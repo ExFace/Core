@@ -2,7 +2,6 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
@@ -22,19 +21,24 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
+use exface\Core\Templates\Placeholders\OptionalPlaceholders;
 
 /**
  * Validates any proposed changes made to the monitored data and rejects invalid changes.
- *
- * This behavior uses negative logic. If all checks fail, the overall evaluation is successful and the proposed changes will be applied to the database.
- * If at least one check succeeds, an exception will be thrown and the proposed changes will be discarded. When writing data checks think of them as violations, that
- * you are trying to catch.
- *
+ * 
+ * This behavior uses negative logic. If all checks fail, the overall evaluation is successful and the proposed changes
+ * will be applied to the database. If at least one check succeeds, an exception will be thrown and the proposed
+ * changes will be discarded. When writing data checks think of them as violations, that you are trying to catch.
+ * 
  * ### Properties:
  * 
- * - `invalid_if_on_create` executes only when data is being **created**, but **before** these changes are applied to the database.
- * - `invalid_if_on_update` executes only when data is being **updated**, but **before** these changes are applied to the database.
- * - `invalid_if_always` executes both when data is being **created and updated**, but **before** those changes are applied to the database.
+ * - `invalid_if_on_create` executes only when data is being **created**, but **before** these changes are applied to
+ * the database.
+ * - `invalid_if_on_update` executes only when data is being **updated**, but **before** these changes are applied to
+ * the database.
+ * - `invalid_if_always` executes both when data is being **created and updated**, but **before** those changes are
+ * applied to the database.
  * 
  * This behavior can react both to when the data is first created and to whenever it is changed from then on.
  * You can use any of the three `ìnvalid_if` properties to control the timing of your checks.
@@ -42,25 +46,30 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * ### Placeholders:
  * 
  *   - `[#~old:alias#]`: Loads the value of the specified `alias` that is currently stored in the database.
- *   - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
- *
- * This behavior supports the use of placeholders to give you more fine-grained control over where your dynamic values are being loaded from.
- * You can apply these placeholders to any input field inside a `invalid_if` context. However, since `[#~old:alias#]` loads data currently
- * stored in the database, it does not work while data is being created (because the data doesn't exist yet).
+ *   - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
+ * validation succeeds.
+ * 
+ * This behavior supports the use of placeholders to give you more fine-grained control over where your dynamic values
+ * are being loaded from. You can apply these placeholders to any input field inside a `invalid_if` context. However,
+ * since `[#~old:alias#]` loads data currently stored in the database, it does not work while data is being created
+ * (because the data doesn't exist yet).
  * 
  * This means `[#~old:alias#]` only works for `invalid_if_on_update`.
  * 
  * **NOTE:** Placeholder values are NOT formatted in order to be comparable in the conditions. If you use
  * placeholders in the error messages, format them explicitly: e.g. `[#~old:=Format(MYATTR)#]`
- *
+ * 
  * ### Example: Comparing old and new values
  * 
- * This check ensures that updated values must be greater than previous values. This might for instance be useful when tracking construction progress.
- * Since we want to compare changes, we have to use `invalid_if_on_update` to enable the `[#~old:alias#]` placeholder.
- *
- * NOTE: The property `value` can usually not read data, but because we are using a placeholder, we can bypass this restriction.
+ * This check ensures that updated values must be greater than previous values. This might for instance be useful when
+ * tracking construction progress. Since we want to compare changes, we have to use `invalid_if_on_update` to enable
+ * the `[#~old:alias#]` placeholder.
+ * 
+ * NOTE: The property `value` can usually not read data, but because we are using a placeholder, we can bypass this
+ * restriction.
  * 
  * ```
+ * 
  * {
  *      "invalid_if_on_update": [
  *       {
@@ -74,17 +83,19 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *          }]
  *       }]
  * }
- *
+ * 
  * ```
- *
+ * 
  * ### Example: Using multiple `invalid_if` properties
  * 
  * In this example we have extended the previous code with a new `invalid_if_on_any`, which triggers both on creating
- * and updating our data. It checks, whether the new value lies within a range of 0 to 100. When data is being created in this example,
- * only the checks in `invalid_if_on_any` will be performed. When data is being updated, however, both `invalid_if_on_any` and
+ * and updating our data. It checks, whether the new value lies within a range of 0 to 100. When data is being created
+ * in this example, only the checks in `invalid_if_on_any` will be performed. When data is being updated, however, both
+ * `invalid_if_on_any` and
  * `invalid_if_on_update` will run their checks. You can use this feature to control the timing of your checks.
- *
+ * 
  *  ```
+ * 
  *  {
  *      "invalid_if_always": [
  *         {
@@ -114,20 +125,23 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *           }]
  *        }]
  *  }
- *
+ * 
  * ```
- *
+ * 
  * ### Example: Flexible syntax
  * 
- * Finally, let's touch on some fun things you can do with our flexible tools. In this example we have used placeholders to
- * dynamically assemble a more insightful error message, as well as having used a formula to do some basic arithmetic.
- * You can get fairly creative with these features, but bear in mind that things might eventually break.
- *
+ * Finally, let's touch on some fun things you can do with our flexible tools. In this example we have used
+ * placeholders to dynamically assemble a more insightful error message, as well as having used a formula to do some
+ * basic arithmetic. You can get fairly creative with these features, but bear in mind that things might eventually
+ * break.
+ * 
  *  ```
+ * 
  * {
  *       "invalid_if_on_update": [
  *        {
- *           "error_text": "[#~old:Sektion#]: The new value for MesswertIst ([#~new:MesswertIst#]) must be greater than the previous value ([#~old:MesswertIst#])!",
+ *           "error_text": "[#~old:Sektion#]: The new value for MesswertIst ([#~new:MesswertIst#]) must be greater than
+ * the previous value ([#~old:MesswertIst#])!",
  *           "operator": "AND",
  *           "conditions": [
  *           {
@@ -137,23 +151,14 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *           }]
  *        }]
  *  }
- *
+ * 
  * ```
  * 
  * @author Andrej Kabachnik, Georg Bieger
- *
+ * 
  */
 class ValidatingBehavior extends AbstractBehavior
 {
-
-    const PLACEHOLDER_OLD = "~old:";
-
-    const PLACEHOLDER_NEW = "~new:";
-
-    const PLACEHOLDERS_PREV_REQUIRED = array(
-        self::PLACEHOLDER_OLD,
-    );
-
     const VAR_EVENT_HANDLER = "handleOnChange";
 
     const VAR_ON_CREATE = "on_create";
@@ -161,21 +166,17 @@ class ValidatingBehavior extends AbstractBehavior
     const VAR_ON_UPDATE = "on_update";
 
     const VAR_ON_ANY = "always";
-
-    const VAR_BAD_DATA = "badData";
-
-    const VAR_LINES = "lines";
-
+    
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
     // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
-    private array $eventConfig = array(
+    private array $uxonsPerEventContext = array(
         self::VAR_ON_UPDATE => null,
         self::VAR_ON_CREATE => null,
         self::VAR_ON_ANY => null
     );
     
     /**
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
@@ -202,69 +203,76 @@ class ValidatingBehavior extends AbstractBehavior
 
     /**
      * Triggers only when data is being CREATED. Prevent changing a data item if any of these conditions match.
-     *
+     * 
      *  ### Placeholders:
      * 
-     *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
-     *
+     *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
+     * validation succeeds.
+     * 
      * @uxon-property invalid_if_on_create
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
-     *
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
+     *     "value": ""}]}]
+     * 
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
     public function setInvalidIfOnCreate(UxonObject $uxon) : ValidatingBehavior
     {
-        $this->eventConfig[self::VAR_ON_CREATE] = $uxon;
+        $this->uxonsPerEventContext[self::VAR_ON_CREATE] = $uxon;
         return $this;
     }
 
     /**
      * Triggers only when data is being UPDATED. Prevent changing a data item if any of these conditions match.
-     *
+     * 
      * ### Placeholders:
      * 
      *  - `[#~old:alias#]`: Loads the value for the specified alias that is currently stored in the database.
-     *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
-     *
+     *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
+     * validation succeeds.
+     * 
      * @uxon-property invalid_if_on_update
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
-     *
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
+     *     "value": ""}]}]
+     * 
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
     public function setInvalidIfOnUpdate(UxonObject $uxon) : ValidatingBehavior
     {
-        $this->eventConfig[self::VAR_ON_UPDATE] = $uxon;
+        $this->uxonsPerEventContext[self::VAR_ON_UPDATE] = $uxon;
         return $this;
     }
 
     /**
-     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions match.
-     *
-     * ### Placeholders:
+     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions
+     * match.
      * 
-     * - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
-     *
+     * ### Placeholders:
+     *  
+     * - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
+     * validation succeeds.
+     * 
      * @uxon-property invalid_if_always
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
-     *
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
+     *     "value": ""}]}]
+     * 
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
     public function setInvalidIfAlways(UxonObject $uxon) : ValidatingBehavior
     {
-        $this->eventConfig[self::VAR_ON_ANY] = $uxon;
+        $this->uxonsPerEventContext[self::VAR_ON_ANY] = $uxon;
         return $this;
     }
 
     /**
      * Handles any change requests for the associated data and decides whether the proposed are valid or
      * need to be rejected.
-     *
+     * 
      * @param OnBeforeDeleteDataEvent $event
      * @throws RuntimeException
      * @throws DataSheetDeleteForbiddenError
@@ -296,15 +304,17 @@ class ValidatingBehavior extends AbstractBehavior
         if (! $changedDataSheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
-
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-
+        
         // Perform data checks for each validation rule.
         $error = null;
-        foreach ($uxon as $propertyName => $dataCheckUxon) {
-            $dataCheckUxon = $this->checkPlaceholders($dataCheckUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
+        $context = $event::class;
+        
+        foreach ($uxon as $dataCheckUxon) {
+            // Perform data checks.
             try {
-                $this->performDataChecks($dataCheckUxon, $previousDataSheet, $changedDataSheet, $onUpdate);
+                $this->performDataChecks($dataCheckUxon, $context, $previousDataSheet, $changedDataSheet);
             } catch (DataCheckFailedErrorMultiple $exception) {
                 if(!$error) {
                     $error = $exception;
@@ -331,16 +341,16 @@ class ValidatingBehavior extends AbstractBehavior
     {
         $result = array();
 
-        if($this->eventConfig[self::VAR_ON_ANY] !== null) {
-            $result['invalid_if_'.self::VAR_ON_ANY] = $this->eventConfig[self::VAR_ON_ANY];
+        if($this->uxonsPerEventContext[self::VAR_ON_ANY] !== null) {
+            $result['invalid_if_'.self::VAR_ON_ANY] = $this->uxonsPerEventContext[self::VAR_ON_ANY];
         }
 
-        if($this->eventConfig[self::VAR_ON_UPDATE] !== null && $onUpdate) {
-            $result['invalid_if_'.self::VAR_ON_UPDATE] = $this->eventConfig[self::VAR_ON_UPDATE];
+        if($this->uxonsPerEventContext[self::VAR_ON_UPDATE] !== null && $onUpdate) {
+            $result['invalid_if_'.self::VAR_ON_UPDATE] = $this->uxonsPerEventContext[self::VAR_ON_UPDATE];
         }
 
-        if($this->eventConfig[self::VAR_ON_CREATE] !== null && !$onUpdate) {
-            $result['invalid_if_'.self::VAR_ON_CREATE] = $this->eventConfig[self::VAR_ON_CREATE];
+        if($this->uxonsPerEventContext[self::VAR_ON_CREATE] !== null && !$onUpdate) {
+            $result['invalid_if_'.self::VAR_ON_CREATE] = $this->uxonsPerEventContext[self::VAR_ON_CREATE];
         }
 
         return array_count_values($result) > 0 ? $result : false;
@@ -348,21 +358,26 @@ class ValidatingBehavior extends AbstractBehavior
 
     /**
      * Performs data validation by applying the specified checks to the provided data sheets.
-     *
-     * @param UxonObject $dataChecksUxon
+     * 
+     * @param UxonObject              $dataCheckUxon
+     * @param string                  $context
      * @param DataSheetInterface|null $previousDataSheet
-     * @param DataSheetInterface $changedDataSheet
-     * @param bool $onUpdate
+     * @param DataSheetInterface      $changedDataSheet
      * @return void
      */
-    protected function performDataChecks(UxonObject $dataChecksUxon, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate) : void
+    protected function performDataChecks(
+        UxonObject          $dataCheckUxon, 
+        string               $context, 
+        ?DataSheetInterface $previousDataSheet, 
+        DataSheetInterface  $changedDataSheet) : void
     {
         $error = null;
-
+        $json = $dataCheckUxon->toJson();
+        
         // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
         foreach ($changedDataSheet->getRows() as $index => $row) {
             // Render placeholders.
-            $renderedUxon = $this->renderUxon($dataChecksUxon, $previousDataSheet, $changedDataSheet, $onUpdate, $index);
+            $renderedUxon = $this->renderUxon($json, $context, $previousDataSheet, $changedDataSheet, $index);
             // Reduce datasheet to the relevant row.
             $checkSheet = $changedDataSheet->copy();
             $checkSheet->removeRows()->addRow($row);
@@ -388,32 +403,34 @@ class ValidatingBehavior extends AbstractBehavior
 
     /**
      * Renders all placeholders present in the provided UXON.
-     *
-     * @param UxonObject $uxonToRender
-     * @param DataSheetInterface|null $previousDataSheet
-     * @param DataSheetInterface $changedDataSheet
-     * @param bool $onUpdate
-     * @param int $rowIndex
+     * 
+     * @param string                  $json
+     * @param string                  $context
+     * @param DataSheetInterface|null $oldData
+     * @param DataSheetInterface      $newData
+     * @param int                     $rowIndex
      * @return UxonObject
      */
-    private function renderUxon(UxonObject $uxonToRender, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate, int $rowIndex) : UxonObject
+    private function renderUxon(
+        string              $json, 
+        string               $context,
+        ?DataSheetInterface $oldData, 
+        DataSheetInterface  $newData, 
+        int                 $rowIndex) : UxonObject
     {
-        $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-
-        if($onUpdate) {
-            $resolver = new DataRowPlaceholders($previousDataSheet, $rowIndex, self::PLACEHOLDER_OLD);
-            // $resolver->setFormatValues(false); TODO format dates and number? Good for messages, but bad for comparison
-            $resolver->setSanitizeAsUxon(true);
-            $placeHolderRenderer->addPlaceholder($resolver);
+        $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
+        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context, true));
+        
+        try {
+            $renderedJson = $renderer->render($json);
+        } catch (\Throwable $e) {
+            $message = PHP_EOL.$this->getAlias().' - '.$e->getMessage();
+            throw new BehaviorRuntimeError($this, $message, null, $e);
         }
-
-        $resolver = new DataRowPlaceholders($changedDataSheet, $rowIndex, self::PLACEHOLDER_NEW);
-        // $resolver->setFormatValues(false); TODO format dates and number? Good for messages, but bad for comparison
-        $resolver->setSanitizeAsUxon(true);
-        $placeHolderRenderer->addPlaceholder($resolver);
-
+        
         // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
-        return UxonObject::fromJson($placeHolderRenderer->render($uxonToRender->toJson()), CASE_LOWER);
+        return UxonObject::fromJson($renderedJson, CASE_LOWER);
     }
 
     /**
@@ -431,45 +448,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Validates any placeholders present in the provided UXON and throws an exception
-     * if it contains any placeholders on the prohibited list.
-     *
-     * @param UxonObject $uxon
-     * @param array $prohibited
-     * @param string $propertyName
-     * @return UxonObject|null
-     */
-    private function checkPlaceholders(UxonObject $uxon, array $prohibited, string $propertyName) : ?UxonObject
-    {
-        $uxonAsArray = $uxon->toArray(CASE_LOWER);
-
-        if (empty($uxonAsArray)) {
-            return new UxonObject();
-        }
-
-        foreach ($uxonAsArray as $value) {
-            if(is_array($value)) {
-                $this->checkPlaceholders(new UxonObject($value), $prohibited, $propertyName);
-            } else {
-                 if(is_string($value)) {
-                    foreach ($prohibited as $filterPhrase) {
-                        $placeHolders = StringDataType::findPlaceholders($value);
-                        foreach ($placeHolders as $placeholder) {
-                            if(str_contains($placeholder, $filterPhrase)) {
-                                $message = 'Placeholder [#'.$placeholder.'#] not supported for '.$propertyName.'!';
-                                throw new BehaviorRuntimeError($this, $message, '7X9TCJ3');
-                            }
-                        }
-                    }
-                 }
-            }
-        }
-
-        return $uxon;
-    }
-
-    /**
-     *
+     * 
      * @param string $messageId
      * @param array|null $placeholderValues
      * @param float|null $pluralNumber
