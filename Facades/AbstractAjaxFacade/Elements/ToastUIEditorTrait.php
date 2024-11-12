@@ -51,11 +51,6 @@ trait ToastUIEditorTrait
                     $editorOptions,
                     {$this->buildJsToolbarItems($widget)}
                     events: {
-                        beforePreviewRender: function(sHtml){
-                            setTimeout(function(){
-                                var oEditor = {$markdownVarJs};
-                            }, 0);
-                        },
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
@@ -93,11 +88,6 @@ JS;
                     autofocus: false,
                     viewer: true,
                     events: {
-                        beforePreviewRender: function(sHtml){
-                            setTimeout(function(){
-                                var oEditor = {$markdownVarJs};
-                            }, 0);
-                        },
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
@@ -216,16 +206,21 @@ JS;
      * {@inheritDoc}
      * @see \exface\JEasyUIFacade\Facades\Elements\EuiInput::buildJsValueSetterMethod()
      */
-    public function buildJsValueSetter($value)
+    public function buildJsValueSetter($value) : string
     {
         return <<<JS
         
+        var oEditor = {$this->buildJsMarkdownVar()};
         if({$value} === undefined || {$value} === null) {
             {$value} = "";
         }
+
+        if ("getMarkdown" in oEditor && {$value} === oEditor.getMarkdown()) {
+            return;
+        }
         
         {$this->buildJsImageDataSanitizer($value)}
-        {$this->buildJsMarkdownVar()}.setMarkdown({$value});
+        oEditor.setMarkdown({$value});
 JS;
     }
 
@@ -268,6 +263,10 @@ JS;
 
         (function () {
             var value = {$this->buildJsMarkdownVar()}.getMarkdown();
+            if(value === undefined || value === null) {
+                return "";
+            }
+            
             {$this->buildJsImageDataSanitizer('value')}
             return value;
         })()
