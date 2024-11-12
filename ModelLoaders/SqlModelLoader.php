@@ -1989,12 +1989,13 @@ SQL;
             throw new InvalidArgumentException('Invalid argument for ' . get_class($this) . '::getApp(): "' . get_class($appOrSelector) . '"! Expecting AppInterface or AppSelectorInterface');
         }
         
-        $selector = $appOrSelector instanceof AppSelectorInterface ? $appOrSelector : $app->getSelector();
-        $rows = array_filter($this->apps_loaded, function($row) use ($selector) {
-            if ($selector->isUid()) {
-                return strcasecmp($row['UID'], $selector->toString()) === 0;
+        $selectorStr = $selector->toString();
+        $selectorIsUid = $selector->isUid();
+        $rows = array_filter($this->apps_loaded, function($row) use ($selectorIsUid, $selectorStr) {
+            if ($selectorIsUid) {
+                return strcasecmp($row['UID'], $selectorStr) === 0;
             } else {
-                return strcasecmp($row['ALIAS'], $selector->toString()) === 0;
+                return strcasecmp($row['ALIAS'], $selectorStr) === 0;
             }
         });
         if (empty($rows)) {
@@ -2004,7 +2005,7 @@ SQL;
                 $this->apps_loaded = null;
                 return $this->loadApp($appOrSelector);
             }
-            throw new AppNotFoundError('App "' . $selector->toString() . '" not found in meta model!');
+            throw new AppNotFoundError('App "' . $selectorStr . '" not found in meta model!');
         }
         $row = reset($rows);
         

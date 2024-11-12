@@ -3,7 +3,6 @@ namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -20,11 +19,11 @@ abstract class DataSheetFactory extends AbstractUxonFactory
      * Creates a data sheet for a give object.
      * The object can be passed directly or specified by it's fully qualified alias (with namespace!)
      *
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @param MetaObjectInterface|string $meta_object_or_alias            
      * @return DataSheetInterface
      */
-    public static function createFromObjectIdOrAlias(Workbench $exface, $meta_object_or_alias = null)
+    public static function createFromObjectIdOrAlias(WorkbenchInterface $exface, $meta_object_or_alias = null)
     {
         if ($meta_object_or_alias instanceof MetaObjectInterface) {
             $meta_object = $meta_object_or_alias;
@@ -36,10 +35,10 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @return DataSheetInterface
      */
-    public static function createEmpty(Workbench $exface)
+    public static function createEmpty(WorkbenchInterface $exface)
     {
         return static::createFromObjectIdOrAlias($exface);
     }
@@ -63,13 +62,13 @@ abstract class DataSheetFactory extends AbstractUxonFactory
      * sheets from widget and action models, where the the sheet should inherit
      * the meta object.
      * 
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @param UxonObject $uxon     
      * @param MetaObjectInterface $fallback_object
      *        
      * @return DataSheetInterface
      */
-    public static function createFromUxon(Workbench $exface, UxonObject $uxon, MetaObjectInterface $fallback_object = null)
+    public static function createFromUxon(WorkbenchInterface $exface, UxonObject $uxon, MetaObjectInterface $fallback_object = null)
     {
         $meta_object = static::findObject($uxon, $exface) ?? $fallback_object;
         $data_sheet = self::createFromObject($meta_object);
@@ -98,12 +97,12 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @param DataSheetInterface|UxonObject $data_sheet_or_uxon            
      * @throws InvalidArgumentException
      * @return DataSheetInterface
      */
-    public static function createFromAnything(Workbench $exface, $data_sheet_or_uxon)
+    public static function createFromAnything(WorkbenchInterface $exface, $data_sheet_or_uxon)
     {
         if ($data_sheet_or_uxon instanceof DataSheetInterface) {
             return $data_sheet_or_uxon;

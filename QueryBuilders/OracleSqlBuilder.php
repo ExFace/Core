@@ -79,7 +79,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             
             $core_joins = array();
             $core_relations = array();
-            $enrichment_selects = $this->getAttributes();
+            $enrichment_parts = $this->getAttributes();
             $enrichment_select = '';
             $enrichment_joins = array();
             $enrichment_join = '';
@@ -133,7 +133,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             array_unique($core_relations);
             
             // separate core SELECTs from enrichment SELECTs
-            foreach ($enrichment_selects as $nr => $qpart) {
+            foreach ($enrichment_parts as $nr => $qpart) {
                 $qpartAttr = $qpart->getAttribute();
                 if (in_array($qpartAttr->getRelationPath()->toString(), $core_relations) || $qpartAttr->getRelationPath()->isEmpty()) {
                     // Workaround to ensure, the UID is always in the query!
@@ -171,11 +171,11 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         }
                         $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getColumnKey()) . '"', null, false);
                     }
-                    unset($enrichment_selects[$nr]);
+                    unset($enrichment_parts[$nr]);
                 }
             }
             
-            foreach ($enrichment_selects as $qpart) {
+            foreach ($enrichment_parts as $qpart) {
                 // If we are grouping, we can only join attributes of object instances, that are unique in the query
                 // This is the case, if we filtered for exactly one instance of an object before, or if we aggregate
                 // over this object or a relation to it.

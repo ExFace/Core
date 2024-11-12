@@ -1427,7 +1427,7 @@ JS;
             var oSemanticColors = $semanticColorsJs;
             var sValue = params.data._key;
             var sColor = {$this->buildJsScaleResolver('sValue', $series->getTextDataColumn()->getCellWidget()->getColorScale(), $series->getTextDataColumn()->getCellWidget()->isColorScaleRangeBased())};
-            if (sColor.startsWith('~')) {
+            if (sColor !== undefined && sColor.startsWith('~')) {
                 sColor = oSemanticColors[sColor] || '';
             } 
             if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
@@ -2628,7 +2628,7 @@ JS;
         var oSemanticColors = $semanticColorsJs;
         value = newNames[0];
         $colJs
-        if (sColor.startsWith('~')) {
+        if (sColor !== undefined && sColor.startsWith('~')) {
             sColor = oSemanticColors[sColor] || '';
         }
         if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
@@ -2662,7 +2662,7 @@ JS;
             var oSemanticColors = $semanticColorsJs;
             value = newNames[i];
             $colJs
-            if (sColor.startsWith('~')) {
+            if (sColor !== undefined && sColor.startsWith('~')) {
                 sColor = oSemanticColors[sColor] || '';
             }
             if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {

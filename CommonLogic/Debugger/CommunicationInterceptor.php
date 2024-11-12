@@ -4,11 +4,11 @@ namespace exface\Core\CommonLogic\Debugger;
 use exface\Core\Events\Contexts\OnContextInitEvent;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\Events\Communication\OnMessageRoutedEvent;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Communication\Recipients\UserRecipient;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Communication\Recipients\UserRoleRecipient;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * 
@@ -22,10 +22,10 @@ class CommunicationInterceptor
     
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param int $startOffsetMs
      */
-    public function __construct(Workbench $workbench)
+    public function __construct(WorkbenchInterface $workbench)
     {
         $this->workbench = $workbench;
         $this->registerEventHandlers();

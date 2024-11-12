@@ -266,7 +266,7 @@ abstract class AbstractBehavior implements BehaviorInterface
     }
     
     /**
-     * Behaviors with higher priority will be executed first if mutiple behaviors of an object are registered for the same event.
+     * Behaviors with higher priority will be executed first if multiple behaviors of an object are registered for the same event.
      *
      * @param int $value
      * @return BehaviorInterface

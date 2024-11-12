@@ -817,6 +817,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 }
                 foreach (preg_split($delim, $script) as $statement) {
                     if ($statement) {
+                        if ($this->isPlugin($statement)) {
+                            $this->runPlugin($statement);
+                        }
                         $results[] = $connection->runSql($statement, true);
                     }
                 }
@@ -946,6 +949,18 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         }
         $this->dataSourceSelector = $value;
         return $this;
+    }
+
+    protected function isPlugin(string $statement) : bool
+    {
+        // TODO regex to search for @installer.xxx()
+        return false;
+    }
+
+    protected function runPlugin(string $statement)
+    {
+        // TODO @installer.xxx() -> xxx() -> Plugin -> Formula
+        return;
     }
 }
 ?>

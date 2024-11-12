@@ -2,10 +2,6 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
-use GuzzleHttp\Psr7\Response;
-use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
-use exface\UrlDataConnector\Psr7DataQuery;
-use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Communication\CommunicationConnectionInterface;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
