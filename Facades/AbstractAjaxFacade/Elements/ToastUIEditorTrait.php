@@ -51,11 +51,6 @@ trait ToastUIEditorTrait
                     $editorOptions,
                     {$this->buildJsToolbarItems($widget)}
                     events: {
-                        beforePreviewRender: function(sHtml){
-                            setTimeout(function(){
-                                var oEditor = {$markdownVarJs};
-                            }, 0);
-                        },
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
@@ -93,11 +88,6 @@ JS;
                     autofocus: false,
                     viewer: true,
                     events: {
-                        beforePreviewRender: function(sHtml){
-                            setTimeout(function(){
-                                var oEditor = {$markdownVarJs};
-                            }, 0);
-                        },
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
@@ -216,7 +206,7 @@ JS;
      * {@inheritDoc}
      * @see \exface\JEasyUIFacade\Facades\Elements\EuiInput::buildJsValueSetterMethod()
      */
-    public function buildJsValueSetter($value)
+    public function buildJsValueSetter($value) : string
     {
         return <<<JS
         
@@ -225,7 +215,7 @@ JS;
             {$value} = "";
         }
 
-        if ({$value} === oEditor.getMarkdown()) {
+        if ("getMarkdown" in oEditor && {$value} === oEditor.getMarkdown()) {
             return;
         }
         
