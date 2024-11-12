@@ -5,13 +5,13 @@ use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Contexts\FilterContext;
 use exface\Core\Contexts\ActionContext;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\ContextFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Contexts\OnContextInitEvent;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
@@ -23,7 +23,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
 
     private $name = null;
 
-    public function __construct(Workbench $exface)
+    public function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
         $this->name = str_replace('ContextScope', '', substr(get_class($this), (strrpos(get_class($this), '\\') + 1)));

@@ -18,6 +18,12 @@ interface EnumDataTypeInterface extends DataTypeInterface
      * @return EnumDataTypeInterface
      */
     public function setValues($uxon_or_array);
+
+    /**
+     * 
+     * @return string[]
+     */
+    public function getValueHints() : array;
     
     /**
      * 
@@ -37,6 +43,13 @@ interface EnumDataTypeInterface extends DataTypeInterface
      * @return string|NULL
      */
     public function getLabelOfValue($value = null) : ?string;
+
+    /**
+     * 
+     * @param mixed $value
+     * @return string|null
+     */
+    public function getHintOfValue($value) : ?string;
     
     /**
      * Returns an array [ value => label ].

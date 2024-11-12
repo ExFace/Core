@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\EntityList;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  *
@@ -13,6 +14,13 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  */
 class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
 {
+    private $autoregisterBehaviors = false;
+
+    public function __construct(WorkbenchInterface $exface, $parent_object, $autoregisterBehaviors = false)
+    {
+        parent::__construct($exface, $parent_object);
+        $this->autoregisterBehaviors = $autoregisterBehaviors;
+    }
 
     /**
      * A behavior list will activate every behavior right after it has been added
@@ -28,7 +36,7 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
             $behavior->setObject($this->getParent());
         }
         $result = parent::add($behavior, $uid);
-        if (! $behavior->isDisabled()) {
+        if (! $behavior->isDisabled() && $this->autoregisterBehaviors === true) {
             $behavior->register();
         }
         return $result;

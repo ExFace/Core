@@ -65,6 +65,7 @@ use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Default implementation of DataSheetInterface
+ *  
  * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
  * 
  * @author Andrej Kabachnik
@@ -989,6 +990,7 @@ class DataSheet implements DataSheetInterface
         // Fire it after the create to be sure every row has UIDs now and are actually updates
         $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
         if ($eventBefore->isPreventUpdate() === true) {
+            // IDEA not sure, if it would be correct to fire OnUpdateData here?
             if ($commit && ! $transaction->isRolledBack()) {
                 $transaction->commit();
             }
@@ -1213,17 +1215,18 @@ class DataSheet implements DataSheetInterface
             // columns of the related sheet too.
         }
         
-        if ($commit && ! $transaction->isRolledBack()) {
-            $transaction->commit();
-        }
-        
         if ($result->getAllRowsCounter() !== null) {
             $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
         } elseif ($result->hasMoreRows() === false) {
             $this->setCounterForRowsInDataSource($this->countRows());
         }
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent($this, $transaction));
+        
+        if ($commit && ! $transaction->isRolledBack()) {
+            $transaction->commit();
+        }
         
         return $counter;
     }
@@ -1465,11 +1468,12 @@ class DataSheet implements DataSheetInterface
         
         $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
+        $this->getWorkbench()->eventManager()->dispatch(new OnReplaceDataEvent($this, $transaction));
+        
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
         }
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnReplaceDataEvent($this, $transaction));
         
         return $deleteCnt+$updateCnt;
     }
@@ -1496,6 +1500,7 @@ class DataSheet implements DataSheetInterface
         
         $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction, $update_if_uid_found));
         if ($eventBefore->isPreventCreate() === true) {
+            // IDEA not sure, if it would be correct to fire OnCreateData here?
             if ($commit && ! $transaction->isRolledBack()) {
                 $transaction->commit();
             }
@@ -1682,17 +1687,18 @@ class DataSheet implements DataSheetInterface
             $this->dataCreateNestedSheets($column, $transaction, $update_if_uid_found);
         }
         
-        if ($commit && ! $transaction->isRolledBack()) {
-            $transaction->commit();
-        }
-        
         if ($result->getAllRowsCounter() !== null) {
             $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
         } elseif ($result->hasMoreRows() === false) {
             $this->setCounterForRowsInDataSource($this->countRows());
         }
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheet\DataSheetInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
+        
+        if ($commit && ! $transaction->isRolledBack()) {
+            $transaction->commit();
+        }
         
         return $result->getAffectedRowsCounter();
     }
@@ -1910,11 +1916,12 @@ class DataSheet implements DataSheetInterface
             $affected_rows = $this->countRows();
         }
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
+        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));
+        
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
         }
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));
         
         return $affected_rows;
     }
@@ -2695,13 +2702,10 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Merges the current data sheet with another one.
-     * Values of the other sheet will overwrite values of identical columns of the current one!
-     *
-     * @param DataSheet $other_sheet            
-     * @return DataSheet
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::merge()
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true)
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true)
     {
         // Ignore empty other sheets
         if ($other_sheet->isEmpty() && $other_sheet->getFilters()->isEmpty()) {
@@ -2715,6 +2719,15 @@ class DataSheet implements DataSheetInterface
         // Check if the sheets are based on the same object
         if ($this->getMetaObject()->getId() !== $other_sheet->getMetaObject()->getId()) {
             throw new DataSheetMergeError($this, 'Cannot merge non-empty data sheets for different objects ("' . $this->getMetaObject()->getAliasWithNamespace() . '" and "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '"): not implemented!', '6T5E8GM');
+        }
+
+        $removeColNames = [];
+        if ($addColumns === false) {
+            foreach ($other_sheet->getColumns() as $otherCol) {
+                if (! $this->getColumns()->get($otherCol->getName())) {
+                    $removeColNames[] = $otherCol->getName();
+                }
+            }
         }
         
         // Check if both sheets have UID columns if they are not empty
@@ -2740,6 +2753,13 @@ class DataSheet implements DataSheetInterface
             $this->removeRows()->addRows($baseSheet->getRows());
         }
         
+        // Remove any columns, that were not there previously
+        // TODO is it really a good idea to add columns and remove them afterwards? They might be
+        // needed for formulas. But are formulas recalculated here anyway? If not, is that correct?
+        foreach ($removeColNames as $colName) {
+            $this->getColumns()->removeByKey($colName);
+        }
+
         return $this;
     }
 

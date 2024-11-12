@@ -3,9 +3,9 @@ namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ContextSelector;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * This factory produces contexts
@@ -44,12 +44,12 @@ abstract class ContextFactory extends AbstractSelectableComponentFactory
     /**
      * Instantiates a new context specified by it's qualified alias.
      *  
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string $selectorString
      * @param ContextScopeInterface $context_scope
      * @return \exface\Core\Interfaces\Contexts\ContextInterface
      */
-    public static function createFromString(Workbench $workbench, string $selectorString, ContextScopeInterface $context_scope = null)
+    public static function createFromString(WorkbenchInterface $workbench, string $selectorString, ContextScopeInterface $context_scope = null)
     {
         $selector = new ContextSelector($workbench, $selectorString);
         if ($context_scope === null){

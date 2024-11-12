@@ -2,8 +2,8 @@
 namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 class ConfigurationFactory extends AbstractStaticFactory
 {
@@ -21,10 +21,10 @@ class ConfigurationFactory extends AbstractStaticFactory
 
     /**
      *
-     * @param Workbench $workbench            
+     * @param WorkbenchInterface $workbench            
      * @return ConfigurationInterface
      */
-    public static function create(Workbench $workbench)
+    public static function create(WorkbenchInterface $workbench)
     {
         return new \exface\Core\CommonLogic\Configuration($workbench);
     }

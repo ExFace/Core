@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Filemanager;
@@ -10,6 +10,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Instantiates apps.
@@ -44,10 +45,10 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
      * Creates a new app from the given selector.
      * 
      * @param AppSelectorInterface|string $anything
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @return AppInterface
      */
-    public static function createFromAnything($anything, Workbench $workbench) : AppInterface
+    public static function createFromAnything($anything, WorkbenchInterface $workbench) : AppInterface
     {
         if ($anything instanceof AppSelectorInterface) {
             return static::create($anything);
@@ -60,10 +61,10 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
      * Creates a new app from the given alias.
      * 
      * @param string $alias_with_namespace            
-     * @param Workbench $workbench            
+     * @param WorkbenchInterface $workbench            
      * @return AppInterface
      */
-    public static function createFromAlias($alias_with_namespace, Workbench $workbench) : AppInterface
+    public static function createFromAlias($alias_with_namespace, WorkbenchInterface $workbench) : AppInterface
     {
         $selector = new AppSelector($workbench, $alias_with_namespace);
         return static::create($selector);
@@ -73,10 +74,10 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
      * Creates a new app from the given UID.
      * 
      * @param string $uid
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @return AppInterface
      */
-    public static function createFromUid($uid, Workbench $exface) : AppInterface
+    public static function createFromUid($uid, WorkbenchInterface $exface) : AppInterface
     {
         return $exface->model()->getModelLoader()->loadApp(new AppSelector($exface, $uid));
     }
@@ -107,6 +108,6 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
                 $appAlias = substr($string, (strlen($vendorAlias)+1));
                 return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $selector->getAppAlias()) . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $appAlias . 'App';
         }
+        throw new InvalidArgumentException('Cannot determine class from selector "' . $selector->toString() . '"!');
     }
 }
-?>

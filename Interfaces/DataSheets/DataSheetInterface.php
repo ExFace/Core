@@ -18,7 +18,7 @@ use Symfony\Component\Console\Exception\InvalidOptionException;
 /**
  * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
  * 
- * Structure:
+ * ## Structure
  * 
  * rowIdx |Column1|Column2|Column3|
  *      0 | value | value | value | \
@@ -30,6 +30,32 @@ use Symfony\Component\Console\Exception\InvalidOptionException;
  * Rows are numbered sequentially. Inserting a row at a certain position will shift row numbers
  * starting from that position. Similarly, removing a row, will also reindex all rows following
  * it!
+ * 
+ * ## Events
+ * 
+ * - OnBeforeReadDataEvent
+ * - OnBeforeCreateDataEvent
+ * - OnBeforeUpdateDataEvent
+ * - OnBeforeReplaceDataEvent
+ * - OnBeforeReadDeleteEvent
+ * 
+ * Are triggered BEFORE the corresponding operation an allow to modify data or prevent the operation.
+ * 
+ * - OnReadDataEvent
+ * - OnCreateDataEvent
+ * - OnUpdateDataEvent
+ * - OnReplaceDataEvent
+ * - OnReadDeleteEvent
+ * 
+ * Are triggered AFTER the operations but BEFORE the transactions are commited. The events allow to
+ * modify the data or to throw an exception to prevent transaction commit.
+ * 
+ * These events are triggered before the commit because otherwise the transaction behavior would
+ * be different depending on wether the transaction was passed from outside to the data methods or
+ * started within them. Behaviors and other listeners cannot know, where the transaction came from,
+ * so they will expect it to be cancellable at this point. In other words, an error in a behavior
+ * on-update should prevent the update (transaction) regardless of whether it only contains this
+ * single operation or a long chain of actions. It must be consistent! 
  * 
  * @author Andrej Kabachnik
  *
@@ -636,7 +662,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * @param DataSheetInterface $other_sheet            
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true);
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true);
 
     public function getMetaObjectRelationPath(MetaObjectInterface $related_object);
 

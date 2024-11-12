@@ -72,6 +72,26 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
     {
         return array_keys($this->getLabels());
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValueHints()
+     */
+    public function getValueHints() : array
+    {
+        return [];
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getHintOfValue()
+     */
+    public function getHintOfValue($value) : ?string
+    {
+        return null;
+    }
     
     /**
      * 

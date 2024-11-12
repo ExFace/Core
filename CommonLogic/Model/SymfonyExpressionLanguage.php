@@ -68,14 +68,14 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
         // Therefore we have to replace the namespace delimiter with thesupported character '_'
         $fixedName = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '_', $name);
         $expression = str_replace($name, $fixedName, $expression);
-        $this->addFunctionToExpressionLanguage($expressionLanguage, $fixedName, $formula);
+        $this->addFormulaToExpressionLanguage($expressionLanguage, $fixedName, $formula);
         foreach ($formula->getNestedFormulas() as $funcName) {
             $fixedName = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '_', $funcName);
             $expression = str_replace($funcName, $fixedName, $expression);
             // Use dummy classes as nested formulas (without a token stream as all tokens were already
             // evaluated in this formula - this saves us lots of parsing!
             $nestedFormula = FormulaFactory::createFromTokenStream($exface, new EmptyTokenStream($funcName));
-            $this->addFunctionToExpressionLanguage($expressionLanguage, $fixedName, $nestedFormula);
+            $this->addFormulaToExpressionLanguage($expressionLanguage, $fixedName, $nestedFormula);
         }
         
         // Add the columns of the current data sheet row as variable arguments
@@ -109,7 +109,7 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
      * @param FormulaInterface $formula
      * @return Formula
      */
-    protected function addFunctionToExpressionLanguage(ExpressionLanguage $expressionLanguage, string $funcName, FormulaInterface $formula) : Formula
+    protected function addFormulaToExpressionLanguage(ExpressionLanguage $expressionLanguage, string $funcName, FormulaInterface $formula) : Formula
     {
         $expressionLanguage->register($funcName, function ($str) {}, function() use ($formula) {
             //get all arguments given to the function
