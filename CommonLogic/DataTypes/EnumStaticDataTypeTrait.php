@@ -254,9 +254,9 @@ trait EnumStaticDataTypeTrait {
         $labels = $this->getLabels();
         $label = $labels[$value] ?? null;
         if ($label === null) {
-            foreach ($labels as $key => $label) {
-                if (strcasecmp($value, $key) === 0) {
-                    return $label;
+            foreach ($labels as $key => $labelValue) {
+                if (strcasecmp($labelValue, $key) === 0) {
+                    return $labelValue;
                 }
             }
         }
