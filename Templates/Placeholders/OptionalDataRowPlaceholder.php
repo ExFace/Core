@@ -19,6 +19,8 @@ class OptionalDataRowPlaceholder extends OptionalPlaceholders
 {
     public function __construct(?DataSheetInterface $data, int $rowIndex, string $prefix, string $context = '', bool $sanitizeAsUxon = false)
     {
+        $this->prefix = $prefix;
+        
         $this->innerConstructor = function () use ($data, $rowIndex, $prefix, $sanitizeAsUxon) {
             if($data) {
                 $resolver = new DataRowPlaceholders($data, $rowIndex, $prefix);
