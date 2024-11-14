@@ -180,6 +180,31 @@ abstract class Formula implements FormulaInterface
         return $this->currentDataSheet;
     }
 
+    /**
+     * Determine the datatype of the input value.
+     *
+     * @param $dataTypeAlias
+     * @return DataTypeInterface
+     */
+    protected function getInputDataType($dataTypeAlias = null) : DataTypeInterface
+    {
+        if ($dataTypeAlias) {
+            $dataType = DataTypeFactory::createFromString($this->getWorkbench(), $dataTypeAlias);
+        } else {
+            if (! $this->getTokenStream()->getAttributes()[0]) {
+                throw new FormulaError('Formula does not contain any attribute to determine datatype from to format value!');
+            }
+            $ds = $this->getDataSheet();
+            if (! $ds) {
+                throw new FormulaError('Formula can not be evaluated statically if no datatype is explicitly given!');
+            }
+            $attr = $ds->getMetaObject()->getAttribute($this->getTokenStream()->getAttributes()[0]);
+            $dataType = $attr->getDataType();
+        }
+
+        return $dataType;
+    }
+    
     public function getDataType()
     {
         if (is_null($this->dataType)) {
