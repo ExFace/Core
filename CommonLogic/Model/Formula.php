@@ -181,26 +181,30 @@ abstract class Formula implements FormulaInterface
     }
 
     /**
-     * Determine the datatype of the input value.
+     * Determine the datatype of the argument with the provided index (starting with 0)
+     * 
+     * NOTE: detection of data types is only possible for arguments, that reference a data column
+     * in a non-static formula. 
+     * 
+     * For other arguments this method will return `null`. If the argument is a data-expression,
+     * but the formula is evaluated statically, this method will throw an error
      *
-     * @param $dataTypeAlias
+     * @param int $argIdx
      * @return DataTypeInterface
      */
-    protected function getInputDataType($dataTypeAlias = null) : DataTypeInterface
+    protected function getArgumentType(int $argIdx) : ?DataTypeInterface
     {
-        if ($dataTypeAlias) {
-            $dataType = DataTypeFactory::createFromString($this->getWorkbench(), $dataTypeAlias);
+        if (! $this->getTokenStream()->isArgumentAttribute($argIdx)) {
+            return null;
         } else {
-            if (! $this->getTokenStream()->getAttributes()[0]) {
-                throw new FormulaError('Formula does not contain any attribute to determine datatype from to format value!');
-            }
-            $ds = $this->getDataSheet();
-            if (! $ds) {
-                throw new FormulaError('Formula can not be evaluated statically if no datatype is explicitly given!');
-            }
-            $attr = $ds->getMetaObject()->getAttribute($this->getTokenStream()->getAttributes()[0]);
-            $dataType = $attr->getDataType();
+            $attrAlias = $this->getTokenStream()->getArgument($argIdx);
         }
+        $ds = $this->getDataSheet();
+        if (! $ds) {
+            throw new FormulaError('Formula can not be evaluated statically because it requires data type detection for argument ' . ($argIdx+1));
+        }
+        $attr = $ds->getMetaObject()->getAttribute($attrAlias);
+        $dataType = $attr->getDataType();
 
         return $dataType;
     }

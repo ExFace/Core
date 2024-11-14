@@ -3,16 +3,19 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\CommonLogic\Model\Formula;
+use exface\Core\DataTypes\Interfaces\HtmlCompatibleDataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\ICanBeConvertedToHtml;
 
 /**
  * Converts the given value to HTML, if possible or formats it as with `=Format()`.
  * 
- * You can specify the datatype of the input value, if necessary, like so:
- * `=ToHtml(value, 'DATATYPE')`, for example: `[#=ToHtml(placeholder, 'exface.Core.MarkdownDataType')#]`
+ * You can specify the datatype of the input value, if necessary, like this:
+ * 
+ * - `=ToHtml(MY_ATTR)` - convert a compatible attribute (e.g. with Markdown data type) to HTML automatically
+ * - `=ToHtml(ANY_TEXT, 'exface.Core.Markdown')` - convert any attribute to HTML treating it as Markdown and
+ * ignoring its data type in the model
  */
 class ToHtml extends Formula
 {
@@ -23,11 +26,16 @@ class ToHtml extends Formula
      */
     public function run($value = null, $dataTypeAlias = null): mixed
     {
-        $inputDataType = $this->getInputDataType($dataTypeAlias);
-        if($inputDataType instanceof ICanBeConvertedToHtml) {
+        if ($dataTypeAlias) {
+            $inputDataType = DataTypeFactory::createFromString($this->getWorkbench(), $dataTypeAlias);
+        } else {
+            $inputDataType = $this->getArgumentType(0);
+        }
+
+        if($inputDataType instanceof HtmlCompatibleDataTypeInterface) {
             return $inputDataType->toHtml($value);
         } else {
-            return $inputDataType->format($value);
+            return $value;
         }
     }
 
