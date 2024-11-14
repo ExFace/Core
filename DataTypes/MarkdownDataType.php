@@ -2,7 +2,7 @@
 namespace exface\Core\DataTypes;
 
 use cebe\markdown\GithubMarkdown;
-use exface\Core\Interfaces\ICanBeConvertedToHtml;
+use exface\Core\DataTypes\Interfaces\HtmlCompatibleDataTypeInterface;
 
 /**
  * 
@@ -11,7 +11,7 @@ use exface\Core\Interfaces\ICanBeConvertedToHtml;
  */
 class MarkdownDataType 
     extends TextDataType
-    implements ICanBeConvertedToHtml
+    implements HtmlCompatibleDataTypeInterface
 {
     public static function escapeString(string $text) : string
     {
@@ -91,6 +91,10 @@ class MarkdownDataType
         return $parser->parse($markdown);
     }
 
+    /**
+     * 
+     * @see exface\Core\DataTypes\Interfaces\HtmlCompatibleDataTypeInterface:toHtml()
+     */
     function toHtml($value = null): string
     {
         $value = $value ?? $this->getValue();
