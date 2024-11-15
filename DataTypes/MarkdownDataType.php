@@ -2,7 +2,7 @@
 namespace exface\Core\DataTypes;
 
 use cebe\markdown\GithubMarkdown;
-use exface\Core\DataTypes\Interfaces\HtmlCompatibleDataTypeInterface;
+use exface\Core\Interfaces\DataTypes\HtmlCompatibleDataTypeInterface;
 
 /**
  * 
@@ -93,7 +93,7 @@ class MarkdownDataType
 
     /**
      * 
-     * @see exface\Core\DataTypes\Interfaces\HtmlCompatibleDataTypeInterface:toHtml()
+     * @see exface\Core\Interfaces\DataTypes\HtmlCompatibleDataTypeInterface:toHtml()
      */
     function toHtml($value = null): string
     {
