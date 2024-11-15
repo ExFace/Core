@@ -524,41 +524,13 @@ class MetaObject implements MetaObjectInterface
         if ($parent instanceof self) {
             foreach ($parent->relations as $relSet) {
                 foreach ($relSet as $rel) {
-                    // Copy the relation unless it is a self-relation. Self-relations (pointing from the parent to the parent)
-                    // need to be recreated, so that they point from the extending object to the extending object.
-                    // For example, if we are extending the FILE object, the relation to the folder should not point
-                    // to the original file object, but rather to the extending object, which may have a custom base
-                    // address, etc.
-                    if ($rel->getRightObjectId() === $parent->getId()) {
-                        $rel_clone = new Relation(
-                            $this->getWorkbench(),
-                            $rel->getCardinality(),
-                            $rel->getId(),
-                            $rel->getAlias(), // IDEA should not the new relation have the alias of the new object?
-                            $rel->getAliasModifier(),
-                            $this,
-                            $this->getAttribute($rel->getLeftKeyAttribute()->getAlias()),
-                            $this->getId(),
-                            $rel->getRightKeyIsUnspecified() === true ?  null : $this->getAttribute($rel->getRightKeyAttribute()->getAlias())->getId()
-                        );
-                    } else {
-                        $rel_clone = clone $rel;
-                    }
-                    // $rel_clone = $rel->copy();
-                    // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-                    if (null === $rel->getInheritedFromObjectId()) {
-                        $rel_clone->setInheritedFromObjectId($parent->getId());
-                    }
+                    $rel_clone = $rel->withExtendedObject($this);
                     $this->addRelation($rel_clone);
                 }
             }
         } else {
             foreach ($parent->getRelations() as $rel) {
-                $rel_clone = clone $rel;
-                // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-                if (null === $rel->getInheritedFromObjectId()) {
-                    $rel_clone->setInheritedFromObjectId($parent->getId());
-                }
+                $rel_clone = $rel->withExtendedObject($this);
                 $this->addRelation($rel_clone);
             }
         }
