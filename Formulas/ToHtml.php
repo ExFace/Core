@@ -3,7 +3,7 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\CommonLogic\Model\Formula;
-use exface\Core\DataTypes\Interfaces\HtmlCompatibleDataTypeInterface;
+use exface\Core\Interfaces\DataTypes\HtmlCompatibleDataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
