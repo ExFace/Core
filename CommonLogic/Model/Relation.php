@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\RelationTypeDataType;
@@ -187,11 +188,11 @@ class Relation implements MetaRelationInterface
     }
     
     /**
+     * Returns TRUE if the right key of this relation is not specified explictily (thus defaults to the UID)
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyIsUnspecified()
+     * @return bool
      */
-    public function getRightKeyIsUnspecified() : bool
+    protected function getRightKeyIsUnspecified() : bool
     {
         return $this->rightKeyAttributeUid === null;
     }
@@ -333,6 +334,44 @@ class Relation implements MetaRelationInterface
     public function copy(MetaObjectInterface $toObject = null) : self
     {
         return clone $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::withExtendedObject()
+     */
+    public function withExtendedObject(MetaObjectInterface $newObject) : MetaRelationInterface
+    {
+        $thisObj = $this->getLeftObject();
+        if (! $newObject->is($thisObj)) {
+            throw new UnexpectedValueException('Cannot use Relation::withExtendedObject() on object ' . $newObject->__toString() . ' because it does not extend ' . $thisObj->__toString());
+        }
+        // This means: $extendedObj->getRelation(x)->getLeftObject() = $parentObj. There are cases
+        // when this leads to inconsistencies. If we have a REPORT with multiple REVISIONs and
+        // a REPORT_2, which extends REPORT, than REVISION__ID:COUNT works for REPORT and for REPORT_2. 
+        // But if REVISION has a separate relation to REPORT_2, than REPORT_2 has two reverse relations
+        // from REVISION and REVISION__ID:COUNT becomes umbiguous! It now must be REVISION[REPORT]__ID
+        // or REVISION[REPORT_2]__ID, but InheritedRelation::needsModifier() does not know, that it was
+        // inherited into an object, that adds conflicts. In fact, it does not know its new object at
+        // all! It only knows, that it was inherited, but not where to.
+        $clone = new Relation(
+            $this->getWorkbench(),
+            $this->getCardinality(),
+            $this->getId(),
+            $this->getAlias(), // IDEA should not the new relation have the alias of the new object?
+            $this->getAliasModifier(),
+            $newObject,
+            $newObject->getAttribute($this->getLeftKeyAttribute()->getAlias()),
+            // Self-relations (pointing from the parent to the parent) need to point from the extending object 
+            // to the extending object.
+            // For example, if we are extending the FILE object, the relation to the folder should not point
+            // to the original file object, but rather to the extending object, which may have a custom base
+            // address, etc.
+            ($thisObj->getId() === $this->getRightObjectId() ? $newObject->getId() : $this->getRightObjectId()),
+            $this->getRightKeyIsUnspecified() === true ?  null : $newObject->getAttribute($this->getRightKeyAttribute()->getAlias())->getId()
+        );
+        return $clone;
     }
 
     /**
