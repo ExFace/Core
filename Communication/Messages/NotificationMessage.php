@@ -16,6 +16,8 @@ use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 class NotificationMessage extends AbstractMessage implements iHaveIcon
 {
     use iHaveIconTrait;
+
+    const FOLDER_INBOX = 'INBOX';
     
     private $widgetUxon = null;
     
@@ -24,6 +26,10 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     private $text = null;
     
     private $title = null;
+
+    private $folder = null;
+
+    private $senderName = null;
     
     /**
      * 
@@ -162,5 +168,51 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
             $uxon->setProperty('buttons', $this->buttonsUxon);
         }
         return $uxon;
+    }
+
+    public function getFolder() : ?string
+    {
+        return $this->folder;
+    }
+
+    /**
+     * Place this message into a folder
+     * 
+     * @uxon-property folder
+     * @uxon-type string
+     * 
+     * @param string $name
+     * @return \exface\Core\Communication\Messages\NotificationMessage
+     */
+    protected function setFolder(string $name) : NotificationMessage
+    {
+        $this->folder = $name;
+        return $this;
+    }
+
+    public function getSenderName() : ?string
+    {
+        return $this->senderName;
+    }
+
+    /**
+     * What to be displayed as sender of the message.
+     * 
+     * Examples:
+     * 
+     * - `Administration`
+     * - `Background validation`
+     * - `[#=User('FULL_NAME')#]`
+     * 
+     * @uxon-property sender
+     * @uxon-type string
+     * 
+     * @param string $name
+     * @return \exface\Core\Communication\Messages\NotificationMessage
+     */
+    protected function setSender(string $name) : NotificationMessage
+    {
+        $this->senderName = $name;
+        return $this;
     }
 }

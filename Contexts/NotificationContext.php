@@ -323,10 +323,10 @@ class NotificationContext extends AbstractContext
                             'widget_type' => 'InputHidden',
                             'value' => $row['MODIFIED_ON']
                         ],[
-                            'attribute_alias' => 'CREATED_BY_USER__USERNAME',
+                            'attribute_alias' => 'SENDER',
                             'widget_type' => 'Display',
                             'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_FROM'),
-                            'value' => $row['CREATED_BY_USER__USERNAME']
+                            'value' => $row['SENDER']
                         ], [
                             'attribute_alias' => 'CREATED_ON',
                             'widget_type' => 'Display',
@@ -367,6 +367,7 @@ class NotificationContext extends AbstractContext
         if ($authToken->isAnonymous()) {
             return null;
         }
+        $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.NOTIFICATION');
         $ds->getColumns()->addFromSystemAttributes();
@@ -379,7 +380,8 @@ class NotificationContext extends AbstractContext
             'WIDGET_UXON'
         ]);
         $ds->getSorters()->addFromString('CREATED_ON', SortingDirectionsDataType::DESC);
-        $ds->getFilters()->addConditionFromString('USER__USERNAME', $authToken->getUsername(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('HIDE_FROM_INBOX', 0, ComparatorDataType::EQUALS);
         $ds->getFilters()->addConditionFromString('ISREAD', 0, ComparatorDataType::EQUALS);
         $ds->dataRead();
         $this->data = $ds;
