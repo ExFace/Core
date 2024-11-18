@@ -211,11 +211,11 @@ self.addEventListener('sync', function(event) {
 		},
 
 		/**
-	 * Converts the current state into a serializable object for storage
-	 * Includes all state flags and a timestamp
-	 * 
-	 * @returns {Object} Serialized state object ready for storage
-	 */
+		 * Converts the current state into a serializable object for storage
+		 * Includes all state flags and a timestamp
+		 * 
+		 * @returns {Object} Serialized state object ready for storage
+		 */
 		serialize: function () {
 			return {
 				bForcedOffline: this._bForcedOffline,
@@ -239,6 +239,46 @@ self.addEventListener('sync', function(event) {
 				this._bSlowNetwork = storedState.bSlowNetwork;
 			}
 			return this;
+		},
+
+		/**
+		 * Get human readable state description
+		 * @returns {string}
+		 */
+		toString: function () {
+			if (! this.isBrowserOnline()) return "Offline";
+			if (this._bForcedOffline) return "Offline, Forced";
+			if (this._bAutoOffline && this._bSlowNetwork) return "Offline, Low Speed";
+			return "Online";
+		},
+
+		/**
+		 * Check if application should be online
+		 * @returns {boolean}
+		 */
+		isOnline: function () {
+			return !this.isOfflineVirtually() && this.isBrowserOnline();
+		},
+
+		/**
+			* Check if app is virtually offline (forced or auto-offline due to slow network)
+			* @returns {boolean}
+			*/
+		isOfflineVirtually: function () {
+			return this._bForcedOffline ||
+				(this._bAutoOffline && this._bSlowNetwork);
+		},
+
+		isOfflineForced: function() {
+			return this._bForcedOffline;
+		},
+
+		isNetworkSlow() {
+			return this._bSlowNetwork;
+		},
+
+		hasAutoffline: function() {
+			return this._bAutoOffline;
 		}
 	};
 
@@ -254,11 +294,10 @@ self.addEventListener('sync', function(event) {
 		network: {
 			/**
 			 * Retrieves current network state
-			 * Modified to work without state caching
 			 * 
 			 * @returns {Promise<Object>} Promise resolving to state object
 			 */
-			getState: async function () {
+			checkState: async function () {
 				return _connectionTable
 					.orderBy('time')
 					.last()
@@ -273,6 +312,16 @@ self.addEventListener('sync', function(event) {
 						return Promise.resolve(_oNetStat);
 					});
 			},
+
+			/**
+			 * Returns the last retrieved network state
+			 * 
+			 * @returns {object}
+			 */
+			getState: function () {
+				return _oNetStat;
+			},
+			
 
 			/**
 			 * Updates network state and persists it to IndexedDB
@@ -291,7 +340,22 @@ self.addEventListener('sync', function(event) {
 				this._pendingStateUpdate = true;
 
 				return new Promise((resolve, reject) => {
+					var oChanges = {};
+					if (bForcedOffline !== _oNetStat._bForcedOffline) {
+						oChanges.forcedOffline = bForcedOffline;
+					} 
+					if (bAutoOffline !== _oNetStat._bAutoOffline) {
+						oChanges.autoOffline = bAutoOffline;
+					} 
+					if (bSlowNetwork !== _oNetStat._bSlowNetwork) {
+						oChanges.slowNetwork = bSlowNetwork;
+					}
+					if (Object.keys(oChanges).length === 0) {
+						// No changes found
+						// TODO break here?
+					}
 					try {
+						
 						// Update _oNetStat directly
 						_oNetStat._bForcedOffline = bForcedOffline || false;
 						_oNetStat._bAutoOffline = bAutoOffline || false;
@@ -306,9 +370,12 @@ self.addEventListener('sync', function(event) {
 						_connectionTable.put(newState)
 							.then(() => {
 								// Trigger event
-								$(document).trigger('networkchanged', {
-									state: newState.state
-								});
+								if (bChangesFound) {
+									$(document).trigger('networkchanged', {
+										currentState: _oNetStat
+										//changes: oChanges // TODO pass the oChanges here to allow listeners to find out WHAT has changed!
+									});
+								}
 								this._pendingStateUpdate = false;
 								resolve();
 							})
@@ -324,34 +391,6 @@ self.addEventListener('sync', function(event) {
 						reject(error);
 					}
 				});
-			},
-
-			/**
-			 * Check if application should be online
-			 * @returns {boolean}
-			 */
-			isOnline: function () {
-				return !this.isOfflineVirtually() && _oNetStat.isBrowserOnline();
-			},
-
-			/**
-				* Check if app is virtually offline (forced or auto-offline due to slow network)
-				* @returns {boolean}
-				*/
-			isOfflineVirtually: function () {
-				return _oNetStat._bForcedOffline ||
-					(_oNetStat._bAutoOffline && _oNetStat._bSlowNetwork);
-			},
-
-			/**
-			 * Get human readable state description
-			 * @returns {string}
-			 */
-			getStateString: function () {
-				if (!_oNetStat.isBrowserOnline()) return "Offline";
-				if (_oNetStat._bForcedOffline) return "Offline, Forced";
-				if (_oNetStat._bAutoOffline && _oNetStat._bSlowNetwork) return "Offline, Low Speed";
-				return "Online";
 			},
 
 			/**
@@ -406,11 +445,17 @@ self.addEventListener('sync', function(event) {
 			 * Check if network is slow based on measurements
 			 * @returns {Promise<boolean>} Returns true if network is considered slow
 			 */
-			isNetworkSlow: async function () {
+			checkNetworkSlow: async function () {
+				var bSlow;
 				// Check browser API first
 				if (navigator?.connection?.effectiveType) {
-					return ['2g', 'slow-2g'].includes(navigator.connection.effectiveType) ||
+					bSlow = ['2g', 'slow-2g'].includes(navigator.connection.effectiveType) ||
 						navigator.connection.downlink === 0;
+				}
+
+				if (bSlow !== undefined) {
+					_oNetStat._bSlowNetwork = bSlow;
+					return bSlow;
 				}
 
 				// Fallback to measurements
@@ -422,11 +467,14 @@ self.addEventListener('sync', function(event) {
 					const avgSpeed = recentStats.reduce((sum, stat) =>
 						sum + (Number(stat.speed) || 0), 0) / recentStats.length;
 
-					return avgSpeed <= 0.1;
+					bSlow = avgSpeed <= 0.1;
 				} catch (error) {
 					console.warn('Failed to check network speed:', error);
-					return false;
+					bSlow = false;
 				}
+
+				_oNetStat._bSlowNetwork = bSlow;
+				return bSlow;
 			}
 
 		},
@@ -801,7 +849,7 @@ self.addEventListener('sync', function(event) {
 						return _pwa.data.syncAll();
 					})
 
-				// if (!_pwa.network.isOnline()) {
+				// if (!_pwa.network.getState().isOnline()) {
 				// 	return Promise.resolve();
 				// }
 
@@ -1133,7 +1181,7 @@ self.addEventListener('sync', function(event) {
 				}
 
 				// Network check
-				if (!_pwa.network.isOnline() || _pwa.network.isOfflineVirtually()) {
+				if (!_pwa.network.getState().isOnline() || _pwa.network.getState().isOfflineVirtually()) {
 					return Promise.resolve();
 				}
 
@@ -1432,7 +1480,7 @@ self.addEventListener('sync', function(event) {
 					return Promise.resolve({});
 				}
 
-				if (_pwa.network.isOnline() === false) {
+				if (_pwa.network.getState().isOnline() === false) {
 					return Promise.resolve({});
 				}
 
@@ -1456,7 +1504,7 @@ self.addEventListener('sync', function(event) {
 
 
 	// Initialize network state on load
-	_pwa.network.getState();
+	_pwa.network.checkState();
 
 	return _pwa;
 })));
