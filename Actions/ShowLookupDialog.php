@@ -215,7 +215,8 @@ class ShowLookupDialog extends ShowDialog
                 'icon' => Icons::CHECK,
                 'action' => [
                     'alias' => 'exface.Core.SendToWidget',
-                    'target_widget_id' => $this->getTargetWidgetId()
+                    'target_widget_id' => $this->getTargetWidgetId(),
+                    'input_rows_min' => 0
                 ]
             ]);
             $btn = $dialog->createButton($btnUxon)->setInputWidget($data_table);
