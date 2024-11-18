@@ -2,7 +2,16 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\Events\DataSheet\OnReadDataEvent;
+use exface\Core\Events\DataSheet\AbstractDataSheetEvent;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
+use exface\Core\Events\DataSheet\OnDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnReplaceDataEvent;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -34,6 +43,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * configuration would look like this:
  * 
  * ```
+ * 
  * {
  *	    "changes_affect_relations": [
  *		    ORDER
@@ -43,11 +53,16 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * ```
  * 
  * @author Andrej Kabachnik
- *
+ * 
  */
 class AffectingBehavior extends AbstractBehavior
 {
-
+    private array $eventMapping = [];
+    
+    private array $eventMappingModifications = [];
+    
+    private array $registeredEventListeners = [];
+    
     private $inProgress = false;
     
     /**
@@ -57,20 +72,16 @@ class AffectingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        // TODO need all data modifying events from \exface\Core\Events\DataSheet
-        // OnCreateData -> OnUpdate
-        // OnUpdate -> OnUpdate
-        // OnDelete -> OnUpdate
-        // OnBeforeCreate -> OnBeforeUpdate
-        // OnBeforeUpdate -> OnBeforeUpdate
-        // OnBeforeDelete -> OnBeforeUpdate
-        $eventMgr = $this->getWorkbench()->eventManager();
-        if (! empty($this->calculateOnEventNames)) {
-            foreach ($this->calculateOnEventNames as $eventName) {
-                $eventMgr->addListener($eventName, [$this, 'onEventRelay'], $this->getPriority());
+        $eventMapping = !empty($this->eventMapping) ? $this->eventMapping : $this->getDefaultEventMapping();
+        $eventMapping = array_merge($eventMapping, $this->eventMappingModifications);
+        $this->validateEventMapping($eventMapping);
+        
+        if (! empty($eventMapping)) {
+            $eventMgr = $this->getWorkbench()->eventManager();
+            foreach ($eventMapping as $fromEvent => $toEvent) {
+                $eventMgr->addListener($fromEvent, [$this, 'onEventRelay'], $this->getPriority());
+                $this->registeredEventListeners[$fromEvent] = $toEvent;
             }
-        } else {
-            $eventMgr->addListener(OnReadDataEvent::getEventName(), [$this, 'onEventRelay'], $this->getPriority());
         }
 
         return $this;
@@ -84,27 +95,45 @@ class AffectingBehavior extends AbstractBehavior
     protected function unregisterEventListeners() : BehaviorInterface
     {
         $eventMgr = $this->getWorkbench()->eventManager();
-        if (! empty($this->calculateOnEventNames)) {
-            foreach ($this->calculateOnEventNames as $eventName) {
-                $eventMgr->removeListener($eventName, [$this, 'onEventRelay']);
+        if (! empty($this->registeredEventListeners)) {
+            foreach ($this->registeredEventListeners as $fromEvent => $toEvent) {
+                $eventMgr->removeListener($fromEvent, [$this, 'onEventRelay']);
             }
-        } else {
-            $eventMgr->removeListener(OnReadDataEvent::getEventName(), [$this, 'onEventRelay']);
         }
         
+        $this->registeredEventListeners = [];
         return $this;
     }
 
     /**
+     * Checks the passed array for invalid event names and throws an error if any
+     * invalid event names are detected. Both keys and values will be checked!
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
+     * @param array $eventMapping
+     * @return void
      */
-    public function exportUxonObject()
+    protected function validateEventMapping(array $eventMapping) : void
     {
-        $uxon = parent::exportUxonObject();
-        // TODO
-        return $uxon;
+        $invalidEvents = [];
+        foreach ($eventMapping as $from => $to) {
+            if(!is_a($from, AbstractDataSheetEvent::class, true)) {
+                $invalidEvents[] = $from;
+            }
+            
+            if(!is_a($to, AbstractDataSheetEvent::class, true)) {
+                $invalidEvents[] = $to;
+            }
+        }
+        
+        if(!empty($invalidEvents)) {
+            $invalidEvents = array_unique($invalidEvents);
+            $msg = "The following event names could not be matched with a corresponding class:".PHP_EOL.PHP_EOL;
+            foreach ($invalidEvents as $index => $eventName) {
+                $msg .= ($index + 1).': '.$eventName.PHP_EOL;
+            }
+            
+            throw new BehaviorConfigurationError($this, $msg);
+        }
     }
 
     /**
@@ -113,7 +142,7 @@ class AffectingBehavior extends AbstractBehavior
      * @param EventInterface $event
      * @return void
      */
-    public function onEventRelay(DataSheetEventInterface $event)
+    public function onEventRelay(AbstractDataSheetEvent $event) : void
     {
         if ($this->isDisabled()) {
             return;
@@ -133,12 +162,14 @@ class AffectingBehavior extends AbstractBehavior
         $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        
+        $eventManager = $this->getWorkbench()->eventManager();
+        $eventManager->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
 
         // Ignore loops
         if ($this->inProgress === true) {
             $logbook->addLine('**Skipped** because of operation performed from within the same behavior (e.g. reading missing data)');
-            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+            $eventManager->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
 
@@ -167,6 +198,12 @@ class AffectingBehavior extends AbstractBehavior
 
             // Now we have an empty data sheet with just the UID column filled.
             // TODO trigger the event
+            $eventType = $this->eventMapping[get_class($event)];
+            if($eventType === null) {
+                throw new BehaviorConfigurationError($this, "Could not relay update to ".$targetObject.", because no valid event mapping was found for ".get_class($event)."!");
+            }
+            
+            $eventManager->dispatch(new $eventType($event->getDataSheet(), $event->getTransaction()));
         }
         $this->inProgress = false;
 
@@ -187,7 +224,7 @@ class AffectingBehavior extends AbstractBehavior
      * 
      * @return \exface\Core\Behaviors\AffectingBehavior
      */
-    protected function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : AffectingBehavior
+    public function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : AffectingBehavior
     {
         $this->relations = $arrayOfRelationPaths->toArray();
 
@@ -209,6 +246,19 @@ class AffectingBehavior extends AbstractBehavior
         return $this;
     }
 
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        // TODO
+        return $uxon;
+    }
+
     /**
      * 
      * @return string[]
@@ -216,5 +266,86 @@ class AffectingBehavior extends AbstractBehavior
     protected function getAffectedRelationPaths() : array
     {
         return $this->relations;
+    }
+
+    /**
+     * NOTE: This property is a stub and has no effect!
+     * Overwrite all entries in the default event mapping with a custom event mapping.
+     *
+     * Since setting this property disables all events not explicitly defined in the
+     * new mapping, it is especially useful if you want to exclude certain events. For example:
+     *
+     * ```
+     *
+     * "overwrite_event_mapping" :
+     * {
+     *      "OnCreateDataEvent" : "OnUpdateDataEvent"
+     * }
+     *
+     * ```
+     *
+     * will only trigger on `OnCreateDataEvent` and will relay that trigger to the `OnUpdateDataEvent` of
+     * all affected relations.
+     *
+     * @uxon-property overwrite_event_mapping
+     * @uxon-type object
+     * @uxon-template {"OnCreateDataEvent":"OnUpdateDataEvent","OnBeforeCreateDataEvent":"OnBeforeCreateDataEvent","OnUpdateDataEvent":"OnUpdateDataEvent","OnBeforeUpdateDataEvent":"OnBeforeCreateDataEvent","OnReplaceDataEvent":"OnUpdateDataEvent","OnBeforeReplaceDataEvent":"OnBeforeUpdateDataEvent","OnDeleteDataEvent":"OnUpdateDataEvent","OnBeforeDeleteDataEvent":"OnBeforeCreateDataEvent"}
+     *
+     * @param UxonObject $eventMapping
+     * @return $this
+     */
+    public function setOverwriteEventMapping(UxonObject $eventMapping) : static
+    {
+        // TODO: Implement actual event mapping.
+        //$this->eventMapping = $eventMapping->toArray();
+        return $this;
+    }
+
+    /**
+     * NOTE: This property is a stub and has no effect!
+     * Modify the current event mapping with custom event mappings.
+     *
+     * Any default mappings not explicitly mentioned in this property will remain unchanged.
+     * Existing keys will be overwritten, while new keys will be appended. For example:
+     *
+     * ```
+     *
+     * "modify_event_mapping" :
+     * {
+     *      "OnCreateDataEvent" : "OnCreateDataEvent", // This overwrites the default mapping.
+     *      "MyOwnDataEvent" : "OnCreateDataEvent" // This appends a new mapping.
+     * }
+     *
+     * ```
+     *
+     * @uxon-property modify_event_mapping
+     * @uxon-type object
+     * @uxon-template {"OnCreateDataEvent":"OnUpdateDataEvent","OnBeforeCreateDataEvent":"OnBeforeCreateDataEvent","OnUpdateDataEvent":"OnUpdateDataEvent","OnBeforeUpdateDataEvent":"OnBeforeCreateDataEvent","OnReplaceDataEvent":"OnUpdateDataEvent","OnBeforeReplaceDataEvent":"OnBeforeUpdateDataEvent","OnDeleteDataEvent":"OnUpdateDataEvent","OnBeforeDeleteDataEvent":"OnBeforeCreateDataEvent"}
+     *
+     * @param UxonObject $eventMappingModifications
+     * @return $this
+     */
+    public function setModifyEventMapping(UxonObject $eventMappingModifications) : static
+    {
+        // TODO: Implement actual event mapping.
+        //$this->eventMappingModifications = $eventMappingModifications->toArray();
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getDefaultEventMapping() : array
+    {
+        return [
+            OnCreateDataEvent::class => OnUpdateDataEvent::class,
+            OnBeforeCreateDataEvent::class => OnBeforeCreateDataEvent::class,
+            OnUpdateDataEvent::class => OnUpdateDataEvent::class,
+            OnBeforeUpdateDataEvent::class => OnBeforeCreateDataEvent::class,
+            OnReplaceDataEvent::class => OnUpdateDataEvent::class,
+            OnBeforeReplaceDataEvent::class => OnBeforeUpdateDataEvent::class,
+            OnDeleteDataEvent::class => OnUpdateDataEvent::class,
+            OnBeforeDeleteDataEvent::class => OnBeforeCreateDataEvent::class
+        ];
     }
 }
