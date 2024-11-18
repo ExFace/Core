@@ -8,7 +8,6 @@ use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\FormulaError;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * Wrapper class to extract formula name, nested formulas and attributes
@@ -189,6 +188,31 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             $this->attributes = $attributes;
         }
         return $this->attributes;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::isArgumentAttribute()
+     */
+    public function getArgument(int $index) : ?string
+    {
+        return $this->getArguments()[$index] ?? null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::isArgumentAttribute()
+     */
+    public function isArgumentAttribute(int $index) : bool
+    {
+        $arg = $this->getArgument($index);
+        if ($arg === null) {
+            return false;
+        }
+        $attrs = $this->getAttributes();
+        return in_array($arg, $attrs, true) === true;
     }
     
     /**
