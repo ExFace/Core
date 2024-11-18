@@ -245,8 +245,8 @@ const swTools = {
 				try {
 					// Make sure to load a fresh connections status instead of doing exfPWA.isOnline(), which
 					// might use cached values and may also load asynchronously when startig up.
-					oNetStat = await exfPWA.getConnectionStatus();
-					mStrategy = oNetStat.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
+					oNetStat = await exfPWA.network.getState(); 
+					mStrategy = exfPWA.network.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
 				} catch (error) {
 					mStrategy = mOnlineStrategy;
 					console.warn('Error checking network status:', error);
@@ -261,3 +261,8 @@ const swTools = {
 		} 
 	}
 }
+//
+//
+//
+//
+//
