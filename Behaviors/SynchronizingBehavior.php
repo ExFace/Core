@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\DataSheet\AbstractDataSheetEvent;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
@@ -29,8 +30,10 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * 
  * Technically this means an `OnUpdateData` event of order position is also an `OnUpdateData` for the
  * order. Other events may be mapped differently, depending on your configuration. The default mapping is as follows:
- * - On**Create**Data, On**Update**Data, On**Replace**Data and On**Delete**Data all trigger On**Update**Data in the synchronized relations.
- * - On**BeforeCreate**Data, On**BeforeUpdate**Data, On**BeforeReplace**Data and On**BeforeDelete**Data all trigger On**BeforeUpdate**Data in the synchronized relations.
+ * - On**Create**Data, On**Update**Data, On**Replace**Data and On**Delete**Data all trigger On**Update**Data in the
+ * synchronized relations.
+ * - On**BeforeCreate**Data, On**BeforeUpdate**Data, On**BeforeReplace**Data and On**BeforeDelete**Data all trigger
+ * On**BeforeUpdate**Data in the synchronized relations.
  * 
  * 
  * ## Examples
@@ -57,9 +60,9 @@ class SynchronizingBehavior extends AbstractBehavior
 {
     private array $affectedRelations = [];
     
-    private array $eventMapping = [];
+    private array $mapToOnUpdate = [];
     
-    private array $eventMappingModifications = [];
+    private array $mapToOnBeforeUpdate = [];
     
     private array $registeredEventListeners = [];
     
@@ -71,15 +74,13 @@ class SynchronizingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $eventMapping = !empty($this->eventMapping) ? $this->eventMapping : $this->getDefaultEventMapping();
-        $eventMapping = array_merge($eventMapping, $this->eventMappingModifications);
-        $this->validateEventMapping($eventMapping);
-        $getEventName = 'getEventName';
+        $eventMapping = $this->getMapToOnBeforeUpdate();
+        $eventMapping = array_merge($eventMapping, $this->getMapToOnUpdate());
         
         if (! empty($eventMapping)) {
             $eventMgr = $this->getWorkbench()->eventManager();
             foreach ($eventMapping as $fromEvent => $toEvent) {
-                $eventMgr->addListener($fromEvent::$getEventName(), [$this, 'onEventRelay'], $this->getPriority());
+                $eventMgr->addListener($fromEvent, [$this, 'onEventRelay'], $this->getPriority());
                 $this->registeredEventListeners[$fromEvent] = $toEvent;
             }
         }
@@ -94,47 +95,15 @@ class SynchronizingBehavior extends AbstractBehavior
     protected function unregisterEventListeners() : BehaviorInterface
     {
         $eventMgr = $this->getWorkbench()->eventManager();
-        $getEventName = 'getEventName';
         
         if (! empty($this->registeredEventListeners)) {
             foreach ($this->registeredEventListeners as $fromEvent => $toEvent) {
-                $eventMgr->removeListener($fromEvent::$getEventName(), [$this, 'onEventRelay']);
+                $eventMgr->removeListener($fromEvent, [$this, 'onEventRelay']);
             }
         }
         
         $this->registeredEventListeners = [];
         return $this;
-    }
-
-    /**
-     * Checks the passed array for invalid event names and throws an error if any
-     * invalid event names are detected. Both keys and values will be checked!
-     * 
-     * @param array $eventMapping
-     * @return void
-     */
-    protected function validateEventMapping(array $eventMapping) : void
-    {
-        $invalidEvents = [];
-        foreach ($eventMapping as $from => $to) {
-            if(!is_a($from, AbstractDataSheetEvent::class, true)) {
-                $invalidEvents[] = $from;
-            }
-            
-            if(!is_a($to, AbstractDataSheetEvent::class, true)) {
-                $invalidEvents[] = $to;
-            }
-        }
-        
-        if(!empty($invalidEvents)) {
-            $invalidEvents = array_unique($invalidEvents);
-            $msg = "The following event names could not be matched with a corresponding class:".PHP_EOL.PHP_EOL;
-            foreach ($invalidEvents as $index => $eventName) {
-                $msg .= ($index + 1).': '.$eventName.PHP_EOL;
-            }
-            
-            throw new BehaviorConfigurationError($this, $msg);
-        }
     }
 
     /**
@@ -196,9 +165,13 @@ class SynchronizingBehavior extends AbstractBehavior
             $targetSheet->getFilters()->addConditionFromValueArray($targetSheet->getUidColumn()->getExpressionObj(), $targetUids);
             $targetSheet->dataRead();
 
-            $eventType = $this->getActiveEventMapping()[get_class($event)];
+            $eventType = $this->getActiveEventMapping()[strtolower($event::getEventName())];
             if($eventType === null) {
                 throw new BehaviorConfigurationError($this, "Could not relay update to ".$targetObject.", because no valid event mapping was found for ".get_class($event)."!");
+            }
+            
+            if(!is_a($eventType, AbstractDataSheetEvent::class, true)) {
+                $eventType = $this->tryGetClassFromEventName($eventType);
             }
             
             $eventManager->dispatch(new $eventType($targetSheet, $event->getTransaction()));
@@ -270,7 +243,7 @@ class SynchronizingBehavior extends AbstractBehavior
      */
     public function getActiveEventMapping() : array
     {
-        return !empty($this->registeredEventListeners) ? $this->registeredEventListeners : $this->getDefaultEventMapping();
+        return $this->registeredEventListeners;
     }
 
     /**
@@ -338,19 +311,85 @@ class SynchronizingBehavior extends AbstractBehavior
     }
 
     /**
-     * @return string[]
+     * Maps all events in this collection to `OnUpdateData`.
+     *
+     * Whenever they are triggered, this behavior will trigger the `OnUpdateData` event for all
+     * the target objects of its synchronized relations.
+     *
+     * @uxon-property map_to_on_update
+     * @uxon-type metamodel:event[]
+     *
+     * @param UxonObject $mapToOnUpdate
+     * @return $this
      */
-    protected function getDefaultEventMapping() : array
+    public function setMapToOnUpdate(UxonObject $mapToOnUpdate) : static
     {
-        return [
-            OnCreateDataEvent::class => OnUpdateDataEvent::class,
-            OnBeforeCreateDataEvent::class => OnBeforeUpdateDataEvent::class,
-            OnUpdateDataEvent::class => OnUpdateDataEvent::class,
-            OnBeforeUpdateDataEvent::class => OnBeforeUpdateDataEvent::class,
-            OnReplaceDataEvent::class => OnUpdateDataEvent::class,
-            OnBeforeReplaceDataEvent::class => OnBeforeUpdateDataEvent::class,
-            OnDeleteDataEvent::class => OnUpdateDataEvent::class,
-            OnBeforeDeleteDataEvent::class => OnBeforeUpdateDataEvent::class
+        $onUpdate = OnUpdateDataEvent::class;
+        foreach ($mapToOnUpdate->toArray() as $eventName) {
+            $this->mapToOnUpdate[strtolower($eventName)] = $onUpdate;
+        }
+        
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMapToOnUpdate() : array
+    {
+        return !empty($this->mapToOnUpdate) ? $this->mapToOnUpdate : [
+            strtolower(OnCreateDataEvent::getEventName()) => OnUpdateDataEvent::class,
+            strtolower(OnUpdateDataEvent::getEventName()) => OnUpdateDataEvent::class,
+            strtolower(OnReplaceDataEvent::getEventName()) => OnUpdateDataEvent::class,
+            strtolower(OnDeleteDataEvent::getEventName()) => OnUpdateDataEvent::class,
         ];
+    }
+
+    /**
+     * Maps all events in this collection to `OnBeforeUpdateData`.
+     *
+     * Whenever they are triggered, this behavior will trigger the `OnBeforeUpdateData` event for all
+     * the target objects of its synchronized relations.
+     *
+     * @uxon-property map_to_on_before_update
+     * @uxon-type metamodel:event[]
+     *
+     * @param UxonObject $mapToOnBeforeUpdate
+     * @return $this
+     */
+    public function setMapToOnBeforeUpdate(UxonObject $mapToOnBeforeUpdate) : static
+    {
+        $onBeforeUpdate = OnBeforeUpdateDataEvent::class;
+        foreach ($mapToOnBeforeUpdate->toArray() as $eventName) {
+            $this->mapToOnBeforeUpdate[strtolower($eventName)] = $onBeforeUpdate;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMapToOnBeforeUpdate() : array
+    {
+        return !empty($this->mapToOnBeforeUpdate) ? $this->mapToOnBeforeUpdate : [
+            strtolower(OnBeforeCreateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
+            strtolower(OnBeforeUpdateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
+            strtolower(OnBeforeReplaceDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
+            strtolower(OnBeforeDeleteDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class
+        ];
+    }
+    
+    private function tryGetClassFromEventName(string $eventName) : string
+    {
+        $eventName = str_replace('.', '\\', $eventName);
+        $before = StringDataType::substringBefore($eventName, '\\DataSheet');
+        $result = $before.'\\Events'.StringDataType::substringAfter($eventName, '\\Core').'Event';
+        
+        if(is_a($result, AbstractDataSheetEvent::class, true)) {
+            return $result;
+        }
+        
+        throw new BehaviorConfigurationError($this, 'Could not resolve '.$eventName.' to a valid class name!');
     }
 }
