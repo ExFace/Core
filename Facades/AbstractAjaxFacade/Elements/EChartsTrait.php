@@ -158,6 +158,26 @@ trait EChartsTrait
     }
     
     /**
+     * Returns the javascript to react to legend active change events
+     * 
+     * @param string $aLegendActive
+     * @return string
+     */
+    protected function buildJsLegendActiveEventHandler(string $aLegendActive) : string {
+        return '';
+    }
+    
+    /**
+     * Returns the javascript to react to legend disable change events
+     * 
+     * @param string $aLegendDisabled
+     * @return string
+     */
+    protected function buildJsLegendDisabledEventHandler(string $aLegendDisabled) : string {
+        return '';
+    }
+    
+    /**
      *
      * @return string
      */
@@ -727,9 +747,10 @@ JS;
      */
     protected function buildJsLegendSelectHandler() : string
     {
-        $invokeActiveGetter = substr_replace($this->getController()->buildJsEventHandler($this, $this->getInvokeLegendActiveGetter(), false), 'aLegendActive', -1, 0);
-        $invokeDisabledGetter = substr_replace($this->getController()->buildJsEventHandler($this, $this->getInvokeLegendDisabledGetter(), false), 'aLegendDisabled', -1, 0);
-        
+        //$invokeActiveGetter = substr_replace($this->getController()->buildJsEventHandler($this, $this->getInvokeLegendActiveGetter(), false), 'aLegendActive', -1, 0);
+        //$invokeDisabledGetter = substr_replace($this->getController()->buildJsEventHandler($this, $this->getInvokeLegendDisabledGetter(), false), 'aLegendDisabled', -1, 0);
+        $invokeActiveGetter = $this->buildJsLegendActiveEventHandler('aLegendActive');
+        $invokeDisabledGetter = $this->buildJsLegendDisabledEventHandler('aLegendDisabled');
         return <<<JS
         
         {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
