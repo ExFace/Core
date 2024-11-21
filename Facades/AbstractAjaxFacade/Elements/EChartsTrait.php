@@ -163,9 +163,7 @@ trait EChartsTrait
      * @param string $aLegendActive
      * @return string
      */
-    protected function buildJsLegendActiveEventHandler(string $aLegendActive) : string {
-        return '';
-    }
+    protected abstract function buildJsLegendActiveEventHandler(string $aLegendActive) : string;
     
     /**
      * Returns the javascript to react to legend disable change events
@@ -173,9 +171,7 @@ trait EChartsTrait
      * @param string $aLegendDisabled
      * @return string
      */
-    protected function buildJsLegendDisabledEventHandler(string $aLegendDisabled) : string {
-        return '';
-    }
+    protected abstract function buildJsLegendDisabledEventHandler(string $aLegendDisabled) : string;
     
     /**
      *
