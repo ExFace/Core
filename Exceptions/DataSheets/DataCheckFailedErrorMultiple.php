@@ -67,7 +67,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
         }
 
         if($updateMessage) {
-            $this->regenerateMessage();
+            $this->updateMessage();
         }
     }
 
@@ -94,7 +94,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
         }
 
         if($updateMessage) {
-            $this->regenerateMessage();
+            $this->updateMessage();
         }
     }
 
@@ -106,7 +106,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      *
      * @return void
      */
-    public function regenerateMessage() : void
+    public function updateMessage() : void
     {
         $trsLine = $this->translator ? $this->translator->translate('BEHAVIOR.VALIDATINGBEHAVIOR.LINE') : 'Lines';
         $updatedMessage = empty($this->baseMessage) ? '' : $this->baseMessage.PHP_EOL.PHP_EOL;
