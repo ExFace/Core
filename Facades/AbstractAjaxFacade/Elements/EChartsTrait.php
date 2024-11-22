@@ -126,36 +126,34 @@ trait EChartsTrait
     ];
 
     /**
-     * @return string
+     * This token can be used in UXON editors to reference the currently active (selected) elements in the legend.
+     * 
+     * @var string 
      */
-    protected function getInvokeLegendActiveGetter() : string
-    {
-        return 'invokeLegendActiveGetter';
-    }
+    protected string $legendActiveToken = '~legend_active';
 
     /**
-     * @return string
+     * This token can be used in UXON editors to reference the currently disabled (de-selected) elements in the legend.
+     * 
+     * @var string 
      */
-    protected function getInvokeLegendDisabledGetter() : string
-    {
-        return 'invokeLegendDisabledGetter';
-    }
+    protected string $legendDisabledToken = '~legend_disabled';
     
     /**
+     * Returns the javascript to react to legend active change events
+     * 
+     * @param string $aLegendActiveJs
      * @return string
      */
-    protected function getLegendActiveToken() : string
-    {
-        return '~legend_active';
-    }
-
+    protected abstract function buildJsLegendActiveEventHandler(string $aLegendActiveJs) : string;
+    
     /**
+     * Returns the javascript to react to legend disable change events
+     * 
+     * @param string $aLegendDisabledJs
      * @return string
      */
-    protected function getLegendDisabledToken() : string
-    {
-        return '~legend_disabled';
-    }
+    protected abstract function buildJsLegendDisabledEventHandler(string $aLegendDisabledJs) : string;
     
     /**
      *
@@ -727,9 +725,8 @@ JS;
      */
     protected function buildJsLegendSelectHandler() : string
     {
-        $invokeActiveGetter = substr_replace($this->getController()->buildJsEventHandler($this, $this->getInvokeLegendActiveGetter(), false), 'aLegendActive', -1, 0);
-        $invokeDisabledGetter = substr_replace($this->getController()->buildJsEventHandler($this, $this->getInvokeLegendDisabledGetter(), false), 'aLegendDisabled', -1, 0);
-        
+        $invokeActiveGetter = $this->buildJsLegendActiveEventHandler('aLegendActive');
+        $invokeDisabledGetter = $this->buildJsLegendDisabledEventHandler('aLegendDisabled');
         return <<<JS
         
         {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
@@ -803,7 +800,7 @@ JS;
      */
     public function buildJsValueGetter($column = null, $row = null) : string
     {
-        if($column === $this->getLegendActiveToken()|| $column == $this->getLegendDisabledToken()) {
+        if($column === $this->legendActiveToken || $column == $this->legendDisabledToken) {
             $column = str_replace('~', '', $column);
             
             return <<<JS
