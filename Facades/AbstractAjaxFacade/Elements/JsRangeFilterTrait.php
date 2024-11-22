@@ -8,7 +8,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
-use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
+use exface\Core\Widgets\RangeFilter;
 
 /**
  * Renders a RangeFilter as an InlineGroup with two default editors.
@@ -114,11 +114,11 @@ trait JsRangeFilterTrait
         $valueGetters = [];
         $facade = $this->getFacade();
         
-        if ($column === '~value_from') {
+        if ($column === RangeFilter::VALUE_FROM) {
             return $facade->getElement($this->getWidgetInlineGroup()->getInputWidgets()[0])->buildJsValueGetter();
         }
         
-        if ($column === '~value_to') {
+        if ($column === RangeFilter::VALUE_TO) {
             return $facade->getElement($this->getWidgetInlineGroup()->getInputWidgets()[1])->buildJsValueGetter();
         }
         
