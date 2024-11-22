@@ -75,6 +75,20 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function addConditionFromColumnValues(DataColumnInterface $column, bool $ignoreEmptyValue = null) : ConditionGroupInterface;
     
     /**
+     * 
+     * @param mixed $attributeOrAlias
+     * @return \exface\Core\Interfaces\Model\ConditionGroupInterface
+     */
+    public function addConditionForAttributeIsNull($attributeOrAlias) : ConditionGroupInterface;
+    
+    /**
+     * 
+     * @param MetaAttributeInterface|string $attributeOrAlias
+     * @return ConditionGroupInterface
+     */
+    public function addConditionForAttributeIsNotNull($attributeOrAlias) : ConditionGroupInterface;
+
+    /**
      * Adds a subgroup to this condition group.
      *
      * @param ConditionGroupInterface $group
@@ -90,6 +104,24 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return ConditionGroupInterface
      */
     public function addNestedGroupFromString(string $operator, bool $ignoreEmptyValues = null) : ConditionGroupInterface;
+
+    /**
+     * Adds a nested group with AND operator and returns it for easy concatennation
+     * 
+     * E.g. `$groups->addNestedAND()->addConditionXXX()->addConditionXXX()`
+     * 
+     * @return \exface\Core\Interfaces\Model\ConditionGroupInterface
+     */
+    public function addNestedAND() : ConditionGroupInterface;
+
+    /**
+     * Adds a nested group with OR operator and returns it for easy concatennation
+     * 
+     * E.g. `$groups->addNestedOR()->addConditionXXX()->addConditionXXX()`
+     * 
+     * @return \exface\Core\Interfaces\Model\ConditionGroupInterface
+     */
+    public function addNestedOR() : ConditionGroupInterface;
     
     /**
      * Returns an array of conditions directly contained in this group (not in the subgroups!).
