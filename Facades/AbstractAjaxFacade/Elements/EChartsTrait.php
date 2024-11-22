@@ -800,7 +800,7 @@ JS;
      */
     public function buildJsValueGetter($column = null, $row = null) : string
     {
-        if($column === $this->legendActiveToken || $column == $this->legendDisabledToken) {
+        if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
             
             return <<<JS
