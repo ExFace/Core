@@ -13,13 +13,16 @@ use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 
 /**
  * Makes a child-object affect its parent whenever it is changed
@@ -28,13 +31,19 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * of an order position obviously also changes the order. If the order has a TimeStampingBehavior, we
  * expect the last-change time to update when the quantity of a position is changed.
  * 
- * Technically this means an `OnUpdateData` event of order position is also an `OnUpdateData` for the
- * order. Other events may be mapped differently, depending on your configuration. The default mapping is as follows:
- * - On**Create**Data, On**Update**Data, On**Replace**Data and On**Delete**Data all trigger On**Update**Data in the
- * synchronized relations.
- * - On**BeforeCreate**Data, On**BeforeUpdate**Data, On**BeforeReplace**Data and On**BeforeDelete**Data all trigger
- * On**BeforeUpdate**Data in the synchronized relations.
+ * Technically this means an `OnUpdateData` event of order position triggers an `OnUpdateData` for the
+ * order. The full event mapping is as follows:
  * 
+ * | Source Event | Target Event |
+ * |--|--|
+ * | OnBefore**Create**Data | OnBefore**Update**Data |
+ * | OnBefore**Update**Data | OnBefore**Update**Data |
+ * | OnBefore**Replace**Data | OnBefore**Update**Data |
+ * | OnBefore**Delete**Data | OnBefore**Update**Data |
+ * | On**Create**Data | On**Update**Data |
+ * | On**Update**Data | On**Update**Data |
+ * | On**Replace**Data | On**Update**Data |
+ * | On**Delete**Data | On**Update**Data |
  * 
  * ## Examples
  * 
@@ -56,26 +65,34 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * @author Andrej Kabachnik, Georg Bieger
  * 
  */
-class SynchronizingBehavior extends AbstractBehavior
+class RelationshipBehavior 
+    extends AbstractBehavior
+    implements IAffectMetaObjectsInterface 
 {
     private array $affectedRelations = [];
     
-    private array $mapToOnUpdate = [];
+    private ?array $mapToOnUpdate = null;
     
-    private array $mapToOnBeforeUpdate = [];
+    private ?array $mapToOnBeforeUpdate = null;
     
     private array $registeredEventListeners = [];
     
+    private array $dataCache = [];
+    
     private bool $inProgress = false;
+
+    /**
+     * An event mapping that's marked as `CACHE_ONLY` will not cause an event dispatch.
+     */
+    private const CACHE_ONLY_FLAG = 'CACHE_ONLY';
     
     /**
      *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     * @see AbstractBehavior::registerEventListeners()
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $eventMapping = $this->getMapToOnBeforeUpdate();
-        $eventMapping = array_merge($eventMapping, $this->getMapToOnUpdate());
+        $eventMapping = $this->getFullEventMapping();
         
         if (! empty($eventMapping)) {
             $eventMgr = $this->getWorkbench()->eventManager();
@@ -90,7 +107,7 @@ class SynchronizingBehavior extends AbstractBehavior
     
     /**
      *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     * @see AbstractBehavior::unregisterEventListeners()
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
@@ -148,33 +165,24 @@ class SynchronizingBehavior extends AbstractBehavior
         }
         $this->inProgress = true;
         
+        $typeOfSourceEvent = get_class($event);
+        $transaction = $event->getTransaction();
+        $typeOfTargetEvent = $this->getActiveEventMapping()[strtolower($event::getEventName())];
+        
+        if($typeOfTargetEvent === null) {
+            throw new BehaviorConfigurationError($this, "Could not relay update, because no valid event mapping was found for ".get_class($event)."!");
+        }
+        
         foreach ($this->getAffectedRelationPaths() as $relationString) {
-            $relPath = RelationPathFactory::createFromString($this->getObject(), $relationString);
-            $targetObject = $relPath->getEndObject();
-            $targetSheet = DataSheetFactory::createFromObject($targetObject);
-            $targetSheet->getColumns()->addFromSystemAttributes();
-
-            if(!$relUidCol = $inputSheet->getColumns()->getByExpression($relationString)) {
-                $relSheet = $inputSheet->copy();
-                $relSheet->getFilters()->addConditionFromColumnValues($relSheet->getUidColumn());
-                $relUidCol = $relSheet->getColumns()->addFromExpression($relationString);
-                $relSheet->dataRead();
-            }
-
-            $targetUids = $relUidCol->getValues();
-            $targetSheet->getFilters()->addConditionFromValueArray($targetSheet->getUidColumn()->getExpressionObj(), $targetUids);
-            $targetSheet->dataRead();
-
-            $eventType = $this->getActiveEventMapping()[strtolower($event::getEventName())];
-            if($eventType === null) {
-                throw new BehaviorConfigurationError($this, "Could not relay update to ".$targetObject.", because no valid event mapping was found for ".get_class($event)."!");
+            $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent);
+            // Event mappings marked as cache only will not be dispatched.
+            if($typeOfTargetEvent === self::CACHE_ONLY_FLAG) {
+                continue;
             }
             
-            if(!is_a($eventType, AbstractDataSheetEvent::class, true)) {
-                $eventType = $this->tryGetClassFromEventName($eventType);
+            foreach ($targetData as $targetSheet) {
+                $eventManager->dispatch(new $typeOfTargetEvent($targetSheet->copy(), $transaction));
             }
-            
-            $eventManager->dispatch(new $eventType($targetSheet, $event->getTransaction()));
         }
 
         $this->inProgress = false;
@@ -182,20 +190,112 @@ class SynchronizingBehavior extends AbstractBehavior
     }
 
     /**
+     * Load the target data, either from the internal data cache or from the database.
+     * 
+     * @param DataSheetInterface $inputSheet
+     * @param string             $relation
+     * @param string             $typeOfSourceEvent
+     * @return array
+     */
+    private function loadTargetData(
+        DataSheetInterface $inputSheet, 
+        string $relation, 
+        string $typeOfSourceEvent) : array
+    {
+        $result = [];
+        
+        // Resolve event type.
+        $typeComponents = explode('\\', $typeOfSourceEvent);
+        $shortType = array_pop($typeComponents);
+        $onAfter = !str_contains($shortType, 'Before');
+        $cacheKey = str_replace('Before', '', $shortType);
+
+        // Try to get Target-UID column from input sheet. 
+        $targetUidCol = $inputSheet->getColumns()->getByExpression($relation);
+        
+        // After (Create, Update, Replace):
+        // Load sheet with old target data from cache.
+        if($onAfter) {
+            if(!key_exists($cacheKey, $this->dataCache)) {
+                throw new BehaviorRuntimeError($this, 'Could not load datasheet from internal data cache! This indicates an undefined event order.');
+            }
+            $cachedSheet = $this->dataCache[$cacheKey];
+            $result[] = $cachedSheet;
+            $targetsHaveChanged = $targetUidCol && $this->targetsHaveChanged(
+                $cachedSheet->getUidColumn()->getValues(), 
+                $targetUidCol->getValues());
+            
+            // After (Create) and After (Update, Replace - if Target-UID did NOT change):
+            // Target data did not change, return result loaded from cache. 
+            if( !$targetsHaveChanged ||
+                is_a($typeOfSourceEvent, OnCreateDataEvent::class, true) ||
+                is_a($typeOfSourceEvent, OnDeleteDataEvent::class, true)) {
+                return $result;
+            }
+        }
+        
+        // Before (Create, Update, Replace, Delete) and After (Create, Replace - if Target-UID did change): 
+        // Build datasheet with new target data.
+        $relPath = RelationPathFactory::createFromString($this->getObject(), $relation);
+        $targetObject = $relPath->getEndObject();
+        $targetSheet = DataSheetFactory::createFromObject($targetObject);
+        $targetSheet->getColumns()->addFromSystemAttributes();
+
+        // If the input sheet did not contain the Target-UID, we need to load it from the database.
+        if(!$targetUidCol){
+            $relSheet = $inputSheet->copy();
+            $relSheet->getFilters()->addConditionFromColumnValues($relSheet->getUidColumn());
+            $targetUidCol = $relSheet->getColumns()->addFromExpression($relation);
+            // TODO (idea) geb 22-11-2024: As a potential optimization, we might be able to cache this across all 
+            // TODO (idea) 'Before' events, but that requires a mechanism that ensures the underlying data didn't change. 
+            $relSheet->dataRead();
+        }
+
+        $targetUids = $targetUidCol->getValues();
+        $targetSheet->getFilters()->addConditionFromValueArray($targetSheet->getUidColumn()->getExpressionObj(), $targetUids);
+        $targetSheet->dataRead();
+        
+        // Save data to cache.
+        $this->dataCache[$cacheKey] = $targetSheet;
+        $result[] = $targetSheet;
+        
+        return $result;
+    }
+
+    /**
+     * Check whether the UIDs of the target objects have been changed by the event source.
+     * 
+     * @param array $previousTargets
+     * @param array $currentTargets
+     * @return bool
+     */
+    private function targetsHaveChanged(array $previousTargets, array $currentTargets) : bool
+    {
+        foreach ($currentTargets as $target) {
+            if(!in_array($target, $previousTargets, true)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * Relations to the objects, that will be affected by changes on this one
-     * 
+     *
      * For example, for an `ORDER_POSITION` object
-     * 
+     *
      * - `ORDER`
      * - `ORDER__CUSTOMER__CUSTOMER_STATS`
-     * 
+     *
      * @uxon-property changes_affect_relations
      * @uxon-type metamodel:relation[]
      * @uxon-template [""]
-     * 
-     * @return \exface\Core\Behaviors\SynchronizingBehavior
+     *
+     * @param UxonObject $arrayOfRelationPaths
+     * @return RelationshipBehavior
      */
-    public function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : SynchronizingBehavior
+    public function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : RelationshipBehavior
     {
         $this->affectedRelations = $arrayOfRelationPaths->toArray();
 
@@ -247,77 +347,10 @@ class SynchronizingBehavior extends AbstractBehavior
     }
 
     /**
-     * NOTE: This property is a stub and has no effect!
-     * Overwrite all entries in the default event mapping with a custom event mapping.
-     *
-     * Since setting this property disables all events not explicitly defined in the
-     * new mapping, it is especially useful if you want to exclude certain events. For example:
-     *
-     * ```
-     *
-     * "overwrite_event_mapping" :
-     * {
-     *      "OnCreateDataEvent" : "OnUpdateDataEvent"
-     * }
-     *
-     * ```
-     *
-     * will only trigger on `OnCreateDataEvent` and will relay that trigger to the `OnUpdateDataEvent` of
-     * all affected relations.
-     *
-     * @uxon-property overwrite_event_mapping
-     * @uxon-type object
-     * @uxon-template {"OnCreateDataEvent":"OnUpdateDataEvent","OnBeforeCreateDataEvent":"OnBeforeCreateDataEvent","OnUpdateDataEvent":"OnUpdateDataEvent","OnBeforeUpdateDataEvent":"OnBeforeCreateDataEvent","OnReplaceDataEvent":"OnUpdateDataEvent","OnBeforeReplaceDataEvent":"OnBeforeUpdateDataEvent","OnDeleteDataEvent":"OnUpdateDataEvent","OnBeforeDeleteDataEvent":"OnBeforeCreateDataEvent"}
-     *
-     * @param UxonObject $eventMapping
-     * @return $this
-     */
-    public function setOverwriteEventMapping(UxonObject $eventMapping) : static
-    {
-        // TODO: Implement actual event mapping.
-        //$this->eventMapping = $eventMapping->toArray();
-        return $this;
-    }
-
-    /**
-     * NOTE: This property is a stub and has no effect!
-     * Modify the current event mapping with custom event mappings.
-     *
-     * Any default mappings not explicitly mentioned in this property will remain unchanged.
-     * Existing keys will be overwritten, while new keys will be appended. For example:
-     *
-     * ```
-     *
-     * "modify_event_mapping" :
-     * {
-     *      "OnCreateDataEvent" : "OnCreateDataEvent", // This overwrites the default mapping.
-     *      "MyOwnDataEvent" : "OnCreateDataEvent" // This appends a new mapping.
-     * }
-     *
-     * ```
-     *
-     * @uxon-property modify_event_mapping
-     * @uxon-type object
-     * @uxon-template {"OnCreateDataEvent":"OnUpdateDataEvent","OnBeforeCreateDataEvent":"OnBeforeCreateDataEvent","OnUpdateDataEvent":"OnUpdateDataEvent","OnBeforeUpdateDataEvent":"OnBeforeCreateDataEvent","OnReplaceDataEvent":"OnUpdateDataEvent","OnBeforeReplaceDataEvent":"OnBeforeUpdateDataEvent","OnDeleteDataEvent":"OnUpdateDataEvent","OnBeforeDeleteDataEvent":"OnBeforeCreateDataEvent"}
-     *
-     * @param UxonObject $eventMappingModifications
-     * @return $this
-     */
-    public function setModifyEventMapping(UxonObject $eventMappingModifications) : static
-    {
-        // TODO: Implement actual event mapping.
-        //$this->eventMappingModifications = $eventMappingModifications->toArray();
-        return $this;
-    }
-
-    /**
      * Maps all events in this collection to `OnUpdateData`.
      *
      * Whenever they are triggered, this behavior will trigger the `OnUpdateData` event for all
      * the target objects of its synchronized relations.
-     *
-     * @uxon-property map_to_on_update
-     * @uxon-type metamodel:event[]
      *
      * @param UxonObject $mapToOnUpdate
      * @return $this
@@ -325,10 +358,16 @@ class SynchronizingBehavior extends AbstractBehavior
     public function setMapToOnUpdate(UxonObject $mapToOnUpdate) : static
     {
         $onUpdate = OnUpdateDataEvent::class;
-        foreach ($mapToOnUpdate->toArray() as $eventName) {
+        $array = $mapToOnUpdate->toArray();
+        
+        if(empty($array)) {
+            $this->mapToOnUpdate = [];
+            return $this;
+        } 
+        
+        foreach ($array as $eventName) {
             $this->mapToOnUpdate[strtolower($eventName)] = $onUpdate;
         }
-        
         return $this;
     }
 
@@ -337,7 +376,7 @@ class SynchronizingBehavior extends AbstractBehavior
      */
     public function getMapToOnUpdate() : array
     {
-        return !empty($this->mapToOnUpdate) ? $this->mapToOnUpdate : [
+        return $this->mapToOnUpdate !== null ? $this->mapToOnUpdate : [
             strtolower(OnCreateDataEvent::getEventName()) => OnUpdateDataEvent::class,
             strtolower(OnUpdateDataEvent::getEventName()) => OnUpdateDataEvent::class,
             strtolower(OnReplaceDataEvent::getEventName()) => OnUpdateDataEvent::class,
@@ -351,19 +390,21 @@ class SynchronizingBehavior extends AbstractBehavior
      * Whenever they are triggered, this behavior will trigger the `OnBeforeUpdateData` event for all
      * the target objects of its synchronized relations.
      *
-     * @uxon-property map_to_on_before_update
-     * @uxon-type metamodel:event[]
-     *
      * @param UxonObject $mapToOnBeforeUpdate
      * @return $this
      */
     public function setMapToOnBeforeUpdate(UxonObject $mapToOnBeforeUpdate) : static
     {
         $onBeforeUpdate = OnBeforeUpdateDataEvent::class;
+        $array = $mapToOnBeforeUpdate->toArray();
+        if(empty($array)) {
+            $this->mapToOnBeforeUpdate = [];
+            return $this;
+        }
+        
         foreach ($mapToOnBeforeUpdate->toArray() as $eventName) {
             $this->mapToOnBeforeUpdate[strtolower($eventName)] = $onBeforeUpdate;
         }
-
         return $this;
     }
 
@@ -372,24 +413,68 @@ class SynchronizingBehavior extends AbstractBehavior
      */
     public function getMapToOnBeforeUpdate() : array
     {
-        return !empty($this->mapToOnBeforeUpdate) ? $this->mapToOnBeforeUpdate : [
+        return $this->mapToOnBeforeUpdate !== null ? $this->mapToOnBeforeUpdate : [
             strtolower(OnBeforeCreateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
             strtolower(OnBeforeUpdateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
             strtolower(OnBeforeReplaceDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
-            strtolower(OnBeforeDeleteDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class
+            strtolower(OnBeforeDeleteDataEvent::getEventName()) => OnBeforeDeleteDataEvent::class
         ];
     }
-    
+
+    /**
+     * Merges all event mappings into one and returns the result.
+     * 
+     * @return array
+     */
+    public function getFullEventMapping() : array
+    {
+        // The full mapping includes OnBefore events that map to nowhere, because regardless of the actual event
+        // mapping, we need these hooks to properly cache the parent reference.
+        $mapping = [
+            strtolower(OnBeforeCreateDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
+            strtolower(OnBeforeUpdateDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
+            strtolower(OnBeforeReplaceDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
+            strtolower(OnBeforeDeleteDataEvent::getEventName()) => self::CACHE_ONLY_FLAG
+        ];
+        
+        $mapping = array_merge($mapping, $this->getMapToOnBeforeUpdate());
+        return array_merge($mapping, $this->getMapToOnUpdate());
+    }
+
+    /**
+     * @inheritdoc 
+     */
+    public function getAffectedMetaObjects(): array
+    {
+        $result = [];
+        
+        foreach ($this->getAffectedRelationPaths() as $relationString) {
+            $relPath = RelationPathFactory::createFromString($this->getObject(), $relationString);
+            $result[] = $relPath->getEndObject();
+        }
+        
+        return  $result;
+    }
+
+    /**
+     * Try to convert an event name into a valid classname with namespaces.
+     *
+     * NOTE: This method is redundant at the moment. If however, we decide to make
+     * the event mapping more flexible, it might come in handy.
+     *
+     * @param string $eventName
+     * @return string
+     */
     private function tryGetClassFromEventName(string $eventName) : string
     {
         $eventName = str_replace('.', '\\', $eventName);
         $before = StringDataType::substringBefore($eventName, '\\DataSheet');
         $result = $before.'\\Events'.StringDataType::substringAfter($eventName, '\\Core').'Event';
-        
+
         if(is_a($result, AbstractDataSheetEvent::class, true)) {
             return $result;
         }
-        
+
         throw new BehaviorConfigurationError($this, 'Could not resolve '.$eventName.' to a valid class name!');
     }
 }
