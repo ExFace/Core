@@ -30,6 +30,10 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     private $folder = null;
 
     private $senderName = null;
+
+    private $sendingTime = null;
+
+    private $reference = null;
     
     /**
      * 
@@ -213,6 +217,37 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     protected function setSender(string $name) : NotificationMessage
     {
         $this->senderName = $name;
+        return $this;
+    }
+
+    public function getReference() : ?string
+    {
+        return $this->reference;
+    }
+
+    public function setReference(string $value) : NotificationMessage
+    {
+        $this->reference = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return string|null
+     */
+    public function getSendingTime() : ?string
+    {
+        return $this->sendingTime;
+    }
+
+    /**
+     * 
+     * @param string $dateTime
+     * @return \exface\Core\Communication\Messages\NotificationMessage
+     */
+    protected function setSendingTime(string $dateTime) : NotificationMessage
+    {
+        $this->sendingTime = $dateTime;
         return $this;
     }
 }
