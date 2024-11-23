@@ -46,7 +46,7 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
             $textUxon = new UxonObject([
                 'widget_type' => 'Markdown',
                 'hide_caption' => true,
-                'value' =>  $this->getText()
+                'value' => $this->getText() ? $this->getText() : $this->getTitle()
             ]);
             $this->widgetUxon = $textUxon;
         }

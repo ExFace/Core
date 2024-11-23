@@ -431,6 +431,11 @@ class NotificationContext extends AbstractContext
         return $ds;
     }
 
+    /**
+     * 
+     * @param array $row
+     * @return \exface\Core\Communication\Messages\AnnouncementMessage
+     */
     protected function createAnnouncementMessage(array $row) : AnnouncementMessage
     {
 
@@ -466,12 +471,20 @@ class NotificationContext extends AbstractContext
             $msg = $this->createAnnouncementMessage($row);
             if ($msg->isVisible($currentUser)) {
                 switch (true) {
+                    // If the message was never sent to this user, send it now
                     case ($row[$uidColName] ?? null) === null:
                         $this::send($msg, [$currentUser->getUid()]);
                         break;
-                    case null === $row[$isReadColName] ?? null || $row[$isReadColName] < $now:
+                    // If it was sent and read already, ignore it (if READ_ON is in the future, it is just
+                    // scheduled to disappear, so right now it is still to be sent)
+                    case $row[$isReadColName] !== null && [$isReadColName] < $now:
                         continue 2;
-                    // default: just output the message - it was already sent and is still visible
+                    // TODO detect if the notiication was created earlier, than the last
+                    // change of the announcement. In this case, delete the notification
+                    // and resend it to make the user see the changes.
+
+                    default: 
+                        // just output the message - it was already sent and is still visible
                 }
                 $msgs[] = $msg;
             }
