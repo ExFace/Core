@@ -1,0 +1,94 @@
+{
+    "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "COMMUNICATION_CHANNEL",
+            "attribute_alias": "COMMUNICATION_CHANNEL"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "MESSAGE_UXON",
+            "attribute_alias": "MESSAGE_UXON"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2024-11-19 22:21:50",
+            "MODIFIED_ON": "2024-11-19 22:23:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11efa9fb4a94f018a9fb025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "COMMUNICATION_CHANNEL": "0x11ef8244b26124848244025041000001",
+            "ALIAS": "global_announcement",
+            "MESSAGE_UXON": {
+                "title": "[#~data:TITLE#]",
+                "recipient_roles": [
+                    "exface.Core.AUTHENTICATED"
+                ]
+            },
+            "OBJECT": "0x11ef9e18bc6f56149e18025041000001",
+            "NAME": "Global announcement"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.COMMUNICATION_TEMPLATE"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
