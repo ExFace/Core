@@ -721,7 +721,7 @@
         },
         {
             "CREATED_ON": "2024-11-20 09:54:56",
-            "MODIFIED_ON": "2024-11-22 12:57:19",
+            "MODIFIED_ON": "2024-11-25 11:53:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef92801da2bfac9280025041000001",
@@ -759,7 +759,7 @@
             "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
-                "SQL_JOIN_ON": "[#~left_alias#].reference = CONCAT('0x', LOWER(HEX([#~right_alias#].oid)))"
+                "SQL_JOIN_ON": "@T-SQL: [#~left_alias#].reference = LOWER(CONVERT(VARCHAR(34), [#~right_alias#].oid, 1))\n@MySQL: [#~left_alias#].reference = CONCAT('0x', LOWER(HEX([#~right_alias#].oid)))"
             },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
