@@ -1,6 +1,6 @@
 -- UP
 
-CREATE TABLE `exf_announcement` (
+CREATE TABLE IF NOT EXISTS `exf_announcement` (
   `oid` binary(16) NOT NULL,
   `created_on` datetime NOT NULL,
   `modified_on` datetime NOT NULL,
@@ -25,7 +25,7 @@ ALTER TABLE `exf_notification`
 	ADD `sent_on` datetime NULL,
 	ADD `reference` varchar(200) NULL;
 
-UPDATE exf_notification SET sent_by = (SELECT COALESCE(u.username, '') FROM exf_user u WHERE u.oid = exf_notification.created_by_user_oid) WHERE sender = NULL;
+UPDATE exf_notification SET sent_by = (SELECT COALESCE(u.username, '') FROM exf_user u WHERE u.oid = exf_notification.created_by_user_oid) WHERE sent_by = NULL;
 UPDATE exf_notification SET sent_on = created_on;
 
 ALTER TABLE `exf_notification`
