@@ -148,16 +148,4 @@ class ValidatingBehavior extends AbstractValidatingBehavior
         $error->updateMessage();
         throw $error;
     }
-
-    protected function generateDataChecks(UxonObject $uxonObject): DataCheckListInterface
-    {
-        $dataCheckList = new BehaviorDataCheckList($this->getWorkbench(), $this);
-        foreach ($uxonObject as $uxon) {
-            $dataCheckList->add(new DataCheck($this->getWorkbench(), $uxon));
-        }
-
-        return $dataCheckList;
-    }
-
-
 }
