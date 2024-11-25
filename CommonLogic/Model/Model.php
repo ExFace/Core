@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
@@ -86,10 +87,12 @@ class Model implements ModelInterface
                 $obj = $this->getModelLoader()->loadObjectByAlias($this->getWorkbench()->getApp($app_alias), $object_alias);
             } catch (MetaObjectNotFoundError $e){
                 if (!$namespace){
-                    throw new MetaObjectNotFoundError('Requested meta object "' . $object_alias . '" without an namespace (app alias)! Currently running app "' . $app_alias . '" did not contain the object either.', null, $e);
+                    throw new MetaObjectNotFoundError('Meta object "' . $object_alias . '" without an namespace (app alias)! Currently running app "' . $app_alias . '" did not contain the object either.', null, $e);
                 } else {
                     throw $e;
                 }
+            } catch (AppNotFoundError $e) {
+                throw new MetaObjectNotFoundError('Meta object "' . $object_alias . '" not found! Invalid app namespace "' . $namespace . '"!');
             }
             $this->cacheObject($obj);
         }
