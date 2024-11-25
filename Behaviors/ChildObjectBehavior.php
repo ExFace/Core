@@ -52,10 +52,10 @@ use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
  * the tracer log.
  * 
  * If an input-UID is present, the behavior works as follows:
- * - Any pre-transaction events try to fetch the target data first from the input sheet and if that fails from the data source. 
+ * - For any pre-transaction events (`OnBefore...Data`) the behavior will try to fetch the target data first from the input sheet and then, if that fails from the data source. 
  * Fetching from the source is slow, so try to include all relation columns in the input sheet if possible.
- * - Any target data loaded for pre-transaction events this behavior will be cached for use by the corresponding post-transaction event-
- * - Any post-transaction events will try to fetch their target data from the cache.
+ * - Any target data loaded for pre-transaction events will be cached for use by the corresponding post-transaction event.
+ * - For any post-transaction events (`On...Data`) the behavior will try to fetch their target data from the cache.
  * - For `OnCreateData` and `OnDeleteData` this is always sufficient.
  * - For `OnUpdateData` and `OnReplaceData` the target objects may have been altered by the transaction itself, which this behavior can detect
  * and resolve by loading additional data from source.
