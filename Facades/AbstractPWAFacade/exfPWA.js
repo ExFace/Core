@@ -56,7 +56,7 @@ self.addEventListener('sync', function(event) {
 
 		dexie.open().catch(function (e) {
 			_indexedDbInitError = e;
-			console.error("PWA error: " + e.stack);
+			console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
 		});
 		return dexie;
 	}();
@@ -72,10 +72,10 @@ self.addEventListener('sync', function(event) {
 		var _networkStatTable = _db.table('networkStat');
 		var _connectionTable = _db.table('connection');
 		var _autoOfflineToggle = _db.table('autoOfflineToggle');
-	}
 
-	(function () {
-		_deviceIdTable.toArray()
+		(function () {
+			_deviceIdTable
+			.toArray()
 			.then(function (data) {
 				if (data.length !== 0) {
 					_deviceId = data[0].id;
@@ -86,7 +86,14 @@ self.addEventListener('sync', function(event) {
 					});
 				}
 			})
-	})();
+			// There were cases when dexie.open() worked, but reading threw an error, which blocked everything else.
+			// Since reading the device ID is the first operation, turn off PWA if this fails
+			.catch(function(e){
+				_indexedDbInitError = e;
+				console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
+			})
+		})();
+	}
 
 	var _merge = function mergeObjects(target, ...sources) {
 		// The last argument may be an array containing excludes

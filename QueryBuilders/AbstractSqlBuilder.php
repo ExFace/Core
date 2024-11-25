@@ -1737,7 +1737,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $right_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($rightKeyAttr), $rightTableAlias);
             $join .=  $left_join_on . ' = ' . $right_join_on;
             if ($customSelectWhere = $right_obj->getDataAddressProperty(self::DAP_SQL_SELECT_WHERE)) {
-                if (stripos($customSelectWhere, 'SELECT ') === false) {
+                if (mb_stripos($customSelectWhere, 'SELECT ') === false) {
                     $join .= ' AND ' . $this->replacePlaceholdersInSqlAddress($customSelectWhere, null, ['~alias' => $rightTableAlias]);
                 } else {
                     $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
@@ -2655,6 +2655,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function replacePlaceholdersInSqlAddress($data_address, RelationPath $relation_path = null, array $static_placeholders = null, $select_from = null)
     {
+        $data_address = $this->findSqlDialect($data_address);
         $original_data_address = $data_address;
         
         if (! empty($static_placeholders)){
@@ -3019,8 +3020,33 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return $addr;
         }
         
-        if (StringDataType::startsWith($addr, '@')) {
-            $stmts = preg_split('/(^|\r\n|\r|\n)@/', $addr);
+        return $this->findSqlDialect($addr);
+    }
+
+    /**
+     * Retruns the current SQL dialect from a multi-dialect statement
+     * 
+     * See class-level comment on "Multi-dialect data addresses". 
+     * 
+     * If the given SQL is a multi-dialect statement, this method will strip all non-applicable dialects and return
+     * only the SQL for the dialect of this particular query builder.
+     * 
+     * ```
+     *  |@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))
+     *  |@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')
+     *  |
+     * ```
+     * 
+     * In the above example, this method would return the first life in the `MySqlBuilder` and the second one for `MsSqlBuilder`.
+     * 
+     * @param string $sql
+     * @throws \exface\Core\Exceptions\QueryBuilderException
+     * @return string
+     */
+    protected function findSqlDialect(string $sql) : string
+    {
+        if (StringDataType::startsWith($sql, '@')) {
+            $stmts = preg_split('/(^|\R)@/', $sql);
             $tags = $this->getSqlDialects();
             // Start with the first supported tag and see if it matches any statement. If not,
             // proceed with the next tag, etc.
@@ -3033,10 +3059,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($addr, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
+            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($sql, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
         }
-        
-        return $addr;
+        return $sql;
     }
     
     /**
