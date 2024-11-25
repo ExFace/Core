@@ -16,6 +16,8 @@ use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 class NotificationMessage extends AbstractMessage implements iHaveIcon
 {
     use iHaveIconTrait;
+
+    const FOLDER_INBOX = 'INBOX';
     
     private $widgetUxon = null;
     
@@ -24,6 +26,14 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     private $text = null;
     
     private $title = null;
+
+    private $folder = null;
+
+    private $senderName = null;
+
+    private $sendingTime = null;
+
+    private $reference = null;
     
     /**
      * 
@@ -36,7 +46,7 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
             $textUxon = new UxonObject([
                 'widget_type' => 'Markdown',
                 'hide_caption' => true,
-                'value' =>  $this->getText()
+                'value' => $this->getText() ? $this->getText() : $this->getTitle()
             ]);
             $this->widgetUxon = $textUxon;
         }
@@ -162,5 +172,82 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
             $uxon->setProperty('buttons', $this->buttonsUxon);
         }
         return $uxon;
+    }
+
+    public function getFolder() : ?string
+    {
+        return $this->folder;
+    }
+
+    /**
+     * Place this message into a folder
+     * 
+     * @uxon-property folder
+     * @uxon-type string
+     * 
+     * @param string $name
+     * @return \exface\Core\Communication\Messages\NotificationMessage
+     */
+    protected function setFolder(string $name) : NotificationMessage
+    {
+        $this->folder = $name;
+        return $this;
+    }
+
+    public function getSenderName() : ?string
+    {
+        return $this->senderName;
+    }
+
+    /**
+     * What to be displayed as sender of the message.
+     * 
+     * Examples:
+     * 
+     * - `Administration`
+     * - `Background validation`
+     * - `[#=User('FULL_NAME')#]`
+     * 
+     * @uxon-property sender
+     * @uxon-type string
+     * 
+     * @param string $name
+     * @return \exface\Core\Communication\Messages\NotificationMessage
+     */
+    protected function setSender(string $name) : NotificationMessage
+    {
+        $this->senderName = $name;
+        return $this;
+    }
+
+    public function getReference() : ?string
+    {
+        return $this->reference;
+    }
+
+    public function setReference(string $value) : NotificationMessage
+    {
+        $this->reference = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return string|null
+     */
+    public function getSendingTime() : ?string
+    {
+        return $this->sendingTime;
+    }
+
+    /**
+     * 
+     * @param string $dateTime
+     * @return \exface\Core\Communication\Messages\NotificationMessage
+     */
+    protected function setSendingTime(string $dateTime) : NotificationMessage
+    {
+        $this->sendingTime = $dateTime;
+        return $this;
     }
 }

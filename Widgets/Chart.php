@@ -60,6 +60,10 @@ class Chart extends AbstractWidget implements
     const AXIS_X = 'x';
 
     const AXIS_Y = 'y';
+
+    const VALUE_LEGEND_ACTIVE = '~legend_active';
+    
+    const VALUE_LEGEND_INACTIVE = '~legend_disabled';
     
     private $autoload_disabled_hint = null;
     

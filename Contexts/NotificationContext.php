@@ -3,6 +3,7 @@ namespace exface\Core\Contexts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\Communication\Messages\AnnouncementMessage;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -38,7 +39,9 @@ use exface\Core\Widgets\Button;
  */
 class NotificationContext extends AbstractContext
 {
-    private $data = null;
+    private $notificationsSheet = null;
+
+    private $announcementsSheet = null;
     
     private $counter = null;
     
@@ -108,8 +111,12 @@ class NotificationContext extends AbstractContext
         $menu->setCaption($this->getName());
         
         // Fill with buttons
-        $menu = $this->createMessageButtons($menu);
-        $menu->addButton($menu->createButton(new UxonObject([
+        $menu = $this->createMessageButtons($menu); 
+        
+        // Add common buttons
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $bottomGroup = $menu->createButtonGroup();
+        $bottomGroup->addButton($bottomGroup->createButton(new UxonObject([
             'caption' => 'Show all',
             'action' => [
                 'alias' => 'exface.Core.ShowDialog',
@@ -121,9 +128,16 @@ class NotificationContext extends AbstractContext
                             'widget_type' => 'DataTable',
                             'object_alias' => 'exface.Core.NOTIFICATION',
                             'hide_header' => true,
+                            'filters' => [
+                                [
+                                    'attribute_alias' => 'USER',
+                                    'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
+                                    'comparator' => ComparatorDataType::EQUALS
+                                ]
+                            ],
                             'columns' => [
                                 ['attribute_alias' => 'ISREAD', 'hide_caption' => true, 'width' => '2rem'],
-                                ['attribute_alias' => 'CREATED_ON'],
+                                ['attribute_alias' => 'SENT_ON'],
                                 ['attribute_alias' => 'TITLE']
                             ]
                         ]
@@ -131,7 +145,21 @@ class NotificationContext extends AbstractContext
                 ]
             ]
         ])));
+        if (! $menu->isEmpty()) {
+            $bottomGroup->addButton($bottomGroup->createButton(new UxonObject([
+                'caption' => $translator->translate('CONTEXT.NOTIFICATION.MARK_ALL_READ'),
+                'action' => [
+                    'alias' => 'exface.Core.NotificationAllRead',
+                    'object_alias' => 'exface.Core.NOTIFICATION',
+                    'input_rows_min' => 0,
+                    'input_data_sheet' => [
+                        'object_alias' => 'exface.Core.NOTIFICATION'
+                    ]
+                ]
+            ])));
+        }
         
+        $menu->addButtonGroup($bottomGroup);
         $container->addWidget($menu);
         
         /*
@@ -160,13 +188,13 @@ class NotificationContext extends AbstractContext
                     'visibility' => WidgetVisibilityDataType::PROMOTED
                 ],
                 [
-                    'attribute_alias' => 'CREATED_ON',
+                    'attribute_alias' => 'SENT_ON',
                     'visibility' => WidgetVisibilityDataType::PROMOTED
                 ]
             ],
             'sorters' => [
                 [
-                    'attribute_alias' => 'CREATED_ON',
+                    'attribute_alias' => 'SENT_ON',
                     'direction' => SortingDirectionsDataType::DESC
                 ]
             ],
@@ -215,11 +243,11 @@ class NotificationContext extends AbstractContext
             );
             $widgetJson = $renderer->render($row['WIDGET_UXON']);
             
-            $dateDiff = DateDataType::diff($row['CREATED_ON'])->days;
+            $dateDiff = DateDataType::diff($row['SENT_ON'])->days;
             switch (true) {
                 case $dateDiff === 0: $grpCaption = $translator->translate('LOCALIZATION.DATE.TODAY'); break;
                 case $dateDiff === 1: $grpCaption = $translator->translate('LOCALIZATION.DATE.YESTERDAY'); break;
-                default: $grpCaption = DateDataType::formatDateLocalized(new \DateTime($row['CREATED_ON']), $this->getWorkbench());
+                default: $grpCaption = DateDataType::formatDateLocalized(new \DateTime($row['SENT_ON']), $this->getWorkbench());
             }
             
             if (null === $btnGrp = ($grps[$grpCaption] ?? null)) {
@@ -254,20 +282,6 @@ class NotificationContext extends AbstractContext
             }
             
             $btnGrp->addButton($btn);
-        }
-        
-        if ($btnGrp) {
-            $btnGrp->addButton($btnGrp->createButton(new UxonObject([
-                'caption' => $translator->translate('CONTEXT.NOTIFICATION.MARK_ALL_READ'),
-                'action' => [
-                    'alias' => 'exface.Core.NotificationAllRead',
-                    'object_alias' => 'exface.Core.NOTIFICATION',
-                    'input_rows_min' => 0,
-                    'input_data_sheet' => [
-                        'object_alias' => 'exface.Core.NOTIFICATION'
-                    ]
-                ]
-            ])));
         }
         
         return $menu;
@@ -323,15 +337,15 @@ class NotificationContext extends AbstractContext
                             'widget_type' => 'InputHidden',
                             'value' => $row['MODIFIED_ON']
                         ],[
-                            'attribute_alias' => 'CREATED_BY_USER__USERNAME',
+                            'attribute_alias' => 'SENT_BY',
                             'widget_type' => 'Display',
                             'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_FROM'),
-                            'value' => $row['CREATED_BY_USER__USERNAME']
+                            'value' => $row['SENT_BY']
                         ], [
-                            'attribute_alias' => 'CREATED_ON',
+                            'attribute_alias' => 'SENT_ON',
                             'widget_type' => 'Display',
                             'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_SENT_AT'),
-                            'value' => DateTimeDataType::formatDateLocalized(new \DateTime($row['CREATED_ON']), $this->getWorkbench())
+                            'value' => DateTimeDataType::formatDateLocalized(new \DateTime($row['SENT_ON']), $this->getWorkbench())
                         ]
                         
                     ]
@@ -359,31 +373,123 @@ class NotificationContext extends AbstractContext
     
     protected function getNotificationData() : ?DataSheetInterface
     {
-        if ($this->data !== null) {
-            return $this->data;
+        if ($this->notificationsSheet !== null) {
+            return $this->notificationsSheet;
         }
         
         $authToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous()) {
             return null;
         }
+        $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.NOTIFICATION');
         $ds->getColumns()->addFromSystemAttributes();
         $ds->getColumns()->addMultiple([
-            'CREATED_ON',
             'MODIFIED_ON',
-            'CREATED_BY_USER__USERNAME',
+            'SENT_ON',
+            'SENT_BY',
             'TITLE',
             'ICON',
-            'WIDGET_UXON'
+            'WIDGET_UXON',
+            'REFERENCE'
         ]);
-        $ds->getSorters()->addFromString('CREATED_ON', SortingDirectionsDataType::DESC);
-        $ds->getFilters()->addConditionFromString('USER__USERNAME', $authToken->getUsername(), ComparatorDataType::EQUALS);
+        $ds->getSorters()->addFromString('SENT_ON', SortingDirectionsDataType::DESC);
+        $ds->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('HIDE_FROM_INBOX', 0, ComparatorDataType::EQUALS);
         $ds->getFilters()->addConditionFromString('ISREAD', 0, ComparatorDataType::EQUALS);
         $ds->dataRead();
-        $this->data = $ds;
+        $this->notificationsSheet = $ds;
         return $ds;
+    }
+
+    protected function getAnnouncementsData() : DataSheetInterface
+    {
+        if ($this->announcementsSheet !== null) {
+            return $this->announcementsSheet;
+        }
+        
+        $currentUser = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.ANNOUNCEMENT');
+        $ds->getColumns()->addFromSystemAttributes();
+        $ds->getColumns()->addMultiple([
+            'TITLE',
+            'COMMUNICATION_TEMPLATE__MESSAGE_UXON',
+            'MESSAGE_TYPE',
+            'MESSAGE_UXON',
+            'SHOW_FROM',
+            'SHOW_TO',
+            'NOTIFICATION__READ_ON:MAX',
+            'NOTIFICATION__UID:LIST_DISTINCT'
+        ]);
+        $ds->getSorters()->addFromString('SHOW_FROM', SortingDirectionsDataType::DESC);
+        $ds->getFilters()->addNestedOR()
+            ->addConditionFromString('NOTIFICATION__USER', $currentUser->getUid(), ComparatorDataType::EQUALS)
+            ->addConditionForAttributeIsNull('NOTIFICATION__ANNOUNCEMENT');
+        $ds->dataRead();
+        $this->announcementsSheet = $ds;
+        return $ds;
+    }
+
+    /**
+     * 
+     * @param array $row
+     * @return \exface\Core\Communication\Messages\AnnouncementMessage
+     */
+    protected function createAnnouncementMessage(array $row) : AnnouncementMessage
+    {
+
+        $uxon = UxonObject::fromJson($row['COMMUNICATION_TEMPLATE__MESSAGE_UXON'] ?? '{}');
+        if ($row['MESSAGE_UXON']) {
+            $uxon = $uxon->extend(UxonObject::fromJson($row['MESSAGE_UXON']));
+        }
+
+        $msg = new AnnouncementMessage($this->getWorkbench(), $uxon);
+        $msg->setTitle($row['TITLE']);
+        if (null !== $val = $row['MESSAGE_TYPE']) {
+            $msg->setMessageType($val);
+        }
+        $msg->setReference($row['UID']);
+        $msg->setShowBetween($row['SHOW_FROM'], $row['SHOW_TO'] ?? null);
+
+        return $msg;
+    }
+
+    /**
+     * 
+     * @return AnnouncementMessage[]
+     */
+    public function getAnnouncements() : array
+    {
+        $msgs = [];
+        $currentUser = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+        $data = $this->getAnnouncementsData();
+        $isReadColName = $data->getColumns()->getByExpression('NOTIFICATION__READ_ON:MAX')->getName();
+        $uidColName = $data->getColumns()->getByExpression('NOTIFICATION__UID:LIST_DISTINCT')->getName();
+        $now = DateTimeDataType::now();
+        foreach ($data->getRows() as $row) {
+            $msg = $this->createAnnouncementMessage($row);
+            if ($msg->isVisible($currentUser)) {
+                switch (true) {
+                    // If the message was never sent to this user, send it now
+                    case ($row[$uidColName] ?? null) === null:
+                        $this::send($msg, [$currentUser->getUid()]);
+                        break;
+                    // If it was sent and read already, ignore it (if READ_ON is in the future, it is just
+                    // scheduled to disappear, so right now it is still to be sent)
+                    case $row[$isReadColName] !== null && [$isReadColName] < $now:
+                        continue 2;
+                    // TODO detect if the notiication was created earlier, than the last
+                    // change of the announcement. In this case, delete the notification
+                    // and resend it to make the user see the changes.
+
+                    default: 
+                        // just output the message - it was already sent and is still visible
+                }
+                $msgs[] = $msg;
+            }
+        }
+        return $msgs;
     }
     
     /**
@@ -413,12 +519,22 @@ class NotificationContext extends AbstractContext
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($notification->getWorkbench(), 'exface.Core.NOTIFICATION');
         foreach ($userUids as $userUid) {
-            $ds->addRow([
+            $row = [
                 'USER' => $userUid,
                 'TITLE' => $title,
                 'ICON' => $notification->getIcon(),
+                'FOLDER' => $notification->getFolder(),
+                'SENT_BY' => $notification->getSenderName() ?? $notification->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUsername(),
+                'SENT_ON' => $notification->getSendingTime() ?? DateTimeDataType::now(),
+                'REFERENCE' => $notification->getReference(),
                 'WIDGET_UXON' => $widgetUxon->toJson()
-            ]);
+            ];
+
+            if (($notification instanceof AnnouncementMessage) && null !== $showTo = $notification->getShowTo()) {
+                $row['READ_ON'] = $showTo;
+            }
+
+            $ds->addRow($row);
         }
         
         if (! $ds->isEmpty()) {

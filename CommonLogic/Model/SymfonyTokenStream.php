@@ -215,7 +215,7 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             
             
             //every token with 'name' key gets to the arguments unless it is the formula name itself
-            // TODO maybe should
+            // TODO maybe should also extract nested formulas here so we can run this functions once and have all tokens categorized
             if ($token['name'] !== null && $token['name'] !== $this->getFormulaName()) {
                 $name = $token['name'];
                 
