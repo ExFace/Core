@@ -185,6 +185,7 @@ class ChildObjectBehavior
             $logbook->setIndentActive(1);
             
             $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent, $logbook);
+            $logbook->setIndentActive(1);
             
             if($typeOfTargetEvent === self::CACHE_ONLY_FLAG) {
                 $logbook->addLine('Event mapping for "'.$event::getEventName().'" specified "CACHE_ONLY". Event will not be relayed.');
@@ -192,9 +193,13 @@ class ChildObjectBehavior
             }
             
             foreach ($targetData as $targetSheet) {
-                $dispatch = new $typeOfTargetEvent($targetSheet->copy(), $transaction);
-                $logbook->addLine('Dispatching "'.$dispatch::getEventName().'" to '.$targetSheet->getMetaObject().'.');
-                $eventManager->dispatch($dispatch);
+                if($targetSheet) {
+                    $dispatch = new $typeOfTargetEvent($targetSheet->copy(), $transaction);
+                    $logbook->addLine('Dispatching "'.$dispatch::getEventName().'" to '.$targetSheet->getMetaObject().'.');
+                    $eventManager->dispatch($dispatch);
+                } else {
+                    $logbook->addLine('Failed to dispatch: Target data is NULL!');
+                }
             }
         }
 
@@ -227,40 +232,44 @@ class ChildObjectBehavior
         $cacheKey = str_replace('Before', '', $shortType);
 
         // Try to get Target-UID column from input sheet. 
-        $targetUidCol = $inputSheet->getColumns()->getByExpression($relation);
+        $targetUidCol = false;// $inputSheet->getColumns()->getByExpression($relation);
         
         // After (Create, Update, Replace):
         // Load sheet with old target data from cache.
         if($onAfter) {
-            if(!key_exists($cacheKey, $this->dataCache)) {
-                throw new BehaviorRuntimeError($this, 'Could not load datasheet from internal data cache! This indicates an undefined event order.');
+            $logbook->addLine('Event is post-transaction, loading data from cache with key "'.$cacheKey.'"...');
+            $logbook->setIndentActive(2);
+            if(key_exists($cacheKey, $this->dataCache)) {
+                $cachedSheet = $this->dataCache[$cacheKey];
+                unset($this->dataCache[$cacheKey]);
+                
+                $logbook->addLine('Successfully loaded target data from cache.');
+                $logbook->addDataSheet('CachedTargetData', $cachedSheet);
+            } else {
+                $logbook->addLine('No matching target data found in cache for key "'.$cacheKey.'".');
             }
-            $cachedSheet = $this->dataCache[$cacheKey];
+            
             $result[] = $cachedSheet;
             $targetsHaveChanged = $targetUidCol && $this->targetsHaveChanged(
                 previousTargets: $cachedSheet->getUidColumn()->getValues(), 
                 currentTargets: $targetUidCol->getValues()
             );
-
-            $logbook->addLine('Event is post-transaction, loading data from cache.');
-            $logbook->addDataSheet('CachedTargetData', $cachedSheet);
-
-            // After (Create) and After (Update, Replace - if Target-UID did NOT change):
-            // Target data did not change, return result loaded from cache. 
+            
             if( !$targetsHaveChanged ||
                 is_a($typeOfSourceEvent, OnCreateDataEvent::class, true) ||
                 is_a($typeOfSourceEvent, OnDeleteDataEvent::class, true)) {
-                $logbook->addLine('Cached data is sufficient to model the full behavior. Moving on to dispatch.');
                 return $result;
             } else {
-                $logbook->addLine('Cached data is insufficient to model full behavior. Moving on to load additional data from source.');
+                $logbook->addLine('Loading from cache complete. Moving on to load additional data from source.');
+                $logbook->setIndentActive(1);
             }
         } else {
-            $logbook->addLine('Event is "OnBefore", target data must be loaded from source.');
+            $logbook->addLine('Event is pre-transaction, target data must be loaded from source.');
         }
+
+        $logbook->addLine('Loading target data from source...');
+        $logbook->setIndentActive(2);
         
-        // Before (Create, Update, Replace, Delete) and After (Create, Replace - if Target-UID did change): 
-        // Build datasheet with new target data.
         $relPath = RelationPathFactory::createFromString($this->getObject(), $relation);
         $targetObject = $relPath->getEndObject();
         $targetSheet = DataSheetFactory::createFromObject($targetObject);
@@ -291,13 +300,16 @@ class ChildObjectBehavior
         if($targetSheet->countRows() > 0) {
             $logbook->addLine('Successfully loaded target data for the following UIDs: '.$targetUidsString);
             $logbook->addDataSheet('LoadedTargetData-'.$targetUidsString, $targetSheet);
+
+            // Save data to cache.
+            if(!$onAfter) {
+                $logbook->addLine('Saving loaded data to cache, with key "' . $cacheKey . '".');
+                $this->dataCache[$cacheKey] = $targetSheet;
+                $result[] = $targetSheet;
+            }
         } else {
             $logbook->addLine('No target data found for the following UIDs: '.$targetUidsString);
         }
-        
-        // Save data to cache.
-        $this->dataCache[$cacheKey] = $targetSheet;
-        $result[] = $targetSheet;
         
         return $result;
     }
