@@ -45,6 +45,10 @@ use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
  * | On**Replace**Data | On**Update**Data |
  * | On**Delete**Data | On**Update**Data |
  * 
+ * ## Underlying rules for loading data
+ * 
+ * For this behavio
+ * 
  * ## Examples
  * 
  * ### Order positions change their order
@@ -150,7 +154,6 @@ class ChildObjectBehavior
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         
         $logbook->addDataSheet('Input data', $inputSheet);
-        $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
         $logbook->setIndentActive(1);
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
@@ -178,7 +181,7 @@ class ChildObjectBehavior
         $logbook->addLine('Processing configured relations:');
         foreach ($this->getAffectedRelationPaths() as $relationString) {
             $logbook->setIndentActive(0);
-            $logbook->addLine('"'.$relationString.'"...');
+            $logbook->addLine('Relation alias: "'.$relationString.'"...');
             $logbook->setIndentActive(1);
             
             $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent, $logbook);
@@ -190,7 +193,7 @@ class ChildObjectBehavior
             
             foreach ($targetData as $targetSheet) {
                 $dispatch = new $typeOfTargetEvent($targetSheet->copy(), $transaction);
-                $logbook->addLine('Dispatching "'.$dispatch::getEventName().'" to "'.$targetSheet->getMetaObject().'".');
+                $logbook->addLine('Dispatching "'.$dispatch::getEventName().'" to '.$targetSheet->getMetaObject().'.');
                 $eventManager->dispatch($dispatch);
             }
         }
@@ -238,17 +241,22 @@ class ChildObjectBehavior
                 previousTargets: $cachedSheet->getUidColumn()->getValues(), 
                 currentTargets: $targetUidCol->getValues()
             );
-            
-            $logbook->addLine('Loaded cached target data. Target UIDs have '.($targetsHaveChanged ? '' : 'not').' been changed.');
+
+            $logbook->addLine('Event is post-transaction, loading data from cache.');
             $logbook->addDataSheet('CachedTargetData', $cachedSheet);
-            
+
             // After (Create) and After (Update, Replace - if Target-UID did NOT change):
             // Target data did not change, return result loaded from cache. 
             if( !$targetsHaveChanged ||
                 is_a($typeOfSourceEvent, OnCreateDataEvent::class, true) ||
                 is_a($typeOfSourceEvent, OnDeleteDataEvent::class, true)) {
+                $logbook->addLine('Cached data is sufficient to model the full behavior. Moving on to dispatch.');
                 return $result;
+            } else {
+                $logbook->addLine('Cached data is insufficient to model full behavior. Moving on to load additional data from source.');
             }
+        } else {
+            $logbook->addLine('Event is "OnBefore", target data must be loaded from source.');
         }
         
         // Before (Create, Update, Replace, Delete) and After (Create, Replace - if Target-UID did change): 
@@ -260,9 +268,8 @@ class ChildObjectBehavior
 
         // If the input sheet did not contain the Target-UID, we need to load it from the database.
         if(! $targetUidCol){
-            $logbook->addLine('Target relation column not found');
+            $logbook->addLine('Target relation column not found. Attempting to read target UIDs from data source.');
             if ($inputSheet->hasUidColumn()) {
-                $logbook->addLine('Attempting to read target UIDs from data source');
                 $relSheet = $inputSheet->copy();
                 $relSheet->getFilters()->addConditionFromColumnValues($relSheet->getUidColumn());
                 $targetUidCol = $relSheet->getColumns()->addFromExpression($relation);
@@ -270,16 +277,17 @@ class ChildObjectBehavior
                 // TODO (idea) 'Before' events, but that requires a mechanism that ensures the underlying data didn't change. 
                 $relSheet->dataRead();
             } else {
-                $logbook->addLine('Cannot read target UIDs from data source because input data has no UID column');
-                return [];
+                $logbook->addLine('Cannot read target UIDs from data source because input data has no UID column.');
+                return $result;
             }
         }
 
         $targetUids = $targetUidCol->getValues();
+        $targetUidsString = '['.implode(',',$targetUids).']';
+        $logbook->addLine('Found the following target UIDs: '.$targetUidsString);
         $targetSheet->getFilters()->addConditionFromValueArray($targetSheet->getUidColumn()->getExpressionObj(), $targetUids);
         $targetSheet->dataRead();
         
-        $targetUidsString = '['.implode(',',$targetUids).']';
         if($targetSheet->countRows() > 0) {
             $logbook->addLine('Successfully loaded target data for the following UIDs: '.$targetUidsString);
             $logbook->addDataSheet('LoadedTargetData-'.$targetUidsString, $targetSheet);
