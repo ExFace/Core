@@ -3046,7 +3046,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function findSqlDialect(string $sql) : string
     {
         if (StringDataType::startsWith($sql, '@')) {
-            $stmts = preg_split('/(^|\r\n|\r|\n)@/', $sql);
+            $stmts = preg_split('/(^|\R)@/', $sql);
             $tags = $this->getSqlDialects();
             // Start with the first supported tag and see if it matches any statement. If not,
             // proceed with the next tag, etc.
