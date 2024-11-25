@@ -350,10 +350,7 @@ self.addEventListener('sync', function(event) {
 					if (bSlowNetwork !== _oNetStat._bSlowNetwork) {
 						oChanges.slowNetwork = bSlowNetwork;
 					}
-					if (Object.keys(oChanges).length === 0) {
-						// No changes found
-						// TODO break here?
-					}
+				
 					try {
 						
 						// Update _oNetStat directly
@@ -369,11 +366,13 @@ self.addEventListener('sync', function(event) {
 						// Save to DB and resolve/reject the promise accordingly
 						_connectionTable.put(newState)
 							.then(() => {
-								// Trigger event
-								if (bChangesFound) {
+								// Trigger event if there were any changes
+								//if (bChangesFound) {
+									if (Object.keys(oChanges).length > 0) {
 									$(document).trigger('networkchanged', {
-										currentState: _oNetStat
+										currentState: _oNetStat,
 										//changes: oChanges // TODO pass the oChanges here to allow listeners to find out WHAT has changed!
+										changes: oChanges
 									});
 								}
 								this._pendingStateUpdate = false;
