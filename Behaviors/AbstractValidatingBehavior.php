@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
@@ -14,8 +16,6 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
-use exface\Core\CommonLogic\DataSheets\DataCheck;
-use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -26,8 +26,7 @@ use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
  * Validates any proposed changes made to the monitored data and collects any rejected data 
  * for further processing.
  * 
- * Extend this class to achieve specific transformations, such as outputting meaningful errors
- * such as with the ValidatingBehavior.
+ * Extend this class to achieve specific transformations, such as rendering meaningful errors messages.
  * 
  * @see ValidatingBehavior
  * 
@@ -306,7 +305,15 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      * @param UxonObject $uxonObject
      * @return DataCheckListInterface
      */
-    protected abstract function generateDataChecks(UxonObject $uxonObject) : DataCheckListInterface;
+    protected function generateDataChecks(UxonObject $uxonObject): DataCheckListInterface
+    {
+        $dataCheckList = new BehaviorDataCheckList($this->getWorkbench(), $this);
+        foreach ($uxonObject as $uxon) {
+            $dataCheckList->add(new DataCheck($this->getWorkbench(), $uxon));
+        }
+
+        return $dataCheckList;
+    }
 
     /**
      * 
