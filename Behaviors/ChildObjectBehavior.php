@@ -151,6 +151,7 @@ class ChildObjectBehavior
         
         $logbook->addDataSheet('Input data', $inputSheet);
         $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
+        $logbook->setIndentActive(1);
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
         
@@ -173,15 +174,24 @@ class ChildObjectBehavior
             throw new BehaviorConfigurationError($this, "Could not relay update, because no valid event mapping was found for ".get_class($event)."!");
         }
         
+        $logbook->setIndentActive(0);
+        $logbook->addLine('Processing configured relations:');
         foreach ($this->getAffectedRelationPaths() as $relationString) {
+            $logbook->setIndentActive(0);
+            $logbook->addLine('"'.$relationString.'"...');
+            $logbook->setIndentActive(1);
+            
             $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent, $logbook);
-            // Event mappings marked as cache only will not be dispatched.
+            
             if($typeOfTargetEvent === self::CACHE_ONLY_FLAG) {
+                $logbook->addLine('Event mapping for "'.$event::getEventName().'" specified "CACHE_ONLY". Event will not be relayed.');
                 continue;
             }
             
             foreach ($targetData as $targetSheet) {
-                $eventManager->dispatch(new $typeOfTargetEvent($targetSheet->copy(), $transaction));
+                $dispatch = new $typeOfTargetEvent($targetSheet->copy(), $transaction);
+                $logbook->addLine('Dispatching "'.$dispatch::getEventName().'" to "'.$targetSheet->getMetaObject().'".');
+                $eventManager->dispatch($dispatch);
             }
         }
 
@@ -191,11 +201,12 @@ class ChildObjectBehavior
 
     /**
      * Load the target data, either from the internal data cache or from the database.
-     * 
+     *
      * @param DataSheetInterface $inputSheet
      * @param string             $relation
      * @param string             $typeOfSourceEvent
-     * @return array
+     * @param BehaviorLogBook    $logbook
+     * @return DataSheetInterface[]
      */
     private function loadTargetData(
         DataSheetInterface $inputSheet, 
@@ -227,6 +238,9 @@ class ChildObjectBehavior
                 previousTargets: $cachedSheet->getUidColumn()->getValues(), 
                 currentTargets: $targetUidCol->getValues()
             );
+            
+            $logbook->addLine('Loaded cached target data. Target UIDs have '.($targetsHaveChanged ? '' : 'not').' been changed.');
+            $logbook->addDataSheet('CachedTargetData', $cachedSheet);
             
             // After (Create) and After (Update, Replace - if Target-UID did NOT change):
             // Target data did not change, return result loaded from cache. 
@@ -264,6 +278,14 @@ class ChildObjectBehavior
         $targetUids = $targetUidCol->getValues();
         $targetSheet->getFilters()->addConditionFromValueArray($targetSheet->getUidColumn()->getExpressionObj(), $targetUids);
         $targetSheet->dataRead();
+        
+        $targetUidsString = '['.implode(',',$targetUids).']';
+        if($targetSheet->countRows() > 0) {
+            $logbook->addLine('Successfully loaded target data for the following UIDs: '.$targetUidsString);
+            $logbook->addDataSheet('LoadedTargetData-'.$targetUidsString, $targetSheet);
+        } else {
+            $logbook->addLine('No target data found for the following UIDs: '.$targetUidsString);
+        }
         
         // Save data to cache.
         $this->dataCache[$cacheKey] = $targetSheet;
