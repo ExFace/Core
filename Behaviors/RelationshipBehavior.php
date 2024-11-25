@@ -167,14 +167,14 @@ class RelationshipBehavior
         
         $typeOfSourceEvent = get_class($event);
         $transaction = $event->getTransaction();
-        $typeOfTargetEvent = $this->getActiveEventMapping()[strtolower($event::getEventName())];
+        $typeOfTargetEvent = $this->getActiveEventMapping()[mb_strtolower($event::getEventName())];
         
         if($typeOfTargetEvent === null) {
             throw new BehaviorConfigurationError($this, "Could not relay update, because no valid event mapping was found for ".get_class($event)."!");
         }
         
         foreach ($this->getAffectedRelationPaths() as $relationString) {
-            $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent);
+            $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent, $logbook);
             // Event mappings marked as cache only will not be dispatched.
             if($typeOfTargetEvent === self::CACHE_ONLY_FLAG) {
                 continue;
@@ -200,7 +200,9 @@ class RelationshipBehavior
     private function loadTargetData(
         DataSheetInterface $inputSheet, 
         string $relation, 
-        string $typeOfSourceEvent) : array
+        string $typeOfSourceEvent,
+        BehaviorLogBook $logbook
+    ) : array
     {
         $result = [];
         
@@ -222,8 +224,9 @@ class RelationshipBehavior
             $cachedSheet = $this->dataCache[$cacheKey];
             $result[] = $cachedSheet;
             $targetsHaveChanged = $targetUidCol && $this->targetsHaveChanged(
-                $cachedSheet->getUidColumn()->getValues(), 
-                $targetUidCol->getValues());
+                previousTargets: $cachedSheet->getUidColumn()->getValues(), 
+                currentTargets: $targetUidCol->getValues()
+            );
             
             // After (Create) and After (Update, Replace - if Target-UID did NOT change):
             // Target data did not change, return result loaded from cache. 
@@ -242,13 +245,20 @@ class RelationshipBehavior
         $targetSheet->getColumns()->addFromSystemAttributes();
 
         // If the input sheet did not contain the Target-UID, we need to load it from the database.
-        if(!$targetUidCol){
-            $relSheet = $inputSheet->copy();
-            $relSheet->getFilters()->addConditionFromColumnValues($relSheet->getUidColumn());
-            $targetUidCol = $relSheet->getColumns()->addFromExpression($relation);
-            // TODO (idea) geb 22-11-2024: As a potential optimization, we might be able to cache this across all 
-            // TODO (idea) 'Before' events, but that requires a mechanism that ensures the underlying data didn't change. 
-            $relSheet->dataRead();
+        if(! $targetUidCol){
+            $logbook->addLine('Target relation column not found');
+            if ($inputSheet->hasUidColumn()) {
+                $logbook->addLine('Attempting to read target UIDs from data source');
+                $relSheet = $inputSheet->copy();
+                $relSheet->getFilters()->addConditionFromColumnValues($relSheet->getUidColumn());
+                $targetUidCol = $relSheet->getColumns()->addFromExpression($relation);
+                // TODO (idea) geb 22-11-2024: As a potential optimization, we might be able to cache this across all 
+                // TODO (idea) 'Before' events, but that requires a mechanism that ensures the underlying data didn't change. 
+                $relSheet->dataRead();
+            } else {
+                $logbook->addLine('Cannot read target UIDs from data source because input data has no UID column');
+                return [];
+            }
         }
 
         $targetUids = $targetUidCol->getValues();
@@ -366,7 +376,7 @@ class RelationshipBehavior
         } 
         
         foreach ($array as $eventName) {
-            $this->mapToOnUpdate[strtolower($eventName)] = $onUpdate;
+            $this->mapToOnUpdate[mb_strtolower($eventName)] = $onUpdate;
         }
         return $this;
     }
@@ -377,10 +387,10 @@ class RelationshipBehavior
     public function getMapToOnUpdate() : array
     {
         return $this->mapToOnUpdate !== null ? $this->mapToOnUpdate : [
-            strtolower(OnCreateDataEvent::getEventName()) => OnUpdateDataEvent::class,
-            strtolower(OnUpdateDataEvent::getEventName()) => OnUpdateDataEvent::class,
-            strtolower(OnReplaceDataEvent::getEventName()) => OnUpdateDataEvent::class,
-            strtolower(OnDeleteDataEvent::getEventName()) => OnUpdateDataEvent::class,
+            mb_strtolower(OnCreateDataEvent::getEventName()) => OnUpdateDataEvent::class,
+            mb_strtolower(OnUpdateDataEvent::getEventName()) => OnUpdateDataEvent::class,
+            mb_strtolower(OnReplaceDataEvent::getEventName()) => OnUpdateDataEvent::class,
+            mb_strtolower(OnDeleteDataEvent::getEventName()) => OnUpdateDataEvent::class,
         ];
     }
 
@@ -403,7 +413,7 @@ class RelationshipBehavior
         }
         
         foreach ($mapToOnBeforeUpdate->toArray() as $eventName) {
-            $this->mapToOnBeforeUpdate[strtolower($eventName)] = $onBeforeUpdate;
+            $this->mapToOnBeforeUpdate[mb_strtolower($eventName)] = $onBeforeUpdate;
         }
         return $this;
     }
@@ -414,10 +424,10 @@ class RelationshipBehavior
     public function getMapToOnBeforeUpdate() : array
     {
         return $this->mapToOnBeforeUpdate !== null ? $this->mapToOnBeforeUpdate : [
-            strtolower(OnBeforeCreateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
-            strtolower(OnBeforeUpdateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
-            strtolower(OnBeforeReplaceDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
-            strtolower(OnBeforeDeleteDataEvent::getEventName()) => OnBeforeDeleteDataEvent::class
+            mb_strtolower(OnBeforeCreateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
+            mb_strtolower(OnBeforeUpdateDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
+            mb_strtolower(OnBeforeReplaceDataEvent::getEventName()) => OnBeforeUpdateDataEvent::class,
+            mb_strtolower(OnBeforeDeleteDataEvent::getEventName()) => OnBeforeDeleteDataEvent::class
         ];
     }
 
@@ -431,10 +441,10 @@ class RelationshipBehavior
         // The full mapping includes OnBefore events that map to nowhere, because regardless of the actual event
         // mapping, we need these hooks to properly cache the parent reference.
         $mapping = [
-            strtolower(OnBeforeCreateDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
-            strtolower(OnBeforeUpdateDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
-            strtolower(OnBeforeReplaceDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
-            strtolower(OnBeforeDeleteDataEvent::getEventName()) => self::CACHE_ONLY_FLAG
+            mb_strtolower(OnBeforeCreateDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
+            mb_strtolower(OnBeforeUpdateDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
+            mb_strtolower(OnBeforeReplaceDataEvent::getEventName()) => self::CACHE_ONLY_FLAG,
+            mb_strtolower(OnBeforeDeleteDataEvent::getEventName()) => self::CACHE_ONLY_FLAG
         ];
         
         $mapping = array_merge($mapping, $this->getMapToOnBeforeUpdate());
