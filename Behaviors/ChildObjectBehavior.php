@@ -65,7 +65,7 @@ use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
  * @author Andrej Kabachnik, Georg Bieger
  * 
  */
-class RelationshipBehavior 
+class ChildObjectBehavior 
     extends AbstractBehavior
     implements IAffectMetaObjectsInterface 
 {
@@ -303,9 +303,9 @@ class RelationshipBehavior
      * @uxon-template [""]
      *
      * @param UxonObject $arrayOfRelationPaths
-     * @return RelationshipBehavior
+     * @return ChildObjectBehavior
      */
-    public function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : RelationshipBehavior
+    public function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : ChildObjectBehavior
     {
         $this->affectedRelations = $arrayOfRelationPaths->toArray();
 
