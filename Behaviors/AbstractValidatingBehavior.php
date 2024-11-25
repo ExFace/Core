@@ -23,10 +23,11 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
 /**
- * Validates any proposed changes made to the monitored data and collects any rejected data 
+ * Validates any proposed changes made to the monitored data and collects any conflicting data 
  * for further processing.
  * 
- * Extend this class to achieve specific transformations, such as rendering meaningful errors messages.
+ * Extend this class to achieve specific transformations, such as rejecting invalid changes, by throwing
+ * a meaningful error message.
  * 
  * @see ValidatingBehavior
  * 
