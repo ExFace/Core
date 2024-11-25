@@ -2,8 +2,8 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Factories\DataSheetFactory;
@@ -1432,6 +1432,17 @@ abstract class AbstractAction implements ActionInterface
         if ($this instanceof iModifyData) {
             $effects = array_merge($effects,  $this->getEffectsFromModel());
         }
+        
+        foreach ($this->getMetaObject()->getBehaviors() as $behavior) {
+            if($behavior instanceof IAffectMetaObjectsInterface) {
+                foreach ($behavior->getAffectedMetaObjects() as $affectedMetaObject) {
+                    $effects[] = new ActionEffect($this, new UxonObject([
+                        'effected_object' => $affectedMetaObject->getAliasWithNamespace()
+                    ]));
+                }
+            }
+        }
+        
         return $effects;
     }
     
