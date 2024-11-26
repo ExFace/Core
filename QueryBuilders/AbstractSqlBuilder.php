@@ -1460,7 +1460,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $customJoinOn = $rightKeyAttribute->getDataAddressProperty(self::DAP_SQL_JOIN_ON);
             if (! $reg_rel_path->isEmpty()) {
                 // attach to the related object key of the last regular relation before the reverse one
-                $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $rev_rel->getLeftKeyAttribute()->getAlias()));
+                $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::join($reg_rel_path->toString(), $rev_rel->getLeftKeyAttribute()->getAlias()));
             } else {
                 // attach to the target key in the core query if there are no regular relations preceeding the reversed one
                 $junction_attribute = $rev_rel->getLeftKeyAttribute();
@@ -2355,7 +2355,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
             if (! $prefix_rel_path->isEmpty()) {
                 // FIXME add support for related_object_special_key_alias
-                $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
+                $prefix_rel_str = RelationPath::join($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
                 $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, null, DataColumn::sanitizeColumnName($prefix_rel_str));
                 $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
             } else {
@@ -2686,7 +2686,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 continue;
             }
             $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
-            $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
+            $ph_attribute_alias = RelationPath::join($prefix, $ph);
             
             // If the placeholder is not part of the query already, create a new query part.
             if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {

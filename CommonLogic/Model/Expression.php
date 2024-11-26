@@ -147,7 +147,7 @@ class Expression implements ExpressionInterface
         } else {
             // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             try {
-                if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($this->relation_path_string ? RelationPath::relationPathAdd($this->relation_path_string, $expression) : $expression))) {
+                if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($this->relation_path_string ? RelationPath::join($this->relation_path_string, $expression) : $expression))) {
                     $isAttributeAlias = true;
                 } else {
                     $isAttributeAlias = false;
@@ -325,7 +325,7 @@ class Expression implements ExpressionInterface
             switch ($this->type) {
                 case self::TYPE_ATTRIBUTE:
                     if ($this->relation_path_string !== null) {
-                        $attrAlias = RelationPath::relationPathAdd($this->relation_path_string, $this->attribute_alias);
+                        $attrAlias = RelationPath::join($this->relation_path_string, $this->attribute_alias);
                     } else {
                         $attrAlias = $this->attribute_alias;
                     }
@@ -350,7 +350,7 @@ class Expression implements ExpressionInterface
     {
         switch ($this->getType()) {
         	case self::TYPE_ATTRIBUTE:
-        		return [($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias)];
+        		return [($this->relation_path ? RelationPath::join($this->relation_path, $this->attribute_alias) : $this->attribute_alias)];
         	case self::TYPE_FORMULA:
         		return $this->getFormula()->getRequiredAttributes();           
         }
@@ -425,7 +425,7 @@ class Expression implements ExpressionInterface
                 // premise that chaining withRelationPath() will replace the previous path is fulfilled here.
                 // There are also many places in the code, that assume that toString() of an attribute
                 // expression will yield the alias including the relation path...
-                return ($this->relation_path_string ? RelationPath::relationPathAdd($this->relation_path_string, $this->attribute_alias) : $this->attribute_alias);
+                return ($this->relation_path_string ? RelationPath::join($this->relation_path_string, $this->attribute_alias) : $this->attribute_alias);
             default:
                 return $this->originalString ?? '';
         }
@@ -559,7 +559,7 @@ class Expression implements ExpressionInterface
                     // is a loop: first we would fetch the order, than it's positions than again all orders of thouse position, which will result in
                     // that one order we fetched in step 1 again. Not sure, if these loops can be prevented somehow...
                     if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAliasWithModifier() && ($relation_path_to_new_base_object == $thisStr || $rel->getRightKeyAttribute()->getAlias() == $thisStr))) {
-                        $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $thisStr);
+                        $new_expression_string = RelationPath::join($new_expression_string, $thisStr);
                     }
             }
             // If we end up with an empty expression, this means, that the original expression pointed to the exact relation to

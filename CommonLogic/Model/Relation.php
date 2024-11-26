@@ -223,7 +223,7 @@ class Relation implements MetaRelationInterface
      */
     public function getRightAttribute(string $aliasRelativeToRightObject) : MetaAttributeInterface
     {
-        return $this->getLeftObject()->getAttribute(RelationPath::relationPathAdd($this->getAlias(), $aliasRelativeToRightObject));
+        return $this->getLeftObject()->getAttribute(RelationPath::join($this->getAlias(), $aliasRelativeToRightObject));
     }
 
     /**

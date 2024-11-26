@@ -200,7 +200,7 @@ class RelationPath implements MetaRelationPathInterface
     }
 
     /**
-     * @deprecated! Use RelationPathFactory::crate_from_string_path() instead!
+     * @deprecated! Use RelationPathFactory::createFromString() instead!
      * 
      * Checks if the given alias includes a relation path and returns an array with relation aliases
      *
@@ -226,19 +226,23 @@ class RelationPath implements MetaRelationPathInterface
     }
 
     /**
-     * @deprecated! Use combine() instead!
-     *
-     * @param string $relation_alias_1            
-     * @param string $relation_alias_2            
+     * Append one relation path string to another one
+     * 
+     * To join two relation path instances, use `combine()` instead. To append a relation to a 
+     * relation path instance, use `appendRelation()`.
+     * 
+     * @param string $path1
+     * @param string $path2
+     * @return string
      */
-    public static function relationPathAdd($relation_alias_1, $relation_alias_2)
+    public static function join(string $path1, string $path2) : string
     {
         $output = '';
-        if ($relation_alias_1) {
-            $output = $relation_alias_1;
+        if ($path1) {
+            $output = $path1;
         }
-        if ($relation_alias_2) {
-            $output = $output ? $output . self::RELATION_SEPARATOR . $relation_alias_2 : $relation_alias_2;
+        if ($path2) {
+            $output = $output ? $output . self::RELATION_SEPARATOR . $path2 : $path2;
         }
         
         return $output;
