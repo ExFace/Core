@@ -889,7 +889,7 @@ class TranslatableBehavior extends AbstractBehavior
         $ds = DataSheetFactory::createFromObject($transRel->getRelationPath()->getEndObject());
         $relKeycol = $ds->getColumns()->addFromExpression($transRel->getRelationKeyAttributeAlias(false));
         $ds->getColumns()->addMultiple($transRel->getTranslatableAttributeAliases(false));
-        $filterAttrAlias = RelationPath::relationPathAdd($transRel->getRelationPath()->reverse()->toString(), $dataKeyAttributeAlias);
+        $filterAttrAlias = RelationPath::join($transRel->getRelationPath()->reverse()->toString(), $dataKeyAttributeAlias);
         $ds->getFilters()->addConditionFromString($filterAttrAlias, $dataKey, ComparatorDataType::EQUALS);
         $ds->dataRead();
         

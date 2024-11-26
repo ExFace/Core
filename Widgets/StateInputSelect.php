@@ -70,7 +70,7 @@ class StateInputSelect extends InputSelect
             } elseif (! $this->getAttribute()) {
                 $error_text .= 'Attribute not found!';
             } else {
-                $error_text .= 'The attribute is not the state attribute - use "' . RelationPath::relationPathAdd($this->getAttribute()->getRelationPath()->toString(), $smb->getStateAttributeAlias()) . '" instead!';
+                $error_text .= 'The attribute is not the state attribute - use "' . RelationPath::join($this->getAttribute()->getRelationPath()->toString(), $smb->getStateAttributeAlias()) . '" instead!';
             }
             
             throw new WidgetConfigurationError($this, $error_text, '6UMTC14');

@@ -993,7 +993,7 @@ class Data
     {
         $object = $relation_path ? $this->getMetaObject()->getRelatedObject($relation_path) : $this->getMetaObject();
         foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
-            $system_alias = RelationPath::relationPathAdd($relation_path, $attr->getAlias());
+            $system_alias = RelationPath::join($relation_path, $attr->getAlias());
             // Add the system attribute only if it is not there already.
             // Counting the columns first allows to add the system column without searching for it. If we would search over
             // empty data widgets, we would automatically trigger the creation of default columns, which is absolute nonsense

@@ -163,7 +163,7 @@ abstract class Formula implements FormulaInterface
             $attrs = $this->requiredAttributeAliases;
             $relPathStr = $this->getRelationPathString();
             foreach ($attrs as $i => $attr) {
-                $attrs[$i] = RelationPath::relationPathAdd($relPathStr, $attr);
+                $attrs[$i] = RelationPath::join($relPathStr, $attr);
             }
             return $attrs;
         }

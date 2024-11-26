@@ -370,7 +370,7 @@ class ChildObjectBehavior
             $relObj = $relPath->getEndObject();
             foreach ($relObj->getAttributes()->getSystem() as $systemAttr) {
                 // If ORDER has system attribute MODIFIED_ON, give ORDER_POS the system attibute ORDER__MODIFIED_ON
-                $this->getObject()->getAttribute(RelationPath::relationPathAdd($relationString, $systemAttr->getAlias()))->setSystem();
+                $this->getObject()->getAttribute(RelationPath::join($relationString, $systemAttr->getAlias()))->setSystem();
             }
             $this->getObject()->getRelation($relKey)->getRightObject();
 

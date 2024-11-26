@@ -233,7 +233,7 @@ class DataSheet implements DataSheetInterface
                         }
                         $right_row = $other_sheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
-                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                            $this->setCellValue(RelationPath::join($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
                         }
                         $needRowCopy = true;
                     }                    
@@ -243,7 +243,7 @@ class DataSheet implements DataSheetInterface
                     // do not empty its values just because the right sheet did not has less data!
                     if ($relation_path !== '') {
                         foreach ($right_cols as $col) {
-                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                            $this->setCellValue(RelationPath::join($relation_path, $col->getName()), $left_row_nr, null);
                         }
                     }
                 }
@@ -1040,7 +1040,7 @@ class DataSheet implements DataSheetInterface
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($fixedExpr = $attr->getFixedValue()) {
-                    $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
+                    $alias_with_relation_path = RelationPath::join($rel_path, $attr->getAlias());
                     if (! $fixedCol = $this->getColumn($alias_with_relation_path)) {
                         $fixedCol = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
                     } elseif ($fixedCol->getIgnoreFixedValues()) {

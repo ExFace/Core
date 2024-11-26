@@ -1346,7 +1346,7 @@ JS;
                     
                     $srcLabelAttr = $srcSheet->getMetaObject()->getLabelAttribute();
                     if ($srcLabelAttr->isRelation() === true && $srcLabelAttr->getRelation()->getRightObject()->hasLabelAttribute() === true) {
-                        $srcLabelCol = $srcSheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($srcLabelAttr->getAlias(), 'LABEL'));
+                        $srcLabelCol = $srcSheet->getColumns()->addFromExpression(RelationPath::join($srcLabelAttr->getAlias(), 'LABEL'));
                     } else {
                         $srcLabelCol = $srcSheet->getColumns()->addFromAttribute($srcLabelAttr);
                     }
