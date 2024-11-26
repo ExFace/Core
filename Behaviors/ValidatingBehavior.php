@@ -1,11 +1,8 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\DataSheets\DataCheck;
-use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
-use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
 
 /**
  * Validates any proposed changes made to the monitored data and rejects invalid changes.
