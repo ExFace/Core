@@ -63,6 +63,26 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
     {
         return [];
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::isArgumentAttribute()
+     */
+    public function getArgument(int $index) : ?string
+    {
+        return null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::isArgumentAttribute()
+     */
+    public function isArgumentAttribute(int $index) : bool
+    {
+        return false;
+    }
     
     /**
      * 

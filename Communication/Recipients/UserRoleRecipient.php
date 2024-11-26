@@ -92,4 +92,22 @@ class UserRoleRecipient implements RecipientGroupInterface
         }
         return strcasecmp($this->__toString(), $otherRecipient->__toString()) === 0;
     }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isGlobalRoleAuthenticated() : bool
+    {
+        return $this->getRoleSelector()->isGlobalRoleAuthenticated();
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isGlobalRoleAnonymous() : bool
+    {
+        return $this->getRoleSelector()->isGlobalRoleAnonymous();
+    }
 }

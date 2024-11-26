@@ -186,18 +186,27 @@
 		return /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sExpr);
 	};
 	
+	/**
+	 * Returns TRUE if the values of the given rows match.
+	 * 
+	 * The internal order of the properties of the JS object is ignored:
+	 * e.g. `{a: 1, b: 2}` is concidered equal to `{b: 2, a: 1}`.
+	 * 
+	 * @param {array|object} row1 
+	 * @param {array|object} row2 
+	 * @returns {boolean}
+	 */
 	function _dataRowsCompare(row1, row2) {
-		var rows1 = Array.isArray(row1) === true ? row1 : [row1]; 
-		var rows2 = Array.isArray(row2) === true ? row2 : [row2]; 
-		rows1.forEach(function(r1, idx){
-			var r2 = rows2[idx];
-			for (var i in r1) {
-				if (r1[i] !== r2[i]) {
-					return false;
-				}
+		var aRows1 = Array.isArray(row1) === true ? row1 : [row1]; 
+		var aRows2 = Array.isArray(row2) === true ? row2 : [row2]; 
+		return aRows1.some(function(oRow1, iR1){
+			var oRow2 = aRows2[iR1];
+			if (oRow1 === undefined || oRow2 === undefined) return false;
+			for (var iR2 in oRow1) {
+				if (oRow1[iR2] !== oRow2[iR2]) return false;
 			} 
+			return true;
 		});
-		return true;
 	}
 	
 	var exfTools = {		
@@ -666,20 +675,26 @@
 		 * 
 		 */
 		data: {
+			
 			/**
-			 * Returns TRUE if row1 is the same as row2. Compares only the UID values if a UID column is specified
+			 * Returns TRUE if row1 is the same as row2 
 			 * 
-			 * @param {object} row1 
-			 * @param {object} row2 
+			 * If the `sUidCol` is specified, two rows with the same UID value are concidered equal
+			 * regardless of their other values. If there is no `sUidCol` or it does not have a value
+			 * on either side, the rows will be compared value-by-value.
+			 * 
+			 * @param {object} oRow1 
+			 * @param {object} oRow2 
 			 * @param {string} sUidCol 
 			 * @returns {boolean}
 			 */
-			compareRows: function(row1, row2, sUidCol) {
-				if (sUidCol !== undefined && row1[sUidCol] !== undefined && row2[sUidCol] !== undefined) {
-					return row1[sUidCol] === row2[sUidCol];
+			compareRows: function(oRow1, oRow2, sUidCol) {
+				if (sUidCol !== undefined && sUidCol !== null && oRow1[sUidCol] !== undefined && oRow2[sUidCol] !== undefined) {
+					return oRow1[sUidCol] === oRow2[sUidCol];
 				}
-				return _dataRowsCompare(row1, row2);
+				return _dataRowsCompare(oRow1, oRow2);
 			},
+
 			/**
 			 * Returns the index of a given row in an array of rows. Compares only UID values if UID column is specified.
 			 * 
@@ -693,6 +708,18 @@
 					return exfTools.data.compareRows(oRow, oRowToFind, sUidCol);
 				});
 			},
+
+			/**
+			 * Returns the boolean result of a comparison operation `mLeft` `sComparator` `mRight` : e.g. `0 < 1`
+			 * 
+			 * This method tries to mimic comparison logic of a human ignoring strict data types.
+			 * 
+			 * @param {mixed} mLeft 
+			 * @param {mixed} mRight 
+			 * @param {string} sComparator 
+			 * @param {string} sMultiValDelim 
+			 * @returns {boolean}
+			 */
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
 				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
