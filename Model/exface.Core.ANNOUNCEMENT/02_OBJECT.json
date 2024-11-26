@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2024-11-19 21:56:23",
-            "MODIFIED_ON": "2024-11-19 22:25:41",
+            "MODIFIED_ON": "2024-11-26 09:30:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef9e18bc6f56149e18025041000001",
@@ -118,6 +118,16 @@
                         "attribute_alias": "COMMUNICATION_TEMPLATE",
                         "widget_type": "InputComboTable",
                         "id": "template_selector",
+                        "filters": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "COMMUNICATION_CHANNEL__MESSAGE_PROTOTYPE",
+                                    "comparator": "=",
+                                    "value_right": "AnnouncementMessage"
+                                }
+                            ]
+                        },
                         "table": {
                             "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
                             "columns": [
