@@ -542,6 +542,16 @@ class MetaObject implements MetaObjectInterface
                             $rel->getRightKeyIsUnspecified() === true ?  null : $this->getAttribute($rel->getRightKeyAttribute()->getAlias())->getId()
                         );
                     } else {
+                        // FIXME inherited relations keep their original "left object". Not sure, this is correct! 
+                        // This means: $extendedObj->getRelation(x)->getLeftObject() = $parentObj. There are cases
+                        // when this leads to inconsistencies. If we have a REPORT with multiple REVISIONs and
+                        // a REPORT_2, which extends REPORT, than REVISION__ID:COUNT works for REPORT and for REPORT_2. 
+                        // But if REVISION has a separate relation to REPORT_2, than REPORT_2 has two reverse relations
+                        // from REVISION and REVISION__ID:COUNT becomes umbiguous! It now must be REVISION[REPORT]__ID
+                        // or REVISION[REPORT_2]__ID, but InheritedRelation::needsModifier() does not know, that it was
+                        // inherited into an object, that adds conflicts. In fact, it does not know its new object at
+                        // all! It only knows, that it was inherited, but not where to.
+                        // See first attempt in branch fix/relation-inheritance-breaks-left-object
                         $rel_clone = clone $rel;
                     }
                     // $rel_clone = $rel->copy();

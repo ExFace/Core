@@ -1,8 +1,8 @@
 {
     "uid": "0x11ef80f2857c613280f2025041000001",
     "alias_with_namespace": "exface.core.local-external-monitoring",
-    "menu_parent_page_selector": "0x11ea5edc2f798596b9920205857feb80",
-    "menu_index": 3,
+    "menu_parent_page_selector": "0x11ea648437c38ffea2e30205857feb80",
+    "menu_index": 0,
     "menu_visible": true,
     "name": "Local\/external roles monitoring",
     "description": "Compare local, external roles and AD-groups",
@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x11ed9f5019075a8a9f50025041000001",
     "created_on": "2024-05-15 09:12:42",
-    "modified_by_user_selector": "0x11ed9f5019075a8a9f50025041000001",
-    "modified_on": "2024-07-30 09:43:38",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2024-11-19 22:09:57",
     "contents": {
         "widget_type": "SplitHorizontal",
         "object_alias": "exface.Core.USER_ROLE",

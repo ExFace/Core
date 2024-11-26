@@ -12,4 +12,18 @@ namespace exface\Core\Interfaces\Selectors;
  *
  */
 interface UserRoleSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface, UidSelectorInterface
-{}
+{
+    /**
+     * Returns TRUE if this selector matches the built-in role exface.Core.AUTHENTICATED
+     * 
+     * @return bool
+     */
+    public function isGlobalRoleAuthenticated() : bool;
+
+    /**
+     * Returns TRUE if this selector matches the built-in role exface.Core.ANONYMOUS
+     * 
+     * @return bool
+     */
+public function isGlobalRoleAnonymous() : bool;
+}

@@ -32,6 +32,22 @@ interface FormulaTokenStreamInterface
      * @return string[]
      */
     public function getArguments() : array;
+
+    /**
+     * Returns the string provided as an argument at the given positione (starting with 0)
+     * 
+     * @param int $index
+     * @return string|null
+     */
+    public function getArgument(int $index) : ?string;
+
+    /**
+     * Returns TRUE if the 
+     * 
+     * @param int $index
+     * @return bool
+     */
+    public function isArgumentAttribute(int $index) : bool;
     
     /**
      * Returns the expression.
