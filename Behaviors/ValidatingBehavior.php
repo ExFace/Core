@@ -142,10 +142,75 @@ use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
  */
 class ValidatingBehavior extends AbstractValidatingBehavior
 {
-    protected function handleError(DataCheckFailedErrorMultiple $error): void
+    protected function processValidationResult(DataCheckFailedErrorMultiple $error): void
     {
         $error->setUseExceptionMessageAsTitle(true);
         $error->updateMessage();
         throw $error;
+    }
+
+    /**
+     * Triggers only when data is being CREATED.
+     *
+     *  ### Placeholders:
+     *
+     *  - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
+     *
+     * @uxon-property invalid_if_on_create
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
+     *     "value": ""}]}]
+     *
+     * @param UxonObject $uxon
+     * @return AbstractValidatingBehavior
+     */
+    public function setInvalidIfOnCreate(UxonObject $uxon) : AbstractValidatingBehavior
+    {
+        $this->setUxonForEventContext($uxon,self::CONTEXT_ON_CREATE);
+        return $this;
+    }
+
+    /**
+     * Triggers only when data is being UPDATED. Prevent changing a data item if any of these conditions match.
+     *
+     * ### Placeholders:
+     *
+     *  - `[#~old:alias#]`: Loads the value the specified alias held BEFORE the event was applied.
+     *  - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
+     *
+     * @uxon-property invalid_if_on_update
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
+     *     "value": ""}]}]
+     *
+     * @param UxonObject $uxon
+     * @return AbstractValidatingBehavior
+     */
+    public function setInvalidIfOnUpdate(UxonObject $uxon) : AbstractValidatingBehavior
+    {
+        $this->setUxonForEventContext($uxon,self::CONTEXT_ON_UPDATE);
+        return $this;
+    }
+
+    /**
+     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions
+     * match.
+     *
+     * ### Placeholders:
+     *
+     * - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
+     *
+     * @uxon-property invalid_if_always
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
+     *     "value": ""}]}]
+     *
+     * @param UxonObject $uxon
+     * @return AbstractValidatingBehavior
+     */
+    public function setInvalidIfAlways(UxonObject $uxon) : AbstractValidatingBehavior
+    {
+        $this->setUxonForEventContext($uxon,self::CONTEXT_ON_ANY);
+        return $this;
     }
 }

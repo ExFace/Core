@@ -41,7 +41,7 @@ namespace exface\Core\Behaviors;
  * @author Andrej Kabachnik, Georg Bieger
  * 
  */
-class ChecklistingBehavior extends ValidatingBehavior
+class ChecklistingBehavior extends AbstractValidatingBehavior
 {
 
 }
