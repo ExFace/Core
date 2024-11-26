@@ -3,7 +3,6 @@
 namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\DataSheets\DataCheckInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\TranslationInterface;
 

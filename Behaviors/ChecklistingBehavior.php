@@ -8,7 +8,7 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
 
 /**
- * WORK-IN-PROGRESS! Fills out a checklist base on formulas for its object on certain events.
+ * Fills out a checklist base on formulas for its object on certain events.
  * 
  * The checklist is basically a set of checks - if any of them apply to the current object, a checklist item will be saved.
  * Checklist items can be warnings, hints, errors - anything, that is not critical, but important to see for the user.
@@ -81,6 +81,8 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             if(key_exists($metaObjectAlias,$outputSheets)) {
                 $outputSheets[$metaObjectAlias]->addRows($checkOutputSheet->getRows());
             } else {
+                // We need to maintain separate sheets for each MetaObjectAlias, in case the designer
+                // configured data checks associated with different MetaObjects.
                 $outputSheets[$metaObjectAlias] = $checkOutputSheet;
                 $affectedUidAliases[$metaObjectAlias] = $check->getAffectedUidAlias();
             }
@@ -92,13 +94,16 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             }
 
             $affectedUidAlias = $affectedUidAliases[$metaObjectAlias];
+            // We filter by affected UID rather than by native UID to ensure that our delete operation finds all cached outputs,
+            // especially if they were part of the source transaction.
             $outputSheet->getFilters()->addConditionFromValueArray($affectedUidAlias, $outputSheet->getColumnValues($affectedUidAlias));
             // We want to delete ALL entries for any given affected UID to ensure that the cache only contains outputs
-            // that actually matched the current round of validations. 
+            // that actually matched the current round of validations. This way we essentially clean up stale data.
             $deleteSheet = $outputSheet->copy();
             // Remove the UID column, because otherwise dataDelete() ignores filters and goes by UID.
             $deleteSheet->getColumns()->remove($deleteSheet->getUidColumn());
             $deleteSheet->dataDelete();
+            // Finally, write the most recent outputs to the cache.
             $outputSheet->dataUpdate(true);
         }
     }

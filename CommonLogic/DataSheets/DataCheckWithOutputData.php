@@ -18,7 +18,6 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 class DataCheckWithOutputData extends DataCheck
 {
     private string $affectedUidAlias = 'AFFECTED_UID';
-    
     private ?UxonObject $outputDataSheetUxon = null;
     private ?DataSheetInterface $outputDataSheet = null;
 
@@ -53,7 +52,10 @@ class DataCheckWithOutputData extends DataCheck
 
 
     /**
-     * Define the output data that this data check will append to its error message, if it was applied.
+     * Define the output data that this data check will append to its error message, if it was applied. For every failed
+     * check, a new row based to this configuration will be added to the output sheet.
+     * 
+     * The associated MetaObject must have a UID-Attribute!
      * 
      * NOTE: Auto-suggest does not work for the left-hand side of the `rows` property. If you want to
      * add a custom column to that row, simply write out the attribute alias of that column on the left and the actual
