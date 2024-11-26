@@ -35,29 +35,44 @@ use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
  */
 abstract class AbstractValidatingBehavior extends AbstractBehavior
 {
-    const VAR_EVENT_HANDLER = "handleOnChange";
+    const EVENT_HANDLER = "handleOnChange";
 
-    const VAR_ON_CREATE = "on_create";
+    const CONTEXT_ON_CREATE = "on_create";
 
-    const VAR_ON_UPDATE = "on_update";
+    const CONTEXT_ON_UPDATE = "on_update";
 
-    const VAR_ON_ANY = "always";
+    const CONTEXT_ON_ANY = "always";
     
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
     // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
     private array $uxonsPerEventContext = array(
-        self::VAR_ON_UPDATE => null,
-        self::VAR_ON_CREATE => null,
-        self::VAR_ON_ANY => null
+        self::CONTEXT_ON_UPDATE => null,
+        self::CONTEXT_ON_CREATE => null,
+        self::CONTEXT_ON_ANY => null
     );
+
+    /**
+     * Assign a UXON definition to a specific event context. 
+     * 
+     * NOTE: It is recommended to use the `CONTEXT` constants as identifiers.
+     * 
+     * @param UxonObject $uxon
+     * @param string     $eventContext
+     * @return $this
+     */
+    protected function setUxonForEventContext(UxonObject $uxon, string $eventContext) : static
+    {
+        $this->uxonsPerEventContext[$eventContext] = $uxon;
+        return $this;
+    }
     
     /**
      * @see AbstractBehavior::registerEventListeners()
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, self::VAR_EVENT_HANDLER], $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, self::VAR_EVENT_HANDLER], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, self::EVENT_HANDLER], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, self::EVENT_HANDLER], $this->getPriority());
         
         return $this;
     }
@@ -67,76 +82,13 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, self::VAR_EVENT_HANDLER]);
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, self::VAR_EVENT_HANDLER]);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, self::EVENT_HANDLER]);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, self::EVENT_HANDLER]);
 
         return $this;
     }
 
-    /**
-     * Triggers only when data is being CREATED.
-     *
-     *  ### Placeholders:
-     *
-     *  - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
-     *
-     * @uxon-property invalid_if_on_create
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
-     *     "value": ""}]}]
-     *
-     * @param UxonObject $uxon
-     * @return AbstractValidatingBehavior
-     */
-    public function setInvalidIfOnCreate(UxonObject $uxon) : AbstractValidatingBehavior
-    {
-        $this->uxonsPerEventContext[self::VAR_ON_CREATE] = $uxon;
-        return $this;
-    }
-
-    /**
-     * Triggers only when data is being UPDATED. Prevent changing a data item if any of these conditions match.
-     *
-     * ### Placeholders:
-     *
-     *  - `[#~old:alias#]`: Loads the value the specified alias held BEFORE the event was applied.
-     *  - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
-     *
-     * @uxon-property invalid_if_on_update
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
-     *     "value": ""}]}]
-     *
-     * @param UxonObject $uxon
-     * @return AbstractValidatingBehavior
-     */
-    public function setInvalidIfOnUpdate(UxonObject $uxon) : AbstractValidatingBehavior
-    {
-        $this->uxonsPerEventContext[self::VAR_ON_UPDATE] = $uxon;
-        return $this;
-    }
-
-    /**
-     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions
-     * match.
-     *
-     * ### Placeholders:
-     *
-     * - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
-     *
-     * @uxon-property invalid_if_always
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
-     *     "value": ""}]}]
-     *
-     * @param UxonObject $uxon
-     * @return AbstractValidatingBehavior
-     */
-    public function setInvalidIfAlways(UxonObject $uxon) : AbstractValidatingBehavior
-    {
-        $this->uxonsPerEventContext[self::VAR_ON_ANY] = $uxon;
-        return $this;
-    }
+    
 
     /**
      * Handles any change requests for the associated data and decides whether the proposed are valid or
@@ -194,13 +146,13 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         }
 
         if($error) {
-            $this->handleError($error);
+            $this->processValidationResult($error);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
 
-    protected abstract function handleError(DataCheckFailedErrorMultiple $error) : void;
+    protected abstract function processValidationResult(DataCheckFailedErrorMultiple $error) : void;
     
     /**
      * @param bool $onUpdate
@@ -210,16 +162,16 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     {
         $result = array();
 
-        if($this->uxonsPerEventContext[self::VAR_ON_ANY] !== null) {
-            $result['invalid_if_'.self::VAR_ON_ANY] = $this->uxonsPerEventContext[self::VAR_ON_ANY];
+        if($this->uxonsPerEventContext[self::CONTEXT_ON_ANY] !== null) {
+            $result['invalid_if_'.self::CONTEXT_ON_ANY] = $this->uxonsPerEventContext[self::CONTEXT_ON_ANY];
         }
 
-        if($this->uxonsPerEventContext[self::VAR_ON_UPDATE] !== null && $onUpdate) {
-            $result['invalid_if_'.self::VAR_ON_UPDATE] = $this->uxonsPerEventContext[self::VAR_ON_UPDATE];
+        if($this->uxonsPerEventContext[self::CONTEXT_ON_UPDATE] !== null && $onUpdate) {
+            $result['invalid_if_'.self::CONTEXT_ON_UPDATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_UPDATE];
         }
 
-        if($this->uxonsPerEventContext[self::VAR_ON_CREATE] !== null && !$onUpdate) {
-            $result['invalid_if_'.self::VAR_ON_CREATE] = $this->uxonsPerEventContext[self::VAR_ON_CREATE];
+        if($this->uxonsPerEventContext[self::CONTEXT_ON_CREATE] !== null && !$onUpdate) {
+            $result['invalid_if_'.self::CONTEXT_ON_CREATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_CREATE];
         }
 
         return array_count_values($result) > 0 ? $result : false;
