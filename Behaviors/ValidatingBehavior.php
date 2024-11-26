@@ -142,25 +142,24 @@ use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
  */
 class ValidatingBehavior extends AbstractValidatingBehavior
 {
-    protected function processValidationResult(DataCheckFailedErrorMultiple $error): void
+    protected function processValidationResult(DataCheckFailedErrorMultiple $result): void
     {
-        $error->setUseExceptionMessageAsTitle(true);
-        $error->updateMessage();
-        throw $error;
+        $result->setUseExceptionMessageAsTitle(true);
+        $result->updateMessage();
+        throw $result;
     }
 
     /**
-     * Triggers only when data is being CREATED.
-     *
+     * Triggers only when data is being CREATED. Prevent changing a data item if any of these conditions match.
+     * 
      *  ### Placeholders:
-     *
+     * 
      *  - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
-     *
+     * 
      * @uxon-property invalid_if_on_create
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
-     *     "value": ""}]}]
-     *
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
      */
@@ -172,17 +171,16 @@ class ValidatingBehavior extends AbstractValidatingBehavior
 
     /**
      * Triggers only when data is being UPDATED. Prevent changing a data item if any of these conditions match.
-     *
+     * 
      * ### Placeholders:
-     *
+     * 
      *  - `[#~old:alias#]`: Loads the value the specified alias held BEFORE the event was applied.
      *  - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
-     *
+     * 
      * @uxon-property invalid_if_on_update
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
-     *     "value": ""}]}]
-     *
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
      */
@@ -193,18 +191,16 @@ class ValidatingBehavior extends AbstractValidatingBehavior
     }
 
     /**
-     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions
-     * match.
-     *
+     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions match.
+     * 
      * ### Placeholders:
-     *
+     * 
      * - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
-     *
+     * 
      * @uxon-property invalid_if_always
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
-     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
-     *     "value": ""}]}]
-     *
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
      */
