@@ -1293,7 +1293,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($attribute->isRelation() && $aggregator === null && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT)) {
             $rel = $this->getMainObject()->getRelation($qpart->getAlias());
             if ($rel->isReverseRelation()) {
-                return "\n" . $this->buildSqlComment('Skipping ' . $qpart->getAlias() . ' as reverse relation without a specific attribute');
+                // TODO it would be nice to output this comment here, but this will break some statements
+                // on write operations with nested sheets. The columns with subsheets for some reason try
+                // to read the reverse realtion directly, which results in this comment without any SQL
+                // and ultimately a broken SQL like this `SELECT field1, /* Skipping ... */, field3 FROM ...`.
+                // Need to debug, why these queries include the the reverse relation as an attribute in the
+                // first place. This definitely seems wrong.
+                // return "\n" . $this->buildSqlComment('Skipping ' . $qpart->getAlias() . ' as reverse relation without a specific attribute');
+                return '';
             }
         }
         
