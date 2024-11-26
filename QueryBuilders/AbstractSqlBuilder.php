@@ -1293,7 +1293,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($attribute->isRelation() && $aggregator === null && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT)) {
             $rel = $this->getMainObject()->getRelation($qpart->getAlias());
             if ($rel->isReverseRelation()) {
-                return "\n" . $this->buildSqlComment('Skipping ' . $qpart->getAlias() . ' as reverse relation without a specific attribute');
+                return;
+                //return "\n" . $this->buildSqlComment('Skipping ' . $qpart->getAlias() . ' as reverse relation without a specific attribute');
             }
         }
         
