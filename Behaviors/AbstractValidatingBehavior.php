@@ -152,7 +152,17 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
 
-    protected abstract function processValidationResult(DataCheckFailedErrorMultiple $error) : void;
+    /**
+     * Process the results of the validation.
+     * 
+     * The validation results are represented as a collection of multiple instances of `DataCheckFailedError`. 
+     * While the class name suggests error handling, you should view these objects as neutral data containers 
+     * that you can process any way you like.
+     * 
+     * @param DataCheckFailedErrorMultiple $result
+     * @return void
+     */
+    protected abstract function processValidationResult(DataCheckFailedErrorMultiple $result) : void;
     
     /**
      * @param bool $onUpdate
