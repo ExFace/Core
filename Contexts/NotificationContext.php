@@ -440,6 +440,7 @@ class NotificationContext extends AbstractContext
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.ANNOUNCEMENT');
         $ds->getColumns()->addFromSystemAttributes();
         $ds->getColumns()->addMultiple($cols);
+        $ds->getFilters()->addConditionFromString('ENABLED_FLAG', true, ComparatorDataType::EQUALS);
         $ds->getSorters()->addFromString('SHOW_FROM', SortingDirectionsDataType::DESC);
         $ds->dataRead();
         
