@@ -231,17 +231,17 @@ class RelationPath implements MetaRelationPathInterface
      * To join two relation path instances, use `combine()` instead. To append a relation to a 
      * relation path instance, use `appendRelation()`.
      * 
-     * @param string $path1
-     * @param string $path2
+     * @param string|null $path1
+     * @param string|null $path2
      * @return string
      */
-    public static function join(string $path1, string $path2) : string
+    public static function join(?string $path1, ?string $path2) : string
     {
         $output = '';
-        if ($path1) {
+        if ($path1 !== '' && $path1 !== null) {
             $output = $path1;
         }
-        if ($path2) {
+        if ($path2 !== '' && $path2 !== null) {
             $output = $output ? $output . self::RELATION_SEPARATOR . $path2 : $path2;
         }
         
@@ -447,7 +447,7 @@ class RelationPath implements MetaRelationPathInterface
      */
     public function getAttributeOfEndObject($attribute_alias)
     {
-        return $this->getStartObject()->getAttribute(self::relationPathAdd($this->toString(), $attribute_alias));
+        return $this->getStartObject()->getAttribute(self::join($this->toString(), $attribute_alias));
     }
     
     /**
