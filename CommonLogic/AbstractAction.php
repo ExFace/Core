@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Communication\UserConfirmations\ConfirmationForAction;
+use exface\Core\Communication\UserConfirmations\ConfirmationForUnsavedChanges;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
@@ -56,7 +58,6 @@ use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
-use exface\Core\Widgets\ConfirmationMessage;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
@@ -155,9 +156,9 @@ abstract class AbstractAction implements ActionInterface
     
     private $offlineStrategy = null;
 
-    private $confirmationForAction = null;
+    protected ConfirmationForUnsavedChanges|null $confirmationForUnsavedChanges = null;
 
-    private $confirmationForUnsavedData = null;
+    protected ConfirmationForAction|null $confirmationForAction = null;
 
     /**
      *
@@ -201,7 +202,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-type metamodel:action
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setAlias()
+     * @see ActionInterface::setAlias
      */
     public function setAlias($value)
     {
@@ -235,7 +236,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getId()
+     * @see ActionInterface::getId
      */
     public function getId()
     {
@@ -249,7 +250,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getApp()
+     * @see ActionInterface::getApp
      */
     public function getApp()
     {
@@ -281,7 +282,7 @@ abstract class AbstractAction implements ActionInterface
 
     /**
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getWidgetDefinedIn()
+     * @see ActionInterface::getWidgetDefinedIn
      */
     public function getWidgetDefinedIn() : WidgetInterface
     {
@@ -291,7 +292,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setWidgetDefinedIn()
+     * @see ActionInterface::setWidgetDefinedIn
      */
     public function setWidgetDefinedIn(WidgetInterface $widget) : ActionInterface
     {
@@ -307,7 +308,7 @@ abstract class AbstractAction implements ActionInterface
      * from external sources because the developer of a specific action might not have taken care
      * of contexts, events etc. This is why handle() is final.
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::handle()
+     * @see ActionInterface::handle
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {        
@@ -359,7 +360,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getResultMessageText()
+     * @see ActionInterface::getResultMessageText
      */
     public function getResultMessageText() : ?string
     {
@@ -378,7 +379,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-property result_message_text
      * @uxon-type string
      *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setResultMessageText()
+     * @see ActionInterface::setResultMessageText
      */
     public function setResultMessageText($value)
     {
@@ -389,7 +390,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputDataPreset()
+     * @see ActionInterface::setInputDataPreset
      */
     public function setInputDataPreset(DataSheetInterface $data_sheet) : ActionInterface
     {
@@ -401,7 +402,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputDataPreset()
+     * @see ActionInterface::getInputDataPreset
      */
     public function getInputDataPreset() : DataSheetInterface
     {        
@@ -415,7 +416,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasInputDataPreset()
+     * @see ActionInterface::hasInputDataPreset
      */
     public function hasInputDataPreset() : bool
     {
@@ -435,7 +436,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
      * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":"", "formula": "="}]}
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputDataSheet($uxon)
+     * @see ActionInterface::setInputDataSheet
      */
     public function setInputDataSheet(UxonObject $uxon) : ActionInterface
     {
@@ -499,7 +500,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputRowsMin()
+     * @see ActionInterface::getInputRowsMin
      */
     public function getInputRowsMin()
     {
@@ -513,7 +514,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-type integer
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputRowsMin()
+     * @see ActionInterface::setInputRowsMin
      */
     public function setInputRowsMin($value)
     {
@@ -522,7 +523,7 @@ abstract class AbstractAction implements ActionInterface
 
     /**
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputRowsMax()
+     * @see ActionInterface::getInputRowsMax
      */
     public function getInputRowsMax()
     {
@@ -536,7 +537,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-type integer
      * 
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputRowsMax()
+     * @see ActionInterface::setInputRowsMax
      */
     public function setInputRowsMax($value)
     {
@@ -546,7 +547,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getMetaObject()
+     * @see ActionInterface::getMetaObject
      */
     public function getMetaObject()
     {
@@ -565,7 +566,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setMetaObject()
+     * @see ActionInterface::setMetaObject
      */
     public function setMetaObject(MetaObjectInterface $object)
     {
@@ -583,7 +584,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-type metamodel:object
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setObjectAlias()
+     * @see ActionInterface::setObjectAlias
      */
     public function setObjectAlias($qualified_alias)
     {
@@ -598,7 +599,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::implementsInterface()
+     * @see ActionInterface::implementsInterface
      */
     public function implementsInterface($interface)
     {
@@ -615,7 +616,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::isUndoable()
+     * @see ActionInterface::isUndoable
      */
     public function isUndoable() : bool
     {
@@ -632,7 +633,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setUndoable()
+     * @see ActionInterface::setUndoable
      */
     public function setUndoable($value)
     {
@@ -710,7 +711,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setDisabledBehaviors()
+     * @see ActionInterface::setDisabledBehaviors
      */
     public function setDisabledBehaviors(UxonObject $behavior_aliases)
     {
@@ -721,7 +722,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getDisabledBehaviors()
+     * @see ActionInterface::getDisabledBehaviors
      */
     public function getDisabledBehaviors()
     {
@@ -755,7 +756,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getName()
+     * @see ActionInterface::getName
      */
     public function getName()
     {
@@ -768,7 +769,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasName()
+     * @see ActionInterface::hasName
      */
     public function hasName()
     {
@@ -781,7 +782,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-property name
      * @uxon-type string
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setName()
+     * @see ActionInterface::setName
      */
     public function setName($value)
     {
@@ -805,7 +806,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getAutocommit()
+     * @see ActionInterface::getAutocommit
      */
     public function getAutocommit()
     {
@@ -815,7 +816,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setAutocommit()
+     * @see ActionInterface::setAutocommit
      */
     public function setAutocommit($true_or_false)
     {
@@ -826,7 +827,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::isExactly()
+     * @see ActionInterface::isExactly
      */
     public function isExactly($actionOrSelectorOrString) : bool
     {
@@ -853,7 +854,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::is()
+     * @see ActionInterface::is
      */
     public function is($actionOrSelectorOrString) : bool
     {
@@ -885,7 +886,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMappers()
+     * @see ActionInterface::getInputMappers
      */
     public function getInputMappers() : array
     {
@@ -895,7 +896,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMapper()
+     * @see ActionInterface::getInputMapper
      */
     public function getInputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
     {
@@ -910,7 +911,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasInputMappers()
+     * @see ActionInterface::hasInputMappers
      */
     public function hasInputMappers() : bool
     {
@@ -979,7 +980,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-template [{"from_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}]
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
+     * @see ActionInterface::setInputMappers
      */
     public function setInputMappers(UxonObject $uxon)
     {
@@ -1023,7 +1024,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
      * 
      * @see setInputMappers()
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMapper()
+     * @see ActionInterface::setInputMapper
      */
     public function setInputMapper(UxonObject $uxon)
     {
@@ -1050,7 +1051,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::addInputMapper()
+     * @see ActionInterface::addInputMapper
      */
     public function addInputMapper(DataSheetMapperInterface $mapper)
     {
@@ -1254,7 +1255,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::isDefinedInWidget()
+     * @see ActionInterface::isDefinedInWidget
      */
     public function isDefinedInWidget(): bool
     {
@@ -1264,7 +1265,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getSelector()
+     * @see ActionInterface::getSelector
      */
     public function getSelector() : ActionSelectorInterface
     {
@@ -1283,7 +1284,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-property input_object_alias
      * @uxon-type metamodel:object
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputObjectAlias()
+     * @see ActionInterface::setInputObjectAlias
      */
     public function setInputObjectAlias(string $aliasWithNamespace) : ActionInterface
     {
@@ -1301,7 +1302,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-property result_object_alias
      * @uxon-type metamodel:object
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setResultObjectAlias()
+     * @see ActionInterface::setResultObjectAlias
      */
     public function setResultObjectAlias(string $aliasWithNamespace) : ActionInterface
     {
@@ -1352,7 +1353,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::isAuthorized()
+     * @see ActionInterface::isAuthorized
      */
     public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool
     {
@@ -1368,7 +1369,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::isTriggerWidgetRequired()
+     * @see ActionInterface::isTriggerWidgetRequired
      */
     public function isTriggerWidgetRequired() : ?bool
     {
@@ -1378,7 +1379,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputTriggerWidgetRequired()
+     * @see ActionInterface::setInputTriggerWidgetRequired
      */
     public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface
     {
@@ -1393,7 +1394,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getHint()
+     * @see ActionInterface::getHint
      */
     public function getHint() : ?string
     {
@@ -1406,7 +1407,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-property hint
      * @uxon-type string
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setHint()
+     * @see ActionInterface::setHint
      */
     public function setHint(string $value) : ActionInterface
     {
@@ -1424,7 +1425,7 @@ abstract class AbstractAction implements ActionInterface
      * @see \exface\Core\Actions\GenerateModelFromDataSource
      * @see \exface\Core\Actions\CustomDataSourceQuery
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffects()
+     * @see ActionInterface::getEffects
      */
     public function getEffects() : array
     {
@@ -1449,7 +1450,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasEffectOn()
+     * @see ActionInterface::hasEffectOn
      */
     public function hasEffectOn(MetaObjectInterface $object) : bool
     {
@@ -1464,7 +1465,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffectsOn()
+     * @see ActionInterface::getEffectsOn
      */
     public function getEffectsOn(MetaObjectInterface $object) : array
     {
@@ -1686,7 +1687,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::addEffect()
+     * @see ActionInterface::addEffect
      */
     public function addEffect(MetaObjectInterface $effectedObject, string $name = null, MetaRelationPathInterface $relationPathFromActionObject = null) : ActionInterface
     {
@@ -1705,7 +1706,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOutputMappers()
+     * @see ActionInterface::getOutputMappers
      */
     public function getOutputMappers() : array
     {
@@ -1715,7 +1716,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOutputMapper()
+     * @see ActionInterface::getOutputMapper
      */
     public function getOutputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
     {
@@ -1730,7 +1731,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasOutputMappers()
+     * @see ActionInterface::hasOutputMappers
      */
     public function hasOutputMappers() : bool
     {
@@ -1748,7 +1749,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-template [{"from_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}]
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOutputMappers()
+     * @see ActionInterface::setOutputMappers
      */
     public function setOutputMappers(UxonObject $uxon)
     {
@@ -1769,7 +1770,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-template {"to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
      *
      * @see setOutputMappers()
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOutputMapper()
+     * @see ActionInterface::setOutputMapper
      */
     public function setOutputMapper(UxonObject $uxon)
     {
@@ -1790,7 +1791,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::addOutputMapper()
+     * @see ActionInterface::addOutputMapper
      */
     public function addOutputMapper(DataSheetMapperInterface $mapper)
     {
@@ -1801,7 +1802,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputChecks()
+     * @see ActionInterface::getInputChecks
      */
     public function getInputChecks() : ActionDataCheckListInterface
     {
@@ -1863,7 +1864,7 @@ abstract class AbstractAction implements ActionInterface
     
     /**
      *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOfflineStrategy()
+     * @see ActionInterface::getOfflineStrategy
      */
     public function getOfflineStrategy() : ?string
     {
@@ -1876,7 +1877,7 @@ abstract class AbstractAction implements ActionInterface
      * @uxon-property offline_strategy
      * @uxon-type [enqueue,presync,use_cache,skip,online_only,client_side]
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOffline()
+     * @see ActionInterface::setOffline
      */
     public function setOfflineStrategy(string $value) : ActionInterface
     {
@@ -1885,20 +1886,21 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Make the action ask for confirmation when its button is pressed
+     * Make the action ask for confirmation when its button is pressed.
      * 
      * @uxon-property confirmation_for_action
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage
      * @uxon-template {"text": ""}
      * 
-     * @param \exface\Core\CommonLogic\UxonObject $uxon
-     * @return \exface\Core\Interfaces\Actions\ActionInterface
+     * @param UxonObject $uxon
+     * @return ActionInterface
      */
     public function setConfirmationForAction(UxonObject $uxon) : ActionInterface
     {
         if ($this->isDefinedInWidget()) {
             $parent = $this->getWidgetDefinedIn();
-            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $widget = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $this->confirmationForAction = new ConfirmationForAction($widget);
         } else {
             // TODO what here?
         }
@@ -1906,56 +1908,67 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * 
-     * @return WidgetInterface
-     */
-    public function getConfirmationForAction() : ?ConfirmationMessage
-    {
-        return $this->confirmationForAction;
-    }
-
-    public function hasConfirmationForAction() : bool
-    {
-        return $this->confirmationForAction !== null && $this->confirmationForAction->isDisabled() === false;
-    }
-
-    /**
-     * Make the action warn the user if it is to be performed when unsaved changes are still visible
+     * Make the action warn the user if it is to be performed when unsaved changes are still visible.
      * 
      * @uxon-property confirmation_for_unsaved_data
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage
      * @uxon-template {"text": ""}
      * 
-     * @param \exface\Core\CommonLogic\UxonObject $uxon
-     * @return \exface\Core\Interfaces\Actions\ActionInterface
+     * @param UxonObject $uxon
+     * @return ActionInterface
      */
-    public function setConfirmationForUnsavedData(UxonObject $uxon) : ActionInterface
+    public function setConfirmationForUnsavedChanges(UxonObject $uxon) : ActionInterface
     {
         if ($this->isDefinedInWidget()) {
             $parent = $this->getWidgetDefinedIn();
-            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $widget = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $this->confirmationForUnsavedChanges = new ConfirmationForUnsavedChanges($widget);
         } else {
             // TODO what here?
         }
+
         return $this;
     }
 
     /**
-     * 
-     * @return mixed
+     * Returns the user confirmation for this action, if any.
+     *
+     * @return WidgetInterface|null
      */
-    public function getConfirmationForUnsavedData() : ?ConfirmationMessage
+    public function getConfirmationForAction() : ?ConfirmationForAction
     {
-        return $this->confirmationForUnsavedData;
+        return $this->confirmationForAction;
     }
 
     /**
-     * 
+     * Returns the user confirmation for unsaved changes, if any.
+     *
+     * @return WidgetInterface|null
+     */
+    public function getConfirmationForUnsavedChanges() : ?ConfirmationForUnsavedChanges
+    {
+        return $this->confirmationForUnsavedChanges;
+    }
+
+    /**
+     * Check whether this action requires a confirmation.
+     *
      * @return bool
      */
-    public function hasConfirmationForUnsavedData() : bool
+    public function requiresConfirmationForAction() : bool
     {
-        // TODO move logic from JqueryButtonTrait::isCheckForUnsavedChangesRequired() here
-        return $this->confirmationForUnsavedData !== null && $this->confirmationForUnsavedData->isDisabled() === false;
+        return $this->confirmationForAction &&
+               !$this->confirmationForAction->disabled();
+    }
+
+    /**
+     * Check whether a confirmation for unsaved changes is required.
+     *
+     * @return bool
+     */
+    public function requiresConfirmationForUnsavedChanges() : bool
+    {
+        return $this->confirmationForUnsavedChanges &&
+               !$this->confirmationForUnsavedChanges->disabled();
     }
 }

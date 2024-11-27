@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
+use exface\Core\Communication\UserConfirmations\ConfirmationForAction;
+use exface\Core\Communication\UserConfirmations\ConfirmationForUnsavedChanges;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -57,7 +59,6 @@ interface ActionInterface extends
     iCanGenerateDebugWidgets,
     iHaveIcon
 {
-    
     /**
      * 
      * @param TaskInterface $task
@@ -533,4 +534,32 @@ interface ActionInterface extends
      * @return ActionInterface
      */
     public function setOfflineStrategy(string $value) : ActionInterface;
+
+    /**
+     * Returns the user confirmation for this action, if any.
+     *
+     * @return WidgetInterface|null
+     */
+    public function getConfirmationForAction() : ?ConfirmationForAction;
+
+    /**
+     * Returns the user confirmation for unsaved changes, if any.
+     *
+     * @return WidgetInterface|null
+     */
+    public function getConfirmationForUnsavedChanges() : ?ConfirmationForUnsavedChanges;
+
+    /**
+     * Check whether this action requires a confirmation.
+     *
+     * @return bool
+     */
+    public function requiresConfirmationForAction() : bool;
+
+    /**
+     * Check whether a confirmation for unsaved changes is required.
+     *
+     * @return bool
+     */
+    public function requiresConfirmationForUnsavedChanges() : bool;
 }
