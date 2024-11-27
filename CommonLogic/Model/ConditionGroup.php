@@ -755,7 +755,7 @@ class ConditionGroup implements ConditionGroupInterface
                 $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
             }
             $this->addNestedGroup($group);
-        } elseif (! is_null($value) && $value !== '') {
+        } elseif ((!is_null($value) && $value !== '') || !$ignoreEmptyValue) {
             $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
         }
         
