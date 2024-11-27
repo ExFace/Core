@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataCheck;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -105,26 +106,41 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             return;
         }
 
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $logbook->addLine('Loading input data...');
+        $logbook->addIndent(1);
+        
         // Get datasheets.
         if ($event instanceof OnBeforeUpdateDataEvent) {
             $onUpdate = true;
             $previousDataSheet = $event->getDataSheetWithOldData();
             $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
+            
+            $logbook->addLine('Found pre-transaction data for '.$previousDataSheet->getMetaObject()->__toString());
+            $logbook->addDataSheet('Pre-Transaction',$previousDataSheet);
         } else {
             $onUpdate = false;
             $previousDataSheet = null;
             $changedDataSheet = $event->getDataSheet();
+            
+            $logbook->addLine('No pre-transaction data found.');
         }
+        $logbook->addDataSheet('Post-Transaction',$previousDataSheet);
+        $logbook->addLine('Found post-transaction data for '.$changedDataSheet->getMetaObject()->__toString());
+        $logbook->addIndent(-1);
 
-        if(!$uxon = $this->getRelevantUxons($onUpdate)) {
-            return;
-        }
-
-        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
-        // extended from it.
         if (! $changedDataSheet->getMetaObject()->isExactly($this->getObject())) {
+            $logbook->addLine('Wrong MetaObject. Moving on...');
             return;
         }
+        
+        $logbook->addLine('Loading relevant UXON definitions for context '.$event::getEventName().'...');
+        $logbook->addIndent(1);
+        if(!$uxon = $this->getRelevantUxons($onUpdate, $logbook)) {
+            $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
+            return;
+        }
+        $logbook->addIndent(-1);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
         
@@ -132,56 +148,75 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $error = null;
         $context = $event::class;
         
-        foreach ($uxon as $dataCheckUxon) {
+        $logbook->addLine('Processing UXON definitions per context...');
+        $logbook->addIndent(1);
+        foreach ($uxon as $context => $dataCheckUxon) {
+            $logbook->addLine('Context '.$context);
+            $logbook->addIndent(1);
             // Perform data checks.
             try {
-                $this->performDataChecks($dataCheckUxon, $context, $previousDataSheet, $changedDataSheet);
+                $this->performDataChecks(
+                    $dataCheckUxon,
+                    $context,
+                    $previousDataSheet,
+                    $changedDataSheet);
             } catch (DataCheckFailedErrorMultiple $exception) {
+                $logbook->addLine('At least one data check applied to the input data:');
+                $logbook->addException($exception);
                 if(!$error) {
                     $error = $exception;
                 } else {
                     $error->merge($exception, false);
                 }
             }
+            $logbook->addIndent(-1);
         }
-
+        $logbook->addIndent(-1);
+        
         if($error) {
-            $this->processValidationResult($error);
+            $logbook->addLine('Processing validation results...');
+            $logbook->addIndent(1);
+            $this->processValidationResult($error, $logbook);
         }
 
-        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
     }
 
     /**
      * Process the results of the validation.
-     * 
-     * The validation results are represented as a collection of multiple instances of `DataCheckFailedError`. 
-     * While the class name suggests error handling, you should view these objects as neutral data containers 
+     *
+     * The validation results are represented as a collection of multiple instances of `DataCheckFailedError`.
+     * While the class name suggests error handling, you should view these objects as neutral data containers
      * that you can process any way you like.
-     * 
+     *
      * @param DataCheckFailedErrorMultiple $result
+     * @param BehaviorLogBook              $logbook
      * @return void
      */
-    protected abstract function processValidationResult(DataCheckFailedErrorMultiple $result) : void;
-    
+    protected abstract function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
+
     /**
-     * @param bool $onUpdate
+     * @param bool            $onUpdate
+     * @param BehaviorLogBook $logbook
      * @return array|bool
      */
-    protected function getRelevantUxons(bool $onUpdate) : array | bool
+    protected function getRelevantUxons(bool $onUpdate, BehaviorLogBook $logbook) : array | bool
     {
         $result = array();
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_ANY] !== null) {
-            $result['invalid_if_'.self::CONTEXT_ON_ANY] = $this->uxonsPerEventContext[self::CONTEXT_ON_ANY];
+            $result[self::CONTEXT_ON_ANY] = $this->uxonsPerEventContext[self::CONTEXT_ON_ANY];
+            $logbook->addLine('Found UXON definition for "'.self::CONTEXT_ON_ANY.'".');
         }
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_UPDATE] !== null && $onUpdate) {
-            $result['invalid_if_'.self::CONTEXT_ON_UPDATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_UPDATE];
+            $result[self::CONTEXT_ON_UPDATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_UPDATE];
+            $logbook->addLine('Found UXON definition for "'.self::CONTEXT_ON_UPDATE.'".');
         }
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_CREATE] !== null && !$onUpdate) {
-            $result['invalid_if_'.self::CONTEXT_ON_CREATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_CREATE];
+            $result[self::CONTEXT_ON_CREATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_CREATE];
+            $logbook->addLine('Found UXON definition "'.self::CONTEXT_ON_CREATE.'".');
         }
 
         return array_count_values($result) > 0 ? $result : false;

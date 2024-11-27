@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 
 /**
@@ -139,11 +141,15 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
  */
 class ValidatingBehavior extends AbstractValidatingBehavior
 {
-    protected function processValidationResult(DataCheckFailedErrorMultiple $result): void
+    protected function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook): void
     {
         $result->setUseExceptionMessageAsTitle(true);
+        
+        $logbook->addLine('Rendering error message...');
         $result->updateMessage();
-        throw $result;
+        
+        $logbook->addLine('Throwing exception...');
+        throw new BehaviorRuntimeError($this, '', null, $result, $logbook);
     }
 
     /**
