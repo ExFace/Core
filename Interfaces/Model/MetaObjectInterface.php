@@ -149,11 +149,15 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * Parts of the parent can be overridden in the extended object by creating an 
      * attribute, relation, etc. with the same alias, as the parent has.
      *
-     * Inherited elements become property of the extende object and loose any connection 
-     * to their parents (i.e. changing an attribute on the parent object at window will not 
+     * Inherited elements become property of the extended object and loose any connection 
+     * to their parents (i.e. changing an attribute on the parent object will not 
      * effect the respective inherited attribute of the extended object). However, using 
-     * the method getInheritedFromObjectId() of an inherited element, it can be determined, 
+     * the method `getObjectInheritedFrom()` of an inherited element, it can be determined, 
      * whether the element is inherited and from which object.
+     * 
+     * Relations are handled similarly. For example, if we have a relation from `ORDER` to `COMPANY` 
+     * called `CONTRACTOR` and we extend the object `CLIENT` from `COMPANY`, the `CONTRACTOR` relation 
+     * of `ORDER` will still point to `COMPANY`, there will be no relation to `CLIENT` automatically.
      *
      * @param MetaObjectInterface $parent
      * @return void
