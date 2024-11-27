@@ -72,7 +72,7 @@ trait PrefillValueTrait
                         if ($related_obj->isExactly($prefill_object)) {
                             $attr_path = implode(RelationPath::getRelationSeparator(), $rel_parts);
                             // TODO add aggregator here
-                            return RelationPath::relationPathAdd($attr_path, $attribute->getAlias());
+                            return RelationPath::join($attr_path, $attribute->getAlias());
                         }
                     }
                 }
@@ -112,7 +112,7 @@ trait PrefillValueTrait
                 }
                 // If we found a relation to use, add the attribute prefixed with it's relation path to the data sheet
                 if ($direct_rel) {
-                    $rel_path = RelationPath::relationPathAdd($rel->getAliasWithModifier(), $attribute->getAlias());
+                    $rel_path = RelationPath::join($rel->getAliasWithModifier(), $attribute->getAlias());
                     if ($prefill_object->hasAttribute($rel_path)) {
                         return $prefill_object->getAttribute($rel_path)->getAliasWithRelationPath();
                     }

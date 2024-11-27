@@ -175,12 +175,18 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function getRelationPath();
     
     /**
-     * Returns the meta object to which this attributes belongs to.
-     * If the attribute has a relation path, this
-     * will return the last object in that path.
+     * Returns the meta object to which this attribute explicitly belongs to.
+     * 
+     * If the attribute has a relation path, this will return the left-most object 
+     * in that path. That is, the object, this attribute was defined for and not that
+     * from which the relation path starts from.
+     * 
+     * For example, for the attribute `ORDER__NO` of object `ORDER_POS`, this method
+     * will return `ORDER`, not `ORDER_POS`. To get the `ORDER_POS` object, use
+     * `$attribute->getRelationPath()->getStartObject()` instead.
      *
-     * If the attribute is inherited, the inheriting object will be returned. To get the base object, the
-     * attribute was inherited from, use getObjectInheritedFrom().
+     * If the attribute is inherited, the inheriting object will be returned. To get 
+     * the base object, the attribute was inherited from, use `getObjectInheritedFrom()`.
      *
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */

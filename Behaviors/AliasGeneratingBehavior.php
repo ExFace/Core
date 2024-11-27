@@ -348,7 +348,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
         }
         
         $revRelPath = $nsRelPath->reverse()->getSubpath(0, -1);
-        $revRelAlias = RelationPath::relationPathAdd($revRelPath->toString(), $nsRelPath->getRelationFirst()->getRightKeyAttribute()->getAlias());
+        $revRelAlias = RelationPath::join($revRelPath->toString(), $nsRelPath->getRelationFirst()->getRightKeyAttribute()->getAlias());
         
         $nsSheet = DataSheetFactory::createFromObject($nsRelPath->getEndObject());
         $nsSheet->getFilters()->addConditionFromString($revRelAlias, $nsRelLeftKeyVal, ComparatorDataType::EQUALS);

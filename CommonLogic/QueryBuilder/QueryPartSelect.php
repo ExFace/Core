@@ -26,7 +26,7 @@ class QueryPartSelect extends QueryPartAttribute
                 switch ($this->getAggregator()->getFunction()->__toString()) {
                     case AggregatorFunctionsDataType::COUNT:
                         $comp = $this->getAttribute()->getComponents()[0];
-                        $compAlias = RelationPath::relationPathAdd($this->getAttribute()->getRelationPath()->toString(), $comp->getAttribute()->getAlias());
+                        $compAlias = RelationPath::join($this->getAttribute()->getRelationPath()->toString(), $comp->getAttribute()->getAlias());
                         $compAlias = DataAggregation::addAggregatorToAlias($compAlias, $this->getAggregator());
                         $qpart = new self($compAlias, $query, $this);
                         $query->addQueryPart($qpart);
@@ -39,7 +39,7 @@ class QueryPartSelect extends QueryPartAttribute
                 foreach ($this->getAttribute()->getComponents() as $comp) {
                     // TODO #compound-attributes getAliasWithRelationPath() must include compound's relation path for
                     // every component
-                    $compAlias = RelationPath::relationPathAdd($this->getAttribute()->getRelationPath()->toString(), $comp->getAttribute()->getAlias());
+                    $compAlias = RelationPath::join($this->getAttribute()->getRelationPath()->toString(), $comp->getAttribute()->getAlias());
                     $qpart = new self($compAlias, $query, $this);
                     $query->addQueryPart($qpart);
                     $this->addChildQueryPart($qpart);
