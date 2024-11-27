@@ -99,7 +99,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             $logbook->addDataSheet('Output-'.$metaObjectAlias, $outputSheet);
             $logbook->addLine('Working on sheet for '.$metaObjectAlias.'...');
             $affectedUidAlias = $affectedUidAliases[$metaObjectAlias];
-            $logbook->addLine('UID-Alias is '.$affectedUidAlias.'.');
+            $logbook->addLine('Affected UID-Alias is '.$affectedUidAlias.'.');
             // We filter by affected UID rather than by native UID to ensure that our delete operation finds all cached outputs,
             // especially if they were part of the source transaction.
             $outputSheet->getFilters()->addConditionFromValueArray($affectedUidAlias, $outputSheet->getColumnValues($affectedUidAlias));

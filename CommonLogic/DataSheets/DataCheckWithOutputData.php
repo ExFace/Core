@@ -49,6 +49,16 @@ class DataCheckWithOutputData extends DataCheck
                     $badData);
             }
             
+            if(!$outputSheet->getMetaObject()->hasUidAttribute()) {
+                throw new DataCheckRuntimeError(
+                    $outputSheet,
+                    'Cannot generate output data: The MetaObject ('.$outputSheet->getMetaObject()->getAlias().') used for caching has no UID-Attribute!',
+                    null,
+                    null,
+                    $this,
+                    $badData);
+            }
+            
             $uidAlias = $outputSheet->getMetaObject()->getUidAttributeAlias();
             foreach ($badData->getUidColumn()->getValues() as $affectedUid) {
                 $rowTemplate[$this->affectedUidAlias] = $affectedUid;

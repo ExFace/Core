@@ -125,7 +125,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             
             $logbook->addLine('No pre-transaction data found.');
         }
-        $logbook->addDataSheet('Post-Transaction',$previousDataSheet);
+        $logbook->addDataSheet('Post-Transaction',$changedDataSheet);
         $logbook->addLine('Found post-transaction data for '.$changedDataSheet->getMetaObject()->__toString());
         $logbook->addIndent(-1);
 
