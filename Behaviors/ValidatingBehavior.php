@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\CommonLogic\Model\Behaviors\AbstractValidatingBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
