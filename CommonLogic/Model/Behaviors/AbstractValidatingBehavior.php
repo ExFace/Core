@@ -1,10 +1,8 @@
 <?php
-namespace exface\Core\Behaviors;
+namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
-use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
