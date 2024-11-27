@@ -260,22 +260,14 @@ class Relation implements MetaRelationInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getInheritedFromObjectId()
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getObjectInheritedFrom()
      */
-    public function getInheritedFromObjectId() : ?string
+    public function getObjectInheritedFrom() : ?MetaObjectInterface
     {
-        return $this->inherited_from_object_id;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setInheritedFromObjectId()
-     */
-    public function setInheritedFromObjectId($value) : MetaRelationInterface
-    {
-        $this->inherited_from_object_id = $value;
-        return $this;
+        if ($this->isInherited()) {
+            return $this->getModel()->getObjectById($this->inherited_from_object_id);
+        }
+        return null;
     }
 
     /**
@@ -347,30 +339,34 @@ class Relation implements MetaRelationInterface
         if (! $newObject->is($thisObj)) {
             throw new UnexpectedValueException('Cannot use Relation::withExtendedObject() on object ' . $newObject->__toString() . ' because it does not extend ' . $thisObj->__toString());
         }
-        // This means: $extendedObj->getRelation(x)->getLeftObject() = $parentObj. There are cases
-        // when this leads to inconsistencies. If we have a REPORT with multiple REVISIONs and
-        // a REPORT_2, which extends REPORT, than REVISION__ID:COUNT works for REPORT and for REPORT_2. 
+        // Copy the relation to make sure all properties set after initialization are copied too, 
+        // but change a couple of changes:
+        // 1) Make sure the new relation has the inheriting object as left object
+        // 2) If it was a self-relation, make sure the right object is the inheriting
+        // object too. This way it will remain a self-relation for its new object. 
+        // It is important to treat inherited relations the same way as regular ones. In particular, in
+        // certain edge cases. For example, if we have a REPORT with multiple REVISIONs and  a REPORT_2, 
+        // which extends REPORT, than REVISION__ID:COUNT works for REPORT and for REPORT_2. 
         // But if REVISION has a separate relation to REPORT_2, than REPORT_2 has two reverse relations
         // from REVISION and REVISION__ID:COUNT becomes umbiguous! It now must be REVISION[REPORT]__ID
-        // or REVISION[REPORT_2]__ID, but InheritedRelation::needsModifier() does not know, that it was
-        // inherited into an object, that adds conflicts. In fact, it does not know its new object at
-        // all! It only knows, that it was inherited, but not where to.
-        $clone = new Relation(
-            $this->getWorkbench(),
-            $this->getCardinality(),
-            $this->getId(),
-            $this->getAlias(), // IDEA should not the new relation have the alias of the new object?
-            $this->getAliasModifier(),
-            $newObject,
-            $newObject->getAttribute($this->getLeftKeyAttribute()->getAlias()),
-            // Self-relations (pointing from the parent to the parent) need to point from the extending object 
-            // to the extending object.
-            // For example, if we are extending the FILE object, the relation to the folder should not point
-            // to the original file object, but rather to the extending object, which may have a custom base
-            // address, etc.
-            ($thisObj->getId() === $this->getRightObjectId() ? $newObject->getId() : $this->getRightObjectId()),
-            $this->getRightKeyIsUnspecified() === true ?  null : $newObject->getAttribute($this->getRightKeyAttribute()->getAlias())->getId()
-        );
+        // or REVISION[REPORT_2]__ID, this InheritedRelation::needsModifier() cannot reuse the previously
+        // calculated modifier.
+        $clone = clone $this;
+        $clone->inherited_from_object_id = $this->getId();
+        $clone->leftObject = $newObject;
+        $clone->leftKeyAttribute = $newObject->getAttribute($this->leftKeyAttribute->getAlias());
+        // Self-relations (pointing from the parent to the parent) need to point from the extending object 
+        // to the extending object.
+        // For example, if we are extending the FILE object, the relation to the folder should not point
+        // to the original file object, but rather to the extending object, which may have a custom base
+        // address, etc.
+        // In this case, we also unset the cached right-object and right-key to make the relation recalculate
+        // them when needed.
+        if ($thisObj->getId() === $this->rightKeyAttributeUid) {
+            $clone->rightObjectUid = $newObject->getId();
+            $clone->rightKeyAttribute = null;
+            $clone->rightObject = null;
+        }
         return $clone;
     }
 
