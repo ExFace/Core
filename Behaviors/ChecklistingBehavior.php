@@ -9,16 +9,16 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
 
 /**
- * Fills out a checklist base on formulas for its object on certain events.
+ * Applies a checklist to the input data and persists the results at a configurable data address.
  * 
- * The checklist is basically a set of checks - if any of them apply to the current object, a checklist item will be saved.
+ * Whenever a data-item matches any of the conditions on the checklist, that condition will save a checklist item.
  * Checklist items can be warnings, hints, errors - anything, that is not critical, but important to see for the user.
  * 
  * The checklist itself should be stored in the data source, that holds the checked object. After all, checklist items are
  * bits of information about this object at a certain point in time, so they should be handled (e.g. backed up) together.
  * 
  * This behavior is similar to the `ValidatingBehavior` except for the result of the checks: in contrast to the
- * `ValidatingBehavior`, that produces errors if at least one check is failed, the `ChecklistingBehavior` merely saves
+ * `ValidatingBehavior`, that produces errors if at least one condition was matched, the `ChecklistingBehavior` merely saves
  * its findings to the data source allowing the user to deal with them separately.
  * 
  * ## Examples
