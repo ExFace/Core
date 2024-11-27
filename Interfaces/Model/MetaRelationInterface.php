@@ -91,13 +91,6 @@ interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopie
      * @return MetaAttributeInterface
      */
     public function getRightKeyAttribute(bool $appendRelationPath = false) : MetaAttributeInterface;
-    
-    /**
-     * Returns TRUE if the right key of this relation is not specified explictily (thus defaults to the UID)
-     * 
-     * @return bool
-     */
-    public function getRightKeyIsUnspecified() : bool;
        
     /**
      * Returns the attribute of the left object, that holds the relation key.
@@ -123,18 +116,15 @@ interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopie
     public function getCardinality() : RelationCardinalityDataType;
     
     /**
-     * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
+     * Returns the UID of the object, this relation was inherited from or NULL if is a native relation
+     * 
+     * If the attribute was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
+     * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an
+     * attribute of OBJECT2 will return OBJECT1, while doing so for OBJECT1 will return the base object.
      *
-     * @return string|null
+     * @return MetaObjectInterface|null
      */
-    public function getInheritedFromObjectId() : ?string;
-    
-    /**
-     *
-     * @param string $value
-     * @return MetaRelationInterface
-     */
-    public function setInheritedFromObjectId($value) : MetaRelationInterface;
+    public function getObjectInheritedFrom() : ?MetaObjectInterface;
     
     /**
      * Returns TRUE if this Relation was inherited from a parent object
@@ -302,5 +292,12 @@ interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopie
      * @return UxonObject
      */
     public function getDefaultEditorUxon() : UxonObject;
-   
+
+    /**
+     * Returns a copy of this relation, built for a different object - one, that inherits from the original object
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $newObject
+     * @return \exface\Core\Interfaces\Model\MetaRelationInterface
+     */
+    public function withExtendedObject(MetaObjectInterface $newObject) : MetaRelationInterface;   
 }

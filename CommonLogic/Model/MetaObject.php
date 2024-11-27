@@ -493,27 +493,7 @@ class MetaObject implements MetaObjectInterface
         
         // Inherit attributes
         foreach ($parent->getAttributes() as $attr) {
-            $attr_clone = $attr->copy();
-            
-            // Save the object, we are inheriting from in the attribute
-            $attr_clone->setInheritedFromObjectId($parent->getId());
-            
-            // IDEA Is it a good idea to set the object of the inheridted attribute to the inheriting object? Would it be
-            // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
-            //
-            // Currently the attribute is attached to the inheriting object, but the reference to the original object is saved in the
-            // inherited_from_object_id property. This is important because otherwise there is no easy way to find out, which object
-            // the attribute belongs to. Say, we want to get the object filtered over if the filter attribute_alias is RELATION__RELATION__ATTRIBUTE
-            // and ATTRIBUTE is inherited. In this case ATTRIBUTE->getObject() should return the inheriting object and not the base object.
-            //
-            // One place, this is used at is \exface\Core\Widgets\Data::doPrefill(). When trying to prefill from the filters of the prefill sheet,
-            // we need to find a filter widget over the object the prefill filters attribute belong to. Now, if that attribute is a UID or a
-            // create/update-timestamp, it will often be inherited from some base object of the data source - perhaps the same base object, the
-            // widget's object inherits from as well. In this case, there is no way to know, whose UID it is, unless the object_id of the inherited
-            // attribute points to the object it directly belongs to (working example in Administration > Core > App > Button "Show Objects").
-            $attr_clone->setObject($this);
-            
-            $this->getAttributes()->add($attr_clone);
+            $this->getAttributes()->add($attr->withExtendedObject($this));
         }
         
         // Inherit Relations
@@ -524,51 +504,13 @@ class MetaObject implements MetaObjectInterface
         if ($parent instanceof self) {
             foreach ($parent->relations as $relSet) {
                 foreach ($relSet as $rel) {
-                    // Copy the relation unless it is a self-relation. Self-relations (pointing from the parent to the parent)
-                    // need to be recreated, so that they point from the extending object to the extending object.
-                    // For example, if we are extending the FILE object, the relation to the folder should not point
-                    // to the original file object, but rather to the extending object, which may have a custom base
-                    // address, etc.
-                    if ($rel->getRightObjectId() === $parent->getId()) {
-                        $rel_clone = new Relation(
-                            $this->getWorkbench(),
-                            $rel->getCardinality(),
-                            $rel->getId(),
-                            $rel->getAlias(), // IDEA should not the new relation have the alias of the new object?
-                            $rel->getAliasModifier(),
-                            $this,
-                            $this->getAttribute($rel->getLeftKeyAttribute()->getAlias()),
-                            $this->getId(),
-                            $rel->getRightKeyIsUnspecified() === true ?  null : $this->getAttribute($rel->getRightKeyAttribute()->getAlias())->getId()
-                        );
-                    } else {
-                        // FIXME inherited relations keep their original "left object". Not sure, this is correct! 
-                        // This means: $extendedObj->getRelation(x)->getLeftObject() = $parentObj. There are cases
-                        // when this leads to inconsistencies. If we have a REPORT with multiple REVISIONs and
-                        // a REPORT_2, which extends REPORT, than REVISION__ID:COUNT works for REPORT and for REPORT_2. 
-                        // But if REVISION has a separate relation to REPORT_2, than REPORT_2 has two reverse relations
-                        // from REVISION and REVISION__ID:COUNT becomes umbiguous! It now must be REVISION[REPORT]__ID
-                        // or REVISION[REPORT_2]__ID, but InheritedRelation::needsModifier() does not know, that it was
-                        // inherited into an object, that adds conflicts. In fact, it does not know its new object at
-                        // all! It only knows, that it was inherited, but not where to.
-                        // See first attempt in branch fix/relation-inheritance-breaks-left-object
-                        $rel_clone = clone $rel;
-                    }
-                    // $rel_clone = $rel->copy();
-                    // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-                    if (null === $rel->getInheritedFromObjectId()) {
-                        $rel_clone->setInheritedFromObjectId($parent->getId());
-                    }
+                    $rel_clone = $rel->withExtendedObject($this);
                     $this->addRelation($rel_clone);
                 }
             }
         } else {
             foreach ($parent->getRelations() as $rel) {
-                $rel_clone = clone $rel;
-                // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-                if (null === $rel->getInheritedFromObjectId()) {
-                    $rel_clone->setInheritedFromObjectId($parent->getId());
-                }
+                $rel_clone = $rel->withExtendedObject($this);
                 $this->addRelation($rel_clone);
             }
         }
