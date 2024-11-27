@@ -5,6 +5,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 use exface\Core\Behaviors\ChecklistingBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
@@ -32,8 +33,20 @@ class DataCheckWithOutputData extends DataCheck
             
             $badData = $error->getBadData();
             
-            if(!$rowTemplate || !$badData->hasUidColumn()) {
-                return $sheet;
+            // No output data, throw an error with an empty sheet.
+            if(!$rowTemplate) {
+                $this->outputDataSheet = $outputSheet;
+                throw $error;
+            }
+            
+            if(!$badData->hasUidColumn()) {
+                throw new DataCheckRuntimeError(
+                    $sheet,
+                    'Cannot generate output data: Input data has no UID column!',
+                    null,
+                    null,
+                    $this,
+                    $badData);
             }
             
             $uidAlias = $outputSheet->getMetaObject()->getUidAttributeAlias();
@@ -52,8 +65,8 @@ class DataCheckWithOutputData extends DataCheck
 
 
     /**
-     * Define the output data that this data check will append to its error message, if it was applied. For every failed
-     * check, a new row based to this configuration will be added to the output sheet.
+     * Define the output data that this data check will append to its error message, if it does apply. For every input row 
+     * this check applies to, it adds a new row based on this template to the output sheet.
      * 
      * The associated MetaObject must have a UID-Attribute!
      * 
@@ -91,9 +104,8 @@ class DataCheckWithOutputData extends DataCheck
     }
 
     /**
-     * For every failed check, a new row will be added to the output sheet, according to your configuration
-     * of `output_data_sheet`. This property defines the name of the column used to store the uid of the 
-     * particular item that failed the data check.
+     * If this data check applied to a given row, the UID of that row will be output
+     * to a column with this alias.
      * 
      * Default is `AFFECTED_UID`.
      * 

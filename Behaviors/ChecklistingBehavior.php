@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
@@ -62,7 +63,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
     }
 
 
-    protected function processValidationResult(DataCheckFailedErrorMultiple $result): void
+    protected function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook): void
     {
         $outputSheets = [];
         $affectedUidAliases = [];
@@ -88,12 +89,17 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             }
         }
         
+        $logbook->addLine('Processing output data sheets...');
+        $logbook->addIndent(1);
         foreach ($outputSheets as $metaObjectAlias => $outputSheet) {
             if($outputSheet === null || $outputSheet->countRows() === 0) {
                 continue;
             }
 
+            $logbook->addDataSheet('Output-'.$metaObjectAlias, $outputSheet);
+            $logbook->addLine('Working on sheet for '.$metaObjectAlias.'...');
             $affectedUidAlias = $affectedUidAliases[$metaObjectAlias];
+            $logbook->addLine('UID-Alias is '.$affectedUidAlias.'.');
             // We filter by affected UID rather than by native UID to ensure that our delete operation finds all cached outputs,
             // especially if they were part of the source transaction.
             $outputSheet->getFilters()->addConditionFromValueArray($affectedUidAlias, $outputSheet->getColumnValues($affectedUidAlias));
@@ -102,10 +108,15 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             $deleteSheet = $outputSheet->copy();
             // Remove the UID column, because otherwise dataDelete() ignores filters and goes by UID.
             $deleteSheet->getColumns()->remove($deleteSheet->getUidColumn());
-            $deleteSheet->dataDelete();
+            $logbook->addLine('Deleting data with affected UIDs from cache.');
+            $count = $deleteSheet->dataDelete();
+            $logbook->addLine('Deleted '.$count.' lines from cache.');
             // Finally, write the most recent outputs to the cache.
-            $outputSheet->dataUpdate(true);
+            $logbook->addLine('Writing data to cache.');
+            $count = $outputSheet->dataUpdate(true);
+            $logbook->addLine('Added '.$count.' lines to cache.');
         }
+        $logbook->addIndent(-1);
     }
 
     /**
