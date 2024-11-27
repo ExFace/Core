@@ -455,13 +455,48 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getObjectInheritedFrom()
      */
-    public function getObjectInheritedFrom()
+    public function getObjectInheritedFrom() : ?MetaObjectInterface
     {
         if ($this->isInherited()) {
-            return $this->getModel()->getObjectById($this->getInheritedFromObjectId());
-        } else {
-            return $this->getObject();
+            return $this->getModel()->getObjectById($this->inherited_from_object_id);
         }
+        return null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::withExtendedObject()
+     */
+    public function withExtendedObject(MetaObjectInterface $newObject) : MetaAttributeInterface
+    {
+        // Copy the attribute ignoring its relation path. In fact, it should not have any relation path because
+        // only direct attributes can be inherited. Not sure, if we need to double-check it somehow?
+        // IDEA copying will also copy the UXON objects for the default editor/display widgets. Not quite sure
+        // if this is correct. The way it is now, changes to the default editor of the original attribute will
+        // not affect the inheriting one. It has always been this way though... Same goes for the data type.
+        // Although, inheriting attributes are unlikely to change the data type aren't they?
+        $clone = $this->copy(true);
+            
+        // Save the object, we are inheriting from in the attribute
+        $clone->inherited_from_object_id = $this->getObject()->getId();
+        
+        // IDEA Is it a good idea to set the object of the inheridted attribute to the inheriting object? Would it be
+        // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
+        //
+        // Currently the attribute is attached to the inheriting object, but the reference to the original object is saved in the
+        // inherited_from_object_id property. This is important because otherwise there is no easy way to find out, which object
+        // the attribute belongs to. Say, we want to get the object filtered over if the filter attribute_alias is RELATION__RELATION__ATTRIBUTE
+        // and ATTRIBUTE is inherited. In this case ATTRIBUTE->getObject() should return the inheriting object and not the base object.
+        //
+        // One place, this is used at is \exface\Core\Widgets\Data::doPrefill(). When trying to prefill from the filters of the prefill sheet,
+        // we need to find a filter widget over the object the prefill filters attribute belong to. Now, if that attribute is a UID or a
+        // create/update-timestamp, it will often be inherited from some base object of the data source - perhaps the same base object, the
+        // widget's object inherits from as well. In this case, there is no way to know, whose UID it is, unless the object_id of the inherited
+        // attribute points to the object it directly belongs to (working example in Administration > Core > App > Button "Show Objects").
+        $clone->object = $newObject;
+
+        return $clone;
     }
     
     /**
@@ -649,31 +684,11 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getInheritedFromObjectId()
-     */
-    public function getInheritedFromObjectId()
-    {
-        return $this->inherited_from_object_id;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setInheritedFromObjectId()
-     */
-    public function setInheritedFromObjectId($value)
-    {
-        $this->inherited_from_object_id = $value;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isInherited()
      */
     public function isInherited()
     {
-        return $this->getInheritedFromObjectId() !== null;
+        return $this->inherited_from_object_id !== null;
     }
 
     /**
@@ -799,6 +814,11 @@ class Attribute implements MetaAttributeInterface
         // Do not use getDefaultEditorUxon() here as it already performs some enrichment
         if ($this->default_editor_uxon instanceof UxonObject){
             $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
+        }
+        
+        // Do not use getDefaultDisplayUxon() here as it already performs some enrichment
+        if ($this->default_display_uxon instanceof UxonObject){
+            $copy->setDefaultDisplayUxon($this->default_display_uxon->copy());
         }
         
         return $copy;
