@@ -135,6 +135,49 @@ class Data
     private $quickSearchWidget = null;
     
     private $quickSearchEnabled = null;
+
+    // Widget functions
+
+    /**
+     * Select one or more rows/items based on the value of a column
+     * 
+     * Arguments
+     * 
+     * 1. Values - one or more values to select. Multiple values should be passed as a delimited list
+     * 2. Column name - the name of the column to look for the values. If ommitted, the UID column of the table will be used
+     * 3. Scroll to selected rows - set to `true` to auto-scroll the table to the first newly selected row
+     * 
+     * Examples
+     * 
+     * - `select()` - select all visible rows
+     * - `select('0x9846568797')` select row with a value in its current UID column
+     * - `select('122,123,182')` select rows with multiple UIDs
+     * - `select('INV1024', 'NO')` select row with a value in the NO column
+     * - `select('1', 'MY_FLAG')` select all rows where column MY_FLAG is checked
+     * - `select('0x9846568797', 'UID', true)` select row with the give UID and scroll to it
+     *
+     * @uxon-property select
+     *
+     * @var string
+     */
+    const FUNCTION_SELECT = 'select';
+
+    /**
+     * Unselect one or more rows/items based on the value of a column
+     * 
+     * Examples
+     * 
+     * - `unselect()` - unselect all visible rows
+     * - `unselect('0x9846568797')` unselect row with a value in its current UID column
+     * - `unselect('122,123,182')` unselect rows with multiple UIDs
+     * - `unselect('INV1024', 'NO')` unselect row with a value in the NO column
+     * - `unselect('1', 'MY_FLAG')` unselect all rows where column MY_FLAG is checked
+     *
+     * @uxon-property unselect
+     *
+     * @var string
+     */
+    const FUNCTION_UNSELECT = 'unselect';
     
     /**
      * 
@@ -993,7 +1036,7 @@ class Data
     {
         $object = $relation_path ? $this->getMetaObject()->getRelatedObject($relation_path) : $this->getMetaObject();
         foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
-            $system_alias = RelationPath::relationPathAdd($relation_path, $attr->getAlias());
+            $system_alias = RelationPath::join($relation_path, $attr->getAlias());
             // Add the system attribute only if it is not there already.
             // Counting the columns first allows to add the system column without searching for it. If we would search over
             // empty data widgets, we would automatically trigger the creation of default columns, which is absolute nonsense

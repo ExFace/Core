@@ -145,7 +145,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function getAliasWithRelationPath()
     {
-        return RelationPath::relationPathAdd($this->getRelationPath()->toString(), $this->getAlias());
+        return RelationPath::join($this->getRelationPath()->toString(), $this->getAlias());
     }
 
     /**

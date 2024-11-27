@@ -1183,7 +1183,6 @@ JS;
                 },
                 style: function(feature) {
                     var oStyle = { {$styleJs} };
-                    console.log(oStyle);
                     return oStyle;
                 },
                 pointToLayer: function(feature, latlng) {
@@ -1807,8 +1806,6 @@ JS;
                 {$dropDataBuilderJs}       
 
                 $(wrapperDiv).removeClass('mouseDown');
-                console.log('Dropped data', oDroppedData);
-                console.log('Dropped target', oTargetRow);
                 
                 {$onDropJs}
             });
