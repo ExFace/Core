@@ -117,6 +117,30 @@ class ConditionGroup implements ConditionGroupInterface
         $this->nested_groups[] = $group;
         return $this;
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addNestedAND()
+     */
+    public function addNestedAND() : ConditionGroupInterface
+    {
+        $grp = new self($this->getWorkbench(), EXF_LOGICAL_AND, $this->baseObject, $this->ignoreEmptyValues);
+        $this->addNestedGroup($grp);
+        return $grp;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addNestedOR()
+     */
+    public function addNestedOR() : ConditionGroupInterface
+    {
+        $grp = new self($this->getWorkbench(), EXF_LOGICAL_OR, $this->baseObject, $this->ignoreEmptyValues);
+        $this->addNestedGroup($grp);
+        return $grp;
+    }
     
     /**
      * 
@@ -731,7 +755,7 @@ class ConditionGroup implements ConditionGroupInterface
                 $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
             }
             $this->addNestedGroup($group);
-        } elseif (! is_null($value) && $value !== '') {
+        } elseif ((!is_null($value) && $value !== '') || !$ignoreEmptyValue) {
             $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
         }
         
@@ -740,8 +764,8 @@ class ConditionGroup implements ConditionGroupInterface
     
     /**
      * 
-     * @param MetaAttributeInterface|string $attributeOrAlias
-     * @return ConditionGroupInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionForAttributeIsNull()
      */
     public function addConditionForAttributeIsNull($attributeOrAlias) : ConditionGroupInterface
     {
@@ -755,8 +779,8 @@ class ConditionGroup implements ConditionGroupInterface
     
     /**
      * 
-     * @param MetaAttributeInterface|string $attributeOrAlias
-     * @return ConditionGroupInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionForAttributeIsNotNull()
      */
     public function addConditionForAttributeIsNotNull($attributeOrAlias) : ConditionGroupInterface
     {

@@ -189,13 +189,13 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
         if ($this->getAttribute()->isRelation()) {
             // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-            $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
+            $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
             // If the column we would need is not there and it's the label column (which is very probable), it might just be named differently
             // Many DataSheets include relation__LABEL columns but may not inlcude a column with the alias of the label attribute. It's worth
             // trying this trick to prevent additional queries to the data source just to find the text for the combo value!
             if (! $data_sheet->getColumns()->getByExpression($text_column_expr) && $this->getTextColumn()->getAttribute()->isLabelForObject() === true) {
                 // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-                $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), MetaAttributeInterface::OBJECT_LABEL_ALIAS);
+                $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), MetaAttributeInterface::OBJECT_LABEL_ALIAS);
             }
         } elseif ($this->getMetaObject()->isExactly($this->getOptionsObject())) {
             $text_column_expr = $this->getTextColumn()->getExpression()->toString();
@@ -383,7 +383,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                 // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
                 if ($this->getAttribute()->isRelation()) {
                     // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-                    $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
+                    $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
                     // When the text for a combo comes from another data source, reading it in advance
                     // might have a serious performance impact. Since adding the text column to the prefill
                     // is generally optional (see above), it is a good idea to check, if the text column
@@ -413,7 +413,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
             // to be aggregated!
             if ($this->isBoundToAttribute() && $relPath = $this->findRelationPathFromObject($sheetObj)) {
                 $isRevRel = $relPath->containsReverseRelations();
-                $keyPrefillAlias = RelationPath::relationPathAdd($relPath->toString(), $this->getAttributeAlias());
+                $keyPrefillAlias = RelationPath::join($relPath->toString(), $this->getAttributeAlias());
                 if ($isRevRel) {
                     $keyPrefillAlias = DataAggregation::addAggregatorToAlias(
                         $keyPrefillAlias,
@@ -425,7 +425,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                 }
                 
                 if ($this->isRelation()) {
-                    $textPrefillAlias = RelationPath::relationPathAdd(DataAggregation::stripAggregator($keyPrefillAlias), $this->getTextAttributeAlias());
+                    $textPrefillAlias = RelationPath::join(DataAggregation::stripAggregator($keyPrefillAlias), $this->getTextAttributeAlias());
                     if ($isRevRel) {
                         $textPrefillAlias = DataAggregation::addAggregatorToAlias(
                             $textPrefillAlias,

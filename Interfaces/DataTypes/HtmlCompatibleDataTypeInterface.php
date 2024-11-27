@@ -1,6 +1,6 @@
 <?php
 
-namespace exface\Core\DataTypes\Interfaces;
+namespace exface\Core\Interfaces\DataTypes;
 
 /**
  * Data types with this interface can be converted to HTML

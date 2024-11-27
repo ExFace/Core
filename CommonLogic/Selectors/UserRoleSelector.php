@@ -47,4 +47,26 @@ class UserRoleSelector extends AbstractSelector implements UserRoleSelectorInter
     {
         return 'User role';
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\UserRoleSelectorInterface::isGlobalRoleAuthenticated()
+     */
+    public function isGlobalRoleAuthenticated() : bool
+    {
+        $str = $this->__toString();
+        return $str === self::AUTHENTICATED_USER_ROLE_ALIAS || $str === self::AUTHENTICATED_USER_ROLE_UID;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\UserRoleSelectorInterface::isGlobalRoleAnonymous()
+     */
+    public function isGlobalRoleAnonymous() : bool
+    {
+        $str = $this->__toString();
+        return $str === self::ANONYMOUS_USER_ROLE_ALIAS || $str === self::ANONYMOUS_USER_ROLE_UID;
+    }
 }

@@ -70,6 +70,10 @@ use exface\Core\Interfaces\Widgets\iHaveValue;
  */
 class RangeFilter extends Filter
 {
+    const VALUE_FROM = '~value_from';
+
+    const VALUE_TO = '~value_to';
+    
     private $comparatorFrom = ComparatorDataType::GREATER_THAN_OR_EQUALS;
     
     private $comparatorTo = ComparatorDataType::LESS_THAN_OR_EQUALS;
