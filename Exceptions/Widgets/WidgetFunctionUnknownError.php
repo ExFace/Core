@@ -5,7 +5,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 
 /**
- * Exception thrown if trying to set a widget property, that does not exist.
+ * Exception thrown if trying to call a widget function, that does not exist.
  *
  * @author Andrej Kabachnik
  *        
