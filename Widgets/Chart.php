@@ -37,7 +37,7 @@ use exface\Core\Interfaces\Widgets\iCanAutoloadData;
  * Chart series as well as axis legends are extracted for columns in that data.
  * 
  * ## Life References
- *
+ * 
  *  - `~legend_active`: All currently `enabled` elements in the chart legend.
  *  - `~legend_disabled`: All currently `disabled` elements in the chart legend.
  * 
