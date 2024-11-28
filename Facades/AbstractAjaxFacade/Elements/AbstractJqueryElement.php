@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Exceptions\Widgets\WidgetFunctionUnknownError;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -15,7 +16,6 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
-use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\DataTypes\ByteSizeDataType;
 
@@ -1071,7 +1071,7 @@ JS;
             case $functionName === AbstractWidget::FUNCTION_NONE:
                 return '';
         }
-        throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
+        throw new WidgetFunctionUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
     }
     
     /**
