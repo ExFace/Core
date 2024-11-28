@@ -38,8 +38,13 @@ use exface\Core\Interfaces\Widgets\iCanAutoloadData;
  * 
  * ## Life References
  * 
- *  - `~legend_active`: All currently `enabled` elements in the chart legend.
- *  - `~legend_disabled`: All currently `disabled` elements in the chart legend.
+ * You can ask this widget for the current selection status of the chart legend, by using
+ * the following reference tokens:
+ * 
+ *  - `~legend_active`: Get all currently `enabled` elements in the chart legend.
+ *  - `~legend_disabled`: Get all currently `disabled` elements in the chart legend.
+ * 
+ * For example:
  * 
  * ```
  * 
