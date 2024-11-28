@@ -194,16 +194,27 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     
     /**
      * Returns the object, this attribute was inherited from.
-     * 
-     * If the attribute was not inherited this returns it's regular object (same as get_object()).
      *
      * If the attribute was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
      * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an
      * attribute of OBJECT2 will return OBJECT1, while doing so for OBJECT1 will return the base object.
+     * 
+     * If you need the original object (the one where the relation was actually defined), use
+     * `->getInheritedOriginalAttribute()->getObject()` instead.
      *
-     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     * @return MetaObjectInterface|null
      */
-    public function getObjectInheritedFrom();
+    public function getObjectInheritedFrom() : ?MetaObjectInterface;
+
+    /**
+     * Returns the source attribute, where this one is originated from if it was inherited.
+     * 
+     * If the was inherited multiple times (because its object inherited it from one, that inherited it from another), this will 
+     * return the very first definition - i.e. the one, that was not inherited by its object.
+     * 
+     * @return MetaAttributeInterface|null
+     */
+    public function getInheritedOriginalAttribute() : ?MetaAttributeInterface;
     
     /**
      * Returns a copy of the custom UXON configuration for the attribute's data type.
@@ -300,25 +311,21 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function setShortDescription($value);
     
     public function getHint();
-    
-    /**
-     * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
-     *
-     * @return string
-     */
-    public function getInheritedFromObjectId();
-    
-    /**
-     *
-     * @param string $value
-     */
-    public function setInheritedFromObjectId($value);
+
     /**
      * Returns TRUE if this Relation was inherited from a parent object
      *
      * @return boolean
      */
     public function isInherited();
+
+    /**
+     * Returns a copy of this attribute, built for a different object - one, that inherits from the original object
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $newObject
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     */
+    public function withExtendedObject(MetaObjectInterface $newObject) : MetaAttributeInterface;
     
     /**
      *

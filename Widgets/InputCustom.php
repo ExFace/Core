@@ -109,6 +109,8 @@ class InputCustom extends Input implements CustomWidgetInterface
     private $scriptVars = [];
     
     private $scriptVarsPlaceholders = [];
+
+    private $resizeScript = null;
     
     /**
      *
@@ -606,6 +608,33 @@ class InputCustom extends Input implements CustomWidgetInterface
     public function setScriptToValidateInput(string $value) : InputCustom
     {
         $this->validatorScript = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getScriptToResize() : ?string
+    {
+        if ($this->validatorScript !== null) {
+            return StringDataType::replacePlaceholders($this->validatorScript, $this->getPlaceholders());
+        }
+        return $this->resizeScript;
+    }
+    
+    /**
+     * Facade script to resize the control to fit the current parent
+     * 
+     * @uxon-property script_to_resize
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return InputCustom
+     */
+    public function setScriptToResize(string $value) : InputCustom
+    {
+        $this->resizeScript = $value;
         return $this;
     }
 }
