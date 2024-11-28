@@ -397,15 +397,6 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     public function getParentObjects(int $depth = null) : array;
     
     /**
-     * Returns all objects, that inherit from the current one as an array.
-     * This includes distant relatives, that inherit
-     * from other objects, inheriting from the current one.
-     *
-     * @return MetaObjectInterface[]
-     */
-    public function getInheritingObjects();
-    
-    /**
      *
      * @return EntityListInterface
      */

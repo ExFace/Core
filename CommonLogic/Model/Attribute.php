@@ -31,6 +31,8 @@ class Attribute implements MetaAttributeInterface
 
     private $inherited_from_object_id = null;
 
+    private $inheritedOriginalAttribute = null;
+
     private $alias;
 
     private $name;
@@ -466,6 +468,16 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getInheritedOriginalAttribute()
+     */
+    public function getInheritedOriginalAttribute() : ?MetaAttributeInterface
+    {
+        return $this->inheritedOriginalAttribute;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::withExtendedObject()
      */
     public function withExtendedObject(MetaObjectInterface $newObject) : MetaAttributeInterface
@@ -480,6 +492,9 @@ class Attribute implements MetaAttributeInterface
             
         // Save the object, we are inheriting from in the attribute
         $clone->inherited_from_object_id = $this->getObject()->getId();
+        // Save the very first attribute, that is being inherited - in case the attribute is inherited from object
+        // to object multiple times
+        $clone->inheritedOriginalAttribute = $this->inheritedOriginalAttribute ?? $this;
         
         // IDEA Is it a good idea to set the object of the inheridted attribute to the inheriting object? Would it be
         // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
