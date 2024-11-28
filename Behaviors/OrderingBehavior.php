@@ -614,6 +614,17 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
+     * @deprecated use parent_aliases instead
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $value
+     * @return \exface\Core\Behaviors\OrderingBehavior
+     */
+    protected function setIndexingBoundaryAttributes(UxonObject $value) : OrderingBehavior
+    {
+        return $this->setParentAliases($value);
+    }
+
+    /**
      *
      * @return string
      */
@@ -636,5 +647,15 @@ class OrderingBehavior extends AbstractBehavior
     {
         $this->indexAlias = $value;
         return $this;
+    }
+#
+    /**
+     * @deprecated  use index_alias instead
+     * @param string $alias
+     * @return \exface\Core\Behaviors\OrderingBehavior
+     */
+    protected function setOrderIndexAttribute(string $alias) : OrderingBehavior
+    {
+        return $this->setIndexAlias($alias);
     }
 }
