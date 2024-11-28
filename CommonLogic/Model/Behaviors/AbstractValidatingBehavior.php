@@ -50,6 +50,8 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         self::CONTEXT_ON_ANY => null
     );
 
+    private bool $inProgress = false;
+    
     /**
      * Assign a UXON definition to a specific event context. 
      * 
@@ -100,9 +102,10 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      */
     public function handleOnChange(DataSheetEventInterface $event) : void
     {
-        if ($this->isDisabled()) {
+        if ($this->isDisabled() || $this->inProgress) {
             return;
         }
+        $this->inProgress = true;
 
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->addLine('Loading input data...');
@@ -129,6 +132,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
 
         if (! $changedDataSheet->getMetaObject()->isExactly($this->getObject())) {
             $logbook->addLine('Wrong MetaObject. Moving on...');
+            $this->inProgress = false;
             return;
         }
         
@@ -136,6 +140,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $logbook->addIndent(1);
         if(!$uxon = $this->getRelevantUxons($onUpdate, $logbook)) {
             $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
+            $this->inProgress = false;
             return;
         }
         $logbook->addIndent(-1);
@@ -144,8 +149,6 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         
         // Perform data checks for each validation rule.
         $error = null;
-        $context = $event::class;
-        
         $logbook->addLine('Processing UXON definitions per context...');
         $logbook->addIndent(1);
         foreach ($uxon as $context => $dataCheckUxon) {
@@ -177,6 +180,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             $this->processValidationResult($error, $logbook);
         }
 
+        $this->inProgress = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
     }
 
