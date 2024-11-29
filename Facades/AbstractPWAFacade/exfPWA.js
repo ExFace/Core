@@ -191,29 +191,98 @@ self.addEventListener('sync', function(event) {
 	};
 
 	/**
-	 * Pure state container - only holds flags and browser state
+	 * Pure state container for network status management
+	 * Handles the core network state and provides basic state operations
+	 * This object maintains the single source of truth for network state
 	 * @private
 	 */
 	var _oNetStat = {
-		_bForcedOffline: false,
-		_bAutoOffline: false,
-		_bSlowNetwork: false,
+		// Internal state flags
+		_bForcedOffline: false,  // Manually forced offline mode
+		_bAutoOffline: false,    // Automatic offline mode based on conditions
+		_bSlowNetwork: false,    // Network speed status indicator
 
 		/**
-		* Returns the browser's native online/offline state
-		* Falls back to true if navigator.onLine is not supported
-		* 
-		* @private
-		* @returns {boolean} True if browser reports online, false otherwise
-		*/
+		 * Returns the browser's native online/offline state
+		 * Falls back to true if navigator.onLine is not supported
+		 * @private
+		 * @returns {boolean} True if browser reports online, false otherwise
+		 */
 		isBrowserOnline: function () {
 			return navigator.onLine !== undefined ? navigator.onLine : true;
 		},
 
+		// /**
+		//  * Core state update logic - handles state transitions and tracks changes
+		//  * @private
+		//  * @param {boolean} forcedOffline - Force offline mode flag
+		//  * @param {boolean} autoOffline - Auto offline mode flag
+		//  * @param {boolean} slowNetwork - Slow network indicator
+		//  * @returns {Object} Object containing state changes if any occurred
+		//  */
+		// _updateState: function (forcedOffline, autoOffline, slowNetwork) {
+		// 	const changes = {};
+
+		// 	// Track changes in forced offline state
+		// 	if (forcedOffline !== this._bForcedOffline) {
+		// 		changes.forcedOffline = {
+		// 			from: this._bForcedOffline,
+		// 			to: forcedOffline
+		// 		};
+		// 	}
+
+		// 	// Track changes in auto offline state
+		// 	if (autoOffline !== this._bAutoOffline) {
+		// 		changes.autoOffline = {
+		// 			from: this._bAutoOffline,
+		// 			to: autoOffline
+		// 		};
+		// 	}
+
+		// 	// Track changes in network speed state
+		// 	if (slowNetwork !== this._bSlowNetwork) {
+		// 		changes.slowNetwork = {
+		// 			from: this._bSlowNetwork,
+		// 			to: slowNetwork
+		// 		};
+		// 	}
+
+		// 	// Update internal state flags
+		// 	this._bForcedOffline = forcedOffline || false;
+		// 	this._bAutoOffline = autoOffline || false;
+		// 	this._bSlowNetwork = slowNetwork || false;
+
+		// 	return changes;
+		// },
+
 		/**
-		 * Converts the current state into a serializable object for storage
-		 * Includes all state flags and a timestamp
+		 * Core state update logic 
+		 * Simplified version - just updates state flags and returns boolean if any change occurred
 		 * 
+		 * @private
+		 * @param {boolean} forcedOffline - Force offline mode flag
+		 * @param {boolean} autoOffline - Auto offline mode flag
+		 * @param {boolean} slowNetwork - Slow network indicator
+		 * @returns {boolean} True if any state changed, false otherwise
+		 */
+		_updateState: function (forcedOffline, autoOffline, slowNetwork) {
+			// Check if any state will change
+			const hasChanges = (
+				forcedOffline !== this._bForcedOffline ||
+				autoOffline !== this._bAutoOffline ||
+				slowNetwork !== this._bSlowNetwork
+			);
+
+			// Update internal state flags
+			this._bForcedOffline = forcedOffline || false;
+			this._bAutoOffline = autoOffline || false;
+			this._bSlowNetwork = slowNetwork || false;
+
+			return hasChanges;
+		},
+
+		/**
+		 * Serializes the current state for storage
 		 * @returns {Object} Serialized state object ready for storage
 		 */
 		serialize: function () {
@@ -227,8 +296,6 @@ self.addEventListener('sync', function(event) {
 
 		/**
 		 * Restores state from a previously serialized object
-		 * Updates all internal flags to match stored state
-		 * 
 		 * @param {Object} storedState - Previously serialized state object
 		 * @returns {Object} Returns this for method chaining
 		 */
@@ -243,10 +310,10 @@ self.addEventListener('sync', function(event) {
 
 		/**
 		 * Get human readable state description
-		 * @returns {string}
+		 * @returns {string} Current state as a readable string
 		 */
 		toString: function () {
-			if (! this.isBrowserOnline()) return "Offline";
+			if (!this.isBrowserOnline()) return "Offline";
 			if (this._bForcedOffline) return "Offline, Forced";
 			if (this._bAutoOffline && this._bSlowNetwork) return "Offline, Low Speed";
 			return "Online";
@@ -254,30 +321,42 @@ self.addEventListener('sync', function(event) {
 
 		/**
 		 * Check if application should be online
-		 * @returns {boolean}
+		 * @returns {boolean} True if the application should be online
 		 */
 		isOnline: function () {
 			return !this.isOfflineVirtually() && this.isBrowserOnline();
 		},
 
 		/**
-			* Check if app is virtually offline (forced or auto-offline due to slow network)
-			* @returns {boolean}
-			*/
+		 * Check if app is virtually offline (forced or auto-offline due to slow network)
+		 * @returns {boolean} True if the app is virtually offline
+		 */
 		isOfflineVirtually: function () {
 			return this._bForcedOffline ||
 				(this._bAutoOffline && this._bSlowNetwork);
 		},
 
-		isOfflineForced: function() {
+		/**
+		 * Check if offline mode is manually forced
+		 * @returns {boolean} True if offline mode is forced
+		 */
+		isOfflineForced: function () {
 			return this._bForcedOffline;
 		},
 
+		/**
+		 * Check if network is considered slow
+		 * @returns {boolean} True if network is slow
+		 */
 		isNetworkSlow() {
 			return this._bSlowNetwork;
 		},
 
-		hasAutoffline: function() {
+		/**
+		 * Check if auto-offline feature is enabled
+		 * @returns {boolean} True if auto-offline is enabled
+		 */
+		hasAutoffline: function () {
 			return this._bAutoOffline;
 		}
 	};
@@ -292,104 +371,219 @@ self.addEventListener('sync', function(event) {
 		 * Note: May have higher IndexedDB write frequency
 		 */
 		network: {
+			// Flag to prevent concurrent state updates
+			_pendingStateUpdate: false,
+
 			/**
-			 * Retrieves current network state
-			 * 
-			 * @returns {Promise<Object>} Promise resolving to state object
-			 */
-			checkState: async function () {
-				return _connectionTable
-					.orderBy('time')
-					.last()
-					.then(function (lastRecord) {
-						if (lastRecord?.state) {
-							_oNetStat.deserialize(lastRecord.state);
-						}
-						return Promise.resolve(_oNetStat);
-					})
-					.catch(function (error) {
-						console.warn('Failed to get network status:', error);
-						return Promise.resolve(_oNetStat);
-					});
+			* Handles toggling of forced offline state
+			* Preserves other state flags while updating forced offline status
+			* 
+			* @param {boolean} newState - The new forced offline state to set
+			* @returns {Promise} Resolves when state is updated
+			*/
+			handleForceOfflineToggle: async function (newState) {
+				try {
+					const currentState = this.getState();
+					await this.setState(
+						newState,                    // new forced offline state
+						currentState._bAutoOffline,  // preserve current auto offline state
+						currentState._bSlowNetwork   // preserve current network speed state
+					);
+				} catch (error) {
+					console.error('Error toggling force offline:', error);
+					throw error;
+				}
 			},
 
 			/**
-			 * Returns the last retrieved network state
-			 * 
-			 * @returns {object}
+			 * Initialize and manage polling for poor network conditions
+			 * Checks network state every 5 seconds to detect slow connections
+			 */
+			initPoorNetworkPoller: function () {
+				if (this._networkPoller) {
+					clearInterval(this._networkPoller);
+				}
+
+				this._networkPoller = setInterval(async () => {
+					try {
+						const state = await this.getState();
+
+						// Stop polling if forced offline
+						if (state._bForcedOffline) {
+							clearInterval(this._networkPoller);
+							return;
+						}
+
+						// Check if network is slow
+						const isNetworkSlow = await this.checkNetworkSlow();
+
+						// Switch to fast poller if auto-offline is enabled and network is slow
+						if (isNetworkSlow && state._bAutoOffline) {
+							console.debug('Switching to fast poller due to slow network');
+							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
+							clearInterval(this._networkPoller);
+							this.initFastNetworkPoller();
+						}
+					} catch (error) {
+						console.error('Error in poor network poller:', error);
+					}
+				}, 5000); // Check every 5 seconds
+			},
+
+			/**
+			 * Initialize and manage polling for fast network recovery
+			 * Monitors network speed more frequently when in auto-offline mode
+			 */
+			initFastNetworkPoller: function () {
+				if (this._networkPoller) {
+					clearInterval(this._networkPoller);
+				}
+
+				this._networkPoller = setInterval(async () => {
+					try {
+						const state = await this.getState();
+
+						// Stop polling if forced offline
+						if (state._bForcedOffline) {
+							clearInterval(this._networkPoller);
+							return;
+						}
+
+						const isNetworkSlow = await this.checkNetworkSlow();
+
+						// Switch back to poor network poller if conditions improve
+						if (!isNetworkSlow || !state._bAutoOffline) {
+							console.debug('Switching back to poor network poller');
+							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
+							clearInterval(this._networkPoller);
+							this.initPoorNetworkPoller();
+						} else {
+							// Network stil slow ve auto-offline is true, update state
+							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
+						}
+					} catch (error) {
+						console.error('Error in fast network poller:', error);
+					}
+				}, 5000);
+			},
+
+			/**
+   * Retrieves and initializes state from persistent storage
+   * @returns {Promise<Object>} Promise resolving to current state
+   */
+			checkState: async function () {
+				try {
+					// Get latest state record from IndexedDB
+					const lastRecord = await _connectionTable
+						.orderBy('time')
+						.last();
+
+					// Restore state if record exists
+					if (lastRecord?.state) {
+						_oNetStat.deserialize(lastRecord.state);
+					}
+					return Promise.resolve(_oNetStat);
+				} catch (error) {
+					console.warn('Failed to get network status:', error);
+					return Promise.resolve(_oNetStat);
+				}
+			},
+
+			/**
+			 * Returns the current network state
+			 * @returns {Object} Current state object
 			 */
 			getState: function () {
 				return _oNetStat;
 			},
-			
+
+
+			// 		/**
+			// * Updates network state and persists changes to storage
+			// * Handles state transitions and triggers appropriate events
+			// * @param {boolean} forcedOffline - Force offline mode flag
+			// * @param {boolean} autoOffline - Auto offline mode flag
+			// * @param {boolean} slowNetwork - Slow network indicator
+			// * @returns {Promise} Resolves when state is updated and saved
+			// */
+			// 		setState: async function (forcedOffline, autoOffline, slowNetwork) {
+			// 			// Prevent concurrent updates
+			// 			if (this._pendingStateUpdate) {
+			// 				return Promise.resolve();
+			// 			}
+
+			// 			this._pendingStateUpdate = true;
+
+			// 			try {
+			// 				// Update state and get changes through core state container
+			// 				const changes = _oNetStat._updateState(forcedOffline, autoOffline, slowNetwork);
+
+			// 				// If there were changes, trigger event and persist to storage
+			// 				if (Object.keys(changes).length > 0) {
+			// 					// Notify listeners about state changes
+			// 					$(document).trigger('networkchanged', {
+			// 						currentState: _oNetStat,
+			// 						changes: changes
+			// 					});
+
+			// 					// Persist updated state to IndexedDB
+			// 					await _connectionTable.put({
+			// 						time: _date.now(),
+			// 						state: _oNetStat.serialize()
+			// 					});
+			// 				}
+
+			// 				this._pendingStateUpdate = false;
+			// 				return Promise.resolve();
+			// 			} catch (error) {
+			// 				this._pendingStateUpdate = false;
+			// 				console.error('Error updating network state:', error);
+			// 				return Promise.reject(error);
+			// 			}
+			// 		},
 
 			/**
-			 * Updates network state and persists it to IndexedDB
-			 * 
-			 * @param {boolean} bForcedOffline - Force offline mode flag 
-			 * @param {boolean} bAutoOffline - Auto offline mode flag
-			 * @param {boolean} bSlowNetwork - Slow network indicator
-			 * @returns {Promise} Promise that resolves when state is saved
-			 */
-			setState: async function (bForcedOffline, bAutoOffline, bSlowNetwork) {
-				// If there's already a pending update, return a resolved promise
+		 * Updates network state and triggers network changed event if needed
+		 * Simplified version - removes change tracking complexity
+		 * 
+		 * @param {boolean} forcedOffline - Force offline mode flag
+		 * @param {boolean} autoOffline - Auto offline mode flag
+		 * @param {boolean} slowNetwork - Slow network indicator
+		 * @returns {Promise} Resolves when state is updated
+		 */
+			setState: async function (forcedOffline, autoOffline, slowNetwork) {
+				// Prevent concurrent updates
 				if (this._pendingStateUpdate) {
 					return Promise.resolve();
 				}
 
 				this._pendingStateUpdate = true;
 
-				return new Promise((resolve, reject) => {
-					var oChanges = {};
-					if (bForcedOffline !== _oNetStat._bForcedOffline) {
-						oChanges.forcedOffline = bForcedOffline;
-					} 
-					if (bAutoOffline !== _oNetStat._bAutoOffline) {
-						oChanges.autoOffline = bAutoOffline;
-					} 
-					if (bSlowNetwork !== _oNetStat._bSlowNetwork) {
-						oChanges.slowNetwork = bSlowNetwork;
-					}
-				
-					try {
-						
-						// Update _oNetStat directly
-						_oNetStat._bForcedOffline = bForcedOffline || false;
-						_oNetStat._bAutoOffline = bAutoOffline || false;
-						_oNetStat._bSlowNetwork = bSlowNetwork || false;
+				try {
+					// Update state and check if anything changed
+					const hasChanges = _oNetStat._updateState(forcedOffline, autoOffline, slowNetwork);
 
-						const newState = {
+					// If there were changes, trigger event
+					if (hasChanges) {
+						// Notify listeners about state changes
+						$(document).trigger('networkchanged', {
+							currentState: _oNetStat,
+						});
+
+						// Persist updated state
+						await _connectionTable.put({
 							time: _date.now(),
 							state: _oNetStat.serialize()
-						};
-
-						// Save to DB and resolve/reject the promise accordingly
-						_connectionTable.put(newState)
-							.then(() => {
-								// Trigger event if there were any changes
-								//if (bChangesFound) {
-									if (Object.keys(oChanges).length > 0) {
-									$(document).trigger('networkchanged', {
-										currentState: _oNetStat,
-										//changes: oChanges // TODO pass the oChanges here to allow listeners to find out WHAT has changed!
-										changes: oChanges
-									});
-								}
-								this._pendingStateUpdate = false;
-								resolve();
-							})
-							.catch(error => {
-								console.error('Failed to save network state:', error);
-								this._pendingStateUpdate = false;
-								reject(error);
-							});
-
-					} catch (error) {
-						console.error('Failed to update network state:', error);
-						this._pendingStateUpdate = false;
-						reject(error);
+						});
 					}
-				});
+
+					this._pendingStateUpdate = false;
+					return Promise.resolve();
+				} catch (error) {
+					this._pendingStateUpdate = false;
+					console.error('Error updating network state:', error);
+					return Promise.reject(error);
+				}
 			},
 
 			/**
@@ -447,33 +641,77 @@ self.addEventListener('sync', function(event) {
 			checkNetworkSlow: async function () {
 				var bSlow;
 				// Check browser API first
-				if (navigator?.connection?.effectiveType) {
+				if (navigator?.connection) {
 					bSlow = ['2g', 'slow-2g'].includes(navigator.connection.effectiveType) ||
-						navigator.connection.downlink === 0;
+						(navigator.connection.downlink > 0 && navigator.connection.downlink <= 0.5); // 0.5 Mbps threshold
+
+					if (bSlow) {
+						console.debug('Network is slow based on browser API:',
+							{ effectiveType: navigator.connection.effectiveType, downlink: navigator.connection.downlink });
+						return bSlow;
+					}
 				}
 
-				if (bSlow !== undefined) {
-					_oNetStat._bSlowNetwork = bSlow;
-					return bSlow;
-				}
-
-				// Fallback to measurements
+				// Check measurements if Browser API doesnt show slow network
 				try {
 					const stats = await this.getAllStats();
 					if (!stats.length) return false;
 
+					// Last 10 measurement avarage
 					const recentStats = stats.slice(-10);
 					const avgSpeed = recentStats.reduce((sum, stat) =>
 						sum + (Number(stat.speed) || 0), 0) / recentStats.length;
 
-					bSlow = avgSpeed <= 0.1;
+					bSlow = avgSpeed <= 0.5; // 0.5 Mbps threshold
+
+					console.debug('Network speed check from measurements:',
+						{ averageSpeed: avgSpeed, isSlow: bSlow, measurements: recentStats.length });
+
 				} catch (error) {
-					console.warn('Failed to check network speed:', error);
+					console.error('Failed to check network speed:', error);
 					bSlow = false;
 				}
 
-				_oNetStat._bSlowNetwork = bSlow;
 				return bSlow;
+			},
+
+			/**
+			 * Initialize network state monitoring
+			 * Listens to browser online/offline events and manages state
+			 */
+			init: function () {
+				// Listen to browser online/offline events
+				window.addEventListener('online', () => {
+					// Update internal state
+					this.checkState().then((state) => {
+						// Trigger our custom event with current state
+						$(document).trigger('networkchanged', {
+							currentState: state,
+							changes: {
+								browserOnline: {
+									from: false,
+									to: true
+								}
+							}
+						});
+					});
+				});
+
+				window.addEventListener('offline', () => {
+					// Update internal state
+					this.checkState().then((state) => {
+						// Trigger our custom event with current state
+						$(document).trigger('networkchanged', {
+							currentState: state,
+							changes: {
+								browserOnline: {
+									from: true,
+									to: false
+								}
+							}
+						});
+					});
+				});
 			}
 
 		},
@@ -1507,6 +1745,5 @@ self.addEventListener('sync', function(event) {
 
 	return _pwa;
 })));
+//
 //v1
-//v2
-//v3
