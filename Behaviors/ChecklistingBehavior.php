@@ -22,11 +22,50 @@ use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
  * `ValidatingBehavior`, that produces errors if at least one condition was matched, the `ChecklistingBehavior` merely saves
  * its findings to the data source allowing the user to deal with them separately.
  * 
+ * ## Setup
+ * 
+ * This behavior requires some setup to function:
+ * 
+ * 1. Create a new table in the app this behavior belongs to. It will serve as persistent storage for the output
+ * data this behavior generates. This table needs to fulfill the following conditions:
+ * 
+ *      - It must have a matching column for each column defined in the `rows` property of `output_data_sheet`.
+ *      - It must have a UID column of type `binary` with length `16`, represented by an attribute of type `Hexadecimal Number`.
+ *      - It must have a column that matches your `affected_uid_alias`, both in name and datatype. 
+ *      - Configure a foreign key that uses the above column as reference.
+ *      - You can find an example definition in the section `Examples`.
+ * 
+ * 2. Create a matching MetaObject that does **not** inherit from its BaseObject and has its UID properly configured.
+ * 
+ * 3. Attach a new `ChecklistingBehavior` to the MetaObject you wish to modify and configure it as needed.
+ * 
+ * 4. If properly configured, the behavior will now write its output to the table you have created whenever its conditions are met.
+ * You can now ready from that table to create useful effects, such as rendering notifications. 
+ * 
  * ## Examples
+ * 
+ * ### Output Table SQL
+ * 
+ * ```
+ * 
+ *  CREATE TABLE [dbo].[CHECKLIST] (
+ *      [UID] binary(16) NOT NULL,
+ *      [CRITICALITY] int NOT NULL,
+ *      [LABEL] nvarchar(50) NOT NULL,
+ *      [MESSAGE] nvarchar(100) NOT NULL,
+ *      [COLOR] nvarchar(20) NOT NULL,
+ *      [ICON] nvarchar(100) NOT NULL,
+ *      [AFFECTED_UID] int NOT NULL
+ *  );
+ * 
+ * ```
+ * 
+ * ### UXON Definition
  * 
  * ```
  *  {
  *      "check_on_update": [{
+ *          "affected_uid_alias": "AFFECTED_UID"
  *          "output_data_sheet": {
  *              "object_alias": "my.APP.CHECKLIST",
  *              "rows": [{
@@ -129,7 +168,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      * 
      * @uxon-property check_on_create
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
-     * @uxon-template [{"output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * @uxon-template [{"affected_uid_alias":"AFFECTED_UID", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
      * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
@@ -149,8 +188,9 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      *  - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
      * 
      * @uxon-property check_on_update
-     * * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
-     * * @uxon-template [{"output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
+     * @uxon-template [{"affected_uid_alias":"AFFECTED_UID", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * 
      * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
@@ -169,8 +209,8 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      * - `[#~new:alias#]`: Loads the value the specified alias will hold AFTER the event has been applied.
      * 
      * @uxon-property check_always
-     * * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
-     * * @uxon-template [{"output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
+     * @uxon-template [{"affected_uid_alias":"AFFECTED_UID", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
      * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
