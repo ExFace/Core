@@ -89,8 +89,6 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         return $this;
     }
 
-    
-
     /**
      * Handles any change requests for the associated data and decides whether the proposed are valid or
      * need to be rejected.
