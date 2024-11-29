@@ -35,7 +35,34 @@ use exface\Core\Interfaces\Widgets\iCanAutoloadData;
  * 
  * Every Chart contains a Data widget, that fetches data visualized by the chart.
  * Chart series as well as axis legends are extracted for columns in that data.
- *
+ * 
+ * ## Life References
+ * 
+ * You can ask this widget for the current selection status of the chart legend, by using
+ * the following reference tokens:
+ * 
+ *  - `~legend_active`: Get all currently `enabled` elements in the chart legend.
+ *  - `~legend_disabled`: Get all currently `disabled` elements in the chart legend.
+ * 
+ * For example:
+ * 
+ * ```
+ * 
+ *  "widgets" : [
+ *      {
+ *          "widget_type": "Chart",
+ *          "id": "my_id",
+ *          ...
+ *      },
+ *      {
+ *          "widget_type": "Display",
+ *          "value": "=my_id!~legend_active",
+ *          ...
+ *      }
+ *  ]
+ * 
+ * ```
+ * 
  * @author Andrej Kabachnik
  *        
  */
