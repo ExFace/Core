@@ -27,7 +27,18 @@ class DataCheckWithOutputData extends DataCheck
         try {
             parent::check($sheet);
         } catch (DataCheckFailedError $error) {
-            $outputSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->outputDataSheetUxon);
+            try {
+                $outputSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->outputDataSheetUxon);
+            } catch (\Throwable $e) {
+                throw new DataCheckRuntimeError(
+                    $sheet,
+                    'Cannot generate output datasheet: Data check has missing or invalid UXON property "output_data_sheet"!',
+                    null,
+                    $e,
+                    $this,
+                    $error->getBadData());
+            }
+            
             $rowTemplate = (array)$outputSheet->getRow();
             $outputSheet->removeRows();
             
