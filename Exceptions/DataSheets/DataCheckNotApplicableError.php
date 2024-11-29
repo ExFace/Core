@@ -7,7 +7,7 @@ namespace exface\Core\Exceptions\DataSheets;
  * @author Andrej Kabachnik
  *
  */
-class DataCheckNotApplicableError extends DataCheckFailedError
+class DataCheckNotApplicableError extends DataCheckRuntimeError
 {
     
 }
