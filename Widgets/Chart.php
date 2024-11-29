@@ -150,6 +150,8 @@ class Chart extends AbstractWidget implements
     private $empty_text = null;
     
     private $colorScheme = null;
+    
+    private string $outputListDelimiter = ',';
 
     /**
      * 
@@ -608,10 +610,11 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     * If a valid link to another data widget is specified, it's data will be used instead of the data property of the chart itself.
+     * If a valid link to another data widget is specified, it's data will be used instead of the data property of the
+     * chart itself.
      *
-     * This is very handy if you want to visualize the data presented by a table or so. Using the link will make the chart automatically react to filters
-     * and other setting of the target data widget.
+     * This is very handy if you want to visualize the data presented by a table or so. Using the link will make the
+     * chart automatically react to filters and other setting of the target data widget.
      *
      * @uxon-property data_widget_link
      * @uxon-type uxon:$..id
@@ -701,9 +704,9 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     * A Chart can be prefilled just like all the other data widgets, but only if it has it's own data. If the data is fetched from
-     * a linked widget, the prefill does not make sense and will be ignored. But the linked widget will surely be prefilled, so the
-     * the chart will get the correct data anyway.
+     * A Chart can be prefilled just like all the other data widgets, but only if it has it's own data. If the data is
+     * fetched from a linked widget, the prefill does not make sense and will be ignored. But the linked widget will
+     * surely be prefilled, so the the chart will get the correct data anyway.
      * 
      * {@inheritdoc}
      * @see \exface\Core\Widgets\Data::prefill()
@@ -1034,5 +1037,32 @@ class Chart extends AbstractWidget implements
     {
         $this->colorScheme = $value;
         return $this;
+    }
+
+    /**
+     * Define a custom output list delimiter that will be used whenever this
+     * widget produces an array output.
+     * 
+     * The default delimiter is `,`.
+     * 
+     * @uxon-property output_list_delimiter
+     * @uxon-type string
+     * @uxon-default ,
+     * 
+     * @param string $delimiter
+     * @return $this
+     */
+    public function setOutputListDelimiter(string $delimiter) : Chart
+    {
+        $this->outputListDelimiter = $delimiter;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOutputListDelimiter() : string
+    {
+        return $this->outputListDelimiter;
     }
 }
