@@ -788,11 +788,12 @@ JS;
     {
         if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
+            $delimiter = $this->getWidget()->getOutputListDelimiter();
             
             return <<<JS
             
             (function ({$column}){
-                return {$column}.join(', ');
+                return {$column}.join('{$delimiter}');
             })(oEvent)
 JS;
 
