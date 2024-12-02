@@ -124,20 +124,6 @@ trait EChartsTrait
         "CHART_TYPE_HEATMAP" => 'heatmap',        
         "CHART_TYPE_SANKEY" => 'sankey'
     ];
-
-    /**
-     * This token can be used in UXON editors to reference the currently active (selected) elements in the legend.
-     * 
-     * @var string 
-     */
-    protected string $legendActiveToken = '~legend_active';
-
-    /**
-     * This token can be used in UXON editors to reference the currently disabled (de-selected) elements in the legend.
-     * 
-     * @var string 
-     */
-    protected string $legendDisabledToken = '~legend_disabled';
     
     /**
      * Returns the javascript to react to legend active change events
@@ -802,11 +788,12 @@ JS;
     {
         if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
+            $delimiter = $this->getWidget()->getOutputListDelimiter();
             
             return <<<JS
             
             (function ({$column}){
-                return {$column}.join(', ');
+                return {$column}.join('{$delimiter}');
             })(oEvent)
 JS;
 
