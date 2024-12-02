@@ -227,42 +227,39 @@ const swTools = {
 			}           
 			var mOfflineStrategy = options.offlineStrategy;
 			var mOnlineStrategy = options.onlineStrategy;
-
+	
 			if (mOfflineStrategy === undefined) {
 				throw {
-					message:  'No offline strategy defined for semiOffline switch!'
+					message: 'No offline strategy defined for semiOffline switch!'
 				};
 			}
 			if (mOnlineStrategy === undefined) {
 				throw {
-					message:  'No online strategy defined for semiOffline switch!'
+					message: 'No online strategy defined for semiOffline switch!'
 				};
 			}
 			
 			return async ({ event, request, ...params }) => {
-				var oNetStat;
 				var mStrategy;
 				try {
-					// Make sure to load a fresh connections status instead of doing exfPWA.isOnline(), which
-					// might use cached values and may also load asynchronously when startig up.
-					oNetStat = await exfPWA.network.getState(); 
-					mStrategy = exfPWA.network.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
+					// Get current state from IndexedDB using existing function
+					const state = await exfPWA.network.checkState();
+					
+					// Use the state methods
+					mStrategy = state.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
 				} catch (error) {
 					mStrategy = mOnlineStrategy;
 					console.warn('Error checking network status:', error);
 				}
-
+	
 				if (mStrategy.handle !== undefined) {
 					return mStrategy.handle({ event, request, ...params });
 				} else {
 					return mStrategy({ event, request, ...params });
 				}
 			};
-		} 
+		}
 	}
 }
 //
-//
-//
-//
-//
+//v1
