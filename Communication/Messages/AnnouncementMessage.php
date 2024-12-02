@@ -67,7 +67,7 @@ class AnnouncementMessage extends NotificationMessage
         $errors = [];
         $dateTime = $dateTime ?? DateTimeDataType::now();
         $visibleForUser = $this->checkVisibilityUser($user, $this->getRecipients(), $errors, $this->getRecipientsToExclude());
-        $visibleOnDate = $this->getShowFrom() <= $dateTime && ($this->getShowTo() === null || $this->getShowTo() <= $dateTime);
+        $visibleOnDate = $this->getShowFrom() <= $dateTime && ($this->getShowTo() === null || $this->getShowTo() >= $dateTime);
         return $visibleForUser && $visibleOnDate;
     }
 

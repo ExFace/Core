@@ -1293,7 +1293,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($attribute->isRelation() && $aggregator === null && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT)) {
             $rel = $this->getMainObject()->getRelation($qpart->getAlias());
             if ($rel->isReverseRelation()) {
-                return "\n" . $this->buildSqlComment('Skipping ' . $qpart->getAlias() . ' as reverse relation without a specific attribute');
+                // TODO it would be nice to output this comment here, but this will break some statements
+                // on write operations with nested sheets. The columns with subsheets for some reason try
+                // to read the reverse realtion directly, which results in this comment without any SQL
+                // and ultimately a broken SQL like this `SELECT field1, /* Skipping ... */, field3 FROM ...`.
+                // Need to debug, why these queries include the the reverse relation as an attribute in the
+                // first place. This definitely seems wrong.
+                // return "\n" . $this->buildSqlComment('Skipping ' . $qpart->getAlias() . ' as reverse relation without a specific attribute');
+                return '';
             }
         }
         
@@ -1453,7 +1460,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $customJoinOn = $rightKeyAttribute->getDataAddressProperty(self::DAP_SQL_JOIN_ON);
             if (! $reg_rel_path->isEmpty()) {
                 // attach to the related object key of the last regular relation before the reverse one
-                $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $rev_rel->getLeftKeyAttribute()->getAlias()));
+                $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::join($reg_rel_path->toString(), $rev_rel->getLeftKeyAttribute()->getAlias()));
             } else {
                 // attach to the target key in the core query if there are no regular relations preceeding the reversed one
                 $junction_attribute = $rev_rel->getLeftKeyAttribute();
@@ -1737,7 +1744,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $right_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($rightKeyAttr), $rightTableAlias);
             $join .=  $left_join_on . ' = ' . $right_join_on;
             if ($customSelectWhere = $right_obj->getDataAddressProperty(self::DAP_SQL_SELECT_WHERE)) {
-                if (stripos($customSelectWhere, 'SELECT ') === false) {
+                if (mb_stripos($customSelectWhere, 'SELECT ') === false) {
                     $join .= ' AND ' . $this->replacePlaceholdersInSqlAddress($customSelectWhere, null, ['~alias' => $rightTableAlias]);
                 } else {
                     $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
@@ -1980,6 +1987,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $customWhereAddress = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE_DATA_ADDRESS);
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
+        $ignoreEmptyValues = !$qpart->getCondition() || $qpart->getCondition()->willIgnoreEmptyValues();
         
         // If the attribute has no data address AND is a static calculation, generate a 
         // static WHERE clause that compares the result of the static expression evaluation 
@@ -1992,7 +2000,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         // Doublecheck that the filter actually can be used
-        if (! ($select || $customWhereClause) || $val === '') {
+        if (! ($select || $customWhereClause) || ($ignoreEmptyValues && $val === '')) {
             if ($val === '') {
                 $hint = ' (the value is empty)';
             } else {
@@ -2348,7 +2356,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
             if (! $prefix_rel_path->isEmpty()) {
                 // FIXME add support for related_object_special_key_alias
-                $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
+                $prefix_rel_str = RelationPath::join($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
                 $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, null, DataColumn::sanitizeColumnName($prefix_rel_str));
                 $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
             } else {
@@ -2655,6 +2663,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function replacePlaceholdersInSqlAddress($data_address, RelationPath $relation_path = null, array $static_placeholders = null, $select_from = null)
     {
+        $data_address = $this->findSqlDialect($data_address);
         $original_data_address = $data_address;
         
         if (! empty($static_placeholders)){
@@ -2678,7 +2687,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 continue;
             }
             $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
-            $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
+            $ph_attribute_alias = RelationPath::join($prefix, $ph);
             
             // If the placeholder is not part of the query already, create a new query part.
             if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {
@@ -3019,8 +3028,33 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return $addr;
         }
         
-        if (StringDataType::startsWith($addr, '@')) {
-            $stmts = preg_split('/(^|\r\n|\r|\n)@/', $addr);
+        return $this->findSqlDialect($addr);
+    }
+
+    /**
+     * Retruns the current SQL dialect from a multi-dialect statement
+     * 
+     * See class-level comment on "Multi-dialect data addresses". 
+     * 
+     * If the given SQL is a multi-dialect statement, this method will strip all non-applicable dialects and return
+     * only the SQL for the dialect of this particular query builder.
+     * 
+     * ```
+     *  |@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))
+     *  |@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')
+     *  |
+     * ```
+     * 
+     * In the above example, this method would return the first life in the `MySqlBuilder` and the second one for `MsSqlBuilder`.
+     * 
+     * @param string $sql
+     * @throws \exface\Core\Exceptions\QueryBuilderException
+     * @return string
+     */
+    protected function findSqlDialect(string $sql) : string
+    {
+        if (StringDataType::startsWith($sql, '@')) {
+            $stmts = preg_split('/(^|\R)@/', $sql);
             $tags = $this->getSqlDialects();
             // Start with the first supported tag and see if it matches any statement. If not,
             // proceed with the next tag, etc.
@@ -3033,10 +3067,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($addr, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
+            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($sql, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
         }
-        
-        return $addr;
+        return $sql;
     }
     
     /**

@@ -1059,9 +1059,15 @@ class SqlModelLoader implements ModelLoaderInterface
             WHERE ac.compound_attribute_oid = {$attrId}
             ORDER BY ac.sequence_index ASC
         ");
+        $obj = $attribute->getObject();
+        $relPath = $attribute->getRelationPath();
         foreach ($query->getResultArray() as $row) {
+            $compAttr = $obj->getAttributes()->getByAttributeId($row['attribute_oid']);
+            if (! $relPath->isEmpty()) {
+                $compAttr = $compAttr->rebase($relPath);
+            }
             $attribute->addComponentAttribute(
-                $attribute->getObject()->getAttributes()->getByAttributeId($row['attribute_oid']),
+                $compAttr,
                 $row['value_prefix'] ?? '',
                 $row['value_suffix'] ?? ''
             );

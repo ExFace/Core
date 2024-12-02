@@ -45,6 +45,21 @@ use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
  * | On**Replace**Data | On**Update**Data |
  * | On**Delete**Data | On**Update**Data |
  * 
+ * ## Underlying rules for loading data
+ * 
+ * For this behavior to work, the input sheet needs to have a UID column. If the input-UID is missing, the event
+ * cannot fetch the target data and will fail to relay the event. If this happens, a corresponding entry will be added to
+ * the tracer log.
+ * 
+ * If an input-UID is present, the behavior works as follows:
+ * - For any pre-transaction events (`OnBefore...Data`) the behavior will try to fetch the target data first from the input sheet and then, if that fails from the data source. 
+ * Fetching from the source is slow, so try to include all relation columns in the input sheet if possible.
+ * - Any target data loaded for pre-transaction events will be cached for use by the corresponding post-transaction event.
+ * - For any post-transaction events (`On...Data`) the behavior will try to fetch their target data from the cache.
+ * - For `OnCreateData` and `OnDeleteData` this is always sufficient.
+ * - For `OnUpdateData` and `OnReplaceData` the target objects may have been altered by the transaction itself, which this behavior can detect
+ * and resolve by loading additional data from source.
+ * 
  * ## Examples
  * 
  * ### Order positions change their order
@@ -65,7 +80,7 @@ use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
  * @author Andrej Kabachnik, Georg Bieger
  * 
  */
-class RelationshipBehavior 
+class ChildObjectBehavior 
     extends AbstractBehavior
     implements IAffectMetaObjectsInterface 
 {
@@ -150,7 +165,7 @@ class RelationshipBehavior
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         
         $logbook->addDataSheet('Input data', $inputSheet);
-        $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
+        $logbook->setIndentActive(1);
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
         
@@ -173,15 +188,29 @@ class RelationshipBehavior
             throw new BehaviorConfigurationError($this, "Could not relay update, because no valid event mapping was found for ".get_class($event)."!");
         }
         
+        $logbook->setIndentActive(0);
+        $logbook->addLine('Processing configured relations:');
         foreach ($this->getAffectedRelationPaths() as $relationString) {
+            $logbook->setIndentActive(0);
+            $logbook->addLine('Relation alias: "'.$relationString.'"...');
+            $logbook->setIndentActive(1);
+            
             $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent, $logbook);
-            // Event mappings marked as cache only will not be dispatched.
+            $logbook->setIndentActive(1);
+            
             if($typeOfTargetEvent === self::CACHE_ONLY_FLAG) {
+                $logbook->addLine('Event mapping for "'.$event::getEventName().'" specified "CACHE_ONLY". Event will not be relayed.');
                 continue;
             }
             
             foreach ($targetData as $targetSheet) {
-                $eventManager->dispatch(new $typeOfTargetEvent($targetSheet->copy(), $transaction));
+                if($targetSheet) {
+                    $dispatch = new $typeOfTargetEvent($targetSheet->copy(), $transaction);
+                    $logbook->addLine('Dispatching "'.$dispatch::getEventName().'" to '.$targetSheet->getMetaObject().'.');
+                    $eventManager->dispatch($dispatch);
+                } else {
+                    $logbook->addLine('Failed to dispatch: Target data is NULL!');
+                }
             }
         }
 
@@ -191,11 +220,12 @@ class RelationshipBehavior
 
     /**
      * Load the target data, either from the internal data cache or from the database.
-     * 
+     *
      * @param DataSheetInterface $inputSheet
      * @param string             $relation
      * @param string             $typeOfSourceEvent
-     * @return array
+     * @param BehaviorLogBook    $logbook
+     * @return DataSheetInterface[]
      */
     private function loadTargetData(
         DataSheetInterface $inputSheet, 
@@ -213,32 +243,44 @@ class RelationshipBehavior
         $cacheKey = str_replace('Before', '', $shortType);
 
         // Try to get Target-UID column from input sheet. 
-        $targetUidCol = $inputSheet->getColumns()->getByExpression($relation);
+        $targetUidCol = false;// $inputSheet->getColumns()->getByExpression($relation);
         
         // After (Create, Update, Replace):
         // Load sheet with old target data from cache.
         if($onAfter) {
-            if(!key_exists($cacheKey, $this->dataCache)) {
-                throw new BehaviorRuntimeError($this, 'Could not load datasheet from internal data cache! This indicates an undefined event order.');
+            $logbook->addLine('Event is post-transaction, loading data from cache with key "'.$cacheKey.'"...');
+            $logbook->setIndentActive(2);
+            if(key_exists($cacheKey, $this->dataCache)) {
+                $cachedSheet = $this->dataCache[$cacheKey];
+                unset($this->dataCache[$cacheKey]);
+                
+                $logbook->addLine('Successfully loaded target data from cache.');
+                $logbook->addDataSheet('CachedTargetData', $cachedSheet);
+            } else {
+                $logbook->addLine('No matching target data found in cache for key "'.$cacheKey.'".');
             }
-            $cachedSheet = $this->dataCache[$cacheKey];
+            
             $result[] = $cachedSheet;
             $targetsHaveChanged = $targetUidCol && $this->targetsHaveChanged(
                 previousTargets: $cachedSheet->getUidColumn()->getValues(), 
                 currentTargets: $targetUidCol->getValues()
             );
             
-            // After (Create) and After (Update, Replace - if Target-UID did NOT change):
-            // Target data did not change, return result loaded from cache. 
             if( !$targetsHaveChanged ||
                 is_a($typeOfSourceEvent, OnCreateDataEvent::class, true) ||
                 is_a($typeOfSourceEvent, OnDeleteDataEvent::class, true)) {
                 return $result;
+            } else {
+                $logbook->addLine('Loading from cache complete. Moving on to load additional data from source.');
+                $logbook->setIndentActive(1);
             }
+        } else {
+            $logbook->addLine('Event is pre-transaction, target data must be loaded from source.');
         }
+
+        $logbook->addLine('Loading target data from source...');
+        $logbook->setIndentActive(2);
         
-        // Before (Create, Update, Replace, Delete) and After (Create, Replace - if Target-UID did change): 
-        // Build datasheet with new target data.
         $relPath = RelationPathFactory::createFromString($this->getObject(), $relation);
         $targetObject = $relPath->getEndObject();
         $targetSheet = DataSheetFactory::createFromObject($targetObject);
@@ -246,9 +288,8 @@ class RelationshipBehavior
 
         // If the input sheet did not contain the Target-UID, we need to load it from the database.
         if(! $targetUidCol){
-            $logbook->addLine('Target relation column not found');
+            $logbook->addLine('Target relation column not found. Attempting to read target UIDs from data source.');
             if ($inputSheet->hasUidColumn()) {
-                $logbook->addLine('Attempting to read target UIDs from data source');
                 $relSheet = $inputSheet->copy();
                 $relSheet->getFilters()->addConditionFromColumnValues($relSheet->getUidColumn());
                 $targetUidCol = $relSheet->getColumns()->addFromExpression($relation);
@@ -256,18 +297,30 @@ class RelationshipBehavior
                 // TODO (idea) 'Before' events, but that requires a mechanism that ensures the underlying data didn't change. 
                 $relSheet->dataRead();
             } else {
-                $logbook->addLine('Cannot read target UIDs from data source because input data has no UID column');
-                return [];
+                $logbook->addLine('Cannot read target UIDs from data source because input data has no UID column.');
+                return $result;
             }
         }
 
         $targetUids = $targetUidCol->getValues();
+        $targetUidsString = '['.implode(',',$targetUids).']';
+        $logbook->addLine('Found the following target UIDs: '.$targetUidsString);
         $targetSheet->getFilters()->addConditionFromValueArray($targetSheet->getUidColumn()->getExpressionObj(), $targetUids);
         $targetSheet->dataRead();
         
-        // Save data to cache.
-        $this->dataCache[$cacheKey] = $targetSheet;
-        $result[] = $targetSheet;
+        if($targetSheet->countRows() > 0) {
+            $logbook->addLine('Successfully loaded target data for the following UIDs: '.$targetUidsString);
+            $logbook->addDataSheet('LoadedTargetData-'.$targetUidsString, $targetSheet);
+
+            // Save data to cache.
+            if(!$onAfter) {
+                $logbook->addLine('Saving loaded data to cache, with key "' . $cacheKey . '".');
+                $this->dataCache[$cacheKey] = $targetSheet;
+                $result[] = $targetSheet;
+            }
+        } else {
+            $logbook->addLine('No target data found for the following UIDs: '.$targetUidsString);
+        }
         
         return $result;
     }
@@ -303,9 +356,9 @@ class RelationshipBehavior
      * @uxon-template [""]
      *
      * @param UxonObject $arrayOfRelationPaths
-     * @return RelationshipBehavior
+     * @return ChildObjectBehavior
      */
-    public function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : RelationshipBehavior
+    public function setChangesAffectRelations(UxonObject $arrayOfRelationPaths) : ChildObjectBehavior
     {
         $this->affectedRelations = $arrayOfRelationPaths->toArray();
 
@@ -317,7 +370,7 @@ class RelationshipBehavior
             $relObj = $relPath->getEndObject();
             foreach ($relObj->getAttributes()->getSystem() as $systemAttr) {
                 // If ORDER has system attribute MODIFIED_ON, give ORDER_POS the system attibute ORDER__MODIFIED_ON
-                $this->getObject()->getAttribute(RelationPath::relationPathAdd($relationString, $systemAttr->getAlias()))->setSystem();
+                $this->getObject()->getAttribute(RelationPath::join($relationString, $systemAttr->getAlias()))->setSystem();
             }
             $this->getObject()->getRelation($relKey)->getRightObject();
 
