@@ -475,9 +475,9 @@ self.addEventListener('sync', function(event) {
 			},
 
 			/**
-   * Retrieves and initializes state from persistent storage
-   * @returns {Promise<Object>} Promise resolving to current state
-   */
+			 * Retrieves and initializes state from persistent storage
+			 * @returns {Promise<Object>} Promise resolving to current state
+			 */
 			checkState: async function () {
 				try {
 					// Get latest state record from IndexedDB
@@ -550,21 +550,22 @@ self.addEventListener('sync', function(event) {
 			// 		},
 
 			/**
-		 * Updates network state and triggers network changed event if needed
-		 * Simplified version - removes change tracking complexity
-		 * 
-		 * @param {boolean} forcedOffline - Force offline mode flag
-		 * @param {boolean} autoOffline - Auto offline mode flag
-		 * @param {boolean} slowNetwork - Slow network indicator
-		 * @returns {Promise} Resolves when state is updated
-		 */
+			 * Updates network state and triggers network changed event if needed
+			 * Simplified version - removes change tracking complexity
+			 * 
+			 * @param {boolean} forcedOffline - Force offline mode flag
+			 * @param {boolean} autoOffline - Auto offline mode flag
+			 * @param {boolean} slowNetwork - Slow network indicator
+			 * @returns {Promise} Resolves when state is updated
+			 */
 			setState: async function (forcedOffline, autoOffline, slowNetwork) {
 				// Prevent concurrent updates
-				if (this._pendingStateUpdate) {
+				oSelf = this;
+				if (oSelf._pendingStateUpdate) {
 					return Promise.resolve();
 				}
 
-				this._pendingStateUpdate = true;
+				oSelf._pendingStateUpdate = true;
 
 				try {
 					// Update state and check if anything changed
@@ -572,22 +573,23 @@ self.addEventListener('sync', function(event) {
 
 					// If there were changes, trigger event
 					if (hasChanges) {
+						// Persist updated state
+						_connectionTable.put({
+							time: _date.now(),
+							state: _oNetStat.serialize()
+						}).then(function(){
+							oSelf._pendingStateUpdate = false;
+						});
+
 						// Notify listeners about state changes
 						$(document).trigger('networkchanged', {
 							currentState: _oNetStat,
 						});
-
-						// Persist updated state
-						await _connectionTable.put({
-							time: _date.now(),
-							state: _oNetStat.serialize()
-						});
 					}
 
-					this._pendingStateUpdate = false;
 					return Promise.resolve();
 				} catch (error) {
-					this._pendingStateUpdate = false;
+					oSelf._pendingStateUpdate = false;
 					console.error('Error updating network state:', error);
 					return Promise.reject(error);
 				}
@@ -718,6 +720,21 @@ self.addEventListener('sync', function(event) {
 							}
 						});
 					});
+				});
+
+				$(window).on('networkchanged', async function (oEvent, data) {
+					try {
+						// Configure network polling based on state
+						if (_oNetStat.hasAutoffline()) {
+							if (_oNetStat.isOfflineVirtually()) {
+								exfPWA.network.initFastNetworkPoller();
+							} else {
+								exfPWA.network.initPoorNetworkPoller();
+							}
+						}
+					} catch (error) {
+						console.error('Error handling network changed event:', error);
+					}
 				});
 			}
 
@@ -1748,9 +1765,12 @@ self.addEventListener('sync', function(event) {
 
 
 	// Initialize network state on load
-	_pwa.network.checkState();
+	_pwa.network.checkState().then(function(oNetStat){
+		if (oNetStat.hasAutoffline()) {
+			exfPWA.network.initPoorNetworkPoller();
+		}
+		// TODO Do we need an else here for the fast network poller???
+	});
 
 	return _pwa;
 })));
-//
-//v1
