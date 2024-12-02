@@ -80,27 +80,26 @@ self.addEventListener('sync', function(event) {
 		var _connectionTable = _db.table('connection');
 	}
 
-		(function () {
-			_deviceIdTable
-			.toArray()
-			.then(function (data) {
-				if (data.length !== 0) {
-					_deviceId = data[0].id;
-				} else {
-					_deviceId = _pwa.createUniqueId();
-					_deviceIdTable.put({
-						id: _deviceId
-					});
-				}
-			})
-			// There were cases when dexie.open() worked, but reading threw an error, which blocked everything else.
-			// Since reading the device ID is the first operation, turn off PWA if this fails
-			.catch(function(e){
-				_indexedDbInitError = e;
-				console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
-			})
-		})();
-	}
+	(function () {
+		_deviceIdTable
+		.toArray()
+		.then(function (data) {
+			if (data.length !== 0) {
+				_deviceId = data[0].id;
+			} else {
+				_deviceId = _pwa.createUniqueId();
+				_deviceIdTable.put({
+					id: _deviceId
+				});
+			}
+		})
+		// There were cases when dexie.open() worked, but reading threw an error, which blocked everything else.
+		// Since reading the device ID is the first operation, turn off PWA if this fails
+		.catch(function(e){
+			_indexedDbInitError = e;
+			console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
+		})
+	})();
 
 	var _merge = function mergeObjects(target, ...sources) {
 		// The last argument may be an array containing excludes
