@@ -279,6 +279,12 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     {
         return $this->element_class;
     }
+
+    public function buildCssWidgetClass() : string
+    {
+        $wType = $this->getWidget()->getWidgetType();
+        return 'exfw exfw-' . $wType; 
+    }
     
     /**
      * 
