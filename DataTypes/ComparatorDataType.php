@@ -141,22 +141,26 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const NOT_IN = '![';
     
     /**
-     * @const LIST_INTERSECTS compares two lists with each other. Becomes true when there is at least one element in both lists.
+     * @const LIST_INTERSECTS compares two lists with each other. Becomes true when at least one element is present in
+     *     both lists.
      */
     const LIST_INTERSECTS = '][';
     
     /**
-     * @const LIST_NOT_INTERSECTS the inverse of `][`. Becomes true when there is no element, that is part of both lists.
+     * @const LIST_NOT_INTERSECTS the inverse of `][`. Becomes true when no element is present in both
+     *     lists.
      */
     const LIST_NOT_INTERSECTS = '!][';
     
     /**
-     * @const LIST_SUBSET compares two lists with each other. Becomes true when all elements of the left list are in the right list too.
+     * @const LIST_SUBSET compares two lists with each other. Becomes true when all elements of the left list are
+     *     present in the right list.
      */
     const LIST_SUBSET = '[[';
     
     /**
-     * @const LIST_NOT_SUBSET the inverse of `[[`. Becomes true when at least one element of the left list is NOT in the right list.
+     * @const LIST_NOT_SUBSET the inverse of `[[`. Becomes true when at least one element of the left list is NOT
+     *     present in the right list.
      */
     const LIST_NOT_SUBSET = '![[';
     
@@ -218,18 +222,10 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param string|ComparatorDataType $comparatorOrString
      * @return bool
      */
-    public static function isNegative($comparatorOrString) : bool
+    public static function isNegative(string|ComparatorDataType $comparatorOrString) : bool
     {
         $cmp = ($comparatorOrString instanceof ComparatorDataType) ? $comparatorOrString->__toString() : $comparatorOrString;
-        switch ($cmp) {
-            case self::EQUALS_NOT:
-            case self::IS_NOT:
-            case self::NOT_IN:
-            case self::LIST_NOT_INTERSECTS:
-            case self::LIST_NOT_SUBSET:
-                return true;
-        }
-        return false;
+        return $cmp[0] === '!';
     }
     
     /**
@@ -340,6 +336,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param string $side
      * @return bool
      */
+    // TODO geb 2024-12-03: Do we really need this switch case? This is actually covered by isExplicit().
     public static function isListComparator(string $comparator, string $side = null) : bool
     {
         switch ($side) {
@@ -392,5 +389,74 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
         }
         return $result;
     }
+
+    /**
+     * Check if a comparator is explicit.
+     * 
+     * A comparator is explicit if it cannot be separated into a concatenation of SCALAR comparators.
+     * In other words all LIST comparators are implicit, because they can be separated into a set
+     * of SCALAR comparators concatenated by a logical operator. 
+     * 
+     * @param string $comparator
+     * @return bool
+     */
+    public static function isExplicit(string $comparator) : bool
+    {
+        if(($len = strlen($comparator)) === 0) {
+            return true;
+        }
+        
+        if(self::isNegative($comparator)) {
+            if($len === 1) {
+                return true;
+            }
+            
+            $check = $comparator[1];
+        } else {
+            $check = $comparator[0];
+        }
+        
+        return $check !== ']' && $check !== '[';
+    }
+
+    /**
+     * Returns an explicit representation of any given comparator.
+     * 
+     * Returns an array with the following structure:
+     * - `[$operator, $comparator]`
+     * - `$operator`: The logical operator used to concatenate the sub-conditions.
+     * - `$comparator`: The actual comparison used for all sub-conditions.
+     * 
+     * @see ComparatorDataType::isExplicit()
+     * @param string $comparator
+     * @return array
+     */
+    public static function makeExplicit(string $comparator) : array
+    {
+        if(self::isExplicit($comparator)) {
+            return [EXF_LOGICAL_AND, $comparator];
+        }
+
+        if($isNegative = self::isNegative($comparator)){
+            $comparator = substr($comparator, 1);
+        }
+        
+        $scalarComparator = str_replace(['[',']'], '', $comparator);
+        /*$setComparator = self::substringBefore($comparator, $scalarComparator);
+        
+        $operator = match ($setComparator) {
+            '[', '[[', '][' => EXF_LOGICAL_OR,
+            default => EXF_LOGICAL_AND,
+        };*/
+        
+        if(empty($scalarComparator)) {
+            $scalarComparator = '==';
+        }
+        
+        if($isNegative) {
+            return [EXF_LOGICAL_AND, '!'.$scalarComparator];
+        } else {
+            return [EXF_LOGICAL_OR, $scalarComparator];
+        }
+    }
 }
-?>
