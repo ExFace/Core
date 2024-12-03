@@ -118,9 +118,12 @@ interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopie
     /**
      * Returns the UID of the object, this relation was inherited from or NULL if is a native relation
      * 
-     * If the attribute was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
-     * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an
-     * attribute of OBJECT2 will return OBJECT1, while doing so for OBJECT1 will return the base object.
+     * If the relation was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
+     * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling `getObjectInheritedFrom()` on an
+     * relation of OBJECT2 will return OBJECT1, while doing so for OBJECT1 will return the base object.
+     * 
+     * If you need the original object (the one where the relation was actually defined), use
+     * `->getInheritedOriginalRelation()->getLeftObject()` instead.
      *
      * @return MetaObjectInterface|null
      */
@@ -132,6 +135,16 @@ interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopie
      * @return bool
      */
     public function isInherited() : bool;
+
+    /**
+     * Returns the source relation, where this one is originated from if it was inherited.
+     * 
+     * If the was inherited multiple times (because its object inherited it from one, that inherited it from another), this will 
+     * return the very first definition - i.e. the one, that was not inherited by its object.
+     * 
+     * @return MetaRelationInterface|null
+     */
+    public function getInheritedOriginalRelation() : ?MetaRelationInterface;
     
     /**
      * Returns a related attribute as if it was queried via $object->getAttribute("this_relation_alias__attribute_alias").

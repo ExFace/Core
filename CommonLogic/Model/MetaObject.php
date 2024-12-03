@@ -504,14 +504,14 @@ class MetaObject implements MetaObjectInterface
         if ($parent instanceof self) {
             foreach ($parent->relations as $relSet) {
                 foreach ($relSet as $rel) {
-                    $rel_clone = $rel->withExtendedObject($this);
-                    $this->addRelation($rel_clone);
+                    $relExt = $rel->withExtendedObject($this);
+                    $this->addRelation($relExt);
                 }
             }
         } else {
             foreach ($parent->getRelations() as $rel) {
-                $rel_clone = $rel->withExtendedObject($this);
-                $this->addRelation($rel_clone);
+                $relExt = $rel->withExtendedObject($this);
+                $this->addRelation($relExt);
             }
         }
         
@@ -932,26 +932,6 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Returns all objects, that inherit from the current one as an array.
-     * This includes distant relatives, that inherit
-     * from other objects, inheriting from the current one.
-     *
-     * @return MetaObjectInterface[]
-     */
-    public function getInheritingObjects()
-    {
-        $result = array();
-        $res = $this->getModel()->getWorkbench()->model()->getModelLoader()->getDataConnection()->runSql('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->getId());
-        foreach ($res as $row) {
-            if ($obj = $this->getModel()->getObject($row['oid'])) {
-                $result[] = $obj;
-                $result = array_merge($result, $obj->getInheritingObjects());
-            }
-        }
-        return $result;
-    }
-
-    /**
      *
      * @return EntityList
      */
@@ -1239,5 +1219,26 @@ class MetaObject implements MetaObjectInterface
     {
         return '"' . $this->getName() . '" [' . $this->getAliasWithNamespace() . ']';
     }
+
+    /**
+     * @deprecated This method is highly experimental! If really required, we will need refactor it to be independent from SQL!!!
+     * 
+     * Returns all objects, that inherit from the current one as an array.
+     * This includes distant relatives, that inherit
+     * from other objects, inheriting from the current one.
+     *
+     * @return MetaObjectInterface[]
+     */
+    public function getInheritingObjects()
+    {
+        $result = array();
+        $res = $this->getModel()->getWorkbench()->model()->getModelLoader()->getDataConnection()->runSql('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->getId());
+        foreach ($res as $row) {
+            if ($obj = $this->getModel()->getObject($row['oid'])) {
+                $result[] = $obj;
+                $result = array_merge($result, $obj->getInheritingObjects());
+            }
+        }
+        return $result;
+    }
 }
-?>

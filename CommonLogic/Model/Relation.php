@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -43,7 +44,9 @@ class Relation implements MetaRelationInterface
     
     private $cardinalty = null;
 
-    private $inherited_from_object_id = null;
+    private $inheritedFromObjectUid = null;
+
+    private $inheritedOriginalRelation = null;
     
     private $leftObjectToBeDeletedWithRightObject = false;
     
@@ -265,7 +268,7 @@ class Relation implements MetaRelationInterface
     public function getObjectInheritedFrom() : ?MetaObjectInterface
     {
         if ($this->isInherited()) {
-            return $this->getModel()->getObjectById($this->inherited_from_object_id);
+            return $this->getModel()->getObjectById($this->inheritedFromObjectUid);
         }
         return null;
     }
@@ -277,7 +280,17 @@ class Relation implements MetaRelationInterface
      */
     public function isInherited() : bool
     {
-        return $this->inherited_from_object_id !== null;
+        return $this->inheritedFromObjectUid !== null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getInheritedOriginalRelation()
+     */
+    public function getInheritedOriginalRelation() : ?MetaRelationInterface
+    {
+        return $this->inheritedOriginalRelation;
     }
 
     /**
@@ -288,25 +301,53 @@ class Relation implements MetaRelationInterface
     public function getReversedRelation() : MetaRelationInterface
     {
         if ($this->isForwardRelation()) {
+            $thisModifier = $this->getAliasModifier();
+
             // If it is a regular relation, it will be a reverse one from the point of view 
             // of the related object. That is identified by the alias of the object it leads 
             // to (in our case, the current object)
-            $thisModifier = $this->getAliasModifier();
             if ($this->getCardinality()->__toString() === RelationCardinalityDataType::ONE_TO_ONE
-            && $this->getRightKeyAttribute()->isRelation() 
-            // IDEA Will this ever happen?? Isn't $thisModifier always empty for forward
-            // relations? Not sure, what exactly this branch was for...
-            && $this->getRightKeyAttribute()->getRelation()->getAlias() === $thisModifier
+                && $this->getRightKeyAttribute()->isRelation() 
+                // IDEA Will this ever happen?? Isn't $thisModifier always empty for forward
+                // relations? Not sure, what exactly this branch was for...
+                && $this->getRightKeyAttribute()->getRelation()->getAlias() === $thisModifier
             ) {
                 $reverse = $this->getRightKeyAttribute()->getRelation();
             } else {
+                // For reverse relations we as the right object of this relation for its relation
+                // with the alias of the current object. So, if we reverse the relation `ORDER` of
+                // object `ORDER_POS`, we ask the `ORDER` object (right side of the relation) for
+                // a relation alias `ORDER_POS` (alias of our current object). If there is only one
+                // matching relation, we're done, but if there are multiple, we need a modifier and
+                // in this case we use the current relation alias as that modifier.
+                $reverseAlias = $this->getLeftObject()->getAlias();
+                $reverseModifier = $thisModifier !== '' ? $thisModifier : $this->getAlias();
+
                 // It is a bit strange, that the current modifier is passed here to
                 // to the right object when getting the reverse relation. It seems
                 // more corret to pass the alias of this relation as modifier, which
                 // is done in case the modifier is empty. However, we did not dare
                 // to change this code entirely - perhaps, tha current modifier is
                 // important for some 1-to-1 relations or similar.
-                $reverse = $this->getRightObject()->getRelation($this->getLeftObject()->getAlias(), $thisModifier !== '' ? $thisModifier : $this->getAlias());
+                try {
+                    $reverse = $this->getRightObject()->getRelation($reverseAlias, $reverseModifier);
+                } catch (MetaRelationNotFoundError $e) {
+                    // If this relation was inherited from another object, the reverse relation might also
+                    // have another alias - the one of its original object. Concider the example of LIST
+                    // and LIST_POS objects, where the latter has a LIST relation. If we have an LIST_POS_EVENT
+                    // that extends from LIST (adding calendar event properties), than LIST_POS_EVENT will
+                    // have the LIST relation too. However, LIST will only have a LIST_POS relation, but not
+                    // LIST_POS_EVENT. The reverse of the LIST relation of LIST_POS_EVENT would be that LIST_POS
+                    // relation.
+                    if ($this->isInherited()) {
+                        $origRel = $this->getInheritedOriginalRelation();
+                        $reverseAlias = $origRel->getLeftObject()->getAlias();
+                        $reverseModifier = $thisModifier !== '' ? $thisModifier : $origRel->getAlias();
+                        $reverse = $this->getRightObject()->getRelation($reverseAlias, $reverseModifier);
+                    } else {
+                        throw $e;
+                    }
+                }
             }
         } elseif ($this->isReverseRelation()) {
             // If it is a reverse relation, it will be a regular one from the point of view of the related object. 
@@ -352,7 +393,16 @@ class Relation implements MetaRelationInterface
         // or REVISION[REPORT_2]__ID, this InheritedRelation::needsModifier() cannot reuse the previously
         // calculated modifier.
         $clone = clone $this;
-        $clone->inherited_from_object_id = $this->getId();
+        // Save the inheritance source. If the relation is inherited multiple times because its object 
+        // inherits from one, that already inherited the relation, than we need the very first relation 
+        // - the one, that was NOT innherited
+        $clone->inheritedOriginalRelation = $this->inheritedOriginalRelation ?? $this;
+        // Save the UID of the object that we are inheriting from. In contrast to the inheritance origin
+        // above, this is the immediate parent object. If we have an inheritance chain, this would be one
+        // "hop" back in the chain.
+        $clone->inheritedFromObjectUid = $thisObj->getId();
+        // The left object of the inherited relation is its inheriting object and the left key is the attribute
+        // of that object, that originated from the inherited attribute.
         $clone->leftObject = $newObject;
         $clone->leftKeyAttribute = $newObject->getAttribute($this->leftKeyAttribute->getAlias());
         // Self-relations (pointing from the parent to the parent) need to point from the extending object 

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\Exceptions\FileNotFoundError;
+
 /**
  * Data type for PHP file paths (file system agnostic).
  * 
@@ -38,8 +40,7 @@ class PhpFilePathDataType extends FilePathDataType
     public static function findClassInFile(string $absolute_path, int $bufferSize = 512) : ?string
     {
         if (! file_exists($absolute_path) && ! is_dir($absolute_path)) {
-            throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - file not found!');
-            return null;
+            throw new FileNotFoundError('Cannot get class from file "' . $absolute_path . '" - file not found!');
         }
         
         $fp = fopen($absolute_path, 'r');
