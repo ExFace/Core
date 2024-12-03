@@ -836,4 +836,52 @@ class Condition implements ConditionInterface
     {
         return $this->applyToAggregates;
     }
+
+    /**
+     * Check, whether this condition can be divided into sub-conditions.
+     * 
+     * @see ComparatorDataType::isExplicit()
+     * @return bool
+     */
+    public function isExplicit() : bool
+    {
+        return empty($this->getValue()) || ComparatorDataType::isExplicit($this->getComparator());
+    }
+
+    /**
+     * Divide this condition into sub-conditions that are guaranteed to be explicit.
+     * 
+     * NOTE: If this condition is already explicit, the resulting condition group will contain
+     * this condition as its only component.
+     * 
+     * @see ComparatorDataType::isExplicit()
+     * 
+     * @param bool $trimValues
+     * @return ConditionGroupInterface
+     */
+    public function makeExplicit(bool $trimValues = true) : ConditionGroupInterface
+    {
+        $rightSideValues = $this->getValue();
+        if(!is_array($rightSideValues)) {
+            $expression = $this->getExpression();
+            $delimiter = $expression->isMetaAttribute() ? $expression->getAttribute()->getValueListDelimiter() : ',';
+            $rightSideValues = explode($delimiter, $rightSideValues);
+        }
+        
+        [$operator, $comparator] = ComparatorDataType::makeExplicit($this->getComparator());
+        $conditionGroup = ConditionGroupFactory::createEmpty($this->getWorkbench(), $operator, null, $this->ignoreEmptyValues);
+        foreach ($rightSideValues as $value) {
+            if($trimValues) {
+                $value = trim($value);
+            }
+            
+            $condition = ConditionFactory::createEmpty($this->getWorkbench(), $this->ignoreEmptyValues);
+            $condition->setExpression($this->getExpression());
+            $condition->setValue($value);
+            $condition->setComparator($comparator);
+            $conditionGroup->addCondition($condition);
+        }
+        
+        return $conditionGroup;
+    }
 }
