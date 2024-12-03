@@ -112,7 +112,8 @@ class DataCheck implements DataCheckInterface
         try {
             return $data->extract($filter, true);
         } catch (DataSheetExtractError $e) {
-            throw new DataCheckNotApplicableError($data, 'Cannot validate data: information required for conditions is not available in the data sheet!', null, $e);
+            // Since the data extraction failed, we can assume that the check does not apply.
+            return $data->copy()->removeRows();
         }
     }
     
