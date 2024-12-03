@@ -845,7 +845,18 @@ class Condition implements ConditionInterface
      */
     public function isExplicit() : bool
     {
-        return empty($this->getValue()) || ComparatorDataType::isExplicit($this->getComparator());
+        if($this->isEmpty()) {
+            return true;
+        }
+        
+        $values = $this->getValue();
+        if(!is_array($values)) {
+            $expression = $this->getExpression();
+            $delimiter = $expression->isMetaAttribute() ? $expression->getAttribute()->getValueListDelimiter() : ',';
+            $values = explode($delimiter, $values);
+        }
+        
+        return count($values) <= 1 || ComparatorDataType::isExplicit($this->getComparator());
     }
 
     /**
