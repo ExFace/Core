@@ -190,9 +190,16 @@ const swTools = {
 			    // Try to get the response from the network
 				return Promise.resolve(
 					fetch(event.request.clone())
-					.then(function(response) {
-						// And store it in the cache for later
-						swTools.cache.put(event.request.clone(), response.clone());
+					.then(async function(response) {
+						try {
+							var iLength = (await event.request.clone().text()).length
+							if (iLength !== null && iLength !== undefined && iLength <= 500*1000) {
+							// And store it in the cache for later
+								swTools.cache.put(event.request.clone(), response.clone());
+							}
+						} catch (error) {
+							console.warn('Error catching POST request:', error);
+						}
 						return response;
 				    })
 					.catch(function() {
