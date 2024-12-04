@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Factories\ConditionGroupFactory;
@@ -36,12 +37,12 @@ class DataCheck implements DataCheckInterface
     private $onlyObject = null;
     
     private $applyToSubsheetsRelationPathString = null;
-    
+
     /**
-     * 
-     * @param WorkbenchInterface $workbench
-     * @param UxonObject $uxon
-     * @param MetaObjectInterface $onlyForObject
+     *
+     * @param WorkbenchInterface       $workbench
+     * @param UxonObject               $uxon
+     * @param MetaObjectInterface|null $onlyForObject
      */
     public function __construct(WorkbenchInterface $workbench, UxonObject $uxon, MetaObjectInterface $onlyForObject = null)
     {
@@ -61,12 +62,15 @@ class DataCheck implements DataCheckInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataCheckInterface::check()
      */
-    public function check(DataSheetInterface $sheet) : DataSheetInterface
+    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : DataSheetInterface
     {
         $badData = $this->findViolations($sheet);
+        
+        $errorText = $this->getErrorText($badData);
+        $logBook?->addLine('Found ' . $badData->countRows() . ' matches for check "' . $this->__toString() . '".');
+        
         if (! $badData->isEmpty()) {
-            $error = $this->getErrorText($badData);
-            throw (new DataCheckFailedError($sheet, $error, null, null, $this, $badData))->setUseExceptionMessageAsTitle(true);
+            throw (new DataCheckFailedError($sheet, $errorText, null, null, $this, $badData))->setUseExceptionMessageAsTitle(true);
         }
         return $sheet;
     }
