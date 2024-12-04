@@ -151,6 +151,10 @@ const swTools = {
 				}
 				return swTools._dexie.cache.add(entry);
 			})
+			.catch(e => {
+				console.warn('Failed to save offline cache for request', e);
+				return Promise.reject();
+			});
 		},
 		
 		/**
@@ -175,6 +179,10 @@ const swTools = {
 						return JSON.parse(oHit.response);
 					}
 				}
+				return null;
+			})
+			.catch(e => {
+				console.warn('Failed to save offline cache for request', e);
 				return null;
 			});
 		}, 
@@ -227,19 +235,27 @@ const swTools = {
 					fetch(event.request.clone())
 					.then(function(response) {
 						var oResponseClone = response.clone();
-						swTools
-						.serializeRequest(event.request.clone())
-						.then(oRequestSerialized => {
-							var sRequest = JSON.stringify(oRequestSerialized) || '';
-							var iLength = sRequest.length;
-							if (iLength !== null && iLength !== undefined && iLength <= 1*1000*1000) {
-								swTools
-								.serializeResponse(oResponseClone)
-								.then(oResponseSerialized => {
-									return swTools.cache.put(oRequestSerialized, oResponseSerialized);
-								})
-							}
-						});
+						if (event.request.headers.get('X-Offline-Strategy') === 'NetworkFirst') {
+							swTools
+							.serializeRequest(event.request.clone())
+							.then(oRequestSerialized => {
+								var sRequest = JSON.stringify(oRequestSerialized) || '';
+								var iLength = sRequest.length;
+								if (iLength !== null && iLength !== undefined && iLength <= 1*1000*1000) {
+									swTools
+									.serializeResponse(oResponseClone)
+									.then(oResponseSerialized => {
+										return swTools.cache.put(oRequestSerialized, oResponseSerialized);
+									})
+									.catch(e => {
+										console.warn('Failed to save offline cache for ' + url, e);
+									});
+								}
+							})
+							.catch(e => {
+								console.warn('Failed to save offline cache for ' + url, e);
+							});
+						}
 						return response;
 				    })
 					.catch(function() {
@@ -254,6 +270,10 @@ const swTools = {
 							} 
 							return new Response('', {status: 503, statusText: 'Service Unavailable'});
 						})
+						.catch(e => {
+							console.warn('Failed to check offline cache for ' + url, e);
+							return new Response('', {status: 503, statusText: 'Service Unavailable'});
+						});
 					})
 				);
 			}
