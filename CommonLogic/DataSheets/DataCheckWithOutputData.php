@@ -8,6 +8,7 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Functions just like a regular `DataCheck`, with the option of defining an output datasheet, that
@@ -22,11 +23,13 @@ class DataCheckWithOutputData extends DataCheck
     private ?UxonObject $outputDataSheetUxon = null;
     private ?DataSheetInterface $outputDataSheet = null;
 
-    public function check(DataSheetInterface $sheet): DataSheetInterface
+    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null): DataSheetInterface
     {
         try {
-            parent::check($sheet);
+            parent::check($sheet, $logBook);
         } catch (DataCheckFailedError $error) {
+            $logBook->addIndent(1);
+            $logBook->addLine('Generating output sheet...');
             try {
                 $outputSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->outputDataSheetUxon);
             } catch (\Throwable $e) {
@@ -46,6 +49,8 @@ class DataCheckWithOutputData extends DataCheck
             
             // No output data, throw an error with an empty sheet.
             if(!$rowTemplate) {
+                $logBook->addLine('Cannot generate output sheet: No row template found.');
+                $logBook->addIndent(-1);
                 $this->outputDataSheet = $outputSheet;
                 throw $error;
             }
@@ -72,11 +77,14 @@ class DataCheckWithOutputData extends DataCheck
             
             $uidAlias = $outputSheet->getMetaObject()->getUidAttributeAlias();
             foreach ($badData->getUidColumn()->getValues() as $affectedUid) {
+                $logBook->addLine('Adding row for affected item with UID "'.$affectedUid.'".');
                 $rowTemplate[$this->affectedUidAlias] = $affectedUid;
                 $rowTemplate[$uidAlias] = '0x'.md5(json_encode($rowTemplate));
                 $outputSheet->addRow($rowTemplate);
             }
-
+            
+            $logBook->addLine('Successfully generated output sheet with '.$outputSheet->countRows().' rows!');
+            $logBook->addIndent(-1);
             $this->outputDataSheet = $outputSheet;
             throw $error;
         }
