@@ -2201,6 +2201,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 } else {
                     $output .= "'%{$this->escapeString(mb_strtoupper($value))}%'";
                 }
+                break;
             // If the query builder cannot deal with the comparator, but the comparator can be transformed into other (atomic)
             // comparators, try building a query with the atomized version of the comparator
             case ! ComparatorDataType::isAtomic($qpart->getComparator()):
