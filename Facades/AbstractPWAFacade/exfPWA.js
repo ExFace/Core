@@ -82,23 +82,23 @@ self.addEventListener('sync', function(event) {
 
 	(function () {
 		_deviceIdTable
-		.toArray()
-		.then(function (data) {
-			if (data.length !== 0) {
-				_deviceId = data[0].id;
-			} else {
-				_deviceId = _pwa.createUniqueId();
-				_deviceIdTable.put({
-					id: _deviceId
-				});
-			}
-		})
-		// There were cases when dexie.open() worked, but reading threw an error, which blocked everything else.
-		// Since reading the device ID is the first operation, turn off PWA if this fails
-		.catch(function(e){
-			_indexedDbInitError = e;
-			console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
-		})
+			.toArray()
+			.then(function (data) {
+				if (data.length !== 0) {
+					_deviceId = data[0].id;
+				} else {
+					_deviceId = _pwa.createUniqueId();
+					_deviceIdTable.put({
+						id: _deviceId
+					});
+				}
+			})
+			// There were cases when dexie.open() worked, but reading threw an error, which blocked everything else.
+			// Since reading the device ID is the first operation, turn off PWA if this fails
+			.catch(function (e) {
+				_indexedDbInitError = e;
+				console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
+			})
 	})();
 
 	var _merge = function mergeObjects(target, ...sources) {
@@ -219,49 +219,6 @@ self.addEventListener('sync', function(event) {
 			return navigator.onLine !== undefined ? navigator.onLine : true;
 		},
 
-		// /**
-		//  * Core state update logic - handles state transitions and tracks changes
-		//  * @private
-		//  * @param {boolean} forcedOffline - Force offline mode flag
-		//  * @param {boolean} autoOffline - Auto offline mode flag
-		//  * @param {boolean} slowNetwork - Slow network indicator
-		//  * @returns {Object} Object containing state changes if any occurred
-		//  */
-		// _updateState: function (forcedOffline, autoOffline, slowNetwork) {
-		// 	const changes = {};
-
-		// 	// Track changes in forced offline state
-		// 	if (forcedOffline !== this._bForcedOffline) {
-		// 		changes.forcedOffline = {
-		// 			from: this._bForcedOffline,
-		// 			to: forcedOffline
-		// 		};
-		// 	}
-
-		// 	// Track changes in auto offline state
-		// 	if (autoOffline !== this._bAutoOffline) {
-		// 		changes.autoOffline = {
-		// 			from: this._bAutoOffline,
-		// 			to: autoOffline
-		// 		};
-		// 	}
-
-		// 	// Track changes in network speed state
-		// 	if (slowNetwork !== this._bSlowNetwork) {
-		// 		changes.slowNetwork = {
-		// 			from: this._bSlowNetwork,
-		// 			to: slowNetwork
-		// 		};
-		// 	}
-
-		// 	// Update internal state flags
-		// 	this._bForcedOffline = forcedOffline || false;
-		// 	this._bAutoOffline = autoOffline || false;
-		// 	this._bSlowNetwork = slowNetwork || false;
-
-		// 	return changes;
-		// },
-
 		/**
 		 * Core state update logic 
 		 * Simplified version - just updates state flags and returns boolean if any change occurred
@@ -378,8 +335,37 @@ self.addEventListener('sync', function(event) {
 		 * Note: May have higher IndexedDB write frequency
 		 */
 		network: {
+
 			// Flag to prevent concurrent state updates
+			/* _pendingStateUpdate is a flag and it helps in two ways:
+				1-For the Same tab :
+					Stops multiple updates happening at once
+					Manages updates from network calls
+				2- Working with multiple tabs:
+					Prevents data conflicts when multiple tabs try to update the same data
+					Keeps data in sync across tabs
+				Think of it like a "busy" sign - when one process is updating data, others must wait until it's done.
+			*/
 			_pendingStateUpdate: false,
+			// TODO: Improve network state management using IndexedDB queue
+			/*
+			Why: 
+			- Currently ignoring state updates when busy, causing data loss
+			- No sync between tabs, leading to inconsistent states
+			- State updates can be lost on browser crash/close
+
+			Possible Solution:
+			1. exfPWA.js: 
+				- Update dexie version to add 'stateUpdateQueue' table:
+					'stateUpdateQueue': '++id, timestamp, state'
+				- Remove _pendingStateUpdate flag
+				- Update setState() to use queue from DB
+				- Process updates in FIFO order from DB
+				- Add BroadcastChannel support for cross-tab sync
+
+			2. openui5.facade.js:
+				- Update network state change handlers to work with new queue system
+			*/
 
 			/**
 			* Handles toggling of forced offline state
@@ -403,95 +389,211 @@ self.addEventListener('sync', function(event) {
 			},
 
 			/**
-			 * Initialize and manage polling for poor network conditions
-			 * Checks network state every 5 seconds to detect slow connections
+			 * Initializes and manages the regular network condition monitoring system.
+			 * 
+			 * This is the default polling mechanism that runs when network conditions are normal.
+			 * It performs periodic checks of network speed and can transition to fast polling
+			 * when slow network conditions are detected.
+			 * 
+			 * Key Features:
+			 * - Runs at 5-second intervals (lower frequency to conserve resources)
+			 * - Automatically cleans up existing pollers before starting
+			 * - Respects forced offline mode
+			 * - Only performs speed checks when auto-offline is enabled
+			 * - Manages transitions between polling states
+			 * 
+			 * State Management:
+			 * - Tracks network state changes
+			 * - Updates UI when network conditions change
+			 * - Manages polling frequency transitions
+			 * 
+			 * Error Handling:
+			 * - Catches and logs all errors without crashing
+			 * - Maintains poller operation even after errors
+			 * 
+			 * @return {void}
 			 */
 			initPoorNetworkPoller: function () {
+				// Clean up any existing polling interval to prevent memory leaks
 				if (this._networkPoller) {
+					console.debug('Cleaning up existing network poller');
 					clearInterval(this._networkPoller);
 				}
 
+				// Initialize new polling interval
 				this._networkPoller = setInterval(async () => {
 					try {
+						// Get current network state
 						const state = await this.getState();
 
-						// Stop polling if forced offline
+						console.debug('Regular Network Poll:', {
+							timestamp: new Date().toISOString(),
+							currentState: {
+								forcedOffline: state._bForcedOffline,
+								autoOffline: state._bAutoOffline,
+								slowNetwork: state._bSlowNetwork
+							}
+						});
+
+						// Respect forced offline mode - stop polling if active
 						if (state._bForcedOffline) {
+							console.debug('Forced offline mode detected, suspending network polling');
 							clearInterval(this._networkPoller);
 							return;
 						}
 
-						// Check if network is slow
-						const isNetworkSlow = await this.checkNetworkSlow();
+						// Only proceed with speed check if auto-offline is enabled
+						if (state._bAutoOffline) {
+							// Perform network speed evaluation
+							const isNetworkSlow = await this.checkNetworkSlow();
 
-						// Switch to fast poller if auto-offline is enabled and network is slow
-						if (isNetworkSlow && state._bAutoOffline) {
-							console.debug('Switching to fast poller due to slow network');
-							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
-							clearInterval(this._networkPoller);
-							this.initFastNetworkPoller();
+							// Log state transition if network status changed
+							if (isNetworkSlow !== state._bSlowNetwork) {
+								console.debug('Network Status Change Detected:', {
+									previousStatus: state._bSlowNetwork ? 'SLOW' : 'FAST',
+									newStatus: isNetworkSlow ? 'SLOW' : 'FAST',
+									timestamp: new Date().toISOString()
+								});
+
+								// Update application state with new network status
+								await this.setState(
+									state._bForcedOffline,
+									state._bAutoOffline,
+									isNetworkSlow
+								);
+							}
+
+							// Switch to rapid polling if network becomes slow
+							if (isNetworkSlow) {
+								console.debug('Initiating fast polling due to slow network conditions');
+								clearInterval(this._networkPoller);
+								this.initFastNetworkPoller();
+							}
 						}
 					} catch (error) {
-						console.error('Error in poor network poller:', error);
+						console.error('Network Polling Error:', {
+							message: error.message,
+							stack: error.stack,
+							timestamp: new Date().toISOString()
+						});
 					}
-				}, 5000); // Check every 5 seconds
+				}, 5000); // 5-second interval for regular polling
 			},
 
 			/**
-			 * Initialize and manage polling for fast network recovery
-			 * Monitors network speed more frequently when in auto-offline mode
+			 * Initializes and manages the rapid network condition monitoring system.
+			 * 
+			 * This polling mechanism is activated when the network is detected as slow,
+			 * allowing for quicker detection of network condition improvements.
+			 * 
+			 * Key Features:
+			 * - Runs at 2-second intervals (higher frequency for responsiveness)
+			 * - Monitors for network improvement
+			 * - Transitions back to normal polling when conditions improve
+			 * - Maintains continuous state updates
+			 * 
+			 * State Transitions:
+			 * 1. Network Improves:
+			 *    - Updates state
+			 *    - Switches back to normal polling
+			 * 2. Network Remains Slow:
+			 *    - Maintains fast polling
+			 *    - Updates state regularly
+			 * 
+			 * Safety Features:
+			 * - Respects forced offline mode
+			 * - Handles auto-offline toggle changes
+			 * - Includes comprehensive error handling
+			 * 
+			 * @return {void}
 			 */
 			initFastNetworkPoller: function () {
+				// Clean up existing poller to prevent duplicate intervals
 				if (this._networkPoller) {
+					console.debug('Cleaning up existing fast network poller');
 					clearInterval(this._networkPoller);
 				}
 
+				// Initialize rapid polling interval
 				this._networkPoller = setInterval(async () => {
 					try {
+						// Get current state
 						const state = await this.getState();
 
-						// Stop polling if forced offline
+						console.debug('Fast Network Poll:', {
+							timestamp: new Date().toISOString(),
+							currentState: {
+								forcedOffline: state._bForcedOffline,
+								autoOffline: state._bAutoOffline,
+								slowNetwork: state._bSlowNetwork
+							}
+						});
+
+						// Check for forced offline mode
 						if (state._bForcedOffline) {
+							console.debug('Forced offline mode detected, suspending fast polling');
 							clearInterval(this._networkPoller);
 							return;
 						}
 
+						// Evaluate current network conditions
 						const isNetworkSlow = await this.checkNetworkSlow();
 
-						// Switch back to poor network poller if conditions improve
+						// Check if we should return to normal polling
 						if (!isNetworkSlow || !state._bAutoOffline) {
-							console.debug('Switching back to poor network poller');
+							console.debug('Network Conditions Update:', {
+								event: 'Returning to normal polling',
+								reason: !isNetworkSlow ? 'Network improved' : 'Auto-offline disabled',
+								networkSlow: isNetworkSlow,
+								autoOffline: state._bAutoOffline,
+								timestamp: new Date().toISOString()
+							});
+
+							// Update state before switching polling modes
 							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
+
+							// Switch back to normal polling
 							clearInterval(this._networkPoller);
 							this.initPoorNetworkPoller();
 						} else {
-							// Network stil slow ve auto-offline is true, update state
+							// Network still slow, maintain state updates
 							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
 						}
 					} catch (error) {
-						console.error('Error in fast network poller:', error);
+						console.error('Fast Network Polling Error:', {
+							message: error.message,
+							stack: error.stack,
+							timestamp: new Date().toISOString()
+						});
 					}
-				}, 5000);
+				}, 2000); // 2-second interval for rapid polling
 			},
 
 			/**
 			 * Retrieves and initializes state from persistent storage
+			 * 
+			 * This method:
+			 * 1. Fetches latest state record from IndexedDB
+			 * 2. Restores network state from stored data
+			 * 3. Ensures consistency between memory and database
+			 * 
 			 * @returns {Promise<Object>} Promise resolving to current state
 			 */
 			checkState: async function () {
 				try {
 					// Get latest state record from IndexedDB
-					const lastRecord = await _connectionTable
+					const oLastRecord = await _connectionTable
 						.orderBy('time')
 						.last();
 
 					// Restore state if record exists
-					if (lastRecord?.state) {
-						_oNetStat.deserialize(lastRecord.state);
+					if (oLastRecord?.state) {
+						_oNetStat.deserialize(oLastRecord.state);
 					}
+
 					return Promise.resolve(_oNetStat);
-				} catch (error) {
-					console.warn('Failed to get network status:', error);
+				} catch (oError) {
+					console.warn('Failed to retrieve network status:', oError);
 					return Promise.resolve(_oNetStat);
 				}
 			},
@@ -504,50 +606,6 @@ self.addEventListener('sync', function(event) {
 				return _oNetStat;
 			},
 
-
-			// 		/**
-			// * Updates network state and persists changes to storage
-			// * Handles state transitions and triggers appropriate events
-			// * @param {boolean} forcedOffline - Force offline mode flag
-			// * @param {boolean} autoOffline - Auto offline mode flag
-			// * @param {boolean} slowNetwork - Slow network indicator
-			// * @returns {Promise} Resolves when state is updated and saved
-			// */
-			// 		setState: async function (forcedOffline, autoOffline, slowNetwork) {
-			// 			// Prevent concurrent updates
-			// 			if (this._pendingStateUpdate) {
-			// 				return Promise.resolve();
-			// 			}
-
-			// 			this._pendingStateUpdate = true;
-
-			// 			try {
-			// 				// Update state and get changes through core state container
-			// 				const changes = _oNetStat._updateState(forcedOffline, autoOffline, slowNetwork);
-
-			// 				// If there were changes, trigger event and persist to storage
-			// 				if (Object.keys(changes).length > 0) {
-			// 					// Notify listeners about state changes
-			// 					$(document).trigger('networkchanged', {
-			// 						currentState: _oNetStat,
-			// 						changes: changes
-			// 					});
-
-			// 					// Persist updated state to IndexedDB
-			// 					await _connectionTable.put({
-			// 						time: _date.now(),
-			// 						state: _oNetStat.serialize()
-			// 					});
-			// 				}
-
-			// 				this._pendingStateUpdate = false;
-			// 				return Promise.resolve();
-			// 			} catch (error) {
-			// 				this._pendingStateUpdate = false;
-			// 				console.error('Error updating network state:', error);
-			// 				return Promise.reject(error);
-			// 			}
-			// 		},
 
 			/**
 			 * Updates network state and triggers network changed event if needed
@@ -573,21 +631,40 @@ self.addEventListener('sync', function(event) {
 
 					// If there were changes, trigger event
 					if (hasChanges) {
+
+						//starts promise process and continue. when then block runs, state sets false. Code doesnt wait  to flow.
+						// means, without table update, network changed event can bi triggered -  this can not be acceptable
+
 						// Persist updated state
-						_connectionTable.put({
+						// _connectionTable.put({
+						// 	time: _date.now(),
+						// 	state: _oNetStat.serialize()
+						// }).then(function () {
+						// 	oSelf._pendingStateUpdate = false;
+						// });
+
+						// Persist updated state
+						/*
+						With await:
+							Waits until the Promise operation completes
+							_pendingStateUpdate becomes false when operation is done
+							Code flow continues only after table update is complete
+							Networkchanged event is definitely triggered after table update
+						*/
+						await _connectionTable.put({
 							time: _date.now(),
 							state: _oNetStat.serialize()
-						}).then(function(){
-							oSelf._pendingStateUpdate = false;
 						});
+
 
 						// Notify listeners about state changes
 						$(document).trigger('networkchanged', {
 							currentState: _oNetStat,
 						});
 					}
-
+					oSelf._pendingStateUpdate = false;
 					return Promise.resolve();
+
 				} catch (error) {
 					oSelf._pendingStateUpdate = false;
 					console.error('Error updating network state:', error);
@@ -644,100 +721,214 @@ self.addEventListener('sync', function(event) {
 			},
 
 			/**
-			 * Check if network is slow based on measurements
-			 * @returns {Promise<boolean>} Returns true if network is considered slow
-			 */
+			* Evaluates if the current network conditions are considered "slow" based on multiple criteria.
+			* 
+			* The function uses a two-tier approach for network speed detection:
+			* 1. First Tier: Browser's Network Information API
+			*    - Checks connection type (2G, 3G, 4G, etc.)
+			*    - Checks reported downlink speed
+			*    - More accurate but not supported by all browsers
+			* 
+			* 2. Second Tier: Speed Measurements from Recent Requests
+			*    - Fallback mechanism when Browser API is not available
+			*    - Uses rolling average of last 10 request speeds
+			*    - Less accurate but more widely supported
+			* 
+			* Network is considered slow if any of these conditions are met:
+			* - Connection type is 2G, slow-2G, or 3G
+			* - Downlink speed is <= 0.5 Mbps
+			* - Average measured speed from last 10 requests is <= 0.5 Mbps
+			* 
+			* @returns {Promise<boolean>} True if network is determined to be slow, false otherwise
+			*/
 			checkNetworkSlow: async function () {
 				var bSlow;
-				// Check browser API first
-				if (navigator?.connection) {
-					bSlow = ['2g', 'slow-2g'].includes(navigator.connection.effectiveType) ||
-						(navigator.connection.downlink > 0 && navigator.connection.downlink <= 0.5); // 0.5 Mbps threshold
 
+				// TIER 1: Browser's Network Information API Check
+				if (navigator?.connection) {
+					// Consider connection slow if it's 2G, slow-2G, or 3G
+					// These connection types typically can't support modern web applications effectively
+					bSlow = ['2g', 'slow-2g', '3g'].includes(navigator.connection.effectiveType) ||
+						(navigator.connection.downlink > 0 && navigator.connection.downlink <= 0.5);
+
+					// If Browser API indicates slow connection, no need to check measurements
 					if (bSlow) {
-						console.debug('Network is slow based on browser API:',
-							{ effectiveType: navigator.connection.effectiveType, downlink: navigator.connection.downlink });
+						console.debug('Network Status Report:', {
+							status: 'SLOW',
+							source: 'Browser API',
+							connectionType: navigator.connection.effectiveType,
+							downlinkSpeed: navigator.connection.downlink + ' Mbps',
+							timestamp: new Date().toISOString()
+						});
 						return bSlow;
 					}
 				}
 
-				// Check measurements if Browser API doesnt show slow network
+				// TIER 2: Recent Speed Measurements Analysis
+				/**
+				 * Analyzes recent network speed measurements to determine if the network is slow
+				 * 
+				 * This function follows a two-tier approach:
+				 * 1. Retrieves recent network speed measurements
+				 * 2. Calculates average speed and compares against threshold
+				 * 
+				 * @returns {Promise<boolean>} Promise resolving to true if network is slow, false otherwise
+				 */
 				try {
-					const stats = await this.getAllStats();
-					if (!stats.length) return false;
+					// Fetch all recorded network statistics
+					const aStats = await this.getAllStats();
+					if (!aStats.length) {
+						console.log('No speed measurements available, assuming network is fast');
+						return false;
+					}
 
-					// Last 10 measurement avarage
-					const recentStats = stats.slice(-10);
-					const avgSpeed = recentStats.reduce((sum, stat) =>
-						sum + (Number(stat.speed) || 0), 0) / recentStats.length;
+					// Calculate average speed from most recent measurements
+					// We use the last 10 measurements to get a reliable recent average
+					const aRecentStats = aStats.slice(-10);
+					const fAvgSpeed = aRecentStats.reduce((fSum, oStat) =>
+						fSum + (Number(oStat.speed) || 0), 0) / aRecentStats.length;
 
-					bSlow = avgSpeed <= 0.5; // 0.5 Mbps threshold
+					// Consider network slow if average speed is below threshold
+					bSlow = fAvgSpeed <= 0.5; // 0.5 Mbps threshold
 
-					console.debug('Network speed check from measurements:',
-						{ averageSpeed: avgSpeed, isSlow: bSlow, measurements: recentStats.length });
+					console.log('Network Speed Analysis:', {
+						averageSpeed: fAvgSpeed.toFixed(2) + ' Mbps',
+						measurementCount: aRecentStats.length,
+						oldestMeasurement: new Date(aRecentStats[0]?.time).toISOString(),
+						latestMeasurement: new Date(aRecentStats[aRecentStats.length - 1]?.time).toISOString(),
+						conclusion: bSlow ? 'SLOW' : 'FAST',
+						source: 'Speed Measurements'
+					});
 
 				} catch (error) {
-					console.error('Failed to check network speed:', error);
-					bSlow = false;
+					console.error('Speed Measurement Analysis Failed:', {
+						error: error.message,
+						stack: error.stack,
+						timestamp: new Date().toISOString()
+					});
+					bSlow = false; // Default to fast network on error
 				}
 
 				return bSlow;
 			},
 
 			/**
-			 * Initialize network state monitoring
-			 * Listens to browser online/offline events and manages state
-			 */
+		 * Initializes network state monitoring system.
+		 * Sets up event listeners and manages network state transitions.
+		 * 
+		 * The initialization process includes:
+		 * - Setting up browser online/offline event listeners
+		 * - Configuring custom networkchanged event handler
+		 * - Initializing network quality polling system
+		 * - Maintaining state consistency between memory and IndexedDB
+		 * - Providing reliable state recovery after page reloads
+		 */
 			init: function () {
-				// Listen to browser online/offline events
-				window.addEventListener('online', () => {
-					// Update internal state
-					this.checkState().then((state) => {
-						// Trigger our custom event with current state
-						$(document).trigger('networkchanged', {
-							currentState: state,
-							changes: {
-								browserOnline: {
-									from: false,
-									to: true
-								}
-							}
-						});
-					});
-				});
 
-				window.addEventListener('offline', () => {
-					// Update internal state
-					this.checkState().then((state) => {
-						// Trigger our custom event with current state
-						$(document).trigger('networkchanged', {
-							currentState: state,
-							changes: {
-								browserOnline: {
-									from: true,
-									to: false
-								}
-							}
-						});
-					});
-				});
+				/**
+				 * Online Event Handler
+				 * Triggered when browser detects network connection
+				 * 
+				 * State Management:
+				 * 1. Updates connection table in IndexedDB
+				 * 2. Updates in-memory network state (oNetStat)
+				 * 3. Triggers custom event for UI updates
+				 */
+				window.addEventListener('online', async () => {
+					console.log('Browser detected online state');
 
-				$(window).on('networkchanged', async function (oEvent, data) {
 					try {
-						// Configure network polling based on state
+						// First persist state in connection table for consistency
+						await _connectionTable.put({
+							time: _date.now(),
+							state: _oNetStat.serialize()  // Include current state flags
+						});
+
+						// Update internal state and trigger custom event
+						this.checkState().then((oState) => {
+							$(document).trigger('networkchanged', {
+								currentState: oState,
+								changes: {
+									browserOnline: {
+										from: false, // Previous state
+										to: true    // New state
+									}
+								}
+							});
+						});
+					} catch (oError) {
+						console.error('Failed to handle online state transition:', oError);
+					}
+				});
+
+				/**
+				 * Offline Event Handler
+				 * Triggered when browser loses network connection
+				 * 
+				 * State Management:
+				 * 1. Updates connection table in IndexedDB
+				 * 2. Updates in-memory network state (oNetStat)
+				 * 3. Triggers custom event for UI updates
+				 */
+				window.addEventListener('offline', async () => {
+					console.log('Browser detected offline state');
+
+					try {
+						// Persist state change in connection table
+						await _connectionTable.put({
+							time: _date.now(),
+							state: _oNetStat.serialize()  // Include current state flags
+						});
+
+						// Update internal state and trigger custom event
+						this.checkState().then((oState) => {
+							$(document).trigger('networkchanged', {
+								currentState: oState,
+								changes: {
+									browserOnline: {
+										from: true,  // Previous state
+										to: false    // New state
+									}
+								}
+							});
+						});
+					} catch (oError) {
+						console.error('Failed to handle offline state transition:', oError);
+					}
+				});
+
+				/**
+				 * Custom Network Change Event Handler
+				 * Manages network polling strategy based on current state
+				 * 
+				 * This handler is responsible for:
+				 * - Adjusting polling frequency based on network conditions
+				 * - Switching between fast and normal polling modes
+				 * - Handling auto-offline functionality
+				 * - Ensuring state consistency across the application
+				 */
+				$(window).on('networkchanged', async function (oEvent, oData) {
+					try {
+						// Check if auto-offline feature is enabled
 						if (_oNetStat.hasAutoffline()) {
-							if (_oNetStat.isOfflineVirtually()) {
+							// Determine appropriate polling strategy
+							const bIsOfflineVirtually = _oNetStat.isOfflineVirtually();
+
+							if (bIsOfflineVirtually) {
+								// Use fast polling when network is poor or virtually offline
+								// Fast polling checks network more frequently (every 2 seconds)
 								exfPWA.network.initFastNetworkPoller();
 							} else {
+								// Use normal polling for stable network conditions
+								// Normal polling runs at longer intervals (every 5 seconds)
 								exfPWA.network.initPoorNetworkPoller();
 							}
 						}
-					} catch (error) {
-						console.error('Error handling network changed event:', error);
+					} catch (oError) {
+						console.error('Failed to handle network change:', oError);
 					}
 				});
 			}
-
 		},
 
 		/**
@@ -1764,13 +1955,32 @@ self.addEventListener('sync', function(event) {
 	} // EOF _pwa
 
 
-	// Initialize network state on load
-	_pwa.network.checkState().then(function(oNetStat){
+	/**
+	* Initialize network monitoring system
+	* 
+	* This initialization:
+	* - Checks if auto-offline feature is enabled
+	* - Starts poor network poller if enabled
+	* - Does not poll if auto-offline is disabled
+	* 
+	* We start with poor polling by default because:
+	* 1. Poor poller already checks network conditions and switches to fast polling if needed  
+	* 2. Keeps the initialization logic simple and clear
+	* 3. Follows the fail-safe principle - starts with less intensive monitoring
+	*/
+	_pwa.network.checkState().then(function (oNetStat) {
 		if (oNetStat.hasAutoffline()) {
+			// Start with regular polling - it will automatically 
+			// switch to fast polling if network conditions degrade
 			exfPWA.network.initPoorNetworkPoller();
+		} else {
+			// No polling needed if auto-offline is disabled
+			console.debug('Auto-offline disabled, skipping network polling');
 		}
-		// TODO Do we need an else here for the fast network poller???
+	}).catch(function (oError) {
+		// Log initialization errors but don't crash
+		console.error('Network state initialization failed:', oError);
 	});
 
 	return _pwa;
-})));
+}))); 
