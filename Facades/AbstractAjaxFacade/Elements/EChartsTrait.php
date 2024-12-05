@@ -348,7 +348,6 @@ JS;
      */
     protected function buildJsEventHandlers() : string
     {
-        $handlersJs = '';
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
@@ -715,7 +714,7 @@ JS;
         $invokeDisabledGetter = $this->buildJsLegendDisabledEventHandler('aLegendDisabled');
         return <<<JS
         
-        {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
+        var handler = function(params){
             // Invoke getters.
             var aLegendActive = Object.keys(params.selected).filter(function (item) {return params.selected[item];});
             {$invokeActiveGetter};
@@ -770,7 +769,10 @@ JS;
                     }
                 }
             }
-        });
+        };
+
+        {$this->buildJsEChartsVar()}.on('legendselectchanged', handler);
+        {$this->buildJsEChartsVar()}.on('legendselectall', handler);
         
 JS;
                         
@@ -2295,7 +2297,27 @@ JS;
     //build and set dataset,config and options depending on chart type
     $js
     
+    {$this->buildJsForceLegendSelectUpdate()}
 JS;
+    }
+
+    /**
+     * A JS snippet that forces an update of the legend selected getters.
+     * 
+     * NOTE: This is a bit of a hack, maybe there is a cleaner way.
+     * 
+     * @return string
+     */
+    protected function buildJsForceLegendSelectUpdate() : string
+    {
+        return <<<JS
+
+        {$this->buildJsEChartsVar()}.dispatchAction({
+            type: 'legendAllSelect'
+        });
+
+JS;
+
     }
     
     /**
