@@ -790,12 +790,11 @@ JS;
     {
         if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
-            $delimiter = $this->getWidget()->getOutputListDelimiter();
             
             return <<<JS
             
             (function ({$column}){
-                return {$column}.join('{$delimiter}');
+                return {$column}.join('{$this->getOutputListDelimiter()}');
             })(oEvent)
 JS;
 
@@ -837,6 +836,19 @@ JS;
                 })()
                 
 JS;
+    }
+    
+    protected function getOutputListDelimiter() : string
+    {
+        $widget = $this->getWidget();
+        if(!$widget instanceof Chart) {
+            return ',';
+        } 
+        
+        $alias = $widget->getLegendAttributeAlias();
+        return $alias !== null ?
+            $widget->getMetaObject()->getAttribute($alias)->getValueListDelimiter() :
+            ',';
     }
     
     /**
