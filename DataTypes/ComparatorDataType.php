@@ -2,8 +2,12 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Interfaces\Model\ConditionInterface;
 
 /**
  * Logical comparison operators: `=`, `==`, `<`, `>`, etc.
@@ -400,7 +404,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param string $comparator
      * @return bool
      */
-    public static function isExplicit(string $comparator) : bool
+    public static function isAtomic(string $comparator) : bool
     {
         if(($len = strlen($comparator)) === 0) {
             return true;
@@ -420,21 +424,30 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     }
 
     /**
-     * Returns an explicit representation of any given comparator.
+     * Divide this condition into sub-conditions that are guaranteed to be explicit.
      * 
-     * Returns an array with the following structure:
-     * - `[$operator, $comparator]`
-     * - `$operator`: The logical operator used to concatenate the sub-conditions.
-     * - `$comparator`: The actual comparison used for all sub-conditions.
+     * NOTE: If this condition is already explicit, the resulting condition group will contain
+     * this condition as its only component.
      * 
      * @see ComparatorDataType::isExplicit()
-     * @param string $comparator
-     * @return array
+     * 
+     * @param bool $trimValues
+     * @return ConditionalExpressionInterface
      */
-    public static function makeExplicit(string $comparator) : array
+    public static function atomizeCondition(ConditionInterface $condition, bool $trimValues = true) : ConditionalExpressionInterface
     {
-        if(self::isExplicit($comparator)) {
-            return [EXF_LOGICAL_AND, $comparator];
+        // IDEA also support ConditionGroups atomizing their inner conditions and nested groups recursively
+        $rightSideValues = $condition->getValue();
+        if(!is_array($rightSideValues)) {
+            $expression = $condition->getExpression();
+            $delimiter = $expression->isMetaAttribute() ? $expression->getAttribute()->getValueListDelimiter() : ',';
+            $rightSideValues = explode($delimiter, $rightSideValues);
+        }
+
+        $comparator = $condition->getComparator();
+        
+        if(self::isAtomic($comparator)) {
+            return $condition;
         }
 
         if($isNegative = self::isNegative($comparator)){
@@ -454,9 +467,25 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
         }
         
         if($isNegative) {
-            return [EXF_LOGICAL_AND, '!'.$scalarComparator];
+            $scalarOperator = EXF_LOGICAL_AND;
+            $scalarComparator = '!' . $scalarComparator;
         } else {
-            return [EXF_LOGICAL_OR, $scalarComparator];
+            $scalarOperator = EXF_LOGICAL_OR;
         }
+
+        $conditionGroup = ConditionGroupFactory::createEmpty($condition->getWorkbench(), $scalarOperator, null, $condition->willIgnoreEmptyValues());
+        foreach ($rightSideValues as $value) {
+            if($trimValues) {
+                $value = trim($value);
+            }
+            
+            $condition = ConditionFactory::createEmpty($condition->getWorkbench(), $condition->ignoreEmptyValues);
+            $condition->setExpression($condition->getExpression());
+            $condition->setValue($value);
+            $condition->setComparator($scalarComparator);
+            $conditionGroup->addCondition($condition);
+        }
+        
+        return $conditionGroup;
     }
 }

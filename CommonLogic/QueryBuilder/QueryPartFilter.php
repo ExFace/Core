@@ -2,9 +2,12 @@
 namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\ConditionInterface;
 
 /**
@@ -178,5 +181,26 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
             $this->compoundFilterGroup = QueryPartFilterGroup::createQueryPartFromConditionGroup($compoundFilterGroup, $this->getQuery(), $this);
         }
         return $this->compoundFilterGroup;
+    }
+
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup|\exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
+     */
+    public function atomize() : QueryPartFilterGroup|QueryPartFilter
+    {
+        $condition = $this->getCondition();
+        if(ComparatorDataType::isAtomic($this->getComparator())) {
+            return $this;
+        } 
+
+        $atomized = ComparatorDataType::atomizeCondition($condition);
+        if ($atomized instanceof ConditionInterface) {
+            return QueryPartFilterGroup::createQueryPartFromCondition($atomized, $this->getQuery());
+        } elseif ($atomized instanceof ConditionGroupInterface) {
+            return QueryPartFilterGroup::createQueryPartFromConditionGroup($atomized, $this->getQuery());
+        }
+        
+        throw new QueryBuilderException('Cannot transform filter ' . $condition->__toString() . ' into one with atomic comparators');
     }
 }
