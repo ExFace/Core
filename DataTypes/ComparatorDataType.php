@@ -406,21 +406,18 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function isAtomic(string $comparator) : bool
     {
-        if(($len = strlen($comparator)) === 0) {
-            return true;
-        }
-        
-        if(self::isNegative($comparator)) {
-            if($len === 1) {
+        switch ($comparator) {
+            case self::EQUALS:
+            case self::EQUALS_NOT:
+            case self::GREATER_THAN:
+            case self::GREATER_THAN_OR_EQUALS:
+            case self::IS:
+            case self::IS_NOT:
+            case self::LESS_THAN:
+            case self::LESS_THAN_OR_EQUALS:
                 return true;
-            }
-            
-            $check = $comparator[1];
-        } else {
-            $check = $comparator[0];
         }
-        
-        return $check !== ']' && $check !== '[';
+        return false;
     }
 
     /**
