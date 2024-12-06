@@ -810,11 +810,17 @@
 	                    bResult = function() {
 			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
 							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
-			                for (var i = 0; i < rightValues.length; i++) {
-								for (var j = 0; j < leftValues.length; j++) {
-				                    if (rightValues[i].trim().toLowerCase() !== leftValues[j].trim().toLowerCase()) {
-				                        return false;
+							var bFoundRight;
+							for (var l = 0; l < leftValues.length; l++) {
+								bFoundRight = false;
+			                	for (var r = 0; r < rightValues.length; r++) {
+				                    if (rightValues[r].trim().toLowerCase() === leftValues[l].trim().toLowerCase()) {
+				                        bFoundRight = true;
+										break;
 				                    }
+								}
+								if (bFoundRight === false) {
+									return false;
 								}
 			                }
 			                return true;
