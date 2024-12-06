@@ -224,25 +224,21 @@ self.addEventListener('sync', function(event) {
 		 * Simplified version - just updates state flags and returns boolean if any change occurred
 		 * 
 		 * @private
-		 * @param {boolean} forcedOffline - Force offline mode flag
-		 * @param {boolean} autoOffline - Auto offline mode flag
-		 * @param {boolean} slowNetwork - Slow network indicator
-		 * @returns {boolean} True if any state changed, false otherwise
+		 * @param {{forcedOffline: boolean, autoOffline: boolean, slowNetwork: boolean}} oFlags
+		 * @returns {{forcedOffline: boolean, autoOffline: boolean, slowNetwork: boolean}} - only the changes
 		 */
-		_updateState: function (forcedOffline, autoOffline, slowNetwork) {
-			// Check if any state will change
-			const hasChanges = (
-				forcedOffline !== this._bForcedOffline ||
-				autoOffline !== this._bAutoOffline ||
-				slowNetwork !== this._bSlowNetwork
-			);
-
-			// Update internal state flags
-			this._bForcedOffline = forcedOffline || false;
-			this._bAutoOffline = autoOffline || false;
-			this._bSlowNetwork = slowNetwork || false;
-
-			return hasChanges;
+		_updateState: function (oFlags) {
+			var oChagnes = {};
+			if (oFlags.forcedOffline !== undefined && oFlags.forcedOffline !== this._bForcedOffline) {
+				oChagnes.forcedOffline = this._bForcedOffline = oFlags.forcedOffline;
+			}
+			if (oFlags.autoOffline !== undefined && oFlags.autoOffline !== this._bAutoOffline) {
+				oChagnes.autoOffline = this._bAutoOffline = oFlags.autoOffline;
+			}
+			if (oFlags.slowNetwork !== undefined && oFlags.slowNetwork !== this._bSlowNetwork) {
+				oChagnes.slowNetwork = this._bSlowNetwork = oFlags.slowNetwork;
+			}
+			return oChagnes;
 		},
 
 		/**
@@ -368,27 +364,6 @@ self.addEventListener('sync', function(event) {
 			*/
 
 			/**
-			* Handles toggling of forced offline state
-			* Preserves other state flags while updating forced offline status
-			* 
-			* @param {boolean} newState - The new forced offline state to set
-			* @returns {Promise} Resolves when state is updated
-			*/
-			handleForceOfflineToggle: async function (newState) {
-				try {
-					const currentState = this.getState();
-					await this.setState(
-						newState,                    // new forced offline state
-						currentState._bAutoOffline,  // preserve current auto offline state
-						currentState._bSlowNetwork   // preserve current network speed state
-					);
-				} catch (error) {
-					console.error('Error toggling force offline:', error);
-					throw error;
-				}
-			},
-
-			/**
 			 * Initializes and manages the regular network condition monitoring system.
 			 * 
 			 * This is the default polling mechanism that runs when network conditions are normal.
@@ -456,11 +431,9 @@ self.addEventListener('sync', function(event) {
 								});
 
 								// Update application state with new network status
-								await this.setState(
-									state._bForcedOffline,
-									state._bAutoOffline,
-									isNetworkSlow
-								);
+								this.setState({
+									slowNetwork: isNetworkSlow
+								});
 							}
 
 							// Switch to rapid polling if network becomes slow
@@ -550,14 +523,14 @@ self.addEventListener('sync', function(event) {
 							});
 
 							// Update state before switching polling modes
-							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
+							this.setState({slowNetwork: isNetworkSlow});
 
 							// Switch back to normal polling
 							clearInterval(this._networkPoller);
 							this.initPoorNetworkPoller();
 						} else {
 							// Network still slow, maintain state updates
-							await this.setState(state._bForcedOffline, state._bAutoOffline, isNetworkSlow);
+							this.setState({slowNetwork: isNetworkSlow});
 						}
 					} catch (error) {
 						console.error('Fast Network Polling Error:', {
@@ -611,60 +584,42 @@ self.addEventListener('sync', function(event) {
 			 * Updates network state and triggers network changed event if needed
 			 * Simplified version - removes change tracking complexity
 			 * 
-			 * @param {boolean} forcedOffline - Force offline mode flag
-			 * @param {boolean} autoOffline - Auto offline mode flag
-			 * @param {boolean} slowNetwork - Slow network indicator
-			 * @returns {Promise} Resolves when state is updated
+			 * @param {{forcedOffline: boolean, autoOffline: boolean, slowNetwork: boolean}} oFlags
+		 	 * @returns {Promise} Resolves when state is updated
 			 */
-			setState: async function (forcedOffline, autoOffline, slowNetwork) {
+			setState: async function (oFlags) {
 				// Prevent concurrent updates
 				oSelf = this;
 				if (oSelf._pendingStateUpdate) {
 					return Promise.resolve();
 				}
 
-				oSelf._pendingStateUpdate = true;
-
 				try {
 					// Update state and check if anything changed
-					const hasChanges = _oNetStat._updateState(forcedOffline, autoOffline, slowNetwork);
+					const oChanges = _oNetStat._updateState(oFlags);
 
 					// If there were changes, trigger event
-					if (hasChanges) {
-
-						//starts promise process and continue. when then block runs, state sets false. Code doesnt wait  to flow.
-						// means, without table update, network changed event can bi triggered -  this can not be acceptable
-
-						// Persist updated state
-						// _connectionTable.put({
-						// 	time: _date.now(),
-						// 	state: _oNetStat.serialize()
-						// }).then(function () {
-						// 	oSelf._pendingStateUpdate = false;
-						// });
-
-						// Persist updated state
-						/*
-						With await:
-							Waits until the Promise operation completes
-							_pendingStateUpdate becomes false when operation is done
-							Code flow continues only after table update is complete
-							Networkchanged event is definitely triggered after table update
-						*/
-						await _connectionTable.put({
-							time: _date.now(),
-							state: _oNetStat.serialize()
-						});
-
-
+					if (Object.keys(oChanges).length === 0) {
 						// Notify listeners about state changes
 						$(document).trigger('networkchanged', {
 							currentState: _oNetStat,
+							changes: oChanges
+						});
+
+						//starts promise process and continue. when then block runs, state sets false. Code doesnt wait  to flow.
+						// means, without table update, network changed event can bi triggered -  this can not be acceptable
+						oSelf._pendingStateUpdate = true;
+						_connectionTable.put({
+							time: _date.now(),
+							state: _oNetStat.serialize()
+						}).then(function () {
+						 	oSelf._pendingStateUpdate = false;
+						}).catch(e => {
+							oSelf._pendingStateUpdate = false;
+							console.warn('Failed to save network state', e);
 						});
 					}
-					oSelf._pendingStateUpdate = false;
 					return Promise.resolve();
-
 				} catch (error) {
 					oSelf._pendingStateUpdate = false;
 					console.error('Error updating network state:', error);
@@ -813,16 +768,16 @@ self.addEventListener('sync', function(event) {
 			},
 
 			/**
-		 * Initializes network state monitoring system.
-		 * Sets up event listeners and manages network state transitions.
-		 * 
-		 * The initialization process includes:
-		 * - Setting up browser online/offline event listeners
-		 * - Configuring custom networkchanged event handler
-		 * - Initializing network quality polling system
-		 * - Maintaining state consistency between memory and IndexedDB
-		 * - Providing reliable state recovery after page reloads
-		 */
+			 * Initializes network state monitoring system.
+			 * Sets up event listeners and manages network state transitions.
+			 * 
+			 * The initialization process includes:
+			 * - Setting up browser online/offline event listeners
+			 * - Configuring custom networkchanged event handler
+			 * - Initializing network quality polling system
+			 * - Maintaining state consistency between memory and IndexedDB
+			 * - Providing reliable state recovery after page reloads
+			 */
 			init: function () {
 
 				/**
@@ -831,34 +786,29 @@ self.addEventListener('sync', function(event) {
 				 * 
 				 * State Management:
 				 * 1. Updates connection table in IndexedDB
-				 * 2. Updates in-memory network state (oNetStat)
-				 * 3. Triggers custom event for UI updates
+				 * 2. Triggers custom event for UI updates
 				 */
 				window.addEventListener('online', async () => {
 					console.log('Browser detected online state');
+					// Trigger the change event without modifying _oNetStat because
+					// only the browser online status changed and that is always determined
+					// live and not saved in _oNetStat
+					$(document).trigger('networkchanged', {
+						currentState: _oNetStat,
+						changes: {
+							browserOnline: true
+						}
+					});
 
-					try {
-						// First persist state in connection table for consistency
-						await _connectionTable.put({
-							time: _date.now(),
-							state: _oNetStat.serialize()  // Include current state flags
-						});
-
-						// Update internal state and trigger custom event
-						this.checkState().then((oState) => {
-							$(document).trigger('networkchanged', {
-								currentState: oState,
-								changes: {
-									browserOnline: {
-										from: false, // Previous state
-										to: true    // New state
-									}
-								}
-							});
-						});
-					} catch (oError) {
+					// First persist state in connection table for consistency
+					// Even if no flags changed, a connection log entry will help
+					// tracking when we went online
+					_connectionTable.put({
+						time: _date.now(),
+						state: _oNetStat.serialize()  // Include current state flags
+					}).catch (oError => {
 						console.error('Failed to handle online state transition:', oError);
-					}
+					});
 				});
 
 				/**
@@ -867,32 +817,22 @@ self.addEventListener('sync', function(event) {
 				 * 
 				 * State Management:
 				 * 1. Updates connection table in IndexedDB
-				 * 2. Updates in-memory network state (oNetStat)
-				 * 3. Triggers custom event for UI updates
+				 * 2. Triggers custom event for UI updates
 				 */
 				window.addEventListener('offline', async () => {
 					console.log('Browser detected offline state');
+					$(document).trigger('networkchanged', {
+						currentState: oState,
+						changes: {
+							browserOnline: false
+						}
+					});
 
-					try {
-						// Persist state change in connection table
-						await _connectionTable.put({
-							time: _date.now(),
-							state: _oNetStat.serialize()  // Include current state flags
-						});
-
-						// Update internal state and trigger custom event
-						this.checkState().then((oState) => {
-							$(document).trigger('networkchanged', {
-								currentState: oState,
-								changes: {
-									browserOnline: {
-										from: true,  // Previous state
-										to: false    // New state
-									}
-								}
-							});
-						});
-					} catch (oError) {
+					// Persist state change in connection table
+					_connectionTable.put({
+						time: _date.now(),
+						state: _oNetStat.serialize()  // Include current state flags
+					}). catch (oError) {
 						console.error('Failed to handle offline state transition:', oError);
 					}
 				});
