@@ -48,7 +48,8 @@ use exface\Core\DataTypes\NumberDataType;
  *      "LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
  *      "LIBS.TINYCOLOR.JS": "npm-asset/tinycolor2/dist/tinycolor-min.js",
  *      "LIBS.TINYGRADIENT.JS": "npm-asset/tinygradient/browser.js",
- *      "WIDGET.CHART.COLORS": ["#c23531", "#2f4554", "#61a0a8", "#d48265", "#91c7ae", "#749f83", "#ca8622", "#bda29a", "#6e7074", "#546570", "#c4ccd3"],
+ *      "WIDGET.CHART.COLORS": ["#c23531", "#2f4554", "#61a0a8", "#d48265", "#91c7ae", "#749f83", "#ca8622", "#bda29a",
+ * "#6e7074", "#546570", "#c4ccd3"],
  *      ```
  * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
@@ -123,6 +124,22 @@ trait EChartsTrait
         "CHART_TYPE_HEATMAP" => 'heatmap',        
         "CHART_TYPE_SANKEY" => 'sankey'
     ];
+    
+    /**
+     * Returns the javascript to react to legend active change events
+     * 
+     * @param string $aLegendActiveJs
+     * @return string
+     */
+    protected abstract function buildJsLegendActiveEventHandler(string $aLegendActiveJs) : string;
+    
+    /**
+     * Returns the javascript to react to legend disable change events
+     * 
+     * @param string $aLegendDisabledJs
+     * @return string
+     */
+    protected abstract function buildJsLegendDisabledEventHandler(string $aLegendDisabledJs) : string;
     
     /**
      *
@@ -694,11 +711,20 @@ JS;
      */
     protected function buildJsLegendSelectHandler() : string
     {
+        $invokeActiveGetter = $this->buildJsLegendActiveEventHandler('aLegendActive');
+        $invokeDisabledGetter = $this->buildJsLegendDisabledEventHandler('aLegendDisabled');
         return <<<JS
         
         {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
-            var options = {$this->buildJsEChartsVar()}.getOption();
+            // Invoke getters.
+            var aLegendActive = Object.keys(params.selected).filter(function (item) {return params.selected[item];});
+            {$invokeActiveGetter};
+            
+            var aLegendDisabled = Object.keys(params.selected).filter(function (item) {return !params.selected[item];});
+            {$invokeDisabledGetter};
+            
             //Check if series gets hidden, if not (means getting shown) do nothing
+            var options = {$this->buildJsEChartsVar()}.getOption();
             if (params.selected[params.name] === false) {
                 if (options.series[0].seriesType === 'pie') {
                     //do nothing
@@ -748,6 +774,67 @@ JS;
         
 JS;
                         
+    }
+
+    /**
+     * build function to get value of a selected data row
+     *
+     * @param string $column
+     * @param int $row
+     * @throws FacadeOutputError
+     * @return string
+     */
+    public function buildJsValueGetter($column = null, $row = null) : string
+    {
+        if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
+            $column = str_replace('~', '', $column);
+            $delimiter = $this->getWidget()->getOutputListDelimiter();
+            
+            return <<<JS
+            
+            (function ({$column}){
+                return {$column}.join('{$delimiter}');
+            })(oEvent)
+JS;
+
+        } else if ($column != null) {
+            $key = $column;
+        } else {
+            if ($this->getWidget()->getData()->hasUidColumn() === true) {
+                $column = $this->getWidget()->getData()->getUidColumn();
+                $key = $column->getDataColumnName();
+            } else {
+                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+            }
+        }
+        if ($row != null) {
+            throw new FacadeOutputError('Unsupported function ');
+        }
+
+        return <<<JS
+        
+                (function(){
+                    var data = '';
+                    var oChart = {$this->buildJsEChartsVar()};
+                    if (oChart === undefined) {
+                        return '';
+                    }
+                    try {
+                        var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
+                    } catch (e) {
+                        console.warn('Cannot get value of chart:', e);
+                        return '';
+                    }
+                    if (oldSelection != undefined) {
+                        var selectedRow = oldSelection;
+                        if (selectedRow && '{$key}' in selectedRow) {
+                            data = selectedRow["{$key}"];
+                        }
+                    }
+                return data;
+                })()
+                
+JS;
     }
     
     /**
@@ -1170,6 +1257,8 @@ JS;
             case $series instanceof SankeyChartSeries:
                 return $this->buildJsSankeyChart($series);
         }
+        
+        return '';
     }
     
     /**
@@ -3529,58 +3618,6 @@ JS;
     protected function buildJsEChartsHideLoading() : string
     {
         return "{$this->buildJsEChartsVar()}.hideLoading()";
-    }
-    
-    /**
-     * build function to get value of a selected data row
-     *
-     * @param string $column
-     * @param int $row
-     * @throws FacadeOutputError
-     * @return string
-     */
-    public function buildJsValueGetter($column = null, $row = null) : string
-    {
-        if ($column != null) {
-            $key = $column;
-        } else {
-            if ($this->getWidget()->getData()->hasUidColumn() === true) {
-                $column = $this->getWidget()->getData()->getUidColumn();
-                $key = $column->getDataColumnName();
-            } else {
-                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
-            }
-        }
-        if ($row != null) {
-            throw new FacadeOutputError('Unsupported function ');
-        }
-        
-        
-        
-        return <<<JS
-        
-                (function(){
-                    var data = '';
-                    var oChart = {$this->buildJsEChartsVar()};
-                    if (oChart === undefined) {
-                        return '';
-                    }
-                    try {
-                        var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
-                    } catch (e) {
-                        console.warn('Cannot get value of chart:', e);
-                        return '';
-                    }
-                    if (oldSelection != undefined) {
-                        var selectedRow = oldSelection;
-                        if (selectedRow && '{$key}' in selectedRow) {
-                            data = selectedRow["{$key}"];
-                        }
-                    }
-                return data;
-                })()
-                
-JS;
     }
     
     /**

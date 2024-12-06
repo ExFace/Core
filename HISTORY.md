@@ -1,11 +1,28 @@
 # Release history
 
-## 1.21 - in development
+## 1.24 - in development
 
 New features:
 
 - AI agents
 - Action confirmations
+- ChildObjectBehavior
+- ChecklistingBehavior
+
+## 1.23 - 26.11.2024
+
+New features:
+
+- Announcements communication channel showing global message strips on top of the app
+- New action `ActionChainPerRow`
+- New formula `ToHtml`
+
+Improvements:
+
+- Greatly improve multiselect logic in the UI5 facade
+- SQL data address properties now support multi-dialect statements with `@T-SQL`, `@MySQL`, etc.
+
+## 1.22 - 12.11.2024
 
 ## 1.20 - 01.10.2024
 

@@ -163,7 +163,7 @@ abstract class Formula implements FormulaInterface
             $attrs = $this->requiredAttributeAliases;
             $relPathStr = $this->getRelationPathString();
             foreach ($attrs as $i => $attr) {
-                $attrs[$i] = RelationPath::relationPathAdd($relPathStr, $attr);
+                $attrs[$i] = RelationPath::join($relPathStr, $attr);
             }
             return $attrs;
         }
@@ -180,6 +180,35 @@ abstract class Formula implements FormulaInterface
         return $this->currentDataSheet;
     }
 
+    /**
+     * Determine the datatype of the argument with the provided index (starting with 0)
+     * 
+     * NOTE: detection of data types is only possible for arguments, that reference a data column
+     * in a non-static formula. 
+     * 
+     * For other arguments this method will return `null`. If the argument is a data-expression,
+     * but the formula is evaluated statically, this method will throw an error
+     *
+     * @param int $argIdx
+     * @return DataTypeInterface
+     */
+    protected function getArgumentType(int $argIdx) : ?DataTypeInterface
+    {
+        if (! $this->getTokenStream()->isArgumentAttribute($argIdx)) {
+            return null;
+        } else {
+            $attrAlias = $this->getTokenStream()->getArgument($argIdx);
+        }
+        $ds = $this->getDataSheet();
+        if (! $ds) {
+            throw new FormulaError('Formula can not be evaluated statically because it requires data type detection for argument ' . ($argIdx+1));
+        }
+        $attr = $ds->getMetaObject()->getAttribute($attrAlias);
+        $dataType = $attr->getDataType();
+
+        return $dataType;
+    }
+    
     public function getDataType()
     {
         if (is_null($this->dataType)) {

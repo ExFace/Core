@@ -672,4 +672,27 @@ class StringDataType extends AbstractDataType
         }
         return $result;
     }
+    
+    /**
+     * Returns TRUE if the given string is one enclosed is quotes (single or double quotes) and FALSE otherwise
+     * 
+     * Currently this does not check, if there are also some closing quotes in the middle of the string.
+     * Possible enhanced solution: https://stackoverflow.com/questions/74963883/php-regular-expression-to-grab-values-enclosed-in-double-quotes
+     * 
+     * @param string $str
+     * @return bool
+     */
+    public static function isQuotedString(string $str) : bool
+    {
+        $str = trim($str);
+        $firstChar = mb_substr($str, 0, 1);
+        if ($firstChar !== '"' && $firstChar !== "'") {
+            return false;
+        }
+        $lastChar = mb_substr($str, -1);
+        if ($lastChar !== '"' && $lastChar !== "'") {
+            return false;
+        }
+        return true;
+    }
 }

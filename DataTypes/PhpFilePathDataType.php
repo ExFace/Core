@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\Exceptions\FileNotFoundError;
+
 /**
  * Data type for PHP file paths (file system agnostic).
  * 
@@ -38,8 +40,7 @@ class PhpFilePathDataType extends FilePathDataType
     public static function findClassInFile(string $absolute_path, int $bufferSize = 512) : ?string
     {
         if (! file_exists($absolute_path) && ! is_dir($absolute_path)) {
-            throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - file not found!');
-            return null;
+            throw new FileNotFoundError('Cannot get class from file "' . $absolute_path . '" - file not found!');
         }
         
         $fp = fopen($absolute_path, 'r');
@@ -122,5 +123,21 @@ class PhpFilePathDataType extends FilePathDataType
             fclose($handle);
         }
         return $ns;
+    }
+
+    /**
+     * Returns the path to the file containing the given class relative to the vendor folder
+     * 
+     * TODO add support for custom namespace paths by asking the autoloader as described
+     * here https://stackoverflow.com/questions/48853306/how-to-get-the-file-path-where-a-class-would-be-loaded-from-while-using-a-compos
+     * 
+     * @param string $prototypeClass
+     * @param string $extension
+     * @return string
+     */
+    public static function findFileOfClass(string $prototypeClass, string $extension = '.php') : string
+    {
+        $path = str_replace('\\', '/', $prototypeClass);
+        return ltrim($path, "/") . $extension;
     }
 }

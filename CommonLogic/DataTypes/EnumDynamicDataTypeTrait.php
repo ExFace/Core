@@ -59,9 +59,10 @@ trait EnumDynamicDataTypeTrait {
         $labels = $this->getLabels();
         $label = $labels[$value] ?? null;
         if ($label === null) {
-            foreach ($labels as $key => $label) {
+            foreach ($labels as $key => $labelValue) {
                 if (strcasecmp($value, $key) === 0) {
-                    return $label;
+                    $label = $labelValue;
+                    continue;
                 }
             }
         }

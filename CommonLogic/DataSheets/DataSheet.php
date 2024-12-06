@@ -233,7 +233,7 @@ class DataSheet implements DataSheetInterface
                         }
                         $right_row = $other_sheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
-                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                            $this->setCellValue(RelationPath::join($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
                         }
                         $needRowCopy = true;
                     }                    
@@ -243,7 +243,7 @@ class DataSheet implements DataSheetInterface
                     // do not empty its values just because the right sheet did not has less data!
                     if ($relation_path !== '') {
                         foreach ($right_cols as $col) {
-                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                            $this->setCellValue(RelationPath::join($relation_path, $col->getName()), $left_row_nr, null);
                         }
                     }
                 }
@@ -1040,7 +1040,7 @@ class DataSheet implements DataSheetInterface
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($fixedExpr = $attr->getFixedValue()) {
-                    $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
+                    $alias_with_relation_path = RelationPath::join($rel_path, $attr->getAlias());
                     if (! $fixedCol = $this->getColumn($alias_with_relation_path)) {
                         $fixedCol = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
                     } elseif ($fixedCol->getIgnoreFixedValues()) {
@@ -3150,6 +3150,33 @@ class DataSheet implements DataSheetInterface
         // Add a tab with the data sheet UXON
         $uxon_tab = $debug_widget->createTab();
         $uxon_tab->setCaption($tabCaption);
+        $debugSheet = $this->createDebugSheet();
+        $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
+            'widget_type' => 'InputUxon',
+            'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
+            'hide_caption' => true,
+            'width' => '100%',
+            'height' => '100%',
+            'disabled' => true,
+            'root_prototype' => '\\' . DataSheet::class,
+            'root_object' => $this->getMetaObject()->getAliasWithNamespace(),
+            'value' => $debugSheet->exportUxonObject()->toJson(true)
+        ]));
+        $uxon_tab->addWidget($uxon_widget);
+        $debug_widget->addTab($uxon_tab);
+        return $debug_widget;
+    }
+
+    /**
+     * Creates a debug version of this instance, censoring and truncating data as needed
+     * for presentation in debug widgets and messages. 
+     * 
+     * Works recursively.
+     * 
+     * @return DataSheetInterface
+     */
+    protected function createDebugSheet() : DataSheetInterface
+    {
         $debugSheet = $this->getCensoredDataSheet();
         if (! $debugSheet->isEmpty()) {
             foreach ($debugSheet->getColumns() as $col) {
@@ -3169,23 +3196,21 @@ class DataSheet implements DataSheetInterface
                             }
                         }
                         break;
+                    case $dataType instanceof DataSheetDataType:
+                        // Truncate strings that go beyond human-readable lengths.
+                        foreach ($col->getValues() as $rowNo => $value) {
+                            if ($value instanceof DataSheetInterface) {
+                                $subsheet = $value;
+                            } else {
+                                $subsheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $value);
+                            }
+                            $col->setValue($rowNo, $subsheet->createDebugSheet()->exportUxonObject()->toArray());
+                        }
+                        break;
                 }
             }
         }
-        $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
-            'widget_type' => 'InputUxon',
-            'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
-            'hide_caption' => true,
-            'width' => '100%',
-            'height' => '100%',
-            'disabled' => true,
-            'root_prototype' => '\\' . DataSheet::class,
-            'root_object' => $this->getMetaObject()->getAliasWithNamespace(),
-            'value' => $debugSheet->exportUxonObject()->toJson(true)
-        ]));
-        $uxon_tab->addWidget($uxon_widget);
-        $debug_widget->addTab($uxon_tab);
-        return $debug_widget;
+        return $debugSheet;
     }
     
     /**

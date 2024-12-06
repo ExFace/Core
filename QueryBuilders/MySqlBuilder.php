@@ -112,7 +112,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             $group_by .= ', ' . $this->buildSqlGroupBy($qpart);
             if (! $group_uid_alias) {
                 if ($rel_path = $qpart->getAttribute()->getRelationPath()->toString()) {
-                    $group_uid_alias = RelationPath::relationPathAdd($rel_path, $this->getMainObject()->getRelatedObject($rel_path)->getUidAttributeAlias());
+                    $group_uid_alias = RelationPath::join($rel_path, $this->getMainObject()->getRelatedObject($rel_path)->getUidAttributeAlias());
                 }
             }
         }
