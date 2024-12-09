@@ -1,12 +1,15 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
@@ -790,7 +793,7 @@ JS;
     {
         if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
-            
+
             return <<<JS
             
             (function ({$column}){
@@ -837,18 +840,41 @@ JS;
                 
 JS;
     }
-    
+
+    /**
+     * Get the delimiter string used to separate items in the output list.
+     * 
+     * This function first tries to deduce a meaningful delimiter from its incoming widget links, using the
+     * first non-standard delimiter it finds. If all incoming links use standard-delimiters, it defaults to `,`.
+     * 
+     * @return string
+     */
+    // TODO 2024-12-09 geb: At the moment we simply use the first non-standard delimiter for ALL outputs, maybe we can 
+    // TODO                 identify consumers of the JS getter and send bespoke delimiters per consumer.
     protected function getOutputListDelimiter() : string
     {
         $widget = $this->getWidget();
-        if(!$widget instanceof Chart) {
-            return ',';
-        } 
+        $links = WidgetLink::getLinksToWidget($widget);
         
-        $alias = $widget->getLegendAttributeAlias();
-        return $alias !== null ?
-            $widget->getMetaObject()->getAttribute($alias)->getValueListDelimiter() :
-            ',';
+        foreach ($links as $link) {
+            $source = $link->getSourceWidget();
+            
+            if($source instanceof iShowSingleAttribute && $source->isBoundToAttribute()) {
+                $attribute = $source->getAttribute();
+                if(($delimiter = $attribute->getValueListDelimiter()) !== ',') {
+                    return $delimiter;
+                }
+            }
+            
+            if($source instanceof iShowDataColumn && $source->isBoundToDataColumn()) {
+                $attribute = $source->getMetaObject()->getAttribute($source->getDataColumnName());
+                if(($delimiter = $attribute->getValueListDelimiter()) !== ',') {
+                    return $delimiter;
+                }
+            }
+        }
+        
+        return ',';
     }
     
     /**
