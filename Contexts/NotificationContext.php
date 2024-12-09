@@ -520,7 +520,6 @@ class NotificationContext extends AbstractContext
      */
     protected function createAnnouncementMessage(array $row) : AnnouncementMessage
     {
-
         $uxon = UxonObject::fromJson($row['COMMUNICATION_TEMPLATE__MESSAGE_UXON'] ?? '{}');
         if ($row['MESSAGE_UXON']) {
             $uxon = $uxon->extend(UxonObject::fromJson($row['MESSAGE_UXON']));
