@@ -800,6 +800,8 @@ JS;
                     aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColNo) + (iRowIdx + 1)));
                 });
                 aCells.forEach(function(domCell, iRowIdx){
+                    // Do nothing if no cell was (yet) rendered
+                    if (! domCell) return;
                     if (bDisable) {
                         if (oWidget.hasChanged(iColIdx, iRowIdx)) {
                             oWidget.restoreInitValue(iColIdx, iRowIdx); 

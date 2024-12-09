@@ -266,6 +266,10 @@ class SqlModelLoader implements ModelLoaderInterface
             if ($parent && $parent !== $baseObject) {
                 $object->extendFromObject($parent);
             }
+
+            // Once we have extended from all parents, any calls to `$object->getAttribute()` will start
+            // populating the caches inside the object, so from here to the end of the attribute initialization
+            // no calls to `getAttribute()` should be made!!!
             
             // Overwrite inherited properties
             if (is_null($object->getDataAddress()) || $object->getDataAddress() == '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
@@ -386,6 +390,9 @@ class SqlModelLoader implements ModelLoaderInterface
                     ];
                 }
             }
+
+            // Now the object has all its attributes - own and inherited ones. From now on it is safe to call
+            // `$object->getAttribute()` and thus populate the internal alias caches.
             
             // Now populate the relations of the object 
             $parentObjIds = $object->getParentObjectsIds();

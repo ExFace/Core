@@ -2072,7 +2072,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param bool $valueIsSQL
      * @return string
      */
-    protected function buildSqlWhereComparator(QueryPartFilter $qpart, string $subject, string $comparator, $value, bool $rely_on_joins, bool $valueIsSQL = null) : string
+    protected function buildSqlWhereComparator(QueryPartAttribute $qpart, string $subject, string $comparator, $value, bool $rely_on_joins, bool $valueIsSQL = null) : string
     {
         $data_type = $qpart->getDataType();
         $dataAddressProps = $qpart->getDataAddressProperties();
@@ -2201,9 +2201,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 } else {
                     $output .= "'%{$this->escapeString(mb_strtoupper($value))}%'";
                 }
+                break;
             // If the query builder cannot deal with the comparator, but the comparator can be transformed into other (atomic)
             // comparators, try building a query with the atomized version of the comparator
-            case ! ComparatorDataType::isAtomic($qpart->getComparator()):
+            case ! ComparatorDataType::isAtomic($comparator) && $qpart instanceof QueryPartFilter:
                 $atomized = $qpart->atomize();
                 if ($this->checkFilterBelongsInHavingClause($qpart)) {
                     $output = $atomized instanceof QueryPartFilterGroup ? $this->buildSqlHaving($atomized, $rely_on_joins) : $this->buildSqlHavingCondition($atomized, $rely_on_joins);
