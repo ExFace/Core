@@ -7,6 +7,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
@@ -50,6 +51,8 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         self::CONTEXT_ON_ANY => null
     );
 
+    private bool $inProgress = false;
+    
     /**
      * Assign a UXON definition to a specific event context. 
      * 
@@ -87,8 +90,6 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         return $this;
     }
 
-    
-
     /**
      * Handles any change requests for the associated data and decides whether the proposed are valid or
      * need to be rejected.
@@ -100,9 +101,10 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      */
     public function handleOnChange(DataSheetEventInterface $event) : void
     {
-        if ($this->isDisabled()) {
+        if ($this->isDisabled() || $this->inProgress) {
             return;
         }
+        $this->inProgress = true;
 
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->addLine('Loading input data...');
@@ -129,6 +131,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
 
         if (! $changedDataSheet->getMetaObject()->isExactly($this->getObject())) {
             $logbook->addLine('Wrong MetaObject. Moving on...');
+            $this->inProgress = false;
             return;
         }
         
@@ -136,6 +139,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $logbook->addIndent(1);
         if(!$uxon = $this->getRelevantUxons($onUpdate, $logbook)) {
             $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
+            $this->inProgress = false;
             return;
         }
         $logbook->addIndent(-1);
@@ -144,8 +148,6 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         
         // Perform data checks for each validation rule.
         $error = null;
-        $context = $event::class;
-        
         $logbook->addLine('Processing UXON definitions per context...');
         $logbook->addIndent(1);
         foreach ($uxon as $context => $dataCheckUxon) {
@@ -157,7 +159,8 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                     $dataCheckUxon,
                     $context,
                     $previousDataSheet,
-                    $changedDataSheet);
+                    $changedDataSheet,
+                    $logbook);
             } catch (DataCheckFailedErrorMultiple $exception) {
                 $logbook->addLine('At least one data check applied to the input data:');
                 $logbook->addException($exception);
@@ -175,8 +178,10 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             $logbook->addLine('Processing validation results...');
             $logbook->addIndent(1);
             $this->processValidationResult($error, $logbook);
+            $logbook->addIndent(-1);
         }
 
+        $this->inProgress = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
     }
 
@@ -222,22 +227,25 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
 
     /**
      * Performs data validation by applying the specified checks to the provided data sheets.
-     * 
+     *
      * @param UxonObject              $dataCheckUxon
      * @param string                  $context
      * @param DataSheetInterface|null $previousDataSheet
      * @param DataSheetInterface      $changedDataSheet
+     * @param LogBookInterface        $logBook
      * @return void
      */
     protected function performDataChecks(
         UxonObject          $dataCheckUxon, 
         string              $context, 
         ?DataSheetInterface $previousDataSheet, 
-        DataSheetInterface  $changedDataSheet) : void
+        DataSheetInterface  $changedDataSheet,
+        LogBookInterface    $logBook) : void
     {
         $error = null;
         $json = $dataCheckUxon->toJson();
-        
+        $logBook->addIndent(1);
+
         // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
         foreach ($changedDataSheet->getRows() as $index => $row) {
             // Render placeholders.
@@ -252,13 +260,14 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                 }
 
                 try {
-                    $check->check($checkSheet);
+                    $check->check($checkSheet, $logBook);
                 } catch (DataCheckFailedError $exception) {
                     $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
                     $error->appendError($exception, $index + 1, false);
                 }
             }
         }
+        $logBook->addIndent(-1);
 
         if($error) {
             throw $error;
@@ -285,6 +294,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
         $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context, true));
+        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '', $context, true));
         
         try {
             $renderedJson = $renderer->render($json);

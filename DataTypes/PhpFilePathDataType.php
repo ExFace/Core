@@ -124,4 +124,20 @@ class PhpFilePathDataType extends FilePathDataType
         }
         return $ns;
     }
+
+    /**
+     * Returns the path to the file containing the given class relative to the vendor folder
+     * 
+     * TODO add support for custom namespace paths by asking the autoloader as described
+     * here https://stackoverflow.com/questions/48853306/how-to-get-the-file-path-where-a-class-would-be-loaded-from-while-using-a-compos
+     * 
+     * @param string $prototypeClass
+     * @param string $extension
+     * @return string
+     */
+    public static function findFileOfClass(string $prototypeClass, string $extension = '.php') : string
+    {
+        $path = str_replace('\\', '/', $prototypeClass);
+        return ltrim($path, "/") . $extension;
+    }
 }
