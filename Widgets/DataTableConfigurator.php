@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
 
 /**
  * DataTable-configurators contain tabs for filters, sorters and column controls.
@@ -14,7 +15,7 @@ use exface\Core\CommonLogic\UxonObject;
  * TODO the table column control tab is not available yet
  * TODO the aggregations control tab is not available yet
  * 
- * @author Andrej Kabachnik
+ * @author Andrej Kabachnik, Georg Bieger
  * 
  * @method \exface\Core\Widgets\DataTable getWidgetConfigured()
  *
@@ -48,7 +49,7 @@ class DataTableConfigurator extends DataConfigurator
         }
         return $this->column_tab;
     }
-    
+
     /**
      * 
      * @return Tab
@@ -66,13 +67,13 @@ class DataTableConfigurator extends DataConfigurator
     public function addColumn(DataColumn $column) : DataTableConfigurator
     {
         $this->getColumnsTab()->addWidget($column);
+        $column->setParent($this->getWidgetConfigured());
         return $this;
     }
 
-    public function addColumnFromUxon(UxonObject $uxon) : DataColumn
+    public function createColumnFromUxon(UxonObject $uxon) : DataColumn
     {
-        $col = $this->getWidgetConfigured()->createColumnFromUxon($uxon);
-        return $col;
+        return $this->getWidgetConfigured()->createColumnFromUxon($uxon);
     }
     
     /**
