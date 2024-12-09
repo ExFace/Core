@@ -730,13 +730,19 @@ class Condition implements ConditionInterface
                 return $leftVal >= $rightVal;
             case ComparatorDataType::LESS_THAN_OR_EQUALS:
                 return $leftVal <= $rightVal;
+            // IN means the left value is equal to at least one right value
             case ComparatorDataType::IN:
+            // NOT IN is the reverse of IN meaning the left value is not equal to any right value
             case ComparatorDataType::NOT_IN:
                 $resposeOnFound = $comparator === ComparatorDataType::IN ? true : false;
+                // If the right side is empty, there is no way any left side is in it
                 if ($rightVal === null) {
                     return ! $resposeOnFound;
                 }
+                // Make sure the right side is an array
                 $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
+                // Compare each right value to the left value via EQUALS
+                // If a match is found, return TRUE for IN and FALSE for NOT_IN
                 foreach ($rightParts as $part) {
                     // trim the $part value as list read from data source might be
                     // seperated by list delimiter and whitespace
