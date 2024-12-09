@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Events\Widget\OnDataConfiguratorInitialized;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
@@ -31,7 +32,14 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     private $filter_tab = null;
     
     private $sorter_tab = null;
-    
+
+    protected function init() : void
+    {
+        parent::init();
+        $this->getWorkbench()->eventManager()->dispatch(new OnDataConfiguratorInitialized($this));
+    }
+
+
     /**
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveFilters::getFilters()
