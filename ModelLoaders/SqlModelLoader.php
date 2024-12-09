@@ -266,6 +266,10 @@ class SqlModelLoader implements ModelLoaderInterface
             if ($parent && $parent !== $baseObject) {
                 $object->extendFromObject($parent);
             }
+
+            // Once we have extended from all parents, any calls to `$object->getAttribute()` will start
+            // populating the caches inside the object, so from here to the end of the attribute initialization
+            // no calls to `getAttribute()` should be made!!!
             
             // Overwrite inherited properties
             if (is_null($object->getDataAddress()) || $object->getDataAddress() == '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
@@ -386,6 +390,9 @@ class SqlModelLoader implements ModelLoaderInterface
                     ];
                 }
             }
+
+            // Now the object has all its attributes - own and inherited ones. From now on it is safe to call
+            // `$object->getAttribute()` and thus populate the internal alias caches.
             
             // Now populate the relations of the object 
             $parentObjIds = $object->getParentObjectsIds();
@@ -1059,9 +1066,15 @@ class SqlModelLoader implements ModelLoaderInterface
             WHERE ac.compound_attribute_oid = {$attrId}
             ORDER BY ac.sequence_index ASC
         ");
+        $obj = $attribute->getObject();
+        $relPath = $attribute->getRelationPath();
         foreach ($query->getResultArray() as $row) {
+            $compAttr = $obj->getAttributes()->getByAttributeId($row['attribute_oid']);
+            if (! $relPath->isEmpty()) {
+                $compAttr = $compAttr->rebase($relPath);
+            }
             $attribute->addComponentAttribute(
-                $attribute->getObject()->getAttributes()->getByAttributeId($row['attribute_oid']),
+                $compAttr,
                 $row['value_prefix'] ?? '',
                 $row['value_suffix'] ?? ''
             );
@@ -1989,12 +2002,13 @@ SQL;
             throw new InvalidArgumentException('Invalid argument for ' . get_class($this) . '::getApp(): "' . get_class($appOrSelector) . '"! Expecting AppInterface or AppSelectorInterface');
         }
         
-        $selector = $appOrSelector instanceof AppSelectorInterface ? $appOrSelector : $app->getSelector();
-        $rows = array_filter($this->apps_loaded, function($row) use ($selector) {
-            if ($selector->isUid()) {
-                return strcasecmp($row['UID'], $selector->toString()) === 0;
+        $selectorStr = $selector->toString();
+        $selectorIsUid = $selector->isUid();
+        $rows = array_filter($this->apps_loaded, function($row) use ($selectorIsUid, $selectorStr) {
+            if ($selectorIsUid) {
+                return strcasecmp($row['UID'], $selectorStr) === 0;
             } else {
-                return strcasecmp($row['ALIAS'], $selector->toString()) === 0;
+                return strcasecmp($row['ALIAS'], $selectorStr) === 0;
             }
         });
         if (empty($rows)) {
@@ -2004,7 +2018,7 @@ SQL;
                 $this->apps_loaded = null;
                 return $this->loadApp($appOrSelector);
             }
-            throw new AppNotFoundError('App "' . $selector->toString() . '" not found in meta model!');
+            throw new AppNotFoundError('App "' . $selectorStr . '" not found in meta model!');
         }
         $row = reset($rows);
         

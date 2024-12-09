@@ -2,6 +2,8 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -25,6 +27,10 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
+use exface\Core\Templates\Placeholders\OptionalPlaceholders;
 
 /**
  * Sends communication messages (notifications, emails, chat posts, etc.) on certain events and conditions.
@@ -72,6 +78,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * ### Send an in-app notification to a user role every time a task is created
  * 
  * ```
+ * 
  *  {
  *      "notify_on_event": "exface.Core.DataSheet.OnCreateData",
  *      "notifications": [
@@ -91,6 +98,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * and reference it here like this:
  * 
  * ```
+ * 
  *  {
  *      "notify_on_event": "exface.Core.DataSheet.OnCreateData",
  *      "notifications": [
@@ -105,6 +113,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * ### Send an in-app notification to a user every time an action is performed
  * 
  * ```
+ * 
  *  {
  *      "notify_on_action": "exface.Core.CommunicationChannelMute",
  *      "notifications": [
@@ -122,6 +131,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * ### Send an email to the ticket author once it reaches a certain status
  * 
  * ```
+ * 
  *  {
  *      "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
  *      "notify_if_attributes_change": [
@@ -176,15 +186,15 @@ class NotifyingBehavior extends AbstractBehavior
     
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
-     *
+     * 
      * You can either define a message here explicitly by setting the `channel`, etc., or
      * select a `template` and customize it if needed by overriding certain properties. Note, that
      * when using templates, proper autosuggest is only available if you set the channel explicitly
      * too. 
-     *
+     * 
      * The following placeholders can be used anywhere inside each message configuration: in `text`,
      * `recipients` - anywhere:
-     *
+     * 
      * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
      * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
      * from the given app
@@ -224,11 +234,11 @@ class NotifyingBehavior extends AbstractBehavior
      *  }
      * 
      * ```
-     *
+     * 
      * @uxon-property notifications
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
      * @uxon-template [{"": ""}]
-     *
+     * 
      * @param UxonObject $arrayOfMessages
      * @return NotifyingBehavior
      */
@@ -305,9 +315,9 @@ class NotifyingBehavior extends AbstractBehavior
     }  
 
     /**
-     *
+     * 
      * {@inheritdoc}
-     *
+     * 
      * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
      */
     public function exportUxonObject()
@@ -386,10 +396,17 @@ class NotifyingBehavior extends AbstractBehavior
         $phResolvers = [];
         
         $dataSheet = null;
+        $oldSheet = null;
         switch (true) {
             // For data-events, use their data obviously
             case $event instanceof DataSheetEventInterface:
                 $dataSheet = $event->getDataSheet();
+                
+                if($event instanceof OnBeforeUpdateDataEvent) {
+                    $oldSheet = $event->getDataSheetWithOldData();
+                    $dataSheet = $dataSheet->copy()->sortLike($oldSheet);
+                } 
+                
                 $logbook->addLine('Received data for ' . $dataSheet->getMetaObject()->__toString() . ' from data-event');
                 break;
             // For action-events, use their input data as object-restrictions will be probably expected to apply to input data:
@@ -425,7 +442,7 @@ class NotifyingBehavior extends AbstractBehavior
         
         // Ignore the event if its data does not match restrictions
         if ($dataSheet && $this->hasRestrictionConditions()) {
-            $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
+            $dataSheet = $dataSheet->extract($this->buildNotifyIfDataMatchesConditions($event, $dataSheet, $oldSheet), true);
             if ($dataSheet->isEmpty()) {
                 $this->skipEvent('**Skipping** event because of `notify_if_data_matches_conditions`', $event, $logbook);
                 return;
@@ -510,12 +527,16 @@ class NotifyingBehavior extends AbstractBehavior
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+        $thisObj = $this->getObject();
+        if (! $event->getDataSheet()->getMetaObject()->isExactly($thisObj)) {
             return;
         }
         
         $ignore = true;
         foreach ($this->getNotifyIfAttributesChange() as $attrAlias) {
+            if (! $thisObj->hasAttribute($attrAlias)) {
+                throw new BehaviorConfigurationError($this, 'Cannot use "' . $attrAlias . '" in `notify_if_attributes_change` of NotifyingBehavior: only aliases of attributes of the behavior object or related objects allowed!');
+            }
             if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
                 $ignore = false;
                 break;
@@ -556,11 +577,11 @@ class NotifyingBehavior extends AbstractBehavior
     
     /**
      * Only call the action if any of these attributes change (list of aliases)
-     *
+     * 
      * @uxon-property notify_if_attributes_change
      * @uxon-type metamodel:attribute[]
      * @uxon-template [""]
-     *
+     * 
      * @param UxonObject $value
      * @return NotifyingBehavior
      */
@@ -587,26 +608,55 @@ class NotifyingBehavior extends AbstractBehavior
     {
         return $this->notifyIfDataMatchesConditionGroupUxon !== null;
     }
-    
+
     /**
-     *
+     * 
+     * @param EventInterface     $event
+     * @param DataSheetInterface $newData
+     * @param DataSheetInterface $oldData
      * @return ConditionGroupInterface|NULL
      */
-    protected function getNotifyIfDataMatchesConditions() : ?ConditionGroupInterface
+    protected function buildNotifyIfDataMatchesConditions(
+        EventInterface      $event, 
+        DataSheetInterface  $newData,
+        ?DataSheetInterface $oldData) : ?ConditionGroupInterface
     {
         if ($this->notifyIfDataMatchesConditionGroupUxon === null) {
             return null;
         }
-        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->notifyIfDataMatchesConditionGroupUxon, $this->getObject());
+
+        $json = $this->notifyIfDataMatchesConditionGroupUxon->toJson(); 
+        $metaObject = $newData->getMetaObject();
+        $workBench = $this->getWorkbench();
+        $conditionGroup = ConditionGroupFactory::createOR($metaObject);
+        $context = $event::class;
+        
+        foreach ($newData->getRows() as $rowIndex => $row) {
+            // Render placeholders.
+            $renderer = new BracketHashStringTemplateRenderer($workBench);
+            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
+            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context, true));
+
+            try {
+                $renderedJson = $renderer->render($json);
+            } catch (\Throwable $e) {
+                $message = PHP_EOL.$this->getAlias().' - '.$e->getMessage();
+                throw new BehaviorRuntimeError($this, $message, null, $e);
+            }
+            
+            $conditionGroup->addNestedGroup(ConditionGroupFactory::createFromUxon($workBench, UxonObject::fromJson($renderedJson), $metaObject));
+        }
+        
+        return $conditionGroup;
     }
     
     /**
      * Only call the action if it's input data would match these conditions
-     *
+     * 
      * @uxon-property notify_if_data_matches_conditions
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
      * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "=","value": ""}]}
-     *
+     * 
      * @param UxonObject $uxon
      * @return NotifyingBehavior
      */
@@ -646,10 +696,10 @@ class NotifyingBehavior extends AbstractBehavior
      * There is no need to set `notify_on_event` together with `notify_on_action`, however, you may want
      * to combine the two options to send notification `OnBeforeActionPerformed` or in other very special
      * cases.
-     *
+     * 
      * @uxon-property notify_on_action
      * @uxon-type metamodel:action
-     *
+     * 
      * @param string $value
      * @return NotifyingBehavior
      */
@@ -673,11 +723,11 @@ class NotifyingBehavior extends AbstractBehavior
     
     /**
      * Set to TRUE to use the action input data to check against the data matches conditions
-     *
+     * 
      * @uxon-property use_action_input_data
      * @uxon-type boolean
      * @uxon-default false
-     *
+     * 
      * @param bool $value
      * @return NotifyingBehavior
      */
@@ -731,7 +781,8 @@ class NotifyingBehavior extends AbstractBehavior
     }
     
     /**
-     * Set to TRUE to not notify immediately, but to wait until all business logic is done and transactions are committed
+     * Set to TRUE to not notify immediately, but to wait until all business logic is done and transactions are
+     * committed
      * 
      * @uxon-property notify_after_all_actions_complete
      * @uxon-type boolean
@@ -747,7 +798,8 @@ class NotifyingBehavior extends AbstractBehavior
     }
     
     /**
-     * Set to FALSE to send notifications for data events even if the recipient user is not authorized to read the corresponding data
+     * Set to FALSE to send notifications for data events even if the recipient user is not authorized to read the
+     * corresponding data
      * 
      * By default, the behavior will check every data row to see if the user to be notified
      * is authorized to read it and will only send the message if so.

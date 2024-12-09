@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
@@ -47,7 +49,14 @@ class Text extends Display implements iShowText, iCanWrapText
      */
     public function setText($value)
     {
-        $this->setValue($this->evaluatePropertyExpression($value));
+        // Evaluate statif formulas right here, but leave dynamic formulas to be handled by the value
+        if (Expression::detectFormula($value)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value);
+            if ($expr->isStatic()) {
+                $value = $expr->evaluate() ?? '';
+            }
+        }
+        $this->setValue($value);
         return $this;
     }
     

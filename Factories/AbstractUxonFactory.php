@@ -2,9 +2,9 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 abstract class AbstractUxonFactory extends AbstractStaticFactory
 {
@@ -14,11 +14,11 @@ abstract class AbstractUxonFactory extends AbstractStaticFactory
      * If the business object implements iCanBeConvertedToUxon, this method
      * will work automatically. Otherwise it needs to be overridden in the specific factory.
      *
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @param UxonObject $uxon            
      * @throws UnexpectedValueException
      */
-    public static function createFromUxon(Workbench $exface, UxonObject $uxon)
+    public static function createFromUxon(WorkbenchInterface $exface, UxonObject $uxon)
     {
         $result = static::createEmpty($exface);
         if ($result instanceof iCanBeConvertedToUxon) {

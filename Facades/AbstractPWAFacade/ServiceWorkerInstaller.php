@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractPWAFacade;
 
 use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
+use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
@@ -167,7 +168,10 @@ JS;
 
 $filename = $this->buildUrlToServiceWorker();
 $path = $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . FilePathDataType::normalize($filename, DIRECTORY_SEPARATOR);
-file_put_contents($path, $code);
+$result = file_put_contents($path, $code);
+if ($result === false) {
+    throw new InstallerRuntimeError($this, 'Could not save ServiceWorker to ' . $path . '!');
+}
 return $filename;
     }
 
@@ -303,6 +307,13 @@ self.addEventListener('sync', function(event) {
 			})
 		)
     }
+});
+
+// Make sure any newly installed service worker becomes active and is not blocked by an already running instance.
+// If this is not done, a freshly installed SW will wait until the current one stops, which might actually
+// neve happen. This seems to be a common approach. It will only happen IF a new version is really available!
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
 });
 
 self.addEventListener('message', function(event){

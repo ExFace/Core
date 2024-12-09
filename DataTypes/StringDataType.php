@@ -4,6 +4,8 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
+use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
 use Transliterator;
 
 /**
@@ -338,7 +340,7 @@ class StringDataType extends AbstractDataType
      * @param bool $strict
      * @param bool $recursive
      * 
-     * @throws RangeException if no value is found for a placeholder
+     * @throws PlaceholderValueInvalidError if $strict === true AND a placeholder has no value
      * 
      * @return string
      */
@@ -348,10 +350,11 @@ class StringDataType extends AbstractDataType
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
+            $phKey = '[#' . ($ph ?? '') . '#]';
             if ($strict === true && array_key_exists($ph, $placeholders) === false) {
-                throw new RangeException('Missing value for placeholder "[#' . $ph . '#]"!');
+                throw new PlaceholderNotFoundError($phKey, 'Missing value for placeholder "' . $phKey . '"!');
             }
-            $search[] = '[#' . ($ph ?? '') . '#]';
+            $search[] = $phKey;
             $replace[] = $placeholders[$ph] ?? '';
         }
         
@@ -370,18 +373,22 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * Replaces a single placeholder in a string with the given value
      * 
      * @param string $string
      * @param string $placeholder
      * @param mixed $value
+     * 
+     * @throws \exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError
+     * 
      * @return string
      */
     public static function replacePlaceholder(string $string, string $placeholder, $value) : string
     {
-        if (! is_scalar($value)) {
-            throw new RuntimeException('Cannot replace placeholder "[#' . $placeholder . '#]" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
-        }
         $search = '[#' . $placeholder . '#]';
+        if (! is_scalar($value)) {
+            throw new PlaceholderValueInvalidError('Cannot replace placeholder "' . $search . '" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!', null, null, $value);
+        }
         return str_replace($search, $value, $string);
     }
     
@@ -664,5 +671,28 @@ class StringDataType extends AbstractDataType
             throw new RuntimeException('Cannot transliterate "' . static::truncate($string, 100, false, true, true, true) . '": ' . $transliterator->getErrorMessage());
         }
         return $result;
+    }
+    
+    /**
+     * Returns TRUE if the given string is one enclosed is quotes (single or double quotes) and FALSE otherwise
+     * 
+     * Currently this does not check, if there are also some closing quotes in the middle of the string.
+     * Possible enhanced solution: https://stackoverflow.com/questions/74963883/php-regular-expression-to-grab-values-enclosed-in-double-quotes
+     * 
+     * @param string $str
+     * @return bool
+     */
+    public static function isQuotedString(string $str) : bool
+    {
+        $str = trim($str);
+        $firstChar = mb_substr($str, 0, 1);
+        if ($firstChar !== '"' && $firstChar !== "'") {
+            return false;
+        }
+        $lastChar = mb_substr($str, -1);
+        if ($lastChar !== '"' && $lastChar !== "'") {
+            return false;
+        }
+        return true;
     }
 }

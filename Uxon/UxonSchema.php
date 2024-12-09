@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\PhpFilePathDataType;
+use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -309,8 +312,7 @@ class UxonSchema implements UxonSchemaInterface
      */
     public function getFilenameForEntity(string $prototypeClass) : string
     {
-        $path = str_replace('\\', '/', $prototypeClass);
-        return ltrim($path, "/") . '.php';
+        return PhpFilePathDataType::findFileOfClass($prototypeClass);
     }
     
     /**
@@ -671,9 +673,27 @@ class UxonSchema implements UxonSchemaInterface
         }
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.WIDGET');
-        $ds->getColumns()->addFromExpression('NAME');
+        $ds->getColumns()->addMultiple([
+            'NAME',
+            'APP'
+        ]);
         $ds->dataRead();
+
         $types = $ds->getColumns()->get('NAME')->getValues(false);
+        $appsAliases = [];
+        foreach ($ds->getColumns()->get('APP')->getValues(false) as $i => $package) {
+            if (strcasecmp($package, 'exface/core') !== 0) {
+                if (! in_array($package, $appsAliases)) {
+                    $alias = str_replace('/', AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $package);
+                    try {
+                        $appsAliases[$package] = $this->getWorkbench()->getApp($alias)->getAliasWithNamespace();
+                    } catch (AppNotFoundError $e) {
+                        continue;
+                    }
+                }
+                $types[$i] = $appsAliases[$package] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $types[$i];
+            }
+        }
         
         $this->setCache('', 'widgetTypes', $types);
         

@@ -4,11 +4,14 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Widgets\iHaveHintScale;
+use exface\Core\Interfaces\Widgets\WidgetPropertyScaleInterface;
 use exface\Core\Widgets\Parts\WidgetPropertyBinding;
 use exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Widgets\Parts\WidgetPropertyScale;
 
 /**
  * A ColorIndicator will change it's color depending the value of it's attributes.
@@ -74,7 +77,7 @@ use exface\Core\DataTypes\NumberDataType;
  * @author Andrej Kabachnik
  *
  */
-class ColorIndicator extends Display implements iHaveColor
+class ColorIndicator extends Display implements iHaveColor, iHaveHintScale
 {
     const BINDING_PROPERTY_COLOR = 'color';
     
@@ -85,6 +88,8 @@ class ColorIndicator extends Display implements iHaveColor
     private $colorBindingUxon = null;
     
     private $colorBinding = null;
+
+    private $hintScale = null;
     
     protected function init()
     {
@@ -254,5 +259,52 @@ class ColorIndicator extends Display implements iHaveColor
         }
         
         return false;
+    }
+
+    /**
+     * Specify a custom hint scale for the widget.
+     *
+     * The hint map must be an object with values as keys and CSS hint codes as values.
+     * The hint code will be applied to all values between it's value and the previous
+     * one. In the below example, all values <= 10 will be red, values > 10 and <= 20
+     * will be hinted yellow, those > 20 and <= 99 will have no special hint and values 
+     * starting with 100 (actually > 99) will be green.
+     *
+     * ```
+     * {
+     *  "10": "This project was not started yet",
+     *  "50": "At least one progress report was submitted",
+     *  "99" : "Waiting for final approvement from the management",
+     *  "100": "All tasks are completed or cancelled"
+     * }
+     *
+     * ```
+     *
+     * @uxon-property hint_scale
+     * @uxon-type string[]
+     * @uxon-template {"// <value>": "<hint>"}
+     *
+     * @param UxonObject $value
+     * @return ColorIndicator
+     */
+    protected function setHintScale(UxonObject $uxon) : ColorIndicator
+    {
+        $this->hintScale = $uxon;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveHintScaleInterface::getHintScale()
+     */
+    public function getHintScale() : WidgetPropertyScaleInterface
+    {
+        if ($this->hintScale === null) {
+            $this->hintScale = new WidgetPropertyScale($this, $this->getValueDataType());
+        } elseif ($this->hintScale instanceof UxonObject) {
+            $uxon = new UxonObject(['scale' => $this->hintScale]);
+            $this->hintScale = new WidgetPropertyScale($this, $this->getValueDataType(), $uxon);
+        }
+        return $this->hintScale;
     }
 }

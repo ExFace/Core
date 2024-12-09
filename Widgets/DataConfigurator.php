@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Events\Widget\OnDataConfiguratorInitialized;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
@@ -39,36 +41,34 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
 
 
     /**
-     * Returns an array with all filter widgets.
-     *
-     * @return Filter[]
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::getFilters()
      */
-    public function getFilters()
+    public function getFilters() : array
     {
         return $this->getFilterTab()->getWidgets();
     }
     
     /**
-     * Returns the filter widget matching the given widget id
-     *
+     * Finds a filter by id and returns it or NULL if non was found
      * @param string $filter_widget_id
-     * @return \exface\Core\Widgets\Filter
+     * @return Filter
      */
-    public function getFilter($filter_widget_id)
+    public function getFilter(string $filter_widget_id) : ?iFilterData
     {
         foreach ($this->getFilters() as $fltr) {
             if ($fltr->getId() == $filter_widget_id) {
                 return $fltr;
             }
         }
+        return null;
     }
     
     /**
-     * Returns all filters, that have values and thus will be applied to the result
-     *
-     * @return \exface\Core\Widgets\AbstractWidget[] array of widgets
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::getFiltersApplied()
      */
-    public function getFiltersApplied()
+    public function getFiltersApplied() : array
     {
         $result = array();
         foreach ($this->getFilters() as $id => $fltr) {
@@ -123,15 +123,14 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * @uxon-property filters
      * @uxon-type exface\Core\Widgets\Filter[]
      * @uxon-template [{"attribute_alias": ""}]
-     *
-     * @param UxonObject[] $uxon_objects
-     * @return DataConfigurator
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::setFilters()
      */
-    public function setFilters(UxonObject $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects) : iHaveFilters
     {
         try {
             foreach ($uxon_objects as $uxon) {
-                $filter = $this->createFilterWidget($uxon->getProperty('attribute_alias'), $uxon);
+                $filter = $this->createFilterForAttributeAlias($uxon->getProperty('attribute_alias'), $uxon);
                 $this->addFilter($filter);
             }
         } catch (\Throwable $e) {
@@ -145,6 +144,16 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         }
         return $this;
     }
+
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::()
+     */
+    public function createFilter(UxonObject $uxon = null) : iFilterData
+    {
+        return WidgetFactory::createFromUxonInParent($this->getFilterTab(), $uxon, 'Filter');
+    }
     
     /**
      * Creates a `Filter` widget from the given attribute alias an/or a UXON description of a `Filter` or `Input` widget.
@@ -155,7 +164,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * @param UxonObject $uxon_object
      * @return Filter
      */
-    public function createFilterWidget(string $attribute_alias = null, UxonObject $uxon_object = null) : Filter
+    public function createFilterForAttributeAlias(string $attribute_alias = null, UxonObject $uxon_object = null) : Filter
     {
         if ($uxon_object !== null) {
             // Legacy filters (before November 2019) allowed to mix filter properties and input 
@@ -188,6 +197,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 if ($inputUxon->hasProperty('apply_on_change')) {
                     $uxon_object->setProperty('apply_on_change', $inputUxon->getProperty('apply_on_change'));
                     $inputUxon->unsetProperty('apply_on_change');
+                }
+                if ($inputUxon->hasProperty('apply_to_aggregates')) {
+                    $uxon_object->setProperty('apply_to_aggregates', $inputUxon->getProperty('apply_to_aggregates'));
+                    $inputUxon->unsetProperty('apply_to_aggregates');
                 }
                 if ($inputUxon->hasProperty('condition_group')) {
                     $uxon_object->setProperty('condition_group', $inputUxon->getProperty('condition_group'));
@@ -228,7 +241,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * @param AbstractWidget $filter_widget
      * @see \exface\Core\Interfaces\Widgets\iHaveFilters::addFilter()
      */
-    public function addFilter(AbstractWidget $filter_widget)
+    public function addFilter(WidgetInterface $filter_widget) : iHaveFilters
     {
         if ($filter_widget instanceof Filter) {
             $filter = $filter_widget;
@@ -243,7 +256,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         return $this;
     }
     
-    public function hasFilters()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::addFilter()
+     */
+    public function hasFilters() : bool
     {
         return $this->getFilterTab()->hasWidgets();
     }

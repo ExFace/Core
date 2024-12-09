@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -121,7 +121,9 @@ use exface\Core\DataTypes\StringDataType;
  *
  * @author Andrej Kabachnik
  */
-class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConvertedToUxon
+class DataSheetPlaceholder
+    extends AbstractPlaceholderResolver
+    implements iCanBeConvertedToUxon
 {    
     use ImportUxonObjectTrait;
     
@@ -136,8 +138,6 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     private $rowRenderer = null;
     
     private $workbench = null;
-    
-    private $prefix = null;
     
     private $outerTemplate = null;
 
@@ -188,7 +188,7 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
         $rowsRendered = [];
         foreach (array_keys($phValsSheet->getRows()) as $rowNo) {
             $currentRowRenderer = $this->rowRenderer->copy();
-            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->prefix));
+            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->getPrefix()));
             if ($legacyPrefixFound === true) {
                 $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $legacyPrefix));
             }

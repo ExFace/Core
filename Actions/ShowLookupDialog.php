@@ -9,6 +9,7 @@ use exface\Core\Widgets\DataLookupDialog;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Interfaces\Widgets\iHaveSorters;
 
 /**
  * Shows an advanced search dialog allowing the user to search and select data entries.
@@ -133,6 +134,23 @@ class ShowLookupDialog extends ShowDialog
                             break;
                     }
                     
+                    switch (true) {
+                        case ($inputWidget instanceof iHaveSorters && $tableObj->is($inputWidget->getMetaObject())):
+                            foreach ($inputWidget->getSorters() as $sorter)
+                            {
+                                $data_table->addSorter($sorter->getProperty('attribute_alias'), $sorter->getProperty('direction'));
+                            }
+                            break;
+                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                            foreach ($inputWidget->getTable()->getSorters() as $sorter)
+                            {
+                                $data_table->addSorter($sorter->getProperty('attribute_alias'), $sorter->getProperty('direction'));
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    
                     // Inherit aggregations from calling widget
                     $aggrAttrs = [];
                     switch (true) {
@@ -147,7 +165,7 @@ class ShowLookupDialog extends ShowDialog
                                     if (! $col->hasAggregator() && ! $data_table->hasAggregationOverColumn($col)) {
                                         $data_table->setColumnsAutoAddDefaultDisplayAttributes(false);
                                         foreach ($data_table->getFilters() as $filter) {
-                                            if ($filter->getAttribute()->isExactly($col->getAttribute())) {
+                                            if ($filter->isBoundToAttribute() && $filter->getAttribute()->isExactly($col->getAttribute())) {
                                                 $data_table->getConfiguratorWidget()->getFilterTab()->removeWidget($filter);
                                             }
                                         }
@@ -197,7 +215,8 @@ class ShowLookupDialog extends ShowDialog
                 'icon' => Icons::CHECK,
                 'action' => [
                     'alias' => 'exface.Core.SendToWidget',
-                    'target_widget_id' => $this->getTargetWidgetId()
+                    'target_widget_id' => $this->getTargetWidgetId(),
+                    'input_rows_min' => 0
                 ]
             ]);
             $btn = $dialog->createButton($btnUxon)->setInputWidget($data_table);

@@ -16,13 +16,28 @@ importScripts('exface/vendor/exface/Core/Facades/AbstractPWAFacade/sw_tools.js')
 
 workbox.routing.registerRoute(
     /.*\/api\/jeasyui.* /i,
-    swTools.strategies.postNetworkFirst(),
+    swTools.strategies.POSTNetworkFirst(),
 	'POST'
 );
 -----------------------------------------------------------
  * 
  * @author Andrej Kabachnik
  */
+
+// Delete old buggy sw-tools IndexedDB if it exists when ServiceWorker is updated
+if (this instanceof ServiceWorkerGlobalScope) {
+	this.addEventListener("install", (event) => {
+		Dexie.exists('sw-tools')
+		.then(function(exists) {
+			if (exists) {
+				Dexie.delete('sw-tools');
+			}
+		}).catch(function (error) {
+			console.error("Failed to check if legacy DB 'sw-tools' exists", error);
+		});
+	});
+}
+
 const swTools = {
 	/**
 	 * Serializes a Request into a plain JS object.
@@ -116,26 +131,29 @@ const swTools = {
 		 * 
 		 * @return Promise
 		 */
-		put: function(request, response) {
-			var key, data;
-			swTools
-			.serializeRequest(request.clone())
-			.then(function(serializedRequest){
-				key = serializedRequest;
-				return swTools
-				.serializeResponse(response.clone());
-			}).then(function(serializedResponse) {
-				data = serializedResponse;
-				var entry = {
-					key: JSON.stringify(key),
-					response: data,
-					timestamp: Date.now()
-				};
-				swTools._dexie.cache
-				.add(entry)
-				.catch(function(error){
-					swTools._dexie.cache.update(entry.key, entry);
-				});
+		put: function(oRequestSerialized, oResponseSerialized) {
+			var sRequest = JSON.stringify(oRequestSerialized);
+			var iHash = swTools.hash(sRequest);
+			var entry = {
+				timestamp: Date.now(),
+				hash: iHash,
+				request: sRequest,
+				response: JSON.stringify(oResponseSerialized)
+			};
+			swTools._dexie.cache
+			.where('hash').equals(iHash)
+			.toArray()
+			.then(aHits => {
+				for (var oHit of aHits) {
+					if (sRequest === oHit.request) {
+						return swTools._dexie.cache.update(oHit.id, entry);
+					}
+				}
+				return swTools._dexie.cache.add(entry);
+			})
+			.catch(e => {
+				console.warn('Failed to save offline cache for request', e);
+				return Promise.reject();
 			});
 		},
 		
@@ -146,33 +164,67 @@ const swTools = {
 		 * 
 		 * @return Promise
 		 */
-		match: function(request) {
-			return swTools
-			.serializeRequest(request.clone())
-			.then(function(serializedRequest) {
-				var key = JSON.stringify(serializedRequest);
-				return swTools._dexie.cache.get(key);
-			}).then(function(data){
-				if (data) {
-					return swTools.deserializeResponse(data.response);
-				} else {
-					return new Response('', {status: 503, statusText: 'Service Unavailable'});
+		match: function(oRequestSerialized) {
+			var sRequest = JSON.stringify(oRequestSerialized);
+			var iHash = swTools.hash(sRequest);
+			return swTools._dexie.cache
+			.where('hash').equals(iHash)
+			.toArray()
+			.then(function(aHits){
+				if (aHits.length === 0) {
+					return null;
 				}
+				for (var oHit of aHits) {
+					if (oHit.request === sRequest) {
+						return JSON.parse(oHit.response);
+					}
+				}
+				return null;
+			})
+			.catch(e => {
+				console.warn('Failed to save offline cache for request', e);
+				return null;
 			});
+		}, 
+	},
+
+	hash: function (string){
+		/*
+		var h = 0, l = s.length, i = 0;
+		if ( l > 0 )
+		  while (i < l)
+			h = (h << 5) - h + s.charCodeAt(i++) | 0;
+		return h;
+		*/
+		var hash = 0;
+		for (var i = 0; i < string.length; i++) {
+			var code = string.charCodeAt(i);
+			hash = ((hash<<5)-hash)+code;
+			hash = hash & hash; // Convert to 32bit integer
 		}
+		return hash;
 	},
 	
 	_dexie: function(){
-		var db = new Dexie("sw-tools");
+		var db = new Dexie("workbox-postcache");
         db.version(1).stores({
-            cache: 'key,response,timestamp'
+            cache: '++id,timestamp,hash'
         });
         return db;
 	}(),
 	
-	// POST
+	/**
+	 * Custom workbox strategies
+	 */
 	strategies: {
-		postNetworkFirst: (options) => {
+
+		/**
+		 * This strategy allows to handle POST requests via NetworkFirst
+		 * 
+		 * @param {Object} options 
+		 * @returns 
+		 */
+		POSTNetworkFirst: (options) => {
 			if (! options) {
 				options = {};
 			}
@@ -182,15 +234,115 @@ const swTools = {
 				return Promise.resolve(
 					fetch(event.request.clone())
 					.then(function(response) {
-						// And store it in the cache for later
-						swTools.cache.put(event.request.clone(), response.clone());
+						var oResponseClone = response.clone();
+						if (event.request.headers.get('X-Offline-Strategy') === 'NetworkFirst') {
+							swTools
+							.serializeRequest(event.request.clone())
+							.then(oRequestSerialized => {
+								var sRequest = JSON.stringify(oRequestSerialized) || '';
+								var iLength = sRequest.length;
+								if (iLength !== null && iLength !== undefined && iLength <= 1*1000*1000) {
+									swTools
+									.serializeResponse(oResponseClone)
+									.then(oResponseSerialized => {
+										return swTools.cache.put(oRequestSerialized, oResponseSerialized);
+									})
+									.catch(e => {
+										console.warn('Failed to save offline cache for ' + url, e);
+									});
+								}
+							})
+							.catch(e => {
+								console.warn('Failed to save offline cache for ' + url, e);
+							});
+						}
 						return response;
 				    })
 					.catch(function() {
-						return swTools.cache.match(event.request.clone());
+						return swTools
+						.serializeRequest(event.request.clone())
+						.then(oRequestSerialized => {
+							return swTools.cache.match(oRequestSerialized);
+						})
+						.then(oResponseSerialized => {
+							if (oResponseSerialized) {
+								return swTools.deserializeResponse(oResponseSerialized);
+							} 
+							return new Response('', {status: 503, statusText: 'Service Unavailable'});
+						})
+						.catch(e => {
+							console.warn('Failed to check offline cache for ' + url, e);
+							return new Response('', {status: 503, statusText: 'Service Unavailable'});
+						});
 					})
 				);
 			}
-		}
+		},
+
+		POSTCacheOnly: (options) => {
+			if (! options) {
+				options = {};
+			}
+			
+			return ({url, event, params}) => {
+			    return swTools
+				.serializeRequest(event.request.clone())
+				.then(oRequestSerialized => {
+					return swTools.cache.match(oRequestSerialized);
+				})
+				.then(oResponseSerialized => {
+					if (oResponseSerialized) {
+						return swTools.deserializeResponse(oResponseSerialized);
+					} 
+					return new Response('', {status: 503, statusText: 'Service Unavailable'});
+				})
+			}
+		},
+
+		/**
+		 * This strategy swichtes between two specified strategies depending on whether it
+		 * concideres to be offline or online.
+		 * 
+		 * @param {{offlineStrategy: object, onlineStrategy: object}} options 
+		 * @returns 
+		 */
+		SemiOfflineSwitch: (options) => {
+			if (!options) {
+				options = {};
+			}           
+			var mOfflineStrategy = options.offlineStrategy;
+			var mOnlineStrategy = options.onlineStrategy;
+
+			if (mOfflineStrategy === undefined) {
+				throw {
+					message:  'No offline strategy defined for semiOffline switch!'
+				};
+			}
+			if (mOnlineStrategy === undefined) {
+				throw {
+					message:  'No online strategy defined for semiOffline switch!'
+				};
+			}
+			
+			return async ({ event, request, ...params }) => {
+				var oNetStat;
+				var mStrategy;
+				try {
+					// Make sure to load a fresh connections status instead of doing exfPWA.isOnline(), which
+					// might use cached values and may also load asynchronously when startig up.
+					oNetStat = await exfPWA.getConnectionStatus();
+					mStrategy = oNetStat.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
+				} catch (error) {
+					mStrategy = mOnlineStrategy;
+					console.warn('Error checking network status:', error);
+				}
+
+				if (mStrategy.handle !== undefined) {
+					return mStrategy.handle({ event, request, ...params });
+				} else {
+					return mStrategy({ event, request, ...params });
+				}
+			};
+		} 
 	}
 }

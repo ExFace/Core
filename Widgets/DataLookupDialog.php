@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -106,7 +108,7 @@ class DataLookupDialog extends Dialog
                         $filterAttrAlias = $col->getAttributeAlias();
                     }
                     if ($filterAttrAlias !== '' || $filterAttrAlias !== null) {
-                        $filterWidget = $dataConfigurator->createFilterWidget($filterAttrAlias);
+                        $filterWidget = $dataConfigurator->createFilterForAttributeAlias($filterAttrAlias);
                         if ($filterWidget->getInputWidget() instanceof iSupportMultiSelect) {
                             $filterWidget->getInputWidget()->setMultiSelect(true);
                         }
@@ -177,5 +179,22 @@ class DataLookupDialog extends Dialog
     public function getDataWidget() : Data
     {
         return $this->dataWidget ?? $this->getWidgetFirst();
+    }
+
+    public function getTriggerWidget() : ?iTriggerAction
+    {
+        if ($this->hasParent() && $this->getParent() instanceof iTriggerAction) {
+            return $this->getParent();
+        }
+        return null;
+    }
+
+    public function getTriggerInputWidget() : ?WidgetInterface
+    {
+        $trigger = $this->getTriggerWidget(); 
+        if ($trigger !== null && ($trigger instanceof iUseInputWidget)) {
+            return $trigger->getInputWidget();
+        }
+        return null;
     }
 }

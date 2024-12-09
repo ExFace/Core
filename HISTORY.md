@@ -1,6 +1,71 @@
 # Release history
 
-## 1.15 - in development
+## 1.24 - in development
+
+New features:
+
+- AI agents
+- Action confirmations
+- ChildObjectBehavior
+- ChecklistingBehavior
+
+## 1.23 - 26.11.2024
+
+New features:
+
+- Announcements communication channel showing global message strips on top of the app
+- New action `ActionChainPerRow`
+- New formula `ToHtml`
+
+Improvements:
+
+- Greatly improve multiselect logic in the UI5 facade
+- SQL data address properties now support multi-dialect statements with `@T-SQL`, `@MySQL`, etc.
+
+## 1.22 - 12.11.2024
+
+## 1.20 - 01.10.2024
+
+New features:
+
+- `ValidatingBehavior` to define `invalid_if`s on object-level - being applied on every write operation
+- `PrintExcel` action using Excel files as templates
+- File uploads for DataFlows in axenox.ETL app including the ability to combine web services with Excel upload using extended OpenAPI syntax. That is, you can define OpenAPI web services and "feed" them with uploaded Excels as an alternative.
+- Export charts as images
+- Detection of corrupted uploads in file connectors
+- Ability to create temporary meta objects from code
+
+Improvements
+
+- ExcelBuilder can now read table columns in Excel by name, not only ba coordinate
+- Button to repair broken logs in administration UI
+- HTTP facade responses can now include `Server-Timing` headers for advanced performance monitoring
+
+## 1.19 - 03.09.2024
+
+New features:
+
+- Manual offline mode ("semi offline")
+- Detecting slow networks and going offline automatically
+- DiffHtml widget to vizualize diffs for print previews and any HTMLs in general
+
+Improvements:
+
+- Read and export actions now support explicit definition of `columns`
+- Data mappers can now inherit columns of `matching_attributes` if to- and from-object have similar attribute names
+- Improved print template preview with HTML validation
+
+## 1.18 - 10.07.2024
+
+- TODO
+
+## 1.17 - 26.04.2024
+
+- TODO
+
+## 1.16 - 20.03.2024
+
+- TODO
 
 ## 1.14 - 12.01.2023
 

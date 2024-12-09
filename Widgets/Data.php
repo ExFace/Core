@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
@@ -133,6 +135,49 @@ class Data
     private $quickSearchWidget = null;
     
     private $quickSearchEnabled = null;
+
+    // Widget functions
+
+    /**
+     * Select one or more rows/items based on the value of a column
+     * 
+     * Arguments
+     * 
+     * 1. Values - one or more values to select. Multiple values should be passed as a delimited list
+     * 2. Column name - the name of the column to look for the values. If ommitted, the UID column of the table will be used
+     * 3. Scroll to selected rows - set to `true` to auto-scroll the table to the first newly selected row
+     * 
+     * Examples
+     * 
+     * - `select()` - select all visible rows
+     * - `select('0x9846568797')` select row with a value in its current UID column
+     * - `select('122,123,182')` select rows with multiple UIDs
+     * - `select('INV1024', 'NO')` select row with a value in the NO column
+     * - `select('1', 'MY_FLAG')` select all rows where column MY_FLAG is checked
+     * - `select('0x9846568797', 'UID', true)` select row with the give UID and scroll to it
+     *
+     * @uxon-property select
+     *
+     * @var string
+     */
+    const FUNCTION_SELECT = 'select';
+
+    /**
+     * Unselect one or more rows/items based on the value of a column
+     * 
+     * Examples
+     * 
+     * - `unselect()` - unselect all visible rows
+     * - `unselect('0x9846568797')` unselect row with a value in its current UID column
+     * - `unselect('122,123,182')` unselect rows with multiple UIDs
+     * - `unselect('INV1024', 'NO')` unselect row with a value in the NO column
+     * - `unselect('1', 'MY_FLAG')` unselect all rows where column MY_FLAG is checked
+     *
+     * @uxon-property unselect
+     *
+     * @var string
+     */
+    const FUNCTION_UNSELECT = 'unselect';
     
     /**
      * 
@@ -348,7 +393,7 @@ class Data
      *
      * @return Filter[]
      */
-    public function getFilters()
+    public function getFilters() : array
     {
         if (! $this->getConfiguratorWidget()->hasFilters()) {
             $this->addRequiredFilters();
@@ -361,7 +406,7 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveFilters::getFilter()
      */
-    public function getFilter($filter_widget_id)
+    public function getFilter(string $filter_widget_id) : ?iFilterData
     {
         return $this->getConfiguratorWidget()->getFilter($filter_widget_id);
     }
@@ -371,7 +416,7 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveFilters::getFiltersApplied()
      */
-    public function getFiltersApplied()
+    public function getFiltersApplied() : array
     {
         return $this->getConfiguratorWidget()->getFiltersApplied();
     }
@@ -428,7 +473,7 @@ class Data
      * @param UxonObject $uxon_objects
      * @return Data
      */
-    public function setFilters(UxonObject $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects) : iHaveFilters
     {
         $this->getConfiguratorWidget()->setFilters($uxon_objects);
         $this->addRequiredFilters();
@@ -439,7 +484,7 @@ class Data
      *
      * @see \exface\Core\Widgets\AbstractWidget::prefill()
      */
-    protected function doPrefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet)
+    protected function doPrefill(DataSheetInterface $data_sheet)
     {
         if ($data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
             return $this->doPrefillWithDataObject($data_sheet);
@@ -465,7 +510,7 @@ class Data
             $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
             // If no filters are there, create one
             if (empty($attribute_filters) === true) {
-                $filter = $this->getConfiguratorWidget()->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
+                $filter = $this->getConfiguratorWidget()->createFilterForAttributeAlias($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                 $this->addFilter($filter);
                 $filter->setValue($condition->getValue(), false);
                 // Disable the filter because if the user changes it, the
@@ -542,6 +587,15 @@ class Data
     }
 
     /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::createFilter()
+     */
+    public function createFilter(UxonObject $uxon = null) : iFilterData
+    {
+        return $this->getConfiguratorWidget()->createFilter($uxon);
+    }
+
+    /**
      * Adds a widget as a filter.
      * Any widget, that can be used to input a value, can be used for filtering. It will automatically be wrapped in a filter
      * widget. The second parameter (if set to TRUE) will make the filter automatically get used in quick search queries.
@@ -550,7 +604,7 @@ class Data
      * @param boolean $include_in_quick_search            
      * @see \exface\Core\Interfaces\Widgets\iHaveFilters::addFilter()
      */
-    public function addFilter(AbstractWidget $filter_widget, $include_in_quick_search = false)
+    public function addFilter(WidgetInterface $filter_widget, $include_in_quick_search = false) : iHaveFilters
     {
         $this->getConfiguratorWidget()->addFilter($filter_widget, $include_in_quick_search);
         return $this;
@@ -568,7 +622,7 @@ class Data
                         $ph_filter->setRequired(true);
                     }
                 } else {
-                    $ph_filter = $this->getConfiguratorWidget()->createFilterWidget($ph);
+                    $ph_filter = $this->getConfiguratorWidget()->createFilterForAttributeAlias($ph);
                     $ph_filter->setRequired(true);
                     $this->addFilter($ph_filter);
                 }
@@ -577,7 +631,12 @@ class Data
         return $this;
     }
 
-    public function hasFilters()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::addFilter()
+     */
+    public function hasFilters() : bool
     {
         if (! $this->getConfiguratorWidget()->hasFilters()) {
             $this->addRequiredFilters();
@@ -977,7 +1036,7 @@ class Data
     {
         $object = $relation_path ? $this->getMetaObject()->getRelatedObject($relation_path) : $this->getMetaObject();
         foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
-            $system_alias = RelationPath::relationPathAdd($relation_path, $attr->getAlias());
+            $system_alias = RelationPath::join($relation_path, $attr->getAlias());
             // Add the system attribute only if it is not there already.
             // Counting the columns first allows to add the system column without searching for it. If we would search over
             // empty data widgets, we would automatically trigger the creation of default columns, which is absolute nonsense
@@ -1371,5 +1430,21 @@ class Data
             $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
         }
         return array_unique($colNames);
+    }
+
+    /**
+     * Array of message widgets to display in the header (configurator) of the table
+     * 
+     * @uxon-property messages
+     * @uxon-type \exface\Core\Widgets\Message[]
+     * @uxon-template [{"text": "", "type": "warning"}]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $arrayOfUxon
+     * @return \exface\Core\Widgets\Data
+     */
+    public function setMessages(UxonObject $arrayOfUxon) : Data
+    {
+        $this->getConfiguratorWidget()->getMessageList()->setMessages($arrayOfUxon);
+        return $this;
     }
 }

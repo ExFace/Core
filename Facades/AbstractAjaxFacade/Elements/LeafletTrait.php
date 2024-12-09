@@ -1183,7 +1183,6 @@ JS;
                 },
                 style: function(feature) {
                     var oStyle = { {$styleJs} };
-                    console.log(oStyle);
                     return oStyle;
                 },
                 pointToLayer: function(feature, latlng) {
@@ -1711,7 +1710,7 @@ JS;
      */
     public function buildJsLeafletRefresh() : string
     {
-        return "{$this->buildJsLeafletVar()}.fire('exfRefresh').invalidateSize()";
+        return "{$this->buildJsLeafletVar()}?.fire('exfRefresh').invalidateSize()";
     }
     
     /**
@@ -1807,8 +1806,6 @@ JS;
                 {$dropDataBuilderJs}       
 
                 $(wrapperDiv).removeClass('mouseDown');
-                console.log('Dropped data', oDroppedData);
-                console.log('Dropped target', oTargetRow);
                 
                 {$onDropJs}
             });

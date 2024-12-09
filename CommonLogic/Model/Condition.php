@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -71,6 +72,8 @@ class Condition implements ConditionInterface
     private $data_type = null;
     
     private $ignoreEmptyValues = null;
+
+    private bool $applyToAggregates = true;
 
     /**
      * @deprecated use ConditionFactory instead!
@@ -473,6 +476,10 @@ class Condition implements ConditionInterface
         if ($this->ignoreEmptyValues === true) {
             $uxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
         }
+        if ($this->applyToAggregates === false) {
+            $uxon->setProperty('apply_to_aggregates', $this->applyToAggregates);
+        }
+
         return $uxon;
     }
 
@@ -537,7 +544,6 @@ class Condition implements ConditionInterface
         switch (true) {
             case $uxon->hasProperty('expression') === true:
                 $expressionStr = $uxon->getProperty('expression');
-                $expressionUnknownAsString = false;
                 break;
             case $uxon->hasProperty('attribute_alias') === true:
                 $expressionStr = $uxon->getProperty('attribute_alias');
@@ -567,9 +573,15 @@ class Condition implements ConditionInterface
             if ($uxon->hasProperty('comparator') && ($comp = $uxon->getProperty('comparator'))) {
                 $this->setComparator($comp);
             }
-            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+
+            if (null !== $ignoreEmpty = BooleanDataType::cast($uxon->getProperty('ignore_empty_values'))) {
                 $this->setIgnoreEmptyValues($ignoreEmpty);
             }
+
+            if(null !== $applyToAggregates = BooleanDataType::cast($uxon->getProperty('apply_to_aggregates'))) {
+                $this->setApplyToAggregates($applyToAggregates);
+            }
+
             if ($uxon->hasProperty('value') || $value !== null){
                 $value = $value ?? $uxon->getProperty('value');
                 // Apply th evalue only if it is not empty or ignore_empty_values is off
@@ -718,13 +730,19 @@ class Condition implements ConditionInterface
                 return $leftVal >= $rightVal;
             case ComparatorDataType::LESS_THAN_OR_EQUALS:
                 return $leftVal <= $rightVal;
+            // IN means the left value is equal to at least one right value
             case ComparatorDataType::IN:
+            // NOT IN is the reverse of IN meaning the left value is not equal to any right value
             case ComparatorDataType::NOT_IN:
                 $resposeOnFound = $comparator === ComparatorDataType::IN ? true : false;
+                // If the right side is empty, there is no way any left side is in it
                 if ($rightVal === null) {
                     return ! $resposeOnFound;
                 }
+                // Make sure the right side is an array
                 $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
+                // Compare each right value to the left value via EQUALS
+                // If a match is found, return TRUE for IN and FALSE for NOT_IN
                 foreach ($rightParts as $part) {
                     // trim the $part value as list read from data source might be
                     // seperated by list delimiter and whitespace
@@ -794,5 +812,34 @@ class Condition implements ConditionInterface
     public function willIgnoreEmptyValues() : bool
     {
         return $this->ignoreEmptyValues;
+    }
+
+    /**
+     * If set to FALSE this condition will not be applied to aggregated values.
+     *
+     * This can be used to fine-tune filters for instance.
+     * The default value is TRUE.
+     *
+     * @uxon-property apply_to_aggregates
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setApplyToAggregates(bool $value) : static
+    {
+        $this->applyToAggregates = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if this condition applies to aggregated values.
+     *
+     * @return bool
+     */
+    public function appliesToAggregatedValues() : bool
+    {
+        return $this->applyToAggregates;
     }
 }
