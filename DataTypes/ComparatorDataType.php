@@ -2,7 +2,7 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
-use exface\Core\Factories\ConditionFactory;
+use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -395,10 +395,10 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     }
 
     /**
-     * Check if a comparator is explicit.
+     * Check if a comparator is atomic.
      * 
-     * A comparator is explicit if it cannot be separated into a concatenation of SCALAR comparators.
-     * In other words all LIST comparators are implicit, because they can be separated into a set
+     * A comparator is atomic if it cannot be separated into a concatenation of SCALAR comparators.
+     * In other words all LIST comparators are not atomic, because they can be separated into a set
      * of SCALAR comparators concatenated by a logical operator. 
      * 
      * @param string $comparator
@@ -424,15 +424,13 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     }
 
     /**
-     * Divide this condition into sub-conditions that are guaranteed to be explicit.
-     * 
-     * NOTE: If this condition is already explicit, the resulting condition group will contain
-     * this condition as its only component.
-     * 
-     * @see ComparatorDataType::isExplicit()
-     * 
-     * @param bool $trimValues
+     * Divide a condition into sub-conditions that are guaranteed to be atomic.
+     *
+     * @param ConditionInterface $condition
+     * @param bool               $trimValues
      * @return ConditionalExpressionInterface
+     * @see ComparatorDataType::isExplicit()
+     *
      */
     public static function atomizeCondition(ConditionInterface $condition, bool $trimValues = true) : ConditionalExpressionInterface
     {
@@ -473,16 +471,22 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             $scalarOperator = EXF_LOGICAL_OR;
         }
 
-        $conditionGroup = ConditionGroupFactory::createEmpty($condition->getWorkbench(), $scalarOperator, null, $condition->willIgnoreEmptyValues());
+        $workbench = $condition->getWorkbench();
+        $ignoreEmpty = $condition->willIgnoreEmptyValues();
+        $expression = $condition->getExpression();
+        $conditionGroup = ConditionGroupFactory::createEmpty($workbench, $scalarOperator, null, $ignoreEmpty);
         foreach ($rightSideValues as $value) {
             if($trimValues) {
                 $value = trim($value);
             }
             
-            $condition = ConditionFactory::createEmpty($condition->getWorkbench(), $condition->ignoreEmptyValues);
-            $condition->setExpression($condition->getExpression());
-            $condition->setValue($value);
-            $condition->setComparator($scalarComparator);
+            $condition = new Condition(
+                $workbench,
+                $expression,
+                $scalarComparator,
+                $value,
+                $ignoreEmpty
+            );
             $conditionGroup->addCondition($condition);
         }
         
