@@ -44,6 +44,7 @@ class DataCheckWithOutputData extends DataCheck
             
             $rowTemplate = (array)$outputSheet->getRow();
             $outputSheet->removeRows();
+            $outputSheet->getColumns()->addFromSystemAttributes();
             
             $badData = $error->getBadData();
             
@@ -75,11 +76,9 @@ class DataCheckWithOutputData extends DataCheck
                     $badData);
             }
             
-            $uidAlias = $outputSheet->getMetaObject()->getUidAttributeAlias();
             foreach ($badData->getUidColumn()->getValues() as $affectedUid) {
                 $logBook?->addLine('Adding row for affected item with UID "'.$affectedUid.'".');
                 $rowTemplate[$this->affectedUidAlias] = $affectedUid;
-                $rowTemplate[$uidAlias] = '0x'.md5(json_encode($rowTemplate));
                 $outputSheet->addRow($rowTemplate);
             }
             
