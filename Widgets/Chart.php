@@ -1040,11 +1040,6 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     * 
-     *
-     * @uxon-property legend_attribute_alias
-     * @uxon-type metamodel:attribute
-     *
      * @param string|null $alias
      * @return $this
      */
