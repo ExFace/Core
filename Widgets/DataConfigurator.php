@@ -36,7 +36,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function init() : void
     {
         parent::init();
-        $this->getWorkbench()->eventManager()->dispatch(new OnDataConfiguratorInitialized($this));
+        $this->getWorkbench()->eventManager()->dispatch(new OnDataConfiguratorInitialized($this, $this->getMetaObject()));
     }
 
 
