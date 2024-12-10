@@ -21,7 +21,6 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
-use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
 /**
@@ -106,11 +105,16 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         if ($this->isDisabled() || $this->inProgress) {
             return;
         }
-        $this->inProgress = true;
 
+        $eventSheet = $event->getDataSheet();
+        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
+        $this->inProgress = true;
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $logbook->addLine('Loading input data...');
-        $logbook->addIndent(1);
+        $logbook->addDataSheet('New data', $eventSheet);
+        $logbook->addLine('Checking ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
         
         // Get datasheets.
         if ($event instanceof OnBeforeUpdateDataEvent || 
@@ -118,25 +122,16 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             
             $onUpdate = true;
             $previousDataSheet = $event->getDataSheetWithOldData();
-            $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
+            $changedDataSheet = $eventSheet->copy()->sortLike($previousDataSheet);
             
-            $logbook->addLine('Found pre-transaction data for '.$previousDataSheet->getMetaObject()->__toString());
-            $logbook->addDataSheet('Pre-Transaction',$previousDataSheet);
+            $logbook->addLine('Found "old" data for ' . $previousDataSheet->getMetaObject()->__toString() . ' - can use `[#old:...#]` placeholders');
+            $logbook->addDataSheet('Old data', $previousDataSheet);
         } else {
             $onUpdate = false;
             $previousDataSheet = null;
-            $changedDataSheet = $event->getDataSheet();
+            $changedDataSheet = $eventSheet;
             
-            $logbook->addLine('No pre-transaction data found.');
-        }
-        $logbook->addDataSheet('Post-Transaction',$changedDataSheet);
-        $logbook->addLine('Found post-transaction data for '.$changedDataSheet->getMetaObject()->__toString());
-        $logbook->addIndent(-1);
-
-        if (! $changedDataSheet->getMetaObject()->isExactly($this->getObject())) {
-            $logbook->addLine('Wrong MetaObject. Moving on...');
-            $this->inProgress = false;
-            return;
+            $logbook->addLine('No "old" data available - cannot use `[#old:...#]` placeholders');
         }
         
         $logbook->addLine('Loading relevant UXON definitions for context '.$event::getEventName().'...');
