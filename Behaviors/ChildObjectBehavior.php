@@ -25,14 +25,22 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 
 /**
- * Makes a child-object affect its parent whenever it is changed
+ * Triggers an update for related objects, whenever the data on this object changes.
  * 
- * For example, if we have an `ORDER` object and multiple `ORDER_POS` for that order. Changing the `QTY`
- * of an order position obviously also changes the order. If the order has a TimeStampingBehavior, we
- * expect the last-change time to update when the quantity of a position is changed.
+ * You can specify which other objects are affected with the property `changes_affect_relations`. Any object
+ * listed in that property will be synchronized with the object this behavior is attached to.
  * 
- * Technically this means an `OnUpdateData` event of order position triggers an `OnUpdateData` for the
- * order. The full event mapping is as follows:
+ * Imagine, for example, an object called `PendingOrder` that represents a list of ordered materials. It consists of 
+ * any number of objects called `PendingOrderPosition`, which hold information on what material was ordered and how much of it.
+ * Now imagine that the user updates a `PendingOrderPosition`: They will expect to see that change reflected in their `PendingOrder`, 
+ * but since we are working with two distinct MetaObjects, this won't be the case. 
+ * 
+ * You can solve this issue with the `ChildObjectBehavior`: Simply attach it to the `PendingOrderPosition` MetaObject and add 
+ * `PendingOrder` to its `changes_affect_relations` property. Now every time any `PendingOrderPosition` is changed, the `PendingOrder` 
+ * they are related to will be updated as well.
+ * 
+ * In technical terms any `OnUpdateData` event of `PendingOrderPosition` triggers `OnUpdateData` for its related `PendingOrder`. 
+ * The full event mapping is as follows:
  * 
  * | Source Event | Target Event |
  * |--|--|
@@ -64,14 +72,14 @@ use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
  * 
  * ### Order positions change their order
  * 
- * The behavior is to be attached to `ORDER_POS`. Assuming this object has a relation called `ORDER`, the behavior
+ * The behavior is to be attached to `PendingOrderPosition`. Assuming this object has a relation called `PendingOrder`, the behavior
  * configuration would look like this:
  * 
  * ```
  * 
  * {
  *	    "changes_affect_relations": [
- *		    ORDER
+ *		    PendingOrder
  *	    ]
  * }
  * 
