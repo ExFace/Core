@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
@@ -20,6 +21,7 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
 /**
@@ -111,7 +113,9 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $logbook->addIndent(1);
         
         // Get datasheets.
-        if ($event instanceof OnBeforeUpdateDataEvent) {
+        if ($event instanceof OnBeforeUpdateDataEvent || 
+            $event instanceof OnUpdateDataEvent) {
+            
             $onUpdate = true;
             $previousDataSheet = $event->getDataSheetWithOldData();
             $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
@@ -294,7 +298,6 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
         $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context, true));
-        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '', $context, true));
         
         try {
             $renderedJson = $renderer->render($json);
