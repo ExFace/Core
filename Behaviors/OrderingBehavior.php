@@ -21,17 +21,26 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
- * This behavior orders given indices within the hierarchy.
+ * Orders data rows automatically and saves the order number in one of the attributes.
  * 
- * The event is triggered before every create, update or delete operation.
- * It establishes a hierarchy based on the `parent_aliases` you provide and then orders
- * all elements among their siblings. Siblings are elements that share exactly the same parents.
+ * This behavior orders all data within configured boundaries: e.g.
  * 
- * - `index_alias` (REQUIRED): The resulting indices will be written to this column. 
- * - `close_gaps`: If TRUE (default), gaps between indices will be closed.
- * - `starting_index`: Ordering will start with this index.
- * - `new_element_on_top`: If TRUE (default), any elements that have no ordering index specified, will be
- * ordered first among their siblings.
+ * - all pages (`exface.Core.PAGE`) within a `MENU_PARENT` 
+ * - all order positions within an `ORDER`
+ * 
+ * Every time a row of the ordered object is saved, this behavior makes sure the order
+ * number storen in `order_number_attribute` is updated - for the saved row, but also
+ * for other rows within the same ordering boundies if needed.
+ * 
+ * ## Configuration
+ * 
+ * - `order_number_attribute` (required) - save the order number here
+ * - `order_with_attributes` - all rows with the same value of these attributes will share an ordering sequence.
+ * - `order_starts_with` - the order number for the first row
+ * - `close_gaps` - by default, deleting a row in the middle of the sequence will update order numbers of subsequent 
+ * rows to close the gap. You can explicitly allow gaps by setting this option to `false`. 
+ * - `append_to_end` - set to `false` to put a new row without an explicitly defined order number at the beginning
+ * (that is with `order_starts_with` as number) instead of at the end
  * 
  * ## Examples
  * 
@@ -42,13 +51,13 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * ```
  * 
  *  {
- *      "parent_aliases": [
+ *      "order_number_attribute": "MENU_POSITION",
+ *      "order_within_attributes": [
  *          "MENU_PARENT"
  *      ],
- *      "close_gaps": true,
- *      "index_alias": "MENU_POSITION",
- *      "new_element_on_top": true,
- *      "starting_index": 1
+ *      "order_starts_with": 0,
+ *      "append_to_end": true,
+ *      "close_gaps": true
  *  }
  * 
  * ```
@@ -64,9 +73,9 @@ class OrderingBehavior extends AbstractBehavior
     // configurable variables
     private int $startIndex = 1;
     private bool $closeGaps = true;
-    private bool $insertNewOnTop = true;
-    private mixed $indexAlias = null;
-    private mixed $parentAliases = [];
+    private bool $insertWithMaxIndex = true;
+    private mixed $orderAttributeAlias = null;
+    private mixed $orderBoundaryAliases = [];
 
     /**
      *
@@ -192,7 +201,7 @@ class OrderingBehavior extends AbstractBehavior
     {
         // Prepare variables.
         $cache = new LazyHierarchicalDataCache();
-        $indexAlias = $this->getIndexAlias();
+        $indexAlias = $this->getOrderNumberAttributeAlias();
         $uidAlias = $eventSheet->getUidColumnName();
 
         // Iterate over changed rows and update the ordering.
@@ -261,9 +270,9 @@ class OrderingBehavior extends AbstractBehavior
         $siblingSheet->addRows($newData->getRows(), true);
 
         // Determine where to insert new elements.
-        $insertOnTop = $this->getInsertNewOnTop();
+        $insertOnTop = ! $this->getAppendToEnd();
         if ($insertOnTop) {
-            $insertionIndex = $this->getStartIndex() - 1;
+            $insertionIndex = $this->getOrderStartsWith() - 1;
         } else {
             // If we have to insert at the bottom of our hierarchy, we have to
             // filter out any rows that are not in our group.
@@ -277,7 +286,7 @@ class OrderingBehavior extends AbstractBehavior
             if ($insertionIndex !== "") {
                 $insertionIndex++;
             } else {
-                $insertionIndex = $this->getStartIndex();
+                $insertionIndex = $this->getOrderStartsWith();
             }
         }
 
@@ -430,8 +439,8 @@ class OrderingBehavior extends AbstractBehavior
     private function findPendingChanges(DataSheetInterface $indexSheet, array &$pendingChanges): void
     {
         // Prepare variables.
-        $nextIndex = $this->getStartIndex();
-        $indexAlias = $this->getIndexAlias();
+        $nextIndex = $this->getOrderStartsWith();
+        $indexAlias = $this->getOrderNumberAttributeAlias();
         $uidAlias = $indexSheet->getUidColumnName();
         $closeGaps = $this->getCloseGaps();
 
@@ -492,7 +501,7 @@ class OrderingBehavior extends AbstractBehavior
         array              $pendingChanges): void
     {
         $uidAlias = $eventSheet->getUidColumnName();
-        $indexAlias = $this->getIndexAlias();
+        $indexAlias = $this->getOrderNumberAttributeAlias();
         $updateSheet = $this->createEmptyCopy($eventSheet, true, false);
 
         foreach ($pendingChanges as $pending) {
@@ -507,35 +516,45 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * Define where the behavior starts counting.
+     * Start order with this this number - typically `1` or `0`
      * 
      * A starting index of `1` for example represents an intuitive count from
-     * `1` to `infinity`.
+     * `1` to infinity.
      * 
-     * @uxon-property starting_index
+     * @uxon-property order_starts_with
      * @uxon-type integer
-     * @uxon-default 0
+     * @uxon-default 1
      * 
      * @param int $value
      * @return OrderingBehavior
      */
-    protected function setStartingIndex(int $value): OrderingBehavior
+    protected function setOrderStartsWith(int $value): OrderingBehavior
     {
         $this->startIndex = $value;
         return $this;
     }
 
     /**
+     * @deprecated use setOrderStartsWith() / order_starts_with instead
+     * @param int $value
+     * @return \exface\Core\Behaviors\OrderingBehavior
+     */
+    protected function setStartingIndex(int $value): OrderingBehavior
+    {
+        return $this->setOrderStartsWith($value);
+    }
+
+    /**
      *
      * @return int
      */
-    protected function getStartIndex(): int
+    protected function getOrderStartsWith(): int
     {
         return $this->startIndex;
     }
 
     /**
-     * Toggle, whether the behavior should close gaps between indices.
+     * Set to FALSE to leave gaps in the order number if an element is deleted from the middle
      * 
      * If TRUE an order of `1 => "A", 2 => "B", 4 => "C", 6 => "D"` would be rearranged to
      * `1 => "A", 2 => "B", 3 => "C", 4 => "D"`.
@@ -565,26 +584,36 @@ class OrderingBehavior extends AbstractBehavior
     /**
      * Toggle whether elements without indices should be inserted at the top or bottom of the order.
      * 
-     * @uxon-property new_element_on_top
+     * @uxon-property append_to_end
      * @uxon-type boolean
      * @uxon-default true
      * 
      * @param bool $trueOrFalse
      * @return OrderingBehavior
      */
+    protected function setAppendToEnd(bool $trueOrFalse): OrderingBehavior
+    {
+        $this->insertWithMaxIndex = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @deprecated use setAppendToEnd() / new_element_on_top instead
+     * @param bool $trueOrFalse
+     * @return \exface\Core\Behaviors\OrderingBehavior
+     */
     protected function setNewElementOnTop(bool $trueOrFalse): OrderingBehavior
     {
-        $this->insertNewOnTop = $trueOrFalse;
-        return $this;
+        return $this->setAppendToEnd($trueOrFalse);
     }
 
     /**
      *
      * @return bool
      */
-    protected function getInsertNewOnTop(): bool
+    protected function getAppendToEnd(): bool
     {
-        return $this->insertNewOnTop;
+        return $this->insertWithMaxIndex;
     }
 
     /**
@@ -593,13 +622,13 @@ class OrderingBehavior extends AbstractBehavior
      */
     protected function getParentAliases(): array
     {
-        return $this->parentAliases;
+        return $this->orderBoundaryAliases;
     }
 
     /**
      * Define from which columns the behavior should determine the parents of a row.
      * 
-     * @uxon-property parent_aliases
+     * @uxon-property order_within_attributes
      * @uxon-type metamodel:attribute[]
      * @uxon-template [""]
      * @uxon-required true
@@ -607,10 +636,21 @@ class OrderingBehavior extends AbstractBehavior
      * @param UxonObject $value
      * @return OrderingBehavior
      */
-    protected function setParentAliases(UxonObject $value): OrderingBehavior
+    protected function setOrderWithinAttributes(UxonObject $value): OrderingBehavior
     {
-        $this->parentAliases = $value->toArray();
+        $this->orderBoundaryAliases = $value->toArray();
         return $this;
+    }
+
+    /**
+     * @deprecated use order_within_attributes instead
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $value
+     * @return \exface\Core\Behaviors\OrderingBehavior
+     */
+    protected function setIndexingBoundaryAttributes(UxonObject $value) : OrderingBehavior
+    {
+        return $this->setOrderWithinAttributes($value);
     }
 
     /**
@@ -619,43 +659,54 @@ class OrderingBehavior extends AbstractBehavior
      * @param \exface\Core\CommonLogic\UxonObject $value
      * @return \exface\Core\Behaviors\OrderingBehavior
      */
-    protected function setIndexingBoundaryAttributes(UxonObject $value) : OrderingBehavior
+    protected function setParentAliases(UxonObject $value) : OrderingBehavior
     {
-        return $this->setParentAliases($value);
+        return $this->setOrderWithinAttributes($value);
     }
 
     /**
      *
      * @return string
      */
-    protected function getIndexAlias(): string
+    protected function getOrderNumberAttributeAlias() : string
     {
-        return $this->indexAlias;
+        return $this->orderAttributeAlias;
     }
 
     /**
-     * Define which attribute will store the calculated indices. Must be compatible with integers.
+     * The attribute to store the order number
      * 
-     * @uxon-property index_alias
+     * @uxon-property order_number_attribute
      * @uxon-type metamodel:attribute
      * @uxon-required true
      * 
      * @param string $value
      * @return OrderingBehavior
      */
-    protected function setIndexAlias(string $value): OrderingBehavior
+    protected function setOrderNumberAttribute(string $value): OrderingBehavior
     {
-        $this->indexAlias = $value;
+        $this->orderAttributeAlias = $value;
         return $this;
     }
-#
+
     /**
-     * @deprecated  use index_alias instead
+     * @deprecated use setOrderAttribute() instead!
+     * 
+     * @param string $value
+     * @return OrderingBehavior
+     */
+    protected function setIndexAlias(string $value): OrderingBehavior
+    {
+        return $this->setOrderNumberAttribute($value);
+    }
+
+    /**
+     * @deprecated  use order_number_attribute instead
      * @param string $alias
      * @return \exface\Core\Behaviors\OrderingBehavior
      */
     protected function setOrderIndexAttribute(string $alias) : OrderingBehavior
     {
-        return $this->setIndexAlias($alias);
+        return $this->setOrderNumberAttribute($alias);
     }
 }
