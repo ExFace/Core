@@ -2,6 +2,7 @@
 namespace exface\Core\Events\Widget;
 
 use exface\Core\Events\AbstractEvent;
+use exface\Core\Interfaces\Events\UiPageEventInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
@@ -13,7 +14,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
  * @author Andrej Kabachnik
  *        
  */
-class OnUiPageInitEvent extends AbstractEvent
+class OnUiPageInitEvent extends AbstractEvent implements UiPageEventInterface
 {
     private $page = null;
     

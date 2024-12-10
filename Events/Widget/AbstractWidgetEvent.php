@@ -2,6 +2,7 @@
 namespace exface\Core\Events\Widget;
 
 use exface\Core\Events\AbstractEvent;
+use exface\Core\Interfaces\Events\UiPageEventInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Events\WidgetEventInterface;
@@ -12,7 +13,7 @@ use exface\Core\Interfaces\Events\WidgetEventInterface;
  * @author Andrej Kabachnik
  *        
  */
-abstract class AbstractWidgetEvent extends AbstractEvent implements WidgetEventInterface
+abstract class AbstractWidgetEvent extends AbstractEvent implements WidgetEventInterface, UiPageEventInterface
 {
     private $widget = null;
     
@@ -36,7 +37,8 @@ abstract class AbstractWidgetEvent extends AbstractEvent implements WidgetEventI
     
     /**
      * 
-     * @return UiPageInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\UiPageEventInterface::getPage()
      */
     public function getPage() : UiPageInterface
     {

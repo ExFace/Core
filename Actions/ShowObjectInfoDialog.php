@@ -189,11 +189,11 @@ class ShowObjectInfoDialog extends ShowDialog
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ShowDialog::enhanceDialogWidget()
+     * @see \exface\Core\Actions\ShowDialog::enrichDialogWidget()
      */
-    protected function enhanceDialogWidget(Dialog $dialog)
+    protected function enrichDialogWidget(Dialog $dialog) : Dialog
     {
-        $dialog = parent::enhanceDialogWidget($dialog);
+        $dialog = parent::enrichDialogWidget($dialog);
         if ($this->getDisableEditing()) {
             foreach ($dialog->getInputWidgets() as $widget) {
                 $widget->setDisabled(true);

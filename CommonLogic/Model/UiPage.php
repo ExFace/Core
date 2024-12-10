@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Events\Widget\OnUiRootWidgetInitEvent;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
@@ -168,6 +169,9 @@ class UiPage implements UiPageInterface, iHaveIcon
         }
         $this->dirty = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnUiPageInitEvent($this));
+        if ($this->widget_root !== null) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnUiRootWidgetInitEvent($this->widget_root, $this->widget_root->getMetaObject()));
+        }
         return $this;
     }
 

@@ -3,6 +3,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
+use exface\Core\Events\Widget\OnUiRootWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\Widget\OnUiPageInitEvent;
@@ -51,7 +52,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnUiPageInitEvent::getEventName(), [$this, 'handleUiPageInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnUiRootWidgetInitEvent::getEventName(), [$this, 'handleUiRootInitialized'], $this->getPriority());
         $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
@@ -63,35 +64,19 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnUiPageInitEvent::getEventName(), [$this, 'handleUiPageInitialized']);
+        $this->getWorkbench()->eventManager()->removeListener(OnUiRootWidgetInitEvent::getEventName(), [$this, 'handleUiRootInitialized']);
         $this->getWorkbench()->eventManager()->removeListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
 
     /**
      * 
-     * @param mixed $widgetId
-     * @param \exface\Core\Interfaces\Model\UiPageInterface $page
-     * @return \exface\Core\Interfaces\WidgetInterface
-     */
-    protected function getTargetWidget(?string $widgetId, UiPageInterface $page) : WidgetInterface
-    {
-        return $widgetId === null ?
-            $page->getWidgetRoot() : $page->getWidget($widgetId);
-    }
-
-    /**
-     * 
-     * @param \exface\Core\Interfaces\WidgetInterface $widget
-     * @param mixed $buttonsUxon
+     * @param iHaveButtons $widget
+     * @param UxonObject $buttonsUxon
      * @return void
      */
-    protected function addButtonsToWidget(WidgetInterface $widget, ?UxonObject $buttonsUxon) : void
+    protected function addButtonsToWidget(iHaveButtons $widget, UxonObject $buttonsUxon) : void
     {
-        if(!isset($buttonsUxon) || !$widget instanceof iHaveButtons) {
-            return;
-        }
-
         foreach ($buttonsUxon as $btnUxon) {
             $widget->addButton($widget->createButton($btnUxon));
         }
@@ -145,21 +130,27 @@ class WidgetModifyingBehavior extends AbstractBehavior
      * @param \exface\Core\Events\Widget\OnUiPageInitEvent $event
      * @return void
      */
-    public function handleUiPageInitialized(OnUiPageInitEvent $event) : void
+    public function handleUiRootInitialized(OnUiRootWidgetInitEvent $event) : void
     {
         if ($this->isDisabled()) {
             return;
         }
 
         $page = $event->getPage();
-        if (!$this->isRelevantPage($page)) {
+        if (! $this->isRelevantPage($page)) {
             return;
         }
-        
+
+        $widget = $event->getWidget();
+        if (! $widget->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
-        $widget = $this->getTargetWidget($this->widgetId, $page);
-        $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
+        if ($this->buttonsToAddUxon !== null && $widget instanceof iHaveButtons) {
+            $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
+        }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
