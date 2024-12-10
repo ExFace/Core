@@ -352,12 +352,10 @@ class ChildObjectBehavior
     }
 
     /**
-     * Relations to the objects, that will be affected by changes on this one
-     *
-     * For example, for an `ORDER_POSITION` object
-     *
-     * - `ORDER`
-     * - `ORDER__CUSTOMER__CUSTOMER_STATS`
+     * A list of target relations.
+     * 
+     * Whenever this objected is changed, the behavior will trigger an update in all objects identified
+     * by the relations in this list.
      *
      * @uxon-property changes_affect_relations
      * @uxon-type metamodel:relation[]
