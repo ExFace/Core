@@ -74,7 +74,7 @@ class DataTableConfigurator extends DataConfigurator
         return $tab;
     }
 
-    public function setColumns(UxonObject $arrayOfColumns) : DataTableConfigurator
+    public function setOptionalColumns(UxonObject $arrayOfColumns) : DataTableConfigurator
     {
         $this->columnsUxon = $arrayOfColumns;
         return $this;
