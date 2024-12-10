@@ -41,17 +41,19 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * data this behavior generates. This table needs to fulfill the following conditions:
  * 
  *      - It must have a matching column for each column defined in the `rows` property of `output_data_sheet` (matching name and datatype).
- *      - It must have a UID column of type `binary` with length `16`, represented by an attribute of type `Hexadecimal Number`.
+ *      - It must have the default system columns of your respective app (e.g. `id`, `modified_by`, etc.).
  *      - It must have a column that matches your `affected_uid_alias`, both in name and datatype. 
  *      - Configure a foreign key that uses the above column as reference.
- *      - Do **NOT** add any columns other than those mentioned above.
  *      - You can find an example definition in the section `Examples`.
  * 
- * 2. Create a MetaObject for this table that does **not** inherit from its BaseObject and has its UID properly configured.
+ * 2. Create a MetaObject for this table that **inherits from its BaseObject**. 
  * 
- * 3. Then, attach a new `ChecklistingBehavior` to the MetaObject that you actually wish to modify (for example the OrderPosition) and configure the behavior as needed.
+ * 3. If your data source is derived from LogBase, you need to add a LogBase-Class to the Data Source Settings of the newly created MetaObject, for example:
+ * `{"LOGBASE_CLASS":"ScaLink.OneLink.LieferscheinPosStatus"}` 
  * 
- * 4. If properly configured, the behavior will now write its output to the table you have created whenever its conditions are met.
+ * 4. Then, attach a new `ChecklistingBehavior` to the MetaObject that you actually wish to modify (for example the OrderPosition) and configure the behavior as needed.
+ * 
+ * 5. If properly configured, the behavior will now write its output to the table you have created whenever its conditions are met.
  * You can now read said data from the table to create useful effects, such as rendering notifications.
  * 
  * ## Placeholders
@@ -70,7 +72,12 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * ```
  * 
  *  CREATE TABLE [dbo].[CHECKLIST] (
- *      [UID] binary(16) NOT NULL,
+ *      [id] bigint NOT NULL,
+ *      [ZeitNeu] datetime NOT NULL,
+ *      [ZeitAend] datetime NOT NULL,
+ *      [UserNeu] nvarchar(50) NOT NULL,
+ *      [UserAend] nvarchar(50) NOT NULL,
+ *      [Betreiber] nvarchar(8) NOT NULL,
  *      [CRITICALITY] int NOT NULL,
  *      [LABEL] nvarchar(50) NOT NULL,
  *      [MESSAGE] nvarchar(100) NOT NULL,
