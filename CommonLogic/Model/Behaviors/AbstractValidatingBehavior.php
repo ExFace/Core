@@ -9,6 +9,7 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
@@ -21,7 +22,6 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
-use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
 /**
@@ -112,19 +112,14 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $logbook->addLine('Loading input data...');
         $logbook->addIndent(1);
         
+        $previousDataSheet = $this->getPreviousDataSheet($event);
         // Get datasheets.
-        if ($event instanceof OnBeforeUpdateDataEvent || 
-            $event instanceof OnUpdateDataEvent) {
-            
-            $onUpdate = true;
-            $previousDataSheet = $event->getDataSheetWithOldData();
+        if ($previousDataSheet !== null) {
             $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
             
             $logbook->addLine('Found pre-transaction data for '.$previousDataSheet->getMetaObject()->__toString());
             $logbook->addDataSheet('Pre-Transaction',$previousDataSheet);
         } else {
-            $onUpdate = false;
-            $previousDataSheet = null;
             $changedDataSheet = $event->getDataSheet();
             
             $logbook->addLine('No pre-transaction data found.');
@@ -141,7 +136,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         
         $logbook->addLine('Loading relevant UXON definitions for context '.$event::getEventName().'...');
         $logbook->addIndent(1);
-        if(!$uxon = $this->getRelevantUxons($onUpdate, $logbook)) {
+        if(!$uxon = $this->getRelevantUxons($event, $logbook)) {
             $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
             $this->inProgress = false;
             return;
@@ -190,6 +185,21 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     }
 
     /**
+     * Try to load a datasheet with pre-transaction data. Returns NULL if no such datasheet was found. 
+     * 
+     * @param EventInterface $event
+     * @return DataSheetInterface|null
+     */
+    protected function getPreviousDataSheet(EventInterface $event) : ?DataSheetInterface
+    {
+        if($event instanceof OnBeforeUpdateDataEvent) {
+            return $event->getDataSheetWithOldData();
+        }
+        
+        return null;
+    }
+
+    /**
      * Process the results of the validation.
      *
      * The validation results are represented as a collection of multiple instances of `DataCheckFailedError`.
@@ -203,13 +213,14 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     protected abstract function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
 
     /**
-     * @param bool            $onUpdate
+     * @param EventInterface  $event
      * @param BehaviorLogBook $logbook
      * @return array|bool
      */
-    protected function getRelevantUxons(bool $onUpdate, BehaviorLogBook $logbook) : array | bool
+    protected function getRelevantUxons(EventInterface $event, BehaviorLogBook $logbook) : array | bool
     {
         $result = array();
+        $onUpdate = $event instanceof OnBeforeUpdateDataEvent || $event instanceof OnUpdateDataEvent;
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_ANY] !== null) {
             $result[self::CONTEXT_ON_ANY] = $this->uxonsPerEventContext[self::CONTEXT_ON_ANY];
