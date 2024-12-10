@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
@@ -111,7 +112,9 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $logbook->addIndent(1);
         
         // Get datasheets.
-        if ($event instanceof OnBeforeUpdateDataEvent) {
+        if ($event instanceof OnBeforeUpdateDataEvent || 
+            $event instanceof OnUpdateDataEvent) {
+            
             $onUpdate = true;
             $previousDataSheet = $event->getDataSheetWithOldData();
             $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
