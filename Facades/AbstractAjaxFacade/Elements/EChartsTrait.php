@@ -797,7 +797,7 @@ JS;
             return <<<JS
             
             (function ({$column}){
-                return {$column}.join('{$this->getOutputListDelimiter()}');
+                return {$column}.join('{$this->getSourceOutputListDelimiter()}');
             })(oEvent)
 JS;
 
@@ -851,7 +851,7 @@ JS;
      */
     // TODO 2024-12-09 geb: At the moment we simply use the first non-standard delimiter for ALL outputs, maybe we can 
     // TODO                 identify consumers of the JS getter and send bespoke delimiters per consumer.
-    protected function getOutputListDelimiter() : string
+    protected function getSourceOutputListDelimiter() : string
     {
         $widget = $this->getWidget();
         $links = WidgetLink::getLinksToWidget($widget);
