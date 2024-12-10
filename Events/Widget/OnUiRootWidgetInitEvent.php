@@ -7,21 +7,13 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
 /**
- * Event fired when a DataConfigurator widget is initialized
+ * Event fired after the root widget of a UI view is initialized: e.g. the root of a UI page, a Dialog, a PopUp, etc.
  * 
- * This allows behaviors like the WidgetModifyingBehavior to add their options to the 
- * configrator.
- * 
- * NOTE: the event contains the meta object, that was used to initialize the widget.
- * If the widgets object is changed later, it will obviously be different from that
- * initial object. So there might be a difference between `$event->getObject()` and
- * `$event->getWidget()->getMetaObject()`.
- * 
- * @event exface.Core.Widget.OnDataConfiguratorInit
+ * @event exface.Core.Widget.OnUiRootWidgetInit
  * 
  * @author Andrej Kabachnik
  */
-class OnDataConfiguratorInitEvent extends AbstractWidgetEvent implements MetaObjectEventInterface
+class OnUiRootWidgetInitEvent extends AbstractWidgetEvent implements MetaObjectEventInterface
 {
     private $object = null;
 
@@ -53,6 +45,6 @@ class OnDataConfiguratorInitEvent extends AbstractWidgetEvent implements MetaObj
      */
     public static function getEventName() : string
     {
-        return 'exface.Core.Widget.OnDataConfiguratorInit';
+        return 'exface.Core.Widget.OnUiRootWidgetInit';
     }
 }
