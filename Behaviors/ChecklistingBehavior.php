@@ -60,7 +60,6 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * 
  * This behavior supports basic data placeholders. Depending on the event context, it may even be able to access pre-transaction:
  * 
- * - `[#attribute_alias#]`: Access post-transaction data. This placeholder is available in all event contexts.
  * - `[#~new:attribute_alias#]`: Access post-transaction data. This placeholder is available in all event contexts.
  * - `[#~old:attribute_alias#]`: Access pre-transaction data, i.e. the data before it was modified. This placeholder is only available for `check_on_update`. If 
  * you try to use it in `check_always` or check_on_create` the behavior will throw an error.
