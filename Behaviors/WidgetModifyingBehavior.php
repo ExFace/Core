@@ -117,6 +117,10 @@ class WidgetModifyingBehavior extends AbstractBehavior
         if ($this->isDisabled()) {
             return;
         }
+
+        if ($this->columnsToAddUxon === null) {
+            return;
+        }
         
         if (! $event->getObject()->isExactly($this->getObject())) {
             return;
