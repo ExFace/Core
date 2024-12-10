@@ -2,10 +2,10 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\Events\Widget\OnDataConfiguratorInitialized;
+use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Events\Widget\OnUiPageInitializedEvent;
+use exface\Core\Events\Widget\OnUiPageInitEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -51,8 +51,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnUiPageInitializedEvent::getEventName(), [$this, 'handleUiPageInitialized'], $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitialized::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnUiPageInitEvent::getEventName(), [$this, 'handleUiPageInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
     
@@ -63,8 +63,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnUiPageInitializedEvent::getEventName(), [$this, 'handleUiPageInitialized']);
-        $this->getWorkbench()->eventManager()->removeListener(OnDataConfiguratorInitialized::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->removeListener(OnUiPageInitEvent::getEventName(), [$this, 'handleUiPageInitialized']);
+        $this->getWorkbench()->eventManager()->removeListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
 
@@ -109,10 +109,10 @@ class WidgetModifyingBehavior extends AbstractBehavior
 
     /**
      * 
-     * @param \exface\Core\Events\Widget\OnDataConfiguratorInitialized $event
+     * @param \exface\Core\Events\Widget\OnDataConfiguratorInitEvent $event
      * @return void
      */
-    public function handleDataConfiguratorInitialized(OnDataConfiguratorInitialized $event) : void
+    public function handleDataConfiguratorInitialized(OnDataConfiguratorInitEvent $event) : void
     {
         if ($this->isDisabled()) {
             return;
@@ -136,16 +136,16 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-        $configurator->setColumns( $this->columnsToAddUxon);
+        $configurator->setOptionalColumns( $this->columnsToAddUxon);
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
 
     /**
      * 
-     * @param \exface\Core\Events\Widget\OnUiPageInitializedEvent $event
+     * @param \exface\Core\Events\Widget\OnUiPageInitEvent $event
      * @return void
      */
-    public function handleUiPageInitialized(OnUiPageInitializedEvent $event) : void
+    public function handleUiPageInitialized(OnUiPageInitEvent $event) : void
     {
         if ($this->isDisabled()) {
             return;

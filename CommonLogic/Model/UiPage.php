@@ -27,7 +27,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 use exface\Core\Factories\UserFactory;
-use exface\Core\Events\Widget\OnUiPageInitializedEvent;
+use exface\Core\Events\Widget\OnUiPageInitEvent;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Translation\UxonTranslator;
@@ -167,7 +167,7 @@ class UiPage implements UiPageInterface, iHaveIcon
             WidgetFactory::createFromUxon($this, $this->getContentsUxon());
         }
         $this->dirty = false;
-        $this->getWorkbench()->eventManager()->dispatch(new OnUiPageInitializedEvent($this));
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiPageInitEvent($this));
         return $this;
     }
 

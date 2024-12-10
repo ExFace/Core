@@ -9,7 +9,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Events\Widget\OnUiPageInitializedEvent;
+use exface\Core\Events\Widget\OnUiPageInitEvent;
 
 /**
  *
@@ -168,7 +168,7 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
         // additional columns are created even if getDataWidget() is not called
         // later explicitly (which won't happen when reading linked data for
         // example as the data widget does not know anything about the link).
-        $this->getWorkbench()->eventManager()->addListener(OnUiPageInitializedEvent::getEventName(), function(OnUiPageInitializedEvent $event) {
+        $this->getWorkbench()->eventManager()->addListener(OnUiPageInitEvent::getEventName(), function(OnUiPageInitEvent $event) {
             $this->getDataWidget();
         });
         
