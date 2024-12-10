@@ -21,6 +21,7 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
 /**
@@ -297,7 +298,6 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
         $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context, true));
-        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '', $context, true));
         
         try {
             $renderedJson = $renderer->render($json);
