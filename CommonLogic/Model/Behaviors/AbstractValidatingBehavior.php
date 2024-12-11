@@ -111,6 +111,8 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             return;
         }
 
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+
         $this->inProgress = true;
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->addDataSheet('New data', $eventSheet);
@@ -139,11 +141,10 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         if(!$uxon = $this->getRelevantUxons($onUpdate, $logbook)) {
             $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
             $this->inProgress = false;
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
         $logbook->addIndent(-1);
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
         
         // Perform data checks for each validation rule.
         $error = null;
