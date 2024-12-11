@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\FileNotReadableError;
-use exface\Core\Exceptions\Contexts\ContextSaveError;
 
 /**
  * 
@@ -106,7 +105,8 @@ class InstallationContextScope extends AbstractContextScope
                 try {
                     $this->getWorkbench()->filemanager()->dumpFile($this->getFilePathAbsolute(), $json);
                 } catch (\Throwable $e) {
-                    throw new ContextSaveError($this, 'Cannot save context data! ' . $e->getMessage());
+                    throw new RuntimeException('Cannot save context data in installation context scope! ' . $recoveryMsg . $e->getMessage(), null, $e);
+                    
                 }
             }
             // The installation context is actually never empty as the internal sodium secret
