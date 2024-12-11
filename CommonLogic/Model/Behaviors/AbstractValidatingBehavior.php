@@ -117,6 +117,9 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                 $changedDataSheet = $eventSheet;
                 $logbook->addLine('No "old" data available - cannot use `[#old:...#]` placeholders');
             }
+        } else {
+            $logbook->addLine('No "old" data required');
+            $changedDataSheet = $eventSheet;
         }
         
         $logbook->addDataSheet('New data', $changedDataSheet);
@@ -415,6 +418,9 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         if ($this->requiresOldData === null) {
             $this->requiresOldData = false;
             foreach ($this->uxonsPerEventContext as $uxon) {
+                if ($uxon === null) {
+                    continue;
+                }
                 if (mb_stripos($uxon->toJson(), '[#~old:') !== false) {
                     $this->requiresOldData = true;
                     break;
