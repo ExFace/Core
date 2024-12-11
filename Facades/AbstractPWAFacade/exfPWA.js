@@ -523,14 +523,14 @@ self.addEventListener('sync', function(event) {
 							});
 
 							// Update state before switching polling modes
-							this.setState({slowNetwork: isNetworkSlow});
+							this.setState({ slowNetwork: isNetworkSlow });
 
 							// Switch back to normal polling
 							clearInterval(this._networkPoller);
 							this.initPoorNetworkPoller();
 						} else {
 							// Network still slow, maintain state updates
-							this.setState({slowNetwork: isNetworkSlow});
+							this.setState({ slowNetwork: isNetworkSlow });
 						}
 					} catch (error) {
 						console.error('Fast Network Polling Error:', {
@@ -582,25 +582,31 @@ self.addEventListener('sync', function(event) {
 
 			/**
 			 * Updates network state and triggers network changed event if needed
-			 * Simplified version - removes change tracking complexity
+			 * Includes automatic cleanup of old state records after save
 			 * 
 			 * @param {{forcedOffline: boolean, autoOffline: boolean, slowNetwork: boolean}} oFlags
-		 	 * @returns {Promise} Resolves when state is updated
+			 * @returns {Promise} Resolves when state is updated
 			 */
 			setState: async function (oFlags) {
 				// Prevent concurrent updates
+				// Store reference to network object to avoid 'this' context issues
+				// This fixes the previous undefined oSelf reference error
 				oSelf = this;
+				// Prevent concurrent updates by checking the pending flag
+				// This ensures only one state update happens at a time
 				if (oSelf._pendingStateUpdate) {
 					return Promise.resolve();
 				}
 
 				try {
 					// Update state and check if anything changed
+					// _updateState returns an object containing only the changed properties
 					const oChanges = _oNetStat._updateState(oFlags);
 
-					// If there were changes, trigger event
-					if (Object.keys(oChanges).length === 0) {
+					// If there were changes, trigger event and update storage
+					if (Object.keys(oChanges).length > 0) {
 						// Notify listeners about state changes
+						// This triggers UI updates and other network state dependent operations
 						$(document).trigger('networkchanged', {
 							currentState: _oNetStat,
 							changes: oChanges
@@ -609,21 +615,48 @@ self.addEventListener('sync', function(event) {
 						//starts promise process and continue. when then block runs, state sets false. Code doesnt wait  to flow.
 						// means, without table update, network changed event can bi triggered -  this can not be acceptable
 						oSelf._pendingStateUpdate = true;
-						_connectionTable.put({
+						// Update the connection table in IndexedDB using Promise chain
+						// This ensures the state persists across page reloads
+						// Update connection table with new state
+						return _connectionTable.put({
 							time: _date.now(),
 							state: _oNetStat.serialize()
-						}).then(function () {
-						 	oSelf._pendingStateUpdate = false;
-						}).catch(e => {
+						}).then(() => {
+							// After successful save, clean up old states
+							const oTenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+
+							oSelf.deleteStatesBefore(oTenMinutesAgo)
+								.then((iDeletedCount) => {
+									if (iDeletedCount > 0) {
+										console.debug('Cleaned up old states:', {
+											deletedRecords: iDeletedCount,
+											timestamp: new Date().toISOString()
+										});
+									}
+								})
+								.catch((oError) => {
+									console.warn('Failed to cleanup old states:', oError);
+								})
+								.finally(() => {
+									// Reset pending flag after cleanup attempt
+									oSelf._pendingStateUpdate = false;
+								});
+
+							// Return successful completion of the main operation
+							return Promise.resolve();
+						}).catch(oError => {
+							// Reset pending flag even if the update fails
 							oSelf._pendingStateUpdate = false;
-							console.warn('Failed to save network state', e);
+							console.warn('Failed to save or cleanup network state:', oError);
 						});
 					}
 					return Promise.resolve();
-				} catch (error) {
+				} catch (oError) {
+					// Reset the pending flag if any error occurs
+					// This ensures the state updates don't get permanently locked
 					oSelf._pendingStateUpdate = false;
-					console.error('Error updating network state:', error);
-					return Promise.reject(error);
+					console.error('Error updating network state:', oError);
+					return Promise.reject(oError);
 				}
 			},
 
@@ -641,36 +674,138 @@ self.addEventListener('sync', function(event) {
 			},
 
 			/**
-			 * Save new speed measurement
+			 * Retrieves all network state changes including auto-offline, browser-online, 
+			 * forced-offline and slow-network states.
+			 * 
+			 * @returns {Promise<Array>} Network state history
 			 */
-			saveStat: function (time, speed, mime_type, size) {
-				if (!exfPWA.isAvailable()) return Promise.resolve();
+			getAllStates: function () {
+				if (!exfPWA.isAvailable()) return Promise.resolve([]);
 
-				return _networkStatTable.put({
-					time: time,
-					speed: speed,
-					mime_type: mime_type,
-					size: size
-				}).catch(function (error) {
-					console.warn('Failed to save network stat:', error);
-				});
+				return _connectionTable.toArray()
+					.then(connections => connections.map(conn => ({
+						time: conn.time,
+						state: typeof conn.state === 'string' ?
+							JSON.parse(conn.state) : (conn.state || {})
+					})))
+					.catch(error => {
+						console.warn('Failed to get network states:', error);
+						return [];
+					});
 			},
 
 			/**
-			 * Delete old measurements
+			 * Save new speed measurement
+			 * Automatically triggers cleanup of old stats after successful save
 			 * 
-			 * @param {number} timestamp - Timestamp before which to delete stats
+			 * @param {Date} oTime - Timestamp of the measurement
+			 * @param {number} fSpeed - Speed in Mbps
+			 * @param {string} sMimeType - Content type of the request
+			 * @param {number} iSize - Size of the transferred data in bytes
+			 * @return {Promise} 
+			 */
+			saveStat: function (oTime, fSpeed, sMimeType, iSize) {
+				if (!exfPWA.isAvailable()) {
+					return Promise.resolve();
+				}
+
+				return _networkStatTable.put({
+					time: oTime,
+					speed: fSpeed,
+					mime_type: sMimeType,
+					size: iSize
+				}).then(() => {
+					// After successful save, clean up old stats
+					const oTenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+					this.deleteStatsBefore(oTenMinutesAgo)
+						.then((iDeletedCount) => {
+							if (iDeletedCount > 0) {
+								console.debug('Cleaned up old stats:', {
+									deletedRecords: iDeletedCount,
+									timestamp: new Date().toISOString()
+								});
+							}
+						})
+						.catch((oError) => {
+							console.warn('Failed to cleanup network stats:', oError);
+						});
+
+					// Return successful completion of the main operation
+					return Promise.resolve();
+				}).catch(function (oError) {
+					console.warn('Failed to save or cleanup network stats:', oError);
+				});
+				//
+			},
+
+			/**
+			 * Delete network speed measurements older than the specified timestamp
+			 * 
+			 * @param {Date|number} oTimestamp - Delete records before this time
 			 * @returns {Promise<number>} Number of deleted records
 			 */
-			deleteStatsBefore: function (timestamp) {
-				if (!exfPWA.isAvailable()) return Promise.resolve(0);
+			deleteStatsBefore: function (oTimestamp) {
+				if (!exfPWA.isAvailable()) {
+					return Promise.resolve(0);
+				}
 
 				return _networkStatTable
 					.where('time')
-					.below(timestamp)
+					.below(oTimestamp)
 					.delete()
-					.catch(function (error) {
-						console.warn('Failed to delete old stats:', error);
+					.then((iDeletedCount) => {
+						if (iDeletedCount > 0) {
+							console.debug('Network stats cleanup:', {
+								deletedRecords: iDeletedCount,
+								cutoffTime: new Date(oTimestamp).toISOString(),
+								timestamp: new Date().toISOString()
+							});
+						}
+						return iDeletedCount;
+					})
+					.catch(function (oError) {
+						console.warn('Failed to delete old stats:', oError);
+						return 0;
+					});
+			},
+
+			/**
+ * Deletes network state records that are older than the specified timestamp
+ * This function handles the cleanup of old connection states from IndexedDB
+ * 
+ * @param {Date|number} oTimestamp - Delete records before this time
+ * @returns {Promise<number>} Number of deleted records
+ */
+			deleteStatesBefore: function (oTimestamp) {
+				// Early return if IndexedDB is not available
+				if (!exfPWA.isAvailable()) {
+					return Promise.resolve(0);
+				}
+
+				// Convert timestamp to the consistent format used in the database
+				// This ensures correct comparison with stored timestamps
+				const formattedTimestamp = _date.normalize(new Date(oTimestamp));
+
+				// Execute the delete operation on the connection table
+				return _connectionTable
+					.where('time')
+					.below(formattedTimestamp)
+					.delete()
+					.then((iDeletedCount) => {
+						// Log successful cleanup operation if any records were deleted
+						if (iDeletedCount > 0) {
+							console.debug('Network states cleanup:', {
+								deletedRecords: iDeletedCount,
+								cutoffTime: formattedTimestamp,
+								timestamp: new Date().toISOString()
+							});
+						}
+						return iDeletedCount;
+					})
+					.catch((oError) => {
+						// Handle and log any errors during the cleanup process
+						console.warn('Failed to delete old states:', oError);
+						// Return 0 deleted records on error
 						return 0;
 					});
 			},
@@ -780,6 +915,7 @@ self.addEventListener('sync', function(event) {
 			 */
 			init: function () {
 
+
 				/**
 				 * Online Event Handler
 				 * Triggered when browser detects network connection
@@ -806,7 +942,7 @@ self.addEventListener('sync', function(event) {
 					_connectionTable.put({
 						time: _date.now(),
 						state: _oNetStat.serialize()  // Include current state flags
-					}).catch (oError => {
+					}).catch(oError => {
 						console.error('Failed to handle online state transition:', oError);
 					});
 				});
@@ -822,7 +958,7 @@ self.addEventListener('sync', function(event) {
 				window.addEventListener('offline', async () => {
 					console.log('Browser detected offline state');
 					$(document).trigger('networkchanged', {
-						currentState: oState,
+						currentState: _oNetStat,
 						changes: {
 							browserOnline: false
 						}
@@ -832,9 +968,9 @@ self.addEventListener('sync', function(event) {
 					_connectionTable.put({
 						time: _date.now(),
 						state: _oNetStat.serialize()  // Include current state flags
-					}). catch (oError) {
+					}).catch(oError => {
 						console.error('Failed to handle offline state transition:', oError);
-					}
+					});
 				});
 
 				/**
@@ -1240,19 +1376,6 @@ self.addEventListener('sync', function(event) {
 					.then(function () {
 						return _pwa.data.syncAll();
 					})
-
-				// if (!_pwa.network.getState().isOnline()) {
-				// 	return Promise.resolve();
-				// }
-
-				// return _pwa.actionQueue
-				// 	.getIds('offline')
-				// 	.then(function (ids) {
-				// 		return _pwa.actionQueue.syncIds(ids)
-				// 	})
-				// 	.then(function () {
-				// 		return _pwa.data.syncAll();
-				// 	});
 			},
 
 			/**
@@ -1896,18 +2019,17 @@ self.addEventListener('sync', function(event) {
 
 
 	/**
-	* Initialize network monitoring system
-	* 
-	* This initialization:
-	* - Checks if auto-offline feature is enabled
-	* - Starts poor network poller if enabled
-	* - Does not poll if auto-offline is disabled
-	* 
-	* We start with poor polling by default because:
-	* 1. Poor poller already checks network conditions and switches to fast polling if needed  
-	* 2. Keeps the initialization logic simple and clear
-	* 3. Follows the fail-safe principle - starts with less intensive monitoring
-	*/
+				* Initialize network monitoring system
+				* 
+				* This initialization:
+				* - Checks if auto-offline feature is enabled
+				* - Starts poor network poller if enabled
+				* - Does not poll if auto-offline is disabled
+				* 
+				* We start with poor polling by default because:
+				* 1. Poor poller already checks network conditions and switches to fast polling if needed   
+				* 2. Follows the fail-safe principle - starts with less intensive monitoring
+				*/
 	_pwa.network.checkState().then(function (oNetStat) {
 		if (oNetStat.hasAutoffline()) {
 			// Start with regular polling - it will automatically 
@@ -1923,4 +2045,5 @@ self.addEventListener('sync', function(event) {
 	});
 
 	return _pwa;
-}))); 
+})));
+//v1 
