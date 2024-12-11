@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 
 /**
@@ -23,15 +25,19 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 class DataTableConfigurator extends DataConfigurator
 {
     private $column_tab = null;
+
+    private $columnsUxon = null;
     
     private $aggregation_tab = null;
+
+    private int $columnsDefaultVisibility = WidgetVisibilityDataType::OPTIONAL;
 
     public function getWidgets(callable $filter_callback = null): array
     {
         // Make sure to initialize the columns tab. This will automatically add
         // it to the default widget array inside the container.
         if (null === $this->column_tab){
-            $this->getColumnsTab();
+            $this->getOptionalColumnsTab();
         }
         // TODO add aggregation tab once it is functional 
         return parent::getWidgets($filter_callback);
@@ -41,13 +47,19 @@ class DataTableConfigurator extends DataConfigurator
      * 
      * @return Tab
      */
-    public function getColumnsTab()
+    public function getOptionalColumnsTab() : Tab
     {
-        if (is_null($this->column_tab)){
+        if (null === $this->column_tab){
             $this->column_tab = $this->createColumnsTab();
             $this->addTab($this->column_tab, 3);
+            $this->initColumns();
         }
         return $this->column_tab;
+    }
+
+    public function getOptionalColumns() : array
+    {
+        return $this->getOptionalColumnsTab()->getWidgets();
     }
 
     /**
@@ -59,21 +71,54 @@ class DataTableConfigurator extends DataConfigurator
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.COLUMN_TAB_CAPTION'));
         $tab->setIcon(Icons::TABLE);
-        // TODO reenable the tab once it has content
-        $tab->setDisabled(true);
         return $tab;
     }
 
-    public function addColumn(DataColumn $column) : DataTableConfigurator
+    public function setOptionalColumns(UxonObject $arrayOfColumns) : DataTableConfigurator
     {
-        $this->getColumnsTab()->addWidget($column);
+        $this->columnsUxon = $arrayOfColumns;
+        return $this;
+    }
+
+    public function hasOptionalColumns() : bool
+    {
+        return $this->columnsUxon !== null && $this->columnsUxon->isEmpty() === false;
+    }
+
+    public function addOptionalColumn(DataColumn $column) : DataTableConfigurator
+    {
+        $this->getOptionalColumnsTab()->addWidget($column);
         $column->setParent($this->getWidgetConfigured());
         return $this;
     }
 
-    public function createColumnFromUxon(UxonObject $uxon) : DataColumn
+    /**
+     * 
+     * @return \exface\Core\Widgets\DataTableConfigurator
+     */
+    protected function initColumns() : DataTableConfigurator
     {
-        return $this->getWidgetConfigured()->createColumnFromUxon($uxon);
+        if (! $this->hasOptionalColumns()) {
+            return $this;
+        }
+        $table = $this->getWidgetConfigured();
+        // Do not create the columns for the table itself because that would reserver column
+        // ids in the main column groug, eventually resulting in shifting ids when optional
+        // columns are added. Instead create a detached column group and use that.
+        // IDEA maybe we don't even need a column group? Couldn't we just create a detached
+        // column with the columns-tab as parent?
+        $colGrp = WidgetFactory::createFromUxonInParent($table, new UxonObject([
+            'visibility' => WidgetVisibilityDataType::OPTIONAL
+        ]), 'DataColumnGroup');
+        foreach($this->columnsUxon as $columnUxon){
+            $column = $colGrp->createColumnFromUxon($columnUxon);
+            if(! $columnUxon->getProperty('visibility')){
+                $column->setVisibility($this->columnsDefaultVisibility);
+            }
+            $colGrp->addColumn($column);
+            $this->addOptionalColumn($column);
+        }
+        return $this;
     }
     
     /**
