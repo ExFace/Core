@@ -50,7 +50,6 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * (matching name and datatype).
  *      - It must have the default system columns of your respective app (e.g. `id`, `modified_by`, etc.).
  *      - It must have a column that matches your `affected_uid_alias`, both in name and datatype. 
- *      - Configure a foreign key that uses the above column as reference.
  *      - You can find an example definition in the section `Examples`.
  * 
  * 2. Create a MetaObject for this table that **inherits from its BaseObject**. 
@@ -131,7 +130,7 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  */
 class ChecklistingBehavior extends AbstractValidatingBehavior
 {
-    private ?DataSheetInterface $oldData = null;
+    private $oldData = null;
     
     /**
      * @see AbstractBehavior::registerEventListeners()
@@ -167,6 +166,10 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     public function cacheOldData(DataSheetEventInterface $event) : void
     {
+        if(!$event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+        
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logBook->addLine("Caching pre-transaction data...");
         if(!$event instanceof OnBeforeUpdateDataEvent) {
@@ -189,6 +192,10 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
     protected function getPreviousDataSheet(EventInterface $event): ?DataSheetInterface
     {
         if(!$event instanceof OnUpdateDataEvent) {
+            return null;
+        }
+        
+        if($this->oldData === null) {
             return null;
         }
         

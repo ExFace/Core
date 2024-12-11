@@ -7,6 +7,7 @@ use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -115,15 +116,21 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $previousDataSheet = $this->getPreviousDataSheet($event);
         // Get datasheets.
         if ($previousDataSheet !== null) {
-            $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
-            
             $logbook->addLine('Found pre-transaction data for '.$previousDataSheet->getMetaObject()->__toString());
             $logbook->addDataSheet('Pre-Transaction',$previousDataSheet);
+            
+            try {
+                $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
+            } catch (DataSheetRuntimeError $e) {
+                $logbook->addDataSheet('Post-transaction', $event->getDataSheet());
+                throw new BehaviorRuntimeError($this, "Failed to align post-transaction data!", $e->getAlias(), $e, $logbook);
+            }
+
         } else {
             $changedDataSheet = $event->getDataSheet();
-            
             $logbook->addLine('No pre-transaction data found.');
         }
+        
         $logbook->addDataSheet('Post-Transaction',$changedDataSheet);
         $logbook->addLine('Found post-transaction data for '.$changedDataSheet->getMetaObject()->__toString());
         $logbook->addIndent(-1);
