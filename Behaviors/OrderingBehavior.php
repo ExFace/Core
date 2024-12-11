@@ -643,7 +643,7 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated use order_within_attributes instead
+     * @deprecated use setOrderWithinAttributes() / order_within_attributes instead
      * 
      * @param \exface\Core\CommonLogic\UxonObject $value
      * @return \exface\Core\Behaviors\OrderingBehavior
@@ -654,7 +654,7 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated use parent_aliases instead
+     * @deprecated use setParentAliases() / parent_aliases instead
      * 
      * @param \exface\Core\CommonLogic\UxonObject $value
      * @return \exface\Core\Behaviors\OrderingBehavior
@@ -701,7 +701,8 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated  use order_number_attribute instead
+     * @deprecated  use setOrderAttribute() / order_number_attribute instead
+     * 
      * @param string $alias
      * @return \exface\Core\Behaviors\OrderingBehavior
      */
