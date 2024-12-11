@@ -4,8 +4,11 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractValidatingBehavior;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
  * Validates any proposed changes made to the monitored data and rejects invalid changes.
@@ -119,15 +122,11 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
  * break.
  * 
  *  ```
- * 
- * {
- *       "invalid_if_on_update": [
- *        {
- *           "error_text": "[#~old:Sektion#]: The new value for MesswertIst ([#~new:MesswertIst#]) must be greater than
- * the previous value ([#~old:MesswertIst#])!",
+ *  {
+ *       "invalid_if_on_update": [{
+ *           "error_text": "[#~old:Sektion#]: The new value for MesswertIst ([#~new:MesswertIst#]) must be greater than the previous value ([#~old:MesswertIst#])!",
  *           "operator": "AND",
- *           "conditions": [
- *           {
+ *           "conditions": [{
  *               "expression": "=Calc([#~new:MesswertIst#] - [#~old:MesswertIst#])",
  *               "comparator": "<",
  *               "value": 0
@@ -142,6 +141,29 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
  */
 class ValidatingBehavior extends AbstractValidatingBehavior
 {
+    
+    /**
+     * @see AbstractBehavior::registerEventListeners()
+     */
+    protected function registerEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
+        
+        return $this;
+    }
+    
+    /**
+     * @see AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
+
+        return $this;
+    }
+
     protected function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook): void
     {
         $result->setUseExceptionMessageAsTitle(true);

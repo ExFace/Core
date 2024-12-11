@@ -129,17 +129,15 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * 
  */
 class ChecklistingBehavior extends AbstractValidatingBehavior
-{
-    private $oldData = null;
-    
+{    
     /**
      * @see AbstractBehavior::registerEventListeners()
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), [$this, self::EVENT_HANDLER], $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), [$this, self::EVENT_HANDLER], $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, "cacheOldData"], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData(), $this->getPriority());
 
         return $this;
     }
@@ -149,60 +147,11 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnCreateDataEvent::getEventName(), [$this, self::EVENT_HANDLER]);
-        $this->getWorkbench()->eventManager()->removeListener(OnUpdateDataEvent::getEventName(), [$this, self::EVENT_HANDLER]);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'cacheOldData']);
+        $this->getWorkbench()->eventManager()->removeListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
+        $this->getWorkbench()->eventManager()->removeListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData());
 
         return $this;
-    }
-
-    /**
-     * Caches pre-transaction data, to be retrieved later.
-     * 
-     * Remember to clear the cache, once you've loaded data from it!
-     * 
-     * @param DataSheetEventInterface $event
-     * @return void
-     */
-    public function cacheOldData(DataSheetEventInterface $event) : void
-    {
-        if(!$event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
-        
-        $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $logBook->addLine("Caching pre-transaction data...");
-        if(!$event instanceof OnBeforeUpdateDataEvent) {
-            $logBook->addLine("Event does not provide pre-transaction data.");
-            return;
-        }
-        
-        $this->oldData = $event->getDataSheetWithOldData();
-        
-        if($this->oldData !== null) {
-            $logBook->addLine("Pre-transaction data found and cached.");
-            $logBook->addDataSheet("Cached Pre-Transaction Data", $this->oldData);
-        } else {
-            $logBook->addLine("No pre-transaction data found.");
-        }
-        
-        $logBook->addLine("Caching completed.");
-    }
-
-    protected function getPreviousDataSheet(EventInterface $event): ?DataSheetInterface
-    {
-        if(!$event instanceof OnUpdateDataEvent) {
-            return null;
-        }
-        
-        if($this->oldData === null) {
-            return null;
-        }
-        
-        $result = $this->oldData;
-        unset($this->oldData);
-        
-        return $result;
     }
 
 
