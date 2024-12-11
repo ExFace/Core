@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Interfaces\Actions\iShowPopup;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
@@ -55,22 +56,20 @@ class ShowPopup extends ShowWidget implements iShowPopup
      * wrapped by a basic container widget.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ShowWidget::getWidget()
+     * @see \exface\Core\Actions\ShowWidget::initWidget()
      */
-    public function getWidget()
+    protected function initWidget() : ?WidgetInterface
     {
-        $widget = parent::getWidget();
-        if (is_null($widget)) {
+        $widget = parent::initWidget();
+        if ($widget === null) {
             try {
                 $page = $this->getWidgetDefinedIn()->getPage();
             } catch (\Throwable $e) {
                 $page = UiPageFactory::createEmpty($this->getWorkbench());
             }
             $widget = $this->createPopupContainer($page);
-            $this->setWidget($widget);
         } elseif (! ($widget instanceof Container)) {
-            $widget = $this->createPopupContainer($page, $widget);
-            $this->setWidget($widget);
+            throw new ActionRuntimeError($this, 'Cannot use widget "' . $widget->getWidgetType() . '" as popup: expecting the Popup widget or a derivative!');
         }
         
         return $widget;

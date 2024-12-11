@@ -107,50 +107,49 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         if ($this->isDisabled() || $this->inProgress) {
             return;
         }
-        $this->inProgress = true;
 
+        $eventSheet = $event->getDataSheet();
+        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+
+        $this->inProgress = true;
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $logbook->addLine('Loading input data...');
-        $logbook->addIndent(1);
+        $logbook->addDataSheet('New data', $eventSheet);
+        $logbook->addLine('Checking ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
         
-        $previousDataSheet = $this->getPreviousDataSheet($event);
         // Get datasheets.
+        $previousDataSheet = $this->getPreviousDataSheet($event);
         if ($previousDataSheet !== null) {
-            $logbook->addLine('Found pre-transaction data for '.$previousDataSheet->getMetaObject()->__toString());
-            $logbook->addDataSheet('Pre-Transaction',$previousDataSheet);
+            $logbook->addLine('Found "old" data for ' . $previousDataSheet->getMetaObject()->__toString() . ' - can use `[#old:...#]` placeholders');
+            $logbook->addDataSheet('Old data', $previousDataSheet);
             
             try {
-                $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
+                $changedDataSheet = $eventSheet->copy()->sortLike($previousDataSheet);
             } catch (DataSheetRuntimeError $e) {
-                $logbook->addDataSheet('Post-transaction', $event->getDataSheet());
+                $logbook->addDataSheet('New data (unsorted)', $eventSheet);
                 throw new BehaviorRuntimeError($this, "Failed to align post-transaction data!", $e->getAlias(), $e, $logbook);
             }
 
         } else {
-            $changedDataSheet = $event->getDataSheet();
-            $logbook->addLine('No pre-transaction data found.');
+            $changedDataSheet = $eventSheet;
+            $logbook->addLine('No "old" data available - cannot use `[#old:...#]` placeholders');
         }
         
-        $logbook->addDataSheet('Post-Transaction',$changedDataSheet);
+        $logbook->addDataSheet('New data', $changedDataSheet);
         $logbook->addLine('Found post-transaction data for '.$changedDataSheet->getMetaObject()->__toString());
-        $logbook->addIndent(-1);
-
-        if (! $changedDataSheet->getMetaObject()->isExactly($this->getObject())) {
-            $logbook->addLine('Wrong MetaObject. Moving on...');
-            $this->inProgress = false;
-            return;
-        }
         
         $logbook->addLine('Loading relevant UXON definitions for context '.$event::getEventName().'...');
         $logbook->addIndent(1);
         if(!$uxon = $this->getRelevantUxons($event, $logbook)) {
             $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
             $this->inProgress = false;
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
         $logbook->addIndent(-1);
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
         
         // Perform data checks for each validation rule.
         $error = null;

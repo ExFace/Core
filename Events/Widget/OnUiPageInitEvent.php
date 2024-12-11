@@ -2,18 +2,19 @@
 namespace exface\Core\Events\Widget;
 
 use exface\Core\Events\AbstractEvent;
+use exface\Core\Interfaces\Events\UiPageEventInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * Event fired after all widget of a UI page were initialized.
  *
- * @event exface.Core.Widget.OnUiPageInitialized
+ * @event exface.Core.Widget.OnUiPageInit
  *
  * @author Andrej Kabachnik
  *        
  */
-class OnUiPageInitializedEvent extends AbstractEvent
+class OnUiPageInitEvent extends AbstractEvent implements UiPageEventInterface
 {
     private $page = null;
     
@@ -51,6 +52,6 @@ class OnUiPageInitializedEvent extends AbstractEvent
      */
     public static function getEventName() : string
     {
-        return 'exface.Core.Widget.OnUiPageInitialized';
+        return 'exface.Core.Widget.OnUiPageInit';
     }
 }

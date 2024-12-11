@@ -2,18 +2,17 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\Events\Widget\OnDataConfiguratorInitialized;
+use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
+use exface\Core\Events\Widget\OnUiRootWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Events\Widget\OnUiPageInitializedEvent;
+use exface\Core\Events\Widget\OnUiPageInitEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
-use exface\Core\Widgets\DataColumnDeferred;
 use exface\Core\Widgets\DataTableConfigurator;
 
 /**
@@ -46,8 +45,6 @@ class WidgetModifyingBehavior extends AbstractBehavior
 
     private ?UxonObject $columnsToAddUxon = null;
 
-    private int $columnsDefaultVisibility = WidgetVisibilityDataType::OPTIONAL;
-
     /**
      *
      * {@inheritDoc}
@@ -55,8 +52,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnUiPageInitializedEvent::getEventName(), [$this, 'handleUiPageInitialized'], $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitialized::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnUiRootWidgetInitEvent::getEventName(), [$this, 'handleUiRootInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
     
@@ -67,36 +64,21 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnUiPageInitializedEvent::getEventName(), [$this, 'handleUiPageInitialized']);
+        $this->getWorkbench()->eventManager()->removeListener(OnUiRootWidgetInitEvent::getEventName(), [$this, 'handleUiRootInitialized']);
+        $this->getWorkbench()->eventManager()->removeListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
 
-    protected function getTargetWidget(?string $widgetId, UiPageInterface $page) : WidgetInterface
+    /**
+     * 
+     * @param iHaveButtons $widget
+     * @param UxonObject $buttonsUxon
+     * @return void
+     */
+    protected function addButtonsToWidget(iHaveButtons $widget, UxonObject $buttonsUxon) : void
     {
-        return $widgetId === null ?
-            $page->getWidgetRoot() : $page->getWidget($widgetId);
-    }
-
-    protected function addButtonsToWidget(WidgetInterface $widget, ?UxonObject $buttonsUxon) : void
-    {
-        if(!isset($buttonsUxon) || !$widget instanceof iHaveButtons) {
-            return;
-        }
-
         foreach ($buttonsUxon as $btnUxon) {
             $widget->addButton($widget->createButton($btnUxon));
-        }
-    }
-
-    protected function addColumnsToConfigurator(DataTableConfigurator $configurator, ?UxonObject $columnsUxon) : void
-    {
-        foreach($columnsUxon as $columnUxon){
-            $column = $configurator->createColumnFromUxon($columnUxon);
-            if(!$columnUxon->getProperty('visibility')){
-                $column->setVisibility($this->columnsDefaultVisibility);
-            }
-
-            $configurator->addColumn($column);
         }
     }
 
@@ -110,9 +92,22 @@ class WidgetModifyingBehavior extends AbstractBehavior
             $page->is($this->pageSelectorString);
     }
 
-    public function handleDataConfiguratorInitialized(OnDataConfiguratorInitialized $event) : void
+    /**
+     * 
+     * @param \exface\Core\Events\Widget\OnDataConfiguratorInitEvent $event
+     * @return void
+     */
+    public function handleDataConfiguratorInitialized(OnDataConfiguratorInitEvent $event) : void
     {
         if ($this->isDisabled()) {
+            return;
+        }
+
+        if ($this->columnsToAddUxon === null) {
+            return;
+        }
+        
+        if (! $event->getObject()->isExactly($this->getObject())) {
             return;
         }
 
@@ -120,56 +115,44 @@ class WidgetModifyingBehavior extends AbstractBehavior
             return;
         }
 
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-
         $configurator = $event->getWidget();
-        if($configurator instanceof DataTableConfigurator) {
-            $this->addColumnsToConfigurator($configurator, $this->columnsToAddUxon);
+        if(! ($configurator instanceof DataTableConfigurator)) {
+            return;
         }
-
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        $configurator->setOptionalColumns( $this->columnsToAddUxon);
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
 
-    public function handleUiPageInitialized(OnUiPageInitializedEvent $event) : void
+    /**
+     * 
+     * @param \exface\Core\Events\Widget\OnUiPageInitEvent $event
+     * @return void
+     */
+    public function handleUiRootInitialized(OnUiRootWidgetInitEvent $event) : void
     {
         if ($this->isDisabled()) {
             return;
         }
 
         $page = $event->getPage();
-        if (!$this->isRelevantPage($page)) {
+        if (! $this->isRelevantPage($page)) {
             return;
         }
-        
+
+        $widget = $event->getWidget();
+        if (! $widget->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
-        $widget = $this->getTargetWidget($this->widgetId, $page);
-        $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
+        if ($this->buttonsToAddUxon !== null && $widget instanceof iHaveButtons) {
+            $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
+        }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
-    }
-
-    /**
-     * Sets the default visibility of added columns: normal, hidden, optional, promoted.
-     *
-     * You can still adjust visibility per added column. Such manual overrides have priority.
-     *
-     * @uxon-property visibility
-     * @uxon-type [normal,promoted,optional,hidden]
-     * @uxon-default optional
-     *
-     */
-    public function setColumnsDefaultVisibility($value) : BehaviorInterface
-    {
-        if (is_int($value)){
-            $this->columnsDefaultVisibility = $value;
-        } else {
-            if (! defined('EXF_WIDGET_VISIBILITY_' . mb_strtoupper($value))) {
-                throw new BehaviorConfigurationError($this, 'Invalid visibility value "' . $value . '" for behavior "' . $this->getName() . '"!');
-            }
-            $this->columnsDefaultVisibility = constant('EXF_WIDGET_VISIBILITY_'. mb_strtoupper($value));
-        }
-        return $this;
     }
 
     /**

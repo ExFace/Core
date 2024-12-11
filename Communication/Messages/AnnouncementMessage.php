@@ -4,6 +4,7 @@ namespace exface\Core\Communication\Messages;
 use exface\Core\Communication\Recipients\UserRoleRecipient;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Communication\RecipientGroupInterface;
+use exface\Core\Interfaces\Communication\UserRecipientInterface;
 use exface\Core\Interfaces\UserInterface;
 
 /**
@@ -90,7 +91,7 @@ class AnnouncementMessage extends NotificationMessage
                     }
                     break;
                 case $recipient instanceof UserRecipientInterface:
-                    if (true === $recipient->is($user)) {
+                    if (true === $recipient->getUser()->is($user)) {
                         return true;
                     }
                     break;
