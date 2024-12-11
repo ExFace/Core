@@ -25,13 +25,24 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
 /**
- * Validates any proposed changes made to the monitored data and collects any conflicting data 
- * for further processing.
+ * Base class for validating behaviors
  * 
- * Extend this class to achieve specific transformations, such as rejecting invalid changes, by throwing
- * a meaningful error message.
+ * This class includes event handlers to perform data checks of different types when
+ * data is saved. It provides built-in logic to define and perform checks on create, 
+ * update or both.
  * 
- * @see ValidatingBehavior
+ * It also provides placeholders to be used in the definition of the data checks:
+ * 
+ * - `[#~new:xxx#]` - referencing data or caluculations based on the data of the event
+ * (= the state of the data after the change)
+ * - `[#~old:xxx#]` - referencing data or calculations before the change
+ * 
+ * App designers can use either explicit data references in their data cheks or these
+ * placeholders. The "old" data will only be loaded if it is really required in the
+ * checks.
+ * 
+ * @see \exface\Core\Behaviors\ValidatingBehavior
+ * @see \exface\Core\Behaviors\ChecklistingBehavior
  * 
  * @author Georg Bieger
  */
@@ -104,7 +115,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         if ($this->isOldDataRequired()) {
             $previousDataSheet = $this->getOldData($event);
             if ($previousDataSheet !== null) {
-                $logbook->addLine('Found "old" data for ' . $previousDataSheet->getMetaObject()->__toString() . ' - can use `[#old:...#]` placeholders');
+                $logbook->addLine('Found "old" data for ' . $previousDataSheet->getMetaObject()->__toString() . ' - can use `[#~old:...#]` placeholders');
                 $logbook->addDataSheet('Old data', $previousDataSheet);
                 try {
                     $changedDataSheet = $eventSheet->copy()->sortLike($previousDataSheet);
@@ -115,7 +126,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
 
             } else {
                 $changedDataSheet = $eventSheet;
-                $logbook->addLine('No "old" data available - cannot use `[#old:...#]` placeholders');
+                $logbook->addLine('No "old" data available - cannot use `[#~old:...#]` placeholders');
             }
         } else {
             $logbook->addLine('No "old" data required');
@@ -357,7 +368,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $this->cacheOldData($eventSheet, $oldData);
         
         if($oldData !== null) {
-            $logbook->addLine('Found "old" data. Caching it for use with `[#old:` placeholders.');
+            $logbook->addLine('Found "old" data. Caching it for use with `[#~old:` placeholders.');
             $logbook->addDataSheet("Old data", $oldData);
         } else {
             $logbook->addLine('No "old" data found!');
