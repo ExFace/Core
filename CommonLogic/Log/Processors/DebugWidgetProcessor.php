@@ -7,7 +7,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 /**
  * Extracts the debug widget from the context and dumps its UXON to a `$record` item.
