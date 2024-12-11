@@ -69,7 +69,7 @@
             "NAME": "String",
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Input"
@@ -87,7 +87,7 @@
             "NAME": "Number",
             "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber"
@@ -105,7 +105,7 @@
             "NAME": "JSON Property Set",
             "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputPropertyTable"
@@ -123,7 +123,7 @@
             "NAME": "Text",
             "PROTOTYPE": "exface\/Core\/DataTypes\/TextDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputText"
@@ -141,7 +141,7 @@
             "NAME": "URL",
             "PROTOTYPE": "exface\/Core\/DataTypes\/URLDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Input"
@@ -159,7 +159,7 @@
             "NAME": "UXON",
             "PROTOTYPE": "exface\/Core\/DataTypes\/UxonDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -179,7 +179,7 @@
             "NAME": "HTML",
             "PROTOTYPE": "exface\/Core\/DataTypes\/HTMLDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputText"
@@ -197,7 +197,7 @@
             "NAME": "Image URL",
             "PROTOTYPE": "exface\/Core\/DataTypes\/ImageUrlDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Input"
@@ -215,7 +215,7 @@
             "NAME": "Date",
             "PROTOTYPE": "exface\/Core\/DataTypes\/DateDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputDate"
@@ -233,7 +233,7 @@
             "NAME": "Timestamp",
             "PROTOTYPE": "exface\/Core\/DataTypes\/TimestampDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputDateTime"
@@ -251,7 +251,7 @@
             "NAME": "Price",
             "PROTOTYPE": "exface\/Core\/DataTypes\/PriceDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber",
@@ -270,7 +270,7 @@
             "NAME": "Boolean",
             "PROTOTYPE": "exface\/Core\/DataTypes\/BooleanDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputCheckBox"
@@ -288,7 +288,7 @@
             "NAME": "Integer (whole number)",
             "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber"
@@ -308,7 +308,7 @@
             "CONFIG_UXON": {
                 "precision": 1
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber"
@@ -328,7 +328,7 @@
             "CONFIG_UXON": {
                 "precision": 2
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber"
@@ -348,7 +348,7 @@
             "CONFIG_UXON": {
                 "min": 0
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber"
@@ -366,7 +366,7 @@
             "NAME": "JSON",
             "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputJson",
@@ -404,7 +404,7 @@
             "NAME": "Markdown",
             "PROTOTYPE": "exface\/Core\/DataTypes\/MarkdownDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputMarkdown"
@@ -422,7 +422,7 @@
             "NAME": "Relative File Path",
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "FILE_PATH_RELATIVE",
@@ -440,7 +440,7 @@
             "CONFIG_UXON": {
                 "group_digits": false
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber"
@@ -465,7 +465,7 @@
                     "fr": "French"
                 }
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -483,7 +483,7 @@
             "NAME": "Generic List (String Enumeration)",
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringEnumDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -501,7 +501,7 @@
             "NAME": "Generic List (Number Enumeration)",
             "PROTOTYPE": "exface\/Core\/DataTypes\/NumberEnumDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -521,7 +521,7 @@
             "CONFIG_UXON": {
                 "group_digits": false
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputNumber"
@@ -539,7 +539,7 @@
             "NAME": "Hexadecimal Number",
             "PROTOTYPE": "exface\/Core\/DataTypes\/HexadecimalNumberDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "HexadecimalNumber",
@@ -555,7 +555,7 @@
             "NAME": "Message Type",
             "PROTOTYPE": "exface\/Core\/DataTypes\/MessageTypeDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -575,7 +575,7 @@
             "CONFIG_UXON": {
                 "schema": "widget"
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -597,7 +597,7 @@
             "CONFIG_UXON": {
                 "schema": "action"
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -619,7 +619,7 @@
             "CONFIG_UXON": {
                 "schema": "datatype"
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -641,7 +641,7 @@
             "CONFIG_UXON": {
                 "schema": "behavior"
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -697,7 +697,7 @@
             "NAME": "Date & Time",
             "PROTOTYPE": "exface\/Core\/DataTypes\/DateTimeDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputDateTime"
@@ -717,7 +717,7 @@
             "CONFIG_UXON": {
                 "schema": "connection"
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -737,7 +737,7 @@
             "NAME": "File Path",
             "PROTOTYPE": "exface\/Core\/DataTypes\/FilePathDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "FilePath",
@@ -753,7 +753,7 @@
             "NAME": "PHP File Path",
             "PROTOTYPE": "exface\/Core\/DataTypes\/PhpFilePathDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "PhpFilePath",
@@ -769,7 +769,7 @@
             "NAME": "Password",
             "PROTOTYPE": "exface\/Core\/DataTypes\/PasswordDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputPassword"
@@ -787,7 +787,7 @@
             "NAME": "Locale",
             "PROTOTYPE": "exface\/Core\/DataTypes\/LocaleDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -807,7 +807,7 @@
             "CONFIG_UXON": {
                 "schema": "facade"
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -834,7 +834,7 @@
                     "X": "Calculated"
                 }
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -852,7 +852,7 @@
             "NAME": "Policy Combining Algorithm",
             "PROTOTYPE": "exface\/Core\/DataTypes\/PolicyCombiningAlgorithmDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -870,7 +870,7 @@
             "NAME": "Policy Effect",
             "PROTOTYPE": "exface\/Core\/DataTypes\/PolicyEffectDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -888,7 +888,7 @@
             "NAME": "Binary Data",
             "PROTOTYPE": "exface\/Core\/DataTypes\/BinaryDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "Binary",
@@ -904,7 +904,7 @@
             "NAME": "File content type (MimeType)",
             "PROTOTYPE": "exface\/Core\/DataTypes\/MimeTypeDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -922,7 +922,7 @@
             "NAME": "Encrypted Data",
             "PROTOTYPE": "exface\/Core\/DataTypes\/EncryptedDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "Encrypted",
@@ -938,7 +938,7 @@
             "NAME": "Queued Task State",
             "PROTOTYPE": "exface\/Core\/DataTypes\/QueuedTaskStateDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": {
                 "widget_type": "ProgressBar",
                 "color_scale": {
@@ -969,7 +969,7 @@
             "NAME": "Image Path",
             "PROTOTYPE": "exface\/Core\/DataTypes\/FilePathDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Input"
@@ -987,7 +987,7 @@
             "NAME": "Percent",
             "PROTOTYPE": "exface\/Core\/DataTypes\/PercentDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "Percent",
@@ -1003,7 +1003,7 @@
             "NAME": "Regular Expression Pattern",
             "PROTOTYPE": "exface\/Core\/DataTypes\/RegularExpressionDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "RegularExpression",
@@ -1019,7 +1019,7 @@
             "NAME": "CRON Expression",
             "PROTOTYPE": "exface\/Core\/DataTypes\/CronDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "CronExpression",
@@ -1035,7 +1035,7 @@
             "NAME": "Empty (no data)",
             "PROTOTYPE": "exface\/Core\/DataTypes\/EmptyDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "Empty",
@@ -1051,7 +1051,7 @@
             "NAME": "Nested data",
             "PROTOTYPE": "exface\/Core\/DataTypes\/DataSheetDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "DataSheet",
@@ -1067,7 +1067,7 @@
             "NAME": "Log level",
             "PROTOTYPE": "exface\/Core\/DataTypes\/LogLevelDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": {
                 "widget_type": "ColorIndicator",
                 "fill": true,
@@ -1100,7 +1100,7 @@
             "CONFIG_UXON": {
                 "schema": "\\exface\\Core\\Uxon\\CommunicationChannelSchema"
             },
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
@@ -1120,7 +1120,7 @@
             "NAME": "Offline strategy",
             "PROTOTYPE": "exface\/Core\/DataTypes\/OfflineStrategyDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
@@ -1138,12 +1138,54 @@
             "NAME": "Time zone",
             "PROTOTYPE": "exface\/Core\/DataTypes\/TimeZoneDataType.php",
             "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
+            "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputSelect"
             },
             "ALIAS": "TimeZone",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2024-08-06 10:54:34",
+            "MODIFIED_ON": "2024-08-06 10:59:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ef913280c689be9132025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Semantic version number",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/SemanticVersionDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "SemanticVersion",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2024-09-25 15:18:31",
+            "MODIFIED_ON": "2024-09-25 15:18:31",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11efa334a926770ca334025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "HTTP Status Code",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/HttpStatusCodeDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": null,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "ColorIndicator",
+                "fill": true,
+                "color_only": false,
+                "color_scale": {
+                    "200": "~OK",
+                    "400": "~WARNING",
+                    "500": "~ERROR",
+                    "": "transparent"
+                }
+            },
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "HttpStatusCode",
             "SHORT_DESCRIPTION": ""
         }
     ],

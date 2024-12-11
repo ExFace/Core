@@ -85,10 +85,16 @@ class ActionToColumnMapping extends AbstractDataSheetMapping
         $fromValues = [];
         switch (true) {
             case StringDataType::startsWith($from, '~file', false):
-                if (! $result instanceof ResultFileInterface) {
-                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use `~file` as from-expression in an action mapper if the result of the mappers action is not a file!');
-                }
                 switch (strtolower($from)) {
+                    // If the result is empty, all fields will be empty too
+                    case $result->isEmpty():
+                        $fromValues = [''];
+                        break;
+                    // TODO add logic to handle data results here 
+                    
+                    // Handle file results
+                    case ! $result instanceof ResultFileInterface:
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use `~file` as from-expression in an action mapper if the result of the mappers action is not a file!');
                     case '~file':
                     case '~file:contents':
                         $fromValues = [$result->getContents()];
@@ -159,7 +165,8 @@ class ActionToColumnMapping extends AbstractDataSheetMapping
      * Possible values:
      * 
      * - Name of a column in the result data sheet of the action
-     * - `~file` for the file contents in case the action produces a downloadable file
+     * - `~file:contents` for the file contents in case the action produces a downloadable file
+     * - `~file:mime_type` for the MIME type of the file (e.g. `text/html`)
      *
      * @uxon-property from
      * @uxon-type metamodel:attribute|'~file'

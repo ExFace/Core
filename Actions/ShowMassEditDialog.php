@@ -73,6 +73,7 @@ class ShowMassEditDialog extends ShowDialog
             $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
             $this->setAffectedCounterWidget($counter_widget);
             $dialog->addWidget($counter_widget, 0);
+            $dialog->setCacheable(false);
         }
         
         // Add a default save button that uses filter contexts

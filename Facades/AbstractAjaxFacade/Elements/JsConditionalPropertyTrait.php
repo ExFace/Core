@@ -24,7 +24,7 @@ use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
  * 
  * You will need to pass the JS code to execute if the condition is TRUE or FALSE to each of these methods.
  * 
- * @method WidgetInterface getWidget()
+ * @method \exface\Core\Interfaces\WidgetInterface getWidget()
  * 
  * @author Andrej Kabachnik
  *
@@ -53,10 +53,11 @@ trait JsConditionalPropertyTrait {
             if ($condition->getComparator() === ComparatorDataType::IN || $condition->getComparator() === ComparatorDataType::NOT_IN) {
                 $rightExpr = $condition->getValueRightExpression();
                 if ($rightExpr->isReference() === true) {
-                    $targetWidget = $rightExpr->getWidgetLink()->getTargetWidget();
+                    $rightLink = $rightExpr->getWidgetLink($this->getWidget());
+                    $targetWidget = $rightLink->getTargetWidget();
                     if (($targetWidget instanceof iShowSingleAttribute) && $targetWidget->isBoundToAttribute()) {
                         $delim = $targetWidget->getAttribute()->getValueListDelimiter();
-                    } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightExpr->getWidgetLink()->getTargetColumnId()) {
+                    } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightLink->getTargetColumnId()) {
                         $targetCol = $targetWidget->getColumnByDataColumnName($colName);
                         if ($targetCol->isBoundToAttribute() === true) {
                             $delim = $targetCol->getAttribute()->getValueListDelimiter();

@@ -2,6 +2,9 @@
 namespace exface\Core\CommonLogic\Filesystem;
 
 use exface\Core\Behaviors\FileBehavior;
+use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Interfaces\Filesystem\FileStreamInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -13,7 +16,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\Exceptions\OverflowException;
 use \DateTimeInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
@@ -23,6 +25,7 @@ use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 
 /**
  * Allows to work with files stored in data sources if the meta object has the `FileBehavior`.
@@ -31,6 +34,8 @@ use exface\Core\DataTypes\DateTimeDataType;
  * 
  * - `metamodel://my.app.ObjectAlias/uid_of_file/filename.ext`
  * - `metamodel://my.app.ObjectAlias/uid_of_file/*`
+ * - `metamodel://my.app.ObjectAlias/uid_of_file` - note, if it is a local file, the UID of it is a
+ * file path itself - e.g. `metamodel://axenox.DevMan.ticket_file/data/App/Attachments/705/360_F.jpg` 
  * - `metamodel://my.app.ObjectAlias/folder_attribute/*`
  * 
  * Currently no real (nested) folder structure is supported - you can't travel up the folder tree, but
@@ -41,7 +46,7 @@ use exface\Core\DataTypes\DateTimeDataType;
  * IDEA added wildcard support for filenames - to select one of multiple files inside a folder in
  * case the `folder_attribute` is not a UID. See `getFilenameMask()` for details
  */
-class DataSourceFileInfo implements FileInfoInterface
+class DataSourceFileInfo implements FileInfoInterface, FileStreamInterface
 {
     const SCHEME = 'metamodel://';
     
@@ -68,6 +73,8 @@ class DataSourceFileInfo implements FileInfoInterface
     private $fileClass = null;
     
     private $infoClass = null;
+
+    private $tempFiles = [];
     
     /**
      * 
@@ -87,6 +94,17 @@ class DataSourceFileInfo implements FileInfoInterface
         if ($folder === null || $objectSelector === null) {
             throw new UnexpectedValueException('Cannot parse virtual file path "' . $path . '".');
         }
+        // For local files the UID is the relative path of the file:
+        // e.g. `metamodel://axenox.DevMan.ticket_file/data/DevMan/TicketFiles/705/360_F.jpg`
+        // The regex above treats the entire UID as a filename though. So, we double-check here 
+        // if the filename contains directory separators. If so, we leave only the filename
+        // as $filename and transfer the path to the $folder variable.
+        // Not sure, if this is a good idea for all file systems...
+        if ($filename !== null && strpos($filename, '/') !== false) {
+            $folder = FilePathDataType::join([$folder, FilePathDataType::findFolderPath($filename)]);
+            $filename = FilePathDataType::findFileName($filename, true);
+        }
+        
         $this->pathFromConstructor = $path;
         $this->filenameMask = $filename;
         $this->folder = $folder;
@@ -96,16 +114,13 @@ class DataSourceFileInfo implements FileInfoInterface
     /**
      *
      * @param WorkbenchInterface $workbench
-     * @param string|MetaObjectSelectorInterface|MetaObjectInterface $objectSelectorString
+     * @param string|MetaObjectSelectorInterface $objectSelectorString
      * @param string $uid
      * @return DataSourceFileInfo
      */
-    public static function fromObjectUID(WorkbenchInterface $workbench, $objectSelectorString, string $uid) : self
+    public static function fromObjectSelectorAndUID(WorkbenchInterface $workbench, $objectSelectorString, string $uid) : self
     {
         switch (true) {
-            case $objectSelectorString instanceof MetaObjectInterface:
-                $objectString = $objectSelectorString->getAliasWithNamespace();
-                break;
             case $objectSelectorString instanceof MetaObjectSelectorInterface:
                 $objectString = $objectSelectorString->toString();
                 break;
@@ -117,6 +132,20 @@ class DataSourceFileInfo implements FileInfoInterface
         }
         $path = self::SCHEME . $objectString . self::SLASH . $uid;
         return new self($path, $workbench);
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
+     * @param string $uid
+     * @return \exface\Core\CommonLogic\Filesystem\DataSourceFileInfo
+     */
+    public static function fromObjectAndUID(MetaObjectInterface $object, string $uid) : self
+    {
+        if ($object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->isEmpty()) {
+            throw new FileNotFoundError('Cannot use object ' . $object->__toString() . ' as a file! Only objects with FileBehavior allowed!');
+        }
+        return self::fromObjectSelectorAndUID($object->getWorkbench(), $object->getAliasWithNamespace(), $uid);
     }
     
     /**
@@ -218,15 +247,19 @@ class DataSourceFileInfo implements FileInfoInterface
                 // NEVER load content right away because it might be large and will slow down getting
                 // file information a lot! It can always be loaded explicitly when `getContent()` is called
                 if ($attr === $contentAttr) {
-                    //continue;
+                    continue;
                 }
                 $this->fileData->getColumns()->addFromAttribute($attr);
             }
             
-            if (! $folderAttr->getRelationPath()->isEmpty() && $this->getMetaObject()->hasUidAttribute()) {
-                $folderAttr = $this->getMetaObject()->getUidAttribute();
+            // FIXME what if there is no folder attribute? Don't we need to filter over the UID
+            // or something in this case?
+            if ($folderAttr !== null) {
+                if (! $folderAttr->getRelationPath()->isEmpty() && $this->getMetaObject()->hasUidAttribute()) {
+                    $folderAttr = $this->getMetaObject()->getUidAttribute();
+                }
+                $this->fileData->getFilters()->addConditionFromAttribute($folderAttr, $this->getFolderName(), ComparatorDataType::EQUALS);
             }
-            $this->fileData->getFilters()->addConditionFromAttribute($folderAttr, $this->getFolderName(), ComparatorDataType::EQUALS);
             if ($this->hasFilenameMask() && $filenameAttr = $this->getFileBehavior()->getFilenameAttribute()) {
                 $this->fileData->getFilters()->addConditionFromAttribute($filenameAttr, $this->getFilenameMask(), ComparatorDataType::EQUALS);
             }
@@ -234,7 +267,7 @@ class DataSourceFileInfo implements FileInfoInterface
             $this->fileData->dataRead();
             
             if ($this->fileData->countRows() > 1) {
-                throw new OverflowException('Ambiguous virtual file path "' . $this->getPath() . '": ' . $this->fileData->countRows() . ' matching files found!');
+                throw new DataSheetReadError($this->fileData, 'Ambiguous virtual file path "' . $this->getPath() . '": ' . $this->fileData->countRows() . ' matching files found!');
             }
         }
         return $this->fileData;
@@ -259,15 +292,15 @@ class DataSourceFileInfo implements FileInfoInterface
         if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
             $val = $this->getFileDataColumn($attr)->getValue(0);
             $dataType = $attr->getDataType();
-            if ($dataType instanceof BinaryDataType) {
-                switch (true) {
-                    case $dataType->getEncoding() === BinaryDataType::ENCODING_BASE64:
-                        $val = BinaryDataType::convertBase64ToBinary($val);
-                        break;
-                    case $dataType->getEncoding() === BinaryDataType::ENCODING_HEX:
-                        $val = BinaryDataType::convertHexToBinary($val);
-                        break;
-                }
+            switch (true) {
+                case ($dataType instanceof BinaryDataType) && $dataType->getEncoding() === BinaryDataType::ENCODING_BASE64:
+                    $val = BinaryDataType::convertBase64ToBinary($val);
+                    break;
+                case ($dataType instanceof BinaryDataType) && $dataType->getEncoding() === BinaryDataType::ENCODING_HEX:
+                    $val = BinaryDataType::convertHexToBinary($val);
+                    break;
+                default:
+                    // Leave $val as-is
             }
             return $val;
         }
@@ -301,7 +334,7 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getExtension() : string
     {
-        return FilePathDataType::findExtension($this->getFilename());    
+        return FilePathDataType::findExtension($this->getFilename()) ?? '';    
     }
     
     /**
@@ -560,5 +593,71 @@ class DataSourceFileInfo implements FileInfoInterface
     {
         // TODO re-read data here?
         return $this->getFileDataSheet()->countRows() === 1;
+    }
+
+    /**
+     * Deletes the file
+     * @return void
+     */
+    public function delete()
+    {
+        $fileDs = $this->getFileDataSheet();
+        $fileDs->dataDelete();
+        // Make sure the FileInfo itself knows, that the file does not exist anymore
+        $fileDs->removeRows();
+        return;
+    }
+
+    /**
+     * 
+     * @throws \exface\Core\Exceptions\FileNotReadableError
+     * @return string
+     */
+    public function getStreamUrl() : string
+    {
+        $contents = $this->openFile()->read();
+        if ($contents === null) {
+            throw new FileNotReadableError('Cannot read spreadsheet from "' . $this->getFilename() . '": fetching contents failed!', null, null, $this);
+        }
+        $fm = $this->getMetaObject()->getWorkbench()->filemanager();
+        $tmpFolder = $fm->getPathToTempFolder() . DIRECTORY_SEPARATOR . 'DataSourceFileInfoTemp' . DIRECTORY_SEPARATOR;
+        if (! file_exists($tmpFolder)) {
+            mkdir($tmpFolder);
+        }
+        $tmpPath = $tmpFolder . $this->getFilename();
+        file_put_contents($tmpPath, $contents);
+        $this->tempFiles[] = $tmpPath;
+
+        return $tmpPath;
+    }
+
+    /**
+     * Called when this file is not needed and clears the caches
+     * 
+     * @return void
+     */
+    public function __destruct()
+    {
+        foreach ($this->tempFiles as $path) {
+            @unlink($path);
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMd5()
+     */
+    public function getMd5() : ?string
+    {
+        if ($this->isDir() || ! $this->exists()) {
+            return null;
+        }
+        $binary = $this->openFile()->read();
+        if ($binary === null) {
+            return null;
+        }
+        $hash = md5($binary);
+        return $hash === false ? null : $hash;
     }
 }

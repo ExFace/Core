@@ -20,6 +20,7 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\DataTypes\LogLevelDataType;
+use exface\Core\Factories\MetaObjectFactory;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -46,9 +47,11 @@ trait ExceptionTrait {
     
     private $useExceptionMessageAsTitle = false;
 
+    private $statusCode = null;
+
     public function __construct($message, $alias = null, $previous = null)
     {
-        parent::__construct($message, null, $previous);
+        parent::__construct($message, 0, $previous);
         $this->setAlias($alias);
     }
 
@@ -75,7 +78,7 @@ trait ExceptionTrait {
         // Create a new error message
         /* @var $tabs \exface\Core\Widgets\ErrorMessage */
         $debug_widget = WidgetFactory::create($page, 'ErrorMessage');
-        $debug_widget->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.MESSAGE'));
+        $debug_widget->setMetaObject(MetaObjectFactory::createFromString($page->getWorkbench(), 'exface.Core.MESSAGE'));
         
         $debug_widget = $this->createDebugWidget($debug_widget);
         
@@ -295,15 +298,24 @@ trait ExceptionTrait {
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 500) : int
     {
-        if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $code = $this->getPrevious()->getStatusCode()){
+        if ($this->statusCode !== null) {
+            return $this->statusCode;
+        }
+        $prev = $this->getPrevious();
+        if ($prev !== null && $prev instanceof ExceptionInterface && 0 !== $code = $prev->getStatusCode(0)){
             return $code;
         } 
-        return 500;
+        return $default;
+    }
+
+    public function setStatusCode(int $httpResponseCode) : ExceptionInterface
+    {
+        $this->statusCode = $httpResponseCode;
+        return $this;
     }
 
     /**

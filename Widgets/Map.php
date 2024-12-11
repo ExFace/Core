@@ -13,19 +13,19 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Factories\DataPointerFactory;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 use exface\Core\Widgets\Parts\Maps\BaseMaps\OpenStreetMap;
 use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 use exface\Core\Widgets\Parts\Maps\DataShapesLayer;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * A map with support for different mapping data providers and data layers.
@@ -90,6 +90,8 @@ class Map extends AbstractWidget implements
     private $doubleClickToZoom = true;
 
     private $showPopupOnClick = true;
+
+    private $showLoadingIndicator = true;
 
     /**
      * @var bool
@@ -350,6 +352,12 @@ class Map extends AbstractWidget implements
         return;
     }
     
+    /**
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param string $coordinate
+     * @throws UnexpectedValueException
+     */
     protected function doPrefillCoordinate(DataSheetInterface $dataSheet, string $coordinate) 
     {
         switch ($coordinate) {
@@ -359,29 +367,25 @@ class Map extends AbstractWidget implements
                 break;
             case self::COORDINATE_LON:
                 $attrAlias = $this->getCenterLongitudeAttributeAlias();
-                $attrAlias = $this->getCenterLatitudeAttributeAlias();
                 $property = 'center_longitude';
+                break;
+            default:
+                throw new UnexpectedValueException('Cannot prefill map with unknown coordinate "' . $coordinate . '"!');
         }
         
-        $colName = $this->getPrefillExpression($dataSheet, $this->getMetaObject(), $attrAlias);
-        if ($col = $dataSheet->getColumns()->getByExpression($colName)) {
-            if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                // TODO #OnPrefillChangeProperty
-                $valuePointer = DataPointerFactory::createFromColumn($col);
-                $value = $col->aggregate($this->getAggregator());
-            } else {
-                $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                $value = $valuePointer->getValue();
-            }
-            
-            if ($this->isCenterBoundByReference() === false && $value !== null && $value != '') {
-                if ($coordinate === self::COORDINATE_LAT) {
-                    $this->setCenterLatitude($value);
-                } else {
-                    $this->setCenterLongitude($value);
+        if (null !== $expr = $this->getPrefillExpression($dataSheet, $this->getMetaObject(), $attrAlias)) {
+            $this->doPrefillForExpression(
+                $dataSheet, 
+                $expr, 
+                $property, 
+                function($value) use ($coordinate) {
+                    if ($coordinate === self::COORDINATE_LAT) {
+                        $this->setCenterLatitude($value);
+                    } else {
+                        $this->setCenterLongitude($value);
+                    }
                 }
-                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, $property, $valuePointer));
-            }
+            );
         }
         
         return;
@@ -572,12 +576,12 @@ class Map extends AbstractWidget implements
      * @uxon-property center_latitude
      * @uxon-type number
      * 
-     * @param float $value
+     * @param float|string|NULL $value
      * @return Map
      */
-    public function setCenterLatitude(float $value) : Map
+    public function setCenterLatitude($value) : Map
     {
-        $this->centerLatitude = $value;
+        $this->centerLatitude = NumberDataType::cast($value);
         return $this;
     }
     
@@ -629,12 +633,12 @@ class Map extends AbstractWidget implements
      * @uxon-property center_longitude
      * @uxon-type number
      *
-     * @param float $value
+     * @param float|string|NULL $value
      * @return Map
      */
-    public function setCenterLongitude(float $value) : Map
+    public function setCenterLongitude($value) : Map
     {
-        $this->centerLongitude = $value;
+        $this->centerLongitude = NumberDataType::cast($value);
         return $this;
     }
     
@@ -837,6 +841,31 @@ class Map extends AbstractWidget implements
     public function setShowScale(bool $value) : Map
     {
         $this->showScale = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowLoadingIndicator() : bool
+    {
+        return $this->showLoadingIndicator;
+    }
+    
+    /**
+     * Set to FALSE to hide the loading overlay while calling the data.
+     * 
+     * @uxon-property show_loading_indicator
+     * @uxon-type bool
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Map
+     */
+    public function setShowLoadingIndicator(bool $value) : Map
+    {
+        $this->showLoadingIndicator = $value;
         return $this;
     }
 

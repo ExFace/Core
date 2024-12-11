@@ -28,9 +28,15 @@ interface SqlDataConnectorInterface extends DataConnectionInterface, TextualQuer
     public function makeArray(SqlDataQuery $query);
 
     /**
-     *
+     * Returns the primary key value of the last inserted row if autogeneration of primary keys was used 
+     * or NULL otherwise
+     * 
+     * The specific behavior heavily depends on the PHP extension used in the connection! If it differs
+     * from the above definition, it must at least be explicitly supported by the query builder intended
+     * to be used with the connector.
+     * 
      * @param SqlDataQuery $query            
-     * @return string
+     * @return string|int|null
      */
     public function getInsertId(SqlDataQuery $query);
 

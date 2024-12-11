@@ -155,7 +155,7 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
     /**
      * The selector of the page where the widget to be extended is located
      * 
-     * @uxon-poperty page_alias
+     * @uxon-property page_alias
      * @uxon-type metamodel:page
      * 
      * @param string $alias

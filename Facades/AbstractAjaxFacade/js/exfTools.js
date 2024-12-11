@@ -456,7 +456,6 @@
 			 * @return {bool}			 *
 			 */
 			compareDates: function (sDate1, sDate2, sComparator, sGranularity) {
-				console.log('Compare: ', sDate1, sDate2, sComparator, sGranularity);
 				var supportedComparators = ['==', '<=', '<', '>=', '>'];
 				var supportedGranularity = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'];
 				var oParsedDate1, oParsedDate2, oMomentDate1, oMomentDate2;
@@ -667,8 +666,32 @@
 		 * 
 		 */
 		data: {
-			compareRows: function(row1, row2) {
+			/**
+			 * Returns TRUE if row1 is the same as row2. Compares only the UID values if a UID column is specified
+			 * 
+			 * @param {object} row1 
+			 * @param {object} row2 
+			 * @param {string} sUidCol 
+			 * @returns {boolean}
+			 */
+			compareRows: function(row1, row2, sUidCol) {
+				if (sUidCol !== undefined && row1[sUidCol] !== undefined && row2[sUidCol] !== undefined) {
+					return row1[sUidCol] === row2[sUidCol];
+				}
 				return _dataRowsCompare(row1, row2);
+			},
+			/**
+			 * Returns the index of a given row in an array of rows. Compares only UID values if UID column is specified.
+			 * 
+			 * @param {array} aRows 
+			 * @param {object} oRowToFind 
+			 * @param {string} sUidCol 
+			 * @returns {int}
+			 */
+			indexOfRow: function(aRows, oRowToFind, sUidCol) {
+				return aRows.findIndex(function(oRow){
+					return exfTools.data.compareRows(oRow, oRowToFind, sUidCol);
+				});
 			},
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
@@ -685,27 +708,44 @@
 					}
 				}
 				switch (sComparator) {
-	                case '==':
-	                case '!==':
+	                case '=': 		// ComparatorDataType::IS
+	                case '!=': 		// ComparatorDataType::IS_NOT
+	                    bResult = function(){
+							var sR = (mRight || '').toString(); 
+							var sL = (mLeft || '').toString(); 
+							if (sR === '' && sL !== '') {
+								return false;
+							}
+							if (sR !== '' && sL === '') {
+								return false;
+							}
+							return (new RegExp(sR, 'i')).test(sL); 
+						}();
+						if (sComparator === '!=') {
+							bResult = ! bResult;
+						}
+	                    break;
+	                case '==': 		// ComparatorDataType::EQUALS
+	                case '!==': 	// ComparatorDataType::EQUALS_NOT
 	                	bResult = (mLeft === null ? '' : mLeft.toString()) == (mRight === null ? '' : mRight.toString());
 	                    if (sComparator === '!==') {
 							bResult = ! bResult;
 						}
 	                    break;
-	                case '<':
+	                case '<': 		// ComparatorDataType::LESS_THAN
 	                	bResult = mLeft < mRight;
 	                	break;
-	                case '<=':
+	                case '<=': 		// ComparatorDataType::LESS_THAN_OR_EQUALS
 	                	bResult = mLeft <= mRight;
 	                	break;
-	                case '>':
+	                case '>': 		// ComparatorDataType::GREATER_THAN
 	                	bResult = mLeft > mRight;
 	                	break;
-	                case '>=':
+	                case '>=': 		// ComparatorDataType::GREATER_THAN_OR_EQUALS
 	                	bResult = mLeft >= mRight;
 	                	break;
-	                case '[':
-	                case '![':
+					case '[':		// ComparatorDataType::IN
+	                case '![':		// ComparatorDataType::NOT_IN
 	                    bResult = function() {
 			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
 			                var sLeftVal = (mLeft || '').toString().toLowerCase();
@@ -720,8 +760,8 @@
 							bResult = ! bResult;
 						}
 	                    break;
-					case '][':
-	                case '!][':
+					case '][': 		// ComparatorDataType::LIST_INTERSECTS
+	                case '!][':		// ComparatorDataType::LIST_NOT_INTERSECTS
 	                    bResult = function() {
 			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
 							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
@@ -738,21 +778,70 @@
 							bResult = ! bResult;
 						}
 	                    break;
-	                case '=':
-	                case '!=':
-	                    bResult = function(){
-							var sR = (mRight || '').toString(); 
-							var sL = (mLeft || '').toString(); 
-							if (sR === '' && sL !== '') {
-								return false;
-							}
-							if (sR !== '' && sL === '') {
-								return false;
-							}
-							return (new RegExp(sR, 'i')).test(sL); 
-						}();
-						if (sComparator === '!=') {
+	                case '[[': 		// ComparatorDataType::LIST_SUBSET
+	                case '![[': 	// ComparatorDataType::LIST_NOT_SUBSET
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                for (var i = 0; i < rightValues.length; i++) {
+								for (var j = 0; j < leftValues.length; j++) {
+				                    if (rightValues[i].trim().toLowerCase() !== leftValues[j].trim().toLowerCase()) {
+				                        return false;
+				                    }
+								}
+			                }
+			                return true;
+			            }();
+						if (sComparator === '![[') {
 							bResult = ! bResult;
+						}
+	                    break;
+	                case '[==': 	// ComparatorDataType::LIST_EACH_EQUALS
+	                case '[!==': 	// ComparatorDataType::LIST_EACH_EQUALS_NOT
+	                case '[<': 		// ComparatorDataType::LIST_EACH_LESS_THAN
+	                case '[<=': 	// ComparatorDataType::LIST_EACH_LESS_THAN_OR_EQUALS
+	                case '[>': 		// ComparatorDataType::LIST_EACH_GREATER_THAN
+	                case '[>=': 	// ComparatorDataType::LIST_EACH_GREATER_THAN_OR_EQUALS
+	                case '[=': 		// ComparatorDataType::LIST_EACH_IS
+	                case '[!=': 	// ComparatorDataType::LIST_EACH_IS_NOT
+						if (mLeft === '' || mLeft === null || mLeft === undefined) {
+							bResult = exfTools.data.compareValues(mLeft, mRight, sComparator.substring(1), sMultiValDelim);
+						} else {
+							bResult = function() {
+			                    var aLeftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                    var iLeftCnt = aLeftValues.length;
+			                    var sScalarComp = sComparator.substring(1);
+			                    for (var i = 0; i < iLeftCnt; i++) {
+									if (false === exfTools.data.compareValues(aLeftValues[i], mRight, sScalarComp, sMultiValDelim)) {
+										return false;
+									}
+								}
+								return true;
+							}();
+						}
+	                    break;
+	                case ']==': 	// ComparatorDataType::LIST_ANY_EQUALS
+	                case ']!==': 	// ComparatorDataType::LIST_ANY_EQUALS_NOT
+	                case ']<': 		// ComparatorDataType::LIST_ANY_LESS_THAN
+	                case ']<=': 	// ComparatorDataType::LIST_ANY_LESS_THAN_OR_EQUALS
+	                case ']>': 		// ComparatorDataType::LIST_ANY_GREATER_THAN
+	                case ']>=': 	// ComparatorDataType::LIST_ANY_GREATER_THAN_OR_EQUALS
+	                case ']=': 		// ComparatorDataType::LIST_ANY_IS
+	                case ']!=': 	// ComparatorDataType::LIST_ANY_IS_NOT
+						if (mLeft === '' || mLeft === null || mLeft === undefined) {
+							bResult = exfTools.data.compareValues(mLeft, mRight, sComparator.substring(1), sMultiValDelim);
+						} else {
+							bResult = function() {
+			                    var aLeftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                    var iLeftCnt = aLeftValues.length;
+			                    var sScalarComp = sComparator.substring(1);
+			                    for (var i = 0; i < iLeftCnt; i++) {
+									if (true === exfTools.data.compareValues(aLeftValues[i], mRight, sScalarComp, sMultiValDelim)) {
+										return true;
+									}
+								}
+								return false;
+							}();
 						}
 	                    break;
 	                default:

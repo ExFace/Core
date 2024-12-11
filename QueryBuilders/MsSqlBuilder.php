@@ -147,7 +147,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $qpartAttr = $qpart->getAttribute();
             
             // First see, if the attribute has some kind of special data type (e.g. binary)
-            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE), 'binary') === 0) {
+            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '', 'binary') === 0) {
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
@@ -203,7 +203,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     break;
                 // Skip all non-group-safe attributes when aggregating
                 default:
-                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                    $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                     break;
             }
         }
@@ -253,6 +253,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if ($useEnrichment) {
             $query = $this->buildSqlQuerySelectWithEnrichment($select, $enrichment_select, $select_comment, $from, $join, $enrichment_join, $where, $group_by, $having, $order_by, $limit, $distinct);
         } else {
+            if ($this->isAggregatedToSingleRowViaListOnly() === true) {
+                $distinct = 'DISTINCT ';
+            }
             $query = $this->buildSqlQuerySelectWithoutEnrichment($select, $select_comment, $from, $join, $where, $group_by, $having, $order_by, $limit, $distinct);
         }
         
@@ -291,7 +294,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         } else {
             // If the object has no UID, sort over the first column in the query, which is simple to sort (i.g. is neither an SQL statement itself nor a compound)
             foreach ($this->getAttributes() as $qpart) {
-                if (! $this->checkForSqlStatement($this->buildSqlDataAddress($qpart)) && $qpart->getAttribute()->isSortable() && ! $qpart->isCompound()) {
+                if (! $this->isSqlStatement($this->buildSqlDataAddress($qpart)) && $qpart->getAttribute()->isSortable() && ! $qpart->isCompound()) {
                     $order_by = $qpart->getColumnKey() . ' DESC';
                     break;
                 }
@@ -356,11 +359,18 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $totals_joins = array();
         $totals_core_selects = array();
         $totals_selects = array();
+        
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
                 $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
+                $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
+            }
+        }
+        // Make sure all JOINs required for data address placeholders are there
+        foreach ($this->getAttributes() as $qpart) {
+            if ($qpart->isUsedInPlaceholders() === true) {
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }
@@ -766,5 +776,44 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $string = str_replace("'", "''", $string );
         
         return $string;
+    }
+
+    /**
+     * Returns TRUE if this query is to be aggregated to a single row AND only uses LIST or LIST_DISTINCT as aggregators
+     * 
+     * This is important for MS SQL because the `FOR XML PATH` concatenation still produces multiple rows
+     * (all with the same values). This does not happen if at least one other group function is used. If it
+     * is only listing though, adding a DISTINCT helps too.
+     * 
+     * For example, the following query will yield two rows:
+     * 
+     * `SELECT STUFF((SELECT [text()] = ', ' + tbl.name FOR XML PATH(''),TYPE),1,2,'') FROM tbl WHERE id IN (100,101)`
+     * 
+     * While the same query with a DISTINCT or a "regular" group function will produce a single row only:
+     * 
+     * `SELECT DISTINCT STUFF((SELECT [text()] = ', ' + tbl.name FOR XML PATH(''),TYPE),1,2,'') FROM tbl WHERE id IN (100,101)`
+     * 
+     * @see buildSqlGroupByExpression()
+     * @see buildSqlSelectGrouped()
+     * 
+     * @return bool
+     */
+    protected function isAggregatedToSingleRowViaListOnly() : bool
+    {
+        if ($this->isAggregatedToSingleRow() === false) {
+            return false;
+        }
+
+        foreach ($this->getAttributes() as $qpart) {
+            $aggr = $qpart->hasAggregator() ? $qpart->getAggregator() : null;
+            if ($aggr === null) {
+                return false;
+            }
+            if ($aggr->__toString() !== AggregatorFunctionsDataType::LIST_ALL && $aggr->__toString() !== AggregatorFunctionsDataType::LIST_DISTINCT) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }

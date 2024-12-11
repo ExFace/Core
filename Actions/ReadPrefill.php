@@ -54,6 +54,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         getPrefillDataPreset as getPrefillDataPresetViaTrait;
         hasPrefillDataPreset as hasPrefillDataPresetViaTrait;
         getPrefillDataSheet as getPrefillDataSheetViaTrait;
+        getPrefillDataRefresh as getPrefillDataRefreshViaTrait;
     }
 
     /**
@@ -170,7 +171,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // Therefor we should check again after we load the actual data in the prefill if the prefill ist actually allowed
         // by checking again against the checks of the trigger action.
         if ($mainSheet !== null && $mainSheet->hasUidColumn()) {
-            $this->validateInputData($mainSheet);
+            $this->validateInputData($mainSheet, $logBook);
         }
         
         if ($mainSheet === null) {
@@ -437,5 +438,19 @@ class ReadPrefill extends ReadData implements iPrefillWidget
     public function isTriggerWidgetRequired() : ?bool
     {
         return true;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iPrefillWidget::getPrefillDataRefresh()
+     */
+    public function getPrefillDataRefresh(TaskInterface $task = null) : string
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task))&& $action instanceof iPrefillWidget && $this->prefill_data_refresh === iPrefillWidget::REFRESH_AUTO) {
+            return $action->getPrefillDataRefresh();
+        }
+        
+        return $this->getPrefillDataRefreshViaTrait();
     }
 }

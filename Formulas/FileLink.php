@@ -49,7 +49,7 @@ class FileLink extends \exface\Core\CommonLogic\Model\Formula
 
         $url = HttpFileServerFacade::buildUrlToDownloadData($object, $uid, $urlParams, true, false);
         if ($makeOneTimeLink === true) {
-            $url = HttpFileServerFacade::buildUrlToOneTimeLink($this->getWorkbench(), $url, true);
+            $url = HttpFileServerFacade::buildUrlToOneTimeLink($this->getWorkbench(), $url, false);
         }
         return $url;
     }

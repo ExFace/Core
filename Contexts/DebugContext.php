@@ -44,6 +44,10 @@ class DebugContext extends AbstractContext
     const OPERATION_START_INTERCEPTING = 'startInterceptingCommunication';
     
     const OPERATION_STOP_INTERCEPTING = 'stopInterceptingCommunication';
+
+    const OPERATION_START_TRACING_JS = 'startTracingJs';
+
+    const OPERATION_STOP_TRACING_JS = 'stopTracingJs';
     
     private $tracing = false;
     
@@ -52,16 +56,6 @@ class DebugContext extends AbstractContext
     private $tracer = null;
     
     private $interceptor = null;
-    
-    /**
-     * Returns TRUE if the debugger is active and FALSE otherwise
-     * 
-     * @return boolean
-     */
-    public function isTracing() : bool
-    {
-        return $this->tracing || ($this->tracer !== null && ! $this->tracer->isDisabled());
-    }
     
     /**
      * @deprecated use startTracing() instead
@@ -86,7 +80,19 @@ class DebugContext extends AbstractContext
     }
     
     /**
-     * Starts the debugger for the current context scope
+     * Returns TRUE if the debugger is active and FALSE otherwise
+     * 
+     * @return boolean
+     */
+    public function isTracing() : bool
+    {
+        return $this->tracing || ($this->tracer !== null && ! $this->tracer->isDisabled());
+    }
+    
+    /**
+     * Starts the tracer for the current context scope
+     * 
+     * @uxon-operation startTracing
      *
      * @return string
      */
@@ -103,7 +109,9 @@ class DebugContext extends AbstractContext
     }
     
     /**
-     * Stops the debugger for the current context scope
+     * Stops the tracer for the current context scope
+     * 
+     * @uxon-operation stopTracing
      *
      * @return string
      */
@@ -114,6 +122,41 @@ class DebugContext extends AbstractContext
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_STOPPED');
     }
     
+    /**
+     * Starts the front-end tracer for the current context scope
+     * 
+     * @uxon-operation startTracingJs
+     *
+     * @return string
+     */
+    public function startTracingJs() : string
+    {
+        $this->getScope()->setVariable('DEBUG.TRACE_JS', true);
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_JS_STARTED');
+    }
+    
+    /**
+     * Stops the front-end tracer for the current context scope
+     * 
+     * @uxon-operation stopTracingJs
+     *
+     * @return string
+     */
+    public function stopTracingJs() : string
+    {
+        $this->getScope()->unsetVariable('DEBUG.TRACE_JS');
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_JS_STOPPED');
+    }
+
+    public function isTracingJs() : bool
+    {
+        return $this->getScope()->getVariable('DEBUG.TRACE_JS') === true;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
     public function isInterceptingCommunication() : bool
     {
         return $this->intercepting;
@@ -122,6 +165,8 @@ class DebugContext extends AbstractContext
     /**
      * Starts the communication intercepter for the current context scope
      *
+     * @uxon-operation startInterceptingCommunication
+     * 
      * @return string
      */
     public function startInterceptingCommunication(CommunicationInterceptor $interceptor = null) : string
@@ -139,7 +184,9 @@ class DebugContext extends AbstractContext
     
     /**
      * Stops intercepting communication
-     *
+     * 
+     * @uxon-operation stopInterceptingCommunication
+     * 
      * @return string
      */
     public function stopInterceptingCommunication() : string
@@ -255,7 +302,9 @@ class DebugContext extends AbstractContext
      */
     public function getIndicator()
     {
-        $state = ($this->isTracing() ? 'T' : '') . ($this->isInterceptingCommunication() ? 'C' : ''); 
+        $state = ($this->isTracing() ? 'T' : '') 
+                . ($this->isTracingJs() ? 'F' : '')
+                . ($this->isInterceptingCommunication() ? 'C' : ''); 
         return $state ? 'ON [' . $state . ']' : 'OFF';
     }
     
@@ -296,16 +345,30 @@ class DebugContext extends AbstractContext
             'widget_type' => 'Menu',
             'caption' => $this->getName(),
             'buttons' => [
+                // Trace server requests
                 [
                     'caption' => '[T] ' . $translator->translate('CONTEXT.DEBUG.TRACE_SERVER_REQUESTS'),
                     'action' => [
                         'alias' => 'exface.Core.CallContext',
                         'context_scope' => $this->getScope()->getName(),
                         'context_alias' => $this->getAliasWithNamespace(),
-                        'operation' => $this->isTracing() ? static::OPERATION_STOP_TRACING : static::OPERATION_START_TRACING,
+                        'operation' => $this->isTracing() ? self::OPERATION_STOP_TRACING : self::OPERATION_START_TRACING,
                         'icon' => $this->isTracing() ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
                     ]
+                ],
+                // Trace front-end errors
+                [
+                    'caption' => '[F] ' . $translator->translate('CONTEXT.DEBUG.TRACE_JS'),
+                    'id' => 'DebugContext_JSTrace_toggle',
+                    'action' => [
+                        'alias' => 'exface.Core.CallContext',
+                        'context_scope' => $this->getScope()->getName(),
+                        'context_alias' => $this->getAliasWithNamespace(),
+                        'operation' => $this->isTracingJs() ? self::OPERATION_STOP_TRACING_JS : self::OPERATION_START_TRACING_JS,
+                        'icon' => $this->isTracingJs() ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
+                    ]
                 ], 
+                // Intercept communication
                 [
                     'caption' => '[C] ' . $translator->translate('CONTEXT.DEBUG.INTERCEPT_COMMUNICATION'),
                     'icon' => $this->isInterceptingCommunication() ? icons::TOGGLE_ON : Icons::TOGGLE_OFF,
@@ -314,7 +377,7 @@ class DebugContext extends AbstractContext
                             'alias' => 'exface.Core.CallContext',
                             'context_scope' => $this->getScope()->getName(),
                             'context_alias' => $this->getAliasWithNamespace(),
-                            'operation' => static::OPERATION_STOP_INTERCEPTING,
+                            'operation' => self::OPERATION_STOP_INTERCEPTING,
                             'icon' => $this->isInterceptingCommunication() ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
                         ] : 
                         [
@@ -353,7 +416,7 @@ class DebugContext extends AbstractContext
                                             'alias' => 'exface.Core.CallContext',
                                             'context_scope' => $this->getScope()->getName(),
                                             'context_alias' => $this->getAliasWithNamespace(),
-                                            'operation' => static::OPERATION_START_INTERCEPTING
+                                            'operation' => self::OPERATION_START_INTERCEPTING
                                         ]
                                         
                                     ]
@@ -361,7 +424,9 @@ class DebugContext extends AbstractContext
                             ]
                         ]
                     )
-                ], [
+                ], 
+                // View server traces
+                [
                     'caption' => $translator->translate('CONTEXT.DEBUG.TRACES_LIST_BUTTON'),
                     'action' => [
                         'alias' => 'exface.Core.ShowDialog',
@@ -411,38 +476,86 @@ class DebugContext extends AbstractContext
                                     ],
                                     'buttons' => [
                                         [
+                                            'caption' => 'Open trace',
                                             'action' => [
                                                 'alias' => 'exface.Core.ShowObjectInfoDialog',
                                                 'disable_buttons' => false
                                             ],
                                             'bind_to_double_click' => true
                                         ], [
+                                            'caption' => 'Delete trace',
                                             'action_alias' => 'exface.Core.DeleteObject'
+                                        ], [
+                                            'caption' => 'Start tracing',
+                                            'action' => [
+                                                'alias' => 'exface.Core.CallContext',
+                                                'context_scope' => $this->getScope()->getName(),
+                                                'context_alias' => $this->getAliasWithNamespace(),
+                                                'operation' => self::OPERATION_START_TRACING,
+                                                'icon' => Icons::TOGGLE_ON
+                                            ]
+                                        ], [
+                                            'caption' => 'Stop tracing',
+                                            'action' => [
+                                                'alias' => 'exface.Core.CallContext',
+                                                'context_scope' => $this->getScope()->getName(),
+                                                'context_alias' => $this->getAliasWithNamespace(),
+                                                'operation' => self::OPERATION_STOP_TRACING,
+                                                'icon' => Icons::TOGGLE_OFF
+                                            ]
                                         ]
                                     ]
                                 ]
                             ]
                         ]
                     ]
-                ], [
+                ], 
+                // View front-end traces
+                [
+                    'caption' => $translator->translate('CONTEXT.DEBUG.TRACES_JS_LIST_BUTTON'),
+                    'icon' => Icons::EXTERNAL_LINK,
+                    'disabled' => $this->isTracingJs() === false,
+                    'action' => [
+                        'alias' => 'exface.Core.CustomFacadeScript',
+                        'script' => <<<JS
+    
+    var oEvent = jQuery.Event("debugShowJsTrace");
+    $(document).trigger(oEvent);
+    if (! oEvent.isDefaultPrevented()) {
+        throw {'message': 'This facade does not support front-end tracing'};
+    }
+JS
+                    ]
+                ], 
+                // Clear cache
+                [
                     'action' => [
                         'alias' => 'exface.Core.ClearCache',
                         'clear_opcache' => true
                     ]
-                ], [
+                ], 
+                // Clean up expired data
+                [
                     'action_alias' => 'exface.Core.CleanUp'
-                ], [
+                ], 
+                // JS Debugger
+                [
                     'caption' => 'JS Debugger',
                     'action' => [
                         'alias' => 'exface.Core.CustomFacadeScript',
                         'script' => <<<JS
 (function () { 
-    var script = document.createElement('script'); 
-    script.src="vendor/npm-asset/eruda/eruda.js"; 
-    document.body.appendChild(script); 
-    script.onload = function () { 
-        eruda.init() 
-    } 
+    if (eruda === undefined) {
+        var script = document.createElement('script'); 
+        script.src="vendor/npm-asset/eruda/eruda.js"; 
+        document.body.appendChild(script); 
+        script.onload = function () { 
+            eruda.init();
+            eruda.show();
+        } 
+    } else {
+        eruda.show();
+    }
 })();
 JS
                     ]

@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -330,7 +331,7 @@ class CallActionBehavior extends AbstractBehavior
             }
         } catch (\Throwable $e) {
             if ($this->isErrorIfActionFails()) {
-                throw $e;
+                throw new BehaviorRuntimeError($this, 'Error in ' . $this->getAlias() . ' (' . $this->getName() . '): ' . $e->getMessage(), null, $e, $logbook);
             } 
             $logbook->addLine('**Failed** silently (silenced by `error_if_action_fails`): ' . $e->getMessage());
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		
+		<title>[#title#]</title>
+		
+		<meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+		<meta name="HandheldFriendly" content="True">
+		<meta name="MobileOptimized" content="240"/>
+		<meta name="PalmComputingPlatform" content="true"/>
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		
+		<link href="[#baseurl#]/npm-asset/github-markdown-css/github-markdown.css" rel="stylesheet">
+		
+	</head>
+	<body class="markdown-body">
+	
+		
+		[#content#]
+		
+		
+		<script type="text/javascript" src="[#baseurl#]/exface/core/Facades/AbstractAjaxFacade/js/mermaid.min.js"></script>
+		
+		<script type="text/javascript">
+		
+			(function(mermaid){
+				mermaid.initialize({
+			        startOnLoad:true,
+			        theme: 'default'
+			    });
+			    mermaid.init(undefined, '.language-mermaid');
+		    })(mermaid);
+		    
+		</script>
+	</body>
+</html>

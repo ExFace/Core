@@ -8,10 +8,37 @@ use exface\Core\Exceptions\LogicException;
 /**
  * Enumeration of aggregator function like SUM, AVG, etc.
  * 
+ * Aggregators are used as an extension for attribute aliases and relations paths to 
+ * aggregate (total up) values values. For example, the following attribute aliases
+ * can be used in a table for an `ORDER` object:
+ * 
+ * - `POSITION__ID:COUNT` - display the number of order positions
+ * - `POSITION__QTY:SUM` - sum up all quantities
+ * - `POSITION__MODIFIED_ON:MAX` - last modification daten
+ * - `POSITION__STATUS:MAX_OF(MODIFIED_ON)` - the status of the last modified position
+ * 
+ * ## Available aggregators:
+ * 
+ * - `ATTRIBUTE:SUM`
+ * - `ATTRIBUTE:AVG`
+ * - `ATTRIBUTE:MIN`
+ * - `ATTRIBUTE:MAX`
+ * - `ATTRIBUTE:MIN_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the minimum of `OTHER_ATTRIBUTE`
+ * - `ATTRIBUTE:MAX_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the maximum of `OTHER_ATTRIBUTE`
+ * - `ATTRIBUTE:LIST`
+ * - `ATTRIBUTE:LIST(,)` - a list with an explicitly defined separator - `,` in this case
+ * - `ATTRIBUTE:LIST_DISTINCT`
+ * - `ATTRIBUTE:LIST_DISTINCT(,)` - a distinct list with an explicitly defined separator
+ * - `ATTRIBUTE:COUNT`
+ * - `ATTRIBUTE:COUNT_DISTINCT`
+ * - `ATTRIBUTE:COUNT_IF(OTHER_ATTRIBUTE > 0)` - currently only supports simple conditions with an attribute alias on the left and a scalar on the right. There MUST be spaces around the comparator!
+ * 
  * @method AggregatorFunctionsDataType SUM(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType AVG(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType MIN(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType MAX(\exface\Core\CommonLogic\workbench $workbench)
+ * @method AggregatorFunctionsDataType MIN_OF(\exface\Core\CommonLogic\workbench $workbench)
+ * @method AggregatorFunctionsDataType MAX_OF(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType LIST_ALL(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType LIST_DISTINCT(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType COUNT(\exface\Core\CommonLogic\workbench $workbench)

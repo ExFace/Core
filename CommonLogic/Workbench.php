@@ -1,9 +1,11 @@
 <?php
 namespace exface\Core\CommonLogic;
+use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Exceptions\UxonSyntaxError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
 
-use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Factories\ModelLoaderFactory;
@@ -34,6 +36,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Model\App;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\CommonLogic\Communication\Communicator;
+use exface\Core\Interfaces\Events\EventManagerInterface;
 
 class Workbench implements WorkbenchInterface
 {
@@ -77,7 +80,7 @@ class Workbench implements WorkbenchInterface
 
     public function __construct(array $config = null)
     {   
-        $this->startTime = microtime(true);
+        $this->startTime = Debugger::getTimeMsNow();
         
         $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
         $this->installation_path = Filemanager::pathNormalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
@@ -157,7 +160,7 @@ class Workbench implements WorkbenchInterface
         $this->model()->setModelLoader($model_loader);
         
         // Load the context
-        $this->context = new ContextManager($this, $config);
+        $this->context = new ContextManager($this);
         
         $this->security = new SecurityManager($this);
         
@@ -207,7 +210,13 @@ class Workbench implements WorkbenchInterface
      */
     public function getConfig()
     {
-        return $this->getCoreApp()->getConfig();
+        try {
+            return $this->getCoreApp()->getConfig();
+        } catch (UxonSyntaxError $e) {
+            throw new RuntimeException('Invalid workbench config sytax! ' . $e->getMessage(), null, $e);
+        }catch (\Throwable $e) {
+            throw new RuntimeException('Cannot load workbench config! ' . $e->getMessage(), null, $e);
+        }
     }
 
     /**
@@ -317,7 +326,7 @@ class Workbench implements WorkbenchInterface
     /**
      * Returns the core app
      *
-     * @return CoreApp
+     * @return AppInterface
      */
     public function getCoreApp()
     {
@@ -352,7 +361,7 @@ class Workbench implements WorkbenchInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchInterface::eventManager()
      */
-    public function eventManager()
+    public function eventManager() : EventManagerInterface
     {
         if ($this->event_manager === null) {
             $this->event_manager = new EventManager($this);
@@ -391,10 +400,11 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     *
-     * @return \exface\Core\Interfaces\DebuggerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getDebugger()
      */
-    public function getDebugger()
+    public function getDebugger() : DebuggerInterface
     {
         return $this->debugger;
     }
@@ -410,7 +420,7 @@ class Workbench implements WorkbenchInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchInterface::getLogger()
      */
-    public function getLogger()
+    public function getLogger() : LoggerInterface
     {
         if (is_null($this->logger)) {
             $this->logger = LoggerFactory::createDefaultLogger($this);

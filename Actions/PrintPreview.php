@@ -2,6 +2,8 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\Exceptions\DataTypes\HtmlValidationError;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -16,6 +18,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Renders a preview for a provided print action
@@ -69,12 +72,20 @@ class PrintPreview extends GoToUrl
         }
         $previewSheet = DataSheetFactory::createFromObject($printAction->getMetaObject());
         $previewSheet->getColumns()->addFromUidAttribute();
-        $labelCol = $previewSheet->getColumns()->addFromLabelAttribute();
+
+        if($previewSheet->getMetaObject()->hasLabelAttribute()){
+            $labelCol = $previewSheet->getColumns()->addFromLabelAttribute();
+        }
+
         if ($previewDataLabel === null || $previewDataLabel === '') {
             $previewSheet->getSorters()->addFromString($printAction->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::DESC);
         } else {
             $previewCondGrp = ConditionGroupFactory::createOR($previewSheet->getMetaObject());
-            $previewCondGrp->addConditionFromAttribute($labelCol->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
+
+            if(isset($labelCol) && $labelCol !== null) {
+                $previewCondGrp->addConditionFromAttribute($labelCol->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
+            }
+
             $previewCondGrp->addConditionFromAttribute($previewSheet->getUidColumn()->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
             $previewSheet->setFilters($previewCondGrp);
         }
@@ -89,8 +100,15 @@ class PrintPreview extends GoToUrl
             $result = ResultFactory::createHTMLResult($task, $preview);
         } else {
             if ($this->getCallActionInsteadOfPreview() === false) {
-                $prints = $printAction->renderTemplate($previewSheet);
+                $prints = $printAction->renderPreviewHTML($previewSheet);
                 $preview = reset($prints);
+
+                try {
+                    $preview = HtmlDataType::validateHtml($preview);
+                } catch (HtmlValidationError $error) {
+                    $preview = $this->buildErrorMessage($error, $preview) . $preview;
+                }
+
                 $result = ResultFactory::createHTMLResult($task, $preview);
             } else {
                 $task = TaskFactory::createFromDataSheet($previewSheet, ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $task->getFacade());
@@ -102,6 +120,55 @@ class PrintPreview extends GoToUrl
         }
         
         return $result;
+    }
+
+    /**
+     * Generates HTML that displays the provided errors in a comprehensible format.
+     *
+     * @param HtmlValidationError $error
+     * @param string $html
+     * @return string
+     */
+    private function buildErrorMessage(HtmlValidationError $error, string $html) : string
+    {
+        $errorListing = '';
+        $lines = StringDataType::splitLines($html);
+        foreach ($error->getErrorMessages() as $errorLineIndex => $errorMessage) {
+            $start = $errorLineIndex - 15;
+            $displayedLines = array_slice($lines, $start, 20);
+            foreach ($displayedLines as $index => $displayedLine) {
+                $currentLineIndex = $index + $start;
+                if($currentLineIndex == $errorLineIndex - 1) {
+                    $displayedLines[$index] = "ERR:\t\t".strtoupper($displayedLine)." <= ERROR";
+                } else {
+                    $displayedLines[$index] = ($currentLineIndex - 1).":\t\t".$displayedLine;
+                }
+            }
+
+            $excerpt = htmlspecialchars(implode(PHP_EOL, $displayedLines));
+            $errorListing .= <<< HTML
+<div style="font-weight: bold;">{$errorMessage}</div>
+<pre style="background: #eee; overflow-x: auto; font-size: 80%">
+{$excerpt}
+</pre> 
+HTML;
+        }
+
+        return <<< HTML
+            <div id="html_validation_error" style="margin-bottom: 2px;">
+                <div id="message" class="exf-message error" style="text-align:center; background-color: #dd4b39; 
+                    padding: 5px; color: white; margin: 2px 0; min-height: 38px; color:white; !important">
+                    
+                    <h3>Invalid HTML detected: Fix all errors listed below!</h3>
+                    <p>Use an external HTML validator for more information.</p>
+                </div>
+                <div id="errors" style="background-color: lightgrey; padding: 5px;">
+                    <div>
+                        {$errorListing}
+                    </div>
+                </div>
+            </div>
+HTML;
     }
     
     /**

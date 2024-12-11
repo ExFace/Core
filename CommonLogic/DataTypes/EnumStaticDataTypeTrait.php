@@ -8,27 +8,57 @@ use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Exceptions\LogicException;
 
+/**
+ * This trait includes everything needed for a enum data type with values defined in code
+ * 
+ * Enum values are defined as constants of the data type class. The enum values are the
+ * constant values and the enum labels are to be computed in the concrete implementation
+ * class if needed - e.g. via method `getLabels()` as seen in `ComparatorDataType`.
+ * 
+ * The constant names are not important for the enum - they are normally only used internally 
+ * inside this trait or the implementing class.
+ * 
+ * When casting values, that differ in case, the case is automatically normalized to the 
+ * version in the constant. Thus `::cast()` always returns the exact notation of the constant 
+ * value.
+ * 
+ * The constant
+ * 
+ * @see SortingDirectionsDataType for an example
+ * 
+ */
 trait EnumStaticDataTypeTrait {
     
     /**
-     * Store existing constants in a static cache per object.
+     * Static cache for constants for each class: [[class] => [<CONSTANT_NAME_UC> => <constnat_value>]]
      *
      * @var array
      */
-    protected static $cache = array();
+    protected static $cache = [];
+
+    /**
+     * Static cache for case-insensitive value search (find constant name by value): [[class] => [<CONSTANT_VALUE_UC> => <CONSTANT_NAME_UC>]]
+     * 
+     * These arrays have constant values for keys and constant names for values. For easier
+     * case insensitive search, the constant values are all uppercased. If there are multiple
+     * constants with the same value, the cache will contain the name of the first constant 
+     * in order of definition.
+     * 
+     * @var array
+     */
+    private static $cacheValuesNC = [];
     
     /**
-     * Returns all possible values as an array
+     * Returns all possible value-label pairs as an array
      *
-     * @return array Constant name in key, constant value in value
+     * @return array Constant name as key, constant value as value
      */
     public static function getValuesStatic()
     {
         $class = get_called_class();
-        if (!array_key_exists($class, static::$cache)) {
-            $reflection            = new \ReflectionClass($class);
+        if (! array_key_exists($class, static::$cache)) {
+            $reflection = new \ReflectionClass($class);
             static::$cache[$class] = $reflection->getConstants();
         }
         
@@ -36,37 +66,66 @@ trait EnumStaticDataTypeTrait {
     }
     
     /**
-     * Returns the keys of the static values (the names of the constants) as an array.
+     * Returns the names of the constants (keys of the value cache array) as a numeric array.
      * 
      * @return array
      */
-    public static function getKeysStatic()
+    public static function getConstantNames()
     {
         return array_keys(static::getValuesStatic());
     }
     
     /**
-     * Returns the key (constant name) matching the given value or FALSE if the value 
-     * does not match any key.
+     * Returns the constant name matching the given value (case insensitive) or FALSE 
+     * if the value does not match any constant.
      * 
-     * @param string $value
-     * @return string|false
+     * The search is case insensitive!
+     * 
+     * @param string|int| $label
+     * @return string|int|null|false
      */
-    public static function findKey($value)
+    public static function findConstant($value)
     {
-        return array_search($value, static::getValuesStatic());
+        $class = get_called_class();
+        if (! array_key_exists($class, static::$cacheValuesNC)) {
+            // Store reverse cache. Note, that array_flip will keep only the last key of the
+            // original array in case there were multiple keys with the same value. Since we
+            // need the first key to match, we first reverse the array, than flip it and then
+            // uppercase all keys.
+            static::$cacheValuesNC[$class] = array_change_key_case(array_flip(array_reverse(static::getValuesStatic())), CASE_UPPER);
+        }
+
+        // Search over the case-insensitive cache
+        if (is_string($value) === true) {
+            $value = mb_strtoupper($value);
+        }
+
+        // Since the values are the constant names in this case, there cannot be 
+        // a value equal to NULL - that would meen, there is no constant, so
+        // return false in this case
+        return static::$cacheValuesNC[$class][$value] ?? false;
     }
     
     /**
-     * Check if is valid enum value
+     * Check if $value is part of the enum
+     * 
+     * This returns TRUE if there is a constant with a value matching the given $value.
      *
-     * @param mixed $value
+     * @param string|int|null $value
      *
      * @return bool
      */
     public static function isValidStaticValue($value)
-    {
-        return in_array($value, static::getValuesStatic());
+    {   
+        // See if there is an exact case-sensitive match first. If not, try to find
+        // the constant name with an case-insensitive search. Since there are really
+        // a lot of validations on static enums like ComparatorDataType, this should
+        // speed up the "regular" cases.
+        $exactMatch = in_array($value, static::getValuesStatic());
+        if ($exactMatch === false) {
+            return static::findConstant($value) !== false;
+        }
+        return true;
     }
     
     /**
@@ -106,21 +165,21 @@ trait EnumStaticDataTypeTrait {
         }
         
         // Check if the casted value is part of the enum
-        $valueInEnum = static::isValidStaticValue($value);
+        $constName = static::findConstant($value);
         
         // Convert all sorts of empty values to NULL except if they are explicitly
         // part of the enumeration: e.g. an empty string should become null if the
         // enumeration does not include the empty string explicitly.
         // TODO #null-or-NULL does the NULL constant need to pass casting?
-        if ((static::isValueEmpty($value) === true || static::isValueLogicalNull($value)) && $valueInEnum === false) {
+        if ((static::isValueEmpty($value) === true || static::isValueLogicalNull($value)) && $constName === false) {
             return null;
         }
         
-        if ($valueInEnum === false){
+        if ($constName === false){
             throw new DataTypeCastingError('Value "' . $value . '" does not fit into the enumeration data type ' . get_called_class() . '!');
         }
         
-        return $value;
+        return static::getValuesStatic()[$constName];
     }    
     
     /**

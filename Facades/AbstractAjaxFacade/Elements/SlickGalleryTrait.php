@@ -338,7 +338,7 @@ JS
                         aRows.forEach(function(oRow) {
                             var sUrl = {$this->buildJsUrlForImage('oRow')};
                             var a;
-
+console.log(sUrl);
                             if (! sUrl) {
                                 {$this->buildJsShowMessageError($this->escapeString($this->translate('WIDGET.IMAGEGALLERY.CANNOT_DOWNLOAD_WITHOUT_URL')))}
                             }
@@ -525,8 +525,8 @@ JS;
         // HttpFileServerFacade.
         // IMPORTANT: the UID must not contain slashes - even if they are URL encoded (%2F) as
         // many servers (like Apache) will disallow this for security reasons. So if the UID
-        // contains a slash, encode it as Base64 first and prefix it by `base64,` - similarly
-        // to a DataURI.
+        // contains a slash, encode it as Base64URL first and prefix it by `base64URL,` - similarly
+        // to a DataURI. See BinaryDataType::convertTextToBase64URL() for more information
         if (! $widget->hasUidColumn()) {
             throw new WidgetConfigurationError($widget, 'Cannot generate thumbnails for ' . $this->getWidget() . ' automatically: neither a `thumbnail_url_attribute_alias` is specified, nor does the widget have UID column!');
         }
@@ -536,7 +536,9 @@ JS;
                         if (mUid === null) {
                             mUid = '';
                         } else if ((typeof mUid === 'string' || mUid instanceof String) && mUid.includes('/')){
-                            mUid = 'base64,' + btoa(mUid);
+                            console.log(mUid);
+                            mUid = 'base64URL,' + btoa(encodeURIComponent(mUid)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+                            console.log(mUid);
                         }
                         return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(mUid));
                     }()

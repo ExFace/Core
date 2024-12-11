@@ -148,12 +148,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         // IDEA at this point, we could use the default aggregate function of the attributes. However it is probably a good
                         // idea to set the default aggregator somewhere in the qpart code, not in the query builders. If we set the aggregator
                         // to the default, this place will pass without a problem.
-                        $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                        $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                         continue;
                     }
                     // also skip selects based on custom sql substatements if not being grouped over
                     // they should be done after pagination as they are potentially very time consuming
-                    if ($this->checkForSqlStatement($this->buildSqlDataAddress($qpartAttr)) && (! $group_by || ! $qpart->getAggregator())) {
+                    if ($this->isSqlStatement($this->buildSqlDataAddress($qpartAttr)) && (! $group_by || ! $qpart->getAggregator())) {
                         continue;
                     } elseif ($qpart->getUsedRelations(RelationTypeDataType::REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
                         // Also skip selects with reverse relations that can be joined later in the enrichment.                      
@@ -184,7 +184,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // its UID column).
                 if ($group_by && $this->isObjectGroupSafe($qpart->getAttribute()->getObject()) === false) {
                     if (! $this->isQpartRelatedToAggregator($qpart)) {
-                        $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                        $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                         continue;
                     }
                 }
@@ -203,7 +203,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } elseif ($group_by && ! $qpart->getFirstRelation() && ! $qpart->getAggregator()) {
                     // If in a GROUP BY the attribute belongs to the main object and does not have an aggregate function, skip it - oracle cannot deal with it
-                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because the attribute belongs to the main object and does not have an aggregate function - oracle does not support this!' . "\n";
+                    $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because the attribute belongs to the main object and does not have an aggregate function - oracle does not support this!') . "\n";
                     continue;
                 } else {
                     // Otherwise the selects can rely on the joins
@@ -298,7 +298,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 } else {
-                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                    $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                 }
             }
             $select = substr($select, 2);
@@ -343,14 +343,22 @@ class OracleSqlBuilder extends AbstractSqlBuilder
     {
         $this->setDirty(false);
         
+        $group_by = '';
         $totals_joins = array();
         $totals_core_selects = array();
         $totals_selects = array();
+        
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
                 $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getColumnKey()) . '"', null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
+                $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
+            }
+        }
+        // Make sure all JOINs required for data address placeholders are there
+        foreach ($this->getAttributes() as $qpart) {
+            if ($qpart->isUsedInPlaceholders() === true) {
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }
@@ -530,7 +538,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
             $qpartAddress = $this->buildSqlDataAddress($qpart);
-            if (! $qpart->getDataAddressProperty(static::DAP_SQL_INSERT) && (! $qpartAddress || $this->checkForSqlStatement($qpartAddress))) {
+            if (! $qpart->getDataAddressProperty(static::DAP_SQL_INSERT) && (! $qpartAddress || $this->isSqlStatement($qpartAddress))) {
                 continue;
             }
             // Save the query part for later processing if it is the object's UID

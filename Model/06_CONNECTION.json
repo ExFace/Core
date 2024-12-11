@@ -169,17 +169,17 @@
         },
         {
             "CREATED_ON": "2022-11-10 21:34:36",
-            "MODIFIED_ON": "2022-11-11 16:25:35",
+            "MODIFIED_ON": "2024-09-09 16:32:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed992617f9ad829926747827435ce5",
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Objects with FileBehavior",
-            "CONNECTOR": "exface\/Core\/DataConnectors\/DataSourceFileContentsConnector.php",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/DataSourceFileConnector.php",
             "CONFIG": {
-  				"error_if_file_not_found": false
-			},
+                "error_if_file_not_found": false
+          },
             "READONLY": 0,
             "ALIAS": "objects_with_filebehavior"
         },

@@ -126,7 +126,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
             // First see, if the attribute has some kind of special data type (e.g. binary)
-            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE), 'binary') === 0) {
+            if (strcasecmp(($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? ''), 'binary') === 0) {
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
@@ -177,7 +177,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     break;
                 // Skip all non-group-safe attributes when aggregating
                 default:
-                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                    $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                     break;
             }
         }
@@ -246,14 +246,22 @@ class MySqlBuilder extends AbstractSqlBuilder
     {
         $this->setDirty(false);
         
+        $group_by = '';
         $totals_joins = array();
         $totals_core_selects = array();
         $totals_selects = array();
+        
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
                 $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
+                $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
+            }
+        }
+        // Make sure all JOINs required for data address placeholders are there
+        foreach ($this->getAttributes() as $qpart) {
+            if ($qpart->isUsedInPlaceholders() === true) {
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }

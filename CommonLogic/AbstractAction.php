@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
@@ -54,11 +56,13 @@ use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
+use exface\Core\Widgets\ConfirmationMessage;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -150,6 +154,10 @@ abstract class AbstractAction implements ActionInterface
     private $logBooks = [];
     
     private $offlineStrategy = null;
+
+    private $confirmationForAction = null;
+
+    private $confirmationForUnsavedData = null;
 
     /**
      *
@@ -892,7 +900,7 @@ abstract class AbstractAction implements ActionInterface
     public function getInputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
     {
         foreach ($this->getInputMappers() as $mapper){
-            if ($mapper->getFromMetaObject()->is($fromObject)){
+            if ($fromObject->is($mapper->getFromMetaObject()) === true){
                 return $mapper;
             }
         }
@@ -1124,23 +1132,31 @@ abstract class AbstractAction implements ActionInterface
 
         // Apply the input mappers
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
-            $inputData = $mapper->map($sheet, null, $logbook);
-            $this->input_mappers_used[] = [$inputData, $mapper];
-            $diagram .= " InputMapping";
-            $diagram .= "\n\t subgraph InputMapping[input_mapper]";
-            $mapperDiagrams = $logbook->getCodeBlocksInSection();
-            if (count($mapperDiagrams) === 2) {
-                $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
-                $logbook->removeLine(null, array_key_last($mapperDiagrams));
+            try {
+                $inputData = $mapper->map($sheet, null, $logbook);
+                $this->input_mappers_used[] = [$inputData, $mapper];
+            } catch (\Throwable $e) {
+                throw new ActionInputError($this, $e->getMessage(), null, $e);
+            } finally {
+                $diagram .= " InputMapping";
+                $diagram .= "\n\t subgraph InputMapping[input_mapper]";
+                $mapperDiagrams = $logbook->getCodeBlocksInSection();
+                // Use the last mapper diagram as subgraph: e.g. remove it from the regular
+                // mapper output and place it into the main diagram.
+                // Take just the very last diagram - if there are nested mappers (e.g. subsheet mappers),
+                // they can produce interesting 
+                if (count($mapperDiagrams) >= 2) {
+                    $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
+                    $logbook->removeLine(null, array_key_last($mapperDiagrams));
+                }
+                $diagram .= "\n\t end";
+                $logbook->addPlaceholderValue('input_diagram', $diagram);
             }
-            $diagram .= "\n\t end";
             $diagram .= "\n\t InputMapping -->|" . DataLogBook::buildMermaidTitleForData($inputData) . "|";
         } else {
             $inputData = $sheet;
             $logbook->addLine('No input mapper found for object ' . $sheet->getMetaObject()->__toString());
         }
-        $diagram .= " Action[Action `{$this->getName()}`]";
-        $logbook->addPlaceholderValue('input_diagram', $diagram);
         
         $logbook->addDataSheet('Final input data', $inputData);
         
@@ -1152,7 +1168,10 @@ abstract class AbstractAction implements ActionInterface
         
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
-        $inputData = $this->validateInputData($inputData);
+        $diagram .= " InputValidation[Input Validation]";
+        $diagram .= "\n\t InputValidation --> Action[\"Action: {$this->getName()}\"]";
+        $logbook->addPlaceholderValue('input_diagram', $diagram);
+        $inputData = $this->validateInputData($inputData, $logbook);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
         
         return $inputData;
@@ -1188,7 +1207,7 @@ abstract class AbstractAction implements ActionInterface
      * @throws ActionInputInvalidObjectError
      * @return DataSheetInterface
      */
-    protected function validateInputData(DataSheetInterface $sheet) : DataSheetInterface
+    protected function validateInputData(DataSheetInterface $sheet, LogBookInterface $logbook) : DataSheetInterface
     {
         // Check if, there are restrictions on input data.
         if ($sheet->countRows() < $this->getInputRowsMin()) {
@@ -1201,17 +1220,33 @@ abstract class AbstractAction implements ActionInterface
             throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
         }
         
+        $logbook->addLine('Performing input validation on data of ' . $sheet->getMetaObject()->__toString() . '.');
+        $logbook->addIndent(+1);
         if ($this->getInputChecks()->isDisabled() === false) {
+            if ($this->getInputChecks()->isEmpty()) {
+                $logbook->addLine('No `ìnput_invalid_if` defined for this action');
+            }
             foreach ($this->getInputChecks() as $check) {
                 if ($check->isApplicable($sheet)) {
                     try {
                         $check->check($sheet);
+                        $logbook->addLine('Check `' . $check->__toString() . '` passed');
                     } catch (DataCheckExceptionInterface $e) {
+                        $eHint = '';
+                        if (null !== $e->getBadData()) {
+                            $eHint = ' on ' . $e->getBadData()->countRows() . ' rows';
+                        }
+                        $logbook->addLine('Check `' . $check->__toString() . '` failed' . $eHint);
                         throw new ActionInputError($this, $e->getMessage(), null, $e);
                     }
+                } else {
+                    $logbook->addLine('Check `' . $check->__toString() . '` not applicable');
                 }
             }
+        } else {
+            $logbook->addLine('Property `input_invalid_if` is explicitly disabled');
         }
+        $logbook->addIndent(-1);
         
         return $sheet;
     }
@@ -1674,7 +1709,7 @@ abstract class AbstractAction implements ActionInterface
     public function getOutputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
     {
         foreach ($this->getOutputMappers() as $mapper){
-            if ($mapper->getFromMetaObject()->is($fromObject)){
+            if ($fromObject->is($mapper->getFromMetaObject()) === true){
                 return $mapper;
             }
         }
@@ -1836,5 +1871,80 @@ abstract class AbstractAction implements ActionInterface
     {
         $this->offlineStrategy = OfflineStrategyDataType::cast($value);
         return $this;
+    }
+
+    /**
+     * Make the action ask for confirmation when its button is pressed
+     * 
+     * @uxon-property confirmation_for_action
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage
+     * @uxon-template {"text": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return \exface\Core\Interfaces\Actions\ActionInterface
+     */
+    public function setConfirmationForAction(UxonObject $uxon) : ActionInterface
+    {
+        if ($this->isDefinedInWidget()) {
+            $parent = $this->getWidgetDefinedIn();
+            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+        } else {
+            // TODO what here?
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @return WidgetInterface
+     */
+    public function getConfirmationForAction() : ?ConfirmationMessage
+    {
+        return $this->confirmationForAction;
+    }
+
+    public function hasConfirmationForAction() : bool
+    {
+        return $this->confirmationForAction !== null && $this->confirmationForAction->isDisabled() === false;
+    }
+
+    /**
+     * Make the action warn the user if it is to be performed when unsaved changes are still visible
+     * 
+     * @uxon-property confirmation_for_unsaved_data
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage
+     * @uxon-template {"text": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return \exface\Core\Interfaces\Actions\ActionInterface
+     */
+    public function setConfirmationForUnsavedData(UxonObject $uxon) : ActionInterface
+    {
+        if ($this->isDefinedInWidget()) {
+            $parent = $this->getWidgetDefinedIn();
+            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+        } else {
+            // TODO what here?
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @return mixed
+     */
+    public function getConfirmationForUnsavedData() : ?ConfirmationMessage
+    {
+        return $this->confirmationForUnsavedData;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function hasConfirmationForUnsavedData() : bool
+    {
+        // TODO move logic from JqueryButtonTrait::isCheckForUnsavedChangesRequired() here
+        return $this->confirmationForUnsavedData !== null && $this->confirmationForUnsavedData->isDisabled() === false;
     }
 }

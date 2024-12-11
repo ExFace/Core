@@ -152,6 +152,27 @@ ALTER TABLE [dbo].[YourTableName]
 
 ```
 
+## Foreign keys
+
+Use named foreign keys in order to be able to quickly remove them in down scripts
+
+```
+ALTER TABLE dbo.etl_file_upload
+ADD CONSTRAINT FK_dbo_file_upload_file_flow_oid FOREIGN KEY (file_flow_oid) REFERENCES dbo.etl_file_flow (oid);
+```
+
+Available rules:
+
+- `ON DELETE`
+- `ON UPDATE`
+
+Available actions for these rules:
+
+- `NO ACTION`
+- `CASCADE`
+- `SET NULL`
+- `SET DEFAULT`
+
 ## Indexes and constraints
 
 ### Checking for constraints in general

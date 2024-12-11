@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade;
 
+use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
@@ -29,7 +32,6 @@ use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Facades\HttpFileServerFacade;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\PrefixedFilterUrlParamsReader;
@@ -66,7 +68,7 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 use exface\Core\DataTypes\MessageTypeDataType;
-use function GuzzleHttp\Psr7\stream_for;
+use exface\Core\Factories\FacadeFactory;
 
 /**
  * 
@@ -256,7 +258,7 @@ HTML;
      */
     protected function getElementClassForWidget(WidgetInterface $widget) : string
     {
-        $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()];
+        $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()] ?? null;
         if (is_null($elem_class)) {
             $elem_class_prefix = $this->getClassNamespace() . '\\Elements\\' . $this->getClassPrefix();
             $elem_class = $elem_class_prefix . $widget->getWidgetType();
@@ -404,11 +406,21 @@ HTML;
         $middleware = parent::getMiddleware();
         
         $middleware[] = new ContextBarApi($this, $this->buildHeadersForAjax());
-        
-        $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
-        $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
-        $middleware[] = new TaskUrlParamReader($this, 'object', 'setMetaObjectSelector');
-        $middleware[] = new TaskUrlParamReader($this, 'element', 'setWidgetIdTriggeredBy');
+
+        $middleware[] = new TaskReader(
+            $this, 
+            $this->getRequestAttributeForTask(), 
+            function(HttpFacadeInterface $facade, ServerRequestInterface $request){
+                return new HttpTask($facade->getWorkbench(), $facade, $request); 
+            }, 
+            // Map common URL parameters to task UXON properties
+            [
+                'action' => 'action_alias',
+                'resource' => 'page_alias',
+                'object' => 'object_alias',
+                'element' => 'widget_id'
+            ]
+        );
         
         $middleware[] = new DataUrlParamReader($this, 'data', 'setInputData');
         $middleware[] = new QuickSearchUrlParamReader($this, 'q', 'getInputData', 'setInputData');
@@ -438,7 +450,7 @@ HTML;
         $status_code = $result->getResponseCode();
         
         if ($result->isEmpty()) {
-            return new Response($status_code, $headers);
+            return new Response(204, $headers);
         }
         
         switch (true) {
@@ -460,7 +472,7 @@ HTML;
                 break;
                 
             case $result instanceof ResultFileInterface && $result->isDownloadable():
-                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getPathAbsolute());
+                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getFileInfo()->getPathAbsolute());
                 $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]);
                 // Use extra response property "download" here instead of redirect, because if facades
                 // use simple redirects for downloads, this won't work for text-files or unknown mime types
@@ -471,15 +483,9 @@ HTML;
                 break;
                 
             case $result instanceof ResultFileInterface && ! $result->isDownloadable():
-                $headers = array_merge($headers, [
-                    'Expires' => 0,
-                    'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
-                    'Pragma' => 'public'
-                ]);
-                $headers['Content-Transfer-Encoding'] = 'binary';
-                $headers['Content-Disposition'] = 'inline; filename=' . $result->getFilename();
-                $headers['Content-Type'] = $result->getMimeType();
-                return new Response(200, $headers, stream_for($result->getResourceHandle())); 
+                /* @var $fileServer \exface\Core\Facades\HttpFileServerFacade */
+                $fileServer = FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench());
+                return $fileServer->createResponseForDonwload($result->getFileInfo()); 
                 
             case $result instanceof ResultUriInterface:
                 if ($result instanceof ResultRedirect && $result->hasTargetPage()) {

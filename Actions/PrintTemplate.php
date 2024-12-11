@@ -21,6 +21,7 @@ use exface\Core\Templates\Placeholders\TranslationPlaceholders;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Templates\Placeholders\ArrayPlaceholders;
 use exface\Core\Interfaces\Actions\iRenderTemplate;
+use exface\Core\Interfaces\Actions\iUseTemplate;
 
 /**
  * This action prints data using a text-based template (e.g. HTML)
@@ -50,9 +51,12 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * Each entry in `data_placeholders` consists of a custom placeholder name (to be used in the main `template`) 
  * and a configuration for its contents:
  * 
- * - `data_sheet` to load the data 
+ * - `data_sheet` to load the data - you can use the regular placeholders above here to define filters
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
- * `[#dataPlaceholderNamesome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
+ * `[#dataPlaceholderName:some_attribute#]`, `[#dataPlaceholderName:=Formula()#]`.
+ * - `row_template_if_empty` - a text to print when there is no data
+ * - `outer_template` and `outer_template_if_empty` to wrap rows in a HTML table, border or
+ * similar also for the two cases of having some data and not.
  * - nested `data_placeholders` to use inside each data placeholder
  * 
  * ## Example 
@@ -68,12 +72,14 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * data placeholder rows - prefixed with the respective placeholder name.
  * 
  * ```
- * {
- *      "template": "Order number: [#~input:ORDERNO#] <br><br> <table><tr><th>Product</th><th>Price</th></tr>[#positions#]</table>",
- *      "filename": "Order [#~input:ORDERNO#].html",
+ *  {
+ *      "filename": "Order [#~input:ORDERNO#].pdf",
+ *      "template": "Order number: [#~input:ORDERNO#] <br><br>",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td></tr>",
+ *              "outer_template": "<table><tr><th>Product</th><th>Price</th></tr>[#positions#]</table>",
+ *              "outer_template_if_empty": "<p>This order is empty</p>",
+ *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "columns": [
@@ -89,14 +95,14 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  *              }
  *          }
  *      }
- * }
+ *  }
  * 
  * ```
  * 
  * @author Andrej Kabachnik
  *
  */
-class PrintTemplate extends AbstractAction implements iRenderTemplate
+class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTemplate
 {
     private $downloadable = true;
     
@@ -118,7 +124,7 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
     protected function init()
     {
         parent::init();
-        $this->setIcon(Icons::DOWNLOAD);
+        $this->setIcon(Icons::PRINT_);
         $this->setInputRowsMin(1);
     }
 
@@ -142,22 +148,34 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
         
         foreach ($contents as $filePath => $fileContents) {
             file_put_contents($filePath, $fileContents);
+            if ($filePath) {
+                $result = ResultFactory::createFileResultFromPath($task, $filePath, $this->isDownloadable());
+            } else {
+                $result = ResultFactory::createEmptyResult($task);
+            }
         }
-        $result = ResultFactory::createFileResult($task, $filePath, $this->isDownloadable());
-        
+
+        if(!isset($result)) {
+            $result = ResultFactory::createEmptyResult($task);
+        }
+
         return $result;
     }
     
     /**
-     * Returns an array of the form [file_path => rendered_template].
      * 
-     * @param DataSheetInterface $inputData
-     * @return string[]
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iRenderTemplate::renderTemplate()
      */
     public function renderTemplate(DataSheetInterface $inputData) : array
     {
         $contents = [];
         $mainTpl = $this->getTemplate();
+        // If the template is empty, there is nothing to print (e.g. when simulating a prefill via PrefillModel)
+        if ($mainTpl === null || $mainTpl === '') {
+            return $contents;
+        }
+        
         $dataPhsUxon = $this->getDataPlaceholdersUxon();
         
         $baseRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
@@ -213,6 +231,16 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
     }
 
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iRenderTemplate::renderPreviewHTML()
+     */
+    public function renderPreviewHTML(DataSheetInterface $inputData) : array
+    {
+        return $this->renderTemplate($inputData);
+    }
+
+    /**
      * Set to FALSE to prevent direct downloading of the exported file (i.e. just export, no download).
      * 
      * @uxon-property downloadable
@@ -235,9 +263,20 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
     public function getFilename(TemplateRendererInterface $tplRenderer) : string
     {
         if ($this->filename === null){
-            return 'print_' . date('Y_m_d_his', time()) . $this->getFileExtensionDefault();
+            if ($this->getMetaObject()->hasLabelAttribute()) {
+                $tpl = '[#~input:' . $this->getMetaObject()->getLabelAttributeAlias() . '#]';
+            } else {
+                $tpl = $this->getMetaObject()->getName();
+            }
+            $tpl .= '_' . date('Y_m_d_His', time());
+            $tpl .= $this->getFileExtensionDefault();
+        } else {
+            $tpl = $this->filename;
         }
-        return FilePathDataType::sanitizeFilename($tplRenderer->render($this->filename));
+        $filename = $tplRenderer->render($tpl);
+        $filename = FilePathDataType::sanitizeFilename($filename);
+        $filename = str_replace(' ', '_', $filename);
+        return $filename; 
     }
     
     /**
@@ -333,7 +372,7 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
      * @param string $value
      * @return PrintTemplate
      */
-    public function setTemplatePath(string $value) : PrintTemplate
+    public function setTemplatePath(string $value) : iUseTemplate
     {
         $this->templatePath = FilePathDataType::isAbsolute($value) ? $value : FilePathDataType::join($this->getWorkbench()->filemanager()->getPathToVendorFolder(), $value);
         return $this;

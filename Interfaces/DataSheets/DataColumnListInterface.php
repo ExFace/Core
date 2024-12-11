@@ -116,7 +116,7 @@ interface DataColumnListInterface extends EntityListInterface
      * Returns NULL if the key is not present in the list.
      *
      * @param mixed $key            
-     * @return DataColumnListInterface
+     * @return DataColumnInterface|null
      */
     public function get($key);
 

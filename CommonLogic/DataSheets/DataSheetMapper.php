@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -33,6 +34,7 @@ use exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
 use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
 
 /**
@@ -139,6 +141,8 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     const INHERIT_NONE = 'none';
     
+    const INHERIT_MATCHING_ATTRIBUTES = 'matching_attributes';
+    
     const INHERIT_COLUMNS_OWN_ATTRIBUTES = 'own_attributes';
     
     const INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES = 'own_system_attributes';
@@ -179,17 +183,17 @@ class DataSheetMapper implements DataSheetMapperInterface
      */
     public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface
     {
-        if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
+        if (! $fromSheet->getMetaObject()->is($this->getFromMetaObject())){
             throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!', null, null, $logbook);
         }
         
         $fromSheetWasEmpty = $fromSheet->isEmpty();
         $freshStamp = $fromSheet->getFreshStamp();
         
-        if ($logbook !== null) {
-            $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**');
-            $logbook->addIndent(1);
-        }
+        $logbook = $logbook ?? new MarkdownLogBook('Data mapper');
+        $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**');
+        $logbook->addIndent(1);
+            
         $diagram = 'flowchart LR';
         $diagram .= "\n\tFromSheet(From-sheet) -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
         
@@ -197,7 +201,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         try {
             $fromSheet = $this->prepareFromSheet($fromSheet, $readMissingColumns, $logbook);
         } catch (\Throwable $e) {
-            if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
+            $logbook->addLine('**ERROR:** ' . $e->getMessage());
             if (! ($e instanceof DataMapperExceptionInterface)) {
                 $e = new DataMapperRuntimeError($this, $fromSheet, 'Failed to read missing data for data mapper', null, $e, $logbook);
             }
@@ -205,7 +209,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         if ($freshStamp !== $fromSheet->getFreshStamp()) {
-            $diagram .= "RefreshFromSheet[Read missing data]";
+            $diagram .= " RefreshFromSheet[Read missing data]";
             $diagram .= "\n\tRefreshFromSheet -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
         }
         
@@ -213,10 +217,9 @@ class DataSheetMapper implements DataSheetMapperInterface
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
         
         // Inherit stuff
-        if ($logbook !== null) {
-            $logbook->addLine('Inheriting: ');
-            $logbook->addIndent(1);
-        }
+        $logbook->addLine('Inheriting: ');
+        $logbook->addIndent(1);
+
         // Inherit columns if neccessary
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritColumns()){
             $processedNames = [];
@@ -230,31 +233,38 @@ class DataSheetMapper implements DataSheetMapperInterface
                 if ($inheritMode === self::INHERIT_COLUMNS_OWN_ATTRIBUTES && (! $fromCol->isAttribute() || $fromCol->getAttribute()->isRelated())) {
                     continue;
                 }
+                if ($inheritMode === self::INHERIT_MATCHING_ATTRIBUTES && (! $fromCol->isAttribute() || ! $toSheet->getMetaObject()->hasAttribute($fromCol->getAttributeAlias()))) {
+                    continue;
+                }
                 $processedNames[] = "`{$fromCol->getName()}`";
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
-            if ($logbook !== null) $logbook->addLine(count($processedNames) . " columns (mode `{$inheritMode}`): " . implode(', ', $processedNames));
+            $logbook->addLine(count($processedNames) . " columns (mode `{$inheritMode}`): " . implode(', ', $processedNames));
             try {
                 $toSheet->importRows($fromSheet);
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
+                $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit columns in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) $logbook->addLine('0 columns');
+            $logbook->addLine('0 columns');
         }
         
         // Inherit filters if neccessary
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritFilters()){
-            if ($logbook !== null) $logbook->addLine("Filters (mode `{$inheritMode}`): `{$fromSheet->getFilters()->__toString()}`");
+            $logbook->addLine("Filters (mode `{$inheritMode}`): `{$fromSheet->getFilters()->__toString()}`");
             try {
-                $toSheet->setFilters($fromSheet->getFilters());
+                if ($inheritMode === self::INHERIT_MATCHING_ATTRIBUTES) {
+                    $toSheet->setFilters($fromSheet->getFilters()->rebaseWithMatchingAttributesOnly($toSheet->getMetaObject()));
+                } else {
+                    $toSheet->setFilters($fromSheet->getFilters());
+                }
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
+                $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit filters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) $logbook->addLine('0 filters');
+            $logbook->addLine('0 filters');
         }
         
         // Inherit sorters if neccessary
@@ -265,21 +275,22 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $toSheet->getSorters()->add($sorter);
                     $processedNames[] = "`{$sorter->__toString()}`";
                 }
-                if ($logbook !== null) $logbook->addLine(count($processedNames) . " sorters (mode `{$inheritMode}`): " . implode(', ', $processedNames));
+                $logbook->addLine(count($processedNames) . " sorters (mode `{$inheritMode}`): " . implode(', ', $processedNames));
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
+                $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot sorters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) $logbook->addLine('0 sorters');
+            $logbook->addLine('0 sorters');
         }
         
         // Apply mappers
-        if ($logbook !== null) $logbook->addLine('Applying mappers:', -1);
+        $logbook->addLine('Applying mappers:', -1);
         $lastClass = null;
         $lastMapCnt = 1;
         foreach ($this->getMappings() as $i => $map) {
             try {
+                
                 $toSheet = $map->map($fromSheet, $toSheet, $logbook);
                 $mapClass = get_class($map);
                 if ($lastClass === $mapClass) {
@@ -291,7 +302,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $lastMapCnt = 1;
                 }
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                $diagram .= " MapperError(Error)";
+                $logbook->addCodeBlock($diagram, 'mermaid');
+
                 if ($e instanceof DataMappingExceptionInterface) {
                     throw $e;
                 }
@@ -299,32 +313,30 @@ class DataSheetMapper implements DataSheetMapperInterface
             }
         }
         $diagram .= " ToSheet(To-sheet)";
-        if ($logbook !== null) $logbook->addIndent(-1);
+        $logbook->addIndent(-1);
         
         // Make sure the to-sheet is empty if the from-sheet was empty and the empty state is to be inherited
         if ($this->getInheritEmptyData() && $fromSheetWasEmpty) {
             $toSheet->removeRows();
-            if ($logbook !== null) $logbook->addLine('Emptied to-data because `inherit_empty_data` is `true`');
+            $logbook->addLine('Emptied to-data because `inherit_empty_data` is `true`');
         }
         
         // Refresh data if needed
         if ($this->getRefreshDataAfterMapping()) {
             $toSheet->dataRead();
-            if ($logbook !== null) $logbook->addLine('Refreshed to-data: read ' . $toSheet->countRows() . ' rows');
+            $logbook->addLine('Refreshed to-data: read ' . $toSheet->countRows() . ' rows');
         }
         
         // Remove duplicate rows if explicitly required or the sheet has a UID column. If there is a UID column,
         // we can be sure, that equal rows actually are the same data item.
         if ($this->getRemoveDuplicateRows() === true || ($toSheet->hasUidColumn(true) && $toSheet->countRows() > 1 && $this->getRemoveDuplicateRows() !== false)) {
             $duplicateRows = $toSheet->removeRowDuplicates();
-            if ($logbook !== null) $logbook->addLine('Removed ' . count($duplicateRows) . ' duplicate rows rows');
+            $logbook->addLine('Removed ' . count($duplicateRows) . ' duplicate rows rows');
         }
         
-        if ($logbook !== null) {
-            $logbook->addIndent(-1);
-            $logbook->addCodeBlock($diagram, 'mermaid');
-            $logbook->addLine("Mapper output: {$toSheet->countRows()} rows of {$toSheet->getMetaObject()->__toString()}");
-        }
+        $logbook->addIndent(-1);
+        $logbook->addCodeBlock($diagram, 'mermaid');
+        $logbook->addLine("Mapper output: {$toSheet->countRows()} rows of {$toSheet->getMetaObject()->__toString()}");
         
         return $toSheet;
     }
@@ -452,9 +464,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                 if ($logbook !== null) $logbook->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $data_sheet->getUidColumn()->getName(), 1);
                 
                 $uidCol = $data_sheet->getUidColumn();
+                $uidColName = $uidCol->getName();
                 foreach ($additionSheet->getColumns() as $addedCol) {
                     foreach ($additionSheet->getRows() as $row) {
-                        $uid = $row[$uidCol->getName()];
+                        $uid = $row[$uidColName];
                         $rowNo = $uidCol->findRowByValue($uid);
                         if ($uid === null || $rowNo === false) {
                             throw new DataMapperRuntimeError($this, $data_sheet, 'Cannot load additional data in preparation for mapping! Trying to read ' . $addedCol->getName(), null, null, $logbook);
@@ -920,7 +933,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * along with certain attributes of related objects.
      * 
      * @uxon-property inherit_columns
-     * @uxon-type [all,none,own_attributes,own_system_attributes,all_system_attributes]
+     * @uxon-type [all,none,own_attributes,own_system_attributes,all_system_attributes,matching_attributes]
      * @uxon-template own_system_attributes
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setInheritColumns()
@@ -942,7 +955,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 break;
         }
         
-        if ($value !== self::INHERIT_NONE){
+        if ($value !== self::INHERIT_NONE && $value !== self::INHERIT_MATCHING_ATTRIBUTES){
             if (! $this->canInheritColumns()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
             }
@@ -986,7 +999,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * This option can prevent this behavior.
      *
      * @uxon-property inherit_filters
-     * @uxon-type [all,none]
+     * @uxon-type [all,none,matching_attributes]
      * @uxon-template none
      *
      * {@inheritDoc}
@@ -1001,8 +1014,14 @@ class DataSheetMapper implements DataSheetMapperInterface
             case $value === false:
                 $value = self::INHERIT_NONE;
                 break;
+            default:
+                $value = mb_strtolower($value);
+                if (! defined('self::INHERIT_' . mb_strtoupper($value))) {
+                    throw new DataMapperConfigurationError($this, 'Invalid value "' . $value . '" for data mapper option `inherit_filters`');
+                }
+                break;
         }
-        if ($value !== self::INHERIT_NONE){
+        if ($value !== self::INHERIT_NONE && $value !== self::INHERIT_MATCHING_ATTRIBUTES){
             if (! $this->canInheritFilters()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit filters from sheets of "' . $this->getFromMetaObject() . '"!');
             }
@@ -1042,6 +1061,12 @@ class DataSheetMapper implements DataSheetMapperInterface
                 break;
             case $value === false:
                 $value = self::INHERIT_NONE;
+                break;
+            default:
+                $value = mb_strtolower($value);
+                if (! defined('self::INHERIT_' . mb_strtoupper($value))) {
+                    throw new DataMapperConfigurationError($this, 'Invalid value "' . $value . '" for data mapper option `inherit_sorters`');
+                }
                 break;
         }
         if ($value !== self::INHERIT_NONE){
@@ -1234,6 +1259,43 @@ class DataSheetMapper implements DataSheetMapperInterface
         foreach ($uxon as $prop){
             $this->addMapping(new VariableToColumnMapping($this, $prop));
         }
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getFromDataChecks()
+     */
+    public function getFromDataChecks() : array
+    {
+        $checks = [];
+        foreach ($this->getMappings() as $mapping) {
+            if ($mapping instanceof DataCheckMapping) {
+                $checks = array_merge($checks, $mapping->getFromDataChecks());
+            }
+        }
+        return $checks;
+    }
+    
+    /**
+     * Check from-data against these conditions before applying the mapper
+     *
+     * If any of these conditions are not met, the mapper will through an error. Each check may
+     * contain it's own error message to make the errors better understandable for the user.
+     *
+     * @uxon-property from_data_invalid_if
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     *
+     * @param UxonObject $arrayOfDataChecks
+     * @return DataSheetMapper
+     */
+    protected function setFromDataInvalidIf(UxonObject $arrayOfDataChecks) : DataSheetMapper
+    {
+        $this->addMapping(new DataCheckMapping($this, new UxonObject([
+            'from_data_invalid_if' => $arrayOfDataChecks
+        ])));
         return $this;
     }
     

@@ -48,7 +48,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @author Andrej Kabachnik
  *
  */
-class HttpStatusCodeDataType extends StringDataType implements EnumDataTypeInterface
+class HttpStatusCodeDataType extends IntegerDataType implements EnumDataTypeInterface
 {
     use EnumStaticDataTypeTrait;
     
@@ -90,6 +90,8 @@ class HttpStatusCodeDataType extends StringDataType implements EnumDataTypeInter
     const HTTP_504 = 504;
     const HTTP_505 = 505;
     
+    private $showValues = true;
+    
     /**
      * 
      * {@inheritDoc}
@@ -98,8 +100,9 @@ class HttpStatusCodeDataType extends StringDataType implements EnumDataTypeInter
     public function getLabels()
     {
         $labels = [];
+        $showVals = $this->getShowValues();
         foreach ($this::getValuesStatic() as $val) {
-            $labels[$val] = $this::getStatusMessage($val);
+            $labels[$val] = ($showVals ? $val . ' ' : '') . $this::getStatusMessage($val);
         }
         return $labels;
     }
@@ -155,6 +158,29 @@ class HttpStatusCodeDataType extends StringDataType implements EnumDataTypeInter
         
         return $text;
     }
-
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getShowValues() : bool
+    {
+        return $this->showValues;
+    }
+    
+    /**
+     * Set to FALSE to display only reason phrases without the numeric codes
+     * 
+     * @uxon-property show_values
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return EnumDataTypeInterface
+     */
+    public function setShowValues(bool $trueOrFalse) : EnumDataTypeInterface
+    {
+        $this->showValues = $trueOrFalse;
+        return $this;
+    }
 }
-?>

@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -157,7 +158,7 @@ use exface\Core\DataTypes\TextDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
+class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
 {
 
     private $inputWidget = null;
@@ -193,6 +194,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     private $preloader = null;
     
     private $useHiddenInput = false;
+
+    private bool $appliesToAggregatedValues = true;
     
     /**
      * Returns TRUE if the input widget was already instantiated.
@@ -836,7 +839,9 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('comparator', $this->getComparator());
+        if (null !== $val = $this->getComparator()) {
+            $uxon->setProperty('comparator', $val);
+        }
         $uxon->setProperty('required', $this->isRequired());
         $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
         if ($this->hasCustomConditionGroup() === true) {
@@ -978,8 +983,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     }
     
     /**
-     * 
-     * @return bool
+     * {@inheritDoc}
+     * @see exface\Core\Interfaces\Widgets\iFilterData::getApplyOnChange()
      */
     public function getApplyOnChange() : bool
     {
@@ -1002,6 +1007,34 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     {
         $this->apply_on_change = BooleanDataType::cast($true_or_false);
         return $this;
+    }
+
+    /**
+     * If set to FALSE this filter will not be applied to aggregated values.
+     *
+     * The default value is TRUE.
+     *
+     * @uxon-property apply_to_aggregates
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setApplyToAggregates(bool $value) : static
+    {
+        $this->appliesToAggregatedValues = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if this filter applies to aggregated values.
+     *
+     * @return bool
+     */
+    public function appliesToAggregatedValues() : bool
+    {
+        return $this->appliesToAggregatedValues;
     }
 
     /**

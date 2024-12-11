@@ -7,6 +7,6 @@ namespace exface\Core\Interfaces\Exceptions;
  * @author Andrej Kabachnik
  *
  */
-Interface SecurityExceptionInterface
+Interface SecurityExceptionInterface extends ExceptionInterface
 {
 }

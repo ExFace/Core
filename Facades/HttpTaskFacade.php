@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades;
 
+use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -19,9 +22,7 @@ use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\CommonLogic\Tasks\ResultRedirect;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
-use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\JsonBodyParser;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\DataTypes\MessageTypeDataType;
@@ -66,8 +67,7 @@ use exface\Core\DataTypes\MessageTypeDataType;
  *
  */
 class HttpTaskFacade extends AbstractHttpTaskFacade
-{
-    
+{    
     /**
      * 
      * {@inheritDoc}
@@ -149,15 +149,11 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
             case $result instanceof ResultWidgetInterface:                
                 $json = [
                     'success' => $result->getMessage()
-                ];
-                if ($result->isContextModified() && $result->getTask()->isTriggeredOnPage()) {
-                    $context_bar = $result->getTask()->getPageTriggeredOn()->getContextBar();
-                    $json['extras']['ContextBar'] = $this->getElement($context_bar)->buildJsonContextBarUpdate();
-                }             
+                ];          
                 break;
                 
             case $result instanceof ResultFileInterface:
-                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getPathAbsolute());
+                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getFileInfo()->getPathAbsolute());
                 $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]);
                 // Use extra response property "download" here instead of redirect, because if facades
                 // use simple redirects for downloads, this won't work for text-files or unknown mime types
@@ -168,19 +164,15 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
                 break;
                 
             case $result instanceof ResultUriInterface:
-                if ($result instanceof ResultRedirect && $result->hasTargetPage()) {
-                    $uri = uri_for($this->buildUrlToPage($result->getTargetPageSelector()));
-                } else {
-                    $uri = $result->getUri();
-                }
-                
+                $uri = $result->getUri();       
+                $message = $result->getMessage();     
                 if ($result->isDownload()) {
                     $json = [
-                        "success" => $result->getMessage() ? $result->getMessage() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]),
+                        "success" => $message ? $message : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $uri->__toString()]),
                         "download" => $uri->__toString()
                     ];
                 } else {
-                    return new Response(302, ['Location' => $url]);
+                    return new Response(302, ['Location' => $uri->__toString()]);
                 }
                 break;
                 
@@ -235,11 +227,21 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
         }
         
         // Read common task properties like the AbstractAjaxFacade does
-        $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
-        $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
-        $middleware[] = new TaskUrlParamReader($this, 'object', 'setMetaObjectSelector');
-        $middleware[] = new TaskUrlParamReader($this, 'element', 'setWidgetIdTriggeredBy');
-        $middleware[] = new DataUrlParamReader($this, 'data', 'setInputData');
+        $middleware[] = new TaskReader(
+            $this, 
+            $this->getRequestAttributeForTask(), 
+            function(HttpFacadeInterface $facade, ServerRequestInterface $request){
+                return new HttpTask($facade->getWorkbench(), $facade, $request); 
+            }, 
+            // Map common URL parameters to task UXON properties
+            [
+                'action' => 'action_alias',
+                'resource' => 'page_alias',
+                'object' => 'object_alias',
+                'element' => 'widget_id'
+            ]
+        );
+        $middleware[] = new DataUrlParamReader($this, 'data', 'setInputData', $this->getRequestAttributeForTask());
         
         return $middleware;
     }

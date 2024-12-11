@@ -57,7 +57,7 @@ class JsonSchemaValidationError extends UnexpectedValueException
         
         return $messages;
     }
-    
+
     public function getJson() : ?string
     {
     	return JsonDataType::prettify($this->json);

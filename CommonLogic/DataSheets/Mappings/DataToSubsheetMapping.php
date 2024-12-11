@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -112,6 +113,7 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
      */
     public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
+        $logbook = $logbook ?? new MarkdownLogBook('DataToSubsheetMapping');
         $toRows = $toSheet->getRows();
         $toRowsUnique = RowArrayDataType::findUniqueRows($toRows);
         
@@ -124,6 +126,14 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
         
         $fromKeyCols = $this->getFromSheetKeyColumnNames();
         $toKeyCols = $this->getToSheetKeyColumnNames(); 
+
+        if (empty($fromKeyCols)) {
+            $logbook->addLine("Subsheet with {$this->getSubsheetObject()->__toString()}: transforming all from-data into a single subsheet.");
+        } else {
+            $logbook->addLine("Subsheet with {$this->getSubsheetObject()->__toString()}: making a subsheet for each distinct set of values in from-data columns [`" . implode('`, `', $fromKeyCols) . "`] and placing it in the row with matching values in to-data columns => [`" . implode('`, `', $toKeyCols) . "`]");
+        }
+        $logbook->addIndent(+1);
+
         if (count($fromKeyCols) !== count($toKeyCols)) {
             throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Invalid configuration for subsheet-mapping: `from_sheet_key_columns` and `to_sheet_key_columns` have different number of entries!');
         }
@@ -134,7 +144,7 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
             if (count($toRowsUnique) > 1) {
                 throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map data to a single subsheet: multiple unique to-rows require `from_sheet_key_columns` to be defined!');
             }
-            $subsheet = $subsheetMapper->map($fromSheet);
+            $subsheet = $subsheetMapper->map($fromSheet, null, $logbook);
             $toRowsUnique[0][$subsheetCol->getName()] = $subsheet->exportUxonObject();
             $toSheet->removeRows()->addRows($toRowsUnique);
         } else {
@@ -160,13 +170,35 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
                 $toKey = $arr['to_key'];
                 $fromKey = $arr['from_key'];
                 $fromRows = $arr['rows'];
-                
+
                 $filter = RowArrayDataType::filter();
                 foreach ($toKey as $toKeyColName => $keyPart) {
                     $filter->addAnd($toKeyColName, $keyPart, ComparatorDataType::EQUALS);
                 }
-                foreach (array_keys($filter->filter($toRowsUnique, true)) as $toRowIdx) {
-                    $subsheet = $subsheetMapper->map($fromSheet->copy()->removeRows()->addRows($fromRows));
+                $toRowsFiltered = $filter->filter($toRowsUnique, true);
+                
+                $logbook->addLine('For key-set `' . implode('`,`', $fromKey) . '` found `' . count($fromRows) . '` rows in from-data. Will combine into `' . count($toRowsFiltered) . '` subsheet in to-data');
+                if (empty($toRowsFiltered)) {
+                    foreach ($toKey as $toKeyColName => $keyPart) {
+                        $toKeyColsMissing = [];
+                        if (! $toSheet->getColumns()->get($toKeyColName)) {
+                            $toKeyColsMissing[] = $toKeyColName;
+                        }
+                    }
+                    if (! empty($toKeyColsMissing)) {
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Invalid `to_sheet_key_columns` in `to_subsheet` mapping: column(s) `' . implode('`, `', $toKeyColsMissing) . '` not found in to-sheet!', '7XA82L1');
+                    } else {
+                        $logbook->addLine('**WARNING:** No place found to put the shubsheet into the to-data: are the `to_sheet_key_columns` wrong?');
+                    }
+                }
+                foreach (array_keys($toRowsFiltered) as $toRowIdx) {
+                    $fromSheetExtract = $fromSheet->copy()->removeRows()->addRows($fromRows);
+
+                    // Generate a subsheet using the inner mapper
+                    // Continue filling the logbook with output of the inner mapper. Hover, remove its flowchart. Otherwise
+                    // there will be flow chart right right inside the list of stuff being done.
+                    $subsheet = $subsheetMapper->map($fromSheetExtract, null, $logbook);
+                    
                     $toRowsUnique[$toRowIdx][$subsheetCol->getName()] = $subsheet->exportUxonObject();
                     
                     foreach (($this->getToAggregationsUxon() ?? []) as $uxon) {
@@ -188,6 +220,8 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
             }
             $toSheet->removeRows()->addRows($toRowsUnique);
         }
+
+        if ($logbook !== null) $logbook->addIndent(-1);
         
         return $toSheet;
     }

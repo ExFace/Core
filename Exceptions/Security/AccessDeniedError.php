@@ -16,9 +16,9 @@ class AccessDeniedError extends RuntimeException
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 403) : int
     {
-        return 403;
+        return parent::getStatusCode($default);
     }
     
     /**
