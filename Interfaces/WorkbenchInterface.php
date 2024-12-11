@@ -6,6 +6,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -95,7 +96,7 @@ interface WorkbenchInterface extends TaskHandlerInterface
      *
      * @return EventManagerInterface
      */
-    public function eventManager();
+    public function eventManager() : EventManagerInterface;
     
     /**
      * Returns the absolute path of the ExFace installation folder
@@ -121,7 +122,7 @@ interface WorkbenchInterface extends TaskHandlerInterface
      *
      * @return \exface\Core\Interfaces\DebuggerInterface
      */
-    public function getDebugger();
+    public function getDebugger() : DebuggerInterface;
     
     public function setDebugger(DebuggerInterface $value);
     
@@ -129,7 +130,7 @@ interface WorkbenchInterface extends TaskHandlerInterface
      *
      * @return \exface\Core\Interfaces\Log\LoggerInterface
      */
-    public function getLogger();
+    public function getLogger() : LoggerInterface;
     
     /**
      * Returns the workbench cache.

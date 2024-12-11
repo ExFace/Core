@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * DataTable-configurators contain tabs for filters, sorters and column controls.
@@ -14,6 +15,8 @@ use exface\Core\CommonLogic\Constants\Icons;
  * TODO the aggregations control tab is not available yet
  * 
  * @author Andrej Kabachnik
+ * 
+ * @method \exface\Core\Widgets\DataTable getWidgetConfigured()
  *
  */
 class DataTableConfigurator extends DataConfigurator
@@ -21,15 +24,26 @@ class DataTableConfigurator extends DataConfigurator
     private $column_tab = null;
     
     private $aggregation_tab = null;
+
+    public function getWidgets(callable $filter_callback = null): array
+    {
+        // Make sure to initialize the columns tab. This will automatically add
+        // it to the default widget array inside the container.
+        if (null === $this->column_tab){
+            $this->getColumnsTab();
+        }
+        // TODO add aggregation tab once it is functional 
+        return parent::getWidgets($filter_callback);
+    }
     
     /**
      * 
      * @return Tab
      */
-    public function getColumnTab()
+    public function getColumnsTab()
     {
         if (is_null($this->column_tab)){
-            $this->column_tab = $this->createColumnTab();
+            $this->column_tab = $this->createColumnsTab();
             $this->addTab($this->column_tab, 3);
         }
         return $this->column_tab;
@@ -39,7 +53,7 @@ class DataTableConfigurator extends DataConfigurator
      * 
      * @return Tab
      */
-    protected function createColumnTab()
+    protected function createColumnsTab()
     {
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.COLUMN_TAB_CAPTION'));
@@ -47,6 +61,18 @@ class DataTableConfigurator extends DataConfigurator
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
+    }
+
+    public function addColumn(DataColumn $column) : DataTableConfigurator
+    {
+        $this->getColumnsTab()->addWidget($column);
+        return $this;
+    }
+
+    public function addColumnFromUxon(UxonObject $uxon) : DataColumn
+    {
+        $col = $this->getWidgetConfigured()->createColumnFromUxon($uxon);
+        return $col;
     }
     
     /**

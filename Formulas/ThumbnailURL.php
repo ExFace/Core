@@ -6,7 +6,6 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\FormulaError;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Generates a thumbnail URL for an image stored in an object with FileBehavior

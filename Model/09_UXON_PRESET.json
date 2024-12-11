@@ -2598,29 +2598,32 @@
         },
         {
             "CREATED_ON": "2020-05-20 16:17:53",
-            "MODIFIED_ON": "2020-05-20 16:17:53",
+            "MODIFIED_ON": "2024-07-06 13:00:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9ab5728e19948abc0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Prevent delete of rows with certain ids",
-            "DESCRIPTION": "Place comma-separated list of ids in the `value` property. Replace `UID` with the id of your UID attribute",
+            "NAME": "Prevent delete of rows after a certain status",
+            "DESCRIPTION": "This preset assumes, that your object has an numeric attribute with the alias `Status`. The behavior will prevent deletion of any rows with a status greater than `50 Active`. Use the `error_text` to provide a user-friendly explanation.",
             "PROTOTYPE": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
             "UXON": {
-                "condition_group": {
-                    "operator": "AND",
-                    "conditions": [
-                        {
-                            "expression": "UID",
-                            "comparator": "[",
-                            "value": ""
-                        }
-                    ]
-                }
+                "prevent_delete_if": [
+                    {
+                        "error_text": "Active items cannot be deleted",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "Status",
+                                "comparator": ">=",
+                                "value": 50
+                            }
+                        ]
+                    }
+                ]
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-05-20 16:21:59",
@@ -5365,6 +5368,57 @@
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "datatype",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2024-08-16 13:46:55",
+            "MODIFIED_ON": "2024-08-16 13:46:55",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ef948b3cc08c78948b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Multi-select filter as InputComboTable with apply_on_change",
+            "DESCRIPTION": "Replace `widget_type` of the input widget with `InputComboTable`, `InputTags` or any other widget you like.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": {
+                "attribute_alias": "",
+                "input_widget": {
+                    "widget_type": "InputComboTable",
+                    "multi_select": true,
+                    "apply_on_change": true
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/select_multi.gif"
+        },
+        {
+            "CREATED_ON": "2024-09-13 16:30:06",
+            "MODIFIED_ON": "2024-09-13 16:31:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11efba6bac5d5b38ba6b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Validate value by comparing to old value",
+            "DESCRIPTION": "This behavior will check, if the new value of an attribute is greater, than the old one every time this attribute is updated.",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/ValidatingBehavior.php",
+            "UXON": {
+                "invalid_if_on_update": [
+                    {
+                        "error_text": "\/\/ Error text here - e.g. 'The new value must be always greater than the old one'",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "MY_ATTR \/\/ REPLACE WITH THE ATTRIBUTE TO CHECK",
+                                "comparator": "<",
+                                "value": "[#~old:MY_ATTR#]"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
             "THUMBNAIL": ""
         }
     ],

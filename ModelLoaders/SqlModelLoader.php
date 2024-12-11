@@ -212,7 +212,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $exists = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         $query = $this->getDataConnection()->runSql('
-                -- Load object
+                /* Load object */
 				SELECT
                     o.*,
 					' . $this->buildSqlUuidSelector('o.oid') . ' as oid,
@@ -302,7 +302,7 @@ class SqlModelLoader implements ModelLoaderInterface
         
         // select all attributes for this object
         $query = $this->getDataConnection()->runSql('
-                -- Load attributes
+                /* Load attributes */
 				SELECT
 					a.*,
 					' . $this->buildSqlUuidSelector('a.oid') . ' as oid,
@@ -379,7 +379,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 
                 // If the attribute is a relation, save it for later processing. We can't create relations here right away because we need to
                 // instantiate all attributes first - otherwise we may not be able to find left keys of reverse relations!
-                if ($row['related_object_oid']) {
+                if (null !== $row['related_object_oid'] ?? null) {
                     $relation_attrs[] = [
                         'attr' => $attr,
                         'row' => $row
@@ -512,18 +512,19 @@ class SqlModelLoader implements ModelLoaderInterface
         // Load behaviors if needed
         if ($load_behaviors) {
             $query = $this->getDataConnection()->runSql("
-                -- Load behaviors
+                /* Load behaviors */
 				SELECT *, {$this->buildSqlUuidSelector('oid')} AS oid FROM exf_object_behaviors WHERE object_oid = {$objectUid}");
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
                     $configUxon = UxonObject::fromJson($row['config_uxon'] ? $row['config_uxon'] : '{}');
+                    $configUxon->setProperty('name', $row['name']);
                     if (intval($row['disabled_flag']) === 1) {
                         $configUxon->setProperty('disabled', true);
                     }
                     if ($row['priority'] !== null) {
                         $configUxon->setProperty('priority', $row['priority']);
                     }
-                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, $row['app_oid']);
+                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, ($row['app_oid'] ?? null));
                     $object->getBehaviors()->add($behavior, $row['oid']);
                 }
             }
@@ -542,7 +543,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
-        if ($row['attribute_type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
+        if (self::ATTRIBUTE_TYPE_COMPOUND === $row['attribute_type'] ?? null) {
             $attr = new CompoundAttribute($object);
         } else {
             $attr = new Attribute($object);
@@ -550,57 +551,83 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
         $attr->setName($row['attribute_name']);
-        $attr->setDataAddress($row['data']);
-        $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
-        $attr->setRelationFlag($row['related_object_oid'] ? true : false);
+        if (null !== $val = $row['data'] ?? null){
+            $attr->setDataAddress($val);
+        }
+        $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties'] ?? null));
+        $attr->setRelationFlag(null !== ($row['related_object_oid'] ?? null) ? true : false);
         $attr->setDataType($row['data_type_oid']);
         
-        if ($calcExpr = $row['attribute_formatter']) {
-            $attr->setCalculation($calcExpr);
+        if ($val = $row['attribute_formatter'] ?? null) {
+            $attr->setCalculation($val);
         }
         
-        $default_editor = $row['default_editor_uxon'];
-        if ($default_editor && $default_editor !== '{}'){
-            $attr->setDefaultEditorUxon($default_editor);
+        $val = $row['default_editor_uxon'] ?? null;
+        if ($val && $val !== '{}'){
+            $attr->setDefaultEditorUxon($val);
         }
-        $default_display = $row['default_display_uxon'];
-        if ($default_display && $default_display !== '{}'){
-            $attr->setDefaultDisplayUxon($default_display);
+        $val = $row['default_display_uxon'] ?? null;
+        if ($val && $val !== '{}'){
+            $attr->setDefaultDisplayUxon($val);
         }
-        $custom_type = $row['custom_data_type_uxon'];
-        if ($custom_type && $custom_type !== '{}') {
-            $attr->setCustomDataTypeUxon($custom_type);
+        $val = $row['custom_data_type_uxon'] ?? null;
+        if ($val && $val !== '{}') {
+            $attr->setCustomDataTypeUxon($val);
         }
         
         // Control flags
-        if (! is_null($row['attribute_readable_flag'])){
-            $attr->setReadable($row['attribute_readable_flag']);
+        if (null !== $val = $row['attribute_readable_flag'] ?? null){
+            $attr->setReadable($val);
         }
-        if (! is_null($row['attribute_writable_flag'])){
-            $attr->setWritable($row['attribute_writable_flag']);
+        if (null !== $val = $row['attribute_writable_flag'] ?? null){
+            $attr->setWritable($val);
         }
-        $attr->setRequired($row['attribute_required_flag']);
-        $attr->setEditable($row['attribute_editable_flag']);
-        $attr->setCopyable($row['attribute_copyable_flag'] ?? $row['attribute_editable_flag']);
-        $attr->setHidden($row['attribute_hidden_flag']);
-        $attr->setSortable($row['attribute_sortable_flag']);
-        $attr->setFilterable($row['attribute_filterable_flag']);
-        $attr->setAggregatable($row['attribute_aggregatable_flag']);
+        if (null !== $val = $row['attribute_required_flag'] ?? null){
+            $attr->setRequired($val);
+        }
+        if (null !== $val = $row['attribute_editable_flag'] ?? null){
+            $attr->setEditable($val);
+        }
+        if (null !== $val = $row['attribute_copyable_flag'] ?? ($row['attribute_editable_flag'] ?? null)){
+            $attr->setCopyable($val);
+        }
+        if (null !== $val = $row['attribute_hidden_flag'] ?? null){
+            $attr->setHidden($val);
+        }
+        if (null !== $val = $row['attribute_sortable_flag'] ?? null){
+            $attr->setSortable($val);
+        }
+        if (null !== $val = $row['attribute_filterable_flag'] ?? null){
+            $attr->setFilterable($val);
+        }
+        if (null !== $val = $row['attribute_aggregatable_flag'] ?? null){
+            $attr->setAggregatable($val);
+        }
         
         // Defaults
-        $attr->setDefaultDisplayOrder($row['default_display_order']);
-        if ($row['default_value'] !== null && $row['default_value'] !== '') {
-            $attr->setDefaultValue($row['default_value']);
+        $attr->setDefaultDisplayOrder($row['default_display_order'] ?? null);
+
+        $val = $row['default_value'] ?? null;
+        if ($val !== null && $val !== '') {
+            $attr->setDefaultValue($val);
         }
-        if ($row['fixed_value'] !== null && $row['fixed_value'] !== '') {
-            $attr->setFixedValue($row['fixed_value']);
+        $val = $row['fixed_value'] ?? null;
+        if ($val !== null && $val !== '') {
+            $attr->setFixedValue($val);
         }
-        $attr->setFormula($row['attribute_formula']);
-        if ($row['default_sorter_dir']){
-            $attr->setDefaultSorterDir($row['default_sorter_dir']);
+        if (null !== $val = $row['attribute_formula'] ?? null){
+            $attr->setFormula($val);
         }
-        $attr->setDefaultAggregateFunction($row['default_aggregate_function']);
-        $attr->setValueListDelimiter($row['value_list_delimiter']);
+        $val = $row['default_sorter_dir'] ?? null;
+        if ($val !== null && $val !== ''){
+            $attr->setDefaultSorterDir($val);
+        }
+        if (null !== $val = $row['default_aggregate_function'] ?? null){
+            $attr->setDefaultAggregateFunction($val);
+        }
+        if (null !== $val = $row['value_list_delimiter'] ?? null){
+            $attr->setValueListDelimiter($val);
+        }
         
         // Descriptions
         $attr->setShortDescription($row['attribute_short_description']);
@@ -666,7 +693,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
         }
         $sql = "
-            -- Load data source
+            /* Load data source */
 			SELECT
 				ds.name as data_source_name,
 				ds.alias as data_source_alias,
@@ -820,7 +847,7 @@ class SqlModelLoader implements ModelLoaderInterface
         // data source table. If the updated had not yet been installed, these columns are
         // not selected.
         $sql = '
-            -- Load connection
+            /* Load connection */
 			SELECT
 				dc.*,
                 ' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
@@ -932,7 +959,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $basket_aliases = ($action_list instanceof MetaObjectActionListInterface) ? $action_list->getObjectBasketActionAliases() : array();
         
         $query = $this->getDataConnection()->runSql('
-                -- Load action
+                /* Load action */
 				SELECT
 					' . $this->buildSqlUuidSelector('oa.object_oid') . ' AS object_oid,
 					oa.action, 
@@ -1023,7 +1050,7 @@ class SqlModelLoader implements ModelLoaderInterface
     {
         $attrId = HexadecimalNumberDataType::cast($attribute->getId());
         $query = $this->getDataConnection()->runSql("
-            -- Load compound attribute
+            /* Load compound attribute */
             SELECT
                 ac.*,
                 {$this->buildSqlUuidSelector('ac.attribute_oid')} as attribute_oid,
@@ -1110,7 +1137,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . MetamodelAliasDataType::cast($selector->getAppAlias(), true) . "')";
         }
         $query = $this->getDataConnection()->runSql('
-                -- Load data types
+                /* Load data types */
 				SELECT
 					dt.*,
 					' . $this->buildSqlUuidSelector('dt.oid') . ' as oid,
@@ -1201,7 +1228,7 @@ SQL;
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
         
         $sql = <<<SQL
--- Load user
+/* Load user */
 SELECT
     u.*,
     {$this->buildSqlUuidSelector('u.oid')} AS oid,
@@ -1264,7 +1291,7 @@ SQL;
     public function loadAuthorizationPoints() : array
     {        
         $sql = <<<SQL
--- Load auth. points
+/* Load auth. points */
 SELECT 
     apt.*, 
     {$this->buildSqlUuidSelector('apt.oid')} AS oid,
@@ -1277,12 +1304,16 @@ SQL;
         $array = [];
         foreach ($result as $row) {
             $authPoint = AuthorizationPointFactory::createFromSelector(new AuthorizationPointSelector($this->getWorkbench(), ltrim($row['class'], "\\")));
+            $effect = trim($row['default_effect_local'] ?? '');
+            $effect = $effect === '' ? trim($row['default_effect_in_app'] ?? '') : $effect;
+            $algorithm = trim($row['combining_algorithm_local'] ?? '');
+            $algorithm = $algorithm === '' ? trim($row['combining_algorithm_in_app'] ?? '') : $algorithm;
             $authPoint
                 ->setName($row['name'])
                 ->setUid($row['oid'])
                 ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
-                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['default_effect_local'])) ? $row['default_effect_local'] : $row['default_effect_in_app'])))
-                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['combining_algorithm_local'])) ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), $effect))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), $algorithm));
             $array[] = $authPoint;
         }
         return $array;
@@ -1339,7 +1370,7 @@ SQL;
             }
             
             $sql = <<<SQL
--- Load policies
+/* Load policies */
 SELECT
     apol.*,
     {$this->buildSqlUuidSelector('apol.auth_point_oid')} AS auth_point_oid,
@@ -1428,7 +1459,7 @@ SQL;
         
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $query = $this->getDataConnection()->runSql("
--- Load page
+/* Load page */
             SELECT 
                 p.*,
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
@@ -1633,10 +1664,11 @@ SQL;
             }
             if ($parentNode === null || $parentNode->getChildNodesLoaded() === false) {
                 foreach ($rows as $row) {
-                    if ($row['oid'] !== $nodeId) {
-                        if ($this->nodes_loaded[$row['oid']] !== null && $this->nodes_loaded[$row['oid']]->getChildNodesLoaded() === true) {
+                    $rowId = $row['oid'] ?? null;
+                    if ($rowId !== null && $rowId !== $nodeId) {
+                        if ($this->nodes_loaded[$rowId] !== null && $this->nodes_loaded[$rowId]->getChildNodesLoaded() === true) {
                             // if the child node was already loaded before and also it's child, take that node
-                            $childNode = $this->nodes_loaded[$row['oid']];
+                            $childNode = $this->nodes_loaded[$rowId];
                             if ($parentNode !== null) {
                                 $childNode->setParentNode($parentNode);
                             }
@@ -1817,7 +1849,7 @@ SQL;
             ORDER BY parent_oid ASC, menu_index ASC, name ASC";
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $sql = "
-            -- Load page tree
+            /* Load page tree */
             SELECT
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
@@ -1893,7 +1925,7 @@ SQL;
         
         if (! array_key_exists($messageCode, $this->messages_loaded)) {
             $sql = <<<SQL
--- Load message
+/* Load message */
 SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS app_oid
     FROM exf_message
     WHERE code = '{$messageCode}'
@@ -1937,7 +1969,7 @@ SQL;
         if ($this->apps_loaded === null) {
             $freshLoad = true;
             $sql = <<<SQL
--- Load app
+/* Load app */
 SELECT {$this->buildSqlUuidSelector('oid')} AS UID, app_alias AS ALIAS, app_name AS NAME, default_language_code AS DEFAULT_LANGUAGE_CODE
     FROM exf_app;
 SQL;
@@ -2006,7 +2038,7 @@ SQL;
         }
         
         $sql = <<<SQL
--- Load communication channel
+/* Load communication channel */
 SELECT 
     {$this->buildSqlUuidSelector('cc.oid')} AS UID,
     cc.name AS NAME,
@@ -2084,7 +2116,7 @@ SQL;
         $selectorWhere = implode(' OR ', $ors);
         
         $sql = <<<SQL
--- Load communication templates
+/* Load communication templates */
 SELECT
     {$this->buildSqlUuidSelector('ct.oid')} AS UID,
     ct.name AS NAME,

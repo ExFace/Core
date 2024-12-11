@@ -34,11 +34,14 @@ use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * A Button is the primary widget for triggering actions.
  *
- * In addition to the general widget attributes it can have an icon and also subwidgets (if the triggered action shows a widget).
+ * In addition to the general widget attributes it can have an icon and also subwidgets (if the triggered action shows
+ * a widget).
  *
  * @author Andrej Kabachnik
  *        
@@ -135,9 +138,13 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         if ($this->action === null) {
             if ($this->action_alias !== null) {
-                $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
-                if ($this->action_uxon !== null) {
-                    $this->action->importUxonObject($this->action_uxon);
+                try {
+                    $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
+                    if ($this->action_uxon !== null) {
+                        $this->action->importUxonObject($this->action_uxon);
+                    }
+                } catch (\Throwable $e) {
+                    throw new WidgetConfigurationError($this, 'Error in Button widget: ' . $e->getMessage(), null, $e);
                 }
             } elseif ($this->action_uxon !== null) {
                 $this->action = ActionFactory::createFromUxon($this->getWorkbench(), $this->action_uxon, $this);
@@ -219,7 +226,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         $this->action_alias = $value === '' ? null : $value;
         return $this;
     }
-
+    
     /**
      * Buttons allow to set action options as an options array or directly as an option of the button itself.
      * In the latter case the option's name must be prefixed by "action_": to set a action's property
@@ -348,7 +355,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
     /**
      * The Button may have a child widget, if the action it triggers shows a widget.
-     * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to another resource.
+     * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to
+     * another resource.
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
@@ -378,7 +386,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
-     * The button's caption falls back to the name of the action if there is no caption defined explicitly and the button has an action.
+     * The button's caption falls back to the name of the action if there is no caption defined explicitly and the
+     * button has an action.
      *
      * {@inheritdoc}
      *
@@ -489,7 +498,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getHint(bool $includeDebugInfo = true) : ?string
     {
-        $hint = parent::getHint();
+        $hint = parent::getHint(false);
         
         if (empty($hint) === true && $this->hasAction()) {
             $hint = $this->getAction()->getHint();
@@ -506,18 +515,28 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         
         // Dev-hint
         if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
-            if ($this->hasAction()) {
-                $actionAliasHint = "`{$this->getAction()->getAliasWithNamespace()}`";
-                $actionObjectHint = $this->getAction()->getMetaObject()->__toString();
-            } else {
-                $actionAliasHint = 'no action defined';
-                $actionObjectHint = 'no action defined';
-            }
-            $hint =  ($hint ? StringDataType::endSentence($hint) : '') . "\n\nDebug-hints: \n- Action alias: {$actionAliasHint} \n- Action object: '{$actionObjectHint}' \n- Button object: {$this->getMetaObject()->__toString()}";
+            $hint = ($hint ? StringDataType::endSentence($hint) : '') . $this->getHintDebug();
         }
         
         return $hint;
-    } 
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getHintDebug() : string
+    {
+        $hint = parent::getHintDebug();
+        if ($this->hasAction()) {
+            $actionAliasHint = "`{$this->getAction()->getAliasWithNamespace()}`";
+            $actionObjectHint = $this->getAction()->getMetaObject()->__toString();
+        } else {
+            $actionAliasHint = 'no action defined';
+            $actionObjectHint = 'no action defined';
+        }
+        return $hint . "\n- Action alias: {$actionAliasHint} \n- Action object: '{$actionObjectHint}' \n- Button object: {$this->getMetaObject()->__toString()}";
+    }
     
     /**
      *
@@ -761,12 +780,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         $inputWidgetObject = $inputWidget->getMetaObject();
         $check = null;
         /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
-        foreach ($action->getInputChecks() as $c) {
+        foreach ($action->getInputChecks()->getAll() as $c) {
             if ($c->isApplicableToObject($inputWidgetObject)) {
                 if ($check === null) {
                     $check = $c;
                 } else {
-                    return null;
+                    continue;
                 }
             }
         }
@@ -783,7 +802,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // If we have found a check, we need to make sure, the input widget will
         // be able to supply enough data.
         /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
-        $condGrp = $check->getConditionGroup($this->getMetaObject());
+        $condGrp = $check->getConditionGroup($inputWidgetObject);
         switch (true) {
             case $inputWidget instanceof iShowData:
                 return $this->getConditionalPropertyForData($inputWidget, $condGrp);
@@ -801,6 +820,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             'operator' => $condGrp->getOperator()
         ]);
         
+        if ($dataWidget instanceof iSupportMultiSelect) {
+            $dataMultiSelect = $dataWidget->getMultiSelect();
+        } else {
+            $dataMultiSelect = false;
+        }
+        
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
@@ -812,9 +837,20 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 $col->setHidden(true);
                 $dataWidget->addColumn($col);
             }
+            $comp = $cond->getComparator();
+            
+            // Multi-select data widget can only handle list-comparators properly as their
+            // value is mostly a list. 
+            if ($dataMultiSelect === true) {
+                $comp = ComparatorDataType::convertToListComparator($comp, false);
+                if ($comp === null) {
+                    return null;
+                }
+            } 
+            
             $uxon->appendToProperty('conditions', new UxonObject([
                 "value_left" => "=~input!" . $col->getDataColumnName(),
-                "comparator" => $cond->getComparator(),
+                "comparator" => $comp,
                 "value_right" => $cond->getRightExpression()->__toString()
             ]));
         }
@@ -847,11 +883,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 return null;
             }
             $attrAlias = $cond->getExpression()->__toString();
-            if (! $this->getMetaObject()->hasAttribute($attrAlias)) {
+            if (! $containerWidget->getMetaObject()->hasAttribute($attrAlias)) {
                 return null;
             }
-            $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias) {
-                return ($child instanceof iTakeInput) && $child->getMetaObject()->isExactly($this->getMetaObject()) && $child->isBoundToAttribute() && $child->getAttributeAlias() === $attrAlias;
+            $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
+                return ($child instanceof iTakeInput) && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) && $child->isBoundToAttribute() && $child->getAttributeAlias() === $attrAlias;
             });
             if (! $w = $matches[0] ?? null) {
                 /*

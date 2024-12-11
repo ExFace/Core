@@ -15,7 +15,6 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\EncryptedDataType;
@@ -23,7 +22,6 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\Traits\PrefillValueTrait;
-use exface\Core\Factories\DataPointerFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 
@@ -62,6 +60,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     private $data_column_name = null;
     
     private $valueExpr = null;
+
+    const VALUE_ALIAS = "value";
     
     /**
      * 
@@ -220,33 +220,18 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         // Since an Input only needs one value, we take the first one from the returned array, fetch it from the data sheet
         // and set it as the value of our input.
         $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
-        if (! $prefill_columns->isEmpty() && $col = $data_sheet->getColumns()->getByExpression($prefill_columns->getFirst()->getExpressionObj())) {
-            $value = null;
-            $valuePointer = null;
-            if (count($col->getValues(false)) > 1) {
-                if ($this->getAggregator()) {
-                    $valuePointer = DataPointerFactory::createFromColumn($col);
-                    $value = $col->aggregate($this->getAggregator());
-                } 
-            } else {
-                $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                $value = $valuePointer->getValue();
-            }
-            if ($valuePointer !== null) {
-                // Ignore empty values because if value is a live-references the ref would get overwritten
-                // even without a meaningfull prefill value
-                if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
-                    $this->setValue($value, false);
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
-                // FIXME now, that there is a separate `calculation` property, wouldn't it be better
-                // to skip the prefill for widget with live-refs in general and not only for non-empty
-                // values?
-                } elseif ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
-                    $this->setValue($value, false);
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
-                }
-            }
+        if ($prefill_columns->isEmpty()) {
+            return;
         }
+        $this->doPrefillForExpression(
+            $data_sheet, 
+            $prefill_columns->getFirst()->getExpressionObj(), 
+            'value', 
+            function($value){
+                $this->setValue($value, false);
+            }, 
+            $this->getValueExpression()
+        );
         return;
     }
     
@@ -416,7 +401,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         $uxon = parent::exportUxonObject();
         
         if ($this->hasValue()) {
-            $uxon->setProperty('value', $this->getValueExpression()->toString());
+            $uxon->setProperty(self::VALUE_ALIAS, $this->getValueExpression()->toString());
         }
         if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());

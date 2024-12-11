@@ -60,6 +60,7 @@ class DataLookupDialog extends Dialog
             $data_table = WidgetFactory::create($this->getPage(), 'DataTableResponsive', $this);
             $data_table->setMetaObject($this->getMetaObject());
             $data_table->setMultiSelect($this->getMultiSelect());
+            $data_table->setMultiSelectSavedOnNavigation(true);
             $data_table->getPaginator()->setCountAllRows(false);
             
             // If the table has no columns, determine them from the model
@@ -105,7 +106,7 @@ class DataLookupDialog extends Dialog
                         $filterAttrAlias = $col->getAttributeAlias();
                     }
                     if ($filterAttrAlias !== '' || $filterAttrAlias !== null) {
-                        $filterWidget = $dataConfigurator->createFilterWidget($filterAttrAlias);
+                        $filterWidget = $dataConfigurator->createFilterForAttributeAlias($filterAttrAlias);
                         if ($filterWidget->getInputWidget() instanceof iSupportMultiSelect) {
                             $filterWidget->getInputWidget()->setMultiSelect(true);
                         }

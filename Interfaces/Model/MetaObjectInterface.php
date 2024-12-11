@@ -274,7 +274,19 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      */
     public function hasDataSource() : bool;
     
+    /**
+     * 
+     * @param string|null $value
+     * @return MetaObjectInterface
+     */
     public function setDataSourceId($value) : MetaObjectInterface;
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\DataSources\DataSourceInterface $dataSource
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     */
+    public function setDataSource(DataSourceInterface $dataSource) : MetaObjectInterface;
     
     /**
      * Returns the data source for this object.

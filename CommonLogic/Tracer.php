@@ -45,6 +45,8 @@ use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
  */
 class Tracer extends Profiler
 {
+    const FOLDER_NAME_TRACES = 'traces';
+    
     private $logHandler = null;
     
     private $filePath = null;
@@ -117,7 +119,7 @@ class Tracer extends Profiler
             $workbench = $this->getWorkbench();
             $now = \DateTime::createFromFormat('U.u', microtime(true));
             $time = $now->format("Y-m-d H-i-s-u");
-            $this->filePath = $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . 'traces' . DIRECTORY_SEPARATOR . $time . '.csv';
+            $this->filePath = $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . self::FOLDER_NAME_TRACES . DIRECTORY_SEPARATOR . $time . '.csv';
         }
         return $this->filePath;
     }
@@ -260,7 +262,7 @@ class Tracer extends Profiler
                 $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
                 break;
             case $event instanceof CommunicationMessageEventInterface:
-                $name = 'Message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
+                $name = 'Communication message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
                 break;
             case $event instanceof BehaviorEventInterface:
                 $name = 'Behavior ' . PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior() . ' of "' . $event->getBehavior()->getObject()->getAliasWithNamespace()) . '"';

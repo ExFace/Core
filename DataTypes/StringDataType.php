@@ -4,6 +4,9 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
+use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
+use Transliterator;
 
 /**
  * Basic data type for textual values.
@@ -126,14 +129,17 @@ class StringDataType extends AbstractDataType
 
     /**
      *
-     * @param string $haystack            
+     * @param string|NULL $haystack            
      * @param string $needle            
-     * @param boolean $case_sensitive            
-     * @return boolean
+     * @param bool $case_sensitive            
+     * @return bool
      */
-    public static function startsWith($haystack, $needle, $case_sensitive = true)
+    public static function startsWith($haystack, string $needle, bool $case_sensitive = true) : bool
     {
-        $substr = mb_substr($haystack, 0, strlen($needle));
+        if ($haystack === null) {
+            return false;
+        }
+        $substr = mb_substr($haystack, 0, mb_strlen($needle));
         if ($case_sensitive) {
             return $substr === $needle;
         } else {
@@ -143,17 +149,20 @@ class StringDataType extends AbstractDataType
     
     /**
      *
-     * @param string $haystack
+     * @param string|NULL $haystack
      * @param string $needle
-     * @param boolean $case_sensitive
-     * @return boolean
+     * @param bool $case_sensitive
+     * @return bool
      */
-    public static function endsWith($haystack, $needle, $case_sensitive = true)
+    public static function endsWith($haystack, string $needle, bool $case_sensitive = true) : bool
     {
+        if ($haystack === null) {
+            return false;
+        }
         if ($case_sensitive) {
-            return mb_substr($haystack, (-1)*strlen($needle)) === $needle;
+            return mb_substr($haystack, (-1)*mb_strlen($needle)) === $needle;
         } else {
-            return mb_substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+            return mb_substr(mb_strtoupper($haystack), (-1)*mb_strlen($needle)) === mb_strtoupper($needle);
         }
     }
     
@@ -341,10 +350,11 @@ class StringDataType extends AbstractDataType
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
+            $phKey = '[#' . ($ph ?? '') . '#]';
             if ($strict === true && array_key_exists($ph, $placeholders) === false) {
-                throw new RangeException('Missing value for placeholder "[#' . $ph . '#]"!');
+                throw new PlaceholderNotFoundError($phKey, 'Missing value for placeholder "' . $phKey . '"!');
             }
-            $search[] = '[#' . ($ph ?? '') . '#]';
+            $search[] = $phKey;
             $replace[] = $placeholders[$ph] ?? '';
         }
         
@@ -371,10 +381,10 @@ class StringDataType extends AbstractDataType
      */
     public static function replacePlaceholder(string $string, string $placeholder, $value) : string
     {
-        if (! is_scalar($value)) {
-            throw new RuntimeException('Cannot replace placeholder "[#' . $placeholder . '#]" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
-        }
         $search = '[#' . $placeholder . '#]';
+        if (! is_scalar($value)) {
+            throw new PlaceholderValueInvalidError('Cannot replace placeholder "' . $search . '" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!', null, null, $value);
+        }
         return str_replace($search, $value, $string);
     }
     
@@ -623,5 +633,39 @@ class StringDataType extends AbstractDataType
         }
         
         return $text . $puct;
+    }
+
+    /**
+     * Transliterate a given string using ICU standard rules
+     * 
+     * See https://unicode-org.github.io/icu/userguide/transforms/general/ for available rules
+     * 
+     * Examples:
+     * 
+     * - `transliterate('Änderung')` -> Anderung
+     * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
+     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;)` -> aufgaben im uberblick
+     * 
+     * @link https://unicode-org.github.io/icu/userguide/transforms/general/
+     * 
+     * @param string $string
+     * @param string $translitRules
+     * @param int $direction
+     * @throws \exface\Core\Exceptions\RuntimeException
+     * @return string
+     */
+    public static function transliterate(string $string, string $translitRules = ':: Any-Latin; :: Latin-ASCII;', int $direction = Transliterator::FORWARD) : string
+    {
+        if ($string === '') {
+            return $string;
+        }
+        $transliterator = \Transliterator::createFromRules($translitRules);
+        $result = $transliterator->transliterate($string);
+        // Alternative with slightly different syntax. Need testing to find out, which is better
+        // $result = transliterator_transliterate($translitRules, 'Any-Latin; Latin-ASCII;');
+        if ($result === false) {
+            throw new RuntimeException('Cannot transliterate "' . static::truncate($string, 100, false, true, true, true) . '": ' . $transliterator->getErrorMessage());
+        }
+        return $result;
     }
 }

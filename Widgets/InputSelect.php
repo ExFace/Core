@@ -1173,9 +1173,15 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
-        if (strpos($value, $this->getMultiSelectValueDelimiter()) > 0 && ! $this->hasOption($value)) {
-            if (! $this->getMultiSelect()) {
-                return parent::setValue(explode($this->getMultiSelectValueDelimiter(), $value)[0], $parseStringAsExpression);
+        if ($this->getMultiSelect() === true) {
+            if (is_array($value)) {
+                $delim = $this->getMultipleValuesDelimiter();
+                $value = implode($delim, $value);
+            }
+        } else {
+            if (strpos($value, $this->getMultiSelectValueDelimiter()) > 0 && ! $this->hasOption($value)) {
+                $firstVal = explode($this->getMultiSelectValueDelimiter(), $value)[0];
+                return parent::setValue($firstVal, $parseStringAsExpression);
             }
         }
         return parent::setValue($value, $parseStringAsExpression);

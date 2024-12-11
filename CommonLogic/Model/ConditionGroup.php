@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
@@ -18,6 +19,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Groups multiple conditions and/or condition groups using a logical operator like AND, OR, etc.
@@ -319,6 +321,51 @@ class ConditionGroup implements ConditionGroupInterface
         
         return $result;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::rebaseWithMatchingAttributesOnly()
+     */
+    public function rebaseWithMatchingAttributesOnly(MetaObjectInterface $newObject) : ConditionGroupInterface
+    {
+        $transformer = function(ConditionInterface $condition) use ($newObject){
+            if ($condition->getExpression()->isMetaAttribute() && $newObject->hasAttribute($condition->getAttributeAlias())) {
+                $uxon = $condition->exportUxonObject();
+                $uxon->setProperty('object_alias', $newObject->getAliasWithNamespace());
+                return ConditionFactory::createFromUxon($this->getWorkbench(), $uxon);
+            } else {
+                return null;
+            }
+        };
+        return $this->rebaseCustom($newObject, $transformer);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::rebaseCustom()
+     */
+    public function rebaseCustom(MetaObjectInterface $newObject, callable $conditionTransformer) : ConditionGroupInterface
+    {
+        $newGroup = ConditionGroupFactory::createEmpty($this->getWorkbench(), $this->getOperator(), $newObject, $this->ignoreEmptyValues);
+        foreach ($this->getConditions() as $cond) {
+            $newCond = $conditionTransformer($cond);
+            if ($newCond !== null) {
+                if ($newCond->getExpression()->getMetaObject() !== $newObject) {
+                    throw new UnexpectedValueException('Failed to rebase condition "' . $cond->__toString() . '" on object ' . $newObject->__toString() . ': the result is not based on the expected object!');
+                }
+                $newGroup->addCondition($newCond);
+            }
+        }
+        foreach ($this->getNestedGroups() as $nestedGrp) {
+            $newNestedGrp = $nestedGrp->rebaseCustom($newObject, $conditionTransformer);
+            if (! $newNestedGrp->isEmpty()) {
+                $newGroup->addNestedGroup($newNestedGrp);
+            }
+        }
+        return $newGroup;
+    }
 
     /**
      * 
@@ -389,7 +436,7 @@ class ConditionGroup implements ConditionGroupInterface
     {
         try {
             $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
-            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+            if (null !== $ignoreEmpty = BooleanDataType::cast($uxon->getProperty('ignore_empty_values'))) {
                 $this->setIgnoreEmptyValues($ignoreEmpty);
             }
             if ($uxon->hasProperty('base_object_alias')) {

@@ -4,9 +4,8 @@ namespace exface\Core\Facades\AbstractHttpFacade;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\Facades\HttpBadRequestError;
 
 /**
  * Common base structure for HTTP facades designed to handle workbench tasks.
@@ -17,9 +16,6 @@ use exface\Core\Exceptions\RuntimeException;
 abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
 {
     const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
-    const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
-    const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
-    const REQUEST_ATTRIBUTE_NAME_WIDGET = 'element';
     
     /**
      * Makes the facade create an HTTP response for the given request - after all middlewares were run.
@@ -46,10 +42,10 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
             // and $request->getParsedBody() were empty. This does not lead to an error, so we double-check
             // here and throw a differen exception if this might be the case.
             if ($request->getBody()->getSize() > (100 * 1024) && empty($request->getParsedBody()) && empty($request->getUploadedFiles())) {
-                throw new RuntimeException('Could not parse large request: max. POST size exceeded? Check post_max_size and server configuration.');
+                throw new HttpBadRequestError($request, 'Could not parse large request: max. POST size exceeded? Check post_max_size and server configuration.');
             }
             // In any case, if there is no task - throw an error!
-            throw new UnexpectedValueException('No task data found in HTTP request');
+            throw new HttpBadRequestError($request, 'No task data found in HTTP request');
         }
         $result = $this->getWorkbench()->handle($task);
         return $this->createResponseFromTaskResult($request, $result);
@@ -68,35 +64,8 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
      * 
      * @return string
      */
-    public function getRequestAttributeForAction() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_ACTION;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
     public function getRequestAttributeForTask() : string
     {
         return static::REQUEST_ATTRIBUTE_NAME_TASK;
-    }
-
-    /**
-     * 
-     * @return string
-     */
-    public function getRequestAttributeForPage() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_PAGE;
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    public function getRequestAttributeForWidget() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_WIDGET;
     }
 }

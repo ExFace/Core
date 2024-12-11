@@ -36,6 +36,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Translation\TranslationsArray;
+use exface\Core\Interfaces\Widgets\iHaveValue;
 
 /**
  * Base class for facade elements in AJAX facades using jQuery
@@ -965,10 +966,28 @@ abstract class AbstractWidget implements WidgetInterface
         }
         
         // Dev-hint
-        if ($includeDebugInfo === true && ($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
-            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hints: \n- Attribute alias: `{$this->getAttributeAlias()}` \n- Object: {$this->getMetaObject()->__toString()}"; 
+        if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            $hint = ($hint ? StringDataType::endSentence($hint) : '') . $this->getHintDebug(); 
         }
         return $hint;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getHintDebug() : string
+    {
+        $hint = "\n\nDebug-hints:\n- Widget type: {$this->getWidgetType()}\n- Widget object: {$this->getMetaObject()->__toString()}";
+        if ($this instanceof iShowSingleAttribute) {
+            if ($this->isBoundToAttribute()) {
+                $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
+            }
+            if ($this instanceof iHaveValue) {
+                $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
+            }
+        }
+        return $hint ?? '';
     }
 
     /**
@@ -980,7 +999,6 @@ abstract class AbstractWidget implements WidgetInterface
      * @uxon-translatable true
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::setHint()
      */
     public function setHint($value)
@@ -1072,7 +1090,9 @@ abstract class AbstractWidget implements WidgetInterface
     }
     
     /**
+     * Depending on the WidgetType, this function may rely on a specific DOM structure, check 'see also' for more information.
      *
+     * @see \exface\UI5Facade\Facades\Elements\UI5Value::buildJsShowHideContainer()
      * @return ConditionalProperty|NULL
      */
     public function getHiddenIf() : ?ConditionalProperty
@@ -1080,6 +1100,7 @@ abstract class AbstractWidget implements WidgetInterface
         if ($this->hidden_if === null) {
             return null;
         }
+
         
         if (! ($this->hidden_if instanceof ConditionalProperty)) {
             $this->hidden_if = new ConditionalProperty($this, 'hidden_if', $this->hidden_if);
@@ -1368,11 +1389,6 @@ abstract class AbstractWidget implements WidgetInterface
             while ($widget->getParent()) {
                 $widget = $widget->getParent();
                 
-                // Ein Filter is eher ein Wrapper als ein Container (kann nur ein Widget enthalten).
-                if (($classOrInterface == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $classOrInterface) && ($widget instanceof Filter)) {
-                    continue;
-                }
-                
                 if ($widget instanceof $classOrInterface) {
                     $this->parentByType[$classOrInterface] = $widget;
                     break;
@@ -1384,6 +1400,25 @@ abstract class AbstractWidget implements WidgetInterface
             }
         }
         return $this->parentByType[$classOrInterface];
+    }
+
+    /**
+     * Returns an array of parent widgets with the given class or interface
+     * @param string $classOrInterface
+     * @return array
+     */
+    public function findParentsByClass(string $classOrInterface) : array
+    {
+        $result  = [];
+        $widget = $this;
+        while ($widget->getParent()) {
+            $widget = $widget->getParent();
+            if ($widget instanceof $classOrInterface) {
+                $result[] = $widget;
+            }
+        }
+        
+        return $result;
     }
     
     /**

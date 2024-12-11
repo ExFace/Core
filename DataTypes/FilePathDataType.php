@@ -235,7 +235,7 @@ class FilePathDataType extends StringDataType
         // sanitize filename
         $filename = preg_replace(
             '~
-        [<>:"/\\\|?*]|            # file system reserved https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
+        [<>:"/\\\|?*]|           # file system reserved https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
         [\x00-\x1F]|             # control characters http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
         [\x7F\xA0\xAD]|          # non-printing characters DEL, NO-BREAK SPACE, SOFT HYPHEN
         [#\[\]@!$&\'()+,;=]|     # URI reserved https://www.rfc-editor.org/rfc/rfc3986#section-2.2
@@ -265,12 +265,22 @@ class FilePathDataType extends StringDataType
      * @param int $fnmatchFlags
      * @return bool
      */
-    public static function matchesPattern(string $path, string $pattern, int $fnmatchFlags = 0) : bool
+    public static function matchesPattern(string $path, string $pattern, bool $caseSensitive = false) : bool
     {
-        if (! function_exists('fnmatch')) {
-            return static::fnmatchPolyfill($pattern, $path);
+        if (strcasecmp($path, $pattern) === 0) {
+            return true;
         }
-        return fnmatch($pattern, $path, $fnmatchFlags);
+        if ($caseSensitive === false) {
+            $flags = 16 /*FNM_CASEFOLD*/;
+        }
+        // fnmatch() includes more special characters than `*` and `?`. These are
+        // escaped with backslashes here
+        // @see https://www.php.net/manual/en/function.fnmatch.php
+        $pattern = str_replace(['[', ']', '!'], ['\\[', '\\]', '\\!'], $pattern);
+        if (! function_exists('fnmatch')) {
+            return static::fnmatchPolyfill($pattern, $path, $flags);
+        }
+        return fnmatch($pattern, $path, $flags);
     }
     
     /**
@@ -328,5 +338,16 @@ class FilePathDataType extends StringDataType
                 . $modifiers;
                 
                 return (boolean)preg_match($pattern, $string);
+    }
+    
+    /**
+     * Return TRUE if the given path contains wildcads and FALSE otherwise
+     * 
+     * @param string $pathWithWildcards
+     * @return bool
+     */
+    public static function isPattern(string $pathWithWildcards) : bool
+    {
+        return strpos($pathWithWildcards, '*') !== false || strpos($pathWithWildcards, '?') !== false;
     }
 }

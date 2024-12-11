@@ -60,7 +60,7 @@ class MarkdownDataType extends TextDataType
      * @param string $emptyText
      * @return string
      */
-    public static function buildMarkdownListFromArray(array $strings, string $emptyText = '', string $indent = "") : string
+    public static function buildMarkdownListFromArray(array $strings, string $emptyText = '', string $indent = "", bool $makeCodeBlocks = false) : string
     {
         if (empty($strings)) {
             $md = $emptyText;
@@ -68,6 +68,9 @@ class MarkdownDataType extends TextDataType
             $md = '';
             foreach ($strings as $str) {
                 $str = static::escapeString($str);
+                if ($makeCodeBlocks === true) {
+                    $str = "`{$str}`";
+                }
                 $md .= PHP_EOL . "{$indent}- {$str}";
             }
         }

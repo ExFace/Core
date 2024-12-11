@@ -5,11 +5,10 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\DataPointerFactory;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * Configurable form to collect structured data and save it in singe attribute
@@ -147,25 +146,21 @@ class InputForm extends InputFormDesigner
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
         parent::doPrefill($data_sheet);
+        
         if ($this->isFormConfigBoundToAttribute() === true) {
-            $formConfigPrefillExpression = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFormConfigAttributeAlias());
-            if ($formConfigPrefillExpression !== null && $col = $data_sheet->getColumns()->getByExpression($formConfigPrefillExpression)) {
-                if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                    // TODO #OnPrefillChangeProperty
-                    $valuePointer = DataPointerFactory::createFromColumn($col);
-                    $value = $col->aggregate($this->getAggregator());
-                } else {
-                    $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                    $value = $valuePointer->getValue();
-                }
-                // Ignore empty values because if value is a live-references as the ref would get overwritten
-                // even without a meaningfull prefill value
-                if ($this->isFormConfigBoundByReference() === false || ($value !== null && $value != '')) {
-                    $this->setFormConfig($value ?? '');
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'form_config', $valuePointer));
-                }
+            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFormConfigAttributeAlias())) {
+                $this->doPrefillForExpression(
+                    $data_sheet, 
+                    $expr, 
+                    'form_config', 
+                    function($value){
+                        $this->setFormConfig($value ?? '');
+                    },
+                    $this->getFormConfigExpression()
+                );
             }
         }
+        
         return;
     }
     

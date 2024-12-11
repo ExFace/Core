@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
+use exface\Core\CommonLogic\Tasks\HttpTask;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -36,8 +37,6 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
  */
 class FacadeResolverMiddleware implements MiddlewareInterface
 {
-    const REQUEST_ATTRIBUTE_PAGE = 'uipage';
-    
     private $workbench = null;
     
     private $pageAttributeAlias = null;
@@ -74,11 +73,11 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                 $page = $this->getPageFromUri($request->getUri());
                 $facade = $page->getFacade();
                 $request = $request
-                    ->withAttribute($facade->getRequestAttributeForAction(), 'exface.Core.ShowWidget')
-                    ->withAttribute($facade->getRequestAttributeForPage(), $page->getSelector()->__toString());
+                    ->withAttribute(HttpTask::REQUEST_ATTRIBUTE_NAME_ACTION, 'exface.Core.ShowWidget')
+                    ->withAttribute(httptask::REQUEST_ATTRIBUTE_NAME_PAGE, $page->getSelector()->__toString());
                 
                 if ($page->getWidgetRoot()) {
-                    $request = $request->withAttribute($facade->getRequestAttributeForWidget(), $page->getWidgetRoot()->getId());
+                    $request = $request->withAttribute(HttpTask::REQUEST_ATTRIBUTE_NAME_WIDGET, $page->getWidgetRoot()->getId());
                 }
             } catch (FacadeRoutingError $ePage) {
                 $logLevel = null;

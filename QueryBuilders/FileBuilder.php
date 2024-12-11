@@ -21,6 +21,9 @@ use exface\Core\CommonLogic\DataQueries\FileWriteDataQuery;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\MimeTypeDataType;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 /**
  * Lists files and folders from a number of file paths.
@@ -181,6 +184,9 @@ class FileBuilder extends AbstractQueryBuilder
     
     const ATTR_ADDRESS_IS_WRITABLE = 'is_writable';
     
+    const REGEX_DELIMITER = '/';
+
+    private $fullReadRequired = null;
     
     /**
      * 
@@ -190,28 +196,93 @@ class FileBuilder extends AbstractQueryBuilder
     {
         $query = new FileReadDataQuery($this->getDirectorySeparator());
         
+        // Calculate paths and filenames from the current filters
+        // TODO instead of working with an array of paths and filename pattersn, create
+        // a common method from filling a query with filters
+        // - full path with filename, but without wildcards -> addFilePath()
+        // - filename -> addFilenamePattern()
+        // - folder path -> addFolder()
+        // - paths with wildcards -> split into filenames and folders
+        // The current solution has trouble distinguishing between folder and file paths!
+        // Cases known to produce problems:
+        // - path and filename separately without wildcards - e.g. from DataSourceFileInfo
+        // - full path with filename (not separated into two filters)
+        // - folder with file name pattern (e.g. data address of `exface.Core.BEHAVIOR`)
+        // Perhaps we also need to normalize folder paths and enforce a trailing slash?
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
-        if ($filenamePattern) {
+        $filenameFilters = [];
+        $folderPatterns = [];
+        // If there is a filename, add it to the query
+        if ($filenamePattern === '' || $filenamePattern === '*' || $filenamePattern === '*.*') {
+            $filenamePattern = null;
+        }
+        
+        // Now add each path
+        foreach ($pathPatterns as $path) {
+            if ($path === null || $path === '') {
+                $path = $this->getPathForObject($this->getMainObject()) ?? '';
+            }
+            
+            // The end of the path might contain a filename or mask too: e.g. the data
+            // address of exface.Core.BEHAVIOR is `/*/*/Behaviors/*.php`.
+            $pathEnd = FilePathDataType::findFileName($path, true);
+            $folder = mb_substr($path, 0, (-1) * mb_strlen($pathEnd));
+            if ($pathEnd === '') {
+                $pathEnd = null;
+            }
+            $pathEndIsFile = $pathEnd !== null && mb_strpos($pathEnd, '.') !== false;
+            $pathEndIsPattern = $pathEnd !== null && FilePathDataType::isPattern($pathEnd);
+            switch (true) {
+                case $pathEndIsFile === true && ! FilePathDataType::isPattern($path):
+                    $query->addFilePath($path);
+                    break;
+                case $pathEndIsFile === true:
+                case $pathEndIsPattern === true:
+                    $filenameFilters[] = $pathEnd;
+                    $folderPatterns[] = $folder;
+                    break;
+                // In case the path includes no file at all, assume it to be a folder
+                default:
+                    $folderPatterns[] = $path;
+                    break;
+            }
+        }
+
+        if ($filenamePattern === null && count($filenameFilters) === 1) {
+            $filenamePattern = $filenameFilters[0];
+            $filenameFilters = [];
+        }
+        
+        foreach ($folderPatterns as $folder) {
+            $query->addFolder($folder);
+        }
+        
+        if ($filenamePattern !== null) {
             $query->addFilenamePattern($filenamePattern);
         }
         
-        // Setup query
-        foreach ($pathPatterns as $path) {
-            if ($path == '') {
-                $path = $this->getMainObject()->getDataAddress();
-            }
-            
-            $pathEnd = FilePathDataType::findFileName($path, true);
-            $pathFolder = $pathEnd ? StringDataType::substringBefore($path, $query->getDirectorySeparator() . $pathEnd) : $path;
-            
-            if ($pathFolder) {
-                $query->addFolder($pathFolder);
-            } 
-            
-            if ($pathEnd && ($filenamePattern === null || $filenamePattern === '')) {
-                $query->addFilenamePattern($pathEnd);
-            }         
+        if (! empty($filenameFilters)) {
+            $query->addFilter(function(FileInfoInterface $fileInfo) use ($filenameFilters) {
+                $filename = $fileInfo->getFilename(true);
+                foreach ($filenameFilters as $pattern) {
+                    switch (true) {
+                        case RegularExpressionDataType::isRegex($pattern):
+                            $match = preg_match($pattern, $filename) === 1;
+                            break;
+                        case FilePathDataType::isPattern($pattern):
+                            $match = FilePathDataType::matchesPattern($filename, $pattern);
+                            break;
+                        default:
+                            $match = strcasecmp($pattern, $filename) === 0;
+                            break;
+                    }
+                    if ($match === true) {
+                        return true;
+                    }
+                }
+                return false;
+            }, 'filename must match any of ["' . implode('", "', $filenameFilters) . '"]');
         }
         
         if (count($this->getSorters()) > 0) {
@@ -285,6 +356,17 @@ class FileBuilder extends AbstractQueryBuilder
     
     /**
      *
+     * @param string $addr
+     * @return bool
+     */
+    protected function isFolderPathAddress(string $addr) : bool
+    {
+        return $addr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_PATH_RELATIVE
+        || $addr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_PATH_ABSOLUTE;
+    }
+    
+    /**
+     *
      * @param string $dataAddress
      * @return bool
      */
@@ -311,13 +393,14 @@ class FileBuilder extends AbstractQueryBuilder
         $values = [];
         $filtersApplied = [];
         $filename = null;
+        $pregDelim = self::REGEX_DELIMITER;
         foreach ($qpart->getFilters() as $filter) {
             if ($this->isFilename($filter)) {
                 switch ($filter->getComparator()) {
-                    case EXF_COMPARATOR_EQUALS:
-                    case EXF_COMPARATOR_IS:
-                        $mask = preg_quote($filter->getCompareValue());
-                        if ($filter->getComparator() === EXF_COMPARATOR_EQUALS) {
+                    case ComparatorDataType::EQUALS:
+                    case ComparatorDataType::IS:
+                        $mask = preg_quote($filter->getCompareValue(), $pregDelim);
+                        if ($filter->getComparator() === ComparatorDataType::EQUALS) {
                             $mask = '^' . $mask . '$';
                         }
                         $values[] = $mask;
@@ -333,11 +416,11 @@ class FileBuilder extends AbstractQueryBuilder
         if (! empty($values)) {
             switch ($qpart->getOperator()) {
                 case EXF_LOGICAL_OR:
-                    $filename = '/(' . implode('|', $values) . ')/i';
+                    $filename = "$pregDelim(" . implode('|', $values) . "){$pregDelim}i";
                     break;
                 case EXF_LOGICAL_AND: 
                     if (count($values) === 1) {
-                        $filename = '/' . $values[0] . '/i';
+                        $filename = $pregDelim . $values[0] . $pregDelim . 'i';
                         break;
                     } 
                 default:
@@ -366,7 +449,7 @@ class FileBuilder extends AbstractQueryBuilder
     {
         // See if the data address has placeholders
         $oper = $qpart->getOperator();
-        $addr = $this->getMainObject()->getDataAddress();
+        $addr = $this->getPathForObject($this->getMainObject()) ?? '';
         $addrPhs = StringDataType::findPlaceholders($addr);
         $pathPatterns = [];
         $uidPatterns = [];
@@ -377,7 +460,9 @@ class FileBuilder extends AbstractQueryBuilder
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $addrPhsValues = [];
             $uidPaths = [];
-            if (($isPathNameFilter = $qpart->getAttribute()->is($this->getMainObject()->getUidAttribute())) || in_array($qpart->getAlias(), $addrPhs)) {
+            $isPathNameFilter = $this->isFilePathAddress($qpart->getDataAddress());
+            $isFolderFilter = $this->isFolderPathAddress($qpart->getDataAddress());
+            if ($isPathNameFilter || $isFolderFilter || in_array($qpart->getAlias(), $addrPhs)) {
                 // Path filters need to be applied after reading too as there may be trouble with 
                 // files with the same name in different (sub-)folders mathing the folder pattern
                 if ($isPathNameFilter && $this->getAttribute($qpart->getAlias())) {
@@ -390,41 +475,49 @@ class FileBuilder extends AbstractQueryBuilder
                     }
                 }
                 switch ($qpart->getComparator()) {
-                    case EXF_COMPARATOR_IS:
-                    case EXF_COMPARATOR_EQUALS:
+                    case ComparatorDataType::IS:
+                    case ComparatorDataType::EQUALS:
                         //if attribute alias is a placeholder in the path patterns, replace it with the value
                         if (in_array($qpart->getAlias(), $addrPhs)) {                            
                             $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
-                            $newPatterns = [];
-                            foreach ($pathPatterns as $pattern) {
-                                $newPatterns[] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
+                            foreach ($pathPatterns as $i => $pattern) {
+                                $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                             }
-                            $pathPatterns = $newPatterns;
                         } else {
-                            $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                            if ($isPathNameFilter) {
+                                $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                            }
+                            if ($isFolderFilter) {
+                                $pathPatterns[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                            }
                         }
                         break;
-                    case EXF_COMPARATOR_IN:
+                    case ComparatorDataType::IN:
                         $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
                         //if attribute alias is a placeholder in the path patterns, replace it with the values (therefore creating more pattern entries)
                         if (in_array($qpart->getAlias(), $addrPhs)) {
                             foreach ($values as $val) {
                                 $addrPhsValues[$qpart->getAlias()] = trim($val);
-                                foreach ($pathPatterns as $pattern) {
-                                    $newPatterns[] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
+                                foreach ($pathPatterns as $i => $pattern) {
+                                    $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                                 }
                             }
-                            $pathPatterns = $newPatterns;
                         } else {
                             foreach ($values as $val) {
-                                $uidPaths[] = Filemanager::pathNormalize(trim($val));
+                                $val = trim($val);
+                                if ($isPathNameFilter) {
+                                    $uidPaths[] = Filemanager::pathNormalize($val);
+                                }
+                                if ($isFolderFilter) {
+                                    $pathPatterns[] = Filemanager::pathNormalize($val);
+                                }
                             }
                         }
                         break;
                     default:
                         $qpart->setApplyAfterReading(true);
-                        $query->setFullScanRequired(true);
                 }
+                
                 if ($oper === EXF_LOGICAL_AND) {
                     if (! empty($uidPatterns)) {
                         foreach ($uidPaths as $path) {
@@ -441,9 +534,8 @@ class FileBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Other filter operators than "' . EXF_LOGICAL_AND . '" or "'. EXF_LOGICAL_OR . '" are not supported by the FileBuilder');
                 }
             } else {
-                $this->addAttribute($qpart->getExpression()->toString());
+                $this->addAttribute($qpart->getExpression()->__toString());
                 $qpart->setApplyAfterReading(true);
-                $query->setFullScanRequired(true);
             }
         }
         foreach ($pathPatterns as $path) {
@@ -468,7 +560,7 @@ class FileBuilder extends AbstractQueryBuilder
                     if ($pathMatchesAllUids === true) {
                         unset($pathPatterns[$pathIdx]);
                     } else {
-                        throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time!');
+                        throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time: "' . $pathPattern . '" and "' . $uidPattern . '"');
                     }
                 }
                 if (empty($pathPatterns)) {
@@ -513,7 +605,26 @@ class FileBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($pathArray) . ' files exist!');
                 }
                 foreach ($pathArray as $i => $path) {
-                    $query->addFileToSave($path, $contentArray[$i]);
+                    // Cannot save anything to an empty path. This is not a real error though
+                    // - it may happen if multiple rows are saved and some do not really need
+                    // a file to be created
+                    if ($path === null) {
+                        continue;
+                    }
+                    
+                    $content = $contentArray[$i];
+                    // See if empty content is feasable for the expected mime type!
+                    // E.g. empty text files are OK, but an empty jpeg cannot be correct.
+                    if (empty($content)) {
+                        $ext = FilePathDataType::findExtension($path);
+                        if ($ext) {
+                            $type = MimeTypeDataType::guessMimeTypeOfExtension($ext);
+                            if (MimeTypeDataType::isBinary($type)) {
+                                throw new QueryBuilderException('Cannot create empty file "' . $path . '" of type "' . $type . '" - files of this type may not be empty!');
+                            }
+                        }
+                    }
+                    $query->addFileToSave($path, $content);
                 }
                 break;
             case count($contentQparts) > 1:
@@ -552,7 +663,9 @@ class FileBuilder extends AbstractQueryBuilder
                         $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
                     }
                 }
+                break;
         }
+
         return $array;
     }
     
@@ -604,7 +717,7 @@ class FileBuilder extends AbstractQueryBuilder
             case $filenameQpart !== null:
                 $paths = [];
                 $sep = $this->getDirectorySeparator();
-                $addr = FilePathDataType::normalize($this->getMainObject()->getDataAddress(), $sep);
+                $addr = FilePathDataType::normalize($this->getPathForObject($this->getMainObject()) ?? '', $sep);
                 $addr = StringDataType::substringBefore($addr, $sep, $addr, false, true);
                 $addrPhs = StringDataType::findPlaceholders($addr);
                 
@@ -631,45 +744,61 @@ class FileBuilder extends AbstractQueryBuilder
      */
     public function read(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
-        $result_rows = array();
+        $result_rows = [];
         $pagination_applied = false;
         // Check if force filtering is enabled
         if ($this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_FORCE_FILTERING) && count($this->getFilters()->getFiltersAndNestedGroups()) < 1) {
-            return false;
+            return new DataQueryResultData([], 0);
         }
         
         $query = $this->buildQueryToRead();
         $performedQuery = $dataConnection->query($query);
-        $rownr = - 1;
-        $fullScan = $query->isFullScanRequired();
+        $rowsTotal = 0;
+        // FIXME how to make sure we only read ALL files if a total count is required?
+        // When reading, we don't know, if we will need the total count, it is fetched
+        // separately via count() method. We could 
+        // $fullScan = $query->isFullScanRequired;
+        // Full scan means, all FileInfo objects need to be instantiated and loaded.
+        // This is required, if we need to know, how many files there are in total or
+        // if we need all the data for postprocessing.
+        $fullScan = true;
+        // Full read means, we not only need a full scan, but also need to fill all result
+        // rows by reading file properties and maybe even contents. This is the case if we
+        // need to filter result data, sort it or do any other in-memory operations.
+        // If we do not need a full read, we can avoid processing FileInfo data for rows,
+        // that are outside of the pagination window.
+        $fullRead = $this->isFullReadRequired($query);
         $limit = $this->getLimit();
-        $offset = $this->getOffset();
-        foreach ($performedQuery->getFiles() as $file) {
-            // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
-            if (! $fullScan) {
-                $pagination_applied = true;
-                $rownr ++;
-                // Skip rows, that are positioned below the offset
-                if ($rownr < $this->getOffset()) {
+        $offset = $this->getOffset() ?? 0;
+        foreach ($performedQuery->getFiles() as $fileInfo) {
+            $rowsTotal++;
+            $limitReached = $limit > 0 && $rowsTotal > ($offset + $limit);
+            // Skip rows, that are positioned below the offset if we neither need a count nor post-processing
+            if ($rowsTotal <= $offset) {
+                if ($fullScan === false && $fullRead === false) {
                     continue;
                 }
-                // Skip rest if we are over the limit
-                if ($this->getLimit() > 0 && $rownr >= $offset + $limit) {
-                    // increase rownr an additional time so we know more rows exist
-                    $rownr ++;
+            }
+            // Skip rest if we are over the limit unless we need that rest for post-processing
+            if ($limitReached === true && $fullRead === false) {
+                // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
+                if ($fullScan === false) {
                     break;
                 }
+            } else {
+                $result_rows = array_merge($result_rows, $this->buildResultRows($fileInfo));
             }
-            // Otherwise add the file data to the result rows
-            $result_rows[] = $this->buildResultRow($file);
         }
+        $paginationApplied = $fullRead === false;
+
         $totalCount = count($result_rows) + $offset;
-        if ($rownr > $totalCount) {
-            $totalCount = $rownr;
+        if ($rowsTotal > $totalCount) {
+            $totalCount = $rowsTotal;
         }
         $result_rows = $this->applyFilters($result_rows);
         $result_rows = $this->applySorting($result_rows);
-        if (! $pagination_applied) {
+        $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
+        if (! $paginationApplied) {
             $result_rows = $this->applyPagination($result_rows);
         }
         $rowCount = count($result_rows);
@@ -801,7 +930,7 @@ class FileBuilder extends AbstractQueryBuilder
      * @throws QueryBuilderException
      * @return string[]|mixed[]
      */
-    protected function buildResultRow(FileInfoInterface $file) : array
+    protected function buildResultRows(FileInfoInterface $file) : array
     {
         $row = [];
         foreach ($this->getAttributes() as $qpart) {
@@ -809,7 +938,7 @@ class FileBuilder extends AbstractQueryBuilder
                 $row[$qpart->getColumnKey()] = $this->buildResultValueFromFile($file, $field);
             }
         }
-        return $row;
+        return [$row];
     }
     
     /**
@@ -819,7 +948,7 @@ class FileBuilder extends AbstractQueryBuilder
      * 
      * @throws QueryBuilderException
      * 
-     * @return NULL
+     * @return mixed
      */
     protected function buildResultValueFromFile(FileInfoInterface $file, string $dataAddress)
     {
@@ -1020,5 +1149,91 @@ class FileBuilder extends AbstractQueryBuilder
     protected function getDirectorySeparator() : string
     {
         return $this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_DIRECTORY_SEPARATOR) ?? '/';
+    }
+
+    /**
+     *
+     * @param boolean $trueOrFalse
+     * @return FileBuilder
+     */
+    protected function setFullScanRequired(bool $trueOrFalse) : FileBuilder
+    {
+        $this->fullReadRequired = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if all data must be read to perform the givn query
+     * 
+     * Since file queries are based on generators, it is important to know, if a query needs to really load all
+     * data (execute all generators) or can stop at some point. 
+     * 
+     * @param FileReadDataQuery $query
+     * @return boolean
+     */
+    protected function isFullReadRequired(FileReadDataQuery $query) : bool
+    {
+        if ($this->fullReadRequired === true) {
+            return true;
+        }
+        if ($query->isFullScanRequired() === true) {
+            return true;
+        }
+        foreach ($this->getFilters() as $qpart) {
+            if ($qpart->getApplyAfterReading() === true) { 
+                return true;
+            }
+        }
+        foreach ($this->getSorters() as $qpart) {
+            if ($qpart->getApplyAfterReading() === true) { 
+                return true;
+            }
+        }
+        if (! empty($this->getAggregations())) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the path or pattern stored in the data address of the given meta object.
+     * 
+     * Override this method to support data addresses with additions - e.g. the ExcelBuilder
+     * supports Worksheet names in its data addresses.
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
+     * @return string|null
+     */
+    protected function getPathForObject(MetaObjectInterface $object) : ?string
+    {
+        return $this->getMainObject()->getDataAddress();
+    }
+
+    /**
+     * Returns TRUE if the given address is a file property and can be handled by this query builder
+     * 
+     * Use this method in extending classes to find out, if an address is a basic file property -
+     * see ExcelBuilder for an example.
+     * 
+     * @param string $address
+     * @return bool
+     */
+    protected function isFileDataAddress(string $address) : bool
+    {
+        $address = mb_strtolower($address);
+        switch (true) {
+            case strpos($address, '~file:') === 0:
+            case strpos($address, '~folder:') === 0:
+            // Still supported legacy data addresses
+            case $address === '~folder':
+            case $address === '~extension':
+            case $address === '~filename_without_extension':
+            case $address === '~filename':
+            case $address === '~contents':
+            case $address === '~filepath_relative':
+            case $address === '~filepath':
+                return true;
+        }
+        return false;
     }
 }

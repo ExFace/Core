@@ -23,6 +23,7 @@ class MarkdownDocsReader extends MarkdownReader
         if (strpos($urlPath, '?') !== false) {
             $query = StringDataType::substringAfter($urlPath, '?');
             $urlPath = StringDataType::substringBefore($urlPath, '?');
+            $filePath = StringDataType::substringBefore($filePath, '?');
         }
         
         if ($urlPath === '' || $urlPath === '/' || $urlPath === 'index.md') {
@@ -32,7 +33,7 @@ class MarkdownDocsReader extends MarkdownReader
             $filePath = $indexPath;
         } 
         
-        if (isset($query)) {
+        if (isset($query) && substr($query, 0, 1) === 'q') {
             $search = $this->buildSearchResult($query);
             $searchPath = $this->workbench->filemanager()->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'search.md';
             file_put_contents($searchPath, $search);
@@ -64,8 +65,8 @@ class MarkdownDocsReader extends MarkdownReader
     protected function buildSearchResult($query)
     {
         $params = parse_query($query);
-        $q = $params['q'];
-        $md = "# Search for \"{$q}\" \n";
+        $q = urldecode($params['q']);
+        $md = "# Search for \"{$this->escapeString($q)}\" \n";
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.DOCS');
         $ds->getColumns()->addFromExpression('PATHNAME_RELATIVE');
@@ -77,13 +78,24 @@ class MarkdownDocsReader extends MarkdownReader
         
         foreach ($ds->getRows() as $row) {
             $content = $this->readFile($row['PATHNAME_ABSOLUTE'], $row['PATHNAME_RELATIVE']);
+            $path = $row['PATHNAME_RELATIVE'] ?? '';
             $md .= <<<MD
- - [{$content->getTitle()}]({$row['PATHNAME_RELATIVE']})
-    ({$row['PATHNAME_RELATIVE']})
+ - [{$this->escapeString($content->getTitle() ?? '')}]({$this->escapeString($path)})
+    ({$this->escapeString($path)})
 
 MD;
         }
         
         return $md;
+    }
+    
+    /**
+     * 
+     * @param string $val
+     * @return string
+     */
+    protected function escapeString(string $val) : string
+    {
+        return htmlspecialchars($val, ENT_QUOTES);
     }
 }

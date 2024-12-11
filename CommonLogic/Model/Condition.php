@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -12,8 +13,6 @@ use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\ConditionFactory;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -73,6 +72,8 @@ class Condition implements ConditionInterface
     private $data_type = null;
     
     private $ignoreEmptyValues = null;
+
+    private bool $applyToAggregates = true;
 
     /**
      * @deprecated use ConditionFactory instead!
@@ -231,7 +232,7 @@ class Condition implements ConditionInterface
     protected function guessComparator()
     {
         if (!$base_object = $this->getExpression()->getMetaObject()){
-            return EXF_COMPARATOR_IS;
+            return ComparatorDataType::IS;
         }
         
         $value = $this->getValue();
@@ -239,44 +240,75 @@ class Condition implements ConditionInterface
         
         // Determine the comparator if it is not given directly.
         // It can be derived from the value or set to a default value
-        if (strpos($value, '!==') === 0) {
-            $comparator = EXF_COMPARATOR_EQUALS_NOT;
-            $value = substr($value, 3);
-        } elseif (strpos($value, '==') === 0) {
-            $comparator = EXF_COMPARATOR_EQUALS;
-            $value = substr($value, 2);
-        } elseif (strpos($value, '>=') === 0) {
-            $comparator = EXF_COMPARATOR_GREATER_THAN_OR_EQUALS;
-            $value = substr($value, 2);
-        } elseif (strpos($value, '>') === 0) {
-            $comparator = EXF_COMPARATOR_GREATER_THAN;
-            $value = substr($value, 1);
-        } elseif (strpos($value, '[') === 0) {
-            $comparator = EXF_COMPARATOR_IN;
-            if (substr(trim($value), - 1) != ']') {
-                $value = substr($value, 1);
-            }
-        } elseif (strpos($value, '<=') === 0) {
-            $comparator = EXF_COMPARATOR_LESS_THAN_OR_EQUALS;
-            $value = substr($value, 2);
-        } elseif (strpos($value, '<') === 0) {
-            $comparator = EXF_COMPARATOR_LESS_THAN;
-            $value = substr($value, 1);
-        } elseif (strpos($value, '!=') === 0) {
-            $comparator = EXF_COMPARATOR_IS_NOT;
-            $value = substr($value, 2);
-        } elseif (strpos($value, '=') === 0) {
-            $comparator = EXF_COMPARATOR_IS;
-            $value = substr($value, 1);
-        } elseif (strpos($value, '![') === 0) {
-            $comparator = EXF_COMPARATOR_NOT_IN;
-            if (substr(trim($value), - 1) == ']') {
-                $value = substr(trim($value), 2, - 1);
-            } else {
+        switch (true) {
+            case $value === null:
+            case is_string($value) === false:
+            case $value === '':
+                $comparator = ComparatorDataType::IS;
+                return $comparator;
+            case strpos($value, '!==') === 0:
+                $comparator = ComparatorDataType::EQUALS_NOT;
+                $value = substr($value, 3);
+                break;
+            case strpos($value, '==') === 0:
+                $comparator = ComparatorDataType::EQUALS;
                 $value = substr($value, 2);
-            }
-        } else {
-            $comparator = EXF_COMPARATOR_IS;
+                break;
+            case strpos($value, '>=') === 0:
+                $comparator = ComparatorDataType::GREATER_THAN_OR_EQUALS;
+                $value = substr($value, 2);
+                break;
+            case strpos($value, '>') === 0:
+                $comparator = ComparatorDataType::GREATER_THAN;
+                $value = substr($value, 1);
+                break;
+            case strpos($value, '[[') === 0:
+                $comparator = ComparatorDataType::LIST_SUBSET;
+                if (substr(trim($value), - 1) != ']') {
+                    $value = substr($value, 1);
+                }
+                break;
+            case strpos($value, '![[') === 0:
+                $comparator = ComparatorDataType::LIST_NOT_SUBSET;
+                if (substr(trim($value), - 1) == ']') {
+                    $value = substr(trim($value), 2, - 1);
+                } else {
+                    $value = substr($value, 2);
+                }
+                break;
+            case strpos($value, '[') === 0:
+                $comparator = ComparatorDataType::IN;
+                if (substr(trim($value), - 1) != ']') {
+                    $value = substr($value, 1);
+                }
+                break;
+            case strpos($value, '![') === 0:
+                $comparator = ComparatorDataType::IN;
+                if (substr(trim($value), - 1) == ']') {
+                    $value = substr(trim($value), 2, - 1);
+                } else {
+                    $value = substr($value, 2);
+                }
+                break;
+            case strpos($value, '<=') === 0:
+                $comparator = ComparatorDataType::LESS_THAN_OR_EQUALS;
+                $value = substr($value, 2);
+                break;
+            case strpos($value, '<') === 0:
+                $comparator = ComparatorDataType::LESS_THAN;
+                $value = substr($value, 1);
+                break;
+            case strpos($value, '!=') === 0:
+                $comparator = ComparatorDataType::IS_NOT;
+                $value = substr($value, 2);
+                break;
+            case strpos($value, '=') === 0:
+                $comparator = ComparatorDataType::IS;
+                $value = substr($value, 1);
+                break;
+            default:
+                $comparator = ComparatorDataType::IS;
+                break;
         }
         
         if ($value !== null) {
@@ -287,14 +319,18 @@ class Condition implements ConditionInterface
         if (substr($value, 0, 1) == '[' && substr($value, - 1) == ']') {
             // a value enclosed in [] is actually a IN-statement
             $value = trim($value, "[]");
-            $comparator = EXF_COMPARATOR_IN;
-        } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
+            $comparator = ComparatorDataType::IN;
+        } elseif (
+            mb_strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
-            && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
-                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface)
-            && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
+            && (
+                $base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface
+            )
+            && mb_strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false
+        ) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
-                $comparator = EXF_COMPARATOR_IN;
+                $comparator = ComparatorDataType::IN;
         } 
         
         return $comparator;
@@ -302,6 +338,47 @@ class Condition implements ConditionInterface
 
     /**
      * The comparison operator used in this condition
+     * 
+     * ## Scalar (single value) comparators
+     * 
+     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
+     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+     * insensitive for strings
+     * - `!=` - yields TRUE if `IS` would result in FALSE
+     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
+     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
+     * - `!==` - the inverse of `EQUALS`
+     * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
+     * - `>` - yields TRUE if the left value is greater than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `>=` - yields TRUE if the left value is greater than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
+     * 
+     * ## List comparators
+     * 
+     * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
+     * value equals at least on of the values in the list within the right value. The list on the
+     * right side must consist of numbers or strings separated by commas or the attribute's value
+     * list delimiter if filtering over an attribute. The right side can also be another type of
+     * expression (e.g. a formula or widget link), that yields such a list.
+     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
+     * list within the right value. The list on the right side must consist of numbers or strings separated 
+     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+     * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+     * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least 
+     * one element, that is present in both lists.
+     * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
+     * - `[[` - subset - compares two lists with each other. Becomes true when all elements of the left list 
+     * are in the right list too
+     * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in 
+     * the right list.
+     * 
+     * ## Range comparators
+     * 
+     * - `..` - range between two values - e.g. `1 .. 5`
      * 
      * @uxon-property comparator
      * @uxon-type metamodel:comparator
@@ -329,16 +406,7 @@ class Condition implements ConditionInterface
      */
     public static function sanitizeComparator(string $value) : string
     {
-        $validated = false;
-        foreach (get_defined_constants(true)['user'] as $constant => $comparator) {
-            if (substr($constant, 0, 15) === 'EXF_COMPARATOR_') {
-                if (strcasecmp($value, $comparator) === 0) {
-                    $validated = true;
-                    $value = $comparator;
-                    break;
-                }
-            }
-        }
+        $validated = ComparatorDataType::isValidStaticValue($value);
         if (! $validated) {
             throw new UnexpectedValueException('Invalid comparator value "' . $value . '"!', '6W1SD52');
         }
@@ -408,13 +476,19 @@ class Condition implements ConditionInterface
         if ($this->ignoreEmptyValues === true) {
             $uxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
         }
+        if ($this->applyToAggregates === false) {
+            $uxon->setProperty('apply_to_aggregates', $this->applyToAggregates);
+        }
+
         return $uxon;
     }
 
     /**
      * Imports data from UXON objects in one of the supported formats. 
      * 
-     * Supported formats:
+     * ## Supported formats
+     * 
+     * Most commonly used "one-sided" conditions comparing an expression to astatic value:
      * 
      * ```
      *  { 
@@ -440,8 +514,8 @@ class Condition implements ConditionInterface
      *  
      * ```
      * 
-     * Also the legacy format with `attribute_alias` instead of `expression` is 
-     * still supported.
+     * Also the legacy format for one-sided expressions with `attribute_alias` instead of 
+     * `expression` is still supported:
      * 
      * ```
      *  { 
@@ -465,16 +539,19 @@ class Condition implements ConditionInterface
         }
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), $objAlias);
         $expression = null;
+        $expressionStr = null;
+        $expressionUnknownAsString = true;
         switch (true) {
             case $uxon->hasProperty('expression') === true:
                 $expressionStr = $uxon->getProperty('expression');
+                $expressionUnknownAsString = false;
                 break;
             case $uxon->hasProperty('attribute_alias') === true:
                 $expressionStr = $uxon->getProperty('attribute_alias');
                 break;
             case $uxon->hasProperty('value_left') === true:
                 $val = $uxon->getProperty('value_left');
-                $expression = ExpressionFactory::createForObject($obj, $val);
+                $expression = ExpressionFactory::createForObject($obj, $val, $expressionUnknownAsString);
                 if ($expression->isMetaAttribute() === true) {
                     $value = $uxon->getProperty('value_right');
                     break;
@@ -482,7 +559,7 @@ class Condition implements ConditionInterface
                 // Otherwise continue with the next case
             case $uxon->hasProperty('value_right') === true:
                 $val = $uxon->getProperty('value_right');
-                $expression = ExpressionFactory::createForObject($obj, $val);
+                $expression = ExpressionFactory::createForObject($obj, $val, $expressionUnknownAsString);
                 if ($expression->isMetaAttribute() === true) {
                     $value = $uxon->getProperty('value_left');
                     break;
@@ -492,25 +569,31 @@ class Condition implements ConditionInterface
                 throw new UxonParserError($uxon, 'Cannot parse condition UXON: no expression found!');
         }
         try {
-            $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr);
+            $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr, $expressionUnknownAsString);
             $this->setExpression($expression);
-            if ($uxon->hasProperty('comparator') && $comp = $uxon->getProperty('comparator')) {
+            if ($uxon->hasProperty('comparator') && ($comp = $uxon->getProperty('comparator'))) {
                 $this->setComparator($comp);
             }
-            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+
+            if (null !== $ignoreEmpty = BooleanDataType::cast($uxon->getProperty('ignore_empty_values'))) {
                 $this->setIgnoreEmptyValues($ignoreEmpty);
             }
+
+            if(null !== $applyToAggregates = BooleanDataType::cast($uxon->getProperty('apply_to_aggregates'))) {
+                $this->setApplyToAggregates($applyToAggregates);
+            }
+
             if ($uxon->hasProperty('value') || $value !== null){
                 $value = $value ?? $uxon->getProperty('value');
                 // Apply th evalue only if it is not empty or ignore_empty_values is off
                 if ($this->ignoreEmptyValues !== true || ($value !== null && $value !== '')) { 
                     if ($value instanceof UxonObject) {
-                        if (! $comp || $comp === EXF_COMPARATOR_IS) {
-                            $comp = EXF_COMPARATOR_IN;
+                        if (! $comp || $comp === ComparatorDataType::IS) {
+                            $comp = ComparatorDataType::IN;
                         }
                         
-                        if (! $comp || $comp === EXF_COMPARATOR_IS_NOT) {
-                            $comp = EXF_COMPARATOR_NOT_IN;
+                        if (! $comp || $comp === ComparatorDataType::IS_NOT) {
+                            $comp = ComparatorDataType::NOT_IN;
                         }
                         if ($expression->isMetaAttribute()) {
                             $glue = $expression->getAttribute()->getValueListDelimiter();
@@ -519,7 +602,7 @@ class Condition implements ConditionInterface
                         }
                         $value = implode($glue, $value->toArray());
                         
-                        if ($comp !== EXF_COMPARATOR_IN && $comp !== EXF_COMPARATOR_NOT_IN) {
+                        if ($comp !== ComparatorDataType::IN && $comp !== ComparatorDataType::NOT_IN) {
                             throw new UnexpectedValueException('Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
                         }
                     }
@@ -663,25 +746,38 @@ class Condition implements ConditionInterface
                     }
                 }
                 return ! $resposeOnFound;
-            case ComparatorDataType::MATCH:
-            case ComparatorDataType::NOT_MATCH:
-                $resposeOnFound = $comparator === ComparatorDataType::MATCH ? true : false;
+            case ComparatorDataType::LIST_INTERSECTS:
+            case ComparatorDataType::LIST_NOT_INTERSECTS:
+                $resultOnIntersect = $comparator === ComparatorDataType::LIST_INTERSECTS ? true : false;
                 if ($rightVal === null && $leftVal === null) {
-                    return $resposeOnFound;
+                    return $resultOnIntersect;
                 }
                 if ($rightVal === null || $leftVal === null) {
-                    return ! $resposeOnFound;
+                    return ! $resultOnIntersect;
                 }
                 $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
                 $leftParts = is_array($leftVal) ? $leftVal : explode($listDelimiter, $leftVal);
                 $rightPartsTrimmed = array_map('trim', $rightParts);
                 $leftPartsTrimmed = array_map('trim', $leftParts);
                 $intersectArray = array_intersect($rightPartsTrimmed, $leftPartsTrimmed);
-                if (! empty($intersectArray)) {
-                    return $resposeOnFound;
-                } else {
-                    return ! $resposeOnFound;
+                return ! empty($intersectArray) ? $resultOnIntersect : ! $resultOnIntersect;
+            case ComparatorDataType::LIST_SUBSET:
+            case ComparatorDataType::LIST_NOT_SUBSET:
+                $resultOnDiff = $comparator === ComparatorDataType::LIST_SUBSET ? false : true;
+                // Empty set is always a subset
+                if ($leftVal === null) {
+                    return ! $resultOnDiff;
                 }
+                // Nothing is a subset of empty
+                if ($rightVal === null) {
+                    return $resultOnDiff;
+                }
+                $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
+                $leftParts = is_array($leftVal) ? $leftVal : explode($listDelimiter, $leftVal);
+                $rightPartsTrimmed = array_map('trim', $rightParts);
+                $leftPartsTrimmed = array_map('trim', $leftParts);
+                $diffArray = array_diff($leftPartsTrimmed, $rightPartsTrimmed);
+                return ! empty($diffArray) ? $resultOnDiff : ! $resultOnDiff;
             default:
                 throw new RuntimeException('Invalid comparator "' . $comparator . '" used in condition "' . $this->toString() . '"!');
         }
@@ -711,5 +807,34 @@ class Condition implements ConditionInterface
     public function willIgnoreEmptyValues() : bool
     {
         return $this->ignoreEmptyValues;
+    }
+
+    /**
+     * If set to FALSE this condition will not be applied to aggregated values.
+     *
+     * This can be used to fine-tune filters for instance.
+     * The default value is TRUE.
+     *
+     * @uxon-property apply_to_aggregates
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setApplyToAggregates(bool $value) : static
+    {
+        $this->applyToAggregates = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if this condition applies to aggregated values.
+     *
+     * @return bool
+     */
+    public function appliesToAggregatedValues() : bool
+    {
+        return $this->applyToAggregates;
     }
 }

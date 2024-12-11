@@ -17,7 +17,7 @@ use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
  * @author Andrej Kabachnik
  *        
  */
-interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface
+interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface, \Stringable
 {
     /**
      * 

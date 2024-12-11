@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Queue;
 
+use exface\Core\CommonLogic\Debugger;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -346,7 +347,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         }
         
         try {
-            $start = microtime(true);
+            $start = Debugger::getTimeMsNow();
             $ds = $this->reserve($event->getQueueItemUid(), ['MESSAGE_ID', 'PRODUCER']);
             
             $messageId = $ds->getCellValue('MESSAGE_ID', 0);
@@ -371,7 +372,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             }
             
             // Save he result if no errors up-to now
-            $this->saveResult($ds, $result, (microtime(true) - $start));
+            $this->saveResult($ds, $result, (Debugger::getTimeMsNow() - $start));
             $event->setResult($result);
         } catch (\Throwable $e) {
             if (! $e instanceof QueueRuntimeError) {
@@ -380,7 +381,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             
             $this->getWorkbench()->getLogger()->logException($e, $this->getErrorLogLevel($e->getLogLevel()));
             
-            $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_ERROR, (microtime(true) - $start));
+            $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_ERROR, (Debugger::getTimeMsNow() - $start));
             
             $result = ResultFactory::createErrorResult($task, $e);
             $result->setDataModified(true);

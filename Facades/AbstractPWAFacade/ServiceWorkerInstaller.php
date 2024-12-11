@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractPWAFacade;
 
 use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
+use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
@@ -167,7 +168,10 @@ JS;
 
 $filename = $this->buildUrlToServiceWorker();
 $path = $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . FilePathDataType::normalize($filename, DIRECTORY_SEPARATOR);
-file_put_contents($path, $code);
+$result = file_put_contents($path, $code);
+if ($result === false) {
+    throw new InstallerRuntimeError($this, 'Could not save ServiceWorker to ' . $path . '!');
+}
 return $filename;
     }
 
@@ -272,8 +276,12 @@ return $filename;
             $builder->addRouteFromUxon($id, $uxon);
         }
         $js = <<<JS
+
+let virtuallOffline = false;
+// Handle OfflineActionSync Event
 self.addEventListener('sync', function(event) {
-    if (event.tag === 'OfflineActionSync') {
+    // if event is OfflineActionSync and not in virtual offline mode, sync offline actions
+    if (event.tag === 'OfflineActionSync' && !virtuallOffline) {
 		event.waitUntil(
 			exfPWA
 			.actionQueue
@@ -298,6 +306,17 @@ self.addEventListener('sync', function(event) {
 				return Promise.reject(error);
 			})
 		)
+    }
+});
+
+self.addEventListener('message', function(event){
+    // if message contains virtuallyOfflineEnabled, set the flag
+    if (event.data && event.data.action === 'virtuallyOfflineEnabled') {
+        virtuallOffline = true;
+    }
+    // if message contains virtuallyOfflineDisabled, unset the flag
+    if (event.data && event.data.action === 'virtuallyOfflineDisabled') {
+        virtuallOffline = false;
     }
 });
 JS;

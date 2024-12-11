@@ -313,7 +313,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($this->hasApplyIf() === true) {
                 $object = $object ?? $this->findObject($action);
                 $conditionGrp = $this->getApplyIf($object);
-                if ($task->hasInputData()) {
+                if ($task !== null && $task->hasInputData()) {
                     if ($conditionGrp->evaluate($task->getInputData()) === false) {
                         return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched in context of action input data');
                     } else {

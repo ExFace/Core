@@ -108,7 +108,7 @@ class DownloadFile extends AbstractAction
                     $path = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . $path;
                 }
                 
-                $result = ResultFactory::createDownloadResultFromFile($task, $path);
+                $result = ResultFactory::createDownloadResultFromFilePath($task, $path);
                 break;
             case $this->isFileContentInData():
                 $contentAttrAlias = $this->getFileContentAttributeAlias();
@@ -159,7 +159,7 @@ class DownloadFile extends AbstractAction
                 $fm = $this->getWorkbench()->filemanager();
                 $path = $fm->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'Downloads' . DIRECTORY_SEPARATOR . $filename;
                 $fm->dumpFile($path, $content);
-                $result = ResultFactory::createDownloadResultFromFile($task, $path);
+                $result = ResultFactory::createDownloadResultFromFilePath($task, $path);
                 break;
             default:
                 if (! $data->hasUidColumn(true)) {

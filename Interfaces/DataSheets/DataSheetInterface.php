@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use Symfony\Component\Console\Exception\InvalidOptionException;
 
 /**
  * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
@@ -391,7 +392,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Returns the specified row as an associative array (e.g.
      * [col1 => val1, col2 => val2, ...])
      *
-     * @param number $row_number            
+     * @param number $row_number
      * @return multitype:
      */
     public function getRow($row_number = 0);
@@ -724,6 +725,17 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function sort(DataSorterListInterface $sorters = null, bool $normalizeValues = true) : DataSheetInterface;
+
+    /**
+     * Sorts rows of this datasheet to match the order those in another datasheet by matching UIDs per row.
+     *
+     * NOTE: Both sheets must have a UID column!
+     *
+     * @param DataSheetInterface $otherSheet
+     * @throws \exface\Core\Exceptions\DataSheets\DataSheetRuntimeError
+     * @return DataSheetInterface
+     */
+    public function sortLike(DataSheetInterface $otherSheet) : DataSheetInterface;
     
     /**
      * Returns TRUE if the data will be aggregated to a single line when loading.
@@ -763,4 +775,16 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function getCensoredDataSheet() : DataSheetInterface;
+
+    /**
+     * Returns the only row from the data sheet or throws an error if it has no rows or more than one.
+     * 
+     * Returns the row as an array: `[col1 => val1, col2 => val2, ...]`.
+     * 
+     * This method a convenient replacement for row number checks.
+     *
+     * @return array
+     * @throws InvalidOptionException if more then one row is within the datasheet
+     */
+    public function getSingleRow() : array;
 }

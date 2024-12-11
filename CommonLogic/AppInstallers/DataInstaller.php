@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -31,6 +32,16 @@ use exface\Core\DataTypes\DateDataType;
  * Saves all data of selected objects, that is related to the an app, in a subfolder of the app.
  * 
  * ## Configuration
+ * 
+ * By default, this installer offers the following configuration options to control
+ * it's behavior on a specific installation. These options can be added to the config
+ * of the app being installed.
+ * 
+ * - `INSTALLER.DATAINSTALLER.DISABLED` - set to TRUE to disable this installer
+ * completely (e.g. if you wish to manage the database manually).
+ * 
+ * For any installer extending from the DataInstaller you have to change the `DATAINSTALLER`
+ * part in the configuration option with the classe name of the extending installer.
  * 
  * ### Include some master data in an app package
  * 
@@ -94,6 +105,10 @@ class DataInstaller extends AbstractAppInstaller
 {
     const ENCRYPTION_CONFIG_FILE = 'Encryption.config.json';
     
+    const CONFIG_OPTION_DISABLED = 'DISABLED';
+    
+    const CONFIG_OPTION_PREFIX = 'INSTALLER';
+    
     private $path = 'Data';
     
     private $dataSheets = [];
@@ -103,6 +118,8 @@ class DataInstaller extends AbstractAppInstaller
     private $dataDefs = [];
     
     private $filenameIndexStart = 0;
+    
+    private $className = null;
     
     /**
      * 
@@ -134,6 +151,10 @@ class DataInstaller extends AbstractAppInstaller
     {       
         $indent = $this->getOutputIndentation();
         yield $indent . $this->getName() . ":" . PHP_EOL;
+        if ($this->isDisabled() === true) {
+            yield $indent . $indent . $this->getClassName() . ' disabled' . PHP_EOL;
+            return;
+        }
         
         $srcPath = $this->getDataFolderPathAbsolute($source_absolute_path);
         
@@ -210,13 +231,15 @@ class DataInstaller extends AbstractAppInstaller
         foreach ($obj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
             $behavior->disable();
             // Make sure to explicitly disable fixed values on update-columns
-            if (null !== $attr = $behavior->getUpdatedOnAttribute()) {
-                if ($col = $data_sheet->getColumns()->getByAttribute($attr))
-                $col->setIgnoreFixedValues(true);
+            if ($behavior->hasUpdatedOnAttribute()) {
+                if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedOnAttribute())) {
+                    $col->setIgnoreFixedValues(true);
+                }
             }
-            if (null !== $attr = $behavior->getUpdatedByAttribute()) {
-                if ($col = $data_sheet->getColumns()->getByAttribute($attr))
-                $col->setIgnoreFixedValues(true);
+            if ($behavior->hasUpdatedByAttribute()) {
+                if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedByAttribute())) {
+                    $col->setIgnoreFixedValues(true);
+                }
             }
         }
         
@@ -224,6 +247,12 @@ class DataInstaller extends AbstractAppInstaller
         /*foreach ($obj->getBehaviors()->getByPrototypeClass(PreventDuplicatesBehavior::class) as $behavior) {
             $behavior->disable();
         }*/
+
+        // ValidatingBehavior - if older model do not pass validation rules, they still need to be installd
+        // to be fixed!!!
+        foreach ($obj->getBehaviors()->getByPrototypeClass(ValidatingBehavior::class) as $behavior) {
+            $behavior->disable();
+        }
         
         // Disable model validation because it would instantiate all objects when the object sheet is being saved,
         // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
@@ -1008,5 +1037,49 @@ class DataInstaller extends AbstractAppInstaller
             }
         }
         return true;
+    }
+    
+    /**
+     * Returns TRUE if this installer was disabled in the configuration of the installed app.
+     *
+     * @return bool
+     */
+    protected function isDisabled() : bool
+    {
+        return $this->getConfigOption(static::CONFIG_OPTION_DISABLED) ?? false;
+    }
+    
+    /**
+     * Returns the value of a configuration option - one of the CONFIG_OPTION_xxx constants.
+     *
+     * This method automatically uses the config option prefix (namespace) of this
+     * installer.
+     *
+     * @param string $name
+     * @return string
+     */
+    protected function getConfigOption(string $name) : ?string
+    {
+        $config = $this->getApp()->getConfig();
+        $option = static::CONFIG_OPTION_PREFIX . '.' . mb_strtoupper($this->getClassName()) . '.' . $name;
+        if ($config->hasOption($option)) {
+            return $config->getOption($option);
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * Returns the short name of the class, means name without namespace.
+     * 
+     * @return string
+     */
+    protected function getClassName() : string
+    {
+        if ($this->className === null) {
+            $refl = new \ReflectionClass($this);
+            $this->className = $refl->getShortName();
+        }
+        return $this->className;
     }
 }

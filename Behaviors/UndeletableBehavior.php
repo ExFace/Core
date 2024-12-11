@@ -139,7 +139,7 @@ class UndeletableBehavior extends AbstractBehavior
     }
     
     /**
-     * This method is responsible for analyzing the expressions for the behavior defined in the metamodel, gethering the object's
+     * This method is responsible for analyzing the expressions for the behavior defined in the metamodel, gathering the object's
      * relevant data from the metamodel and evaluating whether the deletion for a dataset is allowed, or not.
      * 
      * @param OnBeforeDeleteDataEvent $event

@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2022-11-09 14:55:27",
+            "MODIFIED_ON": "2024-09-13 12:13:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -94,7 +94,7 @@
             "DATA_SOURCE": "0x11e6b09e2002641f8943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
-            "PARENT_OBJECT": "",
+            "PARENT_OBJECT": null,
             "DATA_ADDRESS_PROPS": {
                 "folder_depth": 0
             },
@@ -183,6 +183,16 @@
                             "file_extension": "json",
                             "folder_path": "logs\/details",
                             "do_not_prefill": true
+                        }
+                    },
+                    {
+                        "caption": "Repair broken log files",
+                        "icon": "wrench",
+                        "action": {
+                            "alias": "exface.Core.CleanUp",
+                            "areas": [
+                                "logs"
+                            ]
                         }
                     }
                 ]

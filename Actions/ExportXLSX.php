@@ -34,8 +34,53 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * By default, filtering will be enabled for all columns and the first row (headers) will be frozen. These features
  * are controlled by the properties `enable_column_filters` and `freeze_header_row` respectively.
  * 
+ * ## What data will be exported?
+ * 
+ * You can explicitly define the columns to be exported via `columns`. If you don't and the action is placed in a data
+ * widget (e.g. a `DataTable`), it will take all exportable columns of that data widget. Thus, you can exclude table 
+ * columns from the export by setting `exportable` to `false` in the column configuration. 
+ * 
+ * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
+ * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
+ * 
+ * ## Data type handling
+ * 
  * If the exported data uses custom data types, they can be mapped to Excel format expressions manually
  * using `data_type_map`.
+ *
+ *
+ *
+ * ## Filename Placeholders
+ *
+ *
+ *
+ * You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
+ * For example `"filename":"[#=Now('yyyy-MM-dd')#]_[#~data:Materialkategorie:LIST_DISTINCT#]"` could be used to include both
+ * the current date and some information about the categories present in the export and result in a filename like `2024-09-10_Muffen`.
+ *
+ * ### Supported placeholders:
+ *
+ * - `[#=Formula()#]` Allows the use of formulas.
+ * - `[#~data:attribute_alias:AGGREGATOR#]` Aggregates the data column for the given alias by applying the specified aggregator. See below for
+ *a list of supported aggregators.
+ *
+ *
+ *
+ * ### Supported aggregators:
+ *
+ * - `SUM` Sums up all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ * - `AVG` Calculates the arithmetic mean of all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ * - `MIN` Gets the lowest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ * non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ * - `MAX` Gets the highest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ *  non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ * - `COUNT` Counts the total number of rows in the column.
+ * - `COUNT_DISTINCT` Counts the number of unique entries in the column, excluding empty rows.
+ * - `LIST` Lists all non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ * - `LIST_DISTINCT` Lists all unique, non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ *
+ *
+ * ## Examples
  * 
  * Here is an example of the configuration for a machine-friendly export (no filters, no frozen rows, aliases as headers):
  * 
@@ -49,8 +94,6 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * 
  * ```
  * 
- * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
- * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
  *  
  * @author SFL
  *
@@ -198,7 +241,7 @@ class ExportXLSX extends ExportJSON
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::getWriter()
      * 
-     * @return \XLSXWriter
+     * @return XLSXWriter
      */
     protected function getWriter()
     {

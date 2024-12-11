@@ -14,6 +14,12 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 class HttpTask extends GenericTask implements HttpTaskInterface
 {
+    const REQUEST_ATTRIBUTE_NAME_ACTION = "action";
+
+    const REQUEST_ATTRIBUTE_NAME_PAGE = "page"; 
+
+    const REQUEST_ATTRIBUTE_NAME_WIDGET = "widget";
+
     private $request = null;
     
     /**
@@ -24,8 +30,20 @@ class HttpTask extends GenericTask implements HttpTaskInterface
     public function __construct(WorkbenchInterface $workbench, FacadeInterface $facade = null, ServerRequestInterface $request = null)
     {
         parent::__construct($workbench, $facade);
-        if (is_null($request)) {
+        if (null === $request) {
             $request = ServerRequest::fromGlobals();
+        } else {
+            // See if certain parameters were already resolved and stored in request attributes:
+            // e.g. in FacadeResolverMiddleware
+            if (null !== $val = $request->getAttribute(self::REQUEST_ATTRIBUTE_NAME_ACTION)) {
+                $this->setActionSelector($val);
+            }
+            if (null !== $val = $request->getAttribute(self::REQUEST_ATTRIBUTE_NAME_PAGE)) {
+                $this->setPageSelector($val);
+            }
+            if (null !== $val = $request->getAttribute(self::REQUEST_ATTRIBUTE_NAME_WIDGET)) {
+                $this->setWidgetIdTriggeredBy($val);
+            }
         }
         $this->setRequest($request);
     }

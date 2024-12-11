@@ -61,9 +61,9 @@
     "rows": [
         {
             "CREATED_ON": "2020-06-07 16:00:38",
-            "MODIFIED_ON": "2021-04-13 12:43:15",
+            "MODIFIED_ON": "2024-10-14 12:40:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eaa8d7dc5a94abbba0e4b318306b9a",
             "OBJECT": "0x11ea63083a80f8c8a2e30205857feb80",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
@@ -78,16 +78,16 @@
                     "inherit_columns": false,
                     "column_to_column_mappings": [
                         {
-                            "from": "=1",
-                            "to": "DISABLED_FLAG"
-                        },
-                        {
                             "from": "UID",
                             "to": "UID"
                         },
                         {
                             "from": "MODIFIED_ON",
                             "to": "MODIFIED_ON"
+                        },
+                        {
+                            "from": "=1",
+                            "to": "DISABLED_FLAG"
                         }
                     ]
                 }
@@ -98,9 +98,9 @@
         },
         {
             "CREATED_ON": "2020-06-07 19:50:33",
-            "MODIFIED_ON": "2021-04-13 12:43:45",
+            "MODIFIED_ON": "2024-10-14 12:41:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eaa8f7f9e8b3c6bba0e4b318306b9a",
             "OBJECT": "0x11ea63083a80f8c8a2e30205857feb80",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
@@ -115,16 +115,16 @@
                     "inherit_columns": false,
                     "column_to_column_mappings": [
                         {
-                            "from": "=0",
-                            "to": "DISABLED_FLAG"
-                        },
-                        {
                             "from": "UID",
                             "to": "UID"
                         },
                         {
                             "from": "MODIFIED_ON",
                             "to": "MODIFIED_ON"
+                        },
+                        {
+                            "from": "=0",
+                            "to": "DISABLED_FLAG"
                         }
                     ]
                 }

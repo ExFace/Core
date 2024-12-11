@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Utils;
 /*
  * @license MIT License
+ * @link https://github.com/mk-j/PHP_XLSXWriter
  * */
 
 class XLSXWriter

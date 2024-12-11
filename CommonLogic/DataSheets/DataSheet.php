@@ -3,6 +3,9 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
+use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -112,6 +115,13 @@ class DataSheet implements DataSheetInterface
     
     private $dataSourceHasMoreRows = true;
 
+    /**
+     * The maximum number of characters of string data to be represented in debug data.
+     * Truncate any string data to this length before displaying it for debug purposes
+     * to avoid memory overflow.
+     */
+    private const DEBUG_STRING_MAX_LENGTH = 10000;
+
     public function __construct(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
     {
         $this->exface = $meta_object->getModel()->getWorkbench();
@@ -179,7 +189,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::joinLeft()
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $other_sheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relation_path = '') : DataSheetInterface
+    public function joinLeft(DataSheetInterface $other_sheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relation_path = '') : DataSheetInterface
     {
         // First copy the columns of the right data sheet ot the left one
         $right_cols = array();
@@ -202,6 +212,7 @@ class DataSheet implements DataSheetInterface
                 }
                 // Find rows in the other sheet, that match the currently processed key
                 $right_row_nrs = $rCol->findRowsByValue($row[$leftKeyColName]);
+                // If corresponding rows are found in the right sheet, apply their values
                 if (false === empty($right_row_nrs)) {
                     // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
                     // to loop through them. The first row is simply joined to the current left row
@@ -226,8 +237,13 @@ class DataSheet implements DataSheetInterface
                         $needRowCopy = true;
                     }                    
                 } else {
-                    foreach ($right_cols as $col) {
-                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                    // If the right sheet does not have corresponding rows, treat them as empty.
+                    // BUT only if we are JOINing with a relation. If JOINing the same object,
+                    // do not empty its values just because the right sheet did not has less data!
+                    if ($relation_path !== '') {
+                        foreach ($right_cols as $col) {
+                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                        }
                     }
                 }
             }
@@ -277,7 +293,7 @@ class DataSheet implements DataSheetInterface
                 $columns_with_formulas[] = $this_col->getName();
                 continue;
             }
-            if ($other_col = $other_sheet->getColumn($this_col->getName())) {
+            if ($other_col = $other_sheet->getColumns()->get($this_col->getName())) {
                 // TODO probably need to copy values to rows with matching UIDs instead of relying on identical sorting here
                 if (count($this_col->getValues(false)) > 0 && count($this_col->getValues(false)) !== count($other_col->getValues(false))) {
                     throw new DataSheetImportRowError($this, 'Cannot replace rows of column "' . $this_col->getName() . '": source and target columns have different amount of rows!', '6T5V1XX');
@@ -687,7 +703,8 @@ class DataSheet implements DataSheetInterface
                 }
                 // Otherwise add an IN-filter for foreign keys
                 $foreignKeysUidAlias = DataAggregation::stripAggregator($subsheet->getJoinKeyAliasOfSubsheet());
-                $subsheet->getFilters()->addConditionFromString($foreignKeysUidAlias, implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreignKeys), EXF_COMPARATOR_IN);
+                $foreignKeysUidAttr = $subsheet->getMetaObject()->getAttribute($foreignKeysUidAlias);
+                $subsheet->getFilters()->addConditionFromString($foreignKeysUidAlias, implode($foreignKeysUidAttr->getValueListDelimiter(), $foreignKeys), EXF_COMPARATOR_IN);
                 
                 // Do not sort subsheets and do not count data in data source!
                 $subsheet->setAutoSort(false);
@@ -714,7 +731,11 @@ class DataSheet implements DataSheetInterface
                     continue 2;
             }
             
-            $vals = $expr->evaluate($this);
+            try {
+                $vals = $expr->evaluate($this);
+            } catch (Throwable $e) {
+                throw new DataSheetReadError($this, $e->getMessage(), null, $e);
+            }
             if (is_array($vals)) {
                 // See if the expression returned more results, than there were rows. If so, it was also performed on
                 // the total rows. In this case, we need to slice them off and pass to set_column_values() separately.
@@ -889,14 +910,6 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
-        if ($eventBefore->isPreventUpdate() === true) {
-            if ($commit && ! $transaction->isRolledBack()) {
-                $transaction->commit();
-            }
-            return $this->countRows();
-        }
         
         // Check if the data source already contains rows with matching UIDs
         // TODO do not update rows, that were created here. Currently they are created and immediately updated afterwards.
@@ -970,6 +983,16 @@ class DataSheet implements DataSheetInterface
             } else {
                 throw new DataSheetWriteError($this, 'Creating rows from an update statement without a UID-column not supported yet!', '6T5VBHF');
             }
+        }
+        
+        // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
+        // Fire it after the create to be sure every row has UIDs now and are actually updates
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
+        if ($eventBefore->isPreventUpdate() === true) {
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $this->countRows();
         }
         
         // After all preparation is done, check to see if there are any rows to update left
@@ -1178,6 +1201,9 @@ class DataSheet implements DataSheetInterface
         
         // Handle subsheets with columns with relations
         foreach ($relatedSheets as $relPathStr => $relatedSheet) {
+            if ($relatedSheet->getMetaObject()->isWritable() === false) {
+                continue;
+            }
             $relatedSheet = $this->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
             $relatedSheet->dataUpdate($create_if_uid_not_found, $transaction);
             // TODO update data in the main sheet with values from the related sheet - only for those columns with
@@ -1323,7 +1349,9 @@ class DataSheet implements DataSheetInterface
                         if ($relNestedSheetCol === $col) {
                             continue;
                         }
-                        $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        if ($col->isAttribute() && $col->getAttribute()->isFilterable() && ! ($col->getDataType() instanceof DataSheetDataType)) {
+                            $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        }
                     }
                     // Read the data
                     $nestedUidSheet->dataRead();
@@ -1620,9 +1648,14 @@ class DataSheet implements DataSheetInterface
                 $new_uids[] = $row[$uidKey];
             }
         } catch (\Throwable $e) {
-            $transaction->rollback();
-            $commit = false;
-            throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
+            try {
+                $commit = false;
+                $transaction->rollback();
+                throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
+            } catch (\Throwable $eRollback) {
+                $this->getWorkbench()->getLogger()->logException($eRollback);
+                throw new DataSheetWriteError($this, 'Cannot rollback transaction after error! Initial error: ' . $e->getMessage(), null, $e);
+            }
         }
         
         // Save the new UIDs in the data sheet
@@ -1632,6 +1665,9 @@ class DataSheet implements DataSheetInterface
         
         // Handle subsheets with columns with relations
         foreach ($relatedSheets as $relPathStr => $relatedSheet) {
+            if ($relatedSheet->getMetaObject()->isWritable() === false) {
+                continue;
+            }
             $this->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
             $relatedSheet->dataCreate($update_if_uid_found, $transaction);
             // TODO update data in the main sheet with values from the related sheet - only for those columns with
@@ -2435,31 +2471,17 @@ class DataSheet implements DataSheetInterface
         if ($uxon->hasProperty('filters')) {
             $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters'), $this->getMetaObject()));
         }
-        
-        if ($uxon->hasProperty('rows_limit')) {
-            $val = $uxon->getProperty('rows_limit');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
-        } elseif ($uxon->hasProperty('rows_on_page')) {
-            // Still support old property name rows_on_page
-            $val = $uxon->getProperty('rows_on_page');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
+
+        // Limit. Still support old property name rows_on_page.
+        $val = $uxon->hasProperty('rows_limit') ? $uxon->getProperty('rows_limit') : $uxon->getProperty('rows_on_page');
+        if ($val !== null) {
+            $this->setRowsLimit(IntegerDataType::cast($val));
         }
         
-        if ($uxon->hasProperty('rows_offset')) {
-            $val = $uxon->getProperty('rows_offset');
-            if ($val === '') {
-                $val = 0;
-            }
-            $this->setRowsOffset($val);
-        } elseif ($uxon->hasProperty('row_offset')) {
-            // Still support old property name row_offset
-            $this->setRowsOffset($uxon->getProperty('row_offset'));
+        // Offset. Still support old property name row_offset.
+        $val = $uxon->hasProperty('rows_offset') ? $uxon->getProperty('rows_offset') : $uxon->getProperty('row_offset');
+        if ($val !== null && $val !== '') {
+            $this->setRowsOffset(IntegerDataType::cast($val));
         }
         
         if ($uxon->hasProperty('sorters')) {
@@ -2643,6 +2665,9 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsLimit($value) : DataSheetInterface
     {
+        if ($value !== null && $value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid limit "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->rows_on_page = $value;
         return $this;
     }
@@ -2662,6 +2687,9 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsOffset(int $value) : DataSheetInterface
     {
+        if ($value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid offset "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->row_offset = $value;
         return $this;
     }
@@ -2890,6 +2918,7 @@ class DataSheet implements DataSheetInterface
         $condGrp = $conditionOrGroup->toConditionGroup();
         
         if ($readMissingData === true) {
+            // TODO #DataCollector needs to be used here instead of all the following logic
             foreach ($condGrp->getConditionsRecursive() as $cond) {
                 foreach ($cond->getExpression()->getRequiredAttributes() as $attrAlias) {
                     if (! $this->getColumns()->getByExpression($attrAlias)) {
@@ -2976,7 +3005,38 @@ class DataSheet implements DataSheetInterface
         $this->rows = $sorter->sort($this->getRows());
         return $this;
     }
-    
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sortLike()
+     */
+    public function sortLike(DataSheetInterface $otherSheet) : DataSheetInterface
+    {
+        if (! $this->getMetaObject()->isExactly($otherSheet->getMetaObject())) {
+            throw new DataSheetRuntimeError($this, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet based on a different object! The objects must be the same!');
+        }
+        if (! $this->hasUidColumn(true) || ! $otherSheet->hasUidColumn(true)) {
+            throw new DataSheetRuntimeError($this, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet: both data sheet must have UID columns filled with values!');
+        }
+        $orderedRowUids = $otherSheet->getUidColumn()->getValues();
+        $bkpSheet = $this->copy();
+        $bkpRows = $this->getRows();
+        $bkpUidCol = $bkpSheet->getUidColumn();
+        $this->removeRows();
+        foreach ($orderedRowUids as $uid) {
+            $bkpIdx = $bkpUidCol->findRowByValue($uid);
+            if ($uid === false || $uid === null) {
+                throw new DataSheetRuntimeError($bkpSheet, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet: row UID "' . $uid . '" found in sorted sheet, but not in the other sheet!');
+            }
+            $this->addRow($bkpRows[$bkpIdx], false, false);
+        }
+        if ($this->countRows() !== $bkpSheet->countRows()) {
+            throw new DataSheetRuntimeError($bkpSheet, 'Cannot restore sorting order: row count mismatch!');
+        }
+        return $this;
+    }
+
     /**
      *
      * {@inheritdoc}
@@ -3070,6 +3130,28 @@ class DataSheet implements DataSheetInterface
         // Add a tab with the data sheet UXON
         $uxon_tab = $debug_widget->createTab();
         $uxon_tab->setCaption($tabCaption);
+        $debugSheet = $this->getCensoredDataSheet();
+        if (! $debugSheet->isEmpty()) {
+            foreach ($debugSheet->getColumns() as $col) {
+                $dataType = $col->getDataType();
+
+                // Reduce displayed data to prevent memory overflow.
+                switch (true) {
+                    case $dataType instanceof BinaryDataType:
+                        // Binary data is not human-readable and can be discarded.
+                        $col->setValueOnAllRows(null);
+                        break;
+                    case $dataType instanceof StringDataType:
+                        // Truncate strings that go beyond human-readable lengths.
+                        foreach ($col->getValues() as $rowNo => $value) {
+                            if($value !== null && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
+                                $col->setValue($rowNo, mb_substr($value, 0, self::DEBUG_STRING_MAX_LENGTH) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')');
+                            }
+                        }
+                        break;
+                }
+            }
+        }
         $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
             'widget_type' => 'InputUxon',
             'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
@@ -3079,7 +3161,7 @@ class DataSheet implements DataSheetInterface
             'disabled' => true,
             'root_prototype' => '\\' . DataSheet::class,
             'root_object' => $this->getMetaObject()->getAliasWithNamespace(),
-            'value' => $this->getCensoredDataSheet()->exportUxonObject()->toJson(true)
+            'value' => $debugSheet->exportUxonObject()->toJson(true)
         ]));
         $uxon_tab->addWidget($uxon_widget);
         $debug_widget->addTab($uxon_tab);
@@ -3177,5 +3259,22 @@ class DataSheet implements DataSheetInterface
             }
         }
         return $removeRows;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     */
+    public function getSingleRow() : array
+    {
+        $cnt = $this->countRows();
+        if ($cnt === 0) {
+            throw new DataSheetStructureError($this, "Data is empty while exactly one row is expected");
+        }
+        if ($cnt > 1) {
+            throw new DataSheetStructureError($this, "Multiple data rows found while exactly one is expected");
+        }
+        return $this->rows[0];
     }
 }

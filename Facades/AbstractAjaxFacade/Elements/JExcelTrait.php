@@ -223,6 +223,14 @@ JS;
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         $disabledJs = $widget->isDisabled() ? 'true' : 'false';
         
+        if (($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute()) {
+            $rowNumberCol = $widget->getRowNumberColumn();
+            $rowNumberColNameJs =  "'{$rowNumberCol->getDataColumnName()}'";
+        } else {
+            $rowNumberCol = null;
+            $rowNumberColNameJs = 'null';
+        }
+        
         /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($widget->getColumns() as $colIdx => $col) {
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
@@ -298,11 +306,15 @@ JS;
                     }
                 }, 
 
-JS;           
+JS;       
+            // If there is a row_number_attribute_alias, double check if the same attribute is also used
+            // as a regular column. This does not make sense, as the row numbers cannot be explicitly edited.
+            // It is also a technical problem because 
+            if ($rowNumberCol !== null && $col !== $rowNumberCol && $col->getDataColumnName() === $rowNumberCol->getDataColumnName()) {
+                throw new WidgetConfigurationError($widget, 'Cannot use the row number column of a DataSpreadSheet as a regular column too!');
+            }
         }
         $columnsJson = '{' . $columnsJson . '}';
-        
-        $rowNumberColName = ($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute() ? "'{$widget->getRowNumberColumn()->getDataColumnName()}'" : 'null'; 
         
         return <<<JS
 
@@ -531,7 +543,7 @@ JS;
         _dom: {$this->buildJsJqueryElement()}[0],
         _colNames: {$colNamesJson},
         _cols: {$columnsJson},
-        _rowNumberColName: $rowNumberColName,
+        _rowNumberColName: $rowNumberColNameJs,
         _initData: [],
         _disabled: $disabledJs,
         getJExcel: function(){
@@ -571,7 +583,9 @@ JS;
             if (mInitVal === undefined || mInitVal === null) {
                 mInitVal = '';
             } else {
-                //mInitVal = oCol.formatter ? oCol.formatter(mInitVal) : mInitVal;
+                // Make sure to parse the initial value too! For example, a decimal would be `100.00`
+                // as raw (initial) data and `100` once edited in the spreadsheet.
+                mInitVal = oCol.parser ? oCol.parser(mInitVal) : mInitVal;
             }
 
             // Checkboxes cannot distinguish `false` and `null` or empty. Catch that here 
@@ -603,8 +617,9 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
-            var fnValidator = this.getColumnModel(iCol).validator;
-            if (fnValidator === null || fnValidator === undefined) {
+            var oColModel = this.getColumnModel(iCol);
+            var fnValidator = oColModel.validator;
+            if (fnValidator === null || fnValidator === undefined || oColModel.hidden === true) {
                 return true;
             }            
             return fnValidator(mValue);
@@ -1884,6 +1899,23 @@ JS;
     return jqExcel.find('.exf-spreadsheet-invalid').length === 0;
 })({$this->buildJsJqueryElement()})
         
+JS;
+    }
+    
+    public function buildJsValidationError()
+    {
+        $required = $this->getWidget() instanceof iCanBeRequired ? $this->getWidget()->isRequired() : false;
+        $bRequiredJs = $required ? 'true' : 'false';
+        return <<<JS
+        
+(function(jqExcel) {
+    var bRequired = $bRequiredJs;
+    if (jqExcel.length === 0) {
+        return bRequired ? false : true;
+    }
+    jqExcel[0].exfWidget.validateAll();
+})({$this->buildJsJqueryElement()})
+
 JS;
     }
     

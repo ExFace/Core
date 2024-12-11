@@ -38,7 +38,7 @@ class TimeZoneDataType extends StringDataType implements EnumDataTypeInterface
      */
     public function getLabels()
     {
-        return array_keys($this::getValuesStatic());
+        return $this::getValuesStatic();
     }
     
     /**
@@ -48,6 +48,9 @@ class TimeZoneDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function isValidStaticValue($value)
     {
+        if ($value === null || $value === '') {
+            return false;
+        }
         return \IntlTimeZone::getCanonicalID($value) !== false;
     }
 }

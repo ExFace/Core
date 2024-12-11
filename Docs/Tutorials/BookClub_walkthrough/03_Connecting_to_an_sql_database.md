@@ -44,7 +44,7 @@ Our new connection should now appear at the top of the list.
 
 The `MySqlConnector` prototype, that we use here works for MySQL databases as the name suggests. It's configuration (host, dbase, etc.) is also specific to MySQL and may look very different for another data source or even another database engine. You can find the documentation for all available connectors in the main menu at `Administratyion > Documentation > Data Connectors`.
 
-The idea of prototypes with their specific hierarchical configuration is a central concept. There are prototypes for a lot of things: widgets, actions, data types, etc. The configuration is done via our modeling language called [UXON](../../Creating_UIs/UXON/index.md) (User eXperience Object Notation) in special [editors](../../Creating_UIs/UXON/Introduction_to_the_UXON_editor.md), that provide autosuggest, presets (the magic wand above), quick refference, etc. The editor knows, what configurable properties each prototype has and can even suggest possible values in many cases.
+The idea of prototypes with their specific hierarchical configuration is a central concept. There are prototypes for a lot of things: widgets, actions, data types, etc. The configuration is done via our modeling language called [UXON](../../UXON/index.md) (User eXperience Object Notation) in special [editors](../../UXON/Introduction_to_the_UXON_editor.md), that provide autosuggest, presets (the magic wand above), quick refference, etc. The editor knows, what configurable properties each prototype has and can even suggest possible values in many cases.
 
 ## 2. Create a data source
 
@@ -67,5 +67,122 @@ Now we have a data source in the model of the app `tutorial.BookClub` which uses
 Note, that apart from the default connection and query builder (that we have filled above) there is an option to switch temporarily to another set of the two - the "current" connection and query builder. The difference is that the defaults are saved in the app's package and thus will be transferred to another server together with the app. The "current" ones are local settings only and will only have effect on this particular server.
 
 Read more about data sources and connections in the [model docs](../../creating_metamodels/data_sources/index.md).
+
+## 3. Create a new database for the book club
+
+We will use a MySQL database to store all the data required for the [book club tutorial](index.md).
+
+Copy & paste the following SQL to our Adminer Database Management Tool. It will create a database named `tutorial_bookclub`. You can change that name, of course, but you will need to keep track of it in all subsequent steps yourself!
+
+To access Adminer, follow these steps:
+
+1. Navigate to Administration -> Metamodel -> Connections
+
+![Connections](Images/Connections.png)
+
+2. Select your database and press the button "SQL admin".
+
+![Adminer](Images/Adminer.png)
+
+3. You are now inside of Adminer Database Management Tool. Here click the link "SQL command" on the upper left side. Now you can paste the following SQL and press "Execute". The database for your bookclub is now created.
+
+```
+CREATE DATABASE IF NOT EXISTS `tutorial_bookclub` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `tutorial_bookclub`;
+
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `book` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
+  `title` varchar(100) NOT NULL,
+  `series` varchar(100) DEFAULT NULL,
+  `author` varchar(200) DEFAULT NULL,
+  `description_toc` TEXT NULL,
+  `isbn` varchar(13) DEFAULT NULL,
+  `publisher` varchar(50) DEFAULT NULL,
+  `book_size` varchar(10) NULL DEFAULT '',
+  `year` int(4) DEFAULT NULL,
+  `age_min` int(2) DEFAULT NULL,
+  `age_max` int(2) DEFAULT NULL,
+  `pages` int(11) DEFAULT NULL,
+  `language_id` int(11) DEFAULT NULL,
+  `owner_id` int(11) NOT NULL,
+  `owner_comment` TEXT NULL,
+  `owner_rating` int(1) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `book_category` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
+  `category_id` int(11) NOT NULL,
+  `book_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `category` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
+  `name` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `language` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
+  `name` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `loan` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
+  `member_id` int(11) NOT NULL,
+  `book_id` int(11) NOT NULL,
+  `taken` date NOT NULL,
+  `given_back` date DEFAULT NULL,
+  `comment` varchar(200) DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `member` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
+  `name` varchar(50) NOT NULL,
+  `user_oid` binary(16) DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+COMMIT;
+
+```
 
 [<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](02_Creating_a_new_app.md) [<kbd> <br>Next > <br> </kbd>](04_Generating_a_model_from_an_SQL_schema.md)

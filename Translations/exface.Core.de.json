@@ -39,6 +39,8 @@
 	"ACTION.EXPORTDATA.NAME": "Exportieren",
 	"ACTION.EXPORTDATA.ROWOVERFLOW": "Es wurde die maximale Anzahl von %number% Einträgen in die Datei geschrieben. ",
 	"ACTION.EXPORTJSON.NAME": "JSON exportieren",
+	"ACTION.EXPORTJPEG.NAME": "JPG exportieren",
+	"ACTION.EXPORTPNG.NAME": "PNG exportieren",
 	"ACTION.EXPORTXLSX.NAME": "Excel exportieren",
 	"ACTION.EXPORTXLSX.USERNAME": "Benutzername",
 	"ACTION.EXPORTXLSX.TIMESTAMP": "Zeitpunkt des Exports",
@@ -97,7 +99,10 @@
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
 	"CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON": "Nicht verfügbar, wenn keine einzelnen Objekte selektiert werden können",
 
-    "ACTION.READDATA.NAME": "Suchen",
+    "ACTION.PRINTTEMPLATE.NAME": "Drucken",
+    "ACTION.PRINTXLSX.NAME": "Excel",
+    
+	"ACTION.READDATA.NAME": "Suchen",
     "ACTION.READDATA.SEARCH": "Suchen",
     "ACTION.READDATA.RESULT": "%number% Einträge gelesen",
     "ACTION.REFRESHWIDGET.NAME": "Aktualisieren",
@@ -138,6 +143,7 @@
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR": "%object% auf Zeile %row% darf nicht gelöscht werden!",
 	
 	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Daten in Zeile(n) %row% von Objekt %object% sind Duplikate!",
+
 	
 	"BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION": "Übersetzen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE": "Datei mit Übersetzungen",
@@ -147,7 +153,9 @@
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS": "Status",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW": "Neu!",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Vererbt",	
-    
+    	
+	"BEHAVIOR.VALIDATINGBEHAVIOR.LINE": "Zeile",
+	
     "CONTEXT.ACTIONTEST.NAME": "ActionTest",
 	
     "CONTEXT.API.RESULT": "'%operation_name%' erfolgreich!",
@@ -157,10 +165,14 @@
     "CONTEXT.DEBUG.NAME": "Developer tools",
     "CONTEXT.DEBUG.TRACE_STARTED": "Tracer AN: Alle Server-Requests werden jetzt detailliert gelogt.",
     "CONTEXT.DEBUG.TRACE_STOPPED": "Tracer AUS: Server-Requests werden nicht mehr gelogt.",
-    "CONTEXT.DEBUG.TRACE_SERVER_REQUESTS": "Trace server requests",
+    "CONTEXT.DEBUG.TRACE_SERVER_REQUESTS": "Trace Server-Requests",
     "CONTEXT.DEBUG.TRACES_LIST_CAPTION": "Trace logs",
-    "CONTEXT.DEBUG.TRACES_LIST_BUTTON": "Traces anzeigen",
+    "CONTEXT.DEBUG.TRACES_LIST_BUTTON": "Server-Traces anzeigen",
     "CONTEXT.DEBUG.TRACE_NAME": "Trace",
+    "CONTEXT.DEBUG.TRACE_JS_STARTED": "JS-Tracer AN: Fehler im JavaScript werden als Pop-Up angezeigt (für Debugging)",
+    "CONTEXT.DEBUG.TRACE_JS_STOPPED": "JS-Tracer AUS: Fehler im JavaScript werden nur im Hintergrund geloggt",
+    "CONTEXT.DEBUG.TRACE_JS": "Trace fron-end errors",
+    "CONTEXT.DEBUG.TRACES_JS_LIST_BUTTON": "Frontend-Traces anzeigen",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION": "Intercept user communication",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION_HINT": "Temporary re-route all messages to certain users or roles while interception is active. Multiple values can be separated by comma.",
     "CONTEXT.DEBUG.INTERCEPT_STARTED": "Interceptor AN: alle Nachrichten werden zu %recipients% umgeleitet",
@@ -474,7 +486,14 @@
 	"WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
 	
 	"WIDGET.POPUP.CLOSE_BUTTON_CAPTION": "Abbrechen",
-	
+
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED": "Die Datei \"%path%\" ist beschädigt! Bitte prüfen Sie die Datei auf Fehler und versuchen Sie es erneut.",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE": "Die Datei \"%path%\" hat einen unbekannten Inhaltstypen (\"%mimetypes%\").",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER": "Der Upload ist aufgrund folgender Fehler fehlgeschlagen:",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE": "Der Upload ist fehlgeschlagen, weil bei den folgenden %number% Dateien Fehler aufgetreten sind: %files%",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION": "Unter \"%path%\" wurde ein Backup der beschädigten Datei gespeichert.",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_FOOTER": "Es wurden keine Daten im System gespeichert!",
+
 	"WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED": "Nur Dateitypen %extensions% erlaubt!",
 	"WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED": "Nur Inhaltstypen %mimetypes%  erlaubt!",
 	"WIDGET.UPLOADER.ERROR_FILE_TOO_BIG": "Datei zu groß: max. %mb% MB erlaubt!",

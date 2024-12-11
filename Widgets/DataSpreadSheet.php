@@ -274,11 +274,14 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, 
     /**
      * Save row numbers to an attribute.
      * 
+     * This option binds the row number column of the spreadsheet (the one a the very left) to an
+     * attribute. This will result in row numbers being saved to the data source. This is very
+     * usefull for all sorts of child-objets, that need to be explicitly ordererd (i.e. by
+     * drag and drop) - e.g. tasks in a project or similar.
+     * 
      * NOTE: this will automatically add a sorter over this attribute if no sorters are explicitly
      * defined for the widget. However, if sorters are manually set, they should take care of
      * the proper sorting of row numbers!
-     * 
-     * 
      * 
      * @uxon-property row_number_attribute_alias
      * @uxon-type metamodel:attribute

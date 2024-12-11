@@ -20,9 +20,9 @@ We will also handle some advanced topics:
 
 ## Table of contents
 
-1. [Preparation & requirements](01_Preparation.md) - required apps and packages, database schema, etc.
+1. [Preparation & requirements](01_Preparation.md) - required apps and packages, etc.
 2. [Creating a new app](02_Creating_a_new_app.md)
-3. [Setting up a data source in the model](03_Connecting_to_an_sql_database.md) - MySQL connection and data source
+3. [Setting up a data source in the model](03_Connecting_to_an_sql_database.md) - MySQL connection, data source and database schema
 4. [Generating a metamodel from an SQL schema](04_Generating_a_model_from_an_SQL_schema.md) - Model builder, introduction to the object editor
 5. [Creating a simple page](05_Creating_the_apps_first_pages.md) - introduction to the UXON editor, presets, etc.
 6. [Organizing pages and navigation](06_Organizing_pages.md) - creating master data pages and a tile menu

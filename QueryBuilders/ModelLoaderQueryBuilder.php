@@ -68,6 +68,16 @@ class ModelLoaderQueryBuilder implements QueryBuilderInterface
     {
         return $this->qb->canReadAttribute($attribute);
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\DummyQueryBuilder::canWriteAttribute()
+     */
+    public function canWriteAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        return $this->qb->canReadAttribute($attribute);
+    }
     
     /**
      *
