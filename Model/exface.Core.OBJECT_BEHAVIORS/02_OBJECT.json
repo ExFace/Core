@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2016-04-25 13:19:43",
-            "MODIFIED_ON": "2023-02-09 11:17:55",
+            "MODIFIED_ON": "2024-12-11 15:24:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e60ad7563429b089840050568905af",
@@ -94,10 +94,10 @@
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
-            "PARENT_OBJECT": "",
+            "PARENT_OBJECT": null,
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": {
-                "widget_type": "Panel",
+                "widget_type": "Dialog",
                 "widgets": [
                     {
                         "attribute_alias": "NAME"
