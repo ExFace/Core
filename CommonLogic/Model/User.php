@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -426,6 +427,30 @@ class User implements UserInterface
         }
         
         return false;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::hasRolesAll()
+     */
+    public function hasRolesAll(array $selectorsOrStrings) : bool
+    {
+        $roles = [];
+        foreach ($selectorsOrStrings as $role) {
+            if ($role instanceof UserRoleSelectorInterface) {
+                $roles[] = $role;
+            } else {
+                $roles[] = new UserRoleSelector($this->getWorkbench(), $role);
+            }
+        }
+    
+        foreach ($roles as $selector) {
+            if ($this->hasRole($selector) === false) {
+                return false;
+            }
+        }
+        return true;
     }
     
     /**
