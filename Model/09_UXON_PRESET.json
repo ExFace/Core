@@ -5420,6 +5420,35 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2024-12-11 12:15:53",
+            "MODIFIED_ON": "2024-12-11 12:16:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11efb71c4acfbde6b71c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Check if data matches a formula every time an object is saved",
+            "DESCRIPTION": "E.g. you can check, if a value is less than a maximum defined somewhere else. Concider planning activities for a project. The end-date of an activity cannot be later than the end date of a project.",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/ValidatingBehavior.php",
+            "UXON": {
+                "invalid_if_on_update": [
+                    {
+                        "error_text": "An activity cannot end latern than the planned end of the project",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "ACTIVITY_END_DATE",
+                                "comparator": "<=",
+                                "value": "PROJECT__END_DATE_PLAN"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
