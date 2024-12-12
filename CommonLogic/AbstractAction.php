@@ -24,7 +24,6 @@ use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
