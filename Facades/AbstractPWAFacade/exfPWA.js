@@ -661,7 +661,13 @@ self.addEventListener('sync', function(event) {
 			},
 
 			/**
-			 * Get all network speed measurements 
+			 * Retrieves all network speed measurements from storage.
+			 * 
+			 * @returns {Promise<Array>} Promise resolving to array of measurements:
+			 *   - time: Timestamp of measurement
+			 *   - speed: Network speed in Mbps
+			 *   - mime_type: Content type
+			 *   - size: Data size in bytes
 			 */
 			getAllStats: function () {
 				if (!exfPWA.isAvailable()) return Promise.resolve([]);
