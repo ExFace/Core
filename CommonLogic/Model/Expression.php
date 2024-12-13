@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\DataTypes\ListDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
@@ -459,10 +460,14 @@ class Expression implements ExpressionInterface
                     $this->data_type = $this->getFormula()->getDataType();
                     break;
                 case self::TYPE_ATTRIBUTE:
-                    if (! is_null($this->getMetaObject())) {
+                    if (null !== $this->getMetaObject()) {
                         $attribute_type = $this->getAttribute()->getDataType();
-                        if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->toString())) {
+                        if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->__toString())) {
                             $this->data_type = $aggr->getResultDataType($attribute_type);
+                            // If the aggregator produces a list, give the list the delimiter of this attribute
+                            if ($this->data_type instanceof ListDataType) {
+                                $this->data_type->setListDelimiter($this->getAttribute()->getValueListDelimiter());
+                            }
                         } else {
                             $this->data_type = $attribute_type->copy();
                         }
