@@ -12,7 +12,6 @@ use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
@@ -23,9 +22,7 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
-use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Orders data rows automatically and saves the order number in one of the attributes.
@@ -35,19 +32,19 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * - all pages (`exface.Core.PAGE`) within a `MENU_PARENT` 
  * - all order positions within an `ORDER`
  * 
- * Every time a row of the ordered object is saved, this behavior makes sure the order
- * number storen in `order_number_attribute` is updated - for the saved row, but also
- * for other rows within the same ordering boundies if needed.
+ * Every time a row of the ordered object is saved, this behavior finds all rows with matching values in their
+ * `order_with_attributes` and orders them based on your configuration. For example, if you update a page, this
+ * behavior would order every page that has the same `MENU_PARENT`.
  * 
  * ## Configuration
  * 
  * - `order_number_attribute` (required) - save the order number here
  * - `order_with_attributes` - all rows with the same value of these attributes will share an ordering sequence.
- * - `order_starts_with` - the order number for the first row
+ * - `order_starts_with` - ordering sequences will start with this index.
  * - `close_gaps` - by default, deleting a row in the middle of the sequence will update order numbers of subsequent 
  * rows to close the gap. You can explicitly allow gaps by setting this option to `false`. 
- * - `append_to_end` - set to `false` to put a new row without an explicitly defined order number at the beginning
- * (that is with `order_starts_with` as number) instead of at the end
+ * - `append_to_end` - set to `false` to insert rows without a valid value for their `order_number_attribute` at the
+ * start of their sequence, i.e. the value of `order_starts_with`.
  * 
  * ## Examples
  * 
@@ -74,6 +71,8 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  */
 class OrderingBehavior extends AbstractBehavior
 {
+    private const FLAG_PROCESSED = "PROCESSED";
+    
     // internal variables
     private bool $working = false;
 
@@ -160,13 +159,11 @@ class OrderingBehavior extends AbstractBehavior
 
         // Fetch any missing columns.
         $this->fetchMissingColumns($eventSheet, $logbook);
-        $logbook->addLine('Received ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
-        $logbook->addDataSheet('Data', $eventSheet);
 
         // Order data.
         $pendingChanges = [];
         $onDelete = $event instanceof OnBeforeDeleteDataEvent || $event instanceof OnDeleteDataEvent;
-        $this->groupDataByParent($onDelete, $eventSheet, $pendingChanges, $logbook);
+        $this->groupAndOrderDataByParents($onDelete, $eventSheet, $pendingChanges, $logbook);
 
         // Apply changes, if any.
         if (count($pendingChanges) === 0) {
@@ -200,10 +197,9 @@ class OrderingBehavior extends AbstractBehavior
         if($this->working) {
             return;
         }
-        
-        // Create logbook.
-        $this->working = true;
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        $this->working = true;
         
         $eventSheet = $event->getDataSheet();
         $logbook->addLine('Found input data.');
@@ -225,10 +221,11 @@ class OrderingBehavior extends AbstractBehavior
         }
         
         $this->working = false;
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
     }
 
     /**
-     * Loads any missing parent columns and merges their data into the event sheet.
+     * Load any missing parent columns and merges their data into the event sheet.
      *
      * @param DataSheetInterface $eventSheet
      * @param BehaviorLogBook    $logBook
@@ -276,11 +273,11 @@ class OrderingBehavior extends AbstractBehavior
      * @param bool               $onDelete
      * @param DataSheetInterface $eventSheet
      * @param array              $pendingChanges
-     * An array to which any changes necessary to achieve the desired ordering will be appended.
+     * Any necessary data updates will be appended to this array, since updating is deferred to `On...DataEvent`.
      * @param BehaviorLogBook    $logbook
      * @return void
      */
-    private function groupDataByParent(
+    private function groupAndOrderDataByParents(
         bool                $onDelete,
         DataSheetInterface  $eventSheet,
         array               &$pendingChanges,
@@ -298,19 +295,25 @@ class OrderingBehavior extends AbstractBehavior
         foreach ($eventSheet->getRows() as $rowIndex => $row) {
             // Find, load and cache the row and its siblings.
             $logbook->addLine('Searching for siblings of row '. $rowIndex . ':');
+            $logbook->addIndent(1);
             $siblingData = $this->getSiblings($onDelete, $eventSheet, $pendingChanges, $row, $indexAlias, $cache, $logbook);
 
             // If we already ordered the group this row belongs to, continue.
-            if ($siblingData === "PROCESSED") {
+            if ($siblingData === self::FLAG_PROCESSED) {
                 $logbook->addLine('Data for this group has already been processed, moving on.');
+                $logbook->addIndent(-1);
                 continue;
             }
 
             // Find and record changes.
             $this->findPendingChanges($siblingData, $pendingChanges, $logbook);
 
-            // Mark all siblings as DONE, to avoid ordering the same group multiple times.
-            $cache->setData($siblingData->getRow(0)[$uidAlias], "PROCESSED");
+            // Mark all siblings as PROCESSED, to avoid ordering the same group multiple times.
+            try {
+                $cache->setData($siblingData['siblings']->getRow(0)[$uidAlias], self::FLAG_PROCESSED);
+            } catch (InvalidArgumentException $exception) {
+                throw new BehaviorRuntimeError($this, 'Could mark data as "' .  self::FLAG_PROCESSED .'": ' . $exception->getMessage(), null, $exception, $logbook);
+            }
         }
 
         unset($cache);
@@ -329,7 +332,7 @@ class OrderingBehavior extends AbstractBehavior
      * @param bool                      $onDelete
      * @param DataSheetInterface        $eventSheet
      * @param array                     $pendingChanges
-     * An array to which any changes necessary to achieve the desired ordering will be appended.
+     * Any necessary data updates will be appended to this array, since updating is deferred to `On...DataEvent`.
      * @param array                     $row
      * @param string                    $indexingAlias
      * @param LazyHierarchicalDataCache $cache
@@ -345,7 +348,7 @@ class OrderingBehavior extends AbstractBehavior
         LazyHierarchicalDataCache $cache,
         BehaviorLogBook          $logbook): array|string
     {
-        // Check if we already loaded the siblings for this UID before.
+        // Check if we already loaded sibling data for this UID before.
         $uidAlias = $eventSheet->getUidColumnName();
         if ($siblingData = $cache->getData($row[$uidAlias])) {
             $logbook->addLine('Sibling data retrieved from cache.');
@@ -354,30 +357,46 @@ class OrderingBehavior extends AbstractBehavior
 
         // Prepare variables.
         $loadedData = $this->createEmptyCopy($eventSheet, true, false);
+        $changedData = $loadedData->copy();
         $parents = $this->addFiltersFromParentAliases($loadedData, $row);
         $groupId = json_encode($parents);
-        $logbook->addIndent(1);
-        $logbook->addLine('Looking other elements in group ' . $groupId . '.');
-        // Load old data from database.
+        
+        $logbook->addLine('Looking for other elements in group ' . $groupId . '.');
+        // Load old data from database and remove any rows that do not belong to this group.
         $loadedData->dataRead();
-        // And remove any rows that do not belong to this group.
-        foreach ($loadedData->getRows() as $siblingRow) {
-            if (!$this->belongsToGroup($siblingRow, $parents)) {
-                $loadedData->removeRowsByUid($siblingRow[$uidAlias]);
+        foreach ($loadedData->getRows() as $loadedRow) {
+            $siblingUId = $loadedRow[$uidAlias];
+            if (!$this->belongsToGroup($loadedRow, $parents)) {
+                $loadedData->removeRowsByUid($siblingUId);
             }
         }
-        // Get all updated rows from the event that belong to this group.
-        $changedData = $eventSheet->extract($loadedData->getFilters());
-        
+        // Extract rows from event sheet that belong to this group.
+        foreach ($eventSheet->getRows() as $changedRow) {
+            $changedUId = $changedRow[$uidAlias];
+            $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $changedUId);
+            if($this->belongsToGroup($changedRow, $parents)) {
+                // On delete, all changed rows will be removed from the database,
+                // so we have to remove them from our ordering data as well.
+                if($onDelete) {
+                    $loadedData->removeRowsByUid($changedUId);
+                    $cache->addElement($changedUId, $parents);
+                } 
+                
+                if ($loadedRow === null || $loadedRow[$indexingAlias] !== $changedRow[$indexingAlias]) {
+                    $changedData->addRow($changedRow);
+                }
+            }
+        }
+
         if($onDelete) {
-            $rows = $loadedData->getRows();
-            $rowCount = count($rows);
-            if($rowCount === 0) {
-                $logbook->addLine('All siblings have been deleted. No data needs to be ordered in this group.');
-                return "PROCESSED";
+            $rowCount = $loadedData->countRows();
+            if($loadedData->countRows() === 0) {
+                $logbook->addLine('All elements of this group have been deleted.');
+                $cache->setData($row[$uidAlias], self::FLAG_PROCESSED);
+                return self::FLAG_PROCESSED;
             } else {
                 $logbook->addLine($rowCount . ' left to order, after excluding deleted data. Using row ' . $row[$uidAlias] . ' as reference.');
-                $row = $rows[0];
+                $row = $loadedData->getRow();
             }
         } else {
             $logbook->addLine('Fetching new data from changed rows.');
@@ -388,12 +407,11 @@ class OrderingBehavior extends AbstractBehavior
         // Determine where to insert new elements.
         $insertOnTop = ! $this->getAppendToEnd();
         if ($insertOnTop) {
-            $insertionIndex = $this->getOrderStartsWith() - 1;
-            $logbook->addLine('New elements will be inserted at the start' . ' with index ' . $this->getOrderStartsWith());
+            $insertionIndex = $this->getOrderStartsWith();
+            $logbook->addLine('New elements will be inserted at the start with index ' . $this->getOrderStartsWith());
         } else {
             $insertionIndex = max($loadedData->getColumnValues($indexingAlias));
             if ($insertionIndex !== "") {
-                $insertionIndex++;
                 $logbook->addLine('New elements will be inserted at the end with index ' . $insertionIndex);
             } else {
                 $insertionIndex = $this->getOrderStartsWith();
@@ -412,17 +430,20 @@ class OrderingBehavior extends AbstractBehavior
                 // Record change.
                 $siblingRow[$indexingAlias] = $insertionIndex;
                 $pendingChanges[$siblingRow[$uidAlias]] = $siblingRow;
+                // Ensure that this row will have sorting priority.
+                $changedData->addRow($siblingRow, true);
             }
 
             // Add row as node to cache.
             $cache->addElement($siblingRow[$uidAlias], $parents);
         }
 
-        // Save sibling datasheet to cache.
+        // Sort sheet by ordering index.
         $sorters = new DataSorterList($loadedData->getWorkbench(), $loadedData);
         $sorters->addFromString($indexingAlias);
         $loadedData->sort($sorters, false);
         
+        // Save sibling datasheet to cache.
         try {
             $siblingData = [
                 'siblings' => $loadedData,
@@ -430,12 +451,11 @@ class OrderingBehavior extends AbstractBehavior
             ];
             $cache->setData($row[$uidAlias], $siblingData);
         } catch (InvalidArgumentException $exception) {
-            throw new BehaviorRuntimeError($this, 'Could not add data to cache!', null, $exception, $logbook);
+            throw new BehaviorRuntimeError($this, 'Could not add data to cache: ' . $exception->getMessage(), null, $exception, $logbook);
         }
 
         $logbook->addLine('Found ' . ($loadedData->countRows()) . ' elements in group ' . $groupId . '.');
         $logbook->addDataSheet('Group-' . $groupId, $loadedData);
-        $logbook->addIndent(-1);
 
         return $siblingData;
     }
@@ -444,11 +464,13 @@ class OrderingBehavior extends AbstractBehavior
      * Creates a filter setup, that groups data by its parents. The result is not an EXACT grouping (see below).
      * Effort is quadratic with respect to the number of parent aliases.
      *
-     * NOTE: With strict filter the groupings would be sensitive to the order in which the parents appear.
-     * For example: Parents [A,B] would be a separate group from Parents [B,A].
-     * To prevent this, we check ALL parent columns for matches. This will return false
-     * positives, which you will have to check for manually (Parents [A,NULL,NULL] would for instance match with
-     * Parents [A,B,NULL]).
+     * NOTE: This is not a strict filter! With a strict filter the groupings would be sensitive to the order in which the parents appear.
+     * For example: Parents [A,B] would be a different group than Parents [B,A]. Users would find this confusing, which is why we have to
+     * make sure that groupings are detected irrespective of the order in which the parents appear. TO do this we check ALL parent columns for matches. 
+     * The resulting data will contain false positives for example [A,NULL] would be grouped with [A,B]. We solve this issue by manually filtering
+     * the retrieved data set in a later step.
+     * 
+     * @see OrderingBehavior::belongsToGroup()
      *
      * @param DataSheetInterface $dataSheet
      * @param array              $row
@@ -503,10 +525,11 @@ class OrderingBehavior extends AbstractBehavior
     /**
      * Checks, whether a given row belongs to a group of siblings.
      *
-     * A row belongs to a group, if it has the exact same parents, regardless
-     * of the order they appear in. This includes multiples of the same parent.
-     * Parents [A,B,B] belongs to the same group as Parents [B,A,B], but
-     * Parents [A,A,B] does not.
+     * A row belongs to a group, if it has the exact same parents as the group, regardless
+     * of the order they appear in. 
+     * 
+     * For example, Parents [A,B,B] (2x A, 1x B) belongs to the same group as Parents [B,A,B], but not
+     * Parents [A,A,B].
      *
      * @param array $row
      * @param array $parents
@@ -556,17 +579,14 @@ class OrderingBehavior extends AbstractBehavior
         BehaviorLogBook $logBook) : void
     {
         // Prepare variables.
-        $indexCache = [];
         $siblingSheet = $siblingData['siblings'];
         $priorityUIds = $siblingData['priority']->getUidColumn()->getValues();
         $indexAlias = $this->getOrderNumberAttributeAlias();
         $uidAlias = $siblingSheet->getUidColumnName();
-        $closeGaps = $this->getCloseGaps();
         $countInsertedElements = count($pendingChanges);
+        $indexingCache = [];
         
         $logBook->addLine('Scanning for pending changes...');
-        $logBook->addIndent(1);
-        $logBook->addLine('Changes pending from inserting new elements: ' . $countInsertedElements . '.');
 
         //  We need to sort elements in two stages:
         //  First, any changes made by the user are prioritized, so they are sorted first
@@ -575,14 +595,15 @@ class OrderingBehavior extends AbstractBehavior
         //  Database        1,2,3,4,5
         //  Priority        2.,2.,4.,4.
         //  SiblingSheet    1,2.,2.,2,3,4.,4.,4,5
-        //  -------------PRIO----------------
+        //  -------------PRIORITY----------------
         //  Index   Next    Result  NewNext Cache
         //  2       2       2       3       2 => 3
-        //  2       3       3       4       2 => 4
-        //  4       4       4       5       4 => 5
+        //  2       3       3       4       2 => 4 ] <- STITCH CACHE
+        //  4       4       4       5       4 => 5 ]
         //  4       5       5       6       4 => 6
-        //  SiblingSheet    1,2.,2,3.,3,4.,4,5.,5   Cache [2 => 6]
-        //  -------------REGL----------------
+        //  SiblingSheet    1,2.,2,3.,3,4.,4,5.,5
+        //  indexingCache [2 => 6]
+        //  -------------REGULAR-----------------
         //  Index   Next    Result  NewNext Shifted
         //  1       1       1       2       6
         //  2       6       6       7       No
@@ -592,50 +613,61 @@ class OrderingBehavior extends AbstractBehavior
         // Result 1,2.,3.,4.,5.,6,7,8,9
         
         // Priority pass.
-        $nextIndex = -1;
-        $indexingCache = [];
-        foreach ($siblingSheet->getRows() as $row) {
-            if(!in_array($row[$uidAlias], $priorityUIds)) {
-                continue;
+        if(!count($priorityUIds) > 0) {
+            $nextIndex = $this->getOrderStartsWith();
+            foreach ($siblingSheet->getRows() as $row) {
+                // In this pass, we only process elements that have been changed by the user.
+                // Their indices have priority over unchanged data to satisfy user expectations.
+                if(!in_array($row[$uidAlias], $priorityUIds)) {
+                    continue;
+                }
+                // Get current index of row.
+                $index = $row[$indexAlias];
+                $this->validateIndex($index, $indexAlias, $logBook);
+                // Update index and commit row to pending.
+                $row[$indexAlias] = max($index, $nextIndex);
+                $siblingSheet->addRow($row, true);
+                $pendingChanges[$row[$uidAlias]] = $row;
+
+                // Update next index.
+                $nextIndex = $row[$indexAlias] + 1;
+                // Update indexing cache.
+                $indexingCache[$index] = $nextIndex;
             }
-            // Get current index of row.
-            $index = $row[$indexAlias];
-            $this->validateIndex($index, $indexAlias, $logBook);
             
-            // Update index and commit row to pending.
-            $row[$indexAlias] = max($index, $nextIndex);
-            $pendingChanges[$row[$uidAlias]] = $row;
-            // Update next index.
-            $nextIndex = $row[$indexAlias] + 1;
-            // Update indexing cache.
-            if(key_exists($index, $indexingCache)) {
-                $indexingCache
+            // Stitch indexing cache.
+            foreach ($indexingCache as $from => $to) {
+                if(key_exists($to, $indexingCache)) {
+                    $indexingCache[$from] = $indexingCache[$to];
+                    unset($indexingCache[$to]);
+                }
             }
-            $indexingCache[$index] = $nextIndex;
         }
         
         // Regular pass.
+        $closeGaps = $this->getCloseGaps();
+        $nextIndex = $this->getOrderStartsWith();
         foreach ($siblingSheet->getRows() as $row) {
             // Get current index of row.
             $index = $row[$indexAlias];
             $this->validateIndex($index, $indexAlias, $logBook);
-
-            // `$nextIndex` always points to the next open slot. If `$index` is smaller or equal to that, a change is required.
-            // Otherwise, a change is required only if gap closing is enabled.
-            if ($index <= $nextIndex || $closeGaps) {
-                if ($index != $nextIndex) {
-                    // Mark row as pending.
-                    $row[$indexAlias] = $index = $nextIndex;
-                    $pendingChanges[$row[$uidAlias]] = $row;
-                }
+            // Check indexingCache.
+            if(key_exists($index, $indexingCache)) {
+                $nextIndex = $indexingCache[$index];
+            }
+            
+            $regularUpdate = $index < $nextIndex && !in_array($row[$uidAlias], $priorityUIds);
+            $closeGapUpdate = $index > $nextIndex && $closeGaps;
+            if($regularUpdate || $closeGapUpdate) {
+                $row[$indexAlias] = $nextIndex;
+                $pendingChanges[$row[$uidAlias]] = $row;
             }
 
             // Update next index.
-            $nextIndex = $index + 1;
+            $nextIndex = $row[$indexAlias] + 1;
         }
         
         $logBook->addLine('Pending changes detected in this step: ' . (count($pendingChanges) - $countInsertedElements) . '.');
-        $logBook->addIndent(1);
     }
 
     /**
@@ -690,47 +722,17 @@ class OrderingBehavior extends AbstractBehavior
         array              $pendingChanges,
         BehaviorLogBook    $logBook): void
     {
-        $uidAlias = $eventSheet->getUidColumnName();
-        $indexAlias = $this->getOrderNumberAttributeAlias();
         $updateSheet = $this->createEmptyCopy($eventSheet, true, false);
 
         foreach ($pendingChanges as $pending) {
-            if (($rowToChange = $eventSheet->getUidColumn()->findRowByValue($pending[$uidAlias])) !== false) {
-                $eventSheet->setCellValue($indexAlias, $rowToChange, $pending[$indexAlias]);
-            } else {
-                $updateSheet->addRow($pending);
-            }
+            $updateSheet->addRow($pending);
         }
         
         $logBook->addLine('Generated datasheet with pending changes.');
         $logBook->addDataSheet('PendingChanges', $updateSheet);
         
-        $backupSheet = $updateSheet->copy();
-        $backupSheet->getColumns()->removeAll();
-        $existingColumns = $updateSheet->getColumns();
-        
-        $logBook->addLine('Generating backup sheet...');
-        $logBook->addIndent(1);
-        foreach ($backupSheet->getMetaObject()->getAttributes() as $attribute) {
-            $colAlias = $attribute->getAlias();
-            if(!$existingColumns->getByExpression($colAlias)) {
-                $logBook->addLine('Added backup for attribute ' . $colAlias . '.');
-                $backupSheet->getColumns()->addFromExpression($colAlias);
-            }
-        }
-        $backupSheet->getFilters()->addConditionFromValueArray($uidAlias, $updateSheet->getColumnValues($uidAlias));
-        $backupSheet->dataRead();
-        
-        $logBook->addIndent(1);
-        $logBook->addLine('Generated backup sheet.');
-        $logBook->addDataSheet('Backup', $backupSheet);
-        
-        $outputSheet = $backupSheet->merge($updateSheet);
-        $logBook->addLine('Generated output sheet.');
-        $logBook->addDataSheet('Output', $outputSheet);
-        
         try {
-            $outputSheet->dataSave();
+            $updateSheet->dataSave();
         } catch (DataSheetExceptionInterface $exception) {
             throw new BehaviorRuntimeError($this, 'Failed to apply changes!', null, $exception, $logBook);
         }
