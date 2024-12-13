@@ -4,9 +4,7 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Events\Widget\OnUiRootWidgetInitEvent;
-use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Events\Widget\OnUiPageInitEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -24,7 +22,10 @@ use exface\Core\Widgets\DataTableConfigurator;
  * 
  * ```
  *  {
- *      "page_alias": "exface.core.connections",
+ *      "only_page_roots": true,
+ *      "only_pages": [
+ *          "exface.core.connections"
+ *      },
  *      "add_buttons": [
  *          {"action_alias": "my.App.SomeAction"}
  *      ]
@@ -37,9 +38,13 @@ use exface\Core\Widgets\DataTableConfigurator;
  */
 class WidgetModifyingBehavior extends AbstractBehavior
 {    
-    private ?string $pageSelectorString = null;
+    private ?array $onlyOnPages = null;
     
-    private ?string $widgetId = null;
+    private ?array $onlyWidgetIds = null;
+
+    private bool $onlyPageRoot = false;
+
+    private ?array $onlyWidgetTypes = null;
 
     private ?UxonObject $buttonsToAddUxon = null;
 
@@ -82,14 +87,33 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
     }
 
-    protected function isRelevantPage(?UiPageInterface $page) : bool
+    protected function isRelevantPage(UiPageInterface $page) : bool
     {
-        if(!isset($page)){
-            return false;
+        if ($this->onlyOnPages === null) {
+            return true;
         }
+        foreach ($this->onlyOnPages as $selector) {
+            if ($page->is($selector)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        return $this->pageSelectorString === null ||
-            $page->is($this->pageSelectorString);
+    protected function isRelevantForWidget(WidgetInterface $widget) : bool
+    {
+        if ($this->onlyPageRoot === true) {
+            return ! $widget->hasParent();
+        }
+        if ($this->onlyWidgetIds === null) {
+            return true;
+        }
+        foreach ($this->onlyWidgetIds as $id) {
+            if ($widget->getId() === $id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -145,6 +169,9 @@ class WidgetModifyingBehavior extends AbstractBehavior
         if (! $widget->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
+        if (! $this->isRelevantForWidget($widget)) {
+            return;
+        }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
@@ -188,32 +215,70 @@ class WidgetModifyingBehavior extends AbstractBehavior
     }
     
     /**
-     * UI Page to be modified
+     * Only apply modification to widgets on these pages
      * 
-     * @uxon-property page_alias
-     * @uxon-type metamodel:page
+     * @uxon-property only_pages
+     * @uxon-type metamodel:page[]
+     * @uxon-template [""]
      * 
      * @param string $aliasOrUid
      * @return WidgetModifyingBehavior
      */
+    protected function setOnlyPages(UxonObject $aliasOrUids) : WidgetModifyingBehavior
+    {
+        $this->onlyOnPages = $aliasOrUids->toArray();
+        return $this;
+    }
+
+    /**
+     * @deprecated  use setOnlyPages() / only_pages instead
+     * @param string $aliasOrUid
+     * @return \exface\Core\Behaviors\WidgetModifyingBehavior
+     */
     protected function setPageAlias(string $aliasOrUid) : WidgetModifyingBehavior
     {
-        $this->pageSelectorString = $aliasOrUid;
+        return $this->setOnlyPages(new UxonObject([$aliasOrUid]));
+    }
+
+    /**
+     * Set to `TRUE` to only modify the root widgets of pages
+     * 
+     * @uxon-property only_page_roots
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return \exface\Core\Behaviors\WidgetModifyingBehavior
+     */
+    protected function setOnlyPageRoots(bool $trueOrFalse) : WidgetModifyingBehavior
+    {
+        $this->onlyPageRoot = $trueOrFalse;
         return $this;
     }
     
     /**
-     * Id of widget to be modified (will be the root widget if left empty)
+     * Only modify widgets with the following ids
      * 
-     * @uxon-property widget_id
-     * @uxon-type string
+     * @uxon-property only_widget_ids
+     * @uxon-type string[]
      * 
      * @param string $id
      * @return WidgetModifyingBehavior
      */
+    protected function setOnlyWidgetIds(UxonObject $arrayOfIds) : WidgetModifyingBehavior
+    {
+        $this->onlyWidgetIds = $arrayOfIds->toArray();
+        return $this;
+    }
+
+    /**
+     * @deprecated use setOnlyWidgetIds / only_widget_ids instead
+     * 
+     * @param string $id
+     * @return \exface\Core\Behaviors\WidgetModifyingBehavior
+     */
     protected function setWidgetId(string $id) : WidgetModifyingBehavior
     {
-        $this->widgetId = $id;
-        return $this;
+        return $this->setOnlyWidgetIds(new UxonObject([$id]));
     }
 }
