@@ -263,6 +263,15 @@ class WidgetModifyingBehavior extends AbstractBehavior
         return $this;
     }
 
+    /**
+     * Add a sidebar to the widgets if they support sidebars
+     * 
+     * @uxon-property add_sidebar
+     * @uxon-type \exface\Core\Widgets\DialogSidebar
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $sidebarUxon
+     * @return \exface\Core\Behaviors\WidgetModifyingBehavior
+     */
     protected function setAddSidebar(UxonObject $sidebarUxon) : WidgetModifyingBehavior
     {
         $this->sideBarToAdd = $sidebarUxon;
