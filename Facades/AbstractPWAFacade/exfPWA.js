@@ -321,6 +321,9 @@ self.addEventListener('sync', function(event) {
 		}
 	};
 
+	var aStateUpdateQueue = []; // Array to store pending state updates
+	var iStateUpdateRetries = 0; // Counter for queue processing attempts
+	var iMaxStateUpdateRetries = 5; // Maximum number of retry attempts
 
 	// Init the PWA
 	var _pwa = {
@@ -332,36 +335,7 @@ self.addEventListener('sync', function(event) {
 		 */
 		network: {
 
-			// Flag to prevent concurrent state updates
-			/* _pendingStateUpdate is a flag and it helps in two ways:
-				1-For the Same tab :
-					Stops multiple updates happening at once
-					Manages updates from network calls
-				2- Working with multiple tabs:
-					Prevents data conflicts when multiple tabs try to update the same data
-					Keeps data in sync across tabs
-				Think of it like a "busy" sign - when one process is updating data, others must wait until it's done.
-			*/
-			_pendingStateUpdate: false,
-			// TODO: Improve network state management using IndexedDB queue
-			/*
-			Why: 
-			- Currently ignoring state updates when busy, causing data loss
-			- No sync between tabs, leading to inconsistent states
-			- State updates can be lost on browser crash/close
 
-			Possible Solution:
-			1. exfPWA.js: 
-				- Update dexie version to add 'stateUpdateQueue' table:
-					'stateUpdateQueue': '++id, timestamp, state'
-				- Remove _pendingStateUpdate flag
-				- Update setState() to use queue from DB
-				- Process updates in FIFO order from DB
-				- Add BroadcastChannel support for cross-tab sync
-
-			2. openui5.facade.js:
-				- Update network state change handlers to work with new queue system
-			*/
 
 			/**
 			 * Initializes and manages the regular network condition monitoring system.
@@ -402,7 +376,7 @@ self.addEventListener('sync', function(event) {
 						const state = await this.getState();
 
 						console.debug('Regular Network Poll:', {
-							timestamp: new Date().toISOString(),
+							timestamp: _date.now(),
 							currentState: {
 								forcedOffline: state._bForcedOffline,
 								autoOffline: state._bAutoOffline,
@@ -427,7 +401,7 @@ self.addEventListener('sync', function(event) {
 								console.debug('Network Status Change Detected:', {
 									previousStatus: state._bSlowNetwork ? 'SLOW' : 'FAST',
 									newStatus: isNetworkSlow ? 'SLOW' : 'FAST',
-									timestamp: new Date().toISOString()
+									timestamp: _date.now()
 								});
 
 								// Update application state with new network status
@@ -447,7 +421,7 @@ self.addEventListener('sync', function(event) {
 						console.error('Network Polling Error:', {
 							message: error.message,
 							stack: error.stack,
-							timestamp: new Date().toISOString()
+							timestamp: _date.now()
 						});
 					}
 				}, 5000); // 5-second interval for regular polling
@@ -494,7 +468,7 @@ self.addEventListener('sync', function(event) {
 						const state = await this.getState();
 
 						console.debug('Fast Network Poll:', {
-							timestamp: new Date().toISOString(),
+							timestamp: _date.now(),
 							currentState: {
 								forcedOffline: state._bForcedOffline,
 								autoOffline: state._bAutoOffline,
@@ -519,7 +493,7 @@ self.addEventListener('sync', function(event) {
 								reason: !isNetworkSlow ? 'Network improved' : 'Auto-offline disabled',
 								networkSlow: isNetworkSlow,
 								autoOffline: state._bAutoOffline,
-								timestamp: new Date().toISOString()
+								timestamp: _date.now()
 							});
 
 							// Update state before switching polling modes
@@ -536,7 +510,7 @@ self.addEventListener('sync', function(event) {
 						console.error('Fast Network Polling Error:', {
 							message: error.message,
 							stack: error.stack,
-							timestamp: new Date().toISOString()
+							timestamp: _date.now()
 						});
 					}
 				}, 2000); // 2-second interval for rapid polling
@@ -582,82 +556,96 @@ self.addEventListener('sync', function(event) {
 
 			/**
 			 * Updates network state and triggers network changed event if needed
-			 * Includes automatic cleanup of old state records after save
+			 * Uses queue mechanism for handling concurrent state updates
 			 * 
-			 * @param {{forcedOffline: boolean, autoOffline: boolean, slowNetwork: boolean}} oFlags
+			 * @param {{bForcedOffline: boolean, bAutoOffline: boolean, bSlowNetwork: boolean}} oFlags
+			 * Flags indicating the current network state
 			 * @returns {Promise} Resolves when state is updated
 			 */
 			setState: async function (oFlags) {
-				// Prevent concurrent updates
-				// Store reference to network object to avoid 'this' context issues
-				// This fixes the previous undefined oSelf reference error
-				oSelf = this;
-				// Prevent concurrent updates by checking the pending flag
-				// This ensures only one state update happens at a time
-				if (oSelf._pendingStateUpdate) {
+				var oSelf = this;
+
+				// Add the current state update request to the queue.
+				aStateUpdateQueue.push(oFlags);
+
+				// If another state update is already being processed, 
+				// just log the queued update and return immediately
+				if (aStateUpdateQueue.length > 1) {
+					console.debug('State update in progress, queued update:', {
+						flags: oFlags,
+						queueLength: aStateUpdateQueue.length
+					});
 					return Promise.resolve();
 				}
 
-				try {
-					// Update state and check if anything changed
-					// _updateState returns an object containing only the changed properties
-					const oChanges = _oNetStat._updateState(oFlags);
-
-					// If there were changes, trigger event and update storage
-					if (Object.keys(oChanges).length > 0) {
-						// Notify listeners about state changes
-						// This triggers UI updates and other network state dependent operations
-						$(document).trigger('networkchanged', {
-							currentState: _oNetStat,
-							changes: oChanges
+				// Process queued updates while there are items in the queue
+				// and the retry limit has not been reached.
+				while (aStateUpdateQueue.length > 0 && iStateUpdateRetries < iMaxStateUpdateRetries) {
+					try {
+						// Take the first queued state update for processing
+						const oCurrentFlags = aStateUpdateQueue[0];
+						console.debug('Processing state update:', {
+							flags: oCurrentFlags,
+							queueLength: aStateUpdateQueue.length,
+							retries: iStateUpdateRetries
 						});
 
-						//starts promise process and continue. when then block runs, state sets false. Code doesnt wait  to flow.
-						// means, without table update, network changed event can bi triggered -  this can not be acceptable
-						oSelf._pendingStateUpdate = true;
-						// Update the connection table in IndexedDB using Promise chain
-						// This ensures the state persists across page reloads
-						// Update connection table with new state
-						return _connectionTable.put({
-							time: _date.now(),
-							state: _oNetStat.serialize()
-						}).then(() => {
-							// After successful save, clean up old states
+						// Update the internal network state based on the flags provided
+						const oChanges = _oNetStat._updateState(oCurrentFlags);
+
+						// If there are any changes in the state:
+						if (Object.keys(oChanges).length > 0) {
+							// Trigger a global event to notify listeners about the state changes
+							$(document).trigger('networkchanged', {
+								currentState: _oNetStat,
+								changes: oChanges
+							});
+
+							// Save the updated state to the "connection" table in IndexedDB
+							_connectionTable.put({
+								time: _date.now(),
+								state: _oNetStat.serialize()
+							});
+
+							// Clean up old states in IndexedDB (older than 10 minutes).
 							const oTenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+							oSelf.deleteStatesBefore(oTenMinutesAgo);
+						}
 
-							oSelf.deleteStatesBefore(oTenMinutesAgo)
-								.then((iDeletedCount) => {
-									if (iDeletedCount > 0) {
-										console.debug('Cleaned up old states:', {
-											deletedRecords: iDeletedCount,
-											timestamp: new Date().toISOString()
-										});
-									}
-								})
-								.catch((oError) => {
-									console.warn('Failed to cleanup old states:', oError);
-								})
-								.finally(() => {
-									// Reset pending flag after cleanup attempt
-									oSelf._pendingStateUpdate = false;
-								});
+						// Remove the successfully processed state update from the queue
+						aStateUpdateQueue.shift();
+						// Reset the retry counter after a successful update
+						iStateUpdateRetries = 0;
 
-							// Return successful completion of the main operation
-							return Promise.resolve();
-						}).catch(oError => {
-							// Reset pending flag even if the update fails
-							oSelf._pendingStateUpdate = false;
-							console.warn('Failed to save or cleanup network state:', oError);
+					} catch (oError) {
+						// Increment the retry counter if an error occurs during processing
+						iStateUpdateRetries++;
+
+						console.error('Error processing state update:', {
+							error: oError,
+							currentRetries: iStateUpdateRetries,
+							maxRetries: iMaxStateUpdateRetries,
+							queueLength: aStateUpdateQueue.length,
+							timestamp: _date.now()
 						});
+
+						// If the retry limit is reached, clear the queue and reset the counter
+						if (iStateUpdateRetries >= iMaxStateUpdateRetries) {
+							console.warn('Max state update retries reached, clearing queue:', {
+								queueLength: aStateUpdateQueue.length,
+								retries: iStateUpdateRetries,
+								timestamp: _date.now(),
+							});
+							aStateUpdateQueue = []; // Clear the queue
+							iStateUpdateRetries = 0; // Reset retry counter
+							return Promise.reject(oError); // Reject with the error
+						}
+ 
+						new Promise(resolve);
 					}
-					return Promise.resolve();
-				} catch (oError) {
-					// Reset the pending flag if any error occurs
-					// This ensures the state updates don't get permanently locked
-					oSelf._pendingStateUpdate = false;
-					console.error('Error updating network state:', oError);
-					return Promise.reject(oError);
 				}
+
+				return Promise.resolve();
 			},
 
 			/**
@@ -728,7 +716,7 @@ self.addEventListener('sync', function(event) {
 							if (iDeletedCount > 0) {
 								console.debug('Cleaned up old stats:', {
 									deletedRecords: iDeletedCount,
-									timestamp: new Date().toISOString()
+									timestamp: _date.now()
 								});
 							}
 						})
@@ -764,7 +752,7 @@ self.addEventListener('sync', function(event) {
 							console.debug('Network stats cleanup:', {
 								deletedRecords: iDeletedCount,
 								cutoffTime: new Date(oTimestamp).toISOString(),
-								timestamp: new Date().toISOString()
+								timestamp: _date.now()
 							});
 						}
 						return iDeletedCount;
@@ -803,7 +791,7 @@ self.addEventListener('sync', function(event) {
 							console.debug('Network states cleanup:', {
 								deletedRecords: iDeletedCount,
 								cutoffTime: formattedTimestamp,
-								timestamp: new Date().toISOString()
+								timestamp: _date.now()
 							});
 						}
 						return iDeletedCount;
@@ -854,7 +842,7 @@ self.addEventListener('sync', function(event) {
 							source: 'Browser API',
 							connectionType: navigator.connection.effectiveType,
 							downlinkSpeed: navigator.connection.downlink + ' Mbps',
-							timestamp: new Date().toISOString()
+							timestamp: _date.now()
 						});
 						return bSlow;
 					}
@@ -900,7 +888,7 @@ self.addEventListener('sync', function(event) {
 					console.error('Speed Measurement Analysis Failed:', {
 						error: error.message,
 						stack: error.stack,
-						timestamp: new Date().toISOString()
+						timestamp: _date.now()
 					});
 					bSlow = false; // Default to fast network on error
 				}
