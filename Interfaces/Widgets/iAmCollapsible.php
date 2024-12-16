@@ -8,10 +8,11 @@ interface iAmCollapsible extends WidgetInterface
 
     /**
      * Returs TRUE if the widget is collapsible, FALSE otherwise
-     *
-     * @return boolean
+     * 
+     * @param bool $default
+     * @return bool
      */
-    public function isCollapsible() : bool;
+    public function isCollapsible(bool $default = false) : bool;
 
     /**
      * Defines if widget shall be collapsible (TRUE) or not (FALSE)
@@ -19,7 +20,7 @@ interface iAmCollapsible extends WidgetInterface
      * @param boolean $value            
      * @return boolean
      */
-    public function setCollapsible($value) : iAmCollapsible;
+    public function setCollapsible(bool $value) : iAmCollapsible;
     
     /**
      * 
@@ -32,5 +33,5 @@ interface iAmCollapsible extends WidgetInterface
      * @param bool|string $trueOrFalse
      * @return iAmCollapsible
      */
-    public function setCollapsed($trueOrFalse) : iAmCollapsible;
+    public function setCollapsed(bool $trueOrFalse) : iAmCollapsible;
 }
