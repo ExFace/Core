@@ -3,7 +3,11 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
-use exface\Core\Events\Widget\OnUiRootWidgetInitEvent;
+use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\Events\WidgetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -12,6 +16,7 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Widgets\DataTableConfigurator;
+use exface\Core\Widgets\Dialog;
 
 /**
  * Allows to modify widgets, that show the object of this behavior: e.g. add buttons, etc.
@@ -42,6 +47,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
     
     private ?array $onlyWidgetIds = null;
 
+    private ?array $onlyForActions = null;
+
     private bool $onlyPageRoot = false;
 
     private ?array $onlyWidgetTypes = null;
@@ -50,6 +57,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
 
     private ?UxonObject $columnsToAddUxon = null;
 
+    private ?UxonObject $sideBarToAdd = null;
+
     /**
      *
      * {@inheritDoc}
@@ -57,8 +66,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnUiRootWidgetInitEvent::getEventName(), [$this, 'handleUiRootInitialized'], $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnUiActionWidgetInitEvent::getEventName(), [$this, 'onUiActionWidgetInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'onDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
     
@@ -69,8 +78,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnUiRootWidgetInitEvent::getEventName(), [$this, 'handleUiRootInitialized']);
-        $this->getWorkbench()->eventManager()->removeListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->removeListener(OnUiActionWidgetInitEvent::getEventName(), [$this, 'onUiActionWidgetInitialized']);
+        $this->getWorkbench()->eventManager()->removeListener(OnDataConfiguratorInitEvent::getEventName(), [$this, 'onDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
 
@@ -87,6 +96,11 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
     }
 
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\UiPageInterface $page
+     * @return bool
+     */
     protected function isRelevantPage(UiPageInterface $page) : bool
     {
         if ($this->onlyOnPages === null) {
@@ -100,20 +114,38 @@ class WidgetModifyingBehavior extends AbstractBehavior
         return false;
     }
 
+    /**
+     * 
+     * @param \exface\Core\Interfaces\WidgetInterface $widget
+     * @return bool
+     */
     protected function isRelevantForWidget(WidgetInterface $widget) : bool
     {
         if ($this->onlyPageRoot === true) {
-            return ! $widget->hasParent();
-        }
-        if ($this->onlyWidgetIds === null) {
-            return true;
-        }
-        foreach ($this->onlyWidgetIds as $id) {
-            if ($widget->getId() === $id) {
-                return true;
+            if ($widget->hasParent() === true) {
+                return false;
             }
         }
-        return false;
+        if ($this->onlyWidgetIds !== null) {
+            if (in_array($widget->getId(), $this->onlyWidgetIds) === false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected function isRelevantForAction(ActionInterface $action) : bool
+    {
+        if ($this->onlyForActions !== null) {
+            $found = false;
+            foreach ($this->onlyForActions as $actionSelector) {
+                if ($action->is($actionSelector) === true) {
+                    $found = true;
+                }
+            }
+            return $found;
+        }
+        return true;
     }
 
     /**
@@ -121,21 +153,13 @@ class WidgetModifyingBehavior extends AbstractBehavior
      * @param \exface\Core\Events\Widget\OnDataConfiguratorInitEvent $event
      * @return void
      */
-    public function handleDataConfiguratorInitialized(OnDataConfiguratorInitEvent $event) : void
+    public function onDataConfiguratorInitialized(OnDataConfiguratorInitEvent $event) : void
     {
-        if ($this->isDisabled()) {
-            return;
-        }
-
         if ($this->columnsToAddUxon === null) {
             return;
         }
-        
-        if (! $event->getObject()->isExactly($this->getObject())) {
-            return;
-        }
 
-        if(!$this->isRelevantPage($event->getWidget()->getPage())) {
+        if (! $this->isRelevant($event)) {
             return;
         }
 
@@ -151,35 +175,60 @@ class WidgetModifyingBehavior extends AbstractBehavior
 
     /**
      * 
-     * @param \exface\Core\Events\Widget\OnUiPageInitEvent $event
+     * @param \exface\Core\Events\Widget\OnUiActionWidgetInitEvent $event
      * @return void
      */
-    public function handleUiRootInitialized(OnUiRootWidgetInitEvent $event) : void
+    public function onUiActionWidgetInitialized(OnUiActionWidgetInitEvent $event) : void
     {
-        if ($this->isDisabled()) {
+        if ($this->buttonsToAddUxon === null && $this->sideBarToAdd === null) {
             return;
         }
 
-        $page = $event->getPage();
-        if (! $this->isRelevantPage($page)) {
+        if (! $this->isRelevant($event)) {
             return;
         }
 
-        $widget = $event->getWidget();
-        if (! $widget->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
-        if (! $this->isRelevantForWidget($widget)) {
+        if ($this->onlyForActions !== null && ! $this->isRelevantForAction($event->getAction())) {
             return;
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
+        $widget = $event->getWidget();
         if ($this->buttonsToAddUxon !== null && $widget instanceof iHaveButtons) {
             $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
         }
+
+        if ($this->sideBarToAdd !== null && $widget instanceof Dialog) {
+            $widget->setSidebar($this->sideBarToAdd);
+        }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Events\WidgetEventInterface $event
+     * @return bool
+     */
+    protected function isRelevant(WidgetEventInterface $event) : bool
+    {
+        
+        if ($this->isDisabled()) {
+            return false;
+        }
+
+        $page = $event->getPage();
+        if (! $this->isRelevantPage($page)) {
+            return false;
+        }
+
+        $widget = $event->getWidget();
+        if (! $widget->getMetaObject()->isExactly($this->getObject())) {
+            return false;
+        }
+
+        return $this->isRelevantForWidget($widget);
     }
 
     /**
@@ -213,31 +262,47 @@ class WidgetModifyingBehavior extends AbstractBehavior
         $this->buttonsToAddUxon = $uxonArray;
         return $this;
     }
+
+    protected function setAddSidebar(UxonObject $sidebarUxon) : WidgetModifyingBehavior
+    {
+        $this->sideBarToAdd = $sidebarUxon;
+        return $this;
+    }
     
     /**
      * Only apply modification to widgets on these pages
      * 
-     * @uxon-property only_pages
+     * @uxon-property only_on_pages
      * @uxon-type metamodel:page[]
      * @uxon-template [""]
      * 
      * @param string $aliasOrUid
      * @return WidgetModifyingBehavior
      */
-    protected function setOnlyPages(UxonObject $aliasOrUids) : WidgetModifyingBehavior
+    protected function setOnlyOnPages(UxonObject $aliasOrUids) : WidgetModifyingBehavior
     {
         $this->onlyOnPages = $aliasOrUids->toArray();
         return $this;
     }
 
     /**
-     * @deprecated  use setOnlyPages() / only_pages instead
+     * @deprecated use setOnlyOnPages() / only_on_pages instead
+     * @param \exface\Core\CommonLogic\UxonObject $aliasOrUids
+     * @return \exface\Core\Behaviors\WidgetModifyingBehavior
+     */
+    protected function setOnlyPages(UxonObject $aliasOrUids) : WidgetModifyingBehavior
+    {
+        return $this->setOnlyOnPages($aliasOrUids);
+    }
+
+    /**
+     * @deprecated use setOnlyOnPages() / only_on_pages instead
      * @param string $aliasOrUid
      * @return \exface\Core\Behaviors\WidgetModifyingBehavior
      */
     protected function setPageAlias(string $aliasOrUid) : WidgetModifyingBehavior
     {
-        return $this->setOnlyPages(new UxonObject([$aliasOrUid]));
+        return $this->setOnlyOnPages(new UxonObject([$aliasOrUid]));
     }
 
     /**
@@ -280,5 +345,21 @@ class WidgetModifyingBehavior extends AbstractBehavior
     protected function setWidgetId(string $id) : WidgetModifyingBehavior
     {
         return $this->setOnlyWidgetIds(new UxonObject([$id]));
+    }
+
+    /**
+     * Only modify widgets opened by the following actions
+     * 
+     * @uxon-property only_for_actions
+     * @uxon-type metamodel:action[]
+     * @uxon-template [""]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $arrayOfAliases
+     * @return \exface\Core\Behaviors\WidgetModifyingBehavior
+     */
+    protected function setOnlyForActions(UxonObject $arrayOfAliases) : WidgetModifyingBehavior
+    {
+        $this->onlyForActions = $arrayOfAliases->toArray();
+        return $this;
     }
 }

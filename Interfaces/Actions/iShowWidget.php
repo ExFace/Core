@@ -8,7 +8,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 /**
  * Common interface for actions that render and show widgets
  * 
- * @triggers \exface\Core\Events\Widgets\OnUiRootWidgetInitEvent after its widget was rendered
+ * @triggers \exface\Core\Events\Widgets\OnUiActionWidgetInitEvent after its widget was rendered
  */
 interface iShowWidget extends iNavigate
 {
