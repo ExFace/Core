@@ -2,7 +2,6 @@
 namespace exface\Core\Events\Widget;
 
 use exface\Core\Events\AbstractEvent;
-use exface\Core\Interfaces\Events\UiPageEventInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Events\WidgetEventInterface;
@@ -13,7 +12,7 @@ use exface\Core\Interfaces\Events\WidgetEventInterface;
  * @author Andrej Kabachnik
  *        
  */
-abstract class AbstractWidgetEvent extends AbstractEvent implements WidgetEventInterface, UiPageEventInterface
+abstract class AbstractWidgetEvent extends AbstractEvent implements WidgetEventInterface
 {
     private $widget = null;
     
