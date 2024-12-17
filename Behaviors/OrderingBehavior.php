@@ -14,6 +14,7 @@ use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Interfaces\Events\DataSheetTransactionEventInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -728,15 +729,15 @@ class OrderingBehavior extends AbstractBehavior
 
     /**
      *
-     * @param DataSheetEventInterface $event
-     * @param array                   $pendingChanges
-     * @param BehaviorLogBook         $logBook
+     * @param DataSheetTransactionEventInterface $event
+     * @param array                              $pendingChanges
+     * @param BehaviorLogBook                    $logBook
      * @return void
      */
     private function applyChanges(
-        DataSheetEventInterface $event,
-        array                   $pendingChanges,
-        BehaviorLogBook         $logBook): void
+        DataSheetTransactionEventInterface  $event,
+        array                               $pendingChanges,
+        BehaviorLogBook                     $logBook): void
     {
         // Generate update sheet.
         $eventSheet = $event->getDataSheet();
@@ -764,7 +765,7 @@ class OrderingBehavior extends AbstractBehavior
         }
         
         try {
-            $transaction = $this->getWorkbench()->data()->startTransaction();
+            $transaction = $event->getTransaction();
             $shiftSheet->dataSave($transaction);
             $shiftSheet->getColumns()->removeByKey($indexAlias);
             $updateSheet->addRows($shiftSheet->getRows(), true, false);

@@ -13,7 +13,7 @@ use exface\Core\Interfaces\Events\DataTransactionEventInterface;
  * @author Andrej Kabachnik
  *        
  */
-abstract class AbstractDataSheetEvent extends AbstractEvent implements DataSheetEventInterface, DataTransactionEventInterface
+abstract class AbstractDataSheetEvent extends AbstractEvent implements DataTransactionEventInterface
 {
     private $dataSheet = null;
     
