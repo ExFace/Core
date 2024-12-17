@@ -214,13 +214,23 @@ JS;
         if({$value} === undefined || {$value} === null) {
             {$value} = "";
         }
+        
+        {$this->buildJsImageDataSanitizer($value)}
 
         if ("getMarkdown" in oEditor && {$value} === oEditor.getMarkdown()) {
             return;
+        } else {
+            if (!("_lastSetValue" in oEditor)) {
+                oEditor._lastSetValue = null;
+            }
+            
+            if (oEditor._lastSetValue === {$value}) {
+                return;
+            }
         }
         
-        {$this->buildJsImageDataSanitizer($value)}
         oEditor.setMarkdown({$value});
+        oEditor._lastSetValue = {$value};
 JS;
     }
 
