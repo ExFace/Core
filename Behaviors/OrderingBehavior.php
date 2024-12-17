@@ -151,7 +151,7 @@ class OrderingBehavior extends AbstractBehavior
         $loadedData = $this->createEmptyCopy($eventSheet, true, false);
         $loadedData->setFilters(ConditionGroupFactory::createOR($loadedData->getMetaObject()));
         foreach ($eventSheet->getRows() as $row) {
-            $this->addFiltersFromParentAliases($loadedData, $row);
+            $this->addFiltersFromParentAliases($loadedData, $this->getParents($row));
         }
         
         $loadedData->dataRead();
@@ -345,7 +345,8 @@ class OrderingBehavior extends AbstractBehavior
     {
         // Check if we already loaded sibling data for this UID before.
         $uidAlias = $eventSheet->getUidColumnName();
-        if ($siblingData = $cache->getData($row[$uidAlias])) {
+        $parents = $this->getParents($row);
+        if ($siblingData = $cache->getData($parents)) {
             $logbook->addLine('Sibling data retrieved from cache.');
             return $siblingData;
         }
@@ -362,9 +363,9 @@ class OrderingBehavior extends AbstractBehavior
             throw new BehaviorRuntimeError($this, 'Could not retrieve old data from cache!', null,null, $logbook);
         }
         
-        $parents = $this->addFiltersFromParentAliases($loadedData, $row);
+        $this->addFiltersFromParentAliases($loadedData, $parents);
+
         $groupId = json_encode($parents);
-        
         $logbook->addLine('Looking for other elements in group ' . $groupId . '.');
         // Remove any rows that do not belong to this group.
         foreach ($loadedData->getRows() as $loadedRow) {
@@ -378,12 +379,13 @@ class OrderingBehavior extends AbstractBehavior
         foreach ($eventSheet->getRows() as $changedRow) {
             $changedUId = $changedRow[$uidAlias];
             $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $changedUId);
+            
             if($this->belongsToGroup($changedRow, $parents)) {
                 // On delete, all changed rows will be removed from the database,
                 // so we have to remove them from our ordering data as well.
                 if($onDelete) {
                     $loadedData->removeRowsByUid($changedUId);
-                    $cache->addElement($changedUId, $parents);
+                    $cache->addElement($this->getParents($changedRow), $parents);
                 } 
                 
                 if ($loadedRow === null || $loadedRow[$indexingAlias] !== $changedRow[$indexingAlias]) {
@@ -446,7 +448,7 @@ class OrderingBehavior extends AbstractBehavior
             }
 
             // Add row as node to cache.
-            $cache->addElement($siblingRow[$uidAlias], $parents);
+            $cache->addElement($this->getParents($row), $parents);
         }
 
         // Sort sheet by ordering index.
@@ -460,7 +462,7 @@ class OrderingBehavior extends AbstractBehavior
                 'siblings' => $loadedData,
                 'priority' => $changedData
             ];
-            $cache->setData($row[$uidAlias], $siblingData);
+            $cache->setData($parents, $siblingData);
         } catch (InvalidArgumentException $exception) {
             throw new BehaviorRuntimeError($this, 'Could not add data to cache: ' . $exception->getMessage(), null, $exception, $logbook);
         }
@@ -469,6 +471,26 @@ class OrderingBehavior extends AbstractBehavior
         $logbook->addDataSheet('Group-' . $groupId, $loadedData);
 
         return $siblingData;
+    }
+
+    /**
+     * Extracts an array with ALL parents of a row, including duplicates.
+     * 
+     * @param array $row
+     * @return array
+     */
+    protected function getParents(array $row) : array
+    {
+        $parents = [];
+        $parentAliases = $this->getParentAliases();
+        
+        foreach ($parentAliases as $parentAlias) {
+            // Get parent information.
+            $parent = $row[$parentAlias];
+            $parents[] = $parent;
+        }
+        
+        return $parents;
     }
 
     /**
@@ -481,35 +503,33 @@ class OrderingBehavior extends AbstractBehavior
      * the parents appear. TO do this we check ALL parent columns for matches.  The resulting data will contain false
      * positives for example [A,NULL] would be grouped with [A,B]. We solve this issue by manually filtering the
      * retrieved data set in a later step.
-     * 
-     * @see OrderingBehavior::belongsToGroup()
      *
      * @param DataSheetInterface $dataSheet
-     * @param array              $row
-     * @return array
+     * @param array              $parents
+     * @return void
+     * @see OrderingBehavior::belongsToGroup()
+     *
      */
     // TODO geb 2024-10-11: This function is meant as an optimization for large data sets. The idea is to reduce the
     // TODO amount of data retrieved by the SQL-Query. This might not be a good idea, since this filter scheme has O(n²) with
     // TODO respect to the number of parent aliases. Alternatively we might do a simple filter for just one parent or none at all.
     // TODO Any filtering not done via SQL must be done in code, which is easier to do, but may incur long load times for large data sets.
-    private function addFiltersFromParentAliases(DataSheetInterface $dataSheet, array $row): array
+    private function addFiltersFromParentAliases(DataSheetInterface $dataSheet, array $parents): void
     {
         // Prepare variables.
-        $parents = [];
         $metaObject = $dataSheet->getMetaObject();
         $parentAliases = $this->getParentAliases();
         $conditionGroup = ConditionGroupFactory::createAND($metaObject);
-
-        foreach ($parentAliases as $parentAlias) {
-            // Get parent information.
-            $parent = $row[$parentAlias];
-            // If we already created filters for this specific parent, we can skip it.
-            if (in_array($parent, $parents)) {
-                $parents[] = $parent;
+        $processedParents = [];
+        
+        foreach ($parents as $parent) {
+            // Since we concatenate our filters with OR, we only need to filter for
+            // each specific parent once.
+            if(in_array($parent, $processedParents)) {
                 continue;
             }
-            $parents[] = $parent;
-
+            $processedParents[] = $parent;
+            
             // Create a filter that checks across all parent columns, whether at least one of them matches our parent.
             $subGroup = ConditionGroupFactory::createOR($metaObject);
             foreach ($parentAliases as $columnToCheck) {
@@ -531,7 +551,6 @@ class OrderingBehavior extends AbstractBehavior
 
         // Apply filters.
         $dataSheet->getFilters()->addNestedGroup($conditionGroup);
-        return $parents;
     }
 
     /**
