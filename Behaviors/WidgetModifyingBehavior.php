@@ -139,7 +139,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
         if ($this->onlyForActions !== null) {
             $found = false;
             foreach ($this->onlyForActions as $actionSelector) {
-                if ($action->is($actionSelector) === true) {
+                if ($action->isExactly($actionSelector) === true) {
                     $found = true;
                 }
             }
