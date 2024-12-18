@@ -537,7 +537,15 @@ class SqlModelLoader implements ModelLoaderInterface
                         $configUxon->setProperty('priority', $row['priority']);
                     }
 
-                    $this->getWorkbench()->eventManager()->dispatch(new OnBeforeMetaObjectBehaviorLoadedEvent($row['behavior'], $row['oid'], $row['behavior_app_oid'], $object, $configUxon));
+                    $this->getWorkbench()->eventManager()->dispatch(
+                        new OnBeforeMetaObjectBehaviorLoadedEvent(
+                            $row['behavior'], 
+                            $row['oid'], 
+                            $row['behavior_app_oid'], 
+                            $object, 
+                            $configUxon
+                        )
+                    );
                 
                     $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, $row['behavior_app_oid']);
                     $object->getBehaviors()->add($behavior, $row['oid']);
