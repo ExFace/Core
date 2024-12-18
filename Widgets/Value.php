@@ -549,6 +549,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      *
      * @uxon-property value
      * @uxon-type metamodel:expression
+     * @uxon-translatable true
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setValue()
