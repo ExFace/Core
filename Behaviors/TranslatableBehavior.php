@@ -19,6 +19,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Model\Behaviors\TranslatableRelation;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Uxon\UxonSchema;
 use exface\Core\Widgets\InputKeysValues;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\UxonDataType;
@@ -902,7 +903,12 @@ class TranslatableBehavior extends AbstractBehavior
         foreach ($uxon->getPropertiesAll() as $prop => $val) {
             if ($val instanceof UxonObject) {
                 $prototypeClass = $schema->getPrototypeClass($uxon, [$prop, ' '], $rootPrototypeClass);
-                $translations = array_merge($translations, $this->findTranslatableUxonProperties($val, $schema, $keyPrefix, $prototypeClass));
+                if ($schema instanceof UxonSchema) {
+                    $propSchema = $schema->getSchemaForClass($prototypeClass);
+                } else {
+                    $propSchema = $schema;
+                }
+                $translations = array_merge($translations, $this->findTranslatableUxonProperties($val, $propSchema, $keyPrefix, $prototypeClass));
             }
         }
         
