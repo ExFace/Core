@@ -4,6 +4,10 @@ namespace exface\Core\Contexts;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\Constants\Colors;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Widgets\Container;
 
 /**
@@ -64,7 +68,7 @@ class PWAContext extends AbstractContext
      */
     public function getIndicator()
     {
-        return '';
+        return $this->countSyncErrors();
     }
     
     /**
@@ -86,5 +90,18 @@ class PWAContext extends AbstractContext
     {
         // TDOD
         return $container;
+    }
+
+    protected function countSyncErrors(string $deviceId = null) : int
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
+        $countCol = $ds->getColumns()->addFromExpression('UID:COUNT');
+        $ds->getFilters()->addConditionFromValueArray('STATUS', [20,70]);
+        if ($deviceId !== null) {
+            $ds->getFilters()->addConditionFromString('PRODUCER', $deviceId, ComparatorDataType::EQUALS);
+        }   
+        $ds->getFilters()->addConditionFromString('OWNER', $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid());
+        $ds->dataRead();
+        return $countCol->getValue(0) ?? 0;
     }
 }
