@@ -111,6 +111,7 @@ use exface\Core\CommonLogic\Translation\UxonTranslator;
  * - `exface.Core.OBJECT` to translate names and descriptions of meta objects themselves and their attributes
  * - `exface.Core.PAGE` to translate page names, etc. and translatable UXON properties of the widgets
  * - `exface.Core.OBJECT_ACTION` to translate modeled actions
+ * - `exface.Core.OBJECT_BEHAVIORS` to translate behaviors
  * - `exface.Core.MESSAGE` to translate message titles, hints, etc.
  * 
  * These behaviors use advanced configuration options. Have a look at them to get an idea, of what
@@ -143,6 +144,9 @@ class TranslatableBehavior extends AbstractBehavior
         ],
         "exface.Core.Model.OnBeforeMetaObjectActionLoaded" => [
             "\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
+        ],
+        "exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onBehaviorLoadedTranslateModel"
         ],
         "exface.Core.Model.OnUiMenuItemLoaded" => [
             "\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate"
@@ -561,6 +565,7 @@ class TranslatableBehavior extends AbstractBehavior
         $app = $event->getApp();
         
         $translator = $app->getTranslator();
+        // NOTE: this MUST correspond to the attribute TRANSLATION_FILENAME of exface.Core.OBJECT_BEHAVIORS!
         $domain = 'Behaviors/' 
         . $event->getObject()->getAliasWithNamespace() . '.' 
         . FilePathDataType::findFileName($event->getPrototype(), false) . '.'
