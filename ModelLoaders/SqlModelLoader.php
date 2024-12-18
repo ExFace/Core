@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\ModelLoaders;
 
+use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -520,7 +521,11 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($load_behaviors) {
             $query = $this->getDataConnection()->runSql("
                 /* Load behaviors */
-				SELECT *, {$this->buildSqlUuidSelector('oid')} AS oid FROM exf_object_behaviors WHERE object_oid = {$objectUid}");
+				SELECT *, 
+                    {$this->buildSqlUuidSelector('oid')} AS oid,
+                    {$this->buildSqlUuidSelector('behavior_app_oid')} AS behavior_app_oid
+                FROM exf_object_behaviors 
+                WHERE object_oid = {$objectUid}");
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
                     $configUxon = UxonObject::fromJson($row['config_uxon'] ? $row['config_uxon'] : '{}');
@@ -531,7 +536,18 @@ class SqlModelLoader implements ModelLoaderInterface
                     if ($row['priority'] !== null) {
                         $configUxon->setProperty('priority', $row['priority']);
                     }
-                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, ($row['app_oid'] ?? null));
+
+                    $this->getWorkbench()->eventManager()->dispatch(
+                        new OnBeforeMetaObjectBehaviorLoadedEvent(
+                            $row['behavior'], 
+                            $row['oid'], 
+                            $row['behavior_app_oid'], 
+                            $object, 
+                            $configUxon
+                        )
+                    );
+                
+                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, $row['behavior_app_oid']);
                     $object->getBehaviors()->add($behavior, $row['oid']);
                 }
             }
