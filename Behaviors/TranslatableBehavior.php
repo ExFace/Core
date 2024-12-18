@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Action\OnActionPerformedEvent;
@@ -110,6 +111,7 @@ use exface\Core\CommonLogic\Translation\UxonTranslator;
  * - `exface.Core.OBJECT` to translate names and descriptions of meta objects themselves and their attributes
  * - `exface.Core.PAGE` to translate page names, etc. and translatable UXON properties of the widgets
  * - `exface.Core.OBJECT_ACTION` to translate modeled actions
+ * - `exface.Core.OBJECT_BEHAVIORS` to translate behaviors
  * - `exface.Core.MESSAGE` to translate message titles, hints, etc.
  * 
  * These behaviors use advanced configuration options. Have a look at them to get an idea, of what
@@ -142,6 +144,9 @@ class TranslatableBehavior extends AbstractBehavior
         ],
         "exface.Core.Model.OnBeforeMetaObjectActionLoaded" => [
             "\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
+        ],
+        "exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onBehaviorLoadedTranslateModel"
         ],
         "exface.Core.Model.OnUiMenuItemLoaded" => [
             "\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate"
@@ -356,7 +361,9 @@ class TranslatableBehavior extends AbstractBehavior
      */
     protected function hasTranslatableAttributes() : bool
     {
-        return empty($this->translate_attributes) === false;
+        return ! empty($this->translate_attributes) 
+        || ! empty($this->translatable_uxon_attributes)
+        || ! empty($this->translatable_relations);
     }
     
     /**
@@ -542,6 +549,38 @@ class TranslatableBehavior extends AbstractBehavior
         
         $uxon->setProperty('name', $translator->translate('NAME', null, null, $domain, $uxon->getProperty('name')));
         $uxon->setProperty('hint', $translator->translate('SHORT_DESCRIPTION', null, null, $domain, $uxon->getProperty('hint') ?? ''));
+        
+        return;
+    }
+    
+    /**
+     * Translates names and descriptions of object actions whenever they are loaded.
+     * 
+     * @param OnBeforeMetaObjectBehaviorLoadedEvent $event
+     * 
+     * @return void
+     */
+    public static function onBehaviorLoadedTranslateModel(OnBeforeMetaObjectBehaviorLoadedEvent $event) 
+    {
+        $app = $event->getApp();
+        
+        $translator = $app->getTranslator();
+        // NOTE: this MUST correspond to the attribute TRANSLATION_FILENAME of exface.Core.OBJECT_BEHAVIORS!
+        $domain = 'Behaviors/' 
+        . $event->getObject()->getAliasWithNamespace() . '.' 
+        . FilePathDataType::findFileName($event->getPrototype(), false) . '.'
+        . $event->getBehaviorUid();
+        
+        if (! $translator->hasTranslationDomain($domain)) {
+            return;
+        }
+        
+        $uxon = $event->getUxon();
+        $uxonTranslator = new UxonTranslator($translator);
+        $translated = $uxonTranslator->translateUxonProperties($uxon, $domain, 'CONFIG_UXON');
+        foreach ($translated->getPropertiesAll() as $prop => $value) {
+            $uxon->setProperty($prop, $value);
+        }
         
         return;
     }
