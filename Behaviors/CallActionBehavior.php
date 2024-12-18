@@ -82,7 +82,7 @@ class CallActionBehavior extends AbstractBehavior
     
     const PREVENT_DEFAULT_IF_ACTION_CALLED = 'if_action_called';
     
-    private $eventAlias = null;
+    private $eventAliases = [];
     
     private $eventPreventDefault = null;
 
@@ -117,8 +117,10 @@ class CallActionBehavior extends AbstractBehavior
             $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
         }
         
-        $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), [$this, 'onEventCallAction'], $this->getPriority());
-        
+        foreach ($this->getEventAliases() as $event) {
+            $this->getWorkbench()->eventManager()->addListener($event, [$this, 'onEventCallAction'], $this->getPriority());
+        }
+
         return $this;
     }
     
@@ -129,8 +131,10 @@ class CallActionBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener($this->getEventAlias(), [$this, 'onEventCallAction'], $this->getPriority());
-        
+        foreach ($this->getEventAliases() as $event) {
+            $this->getWorkbench()->eventManager()->removeListener($event, [$this, 'onEventCallAction']);
+        }
+
         if ($this->hasRestrictionOnAttributeChange()) {
             $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
         }
@@ -146,7 +150,7 @@ class CallActionBehavior extends AbstractBehavior
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('event_alias', $this->getEventAlias());
+        $uxon->setProperty('event_aliases', $this->getEventAliases());
         $uxon->setProperty('action', $this->getAction()->exportUxonObject());
         if ($this->getPriority() !== null) {
             $uxon->setProperty('priority', $this->getPriority());
@@ -162,15 +166,36 @@ class CallActionBehavior extends AbstractBehavior
 
     /**
      * 
-     * @return string
+     * @return string[]
      */
-    protected function getEventAlias() : string
+    protected function getEventAliases() : array
     {
-        return $this->eventAlias;
+        return $this->eventAliases;
     }
 
     /**
-     * Alias of the event, that should trigger the action.
+     * Call the action when any of these events happen
+     * 
+     * Technically, any type of event selector will do - e.g.: 
+     * - `exface.Core.DataSheet.OnBeforeCreateData`
+     * - `\exface\Core\Events\DataSheet\OnBeforeCreateData`
+     * - OnBeforeCreateData::class (in PHP)
+     * 
+     * @uxon-property event_aliases
+     * @uxon-type metamodel:event[]
+     * @uxon-template [""]
+     * 
+     * @param string $aliasWithNamespace
+     * @return CallActionBehavior
+     */
+    protected function setEventAliases(UxonObject $arrayOfEventAliases) : CallActionBehavior
+    {
+        $this->eventAliases = $arrayOfEventAliases->toArray();
+        return $this;
+    }
+
+    /**
+     * Call the action when this event happens.
      * 
      * Technically, any type of event selector will do - e.g.: 
      * - `exface.Core.DataSheet.OnBeforeCreateData`
@@ -179,14 +204,13 @@ class CallActionBehavior extends AbstractBehavior
      * 
      * @uxon-property event_alias
      * @uxon-type metamodel:event
-     * @uxon-required true
      * 
      * @param string $aliasWithNamespace
      * @return CallActionBehavior
      */
     protected function setEventAlias(string $aliasWithNamespace) : CallActionBehavior
     {
-        $this->eventAlias = $aliasWithNamespace;
+        $this->eventAliases = [$aliasWithNamespace];
         return $this;
     }
 
