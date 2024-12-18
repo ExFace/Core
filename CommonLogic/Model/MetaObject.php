@@ -58,9 +58,11 @@ class MetaObject implements MetaObjectInterface
 
     private $uid_alias;
 
+    private $uid_attribute = null;
+
     private $attributes = null;
     
-    private $attributes_alias_cache = array();
+    private $attributes_alias_cache = [];
 
     /**
      * Array holding all direct relations to/from the object with the following structure:
@@ -521,8 +523,10 @@ class MetaObject implements MetaObjectInterface
             $this->getBehaviors()->add($copy, $key);
         }
         
-        // TODO Inherit actions here as soon as actions can be defined in the model
-        
+        // TODO Inherit actions here?
+
+        // Reset the cache because it might get filled when inheriting relation and attributes
+        $this->attributes_alias_cache = [];
         return;
     }
 
@@ -655,6 +659,8 @@ class MetaObject implements MetaObjectInterface
     public function setUidAttributeAlias($value)
     {
         $this->uid_alias = $value;
+        $this->uid_attribute = null;
+        return $this;
     }
 
     /**
@@ -665,10 +671,13 @@ class MetaObject implements MetaObjectInterface
      */
     public function getUidAttribute()
     {
-        if (! $this->getUidAttributeAlias()) {
-            throw new MetaObjectHasNoUidAttributeError($this, 'No UID attribute defined for object "' . $this->getAliasWithNamespace() . '"!');
+        if ($this->uid_attribute === null) {
+            if (! $this->getUidAttributeAlias()) {
+                throw new MetaObjectHasNoUidAttributeError($this, 'No UID attribute defined for object "' . $this->getAliasWithNamespace() . '"!');
+            }
+            $this->uid_attribute = $this->getAttribute($this->getUidAttributeAlias());
         }
-        return $this->getAttribute($this->getUidAttributeAlias());
+        return $this->uid_attribute;
     }
 
     /**

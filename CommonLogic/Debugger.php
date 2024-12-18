@@ -66,7 +66,7 @@ class Debugger implements DebuggerInterface
      *
      * @see \exface\Core\Interfaces\DebuggerInterface::printException()
      */
-    public function printException(\Throwable $exception, $use_html = true)
+    public static function printException(\Throwable $exception, $use_html = true)
     {
         $renderer = new ExceptionRenderer($exception);
         if ($use_html) {
@@ -98,7 +98,7 @@ class Debugger implements DebuggerInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DebuggerInterface::printVariable()
      */
-    public function printVariable($anything, $use_html = true, $expand_depth = 1)
+    public static function printVariable($anything, $use_html = true, $expand_depth = 1)
     {
         $cloner = new VarCloner();
         if ($use_html) {

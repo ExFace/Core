@@ -37,7 +37,8 @@ trait JqueryContextBarAjaxTrait {
                     foreach ($context->getAnnouncements() as $msg) {
                         $extra[$btn_element->getId()]['announcements'][] = [
                             'widget_type' => 'Message',
-                            'text' => $msg->getTitle(),
+                            'title' => $msg->getTitle(),
+                            'text' => $msg->getText() ? $msg->getText() : $msg->getTitle(),
                             'type' => $msg->getMessageType(),
                             'dismissable' => false, // TODO
                             'icon' => $this->buildCssIconClass($msg->getIcon())

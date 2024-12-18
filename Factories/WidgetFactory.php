@@ -164,7 +164,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
             throw new UxonParserError($uxon_object, 'Failed to create a widget from UXON! ' . $e->getMessage(), null, $e);
         }
         
-        // Now import the UXON description. Since the import is not an atomic operation, be wure to remove this widget
+        // Now import the UXON description. Since the import is not an atomic operation, be sure to remove this widget
         // and all it's children if anything goes wrong. This is important, as leaving the broken widget there may
         // produce an inconsistan stage of the application: e.g. the widget is registered in the page, but is not
         // properly referenced in whatever instance had produced it.

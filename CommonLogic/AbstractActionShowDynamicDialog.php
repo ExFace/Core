@@ -17,7 +17,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
  * Extend this class if you need an action, that creates a dialog on-the-fly based on it's
  * input data or other dynamic parameters. In the simplest case just override these methods:
  * 
- * - `enhanceDialogOnActionInit()` - put all logic, that does not depend on the input data here
+ * - `enrichDialogOnActionInit()` - put all logic, that does not depend on the input data here
  * - `enhanceDialogOnActionPerform()` - all dynamic logic goes here
  * - `perform()` - put any non-dialog-related logic here as always
  * 
@@ -64,9 +64,9 @@ abstract class AbstractActionShowDynamicDialog extends ShowDialog
      * @param Dialog $dialog
      * @return Dialog
      */
-    protected function enhanceDialogOnActionInit(Dialog $dialog) : Dialog
+    protected function enrichDialogOnActionInit(Dialog $dialog) : Dialog
     {
-        return parent::enhanceDialogWidget($dialog);
+        return parent::enrichDialogWidget($dialog);
     }
 
     /**
@@ -98,8 +98,8 @@ abstract class AbstractActionShowDynamicDialog extends ShowDialog
      * @param Dialog $dialog
      * @return \exface\Core\Widgets\Dialog
      */
-    protected final function enhanceDialogWidget(Dialog $dialog)
+    protected final function enrichDialogWidget(Dialog $dialog) : Dialog
     {
-        return $this->enhanceDialogOnActionInit($dialog);
+        return $this->enrichDialogOnActionInit($dialog);
     }
 }

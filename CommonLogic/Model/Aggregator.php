@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\DataTypes\ListDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
@@ -156,8 +157,8 @@ class Aggregator implements AggregatorInterface {
     
     /**
      * 
-     * @param DataTypeInterface $aggregatedType
-     * @return DataTypeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\AggregatorInterface::getResultDataType()
      */
     public function getResultDataType(DataTypeInterface $aggregatedType)
     {
@@ -191,6 +192,11 @@ class Aggregator implements AggregatorInterface {
             case AggregatorFunctionsDataType::MIN:
             case AggregatorFunctionsDataType::MAX:
                 $type = $aggregatedType->copy();
+                break;
+            case AggregatorFunctionsDataType::LIST_ALL:
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), ListDataType::class);
+                $type->setValuesDataType($aggregatedType);
                 break;
             default:
                 $type = DataTypeFactory::createBaseDataType($this->getWorkbench());

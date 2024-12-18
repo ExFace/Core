@@ -59,9 +59,9 @@ class ShowMassEditDialog extends ShowDialog
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ShowDialog::enhanceDialogWidget()
+     * @see \exface\Core\Actions\ShowDialog::enrichDialogWidget()
      */
-    protected function enhanceDialogWidget(Dialog $dialog)
+    protected function enrichDialogWidget(Dialog $dialog) : Dialog
     {
         if ($dialog->countWidgetsVisible() === 1) {
             $dialog->setHeight('auto');
@@ -93,7 +93,7 @@ class ShowMassEditDialog extends ShowDialog
         }
         $dialog->addButton($save_button);
         
-        return parent::enhanceDialogWidget($dialog);
+        return parent::enrichDialogWidget($dialog);
     }
 
     /**
