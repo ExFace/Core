@@ -11,8 +11,8 @@ You can export an app into a folder on your file system and put it in a version 
 1. Navigate in the main menu to `Administration > Metamodel > Apps`. Here you can see all apps currently installed on your workbench.
 2. Press the `+ New` button in the table with the apps.
 3. Fill the dialog with the following values:
-	- App Alias: `tutorial.BookClub`
-	- App Name: `Book Club Tutorial`
+	- App Alias: `tutorial.BookClub_<kuerzel>`
+	- App Name: `Book Club Tutorial <kuerzel>`
 	- Default Language: `English`
 	
 Note the app's alias `tutorial.BookClub`. [Aliases](../../understanding_the_metamodel/Aliases_and_selectors.md) are technical names used to uniquely identify components of the metamodel. A lot of things have aliases: objects, actions, pages, etc. Those components, that belong to an app, use the app's alias as a namespace (prefix) in their alias: e.g. the meta object for the books in our library will have the alias `tutorial.BookClub.book` where the first part is the alias of the app. This "namespacing" allows multiple apps to use the same component alias - in our case there may be other app with objects aliased `book`, but they will have another prefix.
