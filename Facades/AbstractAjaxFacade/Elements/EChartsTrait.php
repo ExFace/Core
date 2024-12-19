@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\Input;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
@@ -797,7 +798,7 @@ JS;
             return <<<JS
             
             (function ({$column}){
-                return {$column}.join('{$this->getSourceOutputListDelimiter()}');
+                return {$column}.join('{$this->getLegendValueListDelimiter()}');
             })(oEvent)
 JS;
 
@@ -851,30 +852,38 @@ JS;
      */
     // TODO 2024-12-09 geb: At the moment we simply use the first non-standard delimiter for ALL outputs, maybe we can 
     // TODO                 identify consumers of the JS getter and send bespoke delimiters per consumer.
-    protected function getSourceOutputListDelimiter() : string
+    protected function getLegendValueListDelimiter() : string
     {
         $widget = $this->getWidget();
         $links = WidgetLink::getLinksToWidget($widget);
+
+        // IDEA if this chart has a split series, the values of the legend are
+        // actually the values of getSplitByAttributeAlias(). We could look for
+        // this attribute and use its value list delimiter here.
         
+        // Search among incoming links for a unusual delimiter
         foreach ($links as $link) {
+            $targetColName = $link->getTargetColumnId();
+            if ($targetColName !== Chart::VALUE_LEGEND_ACTIVE && $targetColName !== Chart::VALUE_LEGEND_INACTIVE) {
+                continue;
+            }
+
             $source = $link->getSourceWidget();
-            
-            if($source instanceof iShowSingleAttribute && $source->isBoundToAttribute()) {
-                $attribute = $source->getAttribute();
-                if(($delimiter = $attribute->getValueListDelimiter()) !== ',') {
-                    return $delimiter;
-                }
+            // IDEA add an interface like iSupportMultipleValues
+            if($source instanceof Input) {
+                return $source->getMultipleValuesDelimiter();
             }
             
-            if($source instanceof iShowDataColumn && $source->isBoundToDataColumn()) {
-                $attribute = $source->getMetaObject()->getAttribute($source->getDataColumnName());
-                if(($delimiter = $attribute->getValueListDelimiter()) !== ',') {
+            // If not an input (e.g. a DataColumn)
+            if($source instanceof iShowSingleAttribute && $source->isBoundToAttribute()) {
+                $attribute = $source->getAttribute();
+                if(($delimiter = $attribute->getValueListDelimiter()) !== EXF_LIST_SEPARATOR) {
                     return $delimiter;
                 }
             }
         }
         
-        return ',';
+        return EXF_LIST_SEPARATOR;
     }
     
     /**

@@ -1040,17 +1040,15 @@ class Chart extends AbstractWidget implements
     }
 
     /**
+     * @deprecated 
+     * TODO Remove after 04.2024
+     * 
      * @param string|null $alias
-     * @return $this
+     * @return Chart
      */
-    public function setLegendAttributeAlias(?string $alias) : Chart
+    protected function setLegendAttributeAlias(?string $alias) : Chart
     {
         $this->legendAttributeAlias = $alias;
         return $this;
-    }
-    
-    public function getLegendAttributeAlias() : ?string
-    {
-        return $this->legendAttributeAlias;
     }
 }
