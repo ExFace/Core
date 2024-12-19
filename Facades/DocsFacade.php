@@ -178,7 +178,7 @@ class DocsFacade extends AbstractHttpFacade
             }
         </style>
             
-        <header>' . '<a href="#' . $requestUri . '">↑</a>' . '</header>
+        <header>' . '<a href="#' . $this->getAnchor($requestUri) . '">↑</a>' . '</header>
             
         <script type="text/javascript">
             window.onload = function() {
@@ -250,23 +250,26 @@ class DocsFacade extends AbstractHttpFacade
     /**
      * Replaces the links to PDF external websites with links that jump to a PDF internal section
      * From < a href="http://.../Section1.md">Section 1</a >
-     * To < a href="#http://.../Section1.md">Section 1</a >
+     * To < a href="##391e16dd556a3f7593801553b2f09bef">Section 1</a >
      * @param string $htmlString
      * @return string
      */
     protected function replaceHref(string $htmlString): string 
     {
-        // Define the pattern to capture the entire URL (including the domain and path) inside the href attribute
-        $pattern = '/<a href="([^"]*\/[^\/]+\.md)(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?">(.*?)<\/a>/';
-        
+        /**
+         * Define the pattern to capture the entire URL (including the domain and path) inside the href attribute
+         * The regex pattern makes sure that a user can add additional attributes like style in their html url definition.
+         * E.g.: <a href="http://localhost/exface/exface/api/docs/nbr/OneLink/Docs/AllgemeineFunktion/Section1.md" style="text-decoration:none; color:#000;">Section1</a></li>
+         */
+        $pattern = '/<a\s+[^>]*href="([^"]*\/[^\/]+\.md)(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?".*?>(.*?)<\/a>/';
         $matches = [];
         preg_match_all($pattern, $htmlString, $matches);
 
-        if (empty($matches)) {
+        if (empty($matches[1])) {
             return $htmlString;
         }
 
-        // Define the replacement pattern e.g. <a href="#http://.../Section1.md">Section 1</a>
+        // Define the replacement pattern e.g. <a href="##391e16dd556a3f7593801553b2f09bef">Section 1</a>
         $from = [];
         $to = [];
         foreach ($matches[1] as $i => $url) {
@@ -284,29 +287,33 @@ class DocsFacade extends AbstractHttpFacade
     
     /**
      * Adds the path/url of the markdown file as an id to the first heading of the markdown to be able to reference it with an href element.
+     * Sometimes Html-to-PDF converters add a <title> html tag to a document with <h1>-<h6> html tags inside. These headings will be ignored.
+     * 
      * @param string $link
      * @param string $htmlString
      * @return string
      */
     protected function addIdToFirstHeading(string $link, string $htmlString): string 
-    {
+    {   
         $doc = new DOMDocument();
         // Suppress errors due to invalid HTML structure
         libxml_use_internal_errors(true);
         $doc->loadHTML($htmlString);
         libxml_clear_errors();
-        
-        // Use XPath to find the first heading (h1-h6)
+
+        // Use XPath to find all headings (h1-h6) outside of <title> tags
         $xpath = new DOMXPath($doc);
-        $headers = $xpath->query('//h1 | //h2 | //h3 | //h4 | //h5 | //h6');
-        
+        $headers = $xpath->query('//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][not(ancestor::title)]');
+
         if ($headers->length > 0) {
             $firstHeader = $headers->item(0);
             // Add the id attribute to the first heading element
             $firstHeader->setAttribute('id', $this->getAnchor($link));
         }
+
         return $doc->saveHTML();
     }
+
     
     /**
      * Returns all links inside of a html string as an array
