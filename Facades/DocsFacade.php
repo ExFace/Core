@@ -250,7 +250,7 @@ class DocsFacade extends AbstractHttpFacade
     /**
      * Replaces the links to PDF external websites with links that jump to a PDF internal section
      * From < a href="http://.../Section1.md">Section 1</a >
-     * To < a href="##391e16dd556a3f7593801553b2f09bef">Section 1</a >
+     * To < a href="#391e16dd556a3f7593801553b2f09bef">Section 1</a >
      * @param string $htmlString
      * @return string
      */
@@ -259,7 +259,7 @@ class DocsFacade extends AbstractHttpFacade
         /**
          * Define the pattern to capture the entire URL (including the domain and path) inside the href attribute
          * The regex pattern makes sure that a user can add additional attributes like style in their html url definition.
-         * E.g.: <a href="http://localhost/exface/exface/api/docs/nbr/OneLink/Docs/AllgemeineFunktion/Section1.md" style="text-decoration:none; color:#000;">Section1</a></li>
+         * E.g.: <a href="http://localhost/path/to/Section1.md" style="text-decoration:none; color:#000;">Section1</a></li>
          */
         $pattern = '/<a\s+[^>]*href="([^"]*\/[^\/]+\.md)(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?".*?>(.*?)<\/a>/';
         $matches = [];
@@ -269,7 +269,7 @@ class DocsFacade extends AbstractHttpFacade
             return $htmlString;
         }
 
-        // Define the replacement pattern e.g. <a href="##391e16dd556a3f7593801553b2f09bef">Section 1</a>
+        // Define the replacement pattern e.g. <a href="#391e16dd556a3f7593801553b2f09bef">Section 1</a>
         $from = [];
         $to = [];
         foreach ($matches[1] as $i => $url) {
