@@ -151,7 +151,7 @@ class Chart extends AbstractWidget implements
     
     private $colorScheme = null;
     
-    private string $outputListDelimiter = ',';
+    private ?string $legendAttributeAlias = null;
 
     /**
      * 
@@ -1040,29 +1040,17 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     * Define a custom output list delimiter that will be used whenever this
-     * widget produces an array output.
-     * 
-     * The default delimiter is `,`.
-     * 
-     * @uxon-property output_list_delimiter
-     * @uxon-type string
-     * @uxon-default ,
-     * 
-     * @param string $delimiter
+     * @param string|null $alias
      * @return $this
      */
-    public function setOutputListDelimiter(string $delimiter) : Chart
+    public function setLegendAttributeAlias(?string $alias) : Chart
     {
-        $this->outputListDelimiter = $delimiter;
+        $this->legendAttributeAlias = $alias;
         return $this;
     }
-
-    /**
-     * @return string
-     */
-    public function getOutputListDelimiter() : string
+    
+    public function getLegendAttributeAlias() : ?string
     {
-        return $this->outputListDelimiter;
+        return $this->legendAttributeAlias;
     }
 }
