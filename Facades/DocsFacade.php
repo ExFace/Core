@@ -36,10 +36,15 @@ class DocsFacade extends AbstractHttpFacade
 
     const URL_PARAM_RENDER_PRINT = 'print';
 
+    const URL_PARAM_RENDER_LOGO = 'logo';
+
+    const URL_PARAM_FILE_NAME = 'fileName';
+
     const URL_PARAM_RENDER_CHAPTER = 'chapter';
     
     private $processedLinks = [];
     private $processedLinksKey = 0;
+    private $docsPath = null;
     
     /**
      *
@@ -56,6 +61,10 @@ class DocsFacade extends AbstractHttpFacade
         $requestUri = $request->getUri();
         $baseUrl = StringDataType::substringBefore($requestUri->getPath(), '/' . $this->buildUrlToFacade(true), '');
         $baseUrl = $requestUri->getScheme() . '://' . $requestUri->getAuthority() . $baseUrl;
+        // Set $this->docsPath only once to get the docs path when opening the first index file
+        if ($this->docsPath === null) {
+            $this->docsPath = $requestUri->getScheme() . '://' . $requestUri->getAuthority() . dirname($requestUri->getPath());
+        }
         
         $baseRewriteRules = $this->getWorkbench()->getConfig()->getOption('FACADES.DOCSFACADE.BASE_URL_REWRITE');
         if (! $baseRewriteRules->isEmpty()) {
@@ -86,15 +95,24 @@ class DocsFacade extends AbstractHttpFacade
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
                 $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));       
                 $response = $handler->handle($request);
-
+                $logoPath = $request->getQueryParams()[self::URL_PARAM_RENDER_LOGO];
                 $htmlString = $response->getBody()->__toString();
-                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString());
+
+                // Set the title and file name for the PDF
+                $fileName = $request->getQueryParams()[self::URL_PARAM_FILE_NAME] ?? "Download";
+                $htmlString = preg_replace(
+                    '/<title>(.*?)<\/title>/i', 
+                    '<title>' . $fileName . '</title>', 
+                    $htmlString
+                );
+
+                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString(), $logoPath);
 
                 $response = new Response(200, [], $htmlString);
                 $response = $response->withHeader('Content-Type', 'text/html');
                 break;
                 
-            // If the page ist to be rendered as a chapter, used a different template
+            // If the page is to be rendered as a chapter, used a different template
             // TODO move the whole printing logic to a middleware
             case ($request->getQueryParams()[self::URL_PARAM_RENDER] === self::URL_PARAM_RENDER_CHAPTER):
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/templatePDF.html']);
@@ -142,7 +160,14 @@ class DocsFacade extends AbstractHttpFacade
         return 'api/docs';
     }
 
-    protected function printCombinedPages(string $htmlString, string $requestUri) : string
+    /**
+     * 
+     * @param string $htmlString
+     * @param string $requestUri
+     * @param string $logoPath
+     * @return string
+     */
+    protected function printCombinedPages(string $htmlString, string $requestUri, ?string $logoPath) : string
     {
         // Find all links in first document page
         $linksArray = $this->findLinksInHtml($htmlString);
@@ -151,40 +176,65 @@ class DocsFacade extends AbstractHttpFacade
         
         $this->printLinkedPages($tempFilePath, $linksArray);
         $htmlString = $this->addIdToFirstHeading($requestUri, $htmlString);
-        $htmlString = $this->replaceHref($htmlString);
-        
+        $htmlString = $this->replaceHrefChapters($htmlString);
+        $htmlString = $this->replaceHrefImages($htmlString);
+
         // Attach print function to end of html to show print window when accessing the HTML
         // Also add an arrow as a header element to jump back to the first page in the PDF
-        $printString =
+        $printString = 
         '<style>
             @media print {
                 body {
-                    margin: 2cm; /* Margin for the body content */
+                    margin: 2cm;
                 }
             
-                /* Custom Header */
                 header {
                     position: fixed;
                     top: 0;
                     left: 0;
                     right: 0;
                     height: 2cm;
-                    text-align: right;
+                    text-align: left;
                     font-size: 24px;
                     font-weight: normal;
-                    line-height: 2cm;
-                    margin-right: 20px
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                header img {
+                    height: 0.5cm;
+                    padding: 0;
+                }
+
+                header a {
+                    font-size: 16px;
                 }
             }
         </style>
             
-        <header>' . '<a href="#' . $this->getAnchor($requestUri) . '">↑</a>' . '</header>
-            
+        <header>
+            <a href="#' . $this->getAnchor($requestUri) . '">↑</a>';
+
+            // Only add a logo if a $logoPath has been given via query param
+            if ($logoPath !== null) {
+                $printString .= 
+                    '<div class="logo-container">
+                        <img src="http://localhost/exface/exface/vendor/nbr/OneLink/Docs/' . $logoPath .  '" alt="Logo">
+                    </div>';
+            }
+
+    $printString .= 
+        '</header>
+                    
         <script type="text/javascript">
             window.onload = function() {
                 window.print();
             };
         </script>';
+
 
         file_put_contents($tempFilePath, $printString, FILE_APPEND | LOCK_EX);
         
@@ -206,8 +256,8 @@ class DocsFacade extends AbstractHttpFacade
     protected function printLinkedPages(string $tempFilePath, array $linksArray) 
     {
         foreach ($linksArray as $link) {
-            // Only process links that are markdown files and have not been processed before
-            if (str_ends_with($link, '.md') && !in_array($link, $this->processedLinks)) {
+            // Only process links that are markdown files, are part of the same app documentation and have not been processed before
+            if (str_ends_with($link, '.md') && str_starts_with($link, $this->docsPath) && !in_array($link, $this->processedLinks)) {
                 $this->processedLinks[$this->processedLinksKey] = $link;
                 $this->processedLinksKey = $this->processedLinksKey +1;
 
@@ -215,13 +265,15 @@ class DocsFacade extends AbstractHttpFacade
                 // Adds queryParam to jump to the right switch case inside of the createResponse function
                 $linkRequest = $linkRequest->withQueryParams([self::URL_PARAM_RENDER => self::URL_PARAM_RENDER_CHAPTER]);
                 $linkResponse = $this->createResponse($linkRequest);
-                // Adds a page break before start of each markdown file
+                // Adds a page break before start of each markdown file to separate the chapters
                 $pageBreak = '<div style="page-break-before: always;">';
                 $htmlString = $pageBreak . $linkResponse->getBody()->__toString();
                 $linksArrayRecursive = $this->findLinksInHTML($htmlString);
                 
-                $htmlString = $this->replaceHref($htmlString);
+                $htmlString = $this->replaceHrefChapters($htmlString);
                 $htmlString = $this->addIdToFirstHeading($link, $htmlString);
+                $htmlString = $this->replaceHrefImages($htmlString);
+                $htmlString = $this->addIdToImages($htmlString);
 
                 // Write the body content to the temporary file
                 file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
@@ -254,14 +306,48 @@ class DocsFacade extends AbstractHttpFacade
      * @param string $htmlString
      * @return string
      */
-    protected function replaceHref(string $htmlString): string 
+    protected function replaceHrefChapters(string $htmlString): string 
     {
         /**
          * Define the pattern to capture the entire URL (including the domain and path) inside the href attribute
          * The regex pattern makes sure that a user can add additional attributes like style in their html url definition.
-         * E.g.: <a href="http://localhost/path/to/Section1.md" style="text-decoration:none; color:#000;">Section1</a></li>
+         * E.g.: <a href="http://localhost/path/to/Section1.md" style="text-decoration:none; color:#000;">Section 1</a></li>
          */
         $pattern = '/<a\s+[^>]*href="([^"]*\/[^\/]+\.md)(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?".*?>(.*?)<\/a>/';
+        $matches = [];
+        preg_match_all($pattern, $htmlString, $matches);
+
+        if (empty($matches[1])) {
+            return $htmlString;
+        }
+
+        // Define the replacement pattern e.g. <a href="#391e16dd556a3f7593801553b2f09bef">Section 1</a>
+        $from = [];
+        $to = [];
+        foreach ($matches[1] as $i => $url) {
+            $from[] = '<a href="' . $url . '"';
+            $to[] = '<a href="#' . $this->getAnchor($url) . '"';
+        }
+        
+        return str_replace($from, $to, $htmlString);
+    }
+
+    /**
+     * Replaces the browser links to images with links that jump to PDF internal images
+     * From < a href="http://.../Image1.jpg">Image 1</a >
+     * To < a href="#391e16dd556a3f7593801553b2f09bef">Image 1</a >
+     * @param string $htmlString
+     * @return string
+     */
+    protected function replaceHrefImages(string $htmlString): string 
+    {
+        /**
+         * Define the pattern to capture the entire URL (including the domain and path) inside the href attribute
+         * The regex pattern makes sure that a user can add additional attributes like style in their html url definition.
+         * E.g.: <a href="http://localhost/path/to/Image1.jpg" style="text-decoration:none; color:#000;">Image 1</a></li>
+         */
+        $pattern = '/<a\s+[^>]*href="([^"]*\/[^\/]+\.(?:jpg|jpeg|png|gif|bmp|webp|svg))(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?".*?>(.*?)<\/a>/i';
+
         $matches = [];
         preg_match_all($pattern, $htmlString, $matches);
 
@@ -314,7 +400,45 @@ class DocsFacade extends AbstractHttpFacade
         return $doc->saveHTML();
     }
 
-    
+    /**
+     * Adds the path/url of the image as an id to be able to reference it with an href element.
+     * 
+     * @param string $htmlString
+     * @return string
+     */
+    protected function addIdToImages(string $htmlString): string 
+    {
+        $doc = new DOMDocument();
+        // Suppress errors due to invalid HTML structure
+        libxml_use_internal_errors(true);
+        $doc->loadHTML($htmlString);
+        libxml_clear_errors();
+
+        // Use XPath to find all <a> tags that link to image files
+        $xpath = new DOMXPath($doc);
+        $imageLinks = $xpath->query('//a[contains(@href, ".jpg") or contains(@href, ".jpeg") or contains(@href, ".png") or contains(@href, ".gif") or contains(@href, ".bmp") or contains(@href, ".webp") or contains(@href, ".svg")]');
+
+        // Loop through all matching <a> tags and add an id attribute
+        foreach ($imageLinks as $linkElement) {
+            // Add the id attribute to the <a> tag's href value
+            $href = $linkElement->getAttribute('href');
+            $linkElement->setAttribute('id', $this->getAnchor($href));
+        }
+
+        // Use XPath to find all <img> tags
+        $imageElements = $xpath->query('//img[contains(@src, ".jpg") or contains(@src, ".jpeg") or contains(@src, ".png") or contains(@src, ".gif") or contains(@src, ".bmp") or contains(@src, ".webp") or contains(@src, ".svg")]');
+
+        // Loop through all matching <img> tags and add an id attribute
+        foreach ($imageElements as $imgElement) {
+            // Add the id attribute to the <img> tag's src value
+            $src = $imgElement->getAttribute('src');
+            $imgElement->setAttribute('id', $this->getAnchor($src));
+        }
+
+        // Return the modified HTML string
+        return $doc->saveHTML();
+    }
+
     /**
      * Returns all links inside of a html string as an array
      * @param string $html
