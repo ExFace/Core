@@ -1,6 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Model\Behaviors;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
@@ -38,7 +42,39 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $priority = null;
 
     private $name = null;
-
+    
+    protected bool $isInProgress = false;
+    
+    public function isInProgress() : bool
+    {
+        return $this->isInProgress;
+    }
+    
+    protected function beginWork(EventInterface $event) : BehaviorLogBook|bool
+    {
+        if($this->isInProgress) {
+            return false;
+        }
+        $this->isInProgress = true;
+        
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        return $logbook;
+    }
+    
+    protected function finishWork(EventInterface $event, BehaviorLogBook $logbook) : bool
+    {
+        $wasInProgress = $this->isInProgress;
+        $this->isInProgress = false;
+        
+        if($wasInProgress) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null, string $appSelectorOrString = null)
     {
         $this->object = $object;
@@ -266,7 +302,8 @@ abstract class AbstractBehavior implements BehaviorInterface
     }
     
     /**
-     * Behaviors with higher priority will be executed first if multiple behaviors of an object are registered for the same event.
+     * Behaviors with higher priority will be executed first if multiple behaviors of an object are registered for the
+     * same event.
      *
      * @param int $value
      * @return BehaviorInterface

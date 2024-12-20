@@ -15,6 +15,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Events\DataSheetTransactionEventInterface;
+use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -75,7 +76,7 @@ class OrderingBehavior extends AbstractBehavior
     private const FLAG_PROCESSED = "PROCESSED";
     
     // internal variables
-    private bool $working = false;
+    private array $eventCache = [];
 
     // configurable variables
     private int $startIndex = 1;
@@ -84,7 +85,6 @@ class OrderingBehavior extends AbstractBehavior
     private mixed $orderAttributeAlias = null;
     private mixed $orderBoundaryAliases = [];
     
-    private array $oldDataCache = [];
 
     /**
      *
@@ -94,17 +94,16 @@ class OrderingBehavior extends AbstractBehavior
     {
         $priority = $this->getPriority();
 
-        $onCacheOldDataHandle = array($this, 'onCacheOldData');
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $onCacheOldDataHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $onCacheOldDataHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), $onCacheOldDataHandle, $priority);
+        $onBeforeHandle = array($this, 'handleOnBefore');
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $onBeforeHandle, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $onBeforeHandle, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), $onBeforeHandle, $priority);
 
-        $determineOrderHandle = array($this, 'onHandleDetermineOrder');
-        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $determineOrderHandle, $priority);
-        //$this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $determineOrderHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $determineOrderHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnDeleteDataEvent::getEventName(), $determineOrderHandle, $priority);
-
+        $onAfterHandle = array($this, 'handleOnAfter');
+        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $onAfterHandle, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $onAfterHandle, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnDeleteDataEvent::getEventName(), $onAfterHandle, $priority);
+        
         return $this;
     }
 
@@ -114,109 +113,194 @@ class OrderingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners(): BehaviorInterface
     {
-        $onCacheOldDataHandle = array($this, 'onCacheOldData');
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), $onCacheOldDataHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $onCacheOldDataHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), $onCacheOldDataHandle);
+        $onBeforeHandle = array($this, 'handleOnBefore');
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), $onBeforeHandle);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $onBeforeHandle);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), $onBeforeHandle);
 
-        $determineOrderHandle = array($this, 'onHandleDetermineOrder');
-        $this->getWorkbench()->eventManager()->removeListener(OnCreateDataEvent::getEventName(), $determineOrderHandle);
-        //$this->getWorkbench()->eventManager()->removeListener(OnUpdateDataEvent::getEventName(), $determineOrderHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $determineOrderHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnDeleteDataEvent::getEventName(), $determineOrderHandle);
+        $onAfterHandle = array($this, 'handleOnAfter');
+        $this->getWorkbench()->eventManager()->removeListener(OnCreateDataEvent::getEventName(), $onAfterHandle);
+        $this->getWorkbench()->eventManager()->removeListener(OnUpdateDataEvent::getEventName(), $onAfterHandle);
+        $this->getWorkbench()->eventManager()->removeListener(OnDeleteDataEvent::getEventName(), $onAfterHandle);
 
         return $this;
     }
 
+    protected function beginWork(EventInterface $event): BehaviorLogBook|bool
+    {
+        if (!$event instanceof DataSheetEventInterface ||
+            !$event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+            return false;
+        }
+        
+        return parent::beginWork($event);
+    }
+
+
     /**
-     * Cache old data (from the database) for later use.
-     * 
      * @param DataSheetEventInterface $event
      * @return void
      */
-    public function onCacheOldData(DataSheetEventInterface $event) : void
+    public function handleOnBefore(DataSheetEventInterface $event) : void
     {
-        if($this->working) {
+        if(!$logbook = $this->beginWork($event)) {
             return;
         }
-        $this->working = true;
-        
-        $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
-        
-        $logBook->addLine('Caching old data for use in later steps.');
+
         $eventSheet = $event->getDataSheet();
-        $this->fetchMissingColumns($eventSheet,$logBook);
+        $logbook->addDataSheet('InputData', $eventSheet->copy());
         
+        // Make sure it has a UID column.
+        if ($eventSheet->hasUidColumn() === false) {
+            $logbook->addLine('Cannot order objects with no Uid attribute.');
+            $this->finishWork($event, $logbook);
+            return;
+        }
+        
+        if(!$event instanceof DataSheetTransactionEventInterface) {
+            throw new BehaviorRuntimeError($this, 'Event ' . $event->getAlias() . ' not supported!', null, null, $logbook);
+        }
+        
+        // Fetch any missing columns.
+        $this->fetchMissingColumns($eventSheet,$logbook);
+        // Load data for groups present in event sheet.
         $loadedData = $this->createEmptyCopy($eventSheet, true, false);
         $loadedData->setFilters(ConditionGroupFactory::createOR($loadedData->getMetaObject()));
         foreach ($eventSheet->getRows() as $row) {
             $this->addFiltersFromParentAliases($loadedData, $this->getParents($row));
         }
-        
         $loadedData->dataRead();
-        $this->oldDataCache[] = [
-            'eventSheet' => $eventSheet,
-            'oldDataSheet' => $loadedData
-        ];
         
-        $logBook->addLine('Data successfully cached.');
-        $logBook->addDataSheet('Cache', $loadedData);
+        $logbook->addLine('Data successfully loaded from database.');
+        $logbook->addDataSheet('LoadedData', $loadedData->copy());
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
-        $this->working = false;
-    }
-    
-    /**
-     * Determine the order of data elements during `OnBefore...Data` and cache the calculated changes to apply them 
-     * during `On...Data` events. 
-     * 
-     * @param DataSheetEventInterface $event
-     */
-    public function onHandleDetermineOrder(DataSheetEventInterface $event): void
-    {
-        // Ignore MetaObjects we are not associated with.
-        if (!$event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
-        // Prevent recursion.
-        if ($this->working === true) {
-            return;
-        }
-
-        // Create logbook.
-        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        // Get datasheet.
-        $eventSheet = $event->getDataSheet();
-        $logbook->addDataSheet('InputData', $eventSheet);
-        // Make sure it has a UID column.
-        if ($eventSheet->hasUidColumn() === false) {
-            $logbook->addLine('Cannot order objects with no Uid attribute.');
-            return;
-        }
-        
-        // Begin work.
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
-        $this->working = true;
-
-        // Fetch any missing columns.
-        $this->fetchMissingColumns($eventSheet, $logbook);
-
         // Order data.
         $pendingChanges = [];
-        $onDelete = $event instanceof OnBeforeDeleteDataEvent || $event instanceof OnDeleteDataEvent;
-        $this->groupAndOrderDataByParents($onDelete, $eventSheet, $pendingChanges, $logbook);
+        $siblingCache = new LazyHierarchicalDataCache();
+        $this->groupAndOrderDataByParents($event, $loadedData, $siblingCache, $pendingChanges, $logbook);
 
         if(empty($pendingChanges)) {
             $logbook->addLine('No changes pending for input data.');
+            $shiftedIndices = [];
         } else {
-            $logbook->addLine('Found ' . count($pendingChanges) . ' pending changes for input data.');
-            $this->applyChanges($event, $pendingChanges, $logbook);
+            $logbook->addLine('Found ' . count($pendingChanges) . ' pending changes.');
+            $shiftedIndices = $this->shiftIndices($eventSheet, $siblingCache, $pendingChanges, $logbook);
+            
+            $logbook->addLine('Shifted indices to make room for next step');
+            $logbook->addDataSheet('Shifted', $eventSheet);
         }
         
-        // Finish work.
-        $this->working = false;
-        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+        // Cache data for next step.
+        $this->eventCache[] = [
+            'eventSheet' => $eventSheet,
+            'loadedData' => $loadedData,
+            'shiftedIndices' => $shiftedIndices
+        ];
+        
+        $this->finishWork($event, $logbook);
+    }
+    
+    /**
+     * @param DataSheetEventInterface $event
+     */
+    public function handleOnAfter(DataSheetEventInterface $event): void
+    {
+        // Prevent recursion.
+        if (!$logbook = $this->beginWork($event)) {
+            return;
+        }
+        
+        // Get datasheet.
+        $eventSheet = $event->getDataSheet();
+        $logbook->addDataSheet('InputData', $eventSheet);
+        
+        // Make sure it has a UID column.
+        if ($eventSheet->hasUidColumn() === false) {
+            $logbook->addLine('Cannot order objects with no Uid attribute.');
+            $this->finishWork($event, $logbook);
+            return;
+        }
+
+        $eventCache = null;
+        foreach ($this->eventCache as $cachedEventData) {
+            if($cachedEventData['eventSheet'] === $eventSheet) {
+                $eventCache = $cachedEventData;
+                break;
+            }
+        }
+        
+        if($eventCache === null) {
+            throw new BehaviorRuntimeError($this, 'Could not load data from cache!', null, null, $logbook);
+        }
+        
+        // Restore shifted indices. This is needed to restore indices of rows that did not
+        // have a UID in the last step.
+        $indexAlias = $this->getOrderNumberAttributeAlias();
+        $shiftedIndices = $eventCache['shiftedIndices'];
+
+        foreach ($eventSheet->getRows() as $rowNr => $row) {
+            $restoredIndex = $shiftedIndices[$row[$indexAlias]];
+            if($restoredIndex !== null) {
+                $row[$indexAlias] = $restoredIndex;
+                $eventSheet->addRow($row, true);
+            }
+        }
+        
+        $pendingChanges = [];
+        $siblingCache = new LazyHierarchicalDataCache();
+        $this->groupAndOrderDataByParents($event, $eventCache['loadedData'], $siblingCache, $pendingChanges, $logbook);
+
+        if(empty($pendingChanges)) {
+            $logbook->addLine('No changes pending for input data.');
+        } else if ($event instanceof DataSheetTransactionEventInterface) {
+            $logbook->addLine('Found ' . count($pendingChanges) . ' pending changes.');
+            $this->applyChanges($event, $siblingCache, $pendingChanges, $logbook);
+        } else {
+            throw new BehaviorRuntimeError($this, 'Event ' . $event->getAlias() . ' not supported!', null, null, $logbook);
+        }
+        
+        $this->finishWork($event, $logbook);
+    }
+
+    /**
+     *
+     * @param DataSheetInterface        $eventSheet
+     * @param LazyHierarchicalDataCache $siblingCache
+     * @param array                     $pendingChanges
+     * @param BehaviorLogBook           $logBook
+     * @return array
+     */
+    private function shiftIndices(
+        DataSheetInterface          $eventSheet,
+        LazyHierarchicalDataCache   $siblingCache,
+        array                       $pendingChanges,
+        BehaviorLogBook             $logBook) : array
+    {
+        // Prepare variables.
+        $indexAlias = $this->getOrderNumberAttributeAlias();
+        $uidAlias = $eventSheet->getUidColumnName();
+        $startIndex = $this->getOrderStartsWith();
+        $shiftedIndices = [];
+
+        $logBook->addLine('Shifting indices of input data.');
+        foreach ($pendingChanges as $pendingRow) {
+            $siblingData = $siblingCache->getData($this->getParents($pendingRow));
+            $pendingIndex = $pendingRow[$indexAlias];
+
+            // If the pending index conflicts with the original data, we need to shift it.
+            $emptyIndex = $pendingIndex === null || $pendingIndex === '';
+            if($emptyIndex || in_array($pendingIndex, $siblingData['original']->getColumnValues($indexAlias))) {
+                $safeIndex = $siblingData['maxIndex'] - $startIndex + 1;
+                $newIndex = $pendingIndex + $safeIndex;
+                $pendingRow[$indexAlias] = $newIndex;
+                $shiftedIndices[$newIndex] = $pendingIndex;
+            }
+
+            $eventSheet->removeRowsByUid($pendingRow[$uidAlias]);
+            $eventSheet->addRow($pendingRow);
+        }
+
+        return $shiftedIndices;
     }
 
     /**
@@ -265,36 +349,45 @@ class OrderingBehavior extends AbstractBehavior
      * Groups all rows in the event sheet by their parents and
      * applies an ascending order within the groups according to their index alias.
      *
-     * @param bool               $onDelete
-     * @param DataSheetInterface $eventSheet
-     * @param array              $pendingChanges
+     * @param DataSheetEventInterface   $event
+     * @param DataSheetInterface        $loadedData
+     * @param LazyHierarchicalDataCache $cache
+     * @param array                     $pendingChanges
      * Any necessary data updates will be appended to this array, since updating is deferred to `On...DataEvent`.
-     * @param BehaviorLogBook    $logbook
+     * @param BehaviorLogBook           $logbook
      * @return void
      */
     private function groupAndOrderDataByParents(
-        bool                $onDelete,
-        DataSheetInterface  $eventSheet,
-        array               &$pendingChanges,
-        BehaviorLogBook     $logbook): void
+        DataSheetEventInterface     $event,
+        DataSheetInterface          $loadedData,
+        LazyHierarchicalDataCache   $cache,
+        array                       &$pendingChanges,
+        BehaviorLogBook             $logbook): void
     {
         $logbook->addLine('Ordering event data...');
         $logbook->addIndent(1);
         
         // Prepare variables.
-        $cache = new LazyHierarchicalDataCache();
-        $indexAlias = $this->getOrderNumberAttributeAlias();
-        $uidAlias = $eventSheet->getUidColumnName();
+        $eventSheet = $event->getDataSheet();
+        $onDelete = $event instanceof OnBeforeDeleteDataEvent;
 
         // Iterate over rows in the event sheet and update their ordering.
         foreach ($eventSheet->getRows() as $rowIndex => $row) {
-            // Find, load and cache the row and its siblings.
             $logbook->addLine('Searching for siblings of row '. $rowIndex . ':');
             $logbook->addIndent(1);
-            $siblingData = $this->getSiblings($onDelete, $eventSheet, $pendingChanges, $row, $indexAlias, $cache, $logbook);
+            
+            // Find, load and cache the row and its siblings.
+            $siblingData = $this->getSiblingData(
+                $onDelete, 
+                $eventSheet,
+                $loadedData, 
+                $pendingChanges, 
+                $row, 
+                $cache, 
+                $logbook);
 
             // If we already ordered the group this row belongs to, continue.
-            if ($siblingData === self::FLAG_PROCESSED) {
+            if ($siblingData['flag'] === self::FLAG_PROCESSED) {
                 $logbook->addLine('Data for this group has already been processed, moving on.');
                 $logbook->addIndent(-1);
                 continue;
@@ -305,18 +398,18 @@ class OrderingBehavior extends AbstractBehavior
 
             // Mark all siblings as PROCESSED, to avoid ordering the same group multiple times.
             try {
-                $cache->setData($siblingData['siblings']->getRow(0)[$uidAlias], self::FLAG_PROCESSED);
+                $siblingData['flag'] = self::FLAG_PROCESSED;
+                $cache->setData($siblingData['parents'], $siblingData);
             } catch (InvalidArgumentException $exception) {
-                throw new BehaviorRuntimeError($this, 'Could mark data as "' .  self::FLAG_PROCESSED .'": ' . $exception->getMessage(), null, $exception, $logbook);
+                throw new BehaviorRuntimeError($this, 'Could not mark data as "' .  self::FLAG_PROCESSED .'": ' . $exception->getMessage(), null, $exception, $logbook);
             }
         }
 
-        unset($cache);
         $logbook->addIndent(-1);
     }
 
     /**
-     * Finds all siblings of a given row. A sibling is any row that has the EXACT same parentage, including EMPTY
+     * Get all siblings of a given row. A sibling is any row that has the EXACT same parentage, including EMPTY
      * values.
      *
      * Loads, processes and caches all relevant data for this row and its siblings.
@@ -326,96 +419,89 @@ class OrderingBehavior extends AbstractBehavior
      *
      * @param bool                      $onDelete
      * @param DataSheetInterface        $eventSheet
+     * @param DataSheetInterface        $loadedData
      * @param array                     $pendingChanges
      * Any necessary data updates will be appended to this array, since updating is deferred to `On...DataEvent`.
      * @param array                     $row
-     * @param string                    $indexingAlias
      * @param LazyHierarchicalDataCache $cache
      * @param BehaviorLogBook           $logbook
-     * @return DataSheetInterface|string
+     * @return array
      */
-    private function getSiblings(
+    private function getSiblingData(
         bool                      $onDelete,
         DataSheetInterface        $eventSheet,
+        DataSheetInterface        $loadedData,
         array                     &$pendingChanges,
         array                     $row,
-        string                    $indexingAlias,
         LazyHierarchicalDataCache $cache,
-        BehaviorLogBook          $logbook): array|string
+        BehaviorLogBook           $logbook): array
     {
-        // Check if we already loaded sibling data for this UID before.
+        // Prepare variables.
+        $indexingAlias = $this->getOrderNumberAttributeAlias();
         $uidAlias = $eventSheet->getUidColumnName();
         $parents = $this->getParents($row);
+        
+        // Check if we already loaded sibling data for this UID before.
         if ($siblingData = $cache->getData($parents)) {
             $logbook->addLine('Sibling data retrieved from cache.');
             return $siblingData;
         }
-
-        // Retrieve old data from cache.
-        $loadedData = null;
-        foreach ($this->oldDataCache as $oldData) {
-            if($oldData['eventSheet'] === $eventSheet) {
-                $loadedData = $oldData['oldDataSheet']->copy();
-                break;
-            }
-        }
-        if($loadedData === null) {
-            throw new BehaviorRuntimeError($this, 'Could not retrieve old data from cache!', null,null, $logbook);
-        }
         
-        $this->addFiltersFromParentAliases($loadedData, $parents);
-
         $groupId = json_encode($parents);
         $logbook->addLine('Looking for other elements in group ' . $groupId . '.');
-        // Remove any rows that do not belong to this group.
+        
+        // Extract all rows from the loaded data that belong to this group.
+        $originalSiblingSheet = $this->createEmptyCopy($loadedData, true, false);
         foreach ($loadedData->getRows() as $loadedRow) {
-            $siblingUId = $loadedRow[$uidAlias];
-            if (!$this->belongsToGroup($loadedRow, $parents)) {
-                $loadedData->removeRowsByUid($siblingUId);
+            if ($this->belongsToGroup($loadedRow, $parents)) {
+                $originalSiblingSheet->addRow($loadedRow);
             }
         }
+        
         // Extract rows from event sheet that belong to this group.
-        $changedData = $this->createEmptyCopy($eventSheet, true, false);
+        $siblingSheet = $originalSiblingSheet->copy();
+        $changeSheet = $this->createEmptyCopy($eventSheet, true, false);
         foreach ($eventSheet->getRows() as $changedRow) {
             $changedUId = $changedRow[$uidAlias];
-            $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $changedUId);
+            $loadedRow = $siblingSheet->getRowByColumnValue($uidAlias, $changedUId);
             
             if($this->belongsToGroup($changedRow, $parents)) {
                 // On delete, all changed rows will be removed from the database,
                 // so we have to remove them from our ordering data as well.
                 if($onDelete) {
-                    $loadedData->removeRowsByUid($changedUId);
+                    $siblingSheet->removeRowsByUid($changedUId);
                     $cache->addElement($this->getParents($changedRow), $parents);
                 } 
                 
                 if ($loadedRow === null || $loadedRow[$indexingAlias] !== $changedRow[$indexingAlias]) {
-                    $changedData->addRow($changedRow, true, false);
+                    $changeSheet->addRow($changedRow, true, false);
                 }
             }
         }
 
         if($onDelete) {
-            $rowCount = $loadedData->countRows();
-            if($loadedData->countRows() === 0) {
+            $rowCount = $siblingSheet->countRows();
+            if($rowCount === 0) {
                 $logbook->addLine('All elements of this group have been deleted.');
-                $cache->setData($row[$uidAlias], self::FLAG_PROCESSED);
-                return self::FLAG_PROCESSED;
+                $siblingData = $this->buildSiblingCacheEntry($originalSiblingSheet, $siblingSheet, $changeSheet, $parents, null);
+                $cache->setData($parents, $siblingData);
+                return $siblingData;
             } else {
                 $logbook->addLine($rowCount . ' left to order, after excluding deleted data. Using row ' . $row[$uidAlias] . ' as reference.');
-                $row = $loadedData->getRow();
+                $row = $siblingSheet->getRow();
             }
         } else {
             $logbook->addLine('Fetching new data from changed rows.');
-            foreach ($changedData->getRows() as $row) {
-                $rowNr = $loadedData->getUidColumn()->findRowByValue($row[$uidAlias]);
+            foreach ($changeSheet->getRows() as $row) {
+                $rowNr = $siblingSheet->getUidColumn()->findRowByValue($row[$uidAlias]);
                 if($rowNr !== false) {
-                    $loadedData->setCellValue($indexingAlias, $rowNr, $row[$indexingAlias]);
+                    $siblingSheet->setCellValue($indexingAlias, $rowNr, $row[$indexingAlias]);
                 } else {
-                    $loadedData->addRow($row);
+                    $siblingSheet->addRow($row);
                 }
             }
         }
-        $logbook->addDataSheet('WorkingSheet-' . $groupId, $loadedData);
+        $logbook->addDataSheet('WorkingSheet-' . $groupId, $siblingSheet);
 
         // Determine where to insert new elements.
         $insertOnTop = ! $this->getAppendToEnd();
@@ -423,7 +509,7 @@ class OrderingBehavior extends AbstractBehavior
             $insertionIndex = $this->getOrderStartsWith();
             $logbook->addLine('New elements will be inserted at the start with index ' . $this->getOrderStartsWith());
         } else {
-            $insertionIndex = max($loadedData->getColumnValues($indexingAlias));
+            $insertionIndex = max($siblingSheet->getColumnValues($indexingAlias)) + 1;
             if ($insertionIndex !== "") {
                 $logbook->addLine('New elements will be inserted at the end with index ' . $insertionIndex);
             } else {
@@ -433,169 +519,61 @@ class OrderingBehavior extends AbstractBehavior
         }
 
         // Post-Process rows.
-        foreach ($loadedData->getRows() as $rowNumber => $siblingRow) {
+        foreach ($siblingSheet->getRows() as $rowNumber => $siblingRow) {
             // Fill missing indices.
             $index = $siblingRow[$indexingAlias];
             if ($index === null || $index === "") {
                 $logbook->addLine('Inserting row ' . $rowNumber . ' with UID ' . $siblingRow[$uidAlias] . ' at ' . $insertionIndex);
                 // Update sheet.
-                $loadedData->setCellValue($indexingAlias, $rowNumber, $insertionIndex);
+                $siblingSheet->setCellValue($indexingAlias, $rowNumber, $insertionIndex);
                 // Record change.
                 $siblingRow[$indexingAlias] = $insertionIndex;
-                $pendingChanges[$siblingRow[$uidAlias]] = $siblingRow;
+                $pendingChanges[] = $siblingRow;
                 // Ensure that this row will have sorting priority.
-                $changedData->addRow($siblingRow, true);
+                $changeSheet->addRow($siblingRow, true);
             }
 
             // Add row as node to cache.
-            $cache->addElement($this->getParents($row), $parents);
+            $cache->addElement($this->getParents($siblingRow), $parents);
         }
 
         // Sort sheet by ordering index.
-        $sorters = new DataSorterList($loadedData->getWorkbench(), $loadedData);
+        $sorters = new DataSorterList($siblingSheet->getWorkbench(), $siblingSheet);
         $sorters->addFromString($indexingAlias);
-        $loadedData->sort($sorters, false);
+        $siblingSheet->sort($sorters, false);
         
-        // Save sibling datasheet to cache.
+        // Save sibling data to cache.
         try {
-            $siblingData = [
-                'siblings' => $loadedData,
-                'priority' => $changedData
-            ];
+            $siblingData = $this->buildSiblingCacheEntry($originalSiblingSheet, $siblingSheet, $changeSheet, $parents, null);
             $cache->setData($parents, $siblingData);
         } catch (InvalidArgumentException $exception) {
             throw new BehaviorRuntimeError($this, 'Could not add data to cache: ' . $exception->getMessage(), null, $exception, $logbook);
         }
 
-        $logbook->addLine('Found ' . ($loadedData->countRows()) . ' elements in group ' . $groupId . '.');
-        $logbook->addDataSheet('Group-' . $groupId, $loadedData);
+        $logbook->addLine('Found ' . ($siblingSheet->countRows()) . ' elements in group ' . $groupId . '.');
+        $logbook->addDataSheet('Group-' . $groupId, $siblingSheet);
 
         return $siblingData;
     }
 
-    /**
-     * Extracts an array with ALL parents of a row, including duplicates.
-     * 
-     * @param array $row
-     * @return array
-     */
-    protected function getParents(array $row) : array
+    private function buildSiblingCacheEntry(
+        DataSheetInterface $originalSheet,
+        DataSheetInterface $siblingSheet,
+        DataSheetInterface $changeSheet,
+        array $parents,
+        ?string $flag) : array
     {
-        $parents = [];
-        $parentAliases = $this->getParentAliases();
-        
-        foreach ($parentAliases as $parentAlias) {
-            // Get parent information.
-            $parent = $row[$parentAlias];
-            $parents[] = $parent;
-        }
-        
-        return $parents;
+        $indexAlias = $this->getOrderNumberAttributeAlias();
+        return [
+            'original' => $originalSheet,
+            'siblings' => $siblingSheet,
+            'priority' => $changeSheet,
+            'parents' => $parents,
+            'flag' => $flag,
+            'maxIndex' => max($siblingSheet->getColumnValues($indexAlias))
+        ];
     }
-
-    /**
-     * Creates a filter setup, that groups data by its parents. The result is not an EXACT grouping (see below).
-     * Effort is quadratic with respect to the number of parent aliases.
-     *
-     * NOTE: This is not a strict filter! With a strict filter the groupings would be sensitive to the order in which
-     * the parents appear. For example: Parents [A,B] would be a different group than Parents [B,A]. Users would find
-     * this confusing, which is why we have to make sure that groupings are detected irrespective of the order in which
-     * the parents appear. TO do this we check ALL parent columns for matches.  The resulting data will contain false
-     * positives for example [A,NULL] would be grouped with [A,B]. We solve this issue by manually filtering the
-     * retrieved data set in a later step.
-     *
-     * @param DataSheetInterface $dataSheet
-     * @param array              $parents
-     * @return void
-     * @see OrderingBehavior::belongsToGroup()
-     *
-     */
-    // TODO geb 2024-10-11: This function is meant as an optimization for large data sets. The idea is to reduce the
-    // TODO amount of data retrieved by the SQL-Query. This might not be a good idea, since this filter scheme has O(n²) with
-    // TODO respect to the number of parent aliases. Alternatively we might do a simple filter for just one parent or none at all.
-    // TODO Any filtering not done via SQL must be done in code, which is easier to do, but may incur long load times for large data sets.
-    private function addFiltersFromParentAliases(DataSheetInterface $dataSheet, array $parents): void
-    {
-        // Prepare variables.
-        $metaObject = $dataSheet->getMetaObject();
-        $parentAliases = $this->getParentAliases();
-        $conditionGroup = ConditionGroupFactory::createAND($metaObject);
-        $processedParents = [];
-        
-        foreach ($parents as $parent) {
-            // Since we concatenate our filters with OR, we only need to filter for
-            // each specific parent once.
-            if(in_array($parent, $processedParents)) {
-                continue;
-            }
-            $processedParents[] = $parent;
-            
-            // Create a filter that checks across all parent columns, whether at least one of them matches our parent.
-            $subGroup = ConditionGroupFactory::createOR($metaObject);
-            foreach ($parentAliases as $columnToCheck) {
-                if ($parent === null) {
-                    // If the parent information is null, we need to add a special filter.
-                    $subGroup->addConditionFromString($columnToCheck, EXF_LOGICAL_NULL, ComparatorDataType::EQUALS);
-                } else {
-                    // Otherwise we add a regular filter.
-                    $subGroup->addConditionFromString(
-                        $columnToCheck,
-                        $parent,
-                        ComparatorDataType::EQUALS,
-                        false);
-                }
-            }
-            // Add the sub-filter to the overall filter.
-            $conditionGroup->addNestedGroup($subGroup);
-        }
-
-        // Apply filters.
-        $dataSheet->getFilters()->addNestedGroup($conditionGroup);
-    }
-
-    /**
-     * Checks, whether a given row belongs to a group of siblings.
-     *
-     * A row belongs to a group, if it has the exact same parents as the group, regardless
-     * of the order they appear in. 
-     * 
-     * For example, Parents [A,B,B] (2x A, 1x B) belongs to the same group as Parents [B,A,B], but not
-     * Parents [A,A,B].
-     *
-     * @param array $row
-     * @param array $parents
-     * @return bool
-     */
-    private function belongsToGroup(array $row, array $parents): bool
-    {
-        $matchedIndices = [];
-
-        foreach ($this->getParentAliases() as $parentAlias) {
-            $parent = $row[$parentAlias];
-            $matched = false;
-
-            foreach ($parents as $index => $parentToMatch) {
-                // Skip indices that already produced a match.
-                if (in_array($index, $matchedIndices)) {
-                    continue;
-                }
-
-                if ($parent === $parentToMatch) {
-                    $matched = true;
-                    $matchedIndices[] = $index;
-                    break;
-                }
-            }
-
-            // If any parent could not be matched (even if it was a duplicate), the row does not belong to the group.
-            if (!$matched) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
+    
     /**
      * Finds all indices that need to be changed to successfully update the ordering.
      *
@@ -658,7 +636,7 @@ class OrderingBehavior extends AbstractBehavior
                 // Update index and commit row to pending.
                 $row[$indexAlias] = max($index, $nextIndex);
                 $siblingSheet->addRow($row, true);
-                $pendingChanges[$row[$uidAlias]] = $row;
+                $pendingChanges[] = $row;
 
                 // Update next index.
                 $nextIndex = $row[$indexAlias] + 1;
@@ -682,18 +660,21 @@ class OrderingBehavior extends AbstractBehavior
             // Get current index of row.
             $index = $row[$indexAlias];
             $this->validateIndex($index, $indexAlias, $logBook);
+            
+            // Check if current row had priority.
+            $isPriorityRow = in_array($row[$uidAlias], $priorityUIds);
+
             // Check indexingCache.
-            if(key_exists($index, $indexingCache)) {
+            if(!$isPriorityRow && key_exists($index, $indexingCache)) {
                 $nextIndex = $indexingCache[$index];
                 unset($indexingCache[$index]);
             }
             
-            $isPriorityRow = in_array($row[$uidAlias], $priorityUIds);
             $regularUpdate = $index < $nextIndex && !$isPriorityRow;
             $closeGapUpdate = $index > $nextIndex && $closeGaps;
             if($regularUpdate || $closeGapUpdate) {
                 $row[$indexAlias] = $nextIndex;
-                $pendingChanges[$row[$uidAlias]] = $row;
+                $pendingChanges[] = $row;
             }
 
             // Update next index. We can skip priority rows, because they have already been processed
@@ -704,6 +685,187 @@ class OrderingBehavior extends AbstractBehavior
         }
         
         $logBook->addLine('Pending changes detected in this step: ' . (count($pendingChanges) - $countInsertedElements) . '.');
+    }
+
+    /**
+     *
+     * @param DataSheetTransactionEventInterface $event
+     * @param LazyHierarchicalDataCache          $siblingCache
+     * @param array                              $pendingChanges
+     * @param BehaviorLogBook                    $logBook
+     * @return void
+     */
+    private function applyChanges(
+        DataSheetTransactionEventInterface $event,
+        LazyHierarchicalDataCache          $siblingCache,
+        array                              $pendingChanges,
+        BehaviorLogBook                    $logBook): void
+    {
+        // Generate update sheet.
+        $eventSheet = $event->getDataSheet();
+        $updateSheet = $this->createEmptyCopy($eventSheet, true, false);
+        foreach ($pendingChanges as $pending) {
+            $updateSheet->addRow($pending);
+        }
+        
+        if(!$event instanceof OnDeleteDataEvent) {
+            // Make sure any data we didn't modify is up-to-date.
+            $currentSheet = $eventSheet->copy();
+            $currentSheet->getColumns()->removeByKey($this->getOrderNumberAttributeAlias());
+            $updateSheet->addRows($currentSheet->getRows(), true, false);
+        }
+
+        $logBook->addLine('Generated datasheet with pending changes.');
+        $logBook->addDataSheet('PendingChanges', $updateSheet);
+
+        // In order to avoid collisions, we first need to shift all changed rows out of the way.
+        // We do so by mirroring their index and ensuring they are outside our ordering range.
+        $shiftSheet = $updateSheet->copy();
+        $indexAlias = $this->getOrderNumberAttributeAlias();
+        $startIndex = $this->getOrderStartsWith();
+
+        foreach ($shiftSheet->getRows() as $rowNr => $row) {
+            $siblingData = $siblingCache->getData($this->getParents($row));
+            $pendingIndex = $row[$indexAlias];
+            $safeIndex = $siblingData['maxIndex'] - $startIndex + 1;
+            
+            $shiftSheet->setCellValue($indexAlias, $rowNr, $pendingIndex + $safeIndex);
+        }
+
+        try {
+            $transaction = $event->getTransaction();
+            $shiftSheet->dataSave($transaction);
+            $shiftSheet->getColumns()->removeByKey($indexAlias);
+            $updateSheet->addRows($shiftSheet->getRows(), true, false);
+            $updateSheet->dataSave($transaction);
+        } catch (DataSheetExceptionInterface $exception) {
+            throw new BehaviorRuntimeError($this, 'Failed to apply changes: ' . $exception->getMessage(), null, $exception, $logBook);
+        }
+
+        $logBook->addLine('Successfully applied changes.');
+    }
+
+    /**
+     * Extracts an array with ALL parents of a row, including duplicates.
+     *
+     * @param array $row
+     * @return array
+     */
+    protected function getParents(array $row) : array
+    {
+        $parents = [];
+        $parentAliases = $this->getParentAliases();
+
+        foreach ($parentAliases as $parentAlias) {
+            // Get parent information.
+            $parent = $row[$parentAlias];
+            $parents[] = $parent;
+        }
+
+        return $parents;
+    }
+
+    /**
+     * Creates a filter setup, that groups data by its parents. The result is not an EXACT grouping (see below).
+     * Effort is quadratic with respect to the number of parent aliases.
+     *
+     * NOTE: This is not a strict filter! With a strict filter the groupings would be sensitive to the order in which
+     * the parents appear. For example: Parents [A,B] would be a different group than Parents [B,A]. Users would find
+     * this confusing, which is why we have to make sure that groupings are detected irrespective of the order in which
+     * the parents appear. TO do this we check ALL parent columns for matches.  The resulting data will contain false
+     * positives for example [A,NULL] would be grouped with [A,B]. We solve this issue by manually filtering the
+     * retrieved data set in a later step.
+     *
+     * @param DataSheetInterface $dataSheet
+     * @param array              $parents
+     * @return void
+     * @see OrderingBehavior::belongsToGroup()
+     *
+     */
+    // TODO geb 2024-10-11: This function is meant as an optimization for large data sets. The idea is to reduce the
+    // TODO amount of data retrieved by the SQL-Query. This might not be a good idea, since this filter scheme has O(n²) with
+    // TODO respect to the number of parent aliases. Alternatively we might do a simple filter for just one parent or none at all.
+    // TODO Any filtering not done via SQL must be done in code, which is easier to do, but may incur long load times for large data sets.
+    private function addFiltersFromParentAliases(DataSheetInterface $dataSheet, array $parents): void
+    {
+        // Prepare variables.
+        $metaObject = $dataSheet->getMetaObject();
+        $parentAliases = $this->getParentAliases();
+        $conditionGroup = ConditionGroupFactory::createAND($metaObject);
+        $processedParents = [];
+
+        foreach ($parents as $parent) {
+            // Since we concatenate our filters with OR, we only need to filter for
+            // each specific parent once.
+            if(in_array($parent, $processedParents)) {
+                continue;
+            }
+            $processedParents[] = $parent;
+
+            // Create a filter that checks across all parent columns, whether at least one of them matches our parent.
+            $subGroup = ConditionGroupFactory::createOR($metaObject);
+            foreach ($parentAliases as $columnToCheck) {
+                if ($parent === null) {
+                    // If the parent information is null, we need to add a special filter.
+                    $subGroup->addConditionFromString($columnToCheck, EXF_LOGICAL_NULL, ComparatorDataType::EQUALS);
+                } else {
+                    // Otherwise we add a regular filter.
+                    $subGroup->addConditionFromString(
+                        $columnToCheck,
+                        $parent,
+                        ComparatorDataType::EQUALS,
+                        false);
+                }
+            }
+            // Add the sub-filter to the overall filter.
+            $conditionGroup->addNestedGroup($subGroup);
+        }
+
+        // Apply filters.
+        $dataSheet->getFilters()->addNestedGroup($conditionGroup);
+    }
+
+    /**
+     * Checks, whether a given row belongs to a group of siblings.
+     *
+     * A row belongs to a group, if it has the exact same parents as the group, regardless
+     * of the order they appear in.
+     *
+     * For example, Parents [A,B,B] (2x A, 1x B) belongs to the same group as Parents [B,A,B], but not
+     * Parents [A,A,B].
+     *
+     * @param array $row
+     * @param array $parents
+     * @return bool
+     */
+    private function belongsToGroup(array $row, array $parents): bool
+    {
+        $matchedIndices = [];
+
+        foreach ($this->getParentAliases() as $parentAlias) {
+            $parent = $row[$parentAlias];
+            $matched = false;
+
+            foreach ($parents as $index => $parentToMatch) {
+                // Skip indices that already produced a match.
+                if (in_array($index, $matchedIndices)) {
+                    continue;
+                }
+
+                if ($parent === $parentToMatch) {
+                    $matched = true;
+                    $matchedIndices[] = $index;
+                    break;
+                }
+            }
+
+            // If any parent could not be matched (even if it was a duplicate), the row does not belong to the group.
+            if (!$matched) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -747,56 +909,6 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     *
-     * @param DataSheetTransactionEventInterface $event
-     * @param array                              $pendingChanges
-     * @param BehaviorLogBook                    $logBook
-     * @return void
-     */
-    private function applyChanges(
-        DataSheetTransactionEventInterface  $event,
-        array                               $pendingChanges,
-        BehaviorLogBook                     $logBook): void
-    {
-        // Generate update sheet.
-        $eventSheet = $event->getDataSheet();
-        $updateSheet = $this->createEmptyCopy($eventSheet, true, false);
-        foreach ($pendingChanges as $pending) {
-            $updateSheet->addRow($pending);
-        }
-        if(!$event instanceof OnDeleteDataEvent && !$event instanceof OnBeforeUpdateDataEvent) {
-            // Make sure any data we didn't modify is up-to-date.
-            $currentSheet = $eventSheet->copy();
-            $currentSheet->getColumns()->removeByKey($this->getOrderNumberAttributeAlias());
-            $updateSheet->addRows($currentSheet->getRows(), true, false);
-        }
-        
-        $logBook->addLine('Generated datasheet with pending changes.');
-        $logBook->addDataSheet('PendingChanges', $updateSheet);
-        
-        // In order to avoid collisions, we first need to shift all changed rows out of the way.
-        // We do so by mirroring their index and ensuring they are outside our ordering range.
-        $shiftSheet = $updateSheet->copy();
-        $indexAlias = $this->getOrderNumberAttributeAlias();
-        $safeIndex = $this->getOrderStartsWith() - 1;
-        foreach ($shiftSheet->getRows() as $rowNr => $row) {
-            $shiftSheet->setCellValue($indexAlias, $rowNr, -$row[$indexAlias] + $safeIndex);
-        }
-        
-        try {
-            $transaction = $event->getTransaction();
-            $shiftSheet->dataSave($transaction);
-            $shiftSheet->getColumns()->removeByKey($indexAlias);
-            $updateSheet->addRows($shiftSheet->getRows(), true, false);
-            $updateSheet->dataSave($transaction);
-        } catch (DataSheetExceptionInterface $exception) {
-            throw new BehaviorRuntimeError($this, 'Failed to apply changes: ' . $exception->getMessage(), null, $exception, $logBook);
-        }
-        
-        $logBook->addLine('Successfully applied changes.');
-    }
-
-    /**
      * Start order with this number - typically `1` or `0`
      * 
      * A starting index of `1` for example represents an intuitive count from
@@ -816,9 +928,9 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated use setOrderStartsWith() / order_starts_with instead
      * @param int $value
-     * @return \exface\Core\Behaviors\OrderingBehavior
+     * @return OrderingBehavior
+     *@deprecated use setOrderStartsWith() / order_starts_with instead
      */
     protected function setStartingIndex(int $value): OrderingBehavior
     {
@@ -835,7 +947,7 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * Set to FALSE to leave gaps in the order number if an element is deleted from the middle
+     * Set FALSE to leave gaps in the order number if an element is deleted from the middle
      * 
      * If TRUE an order of `1 => "A", 2 => "B", 4 => "C", 6 => "D"` would be rearranged to
      * `1 => "A", 2 => "B", 3 => "C", 4 => "D"`.
@@ -879,9 +991,9 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated use setAppendToEnd() / new_element_on_top instead
      * @param bool $trueOrFalse
-     * @return \exface\Core\Behaviors\OrderingBehavior
+     * @return OrderingBehavior
+     *@deprecated use setAppendToEnd() / new_element_on_top instead
      */
     protected function setNewElementOnTop(bool $trueOrFalse): OrderingBehavior
     {
@@ -924,10 +1036,10 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated use setOrderWithinAttributes() / order_within_attributes instead
-     * 
-     * @param \exface\Core\CommonLogic\UxonObject $value
-     * @return \exface\Core\Behaviors\OrderingBehavior
+     * @param UxonObject $value
+     * @return OrderingBehavior
+     *@deprecated use setOrderWithinAttributes() / order_within_attributes instead
+     *
      */
     protected function setIndexingBoundaryAttributes(UxonObject $value) : OrderingBehavior
     {
@@ -935,10 +1047,10 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated use setParentAliases() / parent_aliases instead
-     * 
-     * @param \exface\Core\CommonLogic\UxonObject $value
-     * @return \exface\Core\Behaviors\OrderingBehavior
+     * @param UxonObject $value
+     * @return OrderingBehavior
+     *@deprecated use setParentAliases() / parent_aliases instead
+     *
      */
     protected function setParentAliases(UxonObject $value) : OrderingBehavior
     {
@@ -982,10 +1094,10 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated  use setOrderAttribute() / order_number_attribute instead
-     * 
      * @param string $alias
-     * @return \exface\Core\Behaviors\OrderingBehavior
+     * @return OrderingBehavior
+     *@deprecated  use setOrderAttribute() / order_number_attribute instead
+     *
      */
     protected function setOrderIndexAttribute(string $alias) : OrderingBehavior
     {
