@@ -222,7 +222,7 @@ class DocsFacade extends AbstractHttpFacade
             if ($logoPath !== null) {
                 $printString .= 
                     '<div class="logo-container">
-                        <img src="http://localhost/exface/exface/vendor/nbr/OneLink/Docs/' . $logoPath .  '" alt="Logo">
+                        <img src="placeholder/path/' . $logoPath .  '" alt="Logo">
                     </div>';
             }
 
