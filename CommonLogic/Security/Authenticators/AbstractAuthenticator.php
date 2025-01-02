@@ -656,7 +656,6 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 $checkSheet->getColumns()->addFromExpression('USER_ROLE');
                 $checkCol = $checkSheet->getColumns()->addFromUidAttribute();
                 $checkCol->setValues($checkUids);
-                //$checkSheet->getFilters()->addConditionFromString('AUTHENTICATOR_ID', $this->getId());
                 $checkSheet->getFilters()->addConditionFromColumnValues($checkCol);
                 $checkSheet->dataRead();
                 
