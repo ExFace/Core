@@ -647,7 +647,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             // "Role A" is set as a local/manually assigned role but "Role A" is not found in the external roles to be synchronized.
             // In this case the role is NOT added to $deleteUids to keep the role as a local/manually assigned role.
             // Scenario 2:
-            // "Role B" is set asa  local/manually assigned role and "Role B" is also found in the external roles to be sychronized.
+            // "Role B" is set as a  local/manually assigned role and "Role B" is also found in the external roles to be sychronized.
             // In this case the role is added to $deleteUids to overwrite the local/manually assigned role with the external synchronized role.
             // b) if AUTHENTICATOR_ID is equal to the current authenticator used, then it is an external role and it should be added to $deleteUids to be deleted.
             if (! empty($checkUids)) {
@@ -659,6 +659,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 $checkSheet->getFilters()->addConditionFromColumnValues($checkCol);
                 $checkSheet->dataRead();
                 
+                // see a) as described in the comment above
                 $externalRoleUids = array_column($externalRolesData->getRows(), 'USER_ROLE');
                 foreach ($checkSheet->getRows() as $internalRow) {
                     if (in_array($internalRow["USER_ROLE"], $externalRoleUids)) {
@@ -666,6 +667,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                     }
                 }
                 
+                // see b) as described in the comment above
                 $checkSheet->getFilters()->addConditionFromString('AUTHENTICATOR_ID', $this->getId());
                 $checkSheet->dataRead();
                 foreach ($checkCol->getValues() as $uid) {
