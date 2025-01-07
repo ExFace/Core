@@ -333,6 +333,11 @@ self.addEventListener('sync', function(event) {
 				aStateUpdateQueue: [],     // Array to store pending state updates
 				iStateUpdateRetries: 0,    // Counter for queue processing attempts  
 				iMaxStateUpdateRetries: 5  // Maximum number of retry attempts
+			},
+			thresholds: {
+				iSlowThresholdSeconds: 1,       // Network duration threshold for "slow" request
+				iMonitoringWindowMs: 3 * 60 * 1000, // 3 minutes monitoring window
+				fSlowPercentageThreshold: 50.0   // Percentage threshold for slow network condition
 			}
 		}
 	};
@@ -1010,9 +1015,10 @@ self.addEventListener('sync', function(event) {
 					}
 
 					// Configuration constants for network assessment
-					const iSlowThresholdSeconds = 1;        // Network duration threshold for "slow" request
-					const iMonitoringWindowMs = 3 * 60 * 1000; // 3 minutes monitoring window
-					const fSlowPercentageThreshold = 50.0;    // Percentage threshold for slow network condition
+				 // Use the new thresholds from global config
+				 const iSlowThresholdSeconds = _oGlobalConfig.network.thresholds.iSlowThresholdSeconds;
+				 const iMonitoringWindowMs = _oGlobalConfig.network.thresholds.iMonitoringWindowMs;
+				 const fSlowPercentageThreshold = _oGlobalConfig.network.thresholds.fSlowPercentageThreshold;
 
 					// Calculate time boundary for recent calls
 					const iWindowStartTime = Date.now() - iMonitoringWindowMs;
