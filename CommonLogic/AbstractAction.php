@@ -376,6 +376,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * @uxon-property result_message_text
      * @uxon-type string
+     * @uxon-translatable true
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setResultMessageText()
      */
