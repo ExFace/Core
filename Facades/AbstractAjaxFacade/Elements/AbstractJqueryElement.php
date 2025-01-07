@@ -1089,4 +1089,61 @@ JS;
     {
         return "($('#{$this->getId()}').length !== 0)";
     }
+
+    /**
+     * Returns an inline JS snippet (without ending `;`) that checks for unsaved changes.
+     *
+     * If unsaved changes are detected, the snippet resolves to TRUE.
+     *
+     * ```
+     *
+     *  if ({$element->buildJsHasUnsavedChanges()} === true) {
+     *      // Unsaved changes detected.
+     *  } else {
+     *      // Everything is fine.
+     *  }
+     *
+     * ```
+     *
+     * @return string
+     */
+    public function buildJsCheckForUnsavedChanges() : string
+    {
+        // Return false by default, so that it does not cause unexpected side effects if not overridden.
+        return 'false';
+    }
+
+    /**
+     * Returns an inline JS snippet (without ending `;`) that displays a dialog, asking the user for confirmation.
+     *
+     * If the user confirms the dialog, the snippet will resolve to TRUE.
+     *
+     *  ```
+     *
+     *   if ({$element->buildJsAskForConfirmationDialog()} === true) {
+     *       // Show error or return.
+     *   } else {
+     *       // Everything is fine.
+     *   }
+     *
+     *  ```
+     *
+     * @param array $translationTokens
+     * An array containing the translation tokens for this message.
+     *  [
+     *      `title` => Message title,
+     *      `content` => Message content,
+     *      `confirm` => Confirmation button label,
+     *      `cancel` => Cancel button label
+     *  ]
+     *
+     * @param string $fnConfirm
+     * The name of the function that should be executed upon confirmation.
+     * @return string
+     */
+    public function buildJsAskForConfirmationDialog(array $translationTokens, string $fnConfirm = 'fnAction') : string
+    {
+        // Return false by default, so that it does not cause unexpected side effects if not overridden.
+        return 'false';
+    }
 }
