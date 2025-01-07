@@ -23,17 +23,17 @@ Let's create a data connection to our new DB:
 1. Navigate in the main menu to `Administration > Metamodel > Connections`. Here you can see all data connections the workbench can currently use.
 2. Press the `+ New` button in the table with the connections.
 3. Fill the dialog with the following values:
-	- Connection Name: `BookClub SQL DB localhost <kuerzel>`
+	- Connection Name: `BookClub SQL DB localhost`
 	- Is part of app: `tutorial.BookClub`
-	- Connection Alias: `BOOKCLUB_DB_LOCAL_<kuerzel>`
+	- Connection Alias: `BOOKCLUB_DB_LOCAL`
 	- Connector: `MySqlConnector`
 4. Press the big magic-wand-icon in the middle of the configuration area
 5. Select `MySQL connection with relation matcher` from the list of available presets and press the `Replace` button at the bottom of the dialog
 6. Fill the configuration values as follows:
 	- host: `127.0.0.1` (using an IP is faster than a network name in most cases!)
-	- dbase: `spielwiese_<kuerzel>`
+	- dbase: `tutorial_<kuerzel>`
 	- charset: `utf8`
-	- user: the username to connect to the MySQL server (spielwiese_<kuerzel>)
+	- user: the username to connect to the MySQL server
 	- password: the password for the user above
 	- relation_matcher: leave as is (see explanation below)
 7. Press `Save`
@@ -53,10 +53,10 @@ Now that we have a connection, we can use it in a data source:
 1. Navigate in the main menu to `Administration > Metamodel > Data Sources`. Here you can see all data sources with their current connections.
 2. Press the `+ New` button in the table with the data sources.
 3. Fill the dialog with the following values:
-	- Data Source Name: `BookClub DB <kuerzel>`
-	- Is part of app: `tutorial.BookClub_<kuerzel>`
-	- Data Source Alias: `BOOKCLUB_DB_<kuerzel>`
-	- Default Connection: `BookClub SQL DB localhost <kuerzel>`
+	- Data Source Name: `BookClub DB`
+	- Is part of app: `tutorial.BookClub`
+	- Data Source Alias: `BOOKCLUB_DB`
+	- Default Connection: `BookClub SQL DB localhost`
 	- Default Query Builder: `MySqlBuilder`
 4. Press `Save`
 
