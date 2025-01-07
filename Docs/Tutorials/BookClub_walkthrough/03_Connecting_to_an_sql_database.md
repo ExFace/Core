@@ -87,8 +87,8 @@ To access Adminer, follow these steps:
 3. You are now inside of Adminer Database Management Tool. Here click the link "SQL command" on the upper left side. Now you can paste the following SQL and press "Execute". The database for your bookclub is now created.
 
 ```
-CREATE DATABASE IF NOT EXISTS `tutorial_bookclub` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-USE `tutorial_bookclub`;
+CREATE DATABASE IF NOT EXISTS `tutorial_<kuerzel>` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `tutorial_<kuerzel>`;
 
 -- --------------------------------------------------------
 
