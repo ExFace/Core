@@ -529,7 +529,7 @@
         },
         {
             "CREATED_ON": "2024-12-11 16:13:22",
-            "MODIFIED_ON": "2024-12-18 01:35:05",
+            "MODIFIED_ON": "2024-12-18 17:25:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef99107783520a9910025041000001",
@@ -552,7 +552,7 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "TRANSLATION_FILENAME",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@T-SQL: CONCAT(\n  [#OBJECT__ALIAS_WITH_NS#], \n  '.',\n  LEFT(\n    REVERSE(\n      SUBSTRING(\n        REVERSE([#BEHAVIOR#]), \n        CHARINDEX('\/', \n          REVERSE([#BEHAVIOR#])\n        ) + 1, \n        LEN([#BEHAVIOR#])\n      )\n    ),\n    CHARINDEX('.', \n      REVERSE(\n        SUBSTRING(\n          REVERSE([#BEHAVIOR#]), \n          CHARINDEX('\/', \n            REVERSE([#BEHAVIOR#])\n          ) + 1, \n          LEN([#BEHAVIOR#])\n        )\n      )\n    ) - 1\n  ) AS filename,\n  '.',\n  LOWER(CONVERT(VARCHAR(34), [#UID#], 1))\n)\n@OTHER: CONCAT(\n  [#OBJECT__ALIAS_WITH_NS#], \n  '.', \n  SUBSTRING_INDEX(SUBSTRING_INDEX([#BEHAVIOR#], '\/', -1), '.', 1), \n  '.',\n  [#UID#]\n)",
+            "DATA_ADDRESS": "@T-SQL: CONCAT(\n  [#OBJECT__ALIAS_WITH_NS#], \n  '.',\n  LEFT(\n    RIGHT(\n      [#BEHAVIOR#], \n      CHARINDEX('\/', REVERSE([#BEHAVIOR#])) -1\n    ), \n    CHARINDEX(\n      '.', \n      RIGHT(\n        [#BEHAVIOR#], \n          CHARINDEX('\/', REVERSE([#BEHAVIOR#])) -1\n      )\n     ) - 1\n  ),\n  '.',\n  LOWER(CONVERT(VARCHAR(34), [#UID#], 1))\n)\n@OTHER: CONCAT(\n  [#OBJECT__ALIAS_WITH_NS#], \n  '.', \n  SUBSTRING_INDEX(SUBSTRING_INDEX([#BEHAVIOR#], '\/', -1), '.', 1), \n  '.',\n  [#UID#]\n)",
             "OBJECT": "0x11e60ad7563429b089840050568905af",
             "FORMATTER": "",
             "DISPLAYORDER": null,

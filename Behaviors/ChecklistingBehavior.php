@@ -212,11 +212,12 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             // Remove the UID column, because otherwise dataDelete() ignores filters and goes by UID.
             $deleteSheet->getColumns()->remove($deleteSheet->getUidColumn());
             $logbook->addLine('Deleting data with affected UIDs from cache.');
-            $count = $deleteSheet->dataDelete();
+            $transaction = $deleteSheet->getWorkbench()->data()->startTransaction();
+            $count = $deleteSheet->dataDelete($transaction);
             $logbook->addLine('Deleted '.$count.' lines from cache.');
             // Finally, write the most recent outputs to the cache.
             $logbook->addLine('Writing data to cache.');
-            $count = $outputSheet->dataUpdate(true);
+            $count = $outputSheet->dataUpdate(true, $transaction);
             $logbook->addLine('Added '.$count.' lines to cache.');
         }
         $logbook->addIndent(-1);

@@ -225,6 +225,7 @@ class Attribute implements MetaAttributeInterface
             case $instance_or_resolvable_string instanceof DataTypeInterface:
                 $this->data_type_selector = $instance_or_resolvable_string->getAliasWithNamespace();
                 $this->data_type = $instance_or_resolvable_string;
+                break;
             default: 
                 throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
         }

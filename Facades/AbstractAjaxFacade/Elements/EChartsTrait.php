@@ -1,14 +1,18 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\Input;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
@@ -348,7 +352,6 @@ JS;
      */
     protected function buildJsEventHandlers() : string
     {
-        $handlersJs = '';
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
@@ -715,7 +718,7 @@ JS;
         $invokeDisabledGetter = $this->buildJsLegendDisabledEventHandler('aLegendDisabled');
         return <<<JS
         
-        {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
+        var handler = function(params){
             // Invoke getters.
             var aLegendActive = Object.keys(params.selected).filter(function (item) {return params.selected[item];});
             {$invokeActiveGetter};
@@ -770,7 +773,10 @@ JS;
                     }
                 }
             }
-        });
+        };
+
+        {$this->buildJsEChartsVar()}.on('legendselectchanged', handler);
+        {$this->buildJsEChartsVar()}.on('legendselectall', handler);
         
 JS;
                         
@@ -788,12 +794,11 @@ JS;
     {
         if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
-            $delimiter = $this->getWidget()->getOutputListDelimiter();
-            
+
             return <<<JS
             
             (function ({$column}){
-                return {$column}.join('{$delimiter}');
+                return {$column}.join('{$this->getLegendValueListDelimiter()}');
             })(oEvent)
 JS;
 
@@ -835,6 +840,50 @@ JS;
                 })()
                 
 JS;
+    }
+
+    /**
+     * Get the delimiter string used to separate items in the output list.
+     * 
+     * This function first tries to deduce a meaningful delimiter from its incoming widget links, using the
+     * first non-standard delimiter it finds. If all incoming links use standard-delimiters, it defaults to `,`.
+     * 
+     * @return string
+     */
+    // TODO 2024-12-09 geb: At the moment we simply use the first non-standard delimiter for ALL outputs, maybe we can 
+    // TODO                 identify consumers of the JS getter and send bespoke delimiters per consumer.
+    protected function getLegendValueListDelimiter() : string
+    {
+        $widget = $this->getWidget();
+        $links = WidgetLink::getLinksToWidget($widget);
+
+        // IDEA if this chart has a split series, the values of the legend are
+        // actually the values of getSplitByAttributeAlias(). We could look for
+        // this attribute and use its value list delimiter here.
+        
+        // Search among incoming links for a unusual delimiter
+        foreach ($links as $link) {
+            $targetColName = $link->getTargetColumnId();
+            if ($targetColName !== Chart::VALUE_LEGEND_ACTIVE && $targetColName !== Chart::VALUE_LEGEND_INACTIVE) {
+                continue;
+            }
+
+            $source = $link->getSourceWidget();
+            // IDEA add an interface like iSupportMultipleValues
+            if($source instanceof Input) {
+                return $source->getMultipleValuesDelimiter();
+            }
+            
+            // If not an input (e.g. a DataColumn)
+            if($source instanceof iShowSingleAttribute && $source->isBoundToAttribute()) {
+                $attribute = $source->getAttribute();
+                if(($delimiter = $attribute->getValueListDelimiter()) !== EXF_LIST_SEPARATOR) {
+                    return $delimiter;
+                }
+            }
+        }
+        
+        return EXF_LIST_SEPARATOR;
     }
     
     /**
@@ -2295,7 +2344,27 @@ JS;
     //build and set dataset,config and options depending on chart type
     $js
     
+    {$this->buildJsForceLegendSelectUpdate()}
 JS;
+    }
+
+    /**
+     * A JS snippet that forces an update of the legend selected getters.
+     * 
+     * NOTE: This is a bit of a hack, maybe there is a cleaner way.
+     * 
+     * @return string
+     */
+    protected function buildJsForceLegendSelectUpdate() : string
+    {
+        return <<<JS
+
+        {$this->buildJsEChartsVar()}.dispatchAction({
+            type: 'legendAllSelect'
+        });
+
+JS;
+
     }
     
     /**
