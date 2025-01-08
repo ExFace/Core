@@ -214,7 +214,7 @@ class ConsoleFacade extends Application implements FacadeInterface
     /**
      * Returns a generator, that yields the output of the comand.
      * 
-     * @param CliTaskInterface $task
+     * @param string $cliCommand
      * @return \Generator
      */
     public function getOutputGenerator(string $cliCommand) : \Generator
