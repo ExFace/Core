@@ -364,78 +364,24 @@ self.addEventListener('sync', function(event) {
 		 */
 		network: {
 
-			/**
-			 * Intensive Network Quality Monitor  @function initFastNetworkPoller
-			 * 
-			 * Implements an aggressive polling mechanism for monitoring network quality
-			 * during periods of network instability or when higher precision is needed.
-			 * 			 
-			 * 
-			 * Operational Characteristics:
-			 * - Polls every 30 seconds with enhanced monitoring
-			 * - Performs comprehensive network quality checks
-			 * - Optimized for detecting network improvements
-			 * - Provides rapid response to network condition changes
-			 * 
-			 * Activation Triggers:
-			 * - Poor network conditions detected
-			 * - High-priority network operations
-			 * - System requiring increased network awareness
-			 * 
-			 * State Management:
-			 * - Clears existing polling intervals
-			 * - Maintains detailed network state tracking
-			 * - Updates system state based on network conditions
-			 * 
-			 * Transitions:
-			 * - Reverts to standard polling when network improves
-			 * - Continues intensive monitoring while conditions remain poor
-			 * 
-			 * Resource Considerations:
-			 * - Higher resource usage than standard polling
-			 * - Automatically optimizes polling when conditions improve
-			 * - Balances monitoring precision with system performance
-			 */
-			initFastNetworkPoller: function () {
+			initNetworkPoller: function () {
 				if (this._networkPoller) {
 					clearInterval(this._networkPoller);
 				}
 
 				const poll = async () => {
 					try {
-						const state = this.getState();
 						const isNetworkSlow = await this.checkNetworkSlow();
 
-						console.debug('Fast Network Poll:', {
+						console.debug('Network speed measurement:', {
 							networkSlow: isNetworkSlow,
-							currentState: state,
+							currentState: this.getState(),
 							interval: _oGlobalConfig.network.polling.fastIntervalSeconds + 's'
 						});
 
-
-						// Check if we should return to normal polling
-						if (!isNetworkSlow || !state._bAutoOffline) {
-							console.debug('Network Conditions Update:', {
-								event: 'Returning to normal polling',
-								reason: !isNetworkSlow ? 'Network improved' : 'Auto-offline disabled',
-								networkSlow: isNetworkSlow,
-								autoOffline: state._bAutoOffline,
-								timestamp: _date.now()
-							});
-
-							// Update state before switching polling modes
-							this.setState({ slowNetwork: isNetworkSlow });
-
-
-						} else {
-							// Network still slow, maintain state updates
-							this.setState({ slowNetwork: isNetworkSlow });
-						}
-
-						if (!isNetworkSlow) {
-							clearInterval(this._networkPoller);
-							this.initPoorNetworkPoller();
-						}
+						this.setState({
+							bIsNetworkSlow: isNetworkSlow
+						});
 					} catch (error) {
 						console.error('Fast Network Poll Error:', error);
 					}
@@ -448,81 +394,6 @@ self.addEventListener('sync', function(event) {
 				this._networkPoller = setInterval(poll,
 					_oGlobalConfig.network.polling.fastIntervalSeconds * 1000);
 			},
-
-
-			/**
-			 * Standard Network Quality Monitor @function initPoorNetworkPoller
-			 * 
-			 * Implements the standard polling mechanism for monitoring network quality under normal conditions.
-			 * This is the default monitoring mode when network conditions are stable.
-			 *  
-			 * Operational Characteristics:
-			 * - Polls every 30 seconds during normal network conditions
-			 * - Performs basic network quality assessments
-			 * - Resource-efficient for long-term monitoring
-			 * - Automatically transitions to fast polling if network quality degrades
-			 * 
-			 * State Management:
-			 * - Clears any existing polling interval before starting
-			 * - Updates network state based on quality checks
-			 * - Maintains state consistency with IndexedDB
-			 * 
-			 * Transitions:
-			 * - Switches to fast polling (initFastNetworkPoller) if network becomes slow
-			 * - Continues standard polling if network remains stable
-			 * 
-			 * Error Handling:
-			 * - Logs polling errors for debugging
-			 * - Continues operation even if individual polls fail
-			 */
-			initPoorNetworkPoller: function () {
-				if (this._networkPoller) {
-					clearInterval(this._networkPoller);
-				}
-
-				const poll = async () => {
-					try {
-						const state = this.getState();
-						const isNetworkSlow = await this.checkNetworkSlow();
-
-						console.debug('Poor Network Poll:', {
-							networkSlow: isNetworkSlow,
-							currentState: state,
-							interval: _oGlobalConfig.network.polling.slowIntervalSeconds + 's'
-						});
-
-						// Only proceed with speed check if auto-offline is enabled
-						if (state._bAutoOffline) {
-							// Perform network speed evaluation
-							const isNetworkSlow = await this.checkNetworkSlow();
-
-							// Log state transition if network status changed
-							if (isNetworkSlow !== state._bSlowNetwork) {
-
-								// Update application state with new network status
-								this.setState({
-									slowNetwork: isNetworkSlow
-								});
-							}
-						}
-
-						if (isNetworkSlow) {
-							clearInterval(this._networkPoller);
-							this.initFastNetworkPoller();
-						}
-					} catch (error) {
-						console.error('Poor Network Poll Error:', error);
-					}
-				};
-
-				// Execute initial poll immediately
-				poll();
-
-				// Set up interval using global config
-				this._networkPoller = setInterval(poll,
-					_oGlobalConfig.network.polling.slowIntervalSeconds * 1000);
-			},
-
 
 			// /**
 			//  * Analyzes network performance using historical data
@@ -1148,69 +1019,8 @@ self.addEventListener('sync', function(event) {
 					});
 				});
 
-
-				/**
-				 * Network State Change Event Handler
-				 * Monitors network state transitions and triggers auto-offline mode when conditions deteriorate.
-				 * Only performs analysis when auto-offline is enabled and not in forced offline mode.
-				*/
-				$(window).on('networkchanged', async function (oEvent, oData) {
-
-					try {
-						// Keep reference to network module for proper scoping
-						const oNetwork = exfPWA.network;
-						const oCurrentState = oData.currentState; //oNetwork.getState();
-
-						// Only analyze network if auto-offline is enabled and not forced offline
-						if (oCurrentState.hasAutoffline() && !oCurrentState.isOfflineForced()) {
-							const bIsNetworkSlow = await oNetwork.checkNetworkSlow();
-
-							// Check if slow network status changed 
-							if (oCurrentState.isNetworkSlow() !== bIsNetworkSlow) {
-								await oNetwork.setState({
-									slowNetwork: bIsNetworkSlow,
-									autoOffline: true // Make sure auto-offline is enabled
-								});
-
-								// Log transition
-								console.debug('Network Status Transition:', {
-									previousState: oCurrentState.toString(),
-									newState: oNetwork.getState().toString(),
-									isSlowNetwork: bIsNetworkSlow,
-									isVirtuallyOffline: oNetwork.getState().isOfflineVirtually(),
-									timestamp: _date.now()
-								});
-
-								// If network became slow, trigger offline mode
-								if (bIsNetworkSlow) {
-									console.debug('Transitioning to offline mode due to slow network');
-									$(document).trigger('networkchanged', {
-										currentState: oNetwork.getState(),
-										changes: {
-											autoOffline: true,
-											slowNetwork: true
-										}
-									});
-								}
-							}
-						}
-					} catch (oError) {
-						console.error('Failed to handle network change:', {
-							error: oError.message,
-							stack: oError.stack,
-							timestamp: _date.now()
-						});
-					}
-				});
-
 				// Initialize network polling system
-				if (this.getState().hasAutoffline()) {
-					this.initPoorNetworkPoller();
-					console.debug('Network monitoring started with normal polling');
-				}
-				else {
-					this.initFastNetworkPoller();
-				}
+				this.initNetworkPoller();
 			},
 		},
 
@@ -2224,38 +2034,6 @@ self.addEventListener('sync', function(event) {
 		} // EOF errors
 	} // EOF _pwa
 
-
-	/**
- * Initialize Network Monitoring System
- * Restores network state from persistent storage and initiates performance monitoring.
- * Starts auto-offline monitoring if enabled, logs initialization status for debugging.
- * Falls back gracefully on initialization errors to ensure system stability.
- */
-	_pwa.network.checkState().then(function (oNetStat) {
-		if (oNetStat.hasAutoffline()) {
-			// Start performance monitoring if auto-offline is enabled
-			exfPWA.network.checkNetworkSlow();
-		} else {
-			// Log that monitoring is disabled
-			console.debug('Network Performance Monitoring:', {
-				status: 'disabled',
-				reason: 'auto-offline not enabled',
-				timestamp: _date.now()
-			});
-		}
-	}).catch(function (oError) {
-		// Log initialization error but don't crash
-		console.error('Network State Initialization Failed:', {
-			error: oError.message,
-			stack: oError.stack,
-			timestamp: _date.now(),
-			impact: 'performance monitoring not started'
-		});
-	});
-
 	return _pwa;
-})));
-// v1
-// v2
-//  v 3    
+})));   
 
