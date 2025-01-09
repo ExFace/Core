@@ -90,11 +90,11 @@ class ShowHelpDialog extends ShowDialog
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Actions\ShowDialog::enhanceDialogWidget()
+     * @see \exface\Core\Actions\ShowDialog::enrichDialogWidget()
      */
-    protected function enhanceDialogWidget(Dialog $dialog)
+    protected function enrichDialogWidget(Dialog $dialog) : Dialog
     {
-        $dialog = parent::enhanceDialogWidget($dialog);
+        $dialog = parent::enrichDialogWidget($dialog);
         
         // IMPORTANT: remove help button from the help dialog to prevent infinite help popups
         $dialog->setHideHelpButton(true);

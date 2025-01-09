@@ -3,12 +3,15 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
-use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Events\DataChangeEventInterface;
+use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
@@ -16,27 +19,35 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
-use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
 /**
- * Validates any proposed changes made to the monitored data and collects any conflicting data 
- * for further processing.
+ * Base class for validating behaviors
  * 
- * Extend this class to achieve specific transformations, such as rejecting invalid changes, by throwing
- * a meaningful error message.
+ * This class includes event handlers to perform data checks of different types when
+ * data is saved. It provides built-in logic to define and perform checks on create, 
+ * update or both.
  * 
- * @see ValidatingBehavior
+ * It also provides placeholders to be used in the definition of the data checks:
+ * 
+ * - `[#~new:xxx#]` - referencing data or caluculations based on the data of the event
+ * (= the state of the data after the change)
+ * - `[#~old:xxx#]` - referencing data or calculations before the change
+ * 
+ * App designers can use either explicit data references in their data cheks or these
+ * placeholders. The "old" data will only be loaded if it is really required in the
+ * checks.
+ * 
+ * @see \exface\Core\Behaviors\ValidatingBehavior
+ * @see \exface\Core\Behaviors\ChecklistingBehavior
  * 
  * @author Georg Bieger
  */
 abstract class AbstractValidatingBehavior extends AbstractBehavior
 {
-    const EVENT_HANDLER = "handleOnChange";
-
     const CONTEXT_ON_CREATE = "on_create";
 
     const CONTEXT_ON_UPDATE = "on_update";
@@ -45,13 +56,22 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
     // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
-    private array $uxonsPerEventContext = array(
+    private array $uxonsPerEventContext = [
         self::CONTEXT_ON_UPDATE => null,
         self::CONTEXT_ON_CREATE => null,
         self::CONTEXT_ON_ANY => null
-    );
+    ];
 
     private bool $inProgress = false;
+
+    private $requiresOldData = null;
+
+    private $oldData = [];
+
+    protected function getEventHandlerToPerformChecks() : callable
+    {
+        return [$this, 'onChangePerformChecks'];
+    }
     
     /**
      * Assign a UXON definition to a specific event context. 
@@ -67,28 +87,6 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $this->uxonsPerEventContext[$eventContext] = $uxon;
         return $this;
     }
-    
-    /**
-     * @see AbstractBehavior::registerEventListeners()
-     */
-    protected function registerEventListeners() : BehaviorInterface
-    {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, self::EVENT_HANDLER], $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, self::EVENT_HANDLER], $this->getPriority());
-        
-        return $this;
-    }
-    
-    /**
-     * @see AbstractBehavior::unregisterEventListeners()
-     */
-    protected function unregisterEventListeners() : BehaviorInterface
-    {
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, self::EVENT_HANDLER]);
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, self::EVENT_HANDLER]);
-
-        return $this;
-    }
 
     /**
      * Handles any change requests for the associated data and decides whether the proposed are valid or
@@ -99,52 +97,54 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      * @throws DataSheetDeleteForbiddenError
      * @throws \Exception
      */
-    public function handleOnChange(DataSheetEventInterface $event) : void
+    public function onChangePerformChecks(DataSheetEventInterface $event) : void
     {
-        if ($this->isDisabled() || $this->inProgress) {
+        $eventSheet = $event->getDataSheet();
+        if (! $this->isRelevantData($eventSheet)) {
             return;
         }
-        $this->inProgress = true;
 
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+
+        $this->inProgress = true;
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $logbook->addLine('Loading input data...');
-        $logbook->addIndent(1);
+        $logbook->addDataSheet('New data', $eventSheet);
+        $logbook->addLine('Checking ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
         
         // Get datasheets.
-        if ($event instanceof OnBeforeUpdateDataEvent) {
-            $onUpdate = true;
-            $previousDataSheet = $event->getDataSheetWithOldData();
-            $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
-            
-            $logbook->addLine('Found pre-transaction data for '.$previousDataSheet->getMetaObject()->__toString());
-            $logbook->addDataSheet('Pre-Transaction',$previousDataSheet);
-        } else {
-            $onUpdate = false;
-            $previousDataSheet = null;
-            $changedDataSheet = $event->getDataSheet();
-            
-            $logbook->addLine('No pre-transaction data found.');
-        }
-        $logbook->addDataSheet('Post-Transaction',$changedDataSheet);
-        $logbook->addLine('Found post-transaction data for '.$changedDataSheet->getMetaObject()->__toString());
-        $logbook->addIndent(-1);
+        if ($this->isOldDataRequired()) {
+            $previousDataSheet = $this->getOldData($event);
+            if ($previousDataSheet !== null) {
+                $logbook->addLine('Found "old" data for ' . $previousDataSheet->getMetaObject()->__toString() . ' - can use `[#~old:...#]` placeholders');
+                $logbook->addDataSheet('Old data', $previousDataSheet);
+                try {
+                    $changedDataSheet = $eventSheet->copy()->sortLike($previousDataSheet);
+                } catch (DataSheetRuntimeError $e) {
+                    $logbook->addDataSheet('New data (unsorted)', $eventSheet);
+                    throw new BehaviorRuntimeError($this, "Failed to align post-transaction data!", $e->getAlias(), $e, $logbook);
+                }
 
-        if (! $changedDataSheet->getMetaObject()->isExactly($this->getObject())) {
-            $logbook->addLine('Wrong MetaObject. Moving on...');
-            $this->inProgress = false;
-            return;
+            } else {
+                $changedDataSheet = $eventSheet;
+                $logbook->addLine('No "old" data available - cannot use `[#~old:...#]` placeholders');
+            }
+        } else {
+            $logbook->addLine('No "old" data required');
+            $changedDataSheet = $eventSheet;
         }
+        
+        $logbook->addDataSheet('New data', $changedDataSheet);
+        $logbook->addLine('Found new data for ' . $changedDataSheet->getMetaObject()->__toString());
         
         $logbook->addLine('Loading relevant UXON definitions for context '.$event::getEventName().'...');
         $logbook->addIndent(1);
-        if(!$uxon = $this->getRelevantUxons($onUpdate, $logbook)) {
+        if(!$uxon = $this->getRelevantUxons($event, $logbook)) {
             $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
             $this->inProgress = false;
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
         $logbook->addIndent(-1);
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
         
         // Perform data checks for each validation rule.
         $error = null;
@@ -199,13 +199,14 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     protected abstract function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
 
     /**
-     * @param bool            $onUpdate
+     * @param EventInterface  $event
      * @param BehaviorLogBook $logbook
      * @return array|bool
      */
-    protected function getRelevantUxons(bool $onUpdate, BehaviorLogBook $logbook) : array | bool
+    protected function getRelevantUxons(EventInterface $event, BehaviorLogBook $logbook) : array | bool
     {
         $result = array();
+        $onUpdate = $event instanceof OnBeforeUpdateDataEvent || $event instanceof OnUpdateDataEvent;
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_ANY] !== null) {
             $result[self::CONTEXT_ON_ANY] = $this->uxonsPerEventContext[self::CONTEXT_ON_ANY];
@@ -232,7 +233,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      * @param string                  $context
      * @param DataSheetInterface|null $previousDataSheet
      * @param DataSheetInterface      $changedDataSheet
-     * @param LogBookInterface        $logBook
+     * @param LogBookInterface        $logbook
      * @return void
      */
     protected function performDataChecks(
@@ -240,11 +241,11 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         string              $context, 
         ?DataSheetInterface $previousDataSheet, 
         DataSheetInterface  $changedDataSheet,
-        LogBookInterface    $logBook) : void
+        LogBookInterface    $logbook) : void
     {
         $error = null;
         $json = $dataCheckUxon->toJson();
-        $logBook->addIndent(1);
+        $logbook->addIndent(1);
 
         // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
         foreach ($changedDataSheet->getRows() as $index => $row) {
@@ -260,14 +261,14 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                 }
 
                 try {
-                    $check->check($checkSheet, $logBook);
+                    $check->check($checkSheet, $logbook);
                 } catch (DataCheckFailedError $exception) {
                     $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
                     $error->appendError($exception, $index + 1, false);
                 }
             }
         }
-        $logBook->addIndent(-1);
+        $logbook->addIndent(-1);
 
         if($error) {
             throw $error;
@@ -292,9 +293,10 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         int                 $rowIndex) : UxonObject
     {
         $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
         $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context, true));
-        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '', $context, true));
+        if ($this->isOldDataRequired()) {
+            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
+        }
         
         try {
             $renderedJson = $renderer->render($json);
@@ -331,5 +333,111 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
+    }
+
+    protected function getEventHandlerToCacheOldData() : callable
+    {
+        return [$this, "onBeforeUpdateCacheOldData"];
+    }
+
+    /**
+     * Caches pre-transaction data, to be retrieved later.
+     * 
+     * Remember to clear the cache, once you've loaded data from it!
+     * 
+     * @param DataSheetEventInterface $event
+     * @return void
+     */
+    public function onBeforeUpdateCacheOldData(OnBeforeUpdateDataEvent $event) : void
+    {
+        $eventSheet = $event->getDataSheet();
+        if (! $this->isRelevantData($eventSheet)) {
+            return;
+        }
+
+        if (! $this->isOldDataRequired()) {
+            return;
+        }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $logbook->addLine('Caching "old" data...');
+        
+        $oldData = $event->getDataSheetWithOldData();
+        $this->cacheOldData($eventSheet, $oldData);
+        
+        if($oldData !== null) {
+            $logbook->addLine('Found "old" data. Caching it for use with `[#~old:` placeholders.');
+            $logbook->addDataSheet("Old data", $oldData);
+        } else {
+            $logbook->addLine('No "old" data found!');
+        }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+    }
+
+    protected function isRelevantData(DataSheetInterface $dataSheet) : bool
+    {
+        if ($this->isDisabled() || $this->inProgress) {
+            return false;
+        }
+
+        if(! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Try to load a datasheet with OnBefore-event data. Returns NULL if no such datasheet was found. 
+     * 
+     * @param EventInterface $event
+     * @return DataSheetInterface|null
+     */
+    protected function getOldData(DataSheetEventInterface $event): ?DataSheetInterface
+    {
+        if ($event instanceof DataChangeEventInterface) {
+            return $event->getDataSheetWithOldData();
+        }
+
+        $newData = $event->getDataSheet();
+        foreach($this->oldData as $item) {
+            if ($item['newData'] === $newData) {
+                return $item['oldData'];
+            }
+        }
+        return null;
+    }
+
+    protected function cacheOldData(DataSheetInterface $newData, DataSheetInterface $oldData) : AbstractValidatingBehavior
+    {
+        $this->oldData[] = [
+            'oldData' => $oldData,
+            'newData' => $newData
+        ];
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function isOldDataRequired() : bool
+    {
+        if ($this->requiresOldData === null) {
+            $this->requiresOldData = false;
+            foreach ($this->uxonsPerEventContext as $uxon) {
+                if ($uxon === null) {
+                    continue;
+                }
+                if (mb_stripos($uxon->toJson(), '[#~old:') !== false) {
+                    $this->requiresOldData = true;
+                    break;
+                }
+            }
+        }
+        return $this->requiresOldData;
     }
 }

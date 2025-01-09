@@ -56,9 +56,9 @@ class UserContextScope extends InstallationContextScope
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope::getFilePathAbsolute()
      */
-    protected function getFilePathAbsolute() : string
+    protected function getFilePathAbsolute(string $filename = null) : string
     {
-        return $this->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONTEXTS_FILENAME;
+        return $this->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . $filename ?? static::CONTEXTS_FILENAME;
     }
 
     /**
