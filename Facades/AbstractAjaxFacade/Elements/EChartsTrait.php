@@ -288,7 +288,7 @@ trait EChartsTrait
         // Toggle percentage labels button.
         if($this->getWidget()->hasLabelPercentToggle()) {
             $togglePercentUxon = $buttonTemplate->copy();
-            $togglePercentUxon->setProperty('caption', "Toggle Percent TODO"); // TODO Translate
+            $togglePercentUxon->setProperty('caption', $this->getWorkbench()->getCoreApp()->getTranslator()->translate("WIDGET.BUTTON.TOGGLE_PERCENT"));
             $togglePercentUxon->setProperty('icon', 'percent');
             $togglePercentUxon->setProperty('hide_caption', false);
             $togglePercentUxon->setProperty('visibility', 'optional');

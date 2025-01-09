@@ -158,6 +158,8 @@ class Chart extends AbstractWidget implements
     private $colorScheme = null;
     
     private ?string $legendAttributeAlias = null;
+    
+    private bool $hideLabelPercentToggle = false;
 
     /**
      * 
@@ -1059,12 +1061,41 @@ class Chart extends AbstractWidget implements
     }
 
     /**
+     * @return bool
+     */
+    public function getHideLabelPercentToggle() : bool
+    {
+        return $this->hideLabelPercentToggle;
+    }
+
+    /**
+     * Hide the button that allows the user to toggle percentage displays in the chart labels.
+     * This property  only affects charts with series, that support percentage labels in the first place.
+     * 
+     * @uxon-property hide_label_percent_toggle
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setHideLabelPercentToggle(bool $value) : Chart
+    {
+        $this->hideLabelPercentToggle = $value;
+        return $this;
+    }
+    
+    /**
      * Check, whether this chart should have a button to toggle label percentages.
      * 
      * @return bool
      */
     public function hasLabelPercentToggle () : bool
     {
+        if($this->getHideLabelPercentToggle()) {
+            return false;
+        }
+        
         foreach ($this->getSeries() as $series) {
             if(
                 $series instanceof PieChartSeries ||
