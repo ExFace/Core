@@ -321,7 +321,13 @@ trait EChartsTrait
 JS;
         
     }
-    
+
+    /**
+     * Build a JS snippet to toggle percentage displays on all labels of this chart.
+     * Affects all series contained within this chart.
+     * 
+     * @return string
+     */
     protected function buildJsToggleLabelPercent() : string 
     {
         return <<<JS
@@ -1337,7 +1343,17 @@ JS;
         
         return '';
     }
-    
+
+    /**
+     * Returns a short string formatted according to the ECharts documentation, to render
+     * element percentages. 
+     * 
+     * The string must be displayed in the "label" option of a series, that supports the
+     * `{d}` template. Check the ECharts documentation (`Option > series > YOUR SERIES > label > formatter`)
+     * for further details.
+     * 
+     * @return string
+     */
     protected function buildJsGetLabelPercent() : string
     {
         return <<<JS
