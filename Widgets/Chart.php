@@ -11,6 +11,12 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Widgets\Parts\Charts\BarChartSeries;
+use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
+use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
+use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
+use exface\Core\Widgets\Parts\Charts\PieChartSeries;
+use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
@@ -1050,5 +1056,24 @@ class Chart extends AbstractWidget implements
     {
         $this->legendAttributeAlias = $alias;
         return $this;
+    }
+
+    /**
+     * Check, whether this chart should have a button to toggle label percentages.
+     * 
+     * @return bool
+     */
+    public function hasLabelPercentToggle () : bool
+    {
+        foreach ($this->getSeries() as $series) {
+            if(
+                $series instanceof PieChartSeries ||
+                $series instanceof GraphChartSeries ||
+                $series instanceof ColumnChartSeries) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

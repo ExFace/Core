@@ -248,6 +248,8 @@ trait EChartsTrait
             'hint' => 'Change chart type'
         ]));
         $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
+        
+        // Toggle graph type buttons.
         if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             $buttonUxon = $buttonTemplate->copy();
             $buttonUxon->setProperty('caption', 'Circle');
@@ -266,6 +268,7 @@ trait EChartsTrait
             $menu->addButton($button);
         }
         
+        // Export PNG button.
         $exportPNGUxon = $buttonTemplate->copy();        
         $exportPNGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTPNG.NAME')}");
         $exportPNGUxon->setProperty('icon', 'file-image-o');
@@ -275,13 +278,24 @@ trait EChartsTrait
         $exportPNGBtn->getAction()->setScript($this->buildJsExport('png'));
         $tb->getButtonGroupForGlobalActions()->addButton($exportPNGBtn);
         
+        // Export JPEG button.
         $exportJPGUxon = $exportPNGUxon->copy();
         $exportJPGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTJPEG.NAME')}");
         $exportJPGBtn = WidgetFactory::createFromUxon($widget->getPage(), $exportJPGUxon, $menu);
         $exportJPGBtn->getAction()->setScript($this->buildJsExport('jpeg'));
         $tb->getButtonGroupForGlobalActions()->addButton($exportJPGBtn);
         
-        return;
+        // Toggle percentage labels button.
+        if($this->getWidget()->hasLabelPercentToggle()) {
+            $togglePercentUxon = $buttonTemplate->copy();
+            $togglePercentUxon->setProperty('caption', "Toggle Percent TODO"); // TODO Translate
+            $togglePercentUxon->setProperty('icon', 'percent');
+            $togglePercentUxon->setProperty('hide_caption', false);
+            $togglePercentUxon->setProperty('visibility', 'optional');
+            $togglePercentBtn = WidgetFactory::createFromUxon($widget->getPage(), $togglePercentUxon, $menu);
+            $togglePercentBtn->getAction()->setScript($this->buildJsToggleLabelPercent());
+            $tb->getButtonGroupForGlobalActions()->addButton($togglePercentBtn);
+        }
     }
     
     /**
@@ -306,6 +320,20 @@ trait EChartsTrait
 
 JS;
         
+    }
+    
+    protected function buildJsToggleLabelPercent() : string 
+    {
+        return <<<JS
+
+(function() {
+    var chart = {$this->buildJsEChartsVar()};
+    var current = "__showLabelPercent" in chart && chart.__showLabelPercent;
+    chart.__showLabelPercent = !current;
+    {$this->buildJsRefresh()}
+}())
+
+JS;
     }
     
     /**
@@ -362,7 +390,7 @@ JS;
     }
     
     /**
-     * js script for to change grapt to a circle graph
+     * js script to change graph to a circle graph
      *
      * @param DataButton $button
      * @return string
@@ -386,7 +414,7 @@ JS;
     }
     
     /**
-     * js script for to change grapt to a network graph
+     * js script to change graph to a network graph
      *
      * @param DataButton $button
      * @return string
@@ -1310,6 +1338,22 @@ JS;
         return '';
     }
     
+    protected function buildJsGetLabelPercent() : string
+    {
+        return <<<JS
+
+(function (){
+    var chart = {$this->buildJsEChartsVar()};
+    if("__showLabelPercent" in chart && chart.__showLabelPercent){
+        return ' ({d}%)';
+    } else {
+        return '';
+    }
+})()
+JS;
+
+    }
+    
     /**
      * build line series configuration
      *
@@ -1399,20 +1443,23 @@ JS;
         } else {
             $color = '';
         }
-        //TODO option to show label, define position of it, maybe rotation etc.
-        $label = '';
-        if ($series->getShowValues() === true) {
-            $label = <<<JS
+
+        $showValues = $series->getShowValues() ? 'true' : 'false';
+        $label = <<<JS
 
     label: {
         show: true,
         formatter: function(params) {
-            return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
+            var chart = {$this->buildJsEChartsVar()};
+            if({$showValues} || ("__showLabelPercent" in chart && chart.__showLabelPercent)) {
+                return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
+            } else {
+                return '';
+            }
         }
     },
          
 JS;
-        }
         
         return <<<JS
         
@@ -1496,7 +1543,14 @@ JS;
      */
     protected function buildJsRoseChart(RoseChartSeries $series) : string
     {
-        $label = '{}';
+        $label = <<<JS
+
+{
+    show: true,
+    formatter: '{b}' + {$this->buildJsGetLabelPercent()}
+}
+JS;
+        
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
             $label = '{show: false}';
@@ -1542,7 +1596,15 @@ JS;
      */
     protected function buildJsPieChart(PieChartSeries $series) : string
     {
-        $label = '{}';
+        $label = <<<JS
+
+{
+    show: true,
+    formatter: '{b}' + {$this->buildJsGetLabelPercent()}
+}
+JS;
+        
+
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
             $label = '{show: false}';
@@ -1658,7 +1720,7 @@ JS;
     },
     label: {
         position: 'right',
-        formatter: '{b}',
+        formatter: '{b}' . {$this->buildJsGetLabelPercent()},
 		show: true
     },
     lineStyle: {
@@ -1713,7 +1775,7 @@ JS;
                         if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
                             return 'N/A';
                         } else {
-                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
+                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}'] + {$this->buildJsGetLabelPercent()};
                         }
                     }
                 }
@@ -2256,7 +2318,7 @@ JS;
     }
     
     /**
-     * javascript function body to draw chart, iniatlize global variables, show overlay message if data is empty
+     * javascript function body to draw chart, initialize global variables, show overlay message if data is empty
      *
      * @param string $dataJs
      * @return string
