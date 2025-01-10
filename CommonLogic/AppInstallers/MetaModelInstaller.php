@@ -101,6 +101,7 @@ class MetaModelInstaller extends DataInstaller
         
         $this->setDataFolderPath(self::FOLDER_NAME_MODEL);
         
+        $translitRule = ':: Any-Latin; :: NFD; :: [:Nonspacing Mark:] Remove; :: NFC; :: [:Punctuation:] Remove;';
         $this->addDataOfObject('exface.Core.APP', 'CREATED_ON', 'UID', ['PUPLISHED']);
         $this->addDataOfObject('exface.Core.DATATYPE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.OBJECT', 'CREATED_ON', 'APP');
@@ -118,8 +119,8 @@ class MetaModelInstaller extends DataInstaller
         $this->addDataOfObject('exface.Core.UXON_PRESET', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.PAGE_TEMPLATE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.ATTRIBUTE_COMPOUND', 'CREATED_ON', 'COMPOUND_ATTRIBUTE__OBJECT__APP');
-        $this->addDataOfObject('exface.Core.PAGE_GROUP', 'CREATED_ON', 'APP');
-        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'PAGE__APP');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP', 'CREATED_ON', 'APP', [], 'Security/Page groups/[#=Transliterate(NAME, "' . $translitRule . '")#]/12_PAGE_GROUP.json');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'PAGE__APP', [], 'Security/Page groups/[#=Transliterate(PAGE_GROUP__NAME, "' . $translitRule . '")#]/13_PAGE_GROUP_PAGES.json');
         $this->addDataOfObject('exface.Core.USER_ROLE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.AUTHORIZATION_POINT', 'CREATED_ON', 'APP', [
             'DEFAULT_EFFECT',
@@ -127,16 +128,47 @@ class MetaModelInstaller extends DataInstaller
             'COMBINING_ALGORITHM',
             'COMBINING_ALGORITHM_LOCAL',
             'DISABLED_FLAG'
-        ]);
+        ], 'Security/[#=Transliterate(NAME, "' . $translitRule . '")#]/15_AUTHORIZATION_POINT.json');
         $this->addDataOfObject('exface.Core.AUTHORIZATION_POLICY', 'CREATED_ON', 'APP', [
             'DISABLED_FLAG'
-        ]);
+        ], 'Security/[#=Transliterate(AUTHORIZATION_POINT__NAME, "' . $translitRule . '")#]/16_AUTHORIZATION_POLICY.json');
         $this->addDataOfObject('exface.Core.QUEUE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.SCHEDULER', 'CREATED_ON', 'APP', [
             'LAST_RUN'
         ]);
         $this->addDataOfObject('exface.Core.COMMUNICATION_CHANNEL', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.COMMUNICATION_TEMPLATE', 'CREATED_ON', 'APP');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\DataInstaller::getModelFilePath()
+     */
+    protected function getModelFilePath(MetaObjectInterface $object) : string
+    {
+        $folder = '';
+        switch (true) {
+            case $object->isExactly('exface.Core.OBJECT'):
+                $folder = '[#ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
+                break;
+            case $object->isExactly('exface.Core.ATTRIBUTE_COMPOUND'):
+                $folder = '[#COMPOUND_ATTRIBUTE__OBJECT__ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
+                break;
+            default:
+                foreach ($object->getAttributes() as $attr) {
+                    if ($attr->isRelation() 
+                        && $attr->getRelation()->getRightObject()->isExactly('exface.Core.OBJECT') 
+                        && $attr->getRelation()->isForwardRelation() 
+                        && $attr->isRequired()
+                    ) {
+                        $folder = "[#{$attr->getAlias()}__ALIAS_WITH_NS#]" . DIRECTORY_SEPARATOR;
+                        break;
+                    }
+                }
+        }
+        $filename = parent::getModelFilePath($object);
+        return $folder . $filename;
     }
 
     /**
@@ -331,36 +363,5 @@ class MetaModelInstaller extends DataInstaller
         }
         
         return $sheet;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\DataInstaller::getModelFilePath()
-     */
-    protected function getModelFilePath(MetaObjectInterface $object) : string
-    {
-        $folder = '';
-        switch (true) {
-            case $object->isExactly('exface.Core.OBJECT'):
-                $folder = '[#ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
-                break;
-            case $object->isExactly('exface.Core.ATTRIBUTE_COMPOUND'):
-                $folder = '[#COMPOUND_ATTRIBUTE__OBJECT__ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
-                break;
-            default:
-                foreach ($object->getAttributes() as $attr) {
-                    if ($attr->isRelation() 
-                        && $attr->getRelation()->getRightObject()->isExactly('exface.Core.OBJECT') 
-                        && $attr->getRelation()->isForwardRelation() 
-                        && $attr->isRequired()
-                    ) {
-                        $folder = "[#{$attr->getAlias()}__ALIAS_WITH_NS#]" . DIRECTORY_SEPARATOR;
-                        break;
-                    }
-                }
-        }
-        $filename = parent::getModelFilePath($object);
-        return $folder . $filename;
     }
 }
