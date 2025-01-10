@@ -319,7 +319,7 @@ class StringDataType extends AbstractDataType
     public static function findPlaceholders($string)
     {
         $placeholders = array();
-        preg_match_all("/\[#([^\]\[#]+)#\]/", $string, $placeholders);
+        preg_match_all("/\[#([^#]+)#\]/", $string, $placeholders);
         return is_array($placeholders[1]) ? $placeholders[1] : array();
     }
     
@@ -648,6 +648,7 @@ class StringDataType extends AbstractDataType
      * 
      * - `transliterate('Änderung')` -> Anderung
      * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
+     * - `transliterate('ä/B', ':: Any-Latin; [:Punctuation:] Remove;')` -> a b
      * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;)` -> aufgaben im uberblick
      * 
      * @link https://unicode-org.github.io/icu/userguide/transforms/general/
