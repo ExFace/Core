@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -9,6 +8,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
 
 /**
@@ -23,13 +23,13 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     /**
      * Returns an empty condition group
      *
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @param string $group_operator       
      * @param MetaObjectInterface $baseObject
      *      
      * @return ConditionGroup
      */
-    public static function createEmpty(Workbench $exface, $group_operator = null, MetaObjectInterface $baseObject = null, bool $ignoreEmptyValues = false) : ConditionGroupInterface
+    public static function createEmpty(WorkbenchInterface $exface, $group_operator = null, MetaObjectInterface $baseObject = null, bool $ignoreEmptyValues = false) : ConditionGroupInterface
     {
         return new ConditionGroup($exface, $group_operator ?? EXF_LOGICAL_AND, $baseObject, $ignoreEmptyValues);
     }
@@ -39,13 +39,13 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * If the business object implements iCanBeConvertedToUxon, this method
      * will work automatically. Otherwise it needs to be overridden in the specific factory.
      *
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param UxonObject $uxon
      * @param MetaObjectInterface $baseObject
      * 
      * @return ConditionGroupInterface
      */
-    public static function createFromUxon(Workbench $exface, UxonObject $uxon, MetaObjectInterface $baseObject = null)
+    public static function createFromUxon(WorkbenchInterface $exface, UxonObject $uxon, MetaObjectInterface $baseObject = null)
     {
         $result = static::createEmpty($exface, null, $baseObject);
         $result->importUxonObject($uxon);
@@ -151,8 +151,8 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
                     
             }
         }
+            throw new RuntimeException('Cannot parse conditional expression "' . $string . '": parsing non-UXON conditions not implemented yet!');
         */
-        throw new RuntimeException('Cannot parse conditional expression "' . $string . '": parsing non-UXON conditions not implemented yet!');
     }
     
     /**

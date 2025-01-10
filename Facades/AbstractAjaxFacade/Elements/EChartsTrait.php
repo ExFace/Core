@@ -1,14 +1,18 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\Input;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
@@ -48,7 +52,8 @@ use exface\Core\DataTypes\NumberDataType;
  *      "LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
  *      "LIBS.TINYCOLOR.JS": "npm-asset/tinycolor2/dist/tinycolor-min.js",
  *      "LIBS.TINYGRADIENT.JS": "npm-asset/tinygradient/browser.js",
- *      "WIDGET.CHART.COLORS": ["#c23531", "#2f4554", "#61a0a8", "#d48265", "#91c7ae", "#749f83", "#ca8622", "#bda29a", "#6e7074", "#546570", "#c4ccd3"],
+ *      "WIDGET.CHART.COLORS": ["#c23531", "#2f4554", "#61a0a8", "#d48265", "#91c7ae", "#749f83", "#ca8622", "#bda29a",
+ * "#6e7074", "#546570", "#c4ccd3"],
  *      ```
  * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
@@ -123,6 +128,22 @@ trait EChartsTrait
         "CHART_TYPE_HEATMAP" => 'heatmap',        
         "CHART_TYPE_SANKEY" => 'sankey'
     ];
+    
+    /**
+     * Returns the javascript to react to legend active change events
+     * 
+     * @param string $aLegendActiveJs
+     * @return string
+     */
+    protected abstract function buildJsLegendActiveEventHandler(string $aLegendActiveJs) : string;
+    
+    /**
+     * Returns the javascript to react to legend disable change events
+     * 
+     * @param string $aLegendDisabledJs
+     * @return string
+     */
+    protected abstract function buildJsLegendDisabledEventHandler(string $aLegendDisabledJs) : string;
     
     /**
      *
@@ -331,7 +352,6 @@ JS;
      */
     protected function buildJsEventHandlers() : string
     {
-        $handlersJs = '';
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
@@ -694,11 +714,20 @@ JS;
      */
     protected function buildJsLegendSelectHandler() : string
     {
+        $invokeActiveGetter = $this->buildJsLegendActiveEventHandler('aLegendActive');
+        $invokeDisabledGetter = $this->buildJsLegendDisabledEventHandler('aLegendDisabled');
         return <<<JS
         
-        {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
-            var options = {$this->buildJsEChartsVar()}.getOption();
+        var handler = function(params){
+            // Invoke getters.
+            var aLegendActive = Object.keys(params.selected).filter(function (item) {return params.selected[item];});
+            {$invokeActiveGetter};
+            
+            var aLegendDisabled = Object.keys(params.selected).filter(function (item) {return !params.selected[item];});
+            {$invokeDisabledGetter};
+            
             //Check if series gets hidden, if not (means getting shown) do nothing
+            var options = {$this->buildJsEChartsVar()}.getOption();
             if (params.selected[params.name] === false) {
                 if (options.series[0].seriesType === 'pie') {
                     //do nothing
@@ -744,10 +773,117 @@ JS;
                     }
                 }
             }
-        });
+        };
+
+        {$this->buildJsEChartsVar()}.on('legendselectchanged', handler);
+        {$this->buildJsEChartsVar()}.on('legendselectall', handler);
         
 JS;
                         
+    }
+
+    /**
+     * build function to get value of a selected data row
+     *
+     * @param string $column
+     * @param int $row
+     * @throws FacadeOutputError
+     * @return string
+     */
+    public function buildJsValueGetter($column = null, $row = null) : string
+    {
+        if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
+            $column = str_replace('~', '', $column);
+
+            return <<<JS
+            
+            (function ({$column}){
+                return {$column}.join('{$this->getLegendValueListDelimiter()}');
+            })(oEvent)
+JS;
+
+        } else if ($column != null) {
+            $key = $column;
+        } else {
+            if ($this->getWidget()->getData()->hasUidColumn() === true) {
+                $column = $this->getWidget()->getData()->getUidColumn();
+                $key = $column->getDataColumnName();
+            } else {
+                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+            }
+        }
+        if ($row != null) {
+            throw new FacadeOutputError('Unsupported function ');
+        }
+
+        return <<<JS
+        
+                (function(){
+                    var data = '';
+                    var oChart = {$this->buildJsEChartsVar()};
+                    if (oChart === undefined) {
+                        return '';
+                    }
+                    try {
+                        var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
+                    } catch (e) {
+                        console.warn('Cannot get value of chart:', e);
+                        return '';
+                    }
+                    if (oldSelection != undefined) {
+                        var selectedRow = oldSelection;
+                        if (selectedRow && '{$key}' in selectedRow) {
+                            data = selectedRow["{$key}"];
+                        }
+                    }
+                return data;
+                })()
+                
+JS;
+    }
+
+    /**
+     * Get the delimiter string used to separate items in the output list.
+     * 
+     * This function first tries to deduce a meaningful delimiter from its incoming widget links, using the
+     * first non-standard delimiter it finds. If all incoming links use standard-delimiters, it defaults to `,`.
+     * 
+     * @return string
+     */
+    // TODO 2024-12-09 geb: At the moment we simply use the first non-standard delimiter for ALL outputs, maybe we can 
+    // TODO                 identify consumers of the JS getter and send bespoke delimiters per consumer.
+    protected function getLegendValueListDelimiter() : string
+    {
+        $widget = $this->getWidget();
+        $links = WidgetLink::getLinksToWidget($widget);
+
+        // IDEA if this chart has a split series, the values of the legend are
+        // actually the values of getSplitByAttributeAlias(). We could look for
+        // this attribute and use its value list delimiter here.
+        
+        // Search among incoming links for a unusual delimiter
+        foreach ($links as $link) {
+            $targetColName = $link->getTargetColumnId();
+            if ($targetColName !== Chart::VALUE_LEGEND_ACTIVE && $targetColName !== Chart::VALUE_LEGEND_INACTIVE) {
+                continue;
+            }
+
+            $source = $link->getSourceWidget();
+            // IDEA add an interface like iSupportMultipleValues
+            if($source instanceof Input) {
+                return $source->getMultipleValuesDelimiter();
+            }
+            
+            // If not an input (e.g. a DataColumn)
+            if($source instanceof iShowSingleAttribute && $source->isBoundToAttribute()) {
+                $attribute = $source->getAttribute();
+                if(($delimiter = $attribute->getValueListDelimiter()) !== EXF_LIST_SEPARATOR) {
+                    return $delimiter;
+                }
+            }
+        }
+        
+        return EXF_LIST_SEPARATOR;
     }
     
     /**
@@ -1170,6 +1306,8 @@ JS;
             case $series instanceof SankeyChartSeries:
                 return $this->buildJsSankeyChart($series);
         }
+        
+        return '';
     }
     
     /**
@@ -1427,7 +1565,7 @@ JS;
             var oSemanticColors = $semanticColorsJs;
             var sValue = params.data._key;
             var sColor = {$this->buildJsScaleResolver('sValue', $series->getTextDataColumn()->getCellWidget()->getColorScale(), $series->getTextDataColumn()->getCellWidget()->isColorScaleRangeBased())};
-            if (sColor.startsWith('~')) {
+            if (sColor !== undefined && sColor.startsWith('~')) {
                 sColor = oSemanticColors[sColor] || '';
             } 
             if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
@@ -2206,7 +2344,27 @@ JS;
     //build and set dataset,config and options depending on chart type
     $js
     
+    {$this->buildJsForceLegendSelectUpdate()}
 JS;
+    }
+
+    /**
+     * A JS snippet that forces an update of the legend selected getters.
+     * 
+     * NOTE: This is a bit of a hack, maybe there is a cleaner way.
+     * 
+     * @return string
+     */
+    protected function buildJsForceLegendSelectUpdate() : string
+    {
+        return <<<JS
+
+        {$this->buildJsEChartsVar()}.dispatchAction({
+            type: 'legendAllSelect'
+        });
+
+JS;
+
     }
     
     /**
@@ -2628,7 +2786,7 @@ JS;
         var oSemanticColors = $semanticColorsJs;
         value = newNames[0];
         $colJs
-        if (sColor.startsWith('~')) {
+        if (sColor !== undefined && sColor.startsWith('~')) {
             sColor = oSemanticColors[sColor] || '';
         }
         if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
@@ -2662,7 +2820,7 @@ JS;
             var oSemanticColors = $semanticColorsJs;
             value = newNames[i];
             $colJs
-            if (sColor.startsWith('~')) {
+            if (sColor !== undefined && sColor.startsWith('~')) {
                 sColor = oSemanticColors[sColor] || '';
             }
             if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
@@ -3529,58 +3687,6 @@ JS;
     protected function buildJsEChartsHideLoading() : string
     {
         return "{$this->buildJsEChartsVar()}.hideLoading()";
-    }
-    
-    /**
-     * build function to get value of a selected data row
-     *
-     * @param string $column
-     * @param int $row
-     * @throws FacadeOutputError
-     * @return string
-     */
-    public function buildJsValueGetter($column = null, $row = null) : string
-    {
-        if ($column != null) {
-            $key = $column;
-        } else {
-            if ($this->getWidget()->getData()->hasUidColumn() === true) {
-                $column = $this->getWidget()->getData()->getUidColumn();
-                $key = $column->getDataColumnName();
-            } else {
-                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
-            }
-        }
-        if ($row != null) {
-            throw new FacadeOutputError('Unsupported function ');
-        }
-        
-        
-        
-        return <<<JS
-        
-                (function(){
-                    var data = '';
-                    var oChart = {$this->buildJsEChartsVar()};
-                    if (oChart === undefined) {
-                        return '';
-                    }
-                    try {
-                        var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
-                    } catch (e) {
-                        console.warn('Cannot get value of chart:', e);
-                        return '';
-                    }
-                    if (oldSelection != undefined) {
-                        var selectedRow = oldSelection;
-                        if (selectedRow && '{$key}' in selectedRow) {
-                            data = selectedRow["{$key}"];
-                        }
-                    }
-                return data;
-                })()
-                
-JS;
     }
     
     /**

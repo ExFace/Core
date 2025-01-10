@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic\Log\Processors;
 
+use exface\Core\CommonLogic\Debugger;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 /**
  * Extracts the debug widget from the context and dumps its UXON to a `$record` item.
@@ -43,11 +43,37 @@ class DebugWidgetProcessor
         // Can't render any widget if the workbench was not fully installed yet. 
         // This can happen if the InitDB scripts fail.
         if (false === $this->workbench->isInstalled()) {
+            // Try to create a DebugMessage UXON manually
+            try {
+                $debugWidgetUxon = new UxonObject([
+                    'widget_type' => 'DebugMessage',
+                    'tabs' => []
+                ]);
+                $dump = $record;
+                $exception = $record['context']['exception'] ?? null;
+                if ($exception instanceof \Throwable){
+                    $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
+                        'caption' => 'Stack trace',
+                        'widgets' => [
+                            $this->createHtmlFallback(Debugger::printException($exception, true))->toArray()
+                        ]
+                    ]));
+                }
+                unset($dump['formatted']);
+                $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
+                    'caption' => 'Log entry',
+                    'widgets' => [
+                        $this->createHtmlFallback(Debugger::printVariable($dump))->toArray()
+                    ]
+                ]));
+                $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);
+            } catch (\Throwable $e) {
+                $record['context']['exception_when_dumping'] = $e;
+            }
             return $record;
         }
         
         $sender = $record['context'][$this->sourceContextKey];
-        $debugger = $this->workbench->getDebugger();
         $debugWidgetUxon = null;
         // Let the sender render a debug widget if it can
         if ($sender && ($sender instanceof iCanGenerateDebugWidgets)) {
@@ -63,8 +89,8 @@ class DebugWidgetProcessor
                     'tabs' => []
                 ]);
                 // Create a fallback debug widget for the $sender
-                if ($sender instanceof ExceptionInterface){
-                    $originalErrorUxon = $this->createHtmlFallback($debugger->printException($sender, true));
+                if ($sender instanceof \Throwable){
+                    $originalErrorUxon = $this->createHtmlFallback(Debugger::printException($sender, true));
                     $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                         'caption' => 'Original error',
                         'widgets' => [
@@ -73,7 +99,7 @@ class DebugWidgetProcessor
                     ]));
                 }
                 // Create a fallback debug widget for the exception from the first rendering attempt
-                $renderErrorUxon = $this->createHtmlFallback($debugger->printException($e, true));
+                $renderErrorUxon = $this->createHtmlFallback(Debugger::printException($e, true));
                 $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                     'caption' => 'Rendering exception',
                     'widgets' => [
@@ -86,14 +112,14 @@ class DebugWidgetProcessor
         // If there is no sender or an problem with it, but the context contains an 
         // error, use the error fallback to create a debug widget
         if ($debugWidgetUxon === null && ($e = $record['context']['exception'] ?? null) instanceof \Throwable){
-            $debugWidgetUxon = $this->createHtmlFallback($debugger->printException($e, true));
+            $debugWidgetUxon = $this->createHtmlFallback(Debugger::printException($e, true));
         } 
         
         // If all the above fails, simply dump the entire record to the debug widget
         if ($debugWidgetUxon === null) {
             $dump = $record;
             unset($dump['formatted']);
-            $debugWidgetUxon = $this->createHtmlFallback($debugger->printVariable($dump, true));
+            $debugWidgetUxon = $this->createHtmlFallback(Debugger::printVariable($dump, true));
         }
         
         $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);

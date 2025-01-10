@@ -808,26 +808,30 @@ JS;
      * If the $valueJs is not found, $onNotFoundJs will be executed and $rowIdxJs will be
      * set to -1.
      * 
-     * @param DataColumn $column
-     * @param string $valueJs
+     * @param string $valuesJs
+     * @param string|null $columnName
+     * @param bool $deSelect
      * @param string $onNotFoundJs
-     * @param string $rowIdxJs
+     * 
      * @return string
      */
-    public function buildJsSelectRowByValue(DataColumn $column, string $valueJs, string $onNotFoundJs = '', string $rowIdxJs = 'rowIdx') : string
+    public function buildJsSelectRowByValue(string $valuesJs, ?string $columnName = null, bool $deSelect = false, string $onNotFoundJs = '') : string
     {
         return <<<JS
-
-var {$rowIdxJs} = function() {
-    var rowIdx = {$this->getId()}_table.column('{$column->getAttributeAlias()}:name').data().indexOf({$valueJs});
-    if (rowIdx == -1){
-		{$onNotFoundJs};
-	} else {
-        // {$this->getId()}_table.row(rowIdx).to$().scrollIntoView();
-        {$this->getId()}_table.rows(rowIdx).select();
-	}
-    return rowIdx;
-}();
+(function(mVals) {
+    var aIdxs = [];
+    (Array.isArray(mVals) ? mVals : [mVals]).foreach(function(mVal) {
+        var rowIdx = {$this->getId()}_table.column('{$columnName}:name').data().indexOf(mVal);
+        if (rowIdx == -1){
+            {$onNotFoundJs};
+        } else {
+            aIdxs.push(rowIdx);
+            // {$this->getId()}_table.row(rowIdx).to$().scrollIntoView();
+            {$this->getId()}_table.rows(rowIdx).select();
+        }
+    });
+    return aIdxs;
+})({$valuesJs});
 
 JS;
     }

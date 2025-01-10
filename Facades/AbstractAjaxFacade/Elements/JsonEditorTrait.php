@@ -5,7 +5,6 @@ use exface\Core\Widgets\InputUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
-use exface\Core\CommonLogic\Workbench;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -330,7 +329,7 @@ JS;
      * @param string $funcPrefix
      * @return string
      */
-    protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
+    protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, WorkbenchInterface $workbench) : string
     {   
         $trans = static::getTranslations($workbench);
 
@@ -889,7 +888,7 @@ CSS;
     * Returns translation for a specific UXON editor term using core app's translator.
     * Add new terms by maintaining "exface.Core.(en|de|ru).json" using prefix 'WIDGET.UXONEDITOR.'.
     * 
-    * @param Workbench $workbench,
+    * @param WorkbenchInterface $workbench,
     * @param string $message_id
     * @return string
     * 
@@ -923,7 +922,7 @@ CSS;
      * @param string $rootPrototype
      * @param string $rootObject
      * @param string $ajaxUrl
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string uxonEditorId
      * @return string
      */
@@ -933,7 +932,7 @@ CSS;
         string $rootPrototype,
         string $rootObject,
         string $ajaxUrl,
-        Workbench $workbench,
+        WorkbenchInterface $workbench,
         string $uxonEditorId
         ) : string
         {

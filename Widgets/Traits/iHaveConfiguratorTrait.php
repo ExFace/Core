@@ -34,7 +34,17 @@ trait iHaveConfiguratorTrait
         return $this->configurator;
     }
     
-    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator
+    /**
+     * Detailed configuration for the configurator for this widget - only needed for special cases
+     * 
+     * @uxon-property configurator
+     * @uxon-type \exface\Core\Widgets\WidgetConfigurator
+     * @uxon-template {"": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return \exface\Core\Interfaces\Widgets\iHaveConfigurator
+     */
+    protected function setConfigurator(UxonObject $uxon) : iHaveConfigurator
     {
         if ($this->configurator === null) {
             $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getConfiguratorWidgetType());

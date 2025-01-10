@@ -293,7 +293,7 @@ class PWADataset implements PWADatasetInterface
 
                 // build filter for each object in relation path that has not yet been processed
                 while(str_contains($relationIncrementObjectAlias, RelationPath::RELATION_SEPARATOR)) {
-                    $relationPath = RelationPath::relationPathAdd($relationIncrementObjectAlias, $incrementAttributeAlias);
+                    $relationPath = RelationPath::join($relationIncrementObjectAlias, $incrementAttributeAlias);
                     // only add new relation objects
                     if (in_array($relationPath, $processedRelations) === false){
                         $relationIncrementAttributeAliases[] = $relationPath;
@@ -308,7 +308,7 @@ class PWADataset implements PWADatasetInterface
 
                 // also add direct paths
                 if (in_array($relationIncrementObjectAlias, $processedRelations) === false){
-                    $relationPath = RelationPath::relationPathAdd($relationIncrementObjectAlias, $incrementAttributeAlias);
+                    $relationPath = RelationPath::join($relationIncrementObjectAlias, $incrementAttributeAlias);
                     $relationIncrementAttributeAliases[] = $relationPath;
                     $processedRelations[] = $relationIncrementObjectAlias;
                 }

@@ -16,13 +16,28 @@ importScripts('exface/vendor/exface/Core/Facades/AbstractPWAFacade/sw_tools.js')
 
 workbox.routing.registerRoute(
     /.*\/api\/jeasyui.* /i,
-    swTools.strategies.postNetworkFirst(),
+    swTools.strategies.POSTNetworkFirst(),
 	'POST'
 );
 -----------------------------------------------------------
  * 
  * @author Andrej Kabachnik
  */
+
+// Delete old buggy sw-tools IndexedDB if it exists when ServiceWorker is updated
+if (this instanceof ServiceWorkerGlobalScope) {
+	this.addEventListener("install", (event) => {
+		Dexie.exists('sw-tools')
+		.then(function(exists) {
+			if (exists) {
+				Dexie.delete('sw-tools');
+			}
+		}).catch(function (error) {
+			console.error("Failed to check if legacy DB 'sw-tools' exists", error);
+		});
+	});
+}
+
 const swTools = {
 	/**
 	 * Serializes a Request into a plain JS object.
@@ -116,26 +131,29 @@ const swTools = {
 		 * 
 		 * @return Promise
 		 */
-		put: function(request, response) {
-			var key, data;
-			swTools
-			.serializeRequest(request.clone())
-			.then(function(serializedRequest){
-				key = serializedRequest;
-				return swTools
-				.serializeResponse(response.clone());
-			}).then(function(serializedResponse) {
-				data = serializedResponse;
-				var entry = {
-					key: JSON.stringify(key),
-					response: data,
-					timestamp: Date.now()
-				};
-				swTools._dexie.cache
-				.add(entry)
-				.catch(function(error){
-					swTools._dexie.cache.update(entry.key, entry);
-				});
+		put: function(oRequestSerialized, oResponseSerialized) {
+			var sRequest = JSON.stringify(oRequestSerialized);
+			var iHash = swTools.hash(sRequest);
+			var entry = {
+				timestamp: Date.now(),
+				hash: iHash,
+				request: sRequest,
+				response: JSON.stringify(oResponseSerialized)
+			};
+			swTools._dexie.cache
+			.where('hash').equals(iHash)
+			.toArray()
+			.then(aHits => {
+				for (var oHit of aHits) {
+					if (sRequest === oHit.request) {
+						return swTools._dexie.cache.update(oHit.id, entry);
+					}
+				}
+				return swTools._dexie.cache.add(entry);
+			})
+			.catch(e => {
+				console.warn('Failed to save offline cache for request', e);
+				return Promise.reject();
 			});
 		},
 		
@@ -146,159 +164,185 @@ const swTools = {
 		 * 
 		 * @return Promise
 		 */
-		match: function(request) {
-			return swTools
-			.serializeRequest(request.clone())
-			.then(function(serializedRequest) {
-				var key = JSON.stringify(serializedRequest);
-				return swTools._dexie.cache.get(key);
-			}).then(function(data){
-				if (data) {
-					return swTools.deserializeResponse(data.response);
-				} else {
-					return new Response('', {status: 503, statusText: 'Service Unavailable'});
+		match: function(oRequestSerialized) {
+			var sRequest = JSON.stringify(oRequestSerialized);
+			var iHash = swTools.hash(sRequest);
+			return swTools._dexie.cache
+			.where('hash').equals(iHash)
+			.toArray()
+			.then(function(aHits){
+				if (aHits.length === 0) {
+					return null;
 				}
+				for (var oHit of aHits) {
+					if (oHit.request === sRequest) {
+						return JSON.parse(oHit.response);
+					}
+				}
+				return null;
+			})
+			.catch(e => {
+				console.warn('Failed to save offline cache for request', e);
+				return null;
 			});
+		}, 
+	},
+
+	hash: function (string){
+		/*
+		var h = 0, l = s.length, i = 0;
+		if ( l > 0 )
+		  while (i < l)
+			h = (h << 5) - h + s.charCodeAt(i++) | 0;
+		return h;
+		*/
+		var hash = 0;
+		for (var i = 0; i < string.length; i++) {
+			var code = string.charCodeAt(i);
+			hash = ((hash<<5)-hash)+code;
+			hash = hash & hash; // Convert to 32bit integer
 		}
+		return hash;
 	},
 	
 	_dexie: function(){
-		var db = new Dexie("sw-tools");
+		var db = new Dexie("workbox-postcache");
         db.version(1).stores({
-            cache: 'key,response,timestamp'
+            cache: '++id,timestamp,hash'
         });
         return db;
 	}(),
-
-	checkNetworkStatus: async function() {
-		try {
-			// Call the getLatestConnectionStatus function from exfPWA
-			const status = await exfPWA.getLatestConnectionStatus();
-			return status;
-		} catch (error) { 
-			return 'offline'; // Default to offline in case of an error
-		}
-	},
 	
-	// POST
-	strategies: { 
-		postNetworkFirst: (options) => {
-			if (!options) {
+	/**
+	 * Custom workbox strategies
+	 */
+	strategies: {
+
+		/**
+		 * This strategy allows to handle POST requests via NetworkFirst
+		 * 
+		 * @param {Object} options 
+		 * @returns 
+		 */
+		POSTNetworkFirst: (options) => {
+			if (! options) {
 				options = {};
 			}
 			
-			return async ({url, event, params}) => {
-				const networkStatus = await swTools.checkNetworkStatus();
-				const isVirtuallyOffline = self.isVirtuallyOffline;
-		
-				console.log('Network status:', networkStatus);
-				console.log('Is virtually offline:', isVirtuallyOffline);
-		
-				if (networkStatus === 'offline_bad_connection' || isVirtuallyOffline) {
-					// Using offline-first strategy for POST request, event.request.url);
-					try {
-						const cachedResponse = await swTools.cache.match(event.request.clone());
-						if (cachedResponse) {
-							//Found cached response
-							return cachedResponse;
+			return ({url, event, params}) => {
+			    // Try to get the response from the network
+				return Promise.resolve(
+					fetch(event.request.clone())
+					.then(function(response) {
+						var oResponseClone = response.clone();
+						if (event.request.headers.get('X-Offline-Strategy') === 'NetworkFirst') {
+							swTools
+							.serializeRequest(event.request.clone())
+							.then(oRequestSerialized => {
+								var sRequest = JSON.stringify(oRequestSerialized) || '';
+								var iLength = sRequest.length;
+								if (iLength !== null && iLength !== undefined && iLength <= 1*1000*1000) {
+									swTools
+									.serializeResponse(oResponseClone)
+									.then(oResponseSerialized => {
+										return swTools.cache.put(oRequestSerialized, oResponseSerialized);
+									})
+									.catch(e => {
+										console.warn('Failed to save offline cache for ' + url, e);
+									});
+								}
+							})
+							.catch(e => {
+								console.warn('Failed to save offline cache for ' + url, e);
+							});
 						}
-					} catch (error) {
-						console.error('Error while trying to get cached response:', error);
-					}
-		
-					//No cached response found, trying network
-				}
-		
-				console.log('Using online strategy for POST request:', event.request.url);
-				try {
-					const response = await fetch(event.request.clone());
-					swTools.cache.put(event.request.clone(), response.clone());
-					return response;
-				} catch (error) {
-					//Network request failed
-					const cachedResponse = await swTools.cache.match(event.request.clone());
-					if (cachedResponse) {
-						return cachedResponse;
-					}
-					throw error;  // If we can't get from network or cache, throw the error
-				}
+						return response;
+				    })
+					.catch(function() {
+						return swTools
+						.serializeRequest(event.request.clone())
+						.then(oRequestSerialized => {
+							return swTools.cache.match(oRequestSerialized);
+						})
+						.then(oResponseSerialized => {
+							if (oResponseSerialized) {
+								return swTools.deserializeResponse(oResponseSerialized);
+							} 
+							return new Response('', {status: 503, statusText: 'Service Unavailable'});
+						})
+						.catch(e => {
+							console.warn('Failed to check offline cache for ' + url, e);
+							return new Response('', {status: 503, statusText: 'Service Unavailable'});
+						});
+					})
+				);
 			}
 		},
-		semiOffline: (options) => {
-			if (!options) {
+
+		POSTCacheOnly: (options) => {
+			if (! options) {
 				options = {};
 			}
 			
-			const defaultCacheConfigs = {
-				'html-cache': {
-					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'html-cache' }),
-					expiration: {
-						maxEntries: 50,
-						maxAgeSeconds: 24 * 60 * 60, // 1 day
-					}
-				},
-				'data-cache': {
-					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'data-cache' }),
-					expiration: {
-						maxEntries: 50,
-						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
-					}
-				},
-				'asset-cache': {
-					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'asset-cache' }),
-					expiration: {
-						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
-					}
-				},
-				'image-cache': {
-					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'image-cache' }),
-					expiration: {
-						maxEntries: 250,
-						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
-					}
+			return ({url, event, params}) => {
+			    return swTools
+				.serializeRequest(event.request.clone())
+				.then(oRequestSerialized => {
+					return swTools.cache.match(oRequestSerialized);
+				})
+				.then(oResponseSerialized => {
+					if (oResponseSerialized) {
+						return swTools.deserializeResponse(oResponseSerialized);
+					} 
+					return new Response('', {status: 503, statusText: 'Service Unavailable'});
+				})
+			}
+		},
+
+		/**
+		 * This strategy swichtes between two specified strategies depending on whether it
+		 * concideres to be offline or online.
+		 * 
+		 * @param {{offlineStrategy: object, onlineStrategy: object}} options 
+		 * @returns 
+		 */
+		SemiOfflineSwitch: (options) => {
+			if (!options) {
+				options = {};
+			}           
+			var mOfflineStrategy = options.offlineStrategy;
+			var mOnlineStrategy = options.onlineStrategy;
+
+			if (mOfflineStrategy === undefined) {
+				throw {
+					message:  'No offline strategy defined for semiOffline switch!'
+				};
+			}
+			if (mOnlineStrategy === undefined) {
+				throw {
+					message:  'No online strategy defined for semiOffline switch!'
+				};
+			}
+			
+			return async ({ event, request, ...params }) => {
+				var oNetStat;
+				var mStrategy;
+				try {
+					// Make sure to load a fresh connections status instead of doing exfPWA.isOnline(), which
+					// might use cached values and may also load asynchronously when startig up.
+					oNetStat = await exfPWA.getConnectionStatus();
+					mStrategy = oNetStat.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
+				} catch (error) {
+					mStrategy = mOnlineStrategy;
+					console.warn('Error checking network status:', error);
+				}
+
+				if (mStrategy.handle !== undefined) {
+					return mStrategy.handle({ event, request, ...params });
+				} else {
+					return mStrategy({ event, request, ...params });
 				}
 			};
-		
-			const cacheConfigs = options.cacheConfigs || defaultCacheConfigs;
-		
-			return {
-				handle: async ({ event, request, ...params }) => {
-					const isSemiOffline = await swTools.checkNetworkStatus() === 'offline_bad_connection';
-					const isVirtuallyOffline = self.isVirtuallyOffline;
-		
-					if (isSemiOffline || isVirtuallyOffline) {
-						console.log('Using offline strategy for:', request.url);
-						
-						// Determine which cache to use based on the request URL
-						let cacheToUse = 'data-cache'; // default
-						if (request.url.match(/^.*\.html/i)) {
-							cacheToUse = 'html-cache';
-						} else if (request.url.match(/vendor\/.*(\.js|\.css|\.woff2?|\.otf|\.ttf|\.eot)/i)) {
-							cacheToUse = 'asset-cache';
-						} else if (request.url.match(/.*\.(?:png|gif|jpg|jpeg|svg|ico)$/i) || request.url.match(/.*\/api\/files\/.*/i)) {
-							cacheToUse = 'image-cache';
-						}
-		
-						const cacheConfig = cacheConfigs[cacheToUse];
-						const offlineStrategy = cacheConfig.strategy();
-						
-						// Add expiration plugin if configured
-						if (cacheConfig.expiration) {
-							if (!offlineStrategy.plugins) {
-								offlineStrategy.plugins = [];
-							}
-							offlineStrategy.plugins.push(
-								new workbox.expiration.ExpirationPlugin(cacheConfig.expiration)
-							);
-						}
-		
-						return offlineStrategy.handle({ event, request, ...params });
-					} else {
-						console.log('Using online strategy for:', request.url);
-						return (options.normal || new workbox.strategies.NetworkFirst()).handle({ event, request, ...params });
-					}
-				}
-			};
-		}
-    }
-};
+		} 
+	}
+}

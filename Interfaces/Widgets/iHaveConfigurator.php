@@ -2,26 +2,17 @@
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\WidgetConfigurator;
 
 /**
  * Widgets with this interface have a separate configurator widget, that controls their behavior.
  * 
- * @see WidgetConfigurator for a details explanation.
+ * @see \exface\Core\Widgets\WidgetConfigurator for a details explanation.
  * 
  * @author Andrej Kabachnik
  *
  */
 interface iHaveConfigurator extends WidgetInterface
 {
-    /**
-     * 
-     * @param UxonObject $uxon
-     * @return iHaveConfigurator
-     */
-    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator;
-
     /**
      * Sets the configurator widget
      * 

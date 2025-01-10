@@ -21,6 +21,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
 
 /**
  * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
@@ -81,7 +82,7 @@ class CallActionBehavior extends AbstractBehavior
     
     const PREVENT_DEFAULT_IF_ACTION_CALLED = 'if_action_called';
     
-    private $eventAlias = null;
+    private $eventAliases = [];
     
     private $eventPreventDefault = null;
 
@@ -116,8 +117,10 @@ class CallActionBehavior extends AbstractBehavior
             $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
         }
         
-        $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), [$this, 'onEventCallAction'], $this->getPriority());
-        
+        foreach ($this->getEventAliases() as $event) {
+            $this->getWorkbench()->eventManager()->addListener($event, [$this, 'onEventCallAction'], $this->getPriority());
+        }
+
         return $this;
     }
     
@@ -128,8 +131,10 @@ class CallActionBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener($this->getEventAlias(), [$this, 'onEventCallAction'], $this->getPriority());
-        
+        foreach ($this->getEventAliases() as $event) {
+            $this->getWorkbench()->eventManager()->removeListener($event, [$this, 'onEventCallAction']);
+        }
+
         if ($this->hasRestrictionOnAttributeChange()) {
             $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
         }
@@ -145,7 +150,7 @@ class CallActionBehavior extends AbstractBehavior
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('event_alias', $this->getEventAlias());
+        $uxon->setProperty('event_aliases', $this->getEventAliases());
         $uxon->setProperty('action', $this->getAction()->exportUxonObject());
         if ($this->getPriority() !== null) {
             $uxon->setProperty('priority', $this->getPriority());
@@ -161,15 +166,36 @@ class CallActionBehavior extends AbstractBehavior
 
     /**
      * 
-     * @return string
+     * @return string[]
      */
-    protected function getEventAlias() : string
+    protected function getEventAliases() : array
     {
-        return $this->eventAlias;
+        return $this->eventAliases;
     }
 
     /**
-     * Alias of the event, that should trigger the action.
+     * Call the action when any of these events happen
+     * 
+     * Technically, any type of event selector will do - e.g.: 
+     * - `exface.Core.DataSheet.OnBeforeCreateData`
+     * - `\exface\Core\Events\DataSheet\OnBeforeCreateData`
+     * - OnBeforeCreateData::class (in PHP)
+     * 
+     * @uxon-property event_aliases
+     * @uxon-type metamodel:event[]
+     * @uxon-template [""]
+     * 
+     * @param string $aliasWithNamespace
+     * @return CallActionBehavior
+     */
+    protected function setEventAliases(UxonObject $arrayOfEventAliases) : CallActionBehavior
+    {
+        $this->eventAliases = $arrayOfEventAliases->toArray();
+        return $this;
+    }
+
+    /**
+     * Call the action when this event happens.
      * 
      * Technically, any type of event selector will do - e.g.: 
      * - `exface.Core.DataSheet.OnBeforeCreateData`
@@ -178,14 +204,13 @@ class CallActionBehavior extends AbstractBehavior
      * 
      * @uxon-property event_alias
      * @uxon-type metamodel:event
-     * @uxon-required true
      * 
      * @param string $aliasWithNamespace
      * @return CallActionBehavior
      */
     protected function setEventAlias(string $aliasWithNamespace) : CallActionBehavior
     {
-        $this->eventAlias = $aliasWithNamespace;
+        $this->eventAliases = [$aliasWithNamespace];
         return $this;
     }
 
@@ -243,27 +268,27 @@ class CallActionBehavior extends AbstractBehavior
             throw new BehaviorConfigurationError($this, 'The CallActionBehavior cannot be triggered by event "' . $event->getAliasWithNamespace() . '": currently only data sheet events supported!');
         }
         
-        $data_sheet = $event->getDataSheet();
+        $eventSheet = $event->getDataSheet();
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
+        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
 		
-		$ignoreKey = array_search($data_sheet, $this->ignoreDataSheets, true);
+		$ignoreKey = array_search($eventSheet, $this->ignoreDataSheets, true);
 		if ($ignoreKey !== false && null !== $logbook = ($this->ignoreLogbooks[$ignoreKey] ?? null)) {
 			$logbook->addSection('Proceeding with event' . $event::getEventName());
 		} else {
 			$logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
 		}
         
-        $logbook->addDataSheet('Input data', $data_sheet);
-        $logbook->addLine('Found input data for object ' . $data_sheet->getMetaObject()->__toString());
+        $logbook->addDataSheet('Event data', $eventSheet);
+        $logbook->addLine('Found input data for object ' . $eventSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
-        if (in_array($data_sheet, $this->ignoreDataSheets, true)) {
+        if (in_array($eventSheet, $this->ignoreDataSheets, true)) {
             $logbook->addLine('**Skipped** because of `only_if_attributes_change`');
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
@@ -280,48 +305,76 @@ class CallActionBehavior extends AbstractBehavior
             if ($this->hasRestrictionConditions()) {
                 $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
                 $logbook->addLine($this->getOnlyIfDataMatchesConditions()->__toString());
-                $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions(), true);
-                if ($data_sheet->isEmpty()) {
+                $inputSheet = $eventSheet->extract($this->getOnlyIfDataMatchesConditions(), true);
+                if ($inputSheet->isEmpty()) {
                     $logbook->addLine('**Skipped** because of `only_if_data_matches_conditions`');
                     $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
                     return;
                 }
+            } else {
+                $inputSheet = $eventSheet;
             }
             
-            // Now handle the action
+            // Now perform the action
             if ($action = $this->getAction()) {
                 $logbook->addSection('Running action ' . $action->getAliasWithNamespace());
+
+                // Get the task from the event or create one
                 if ($event instanceof TaskEventInterface) {
                     $logbook->addLine('Getting task for event and replacing the task data with the input data of the behavior');
                     $task = $event->getTask();
-                    $task->setInputData($data_sheet);
+                    $task->setInputData($inputSheet);
                 } else {
                     // We never have an input widget here, so tell the action it won't get one
                     // and let it deal with it.
                     $logbook->addLine('Creating a new task because the event has no task attached');
                     $action->setInputTriggerWidgetRequired(false);
-                    $task = TaskFactory::createFromDataSheet($data_sheet);
+                    $task = TaskFactory::createFromDataSheet($inputSheet);
                 }
                 
+                // Handle the task
                 if ($event instanceof DataTransactionEventInterface) {
                     $logbook->addLine('Getting the transaction from the event');
                     $this->isHandling = true;
-                    // commit the transaction in case the action calls a external
-                    // system which relies on the commited data
+                    // Commit the transaction if explicitly requested in the behavior config.
+                    // This might be the case if the action calls a external system, which 
+                    // relies on the commited data
                     if ($this->getCommitBeforeAction()) {
                        $event->getTransaction()->commit(); 
+                    } else {
+                        // Otherwise disable autocommit for the action to force it to use
+                        // the same transaction
+                        $action->setAutocommit(false);
                     }
-                    $action->handle($task, $event->getTransaction());
+                    $result = $action->handle($task, $event->getTransaction());
                     $this->isHandling = false;
                 } else {
                     $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
                     $logbook->addLine('**Performing action**');
                     $this->isHandling = true;
-                    $action->handle($task);
+                    $result = $action->handle($task);
                     $this->isHandling = false;
                 }
+
+                // Apply data changes if it is the same object
+                if ($result instanceof ResultDataInterface) {
+                    if ($result->isDataModified()) {
+                        if ($result->getData()->getMetaObject()->isExactly($eventSheet->getMetaObject())) {
+                            $logbook->addLine('Updating event data with values from the action because it modified the same object');
+                            $eventSheet->merge($result->getData(), true, false);
+                        } else {
+                            $logbook->addLine('No update of event data required because action returned data of a different object: ' . $result->getData()->getMetaObject()->__toString());
+                        }
+                    } else {
+                        $logbook->addLine('No update of event data required because action did not modify data');
+                    }
+                } else {
+                    $logbook->addLine('No update of event data required because action result does not contain data');
+                }
+
+                // Prevent event default if needed
                 if ($this->getEventPreventDefault() === self::PREVENT_DEFAULT_IF_ACTION_CALLED) {
-                    $logbook->addLine('Events default logic will be prevented');
+                    $logbook->addLine('Event default logic will be prevented');
                     $event->preventDefault();
                 }
                 $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));

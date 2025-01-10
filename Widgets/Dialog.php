@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -11,11 +12,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\Widgets\Traits\iHaveToolbarsTrait;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Actions\iShowDialog;
-use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Widgets\Traits\PopupTrait;
 
 /**
@@ -48,6 +46,8 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     private $header = null;
     
     private $hide_header = null;
+
+    private $sidebar = null;
     
     private $cacheable = true;
 
@@ -233,6 +233,10 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
             yield $this->getHeader();
         }
         
+        if ($this->hasSidebar()) {
+            yield $this->getSidebar();
+        }
+        
         yield $this->getCloseButton();
     }
     
@@ -296,6 +300,46 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     {
         $this->hide_header = $boolean;
         return $this;
+    }
+    
+    /**
+     * Gives the dialog a sidebar for secondary content like an AI chat, comments or similar
+     * 
+     * @uxon-property sidebar
+     * @uxon-type \exface\Core\Widgets\DialogSidebar
+     * @uxon-template {"widgets": [{"": ""}]}
+     * 
+     * @param UxonObject|DialogSidebar $uxon_or_widget
+     * @throws WidgetConfigurationError
+     * @return \exface\Core\Widgets\Dialog
+     */
+    public function setSidebar($uxon_or_widget)
+    {
+        if ($uxon_or_widget instanceof UxonObject) {
+            $this->sidebar = WidgetFactory::createFromUxon($this->getPage(), $uxon_or_widget, $this, 'DialogSidebar');
+        } elseif ($uxon_or_widget instanceof DialogSidebar) {
+            $this->sidebar = $uxon_or_widget;
+        } else {
+            throw new WidgetConfigurationError($this, 'Invalid definiton of dialog sidebar given!');
+        }
+        return $this;
+    }
+    
+    /**
+     * @return DialogSidebar
+     */
+    public function getSidebar() : DialogSidebar
+    {
+        return $this->sidebar;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasSidebar() : bool
+    {
+        return is_null($this->sidebar) ? false : true;
     }
     
     /**
@@ -385,7 +429,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
      * Returns inner widgets of this Dialog, its DialogHeader and any nested containers recursively
      * 
      * NOTE: in contranst to other containers, this method includes not only members of the `widgets`
-     * list, but also widgets from the `header`!
+     * list, but also widgets from the `header` and the `sidebar`!
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::getWidgetsRecursive()
@@ -393,11 +437,20 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function getWidgetsRecursive(callable $filterCallback = null, int $depth = null) : array
     {
         $result = parent::getWidgetsRecursive($filterCallback, $depth);
+        // Add the header and its children
         if ($this->hasHeader()) {
-            $header = $this->getHeader();
-            $result[] = $header;
-            if ($depth !== 1) {
-                $result = array_merge($result, $header->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
+            $child = $this->getHeader();
+            $result[] = $child;
+            if ($depth > 1) {
+                $result = array_merge($result, $child->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
+            }
+        }
+        // Add the sidebar and its children
+        if ($this->hasSidebar()) {
+            $child = $this->getSidebar();
+            $result[] = $child;
+            if ($depth > 1) {
+                $result = array_merge($result, $child->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
             }
         }
         return $result;

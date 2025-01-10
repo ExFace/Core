@@ -69,6 +69,29 @@
             "DESCRIPTION": "This behavior makes sure, every behavior is instantiated and validated every time an editor for it's model is opened. This behavior also fires the onBehaviorValidated event, which allows other behaviors to append their own checks or modifications for metamodel editors.",
             "DISABLED_FLAG": 0,
             "PRIORITY": null
+        },
+        {
+            "CREATED_ON": "2024-12-11 15:17:26",
+            "MODIFIED_ON": "2024-12-11 16:31:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ef8e1ea5a47b628e1e025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
+            "CONFIG_UXON": {
+                "translation_subfolder": "Behaviors",
+                "translation_filename_attribute_alias": "TRANSLATION_FILENAME",
+                "translation_app_determined_by_relation": "APP",
+                "translatable_uxon_prototype_attribute": "BEHAVIOR",
+                "translatable_uxon_properties": [
+                    "CONFIG_UXON"
+                ]
+            },
+            "OBJECT": "0x11e60ad7563429b089840050568905af",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Translations",
+            "DESCRIPTION": "Makes behavior config translatable",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

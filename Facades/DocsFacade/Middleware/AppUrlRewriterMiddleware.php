@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Middleware;
 
+use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use exface\Core\Factories\DataSheetFactory;
-use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 
@@ -44,7 +44,7 @@ class AppUrlRewriterMiddleware implements MiddlewareInterface
         $html = $this->rewriteSourceUrls($html);
         $html = $this->rewriteLocalUrls($html);
         
-        return $response->withBody(stream_for($html));
+        return $response->withBody(Utils::streamFor($html));
     }
     
     /**

@@ -2,8 +2,8 @@
 namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultUriInterface;
+use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\UriInterface;
-use function GuzzleHttp\Psr7\uri_for;
 
 /**
  * Task result containing a downloadable file: i.e. text, code, etc..
@@ -43,7 +43,7 @@ class ResultUri extends ResultMessage implements ResultUriInterface
      */
     protected function getUriFromString(string $url) : UriInterface
     {
-        return uri_for($url);
+        return Utils::uriFor($url);
     }
 
     /**

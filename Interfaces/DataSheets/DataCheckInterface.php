@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -20,15 +21,14 @@ use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
 interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface, \Stringable
 {
     /**
-     * 
-     * @param DataSheetInterface $sheet
-     * 
+     *
+     * @param DataSheetInterface    $sheet
+     * @param LogBookInterface|null $logBook
+     * @return DataSheetInterface
      * @throws DataCheckFailedError
      * @throws DataCheckNotApplicableError
-     * 
-     * @return DataSheetInterface
      */
-    public function check(DataSheetInterface $sheet) : DataSheetInterface;
+    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : DataSheetInterface;
     
     /**
      * 

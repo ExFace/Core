@@ -7,7 +7,9 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 trait EnumDynamicDataTypeTrait {
     
-    private $values = array();
+    private $values = [];
+
+    private $valueHints = [];
     
     private $showValues = true;
     
@@ -57,9 +59,10 @@ trait EnumDynamicDataTypeTrait {
         $labels = $this->getLabels();
         $label = $labels[$value] ?? null;
         if ($label === null) {
-            foreach ($labels as $key => $label) {
+            foreach ($labels as $key => $labelValue) {
                 if (strcasecmp($value, $key) === 0) {
-                    return $label;
+                    $label = $labelValue;
+                    continue;
                 }
             }
         }
@@ -73,12 +76,16 @@ trait EnumDynamicDataTypeTrait {
      * Defines the allowed values for the enumeration as value-label pairs.
      * 
      * Example for a typical type enumeration:
-     * {
-     *  "values": {
-     *      "TYPE1": "Name of type 1",
-     *      "TYPE2": "Name of type 2"
+     * 
+     * ```
+     *  {
+     *      "values": {
+     *          "TYPE1": "Name of type 1",
+     *          "TYPE2": "Name of type 2"
+     *      }
      *  }
-     * }
+     * 
+     * ```
      * 
      * @uxon-property values
      * @uxon-type object
@@ -96,6 +103,41 @@ trait EnumDynamicDataTypeTrait {
         } else {
             throw new DataTypeConfigurationError($this, 'Invalid format for enumeration values ("' . gettype($uxon_or_array) . '") given: expecting UXON or array!', '6XGN4ES');
         }
+    }
+
+    /**
+     * Hints/tooltips to describe each value in addition to its label
+     * 
+     * @uxon-property value_hints
+     * @uxon-type object
+     * @uxon-template {"": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxonArray
+     * @return \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface
+     */
+    protected function setValueHints(UxonObject $uxonArray) : EnumDataTypeInterface
+    {
+        $this->valueHints = $uxonArray->toArray();
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValueHints()
+     */
+    public function getValueHints() : array
+    {
+        return $this->valueHints;
+    }
+
+    /**
+     * 
+     * @param string|int|null $value
+     * @return string|null
+     */
+    public function getHintOfValue($value) : ?string
+    {
+        return $this->valueHints[$value] ?? null;
     }
     
     /**
