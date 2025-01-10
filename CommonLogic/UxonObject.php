@@ -73,6 +73,8 @@ class UxonObject implements \IteratorAggregate
         $options = $options | JSON_NUMERIC_CHECK;
         // Do not hex unicode characters
         $options = $options | JSON_UNESCAPED_UNICODE;
+        // Leave forward slashes
+        $options = $options | JSON_UNESCAPED_SLASHES;
         return json_encode($this->toArray(), $options);
     }
 
