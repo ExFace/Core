@@ -60,7 +60,8 @@
         "robthree/twofactorauth": "^1.8",
         "npm-asset/eruda": "^2",
         "justinrainbow/json-schema": "^5.2",
-        "composer/semver": "^3"
+        "composer/semver": "^3",
+        "softcreatr/jsonpath": "~0.7"
     },
     "bin": [
         "Facades/ConsoleFacade/bin/action"
