@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Property [PROPERTY]",
             "CREATED_ON": "2016-12-05 13:39:20",
             "MODIFIED_ON": "2019-01-08 15:33:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -216,6 +222,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Type [TYPE]",
             "CREATED_ON": "2016-12-05 14:43:18",
             "MODIFIED_ON": "2019-01-08 15:33:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -249,10 +256,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -260,6 +267,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Template [TEMPLATE]",
             "CREATED_ON": "2019-01-08 15:32:33",
             "MODIFIED_ON": "2019-01-08 15:33:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -293,10 +301,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -304,6 +312,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default [DEFAULT]",
             "CREATED_ON": "2019-01-08 15:33:04",
             "MODIFIED_ON": "2019-01-08 15:33:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -337,10 +346,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -348,6 +357,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Required [REQUIRED]",
             "CREATED_ON": "2019-06-05 20:58:38",
             "MODIFIED_ON": "2019-06-05 21:08:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -381,10 +391,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -392,6 +402,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Translatable [TRANSLATABLE]",
             "CREATED_ON": "2020-08-28 05:35:07",
             "MODIFIED_ON": "2020-08-28 05:35:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -425,10 +436,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

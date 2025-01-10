@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -48,6 +53,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Global announcement",
             "CREATED_ON": "2024-11-19 22:21:50",
             "MODIFIED_ON": "2024-11-19 22:23:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

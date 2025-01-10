@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.MESSAGE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -52,6 +57,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "6T2T2JM Cannot start transaction",
             "CREATED_ON": "2016-12-16 12:54:27",
             "MODIFIED_ON": "2016-12-16 12:54:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -66,6 +72,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T2T2O9 Cannot commit transaction",
             "CREATED_ON": "2016-12-16 12:54:44",
             "MODIFIED_ON": "2016-12-16 12:54:34",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -80,6 +87,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T2T2S1 Cannot rollback transaction",
             "CREATED_ON": "2016-12-16 12:54:57",
             "MODIFIED_ON": "2016-12-16 12:54:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -94,6 +102,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T2T2UI SQL query failed",
             "CREATED_ON": "2016-12-16 12:55:06",
             "MODIFIED_ON": "2016-12-16 12:54:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -108,6 +117,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T2TBVR Cannot connect to ODBC database",
             "CREATED_ON": "2016-12-16 13:14:37",
             "MODIFIED_ON": "2017-04-27 08:30:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -122,6 +132,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T2TCAJ Cannot get last insert id from database",
             "CREATED_ON": "2016-12-16 13:15:30",
             "MODIFIED_ON": "2016-12-16 13:15:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -136,6 +147,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T2TCL6 Cannot  count rows affected by query",
             "CREATED_ON": "2016-12-16 13:16:09",
             "MODIFIED_ON": "2016-12-16 13:15:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -150,6 +162,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T4F41P Invalid data connector configuration option",
             "CREATED_ON": "2016-12-19 16:07:46",
             "MODIFIED_ON": "2016-12-20 08:55:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -164,6 +177,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T4R8UM Multiple user credentials found for data connection",
             "CREATED_ON": "2016-12-20 07:51:16",
             "MODIFIED_ON": "2016-12-20 08:55:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -178,6 +192,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T4R97R Data connection not found in model",
             "CREATED_ON": "2016-12-20 07:52:03",
             "MODIFIED_ON": "2016-12-20 07:52:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -192,6 +207,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DI5E Action property cannot be set",
             "CREATED_ON": "2016-12-21 12:42:04",
             "MODIFIED_ON": "2016-12-21 12:42:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -206,6 +222,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DJPP Cannot find object for action",
             "CREATED_ON": "2016-12-21 12:45:27",
             "MODIFIED_ON": "2016-12-21 12:45:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -220,6 +237,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DLGN Cannot undo action: action not found in history",
             "CREATED_ON": "2016-12-21 12:49:14",
             "MODIFIED_ON": "2016-12-21 13:06:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -234,6 +252,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DMUS Action not aplicable to input object",
             "CREATED_ON": "2016-12-21 12:52:14",
             "MODIFIED_ON": "2016-12-21 12:51:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -248,6 +267,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DNWE Cannot find placeholder value in input data of action",
             "CREATED_ON": "2016-12-21 12:54:30",
             "MODIFIED_ON": "2016-12-21 12:54:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -262,6 +282,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DOSV Not allowed to read data without knowing which widget called the read action",
             "CREATED_ON": "2016-12-21 12:56:27",
             "MODIFIED_ON": "2016-12-21 12:59:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -276,6 +297,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DS00 Undo-functionality not implemented for action",
             "CREATED_ON": "2016-12-21 13:03:21",
             "MODIFIED_ON": "2016-12-21 13:02:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -290,6 +312,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DT14 Action cannot be undone in principle",
             "CREATED_ON": "2016-12-21 13:05:35",
             "MODIFIED_ON": "2016-12-21 13:05:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -304,6 +327,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DUT1 Unexpected type of action output",
             "CREATED_ON": "2016-12-21 13:09:25",
             "MODIFIED_ON": "2016-12-21 13:09:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -318,6 +342,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DXWP App not found",
             "CREATED_ON": "2016-12-21 13:16:07",
             "MODIFIED_ON": "2016-12-21 13:15:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -332,6 +357,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5DZN2 Configuration key not found",
             "CREATED_ON": "2016-12-21 13:19:51",
             "MODIFIED_ON": "2016-12-21 13:19:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -346,6 +372,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E14B Context scope not found",
             "CREATED_ON": "2016-12-21 13:23:03",
             "MODIFIED_ON": "2016-12-21 13:22:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -360,6 +387,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E24E Context class not found",
             "CREATED_ON": "2016-12-21 13:25:13",
             "MODIFIED_ON": "2016-12-21 13:25:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -374,6 +402,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E3ID Context data cannot be saved",
             "CREATED_ON": "2016-12-21 13:28:13",
             "MODIFIED_ON": "2016-12-21 13:27:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -388,6 +417,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E400 Cannot load context",
             "CREATED_ON": "2016-12-21 13:29:16",
             "MODIFIED_ON": "2016-12-21 13:29:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -402,6 +432,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E5VY Object basket context requested for non-existant meta object",
             "CREATED_ON": "2016-12-21 13:33:21",
             "MODIFIED_ON": "2017-01-24 07:00:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -416,6 +447,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E849 Cannot find right key column for a left join",
             "CREATED_ON": "2016-12-21 13:38:10",
             "MODIFIED_ON": "2016-12-21 13:37:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -430,6 +462,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E8GM Cannot merge non-empty data sheets for different objects",
             "CREATED_ON": "2016-12-21 13:38:54",
             "MODIFIED_ON": "2016-12-21 13:38:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -444,6 +477,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5E8Q6 Cannot merge data sheets without UID columns",
             "CREATED_ON": "2016-12-21 13:39:29",
             "MODIFIED_ON": "2016-12-21 13:39:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -458,6 +492,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5U304 Unsupported data connector for SQL reverse engineering. Currently supported are MySQL, Oracle SQL and Microsoft SQL",
             "CREATED_ON": "2016-12-22 10:11:17",
             "MODIFIED_ON": "2016-12-22 10:11:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -472,6 +507,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5UUOI Cannot diff columns by UID if one of the data sheets does not have a UID-column or that column is empty",
             "CREATED_ON": "2016-12-22 11:11:04",
             "MODIFIED_ON": "2016-12-22 11:12:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -486,6 +522,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5UW0E Invalid formula in data sheet column",
             "CREATED_ON": "2016-12-22 11:13:56",
             "MODIFIED_ON": "2016-12-22 11:13:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -500,6 +537,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5UX3Q Required values missing!",
             "CREATED_ON": "2016-12-22 11:16:18",
             "MODIFIED_ON": "2022-02-03 13:44:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -514,6 +552,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5UXLD Unknown aggregator function",
             "CREATED_ON": "2016-12-22 11:17:21",
             "MODIFIED_ON": "2016-12-22 11:19:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -528,6 +567,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V0GU Cannot join data sheets if one of the key columns is not specified",
             "CREATED_ON": "2016-12-22 11:23:34",
             "MODIFIED_ON": "2016-12-22 11:23:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -542,6 +582,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V1DR Importing rows from another sheet is only possible if both sheets are based on the same object",
             "CREATED_ON": "2016-12-22 11:25:32",
             "MODIFIED_ON": "2017-07-10 11:58:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -556,6 +597,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V1XX Cannot import rows from another sheet if sheets have different amounts of rows",
             "CREATED_ON": "2016-12-22 11:26:45",
             "MODIFIED_ON": "2016-12-22 11:26:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -570,6 +612,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V2Q8 UID column not found",
             "CREATED_ON": "2016-12-22 11:28:27",
             "MODIFIED_ON": "2016-12-22 11:28:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -584,6 +627,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V36I Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!",
             "CREATED_ON": "2016-12-22 11:29:25",
             "MODIFIED_ON": "2016-12-22 11:29:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -598,6 +642,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V4HW Updating attributes from reverse relations is not possible",
             "CREATED_ON": "2016-12-22 11:32:16",
             "MODIFIED_ON": "2016-12-22 11:31:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -612,6 +657,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V4TS Cannot delete redundant rows while replacing data if no filter are defined!",
             "CREATED_ON": "2016-12-22 11:32:59",
             "MODIFIED_ON": "2016-12-22 11:32:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -626,6 +672,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V5EB Cannot delete redundant rows if no UID column is present in the data sheet",
             "CREATED_ON": "2016-12-22 11:34:13",
             "MODIFIED_ON": "2016-12-22 11:33:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -640,6 +687,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V6WE Data sheet column not found",
             "CREATED_ON": "2016-12-22 11:37:27",
             "MODIFIED_ON": "2016-12-22 11:37:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -654,6 +702,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5V9KS Invalid sort direction. Only ASC and DESC are allowed!",
             "CREATED_ON": "2016-12-22 11:43:14",
             "MODIFIED_ON": "2016-12-22 11:42:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -668,6 +717,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VBHF Creating rows from an update statement without a UID-column not supported yet!",
             "CREATED_ON": "2016-12-22 11:47:21",
             "MODIFIED_ON": "2016-12-22 11:47:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -682,6 +732,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VCA6 Cannot delete all instances. Forbidden operation!",
             "CREATED_ON": "2016-12-22 11:49:05",
             "MODIFIED_ON": "2016-12-22 11:48:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -696,6 +747,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VG46 Connection to data source failed",
             "CREATED_ON": "2016-12-22 11:57:22",
             "MODIFIED_ON": "2016-12-22 11:57:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -710,6 +762,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VIIA Cannot commit a transaction, that has already been rolled back!",
             "CREATED_ON": "2016-12-22 12:02:32",
             "MODIFIED_ON": "2016-12-22 12:02:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -724,6 +777,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VIT8 Cannot roll back a transaction, that has already been committed!",
             "CREATED_ON": "2016-12-22 12:03:11",
             "MODIFIED_ON": "2016-12-22 12:03:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -738,6 +792,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VJD3 Transaction rollback failed",
             "CREATED_ON": "2016-12-22 12:04:23",
             "MODIFIED_ON": "2016-12-22 12:04:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -752,6 +807,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VJPV Transaction commit failed",
             "CREATED_ON": "2016-12-22 12:05:09",
             "MODIFIED_ON": "2016-12-22 12:04:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -766,6 +822,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5VK2M Transaction could not be started",
             "CREATED_ON": "2016-12-22 12:05:55",
             "MODIFIED_ON": "2016-12-22 12:05:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -780,6 +837,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5W75J Invalid query type passed to data connector",
             "CREATED_ON": "2016-12-22 12:55:46",
             "MODIFIED_ON": "2016-12-22 12:55:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -794,6 +852,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T5WBNB Illegal filter value",
             "CREATED_ON": "2016-12-22 13:05:28",
             "MODIFIED_ON": "2016-12-22 13:05:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -808,6 +867,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T6HSAO Action not specified in request",
             "CREATED_ON": "2016-12-23 16:54:23",
             "MODIFIED_ON": "2016-12-23 16:54:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -822,6 +882,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T6HSL4 Cannot perform quick search on object",
             "CREATED_ON": "2016-12-23 16:55:01",
             "MODIFIED_ON": "2016-12-23 16:55:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -836,6 +897,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T6HZLF Data modified by another user",
             "CREATED_ON": "2016-12-23 17:10:09",
             "MODIFIED_ON": "2016-12-23 17:10:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -850,6 +912,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T6I04D Cannot check for concurrent writes on mass updates via filters",
             "CREATED_ON": "2016-12-23 17:11:18",
             "MODIFIED_ON": "2016-12-23 17:11:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -864,6 +927,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T6I51G Widget id conflict",
             "CREATED_ON": "2016-12-23 17:21:55",
             "MODIFIED_ON": "2016-12-23 17:21:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -878,6 +942,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T90UH3 Invalid widget visibility setting",
             "CREATED_ON": "2016-12-28 14:55:15",
             "MODIFIED_ON": "2017-04-06 09:22:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -892,6 +957,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T90UV9 Invalid or missing chart widget configuration",
             "CREATED_ON": "2016-12-28 14:56:06",
             "MODIFIED_ON": "2016-12-28 15:09:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -906,6 +972,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T90WFX Missing data configuration for data-visualization widget",
             "CREATED_ON": "2016-12-28 14:59:30",
             "MODIFIED_ON": "2016-12-28 14:59:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -920,6 +987,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T910B6 Invalid or missing diagram widget configuration",
             "CREATED_ON": "2016-12-28 15:07:52",
             "MODIFIED_ON": "2016-12-28 15:07:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -934,6 +1002,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T911YV Tabs widget: Invalid position for tab ribbon",
             "CREATED_ON": "2016-12-28 15:11:27",
             "MODIFIED_ON": "2016-12-28 15:11:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -948,6 +1017,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T9137Y Widget has no meta object",
             "CREATED_ON": "2016-12-28 15:14:09",
             "MODIFIED_ON": "2017-07-06 08:07:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -956,12 +1026,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6T9137Y",
             "TITLE": "Widget has no meta object",
-            "DESCRIPTION": "Every widget showing data must have a reference to it's main meta object. This reference can either be set directly in the widget's UXON description via the \"object_alias\" property or will be inherited automatically from the widget's parent.\n\nGenerally it is a good idea to always specify an object_alias for the root widget of every page - even if it is a container with widgets based on other objects. It is no problem to specify a different object for a child widget!",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Every widget showing data must have a reference to it's main meta object. This reference can either be set directly in the widget's UXON description via the \"object_alias\" property or will be inherited automatically from the widget's parent.",
+                "",
+                "Generally it is a good idea to always specify an object_alias for the root widget of every page - even if it is a container with widgets based on other objects. It is no problem to specify a different object for a child widget!"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T919D5 Invalid or missing button action configuration",
             "CREATED_ON": "2016-12-28 15:27:25",
             "MODIFIED_ON": "2016-12-28 15:27:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -976,6 +1052,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91AR9 Invalid data filter widget configuration",
             "CREATED_ON": "2016-12-28 15:30:26",
             "MODIFIED_ON": "2016-12-28 15:30:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -990,6 +1067,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91BRG Invalid tree widget configuration",
             "CREATED_ON": "2016-12-28 15:32:36",
             "MODIFIED_ON": "2016-12-28 15:32:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1004,6 +1082,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91E4Q Widget not found",
             "CREATED_ON": "2016-12-28 15:37:43",
             "MODIFIED_ON": "2016-12-28 15:37:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1018,6 +1097,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91H2S Invalid widget configuration for action",
             "CREATED_ON": "2016-12-28 15:44:05",
             "MODIFIED_ON": "2016-12-28 15:44:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1032,6 +1112,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91HJK Malformed relation path",
             "CREATED_ON": "2016-12-28 15:45:05",
             "MODIFIED_ON": "2018-06-18 07:21:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1040,12 +1121,22 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6T91HJK",
             "TITLE": "Malformed relation path",
-            "DESCRIPTION": "A relation path consists of relation\/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.\n\nExamples (based on an imaginary meta object COMPANY):\n\n- `Billing_ADDRESS__STREET` - the street name of the company's billing address\n- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee\n- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "A relation path consists of relation/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.",
+                "",
+                "Examples (based on an imaginary meta object COMPANY):",
+                "",
+                "- `Billing_ADDRESS__STREET` - the street name of the company's billing address",
+                "- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee",
+                "- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91IGZ Malformed widget link",
             "CREATED_ON": "2016-12-28 15:47:05",
             "MODIFIED_ON": "2016-12-28 15:47:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1060,6 +1151,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91QQ8 Invalid ComboTable widget configuration",
             "CREATED_ON": "2016-12-28 16:04:56",
             "MODIFIED_ON": "2016-12-28 16:05:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1074,6 +1166,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91RQ5 Invalid column configuration for data widget",
             "CREATED_ON": "2016-12-28 16:07:05",
             "MODIFIED_ON": "2016-12-28 16:07:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1088,6 +1181,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6T91S9G Invalid configuration of InputSelect widget",
             "CREATED_ON": "2016-12-28 16:08:14",
             "MODIFIED_ON": "2016-12-28 16:08:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1102,6 +1196,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6TA2Y6A Invalid chart axis configuration",
             "CREATED_ON": "2016-12-30 16:18:08",
             "MODIFIED_ON": "2016-12-30 16:17:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1116,6 +1211,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6TBX1V2 Cannot rebase expression",
             "CREATED_ON": "2017-01-03 05:58:15",
             "MODIFIED_ON": "2017-01-03 05:58:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1130,6 +1226,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6TG2ZFI Invalid configuration for StateMachineBehavior",
             "CREATED_ON": "2017-01-11 08:17:00",
             "MODIFIED_ON": "2017-01-11 08:17:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1144,6 +1241,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6TMQR5N Cannot add instance to object basket",
             "CREATED_ON": "2017-01-24 07:01:32",
             "MODIFIED_ON": "2017-01-24 07:01:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1158,6 +1256,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6TV1LBR Invalid text/value configuration for ComboTable widget",
             "CREATED_ON": "2017-02-09 10:19:11",
             "MODIFIED_ON": "2017-02-09 10:19:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1165,13 +1264,14 @@
             "UID": "0x11e6eeb13274804a8b7ee4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6TV1LBR",
-            "TITLE": "Invalid text\/value configuration for ComboTable widget",
+            "TITLE": "Invalid text/value configuration for ComboTable widget",
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6U5TRGK Invalid chained action configuration",
             "CREATED_ON": "2017-03-02 09:23:18",
             "MODIFIED_ON": "2017-03-02 09:23:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1186,6 +1286,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UMF9UL Illegal state in StateMachineBehavior",
             "CREATED_ON": "2017-04-03 15:45:45",
             "MODIFIED_ON": "2017-04-03 15:45:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1200,6 +1301,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UMTC14 Invalid configuration of the StateInputSelect widget",
             "CREATED_ON": "2017-04-04 09:59:06",
             "MODIFIED_ON": "2017-04-04 09:59:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1214,6 +1316,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UNT6D5 Invalid button widget type",
             "CREATED_ON": "2017-04-06 08:26:13",
             "MODIFIED_ON": "2017-04-06 08:26:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1228,6 +1331,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UNTXJE Unknown widget property",
             "CREATED_ON": "2017-04-06 09:24:55",
             "MODIFIED_ON": "2017-04-06 09:28:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1242,6 +1346,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UOD4TW Cannot automatically determine the current object namespace",
             "CREATED_ON": "2017-04-07 10:18:06",
             "MODIFIED_ON": "2017-04-07 10:18:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1256,6 +1361,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UQBUVZ Invalid configuration for column totals in a data sheet",
             "CREATED_ON": "2017-04-11 05:57:35",
             "MODIFIED_ON": "2017-04-11 06:02:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1270,6 +1376,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UQBX9K Invalid configuration for sorters in a data sheet",
             "CREATED_ON": "2017-04-11 06:02:43",
             "MODIFIED_ON": "2017-04-11 06:02:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1284,6 +1391,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UX6TNT Missing UID attribute for meta object",
             "CREATED_ON": "2017-04-27 07:25:15",
             "MODIFIED_ON": "2017-04-27 07:25:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1292,12 +1400,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6UX6TNT",
             "TITLE": "Missing UID attribute for meta object",
-            "DESCRIPTION": "This error indicates, that a meta object does not have a UID attribute, but the current runtime requires it. Please mark one of the attributes as object UID.\n\nIn general, an object does not neccessarily need a UID attribute. However, certain actions or query builders require it for their logic to function correctly.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error indicates, that a meta object does not have a UID attribute, but the current runtime requires it. Please mark one of the attributes as object UID.",
+                "",
+                "In general, an object does not neccessarily need a UID attribute. However, certain actions or query builders require it for their logic to function correctly."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6UX6KAQ Missing UID column in data-widget",
             "CREATED_ON": "2017-04-27 07:32:21",
             "MODIFIED_ON": "2017-04-27 07:32:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1306,12 +1420,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6UX6KAQ",
             "TITLE": "Missing UID column in data-widget",
-            "DESCRIPTION": "This error occurs if a data widget (DataTable, DataMatrix, Chart, etc.) has no UID column, but it is required for the current configuration (e.g. for button actions). \n\nTo solve the problem, either add a UID attribute to the main object of the widget or specify a custom uid_column_id in the UXON configuration.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs if a data widget (DataTable, DataMatrix, Chart, etc.) has no UID column, but it is required for the current configuration (e.g. for button actions). ",
+                "",
+                "To solve the problem, either add a UID attribute to the main object of the widget or specify a custom uid_column_id in the UXON configuration."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6V5FGYF No value or  attribute found for a select widget",
             "CREATED_ON": "2017-05-10 14:28:56",
             "MODIFIED_ON": "2017-05-10 14:33:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1320,12 +1440,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6V5FGYF",
             "TITLE": "No value or  attribute found for a select widget",
-            "DESCRIPTION": "This error indicates, that the attributes are neither specified, nor could they be guessed.\n\nSelect widgets like InputSelect or InputCombo require a value attribute and a text attribute to be rendered. The system will try to determine suitable attributes automatically if the respective properties (value_attribute_alias, text_attribute_alias) are not set. \n\nPlease refer to the widget documentation for detailed information on how the attributes are determined.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error indicates, that the attributes are neither specified, nor could they be guessed.",
+                "",
+                "Select widgets like InputSelect or InputCombo require a value attribute and a text attribute to be rendered. The system will try to determine suitable attributes automatically if the respective properties (value_attribute_alias, text_attribute_alias) are not set. ",
+                "",
+                "Please refer to the widget documentation for detailed information on how the attributes are determined."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6V5FK1J Missing values for placeholders in the file path",
             "CREATED_ON": "2017-05-10 14:35:36",
             "MODIFIED_ON": "2017-05-10 14:35:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1340,6 +1468,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6V6EAL3 Data connection not found",
             "CREATED_ON": "2017-05-12 11:36:47",
             "MODIFIED_ON": "2017-05-12 11:36:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1354,6 +1483,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6V9XDV4 Cannot render contextual help",
             "CREATED_ON": "2017-05-19 08:19:23",
             "MODIFIED_ON": "2017-05-19 08:19:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1368,6 +1498,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VCYA0J Invalid meta model configuration for an object",
             "CREATED_ON": "2017-05-25 05:26:54",
             "MODIFIED_ON": "2017-05-25 05:26:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1382,6 +1513,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VCYEUC Internal widget error",
             "CREATED_ON": "2017-05-25 05:37:20",
             "MODIFIED_ON": "2017-05-25 05:37:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1396,6 +1528,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VCYFND Internal error",
             "CREATED_ON": "2017-05-25 05:39:04",
             "MODIFIED_ON": "2017-05-25 05:37:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1410,6 +1543,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VG359M Meta object not found",
             "CREATED_ON": "2017-05-31 07:43:32",
             "MODIFIED_ON": "2017-05-31 07:43:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1418,12 +1552,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6VG359M",
             "TITLE": "Meta object not found",
-            "DESCRIPTION": "This error occurs when an object is requested from the meta model, but cannot be found. The error text mostly shows, which object id or alias was requested.\n\nIf the object was requested by alias, make sure, it's a fully qualified prefixed by the app alias (e.g. exface.Core.MyObject instead of simply MyObject).",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs when an object is requested from the meta model, but cannot be found. The error text mostly shows, which object id or alias was requested.",
+                "",
+                "If the object was requested by alias, make sure, it's a fully qualified prefixed by the app alias (e.g. exface.Core.MyObject instead of simply MyObject)."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VG35OA Meta attribute not found",
             "CREATED_ON": "2017-05-31 07:44:24",
             "MODIFIED_ON": "2017-05-31 07:45:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1438,6 +1578,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VYMG0N Access denied for requested context",
             "CREATED_ON": "2017-07-06 08:32:40",
             "MODIFIED_ON": "2017-07-06 09:02:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1446,12 +1587,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6VYMG0N",
             "TITLE": "Access denied for requested context",
-            "DESCRIPTION": "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. \n\nInaccessible contexts are automatically hidden from the context bar. ",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. ",
+                "",
+                "Inaccessible contexts are automatically hidden from the context bar. "
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VYOEGI Invalid value for a widget property in UXON",
             "CREATED_ON": "2017-07-06 11:04:49",
             "MODIFIED_ON": "2017-07-06 11:09:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1460,12 +1607,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6VYOEGI",
             "TITLE": "Invalid value for a widget property in UXON",
-            "DESCRIPTION": "This error indicates, that an illegal value was assigned to a widget property in it's UXON description. See the error subtitle for details. \n\nIf you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error indicates, that an illegal value was assigned to a widget property in it's UXON description. See the error subtitle for details. ",
+                "",
+                "If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6VYOFZJ Unknown widget property specified",
             "CREATED_ON": "2017-07-06 11:08:07",
             "MODIFIED_ON": "2017-07-06 11:09:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1474,12 +1627,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6VYOFZJ",
             "TITLE": "Unknown widget property specified",
-            "DESCRIPTION": "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.\n\nThe most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.",
+                "",
+                "The most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6W1SD52 Invalid comparator used!",
             "CREATED_ON": "2017-07-12 12:11:06",
             "MODIFIED_ON": "2017-07-12 13:03:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1488,12 +1647,26 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6W1SD52",
             "TITLE": "Invalid comparator used!",
-            "DESCRIPTION": "The following expressions are supported as comparators:\n- '[' - in\n- '![' - not in\n- '=' - is (default)\n- '!=' - is not\n- '==' - equals\n- '!==' - equals not\n- '<' - less\n- '<=' - less or equals\n- '>' - greater\n- '>=' - greater or equals",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The following expressions are supported as comparators:",
+                "- '[' - in",
+                "- '![' - not in",
+                "- '=' - is (default)",
+                "- '!=' - is not",
+                "- '==' - equals",
+                "- '!==' - equals not",
+                "- '<' - less",
+                "- '<=' - less or equals",
+                "- '>' - greater",
+                "- '>=' - greater or equals"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6W25AB1 Invalid date format",
             "CREATED_ON": "2017-07-13 00:00:00",
             "MODIFIED_ON": "2017-07-13 00:00:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1502,12 +1675,23 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6W25AB1",
             "TITLE": "Invalid date format",
-            "DESCRIPTION": "The following date input formats are supported:\n- 31.12.2017.\n- 2017-12-31.\n- 2017 (2017-01-01 will be assumed).\n- 12.2017 or 12-2017 (2017-12-01 will be assumed).\n- 15.02 or 15-02 (2017-02-15 will be assumed).\n- +1d, +2w, +3m, +4y for adding days, weeks, months or years to the current date.\n- -4d, -3w, -2m, -1y for subtracting days, weeks, months or years from the current date.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The following date input formats are supported:",
+                "- 31.12.2017.",
+                "- 2017-12-31.",
+                "- 2017 (2017-01-01 will be assumed).",
+                "- 12.2017 or 12-2017 (2017-12-01 will be assumed).",
+                "- 15.02 or 15-02 (2017-02-15 will be assumed).",
+                "- +1d, +2w, +3m, +4y for adding days, weeks, months or years to the current date.",
+                "- -4d, -3w, -2m, -1y for subtracting days, weeks, months or years from the current date."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6W5WLSA Invalid widget alignment value",
             "CREATED_ON": "2017-07-20 00:00:00",
             "MODIFIED_ON": "2017-07-20 00:00:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1516,12 +1700,22 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6W5WLSA",
             "TITLE": "Invalid widget alignment value",
-            "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The \"align\" property of an alignable widget takes the following values:",
+                "",
+                "- left",
+                "- right",
+                "- center",
+                "- default (the default alignment for the widget type in the current template)",
+                "- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6WNC22Z UI page not found",
             "CREATED_ON": "2017-08-23 09:28:58",
             "MODIFIED_ON": "2017-08-23 09:25:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1530,12 +1724,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6WNC22Z",
             "TITLE": "UI page not found",
-            "DESCRIPTION": "This error means, that a referenced page cannot be found.\n\nThis mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. \n\nIf this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error means, that a referenced page cannot be found.",
+                "",
+                "This mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. ",
+                "",
+                "If this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6WXNHMN Invalid argument in aggregator COUNT_IF",
             "CREATED_ON": "2017-09-12 10:51:31",
             "MODIFIED_ON": "2017-09-12 10:46:34",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1544,12 +1746,23 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6WXNHMN",
             "TITLE": "Invalid argument in aggregator COUNT_IF",
-            "DESCRIPTION": "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. \n\nThis aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. \n\nValid examples:\n\n- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)\n- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) ",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. ",
+                "",
+                "This aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. ",
+                "",
+                "Valid examples:",
+                "",
+                "- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)",
+                "- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) "
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6XALZHW Invalid numeric data type configuration",
             "CREATED_ON": "2017-10-07 15:26:16",
             "MODIFIED_ON": "2017-10-07 15:26:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1558,12 +1771,22 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XALZHW",
             "TITLE": "Invalid numeric data type configuration",
-            "DESCRIPTION": "Numeric data types (based on the NumberDataType prototype) take the following configuration values:\n\n- min - minimum valid value (must be less or equal, than max)\n- max - maximum valid value (must be greater or equal than min)\n- precision_min - minimum number of decimal places (must be less or equal, than precision_max)\n- precision_max - maximum number of decimal places (must be greater or equal, than presision_min)\n- precision - fixed precision (the same as setting the same value for precision_min and precision_max)",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Numeric data types (based on the NumberDataType prototype) take the following configuration values:",
+                "",
+                "- min - minimum valid value (must be less or equal, than max)",
+                "- max - maximum valid value (must be greater or equal than min)",
+                "- precision_min - minimum number of decimal places (must be less or equal, than precision_max)",
+                "- precision_max - maximum number of decimal places (must be greater or equal, than presision_min)",
+                "- precision - fixed precision (the same as setting the same value for precision_min and precision_max)"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6XDP7LI Model entity aliases can only contain letters, digits and '_', but may not start with '_'!",
             "CREATED_ON": "2017-10-13 15:35:07",
             "MODIFIED_ON": "2019-01-29 09:41:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1578,6 +1801,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6XGN2H6 Not a valid value",
             "CREATED_ON": "2017-10-19 08:46:37",
             "MODIFIED_ON": "2017-10-19 08:46:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1592,6 +1816,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6XGN4ES Invalid configuration for enumeration data type",
             "CREATED_ON": "2017-10-19 08:50:48",
             "MODIFIED_ON": "2017-10-19 08:50:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1600,12 +1825,24 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XGN4ES",
             "TITLE": "Invalid configuration for enumeration data type",
-            "DESCRIPTION": "The list of valid values of dynamic enumeration data types can be configured in the model of the data type or a specific attribute:\n\n{\n  ...\n  \"values\": {\n    \"VALUE1\": \"Label 1\",\n    \"VALUE2\": \"Label 2\"\n  }\n}",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The list of valid values of dynamic enumeration data types can be configured in the model of the data type or a specific attribute:",
+                "",
+                "{",
+                "  ...",
+                "  \"values\": {",
+                "    \"VALUE1\": \"Label 1\",",
+                "    \"VALUE2\": \"Label 2\"",
+                "  }",
+                "}"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6XGNBJB Cannot override values in static enumeration data types",
             "CREATED_ON": "2017-10-19 09:06:11",
             "MODIFIED_ON": "2017-10-19 09:06:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1614,12 +1851,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XGNBJB",
             "TITLE": "Cannot override values in static enumeration data types",
-            "DESCRIPTION": "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. \n\nThis behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. ",
+                "",
+                "This behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6XHA8KR This UI page is not part of any app.",
             "CREATED_ON": "2017-10-20 14:48:17",
             "MODIFIED_ON": "2017-10-20 14:49:52",
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
@@ -1634,6 +1877,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6XQM0SZ This UI page has no UID.",
             "CREATED_ON": "2017-11-07 17:58:51",
             "MODIFIED_ON": "2017-11-07 18:01:52",
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
@@ -1642,12 +1886,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XQM0SZ",
             "TITLE": "This UI page has no UID.",
-            "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues).",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs an UI page has no UID.",
+                "",
+                "This problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues)."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6Y0U6GM Model builder not available for selected data connector",
             "CREATED_ON": "2017-11-27 15:06:45",
             "MODIFIED_ON": "2017-11-27 15:07:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1662,6 +1912,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6YD44MC Invalid configuration for Tree widget",
             "CREATED_ON": "2017-12-21 11:52:42",
             "MODIFIED_ON": "2017-12-21 12:19:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1676,6 +1927,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6YD4HAF Invalid tree widget configuration",
             "CREATED_ON": "2017-12-21 12:20:03",
             "MODIFIED_ON": "2017-12-21 12:24:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1684,12 +1936,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6YD4HAF",
             "TITLE": "Invalid tree widget configuration",
-            "DESCRIPTION": "The configuration for the tree structure within a widget based on a hierarchy is missing or invalid. Widgets like DataTree or ComboTree contain a Tree widget internally, that defines the hierarchy structure. When creating on of those widgets, the \"tree\" property must contain a valid tree definition.\n\nPlease refer to the description of the Tree widget for more information.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The configuration for the tree structure within a widget based on a hierarchy is missing or invalid. Widgets like DataTree or ComboTree contain a Tree widget internally, that defines the hierarchy structure. When creating on of those widgets, the \"tree\" property must contain a valid tree definition.",
+                "",
+                "Please refer to the description of the Tree widget for more information."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6YI5RCU Required widget property missing",
             "CREATED_ON": "2017-12-31 07:16:22",
             "MODIFIED_ON": "2017-12-31 07:16:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1704,6 +1962,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6Z5MAVK Invalid configuration for the DataRowGrouper",
             "CREATED_ON": "2018-02-14 21:47:58",
             "MODIFIED_ON": "2018-02-14 21:47:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1718,6 +1977,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6ZISUAJ Cannot delete dependent data",
             "CREATED_ON": "2018-03-12 12:48:09",
             "MODIFIED_ON": "2018-03-12 12:48:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1726,12 +1986,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6ZISUAJ",
             "TITLE": "Cannot delete dependent data",
-            "DESCRIPTION": "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.\n\nRemoving dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.\n\nIf the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.",
+                "",
+                "Removing dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.",
+                "",
+                "If the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "6ZIT36X No data source defined for object",
             "CREATED_ON": "2018-03-12 13:07:22",
             "MODIFIED_ON": "2018-03-12 13:07:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1740,12 +2008,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6ZIT36X",
             "TITLE": "No data source defined for object",
-            "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. ",
+                "",
+                "Objects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "70U52B4 Error in metamodel: relations to objects without primary keys (UIDs) must have an explicit key attribute",
             "CREATED_ON": "2018-06-12 13:28:30",
             "MODIFIED_ON": "2018-06-13 07:33:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1754,12 +2028,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "70U52B4",
             "TITLE": "Error in metamodel: relations to objects without primary keys (UIDs) must have an explicit key attribute",
-            "DESCRIPTION": "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).\n\nNormally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. ",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).",
+                "",
+                "Normally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. "
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "70UJ2GV Error in metamodel: orphaned model components detected",
             "CREATED_ON": "2018-06-13 07:37:29",
             "MODIFIED_ON": "2018-06-13 07:37:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1774,6 +2054,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "70X3MLA Ambiguous relation alias",
             "CREATED_ON": "2018-06-18 07:34:52",
             "MODIFIED_ON": "2018-06-18 07:34:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1782,12 +2063,29 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "70X3MLA",
             "TITLE": "Ambiguous relation alias",
-            "DESCRIPTION": "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. \n\nThis happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. \n\nConsider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. \n\nThe part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:\n\n- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)\n- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.\n\nIn any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.\n\n",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. ",
+                "",
+                "This happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. ",
+                "",
+                "Consider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. ",
+                "",
+                "The part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:",
+                "",
+                "- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)",
+                "- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.",
+                "",
+                "In any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.",
+                "",
+                ""
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "70Y6HAK Object not writeable!",
             "CREATED_ON": "2018-06-20 09:56:04",
             "MODIFIED_ON": "2018-06-20 09:57:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1796,12 +2094,22 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "70Y6HAK",
             "TITLE": "Object not writeable!",
-            "DESCRIPTION": "Writing operations can be explicitly disabled in the metamodel by removing the property \"writable\" from \n\n- the object, \n- it's data source, or\n- a specific connection. \n\nIn this case, writing attempts will fail even before a transaction is started or the data is passed to the corresponding query builder!",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Writing operations can be explicitly disabled in the metamodel by removing the property \"writable\" from ",
+                "",
+                "- the object, ",
+                "- it's data source, or",
+                "- a specific connection. ",
+                "",
+                "In this case, writing attempts will fail even before a transaction is started or the data is passed to the corresponding query builder!"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "734GDAX Object has no LABEL attribute",
             "CREATED_ON": "2018-11-19 13:55:08",
             "MODIFIED_ON": "2018-11-19 13:55:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1816,6 +2124,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "734GQRL Object has no UID attribute",
             "CREATED_ON": "2018-11-19 14:24:12",
             "MODIFIED_ON": "2018-11-19 14:24:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1830,6 +2139,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "734GUW2 An object without a data source cannot be readable!",
             "CREATED_ON": "2018-11-19 14:33:07",
             "MODIFIED_ON": "2018-11-19 14:35:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1844,6 +2154,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "734GWLL Object has no attributes!",
             "CREATED_ON": "2018-11-19 14:36:48",
             "MODIFIED_ON": "2018-11-19 14:35:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1858,6 +2169,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "734GZDR Object is not readable, but has readable attributes",
             "CREATED_ON": "2018-11-19 14:42:49",
             "MODIFIED_ON": "2018-11-19 14:35:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1872,6 +2184,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "73A6BVD Object has multiple LABEL-attributes!",
             "CREATED_ON": "2018-11-30 16:50:36",
             "MODIFIED_ON": "2018-11-30 16:50:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1886,6 +2199,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "73H79S1 Attempting to read data for a non-readable object",
             "CREATED_ON": "2018-12-14 08:39:21",
             "MODIFIED_ON": "2018-12-14 08:39:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1900,6 +2214,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "73II64M Object already exists!",
             "CREATED_ON": "2018-12-16 21:26:11",
             "MODIFIED_ON": "2018-12-17 09:19:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1908,12 +2223,21 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "73II64M",
             "TITLE": "Object already exists!",
-            "DESCRIPTION": "This error means, that at least one of the object, you tried to create already exists in the data source and cannot be created a second time. This is typically caused by unique constraints of different types: e.g.\n\n- trying to create multiple object with the same unique name or id\n- trying to assign a child object to it's parent multiple times (e.g. the same user role to a signle user)  \n\nTo solve the ussue, simply search for the existing object and use it instead of creating a new one.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error means, that at least one of the object, you tried to create already exists in the data source and cannot be created a second time. This is typically caused by unique constraints of different types: e.g.",
+                "",
+                "- trying to create multiple object with the same unique name or id",
+                "- trying to assign a child object to it's parent multiple times (e.g. the same user role to a signle user)  ",
+                "",
+                "To solve the ussue, simply search for the existing object and use it instead of creating a new one."
+            ],
             "HINT": "Use existing objects instead of creating new ones.",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "74BKHZL Invalid time format",
             "CREATED_ON": "2019-02-11 09:28:46",
             "MODIFIED_ON": "2019-02-11 09:28:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1922,12 +2246,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "74BKHZL",
             "TITLE": "Invalid time format",
-            "DESCRIPTION": "Supported input formats are:\n \n - `hh:mm`, `hh:mm AM\/PM` (e.g. \"13:59\" or \"01:59 PM\")\n - `hh:mm:ss`, `hh:mm:ss AM\/PM` (e.g. \"13:59:31\" or \"01:59:31 PM\")\n - `hhmm` (eg. 1359)",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Supported input formats are:",
+                " ",
+                " - `hh:mm`, `hh:mm AM/PM` (e.g. \"13:59\" or \"01:59 PM\")",
+                " - `hh:mm:ss`, `hh:mm:ss AM/PM` (e.g. \"13:59:31\" or \"01:59:31 PM\")",
+                " - `hhmm` (eg. 1359)"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "74G83MI Invalid value for a numeric string",
             "CREATED_ON": "2019-02-20 10:41:25",
             "MODIFIED_ON": "2019-02-20 10:41:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1942,6 +2274,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "74JU2AU Invalid UXON property",
             "CREATED_ON": "2019-02-27 11:07:17",
             "MODIFIED_ON": "2019-02-27 11:18:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1950,12 +2283,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "74JU2AU",
             "TITLE": "Invalid UXON property",
-            "DESCRIPTION": "The provided UXON configuration cannot be applied to the selected prototype because the prototype does not recognize one of the properties.\n\nThis is a typical error for misspelled or misplaced UXON properties. You can find all UXON properties supported by a prototype in the documentation: go to Administration > Documentation and navigate to the desired prototype section (e.g. widgets, actions, etc.).",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The provided UXON configuration cannot be applied to the selected prototype because the prototype does not recognize one of the properties.",
+                "",
+                "This is a typical error for misspelled or misplaced UXON properties. You can find all UXON properties supported by a prototype in the documentation: go to Administration > Documentation and navigate to the desired prototype section (e.g. widgets, actions, etc.)."
+            ],
             "HINT": "Please, correct the UXON code shown in the tab \"UXON\" of this error message or pick another prototype.",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "74W2U4X Invalid app alias",
             "CREATED_ON": "2019-03-23 06:21:53",
             "MODIFIED_ON": "2019-03-23 06:26:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1964,12 +2303,24 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "74W2U4X",
             "TITLE": "Invalid app alias",
-            "DESCRIPTION": "The alias must consist of two parts separated by a dot: the vendor (namespace) and the actual app alias. Both, vendor name and alias may contain letters, numbers and underscores.\n\nThe app's alias will automatically be used to name the package, which the app will be exported to. So, if you plan to add PHP code to the package, it is a good idea to make the alias adhere to the PSR2 standard: use lowercase for vendor and PascalCase for the app alias.\n\nHere are some typical examples:\n\n- exface.Core\n- mycompany.MyAppWithPSRCompilantAlias\n- me.my_very_long_app_name",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The alias must consist of two parts separated by a dot: the vendor (namespace) and the actual app alias. Both, vendor name and alias may contain letters, numbers and underscores.",
+                "",
+                "The app's alias will automatically be used to name the package, which the app will be exported to. So, if you plan to add PHP code to the package, it is a good idea to make the alias adhere to the PSR2 standard: use lowercase for vendor and PascalCase for the app alias.",
+                "",
+                "Here are some typical examples:",
+                "",
+                "- exface.Core",
+                "- mycompany.MyAppWithPSRCompilantAlias",
+                "- me.my_very_long_app_name"
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "75DBQ3G Invalid configuration of the LockingBehavior",
             "CREATED_ON": "2019-04-25 19:02:07",
             "MODIFIED_ON": "2019-04-25 19:02:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1984,6 +2335,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "75IRH3L Incompatible PHP options detected in WebConsole facade: streaming not possible!",
             "CREATED_ON": "2019-05-06 08:43:39",
             "MODIFIED_ON": "2019-05-06 08:43:39",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
@@ -1998,6 +2350,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "769139J Invalid chart axis configuration",
             "CREATED_ON": "2019-06-26 10:14:43",
             "MODIFIED_ON": "2019-06-26 10:14:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2012,6 +2365,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "76BJXFH Cannot connect to Micrsoft SQL Server",
             "CREATED_ON": "2019-07-01 07:58:17",
             "MODIFIED_ON": "2019-07-01 08:07:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2020,12 +2374,19 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "76BJXFH",
             "TITLE": "Cannot connect to Micrsoft SQL Server",
-            "DESCRIPTION": "Connecting to Microsoft SQL Server via SQL requires:\n\n- The PHP extension \"sqlsrv\" being enabled (downloadable it from [GitHub](https:\/\/github.com\/Microsoft\/msphpsql\/releases))\n- The Microsoft ODBC driver matching the version of your server installed (downloadable from [Microsoft](https:\/\/docs.microsoft.com\/de-de\/sql\/connect\/odbc\/download-odbc-driver-for-sql-server))",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Connecting to Microsoft SQL Server via SQL requires:",
+                "",
+                "- The PHP extension \"sqlsrv\" being enabled (downloadable it from [GitHub](https://github.com/Microsoft/msphpsql/releases))",
+                "- The Microsoft ODBC driver matching the version of your server installed (downloadable from [Microsoft](https://docs.microsoft.com/de-de/sql/connect/odbc/download-odbc-driver-for-sql-server))"
+            ],
             "HINT": "Please contact the server administrator!",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "76BK02Z Cannot connect to Oracle SQL",
             "CREATED_ON": "2019-07-01 08:04:01",
             "MODIFIED_ON": "2019-07-01 08:04:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2034,12 +2395,19 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "76BK02Z",
             "TITLE": "Cannot connect to Oracle SQL",
-            "DESCRIPTION": "Connecting to Oracle SQL requires:\n\n- The **oci8** PHP extension matching your database version (e.g. oci8_12c)\n- The corresponding Version of the Oracle InstantClient accessible via command line (e.g. registered in the PATH on Windows).",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Connecting to Oracle SQL requires:",
+                "",
+                "- The **oci8** PHP extension matching your database version (e.g. oci8_12c)",
+                "- The corresponding Version of the Oracle InstantClient accessible via command line (e.g. registered in the PATH on Windows)."
+            ],
             "HINT": "Please contact the server administrator!",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "76JXZG9 Linked data missing",
             "CREATED_ON": "2019-07-17 15:26:10",
             "MODIFIED_ON": "2019-07-17 15:26:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2054,6 +2422,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "77UP8Q4 No valid data connection for SQL installer",
             "CREATED_ON": "2019-10-16 12:56:17",
             "MODIFIED_ON": "2019-10-16 12:56:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2063,11 +2432,12 @@
             "CODE": "77UP8Q4",
             "TITLE": "No valid data connection for SQL installer",
             "DESCRIPTION": "",
-            "HINT": "Please add a connection to the model of the data source below and reinstall\/repair the app.",
+            "HINT": "Please add a connection to the model of the data source below and reinstall/repair the app.",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "784JYW8 Error generating model from data source",
             "CREATED_ON": "2019-11-04 16:39:51",
             "MODIFIED_ON": "2019-11-04 16:39:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2082,6 +2452,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "79G9JUB Cannot handle value of compound attribute",
             "CREATED_ON": "2020-02-05 10:39:00",
             "MODIFIED_ON": "2020-02-05 10:39:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2090,12 +2461,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "79G9JUB",
             "TITLE": "Cannot handle value of compound attribute",
-            "DESCRIPTION": "Values of compound attributes are concatenated values of their component attributes separated by prefixes and suffixes defined in the meta model. This error means, that the concatenated value could not be split back into individual values of the component attributes.\n\nChange the configuration of the compound attribute in the meta model so that prefixes and suffixes produce unambiguous delimiters between component values: e.g. use `--` between numbers, special characters like `$$` between strings, etc.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Values of compound attributes are concatenated values of their component attributes separated by prefixes and suffixes defined in the meta model. This error means, that the concatenated value could not be split back into individual values of the component attributes.",
+                "",
+                "Change the configuration of the compound attribute in the meta model so that prefixes and suffixes produce unambiguous delimiters between component values: e.g. use `--` between numbers, special characters like `$$` between strings, etc."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7A8LNGD Password mismatch",
             "CREATED_ON": "2020-03-31 14:42:01",
             "MODIFIED_ON": "2020-03-31 15:20:24",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
@@ -2110,6 +2487,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7AL3G5P Login failed!",
             "CREATED_ON": "2020-04-24 19:38:15",
             "MODIFIED_ON": "2020-04-25 17:39:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2124,6 +2502,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7AL3J9X Invalid username/password!",
             "CREATED_ON": "2020-04-24 19:44:59",
             "MODIFIED_ON": "2020-04-24 19:44:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2131,13 +2510,14 @@
             "UID": "0x11ea86640e7f2c0297940205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7AL3J9X",
-            "TITLE": "Invalid username\/password!",
+            "TITLE": "Invalid username/password!",
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7ATP376 Access denied!",
             "CREATED_ON": "2020-05-11 12:55:52",
             "MODIFIED_ON": "2020-05-11 12:55:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2152,6 +2532,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7AYEKR3 Not allowed to delete!",
             "CREATED_ON": "2020-05-20 16:35:13",
             "MODIFIED_ON": "2020-05-20 16:35:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2166,6 +2547,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7B7KU9Q Cannot include editable table in action data",
             "CREATED_ON": "2020-06-07 12:36:34",
             "MODIFIED_ON": "2020-06-07 12:36:34",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2180,6 +2562,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7CX9G68 No connection to server!",
             "CREATED_ON": "2020-10-05 10:31:05",
             "MODIFIED_ON": "2020-10-05 10:31:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2194,6 +2577,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7CYA39T Cannot use widget data with action due to meta object mismatch",
             "CREATED_ON": "2020-10-07 10:00:20",
             "MODIFIED_ON": "2020-10-07 10:04:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2202,12 +2586,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7CYA39T",
             "TITLE": "Cannot use widget data with action due to meta object mismatch",
-            "DESCRIPTION": "When an action is performed, it's input data is collected from the input widget of the action's trigger (e.g. a `Button`). In most cases, this means, that the input data is provided by a data widget or the inner widgets of a `Form` or similar. These widgets are all bound to their own objects, that are not neccessarily the same as the object of the action. Many widgets can deal with this situation and use relations between the objects, etc. However, this is not always possible!\n\nThis error indicates, that the object of one of the input widgets differs from that of the action and the workbench cannot resolve this conflict. \n\nIf the widget has a custom `object_alias`, try to provide an `object_relation_to_parent`.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "When an action is performed, it's input data is collected from the input widget of the action's trigger (e.g. a `Button`). In most cases, this means, that the input data is provided by a data widget or the inner widgets of a `Form` or similar. These widgets are all bound to their own objects, that are not neccessarily the same as the object of the action. Many widgets can deal with this situation and use relations between the objects, etc. However, this is not always possible!",
+                "",
+                "This error indicates, that the object of one of the input widgets differs from that of the action and the workbench cannot resolve this conflict. ",
+                "",
+                "If the widget has a custom `object_alias`, try to provide an `object_relation_to_parent`."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7D97VLN Broken relation model detected!",
             "CREATED_ON": "2020-10-28 16:21:35",
             "MODIFIED_ON": "2020-10-28 16:21:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2222,6 +2614,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7DA4MW9 Invalid configuration of DataCarousel widget",
             "CREATED_ON": "2020-10-30 10:48:29",
             "MODIFIED_ON": "2020-10-30 10:48:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2230,12 +2623,21 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7DA4MW9",
             "TITLE": "Invalid configuration of DataCarousel widget",
-            "DESCRIPTION": "The carousel consists of a `data` widget (typically a `DataTableResponsive`) and a `details` widget,\n * (typically a `Form`), that is positioned next to the data and gets filled once a data item is selected. \n\nThis error indicates, that one of them is not set or has an invalid `widget_type`: \n- The `data` can be any data widget or a widget using data (e.g. a `Chart`)\n- The `details` can be any container widget (e.g. `Panel`, `Form`, etc.)",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The carousel consists of a `data` widget (typically a `DataTableResponsive`) and a `details` widget,",
+                " * (typically a `Form`), that is positioned next to the data and gets filled once a data item is selected. ",
+                "",
+                "This error indicates, that one of them is not set or has an invalid `widget_type`: ",
+                "- The `data` can be any data widget or a widget using data (e.g. a `Chart`)",
+                "- The `details` can be any container widget (e.g. `Panel`, `Form`, etc.)"
+            ],
             "HINT": "Make sure `data` and `details` properties of the widget are set correctly!",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7DGRY8R Multi-dialect SQL statement does not include a supported dialect",
             "CREATED_ON": "2020-11-12 09:03:48",
             "MODIFIED_ON": "2020-11-12 09:04:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2244,12 +2646,32 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7DGRY8R",
             "TITLE": "Multi-dialect SQL statement does not include a supported dialect",
-            "DESCRIPTION": "Multi-dialect SQL statements can be used to place custom SQL in data addresses of meta objects or attributes with different syntax for different SQL dialects. Each dialect is identified by a special tag like `@T-SQL:`, `@PL\/SQL:`, etc. \n\nSQL query builders search for tags they support. This error indicates, that no supported dialect-tag was found!\n\nHere is an example with different syntax in MySQL and Microsoft's T-SQL:\n\n```\n@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))\n@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')\n\n```\n\nMulti-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`)\n MUST be placed at the beginning of a new line. Everything until the next dialect-tag or the end of the field is concidered to be the data address in this dialect. \n\nThe default dialect-tag and `@OTHER:` can be used to define a fallback for all\ndialects not explicitly addressed.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Multi-dialect SQL statements can be used to place custom SQL in data addresses of meta objects or attributes with different syntax for different SQL dialects. Each dialect is identified by a special tag like `@T-SQL:`, `@PL/SQL:`, etc. ",
+                "",
+                "SQL query builders search for tags they support. This error indicates, that no supported dialect-tag was found!",
+                "",
+                "Here is an example with different syntax in MySQL and Microsoft's T-SQL:",
+                "",
+                "```",
+                "@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))",
+                "@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')",
+                "",
+                "```",
+                "",
+                "Multi-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`)",
+                " MUST be placed at the beginning of a new line. Everything until the next dialect-tag or the end of the field is concidered to be the data address in this dialect. ",
+                "",
+                "The default dialect-tag and `@OTHER:` can be used to define a fallback for all",
+                "dialects not explicitly addressed."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7DUPQZE Workbench not installed correctly",
             "CREATED_ON": "2020-12-09 12:21:32",
             "MODIFIED_ON": "2020-12-09 12:21:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2258,12 +2680,21 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7DUPQZE",
             "TITLE": "Workbench not installed correctly",
-            "DESCRIPTION": "It seems, the workbench is not fully installed. This can occur if:\n\n1) The core app was not installed\n2) The installation context file (`\/data\/.contexts`) is corrupted or missing\n\nIn any case, restoring the contexts file mentioned above from a backup or reinstalling the core via command line (`vendor\/bin\/action axenox.PackageManager:InstallApp exface.Core`) should help. ",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "It seems, the workbench is not fully installed. This can occur if:",
+                "",
+                "1) The core app was not installed",
+                "2) The installation context file (`/data/.contexts`) is corrupted or missing",
+                "",
+                "In any case, restoring the contexts file mentioned above from a backup or reinstalling the core via command line (`vendor/bin/action axenox.PackageManager:InstallApp exface.Core`) should help. "
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7EBO5IU Incompatible web browser",
             "CREATED_ON": "2021-01-11 11:22:29",
             "MODIFIED_ON": "2021-01-11 11:29:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2272,12 +2703,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7EBO5IU",
             "TITLE": "Incompatible web browser",
-            "DESCRIPTION": "The facade being used requires features, that are not available in the current web browser. This happens most often in Internet Explorer as most JavaScript frameworks dropped support for it. \n\nPlease use a moder web browser. If it has to be Internet Explorer for some reason, try a different facade\/template for the UI page.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The facade being used requires features, that are not available in the current web browser. This happens most often in Internet Explorer as most JavaScript frameworks dropped support for it. ",
+                "",
+                "Please use a moder web browser. If it has to be Internet Explorer for some reason, try a different facade/template for the UI page."
+            ],
             "HINT": "Please open the Link in Chrome, Firefox, Safari, Edge or similar!",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7FDSVFK Cannot check for potential update conflicts",
             "CREATED_ON": "2021-03-26 14:25:10",
             "MODIFIED_ON": "2021-03-26 14:25:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2286,12 +2723,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7FDSVFK",
             "TITLE": "Cannot check for potential update conflicts",
-            "DESCRIPTION": "The `TimeStampingBehavior` implements so-called \"optimistic locking\" by perventing write-operations if the `updated_on_attribute` of a data row changed since the row was last read. If the value of the attribute has changed, a (concurrent) write operation must have occurred.\n\nThis error indicates, that checking `updated_on_attribute` was not possible because there was no time value provided in the action's input data. Thus, there is nothing to check against. \n\nTo aviod this error, make sure, every update-operation on an object with `TimeStampingBehavior` MUST have the `updated_on_attribute` in its input data. In many cases, this can be done by adding this attribute to the `input_mapper` of the action.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "The `TimeStampingBehavior` implements so-called \"optimistic locking\" by perventing write-operations if the `updated_on_attribute` of a data row changed since the row was last read. If the value of the attribute has changed, a (concurrent) write operation must have occurred.",
+                "",
+                "This error indicates, that checking `updated_on_attribute` was not possible because there was no time value provided in the action's input data. Thus, there is nothing to check against. ",
+                "",
+                "To aviod this error, make sure, every update-operation on an object with `TimeStampingBehavior` MUST have the `updated_on_attribute` in its input data. In many cases, this can be done by adding this attribute to the `input_mapper` of the action."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7H6M243 Invalid use of a data mapper",
             "CREATED_ON": "2021-07-30 15:13:41",
             "MODIFIED_ON": "2021-07-30 15:13:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2300,12 +2745,18 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7H6M243",
             "TITLE": "Invalid use of a data mapper",
-            "DESCRIPTION": "This type of error indicates, that data mappings (e.g. `input_mappers` or `output_mappers` in actions) are not configured correctly or received invalid from-data.\n\nA mapper is used to transform one data sheet into another by mapping parts of the from-sheet to other parts of the to-sheet. The most common use-case is transforming the input data of an action by mapping data column from one object to another.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This type of error indicates, that data mappings (e.g. `input_mappers` or `output_mappers` in actions) are not configured correctly or received invalid from-data.",
+                "",
+                "A mapper is used to transform one data sheet into another by mapping parts of the from-sheet to other parts of the to-sheet. The most common use-case is transforming the input data of an action by mapping data column from one object to another."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7INNL87 Insecure password: use at least 8 characters,  1 number, 1 lowercase, 1 uppercase and 1 special character ",
             "CREATED_ON": "2021-11-10 16:58:48",
             "MODIFIED_ON": "2021-11-22 13:44:57",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -2320,6 +2771,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7K8KI39 Invalid value",
             "CREATED_ON": "2022-03-01 08:22:16",
             "MODIFIED_ON": "2022-03-01 08:22:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2334,6 +2786,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7L98V2P Data validation failed",
             "CREATED_ON": "2022-05-11 16:33:55",
             "MODIFIED_ON": "2022-05-11 16:33:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2348,6 +2801,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7LCYZD0 Invalid widget function name",
             "CREATED_ON": "2022-05-18 22:22:47",
             "MODIFIED_ON": "2022-05-18 22:22:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2362,6 +2816,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7NHEM6W Your session has expired. Please re-login!",
             "CREATED_ON": "2022-10-14 12:30:12",
             "MODIFIED_ON": "2022-10-14 12:30:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2376,6 +2831,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7PNKJ50 Cannot check for duplicates: not enough data",
             "CREATED_ON": "2023-03-15 10:28:11",
             "MODIFIED_ON": "2023-03-15 10:28:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2384,12 +2840,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7PNKJ50",
             "TITLE": "Cannot check for duplicates: not enough data",
-            "DESCRIPTION": "This is error occurs when the `PreventDuplicatesBehvavior` attempts to check for duplicates in data, where some of the columns to compare are missing and there is no way to read them on-the-fly.\n\nNormally, if some of the `compare_attributes` are missing, the behavior will attempt to read them from the data source. However, this only works if each row has a UID and that UID is present in the data. In particular, it will not work for create-operations as there is simply nothing to read then.\n\nThe simplest solution would be to ensure, that the data handled by the behavior always has the required columns. Add them as `InputHidden` widgets to the UI or use an `input_mapper` for the action, that performs the operation.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This is error occurs when the `PreventDuplicatesBehvavior` attempts to check for duplicates in data, where some of the columns to compare are missing and there is no way to read them on-the-fly.",
+                "",
+                "Normally, if some of the `compare_attributes` are missing, the behavior will attempt to read them from the data source. However, this only works if each row has a UID and that UID is present in the data. In particular, it will not work for create-operations as there is simply nothing to read then.",
+                "",
+                "The simplest solution would be to ensure, that the data handled by the behavior always has the required columns. Add them as `InputHidden` widgets to the UI or use an `input_mapper` for the action, that performs the operation."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7QCJZL7 Please provide a one-time-password",
             "CREATED_ON": "2023-05-03 01:01:30",
             "MODIFIED_ON": "2023-05-03 01:01:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2404,6 +2868,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7QCK0MD Please provide an additional authentication factor",
             "CREATED_ON": "2023-05-03 01:03:36",
             "MODIFIED_ON": "2023-05-03 01:03:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2418,6 +2883,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7R34E52 Error in formula syntax",
             "CREATED_ON": "2023-06-23 16:31:50",
             "MODIFIED_ON": "2023-06-23 16:31:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2432,6 +2898,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7V9OSYM Data too large",
             "CREATED_ON": "2024-04-11 09:28:05",
             "MODIFIED_ON": "2024-04-11 09:28:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2446,6 +2913,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7W2J960 Multiple values found for a non-aggregated attribute in a single row",
             "CREATED_ON": "2024-06-06 11:19:56",
             "MODIFIED_ON": "2024-06-06 11:19:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2454,12 +2922,20 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "7W2J960",
             "TITLE": "Multiple values found for a non-aggregated attribute in a single row",
-            "DESCRIPTION": "This error typically occurs, when trying to read some related attribute from a 1-to-n or n-to-m relation. E.g. when reading data for `exface.Core.USER`, you cannot simply read `USER_ROLE_USERS__USER_ROLE__LABEL` to get the role(s) of a user - it will end up in this error as soon as at least one user has more than one role. \n\nThe solution is to use aggregators for all reverser relations: simply replace `USER_ROLE_USERS__USER_ROLE__LABEL` with `USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT` to get a comma separated list of all roles for every user. Similarly, you can also use `:MIN` or `:MAX` for numbers.\n\nNote, that different data sources handle relations differently. Some may even have default fallbacks for such cases and will not produce this error at all. ",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error typically occurs, when trying to read some related attribute from a 1-to-n or n-to-m relation. E.g. when reading data for `exface.Core.USER`, you cannot simply read `USER_ROLE_USERS__USER_ROLE__LABEL` to get the role(s) of a user - it will end up in this error as soon as at least one user has more than one role. ",
+                "",
+                "The solution is to use aggregators for all reverser relations: simply replace `USER_ROLE_USERS__USER_ROLE__LABEL` with `USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT` to get a comma separated list of all roles for every user. Similarly, you can also use `:MIN` or `:MAX` for numbers.",
+                "",
+                "Note, that different data sources handle relations differently. Some may even have default fallbacks for such cases and will not produce this error at all. "
+            ],
             "HINT": "Use an aggregation like `:LIST_DISTINCT` for attributes with reverse relations",
             "TYPE": "ERROR",
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7WVU9TJ File corrupted",
             "CREATED_ON": "2024-08-02 10:31:18",
             "MODIFIED_ON": "2024-08-02 10:32:49",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -2474,6 +2950,7 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "7XA82L1 Invalid use of data-to-subsheet mapping",
             "CREATED_ON": "2024-08-30 09:36:00",
             "MODIFIED_ON": "2024-08-30 09:36:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
