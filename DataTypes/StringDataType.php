@@ -319,7 +319,7 @@ class StringDataType extends AbstractDataType
     public static function findPlaceholders($string)
     {
         $placeholders = array();
-        preg_match_all("/\[#([^\]\[#]+)#\]/", $string, $placeholders);
+        preg_match_all("/\[#([^#]+)#\]/", $string, $placeholders);
         return is_array($placeholders[1]) ? $placeholders[1] : array();
     }
     
@@ -648,6 +648,7 @@ class StringDataType extends AbstractDataType
      * 
      * - `transliterate('Änderung')` -> Anderung
      * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
+     * - `transliterate('ä/B', ':: Any-Latin; [:Punctuation:] Remove;')` -> a b
      * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;)` -> aufgaben im uberblick
      * 
      * @link https://unicode-org.github.io/icu/userguide/transforms/general/
@@ -694,5 +695,18 @@ class StringDataType extends AbstractDataType
             return false;
         }
         return true;
+    }
+
+    /**
+     * Determines, which line break characters are used in a string and returns them as an array
+     * 
+     * @param string $str
+     * @return array
+     */
+    public static function findLineBreakChars(string $str) : array
+    {
+        $matches = [];
+        preg_match('/\R/', $str, $matches);
+        return array_unique($matches);
     }
 }
