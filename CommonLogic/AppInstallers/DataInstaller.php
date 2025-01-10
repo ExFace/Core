@@ -479,12 +479,14 @@ class DataInstaller extends AbstractAppInstaller
         $obj = $sheet->getMetaObject();
         $objPath = $this->getModelFilePath($obj);
         $objPathPhs = StringDataType::findPlaceholders($objPath);
+        $objPathPhColNames = [];
         $removeColNames = [];
         foreach ($objPathPhs as $attrAlias) {
             if (! $col = $sheet->getColumns()->getByExpression($attrAlias)) {
                 $col = $sheet->getColumns()->addFromExpression($attrAlias);
                 $removeColNames[] = $col->getName();
             }
+            $objPathPhColNames[$attrAlias] = $col->getName();
         }
         
         $sheet->dataRead();
@@ -516,9 +518,10 @@ class DataInstaller extends AbstractAppInstaller
             foreach ($rows as $row) {
                 $objPathPhVals = [];
                 foreach ($objPathPhs as $ph) {
-                    $objPathPhVals[$ph] = $row[$ph] ?? null;
-                    if (in_array($ph, $removeColNames) === true) {
-                        unset($row[$ph]);
+                    $phColName = $objPathPhColNames[$ph];
+                    $objPathPhVals[$ph] = $row[$phColName] ?? null;
+                    if (in_array($phColName, $removeColNames) === true) {
+                        unset($row[$phColName]);
                     }
                 }
                 $rowPath = StringDataType::replacePlaceholders($objPath, $objPathPhVals);
@@ -530,6 +533,7 @@ class DataInstaller extends AbstractAppInstaller
             
             $uxon = $sheet->exportUxonObject();
             foreach ($rowsByPath as $filePathRel => $filteredRows) {
+                $filePathRel = trim(FilePathDataType::normalize($filePathRel, DIRECTORY_SEPARATOR));
                 // Put only the filtered rows into the UXON. For now NO prettifying!!! Otherwise the
                 // diff with the previous version below will produces false positives!
                 $uxon->setProperty('rows', $filteredRows);
@@ -827,7 +831,7 @@ class DataInstaller extends AbstractAppInstaller
             $prefix = str_pad($defIdx + $this->filenameIndexStart, 2, '0', STR_PAD_LEFT) . '_';
             $path = $prefix . $object->getAlias() . '.json';
         }
-        return FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
+        return $path;
     }
     
     /**
@@ -1003,7 +1007,8 @@ class DataInstaller extends AbstractAppInstaller
         $folderUxons = [];
         
         if (is_file($absolutePath)) {
-            $folderUxons[FilePathDataType::findFileName($absolutePath) . '@' . FilePathDataType::findFolderPath($absolutePath)] = $this->readDataSheetUxonFromFile($absolutePath);
+            $dataSheet = $this->readDataSheetUxonFromFile($absolutePath);
+            $folderUxons[FilePathDataType::findFileName($absolutePath) . '@' . FilePathDataType::findFolderPath($absolutePath)] = $dataSheet;
             return $folderUxons;
         }
         
