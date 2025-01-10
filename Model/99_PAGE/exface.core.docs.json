@@ -15,6 +15,6 @@
     "contents": {
         "widget_type": "Browser",
         "object_alias": "exface.Core.Docs",
-        "url_base": "[#api#]\/docs"
+        "url_base": "[#api#]/docs"
     }
 }

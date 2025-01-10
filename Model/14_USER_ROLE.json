@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.USER_ROLE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -48,6 +53,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "UI Designer",
             "CREATED_ON": "2020-03-12 17:21:07",
             "MODIFIED_ON": "2020-05-11 09:31:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -57,10 +63,11 @@
             "DESCRIPTION": "Edit pages and permissions",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "UI_DESIGNER",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "Metamodel Developer",
             "CREATED_ON": "2020-03-12 17:21:42",
             "MODIFIED_ON": "2020-05-11 09:31:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -70,10 +77,11 @@
             "DESCRIPTION": "Edit the metamodel",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "MODEL_DEV",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "Superuser: access everything",
             "CREATED_ON": "2020-03-22 13:39:26",
             "MODIFIED_ON": "2020-05-11 09:44:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -83,10 +91,11 @@
             "DESCRIPTION": "",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "SUPERUSER",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "Anonymous",
             "CREATED_ON": "2020-03-22 13:54:52",
             "MODIFIED_ON": "2020-03-26 20:53:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -96,10 +105,11 @@
             "DESCRIPTION": "Non-authenticated users",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ANONYMOUS",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "User Administrator",
             "CREATED_ON": "2020-03-26 19:38:33",
             "MODIFIED_ON": "2020-05-06 17:00:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -109,10 +119,11 @@
             "DESCRIPTION": "Manage users and access rights",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "USER_ADMIN",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "Authenticated",
             "CREATED_ON": "2020-03-26 20:53:06",
             "MODIFIED_ON": "2020-03-26 20:53:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -122,10 +133,11 @@
             "DESCRIPTION": "Automatically given to all named users",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "AUTHENTICATED",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "Debugger",
             "CREATED_ON": "2020-03-27 14:44:40",
             "MODIFIED_ON": "2020-05-11 09:33:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -135,10 +147,11 @@
             "DESCRIPTION": "Access to logs and extended error display",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "DEBUGGER",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "Administrator",
             "CREATED_ON": "2020-05-11 13:00:51",
             "MODIFIED_ON": "2020-05-11 13:00:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -148,10 +161,11 @@
             "DESCRIPTION": "Everything in administration",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ADMINISTRATOR",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "CLI User",
             "CREATED_ON": "2021-04-19 11:54:27",
             "MODIFIED_ON": "2021-04-19 17:26:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -161,10 +175,11 @@
             "DESCRIPTION": "Default role for command-line-interface users",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "CLI_USER",
-            "SYNC_WITH_EXT_ROLE": "",
-            "START_PAGE": ""
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": null
         },
         {
+            "_EXPORT_SUMMARY": "Support",
             "CREATED_ON": "2021-04-21 18:41:36",
             "MODIFIED_ON": "2021-04-22 11:07:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -174,7 +189,7 @@
             "DESCRIPTION": "Start with monitor after logon",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "SUPPORT",
-            "SYNC_WITH_EXT_ROLE": "",
+            "SYNC_WITH_EXT_ROLE": null,
             "START_PAGE": "0x11ebb1630a28048ab163025041000001"
         }
     ],

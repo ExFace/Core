@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "First Name [FIRST_NAME]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -216,6 +222,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Last Name [LAST_NAME]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -249,10 +256,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -260,6 +267,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Username [USERNAME]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2023-09-27 15:51:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -293,10 +301,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -304,6 +312,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Locale [LOCALE]",
             "CREATED_ON": "2017-09-27 11:14:18",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
@@ -337,10 +346,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -348,6 +357,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Email [EMAIL]",
             "CREATED_ON": "2017-10-11 09:55:01",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
@@ -381,10 +391,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -392,6 +402,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Password [PASSWORD]",
             "CREATED_ON": "2019-11-19 15:49:43",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -425,10 +436,10 @@
             "HIDDENFLAG": 1,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -438,6 +449,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Disabled [DISABLED_FLAG]",
             "CREATED_ON": "2020-05-12 13:49:14",
             "MODIFIED_ON": "2023-06-05 11:15:44",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
@@ -477,10 +489,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The user will not be able to log on if checked",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -488,6 +500,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Comments (internal) [COMMENTS]",
             "CREATED_ON": "2020-12-19 16:29:09",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -523,10 +536,10 @@
             "HIDDENFLAG": 1,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Internal comment not visible to the user itself - just for user admins. This information is stored encrypted!",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -539,6 +552,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Company [COMPANY]",
             "CREATED_ON": "2023-06-01 12:49:57",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -572,10 +586,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -585,6 +599,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Position [POSITION]",
             "CREATED_ON": "2023-06-01 12:49:57",
             "MODIFIED_ON": "2023-06-01 12:50:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -618,10 +633,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -631,6 +646,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Disable communication [DISABLED_COMMUNICATION_FLAG]",
             "CREATED_ON": "2023-06-01 16:06:16",
             "MODIFIED_ON": "2023-08-23 10:06:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -670,10 +686,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Check to prevent any communication with this user: no emails, no in-app notifications, etc.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_SELECT": "(COALESCE([#~alias#].disabled_communication_flag, 0))"
@@ -683,6 +699,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Full Name [FULL_NAME]",
             "CREATED_ON": "2023-06-16 10:58:47",
             "MODIFIED_ON": "2023-12-12 18:43:38",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -707,7 +724,18 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "FULL_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@T-SQL2016: (CASE \n  WHEN ([#FIRST_NAME#] IS NOT NULL AND [#FIRST_NAME#] <> '') OR ([#LAST_NAME#] IS NOT NULL AND [#LAST_NAME#] <> '') THEN LTRIM(RTRIM(CONCAT([#FIRST_NAME#], ' ', [#LAST_NAME#])))\n  ELSE [#USERNAME#]\nEND)\n\n@OTHER: (CASE \n  WHEN ([#FIRST_NAME#] IS NOT NULL AND [#FIRST_NAME#] <> '') OR ([#LAST_NAME#] IS NOT NULL AND [#LAST_NAME#] <> '') THEN TRIM(CONCAT([#FIRST_NAME#], ' ', [#LAST_NAME#]))\n  ELSE [#USERNAME#]\nEND)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@T-SQL2016: (CASE ",
+                "  WHEN ([#FIRST_NAME#] IS NOT NULL AND [#FIRST_NAME#] <> '') OR ([#LAST_NAME#] IS NOT NULL AND [#LAST_NAME#] <> '') THEN LTRIM(RTRIM(CONCAT([#FIRST_NAME#], ' ', [#LAST_NAME#])))",
+                "  ELSE [#USERNAME#]",
+                "END)",
+                "",
+                "@OTHER: (CASE ",
+                "  WHEN ([#FIRST_NAME#] IS NOT NULL AND [#FIRST_NAME#] <> '') OR ([#LAST_NAME#] IS NOT NULL AND [#LAST_NAME#] <> '') THEN TRIM(CONCAT([#FIRST_NAME#], ' ', [#LAST_NAME#]))",
+                "  ELSE [#USERNAME#]",
+                "END)"
+            ],
             "OBJECT": "0x31343400000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -716,10 +744,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
