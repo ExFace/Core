@@ -695,4 +695,17 @@ class StringDataType extends AbstractDataType
         }
         return true;
     }
+
+    /**
+     * Determines, which line break characters are used in a string and returns them as an array
+     * 
+     * @param string $str
+     * @return array
+     */
+    public static function findLineBreakChars(string $str) : array
+    {
+        $matches = [];
+        preg_match('/\R/', $str, $matches);
+        return array_unique($matches);
+    }
 }
