@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Behaviors\ValidatingBehavior;
+use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -108,6 +109,8 @@ class DataInstaller extends AbstractAppInstaller
     const CONFIG_OPTION_DISABLED = 'DISABLED';
     
     const CONFIG_OPTION_PREFIX = 'INSTALLER';
+
+    const SPLIT_TEXT_COMMENT = '// Multiline text delimited by ';
     
     private $path = 'Data';
     
@@ -476,12 +479,14 @@ class DataInstaller extends AbstractAppInstaller
         $obj = $sheet->getMetaObject();
         $objPath = $this->getModelFilePath($obj);
         $objPathPhs = StringDataType::findPlaceholders($objPath);
+        $objPathPhColNames = [];
         $removeColNames = [];
         foreach ($objPathPhs as $attrAlias) {
             if (! $col = $sheet->getColumns()->getByExpression($attrAlias)) {
                 $col = $sheet->getColumns()->addFromExpression($attrAlias);
                 $removeColNames[] = $col->getName();
             }
+            $objPathPhColNames[$attrAlias] = $col->getName();
         }
         
         $sheet->dataRead();
@@ -513,9 +518,10 @@ class DataInstaller extends AbstractAppInstaller
             foreach ($rows as $row) {
                 $objPathPhVals = [];
                 foreach ($objPathPhs as $ph) {
-                    $objPathPhVals[$ph] = $row[$ph] ?? null;
-                    if (in_array($ph, $removeColNames) === true) {
-                        unset($row[$ph]);
+                    $phColName = $objPathPhColNames[$ph];
+                    $objPathPhVals[$ph] = $row[$phColName] ?? null;
+                    if (in_array($phColName, $removeColNames) === true) {
+                        unset($row[$phColName]);
                     }
                 }
                 $rowPath = StringDataType::replacePlaceholders($objPath, $objPathPhVals);
@@ -527,6 +533,7 @@ class DataInstaller extends AbstractAppInstaller
             
             $uxon = $sheet->exportUxonObject();
             foreach ($rowsByPath as $filePathRel => $filteredRows) {
+                $filePathRel = trim(FilePathDataType::normalize($filePathRel, DIRECTORY_SEPARATOR));
                 // Put only the filtered rows into the UXON. For now NO prettifying!!! Otherwise the
                 // diff with the previous version below will produces false positives!
                 $uxon->setProperty('rows', $filteredRows);
@@ -639,13 +646,30 @@ class DataInstaller extends AbstractAppInstaller
                         $val = $row[$colName];
                         if ($val !== null && $val !== '') {
                             try {
-                                $valUxon = UxonObject::fromAnything($val); 
-                                $rows[$i][$colName] = $valUxon->toArray();
+                                $valArray = UxonObject::fromAnything($val)->toArray(); 
+                                $valArray = $this->textToArrayRecursive($valArray);
+                                $rows[$i][$colName] = $valArray;
                             } catch (\Throwable $e) {
                                 // Ignore errors
                             }
                         }
                     }
+                    break;
+                case $dataType instanceof TextDataType:
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName];
+                        if ($val !== null && $val !== '' && is_string($val)) {
+                            try {
+                                $lines = $this->textToArray($val);
+                                if (is_array($lines)) {
+                                    $rows[$i][$colName] = $lines;
+                                }
+                            } catch (\Throwable $e) {
+                                // Ignore errors
+                            }
+                        }
+                    }
+                    break;
             }
         }
         return $rows;
@@ -727,6 +751,12 @@ class DataInstaller extends AbstractAppInstaller
             if ($ds->getMetaObject()->hasUidAttribute()) {
                 $ds->getSorters()->addFromString($ds->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::ASC);
             }
+
+            // Add a fake column atop of every row that will tell humans looking at the JSON what this
+            // row was originally
+            if ($ds->getMetaObject()->hasLabelAttribute()) {
+                $ds->getColumns()->addFromExpression($ds->getMetaObject()->getLabelAttributeAlias(), '_EXPORT_SUMMARY', true);
+            }
                 
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
                 if (in_array($attr->getAlias(), $excludeAttributeAliases)){
@@ -801,7 +831,7 @@ class DataInstaller extends AbstractAppInstaller
             $prefix = str_pad($defIdx + $this->filenameIndexStart, 2, '0', STR_PAD_LEFT) . '_';
             $path = $prefix . $object->getAlias() . '.json';
         }
-        return FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
+        return $path;
     }
     
     /**
@@ -885,9 +915,9 @@ class DataInstaller extends AbstractAppInstaller
                 // The check for JsonDataType is a fix upgrading older installations where the
                 // UxonDataType was not a PHP class yet.
                 $dataType = $col->getDataType();
+                $colName = $col->getName();
                 switch (true) {
                     case $dataType instanceof EncryptedDataType:
-                        $colName = $col->getName();
                         foreach ($rows as $i => $row) {
                             $val = $row[$colName];
                             if (is_string($val) && StringDataType::startsWith($val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT)) {
@@ -901,11 +931,23 @@ class DataInstaller extends AbstractAppInstaller
                         }
                         break;
                     case $dataType instanceof JsonDataType:
-                        $colName = $col->getName();
                         foreach ($rows as $i => $row) {
                             $val = $row[$colName];
                             if (is_array($val)) {
+                                $val = $this->textFromArrayRecursive($val);
                                 $rows[$i][$colName] = (UxonObject::fromArray($val))->toJson();
+                            }
+                        }
+                        break;
+                    // Long texts are exported as arrays, so glue them all together here
+                    case $dataType instanceof TextDataType:
+                        foreach ($rows as $i => $row) {
+                            $val = $row[$colName];
+                            if (is_array($val)) {
+                                $val = $this->textFromArray($val);
+                                if (is_string($val)) {
+                                    $rows[$i][$colName] = $val;
+                                }
                             }
                         }
                         break;
@@ -965,7 +1007,8 @@ class DataInstaller extends AbstractAppInstaller
         $folderUxons = [];
         
         if (is_file($absolutePath)) {
-            $folderUxons[FilePathDataType::findFileName($absolutePath) . '@' . FilePathDataType::findFolderPath($absolutePath)] = $this->readDataSheetUxonFromFile($absolutePath);
+            $dataSheet = $this->readDataSheetUxonFromFile($absolutePath);
+            $folderUxons[FilePathDataType::findFileName($absolutePath) . '@' . FilePathDataType::findFolderPath($absolutePath)] = $dataSheet;
             return $folderUxons;
         }
         
@@ -1081,5 +1124,91 @@ class DataInstaller extends AbstractAppInstaller
             $this->className = $refl->getShortName();
         }
         return $this->className;
+    }
+
+    /**
+     * Splits a text into a per-line array if there are multiple lines or 
+     * returns it as-is if it has one line only
+     * 
+     * @param string $text
+     * @return string|array
+     */
+    protected function textToArray(string $text) : string|array
+    {
+        $lineBreaks = StringDataType::findLineBreakChars($text);
+        if (empty($lineBreaks)) {
+            return $text;
+        }
+        $lines = StringDataType::splitLines($text);
+        array_unshift($lines, self::SPLIT_TEXT_COMMENT . '`' . $lineBreaks[0] . '`');
+        return $lines;
+    }
+
+    /**
+     * Splits all texts inside the given array into per-line arrays recursively
+     * 
+     * @param array $array
+     * @return array
+     */
+    protected function textToArrayRecursive(array $array) : array
+    {
+        foreach ($array as $key => $val) {
+            switch (true) {
+                case is_array($val):
+                    $array[$key] = $this->textToArrayRecursive($val);
+                    break;
+                case is_string($val) && $val !== '':
+                    $lines = $this->textToArray($val);
+                    if (! empty(StringDataType::findLineBreakChars($val))) {
+                        $br = 1;
+                    }
+                    if (is_array($lines)) {
+                        $array[$key] = $lines;
+                    }
+                    break;
+            }
+        }
+        return $array;
+    }
+
+    /**
+     * Checks if the given array originally was a per-line split and merges it back together.
+     * 
+     * Returns a string if the array was a multiline string originally
+     * 
+     * @param array $lines
+     * @return string|array
+     */
+    protected function textFromArray(array $lines) : string|array
+    {
+        if (! is_string($lines[0]) || strpos($lines[0], self::SPLIT_TEXT_COMMENT) !== 0) {
+            return $lines;
+        }
+        $comment = array_shift($lines);
+        $lineBreak = StringDataType::substringAfter($comment, self::SPLIT_TEXT_COMMENT);
+        $lineBreak = trim(trim($lineBreak), "`");
+        return implode($lineBreak, $lines);
+    }
+
+    /**
+     * Restores all values in the given array if they are per-line splits
+     * 
+     * @param array $array
+     * @return array
+     */
+    protected function textFromArrayRecursive(array $array) : array
+    {
+        foreach ($array as $key => $val) {
+            if (! is_array($val)) {
+                continue;
+            }
+            $text = $this->textFromArray($val);
+            if (is_string($text)) {
+                $array[$key] = $text;
+            } else {
+                $array[$key] = $this->textFromArrayRecursive($val);
+            }
+        }
+        return $array;
     }
 }
