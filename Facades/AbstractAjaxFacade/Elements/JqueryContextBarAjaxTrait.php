@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Contexts\NotificationContext;
+
 /**
  * The ContextBar widget is rendered by the facade itself and is update via response extras.
  *
@@ -31,6 +33,18 @@ trait JqueryContextBarAjaxTrait {
                     'bar_widget_id' => $btn->getId(),
                     'context_alias' => $context->getAliasWithNamespace()
                 ];
+                if ($context instanceof NotificationContext) {
+                    foreach ($context->getAnnouncements() as $msg) {
+                        $extra[$btn_element->getId()]['announcements'][] = [
+                            'widget_type' => 'Message',
+                            'title' => $msg->getTitle(),
+                            'text' => $msg->getText() ? $msg->getText() : $msg->getTitle(),
+                            'type' => $msg->getMessageType(),
+                            'dismissable' => false, // TODO
+                            'icon' => $this->buildCssIconClass($msg->getIcon())
+                        ];
+                    }
+                }
             }
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);

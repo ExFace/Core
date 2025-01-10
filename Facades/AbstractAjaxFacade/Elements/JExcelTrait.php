@@ -800,6 +800,8 @@ JS;
                     aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColNo) + (iRowIdx + 1)));
                 });
                 aCells.forEach(function(domCell, iRowIdx){
+                    // Do nothing if no cell was (yet) rendered
+                    if (! domCell) return;
                     if (bDisable) {
                         if (oWidget.hasChanged(iColIdx, iRowIdx)) {
                             oWidget.restoreInitValue(iColIdx, iRowIdx); 
@@ -1346,7 +1348,7 @@ JS;
                     
                     $srcLabelAttr = $srcSheet->getMetaObject()->getLabelAttribute();
                     if ($srcLabelAttr->isRelation() === true && $srcLabelAttr->getRelation()->getRightObject()->hasLabelAttribute() === true) {
-                        $srcLabelCol = $srcSheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($srcLabelAttr->getAlias(), 'LABEL'));
+                        $srcLabelCol = $srcSheet->getColumns()->addFromExpression(RelationPath::join($srcLabelAttr->getAlias(), 'LABEL'));
                     } else {
                         $srcLabelCol = $srcSheet->getColumns()->addFromAttribute($srcLabelAttr);
                     }
@@ -1934,17 +1936,32 @@ JS;
     }
     
     /**
+     * Return a JS snippet to call a widget function if that function is supported this trait and NULL otherwise.
      * 
-     * {@inheritdoc}
-     * @see AjaxFacadeElementInterface::buildJsCallFunction()
+     * In classes, that use this trait, you can include this method like this:
+     * 
+     * ```
+     * public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+     * {
+     *     if (null !== $js = $this->buildJsCallFunctionOfJExcel($functionName, $parameters)) {
+     *         return $js;
+     *     }
+     *     return parent::buildJsCallFunction($functionName, $parameters);
+     * }
+     * 
+     * ```
+     * 
+     * @param string $functionName
+     * @param array $parameters
+     * @return string|null
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    protected function buildJsCallFunctionOfJExcel(string $functionName = null, array $parameters = []) : ?string
     {
         switch (true) {
             case $functionName === DataTable::FUNCTION_EMPTY:
                 return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
         }
-        return parent::buildJsCallFunction($functionName, $parameters);
+        return null;
     }
     
     public function buildJsSetDisabled(bool $trueOrFalse) : string

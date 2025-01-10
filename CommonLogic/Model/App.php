@@ -79,6 +79,8 @@ class App implements AppInterface
     const CONFIG_FILE_EXTENSION = '.json';
     
     private $selector = null;
+
+    private $aliasWithNamesape = null;
     
     private $uid = null;
     
@@ -127,7 +129,21 @@ class App implements AppInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getSelector()->getAppAlias();
+        // We want the app to return the exact alias event if the selector it was created from has wrong case.
+        // So check if the alias has the correct case and cache the result.
+        if ($this->aliasWithNamesape === null) {
+            // Get the alias from the selector. That will often be computed from the file path, so
+            // it might be completely lowercased depending on how the composer package was installed.
+            // We can't rely on the namespace here as the app class might be the core App if 
+            // the app we are loading has no own app class.
+            $aliasFromSelector = $this->getSelector()->getAppAlias();
+            if ($aliasFromSelector === mb_strtolower($aliasFromSelector)) {
+                $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
+            } else {
+                $this->aliasWithNamesape = $aliasFromSelector;
+            }
+        }
+        return $this->aliasWithNamesape;
     }
     
     /**
@@ -135,11 +151,23 @@ class App implements AppInterface
      * @param string $alias
      * @return AppInterface
      */
-    protected function setAlias(string $alias) : AppInterface
+    protected function setAlias(string $aliasWithNamesape) : AppInterface
     {
-        if (strcasecmp($alias, $this->getAliasWithNamespace()) !== 0) {
+        // If there are case-differences in the alias, update it! We want the app to return the exact
+        // alias event if the selector it was created from has wrong case
+        if ($this->$aliasWithNamesape === null) {
+            if (strcasecmp($aliasWithNamesape, $this->getSelector()->getAppAlias()) !== 0) {
+                throw new RuntimeException('Cannot change the alias of an app at runtime! Please change it in the model before loading the app.');
+            }
+            $this->aliasWithNamesape = $aliasWithNamesape;
+            list ($namespace, $alias) = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $aliasWithNamesape);
+            $this->alias = $alias;
+        } else
+        // Otherwise just doublecheck, that the alias will not change!
+        if (strcasecmp($aliasWithNamesape, $this->aliasWithNamesape) !== 0) {
             throw new RuntimeException('Cannot change the alias of an app at runtime! Please change it in the model before loading the app.');
         }
+        
         return $this;
     }
     
@@ -162,7 +190,7 @@ class App implements AppInterface
         if (! $this->directory) {
             $vendorDir = $this->getWorkbench()->filemanager()->getPathToVendorFolder();
             // Replace dots in the alias by the DIRECTORY_SEPARATOR
-            $dirCaseSensitive = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
+            $dirCaseSensitive = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $this->getSelector()->getAppAlias());
             // By default, we use composer packages. Since the must be lowercase as of composer 2.0,
             // we just lowercase the app's alias here.
             $dir = strtolower($dirCaseSensitive);

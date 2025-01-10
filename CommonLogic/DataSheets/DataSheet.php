@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -64,6 +65,7 @@ use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Default implementation of DataSheetInterface
+ *  
  * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
  * 
  * @author Andrej Kabachnik
@@ -211,6 +213,7 @@ class DataSheet implements DataSheetInterface
                 }
                 // Find rows in the other sheet, that match the currently processed key
                 $right_row_nrs = $rCol->findRowsByValue($row[$leftKeyColName]);
+                // If corresponding rows are found in the right sheet, apply their values
                 if (false === empty($right_row_nrs)) {
                     // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
                     // to loop through them. The first row is simply joined to the current left row
@@ -230,13 +233,18 @@ class DataSheet implements DataSheetInterface
                         }
                         $right_row = $other_sheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
-                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                            $this->setCellValue(RelationPath::join($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
                         }
                         $needRowCopy = true;
                     }                    
                 } else {
-                    foreach ($right_cols as $col) {
-                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                    // If the right sheet does not have corresponding rows, treat them as empty.
+                    // BUT only if we are JOINing with a relation. If JOINing the same object,
+                    // do not empty its values just because the right sheet did not has less data!
+                    if ($relation_path !== '') {
+                        foreach ($right_cols as $col) {
+                            $this->setCellValue(RelationPath::join($relation_path, $col->getName()), $left_row_nr, null);
+                        }
                     }
                 }
             }
@@ -982,6 +990,7 @@ class DataSheet implements DataSheetInterface
         // Fire it after the create to be sure every row has UIDs now and are actually updates
         $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
         if ($eventBefore->isPreventUpdate() === true) {
+            // IDEA not sure, if it would be correct to fire OnUpdateData here?
             if ($commit && ! $transaction->isRolledBack()) {
                 $transaction->commit();
             }
@@ -1031,7 +1040,7 @@ class DataSheet implements DataSheetInterface
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($fixedExpr = $attr->getFixedValue()) {
-                    $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
+                    $alias_with_relation_path = RelationPath::join($rel_path, $attr->getAlias());
                     if (! $fixedCol = $this->getColumn($alias_with_relation_path)) {
                         $fixedCol = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
                     } elseif ($fixedCol->getIgnoreFixedValues()) {
@@ -1206,17 +1215,18 @@ class DataSheet implements DataSheetInterface
             // columns of the related sheet too.
         }
         
-        if ($commit && ! $transaction->isRolledBack()) {
-            $transaction->commit();
-        }
-        
         if ($result->getAllRowsCounter() !== null) {
             $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
         } elseif ($result->hasMoreRows() === false) {
             $this->setCounterForRowsInDataSource($this->countRows());
         }
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent($this, $transaction));
+        
+        if ($commit && ! $transaction->isRolledBack()) {
+            $transaction->commit();
+        }
         
         return $counter;
     }
@@ -1458,11 +1468,12 @@ class DataSheet implements DataSheetInterface
         
         $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
+        $this->getWorkbench()->eventManager()->dispatch(new OnReplaceDataEvent($this, $transaction));
+        
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
         }
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnReplaceDataEvent($this, $transaction));
         
         return $deleteCnt+$updateCnt;
     }
@@ -1489,6 +1500,7 @@ class DataSheet implements DataSheetInterface
         
         $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction, $update_if_uid_found));
         if ($eventBefore->isPreventCreate() === true) {
+            // IDEA not sure, if it would be correct to fire OnCreateData here?
             if ($commit && ! $transaction->isRolledBack()) {
                 $transaction->commit();
             }
@@ -1675,17 +1687,18 @@ class DataSheet implements DataSheetInterface
             $this->dataCreateNestedSheets($column, $transaction, $update_if_uid_found);
         }
         
-        if ($commit && ! $transaction->isRolledBack()) {
-            $transaction->commit();
-        }
-        
         if ($result->getAllRowsCounter() !== null) {
             $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
         } elseif ($result->hasMoreRows() === false) {
             $this->setCounterForRowsInDataSource($this->countRows());
         }
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheet\DataSheetInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
+        
+        if ($commit && ! $transaction->isRolledBack()) {
+            $transaction->commit();
+        }
         
         return $result->getAffectedRowsCounter();
     }
@@ -1903,11 +1916,12 @@ class DataSheet implements DataSheetInterface
             $affected_rows = $this->countRows();
         }
         
+        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
+        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));
+        
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
         }
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));
         
         return $affected_rows;
     }
@@ -2464,31 +2478,17 @@ class DataSheet implements DataSheetInterface
         if ($uxon->hasProperty('filters')) {
             $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters'), $this->getMetaObject()));
         }
-        
-        if ($uxon->hasProperty('rows_limit')) {
-            $val = $uxon->getProperty('rows_limit');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
-        } elseif ($uxon->hasProperty('rows_on_page')) {
-            // Still support old property name rows_on_page
-            $val = $uxon->getProperty('rows_on_page');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
+
+        // Limit. Still support old property name rows_on_page.
+        $val = $uxon->hasProperty('rows_limit') ? $uxon->getProperty('rows_limit') : $uxon->getProperty('rows_on_page');
+        if ($val !== null) {
+            $this->setRowsLimit(IntegerDataType::cast($val));
         }
         
-        if ($uxon->hasProperty('rows_offset')) {
-            $val = $uxon->getProperty('rows_offset');
-            if ($val === '') {
-                $val = 0;
-            }
-            $this->setRowsOffset($val);
-        } elseif ($uxon->hasProperty('row_offset')) {
-            // Still support old property name row_offset
-            $this->setRowsOffset($uxon->getProperty('row_offset'));
+        // Offset. Still support old property name row_offset.
+        $val = $uxon->hasProperty('rows_offset') ? $uxon->getProperty('rows_offset') : $uxon->getProperty('row_offset');
+        if ($val !== null && $val !== '') {
+            $this->setRowsOffset(IntegerDataType::cast($val));
         }
         
         if ($uxon->hasProperty('sorters')) {
@@ -2672,6 +2672,9 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsLimit($value) : DataSheetInterface
     {
+        if ($value !== null && $value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid limit "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->rows_on_page = $value;
         return $this;
     }
@@ -2691,18 +2694,18 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsOffset(int $value) : DataSheetInterface
     {
+        if ($value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid offset "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->row_offset = $value;
         return $this;
     }
 
     /**
-     * Merges the current data sheet with another one.
-     * Values of the other sheet will overwrite values of identical columns of the current one!
-     *
-     * @param DataSheet $other_sheet            
-     * @return DataSheet
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::merge()
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true)
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true)
     {
         // Ignore empty other sheets
         if ($other_sheet->isEmpty() && $other_sheet->getFilters()->isEmpty()) {
@@ -2716,6 +2719,15 @@ class DataSheet implements DataSheetInterface
         // Check if the sheets are based on the same object
         if ($this->getMetaObject()->getId() !== $other_sheet->getMetaObject()->getId()) {
             throw new DataSheetMergeError($this, 'Cannot merge non-empty data sheets for different objects ("' . $this->getMetaObject()->getAliasWithNamespace() . '" and "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '"): not implemented!', '6T5E8GM');
+        }
+
+        $removeColNames = [];
+        if ($addColumns === false) {
+            foreach ($other_sheet->getColumns() as $otherCol) {
+                if (! $this->getColumns()->get($otherCol->getName())) {
+                    $removeColNames[] = $otherCol->getName();
+                }
+            }
         }
         
         // Check if both sheets have UID columns if they are not empty
@@ -2741,6 +2753,13 @@ class DataSheet implements DataSheetInterface
             $this->removeRows()->addRows($baseSheet->getRows());
         }
         
+        // Remove any columns, that were not there previously
+        // TODO is it really a good idea to add columns and remove them afterwards? They might be
+        // needed for formulas. But are formulas recalculated here anyway? If not, is that correct?
+        foreach ($removeColNames as $colName) {
+            $this->getColumns()->removeByKey($colName);
+        }
+
         return $this;
     }
 
@@ -3131,6 +3150,33 @@ class DataSheet implements DataSheetInterface
         // Add a tab with the data sheet UXON
         $uxon_tab = $debug_widget->createTab();
         $uxon_tab->setCaption($tabCaption);
+        $debugSheet = $this->createDebugSheet();
+        $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
+            'widget_type' => 'InputUxon',
+            'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
+            'hide_caption' => true,
+            'width' => '100%',
+            'height' => '100%',
+            'disabled' => true,
+            'root_prototype' => '\\' . DataSheet::class,
+            'root_object' => $this->getMetaObject()->getAliasWithNamespace(),
+            'value' => $debugSheet->exportUxonObject()->toJson(true)
+        ]));
+        $uxon_tab->addWidget($uxon_widget);
+        $debug_widget->addTab($uxon_tab);
+        return $debug_widget;
+    }
+
+    /**
+     * Creates a debug version of this instance, censoring and truncating data as needed
+     * for presentation in debug widgets and messages. 
+     * 
+     * Works recursively.
+     * 
+     * @return DataSheetInterface
+     */
+    protected function createDebugSheet() : DataSheetInterface
+    {
         $debugSheet = $this->getCensoredDataSheet();
         if (! $debugSheet->isEmpty()) {
             foreach ($debugSheet->getColumns() as $col) {
@@ -3150,23 +3196,21 @@ class DataSheet implements DataSheetInterface
                             }
                         }
                         break;
+                    case $dataType instanceof DataSheetDataType:
+                        // Truncate strings that go beyond human-readable lengths.
+                        foreach ($col->getValues() as $rowNo => $value) {
+                            if ($value instanceof DataSheetInterface) {
+                                $subsheet = $value;
+                            } else {
+                                $subsheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $value);
+                            }
+                            $col->setValue($rowNo, $subsheet->createDebugSheet()->exportUxonObject()->toArray());
+                        }
+                        break;
                 }
             }
         }
-        $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
-            'widget_type' => 'InputUxon',
-            'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
-            'hide_caption' => true,
-            'width' => '100%',
-            'height' => '100%',
-            'disabled' => true,
-            'root_prototype' => '\\' . DataSheet::class,
-            'root_object' => $this->getMetaObject()->getAliasWithNamespace(),
-            'value' => $debugSheet->exportUxonObject()->toJson(true)
-        ]));
-        $uxon_tab->addWidget($uxon_widget);
-        $debug_widget->addTab($uxon_tab);
-        return $debug_widget;
+        return $debugSheet;
     }
     
     /**

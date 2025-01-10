@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2013-06-24 13:08:07",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2021-11-23 13:03:42",
+    "modified_on": "2024-12-06 09:45:38",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.ATTRIBUTE",
@@ -84,6 +84,9 @@
             },
             {
                 "attribute_alias": "HIDDENFLAG"
+            },
+            {
+                "attribute_alias": "TYPE"
             }
         ],
         "columns": [

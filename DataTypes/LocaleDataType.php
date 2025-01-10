@@ -128,4 +128,24 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     {
         return \Locale::getRegion($locale);
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValueHints()
+     */
+    public function getValueHints() : array
+    {
+        return [];
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getHintOfValue()
+     */
+    public function getHintOfValue($value) : ?string
+    {
+        return null;
+    }
 }

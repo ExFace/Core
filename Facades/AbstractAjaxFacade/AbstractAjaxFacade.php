@@ -2,6 +2,8 @@
 namespace exface\Core\Facades\AbstractAjaxFacade;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\DataTypes\ListDataType;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Widgets\AbstractWidget;
@@ -20,6 +22,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterfa
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsEnumFormatter;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsBooleanFormatter;
+use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -51,7 +54,6 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
 use exface\Core\CommonLogic\Tasks\ResultRedirect;
-use function GuzzleHttp\Psr7\uri_for;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\Login;
 use exface\Core\Widgets\LoginPrompt;
@@ -386,6 +388,7 @@ HTML;
     public function getDataTypeFormatter(DataTypeInterface $dataType)
     {
         switch (true) {
+            case $dataType instanceof ListDataType: return new JsListFormatter($dataType, $this->getDataTypeFormatter($dataType->getValuesDataType()));
             case $dataType instanceof EnumDataTypeInterface: return new JsEnumFormatter($dataType);
             case $dataType instanceof NumberDataType: return new JsNumberFormatter($dataType);
             case $dataType instanceof DateDataType: return new JsDateFormatter($dataType);
@@ -489,7 +492,7 @@ HTML;
                 
             case $result instanceof ResultUriInterface:
                 if ($result instanceof ResultRedirect && $result->hasTargetPage()) {
-                    $uri = uri_for($this->buildUrlToPage($result->getTargetPageSelector()));
+                    $uri = Utils::uriFor($this->buildUrlToPage($result->getTargetPageSelector()));
                 } else {
                     $uri = $result->getUri();
                 }

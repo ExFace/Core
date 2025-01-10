@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\Widgets\iHaveHintScale;
+use exface\Core\Interfaces\Widgets\WidgetPropertyScaleInterface;
+use exface\Core\Widgets\Parts\WidgetPropertyScale;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\DataTypes\NumberDataType;
@@ -57,7 +60,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ProgressBar extends Display implements iCanBeAligned
+class ProgressBar extends Display implements iCanBeAligned, iHaveHintScale
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignViaTrait;
@@ -71,6 +74,8 @@ class ProgressBar extends Display implements iCanBeAligned
     private $textAttributeAlias = null;
     
     private $textStaticValue = null;
+
+    private $hintScale = null;
     
     /**
      *
@@ -386,5 +391,52 @@ class ProgressBar extends Display implements iCanBeAligned
             static::findText($this->getValue(), $this->getTextScale());
         }
         return null;
+    }
+
+    /**
+     * Specify a custom hint scale for the widget.
+     *
+     * The hint map must be an object with values as keys and CSS hint codes as values.
+     * The hint code will be applied to all values between it's value and the previous
+     * one. In the below example, all values <= 10 will be red, values > 10 and <= 20
+     * will be hinted yellow, those > 20 and <= 99 will have no special hint and values 
+     * starting with 100 (actually > 99) will be green.
+     *
+     * ```
+     * {
+     *  "10": "This project was not started yet",
+     *  "50": "At least one progress report was submitted",
+     *  "99" : "Waiting for final approvement from the management",
+     *  "100": "All tasks are completed or cancelled"
+     * }
+     *
+     * ```
+     *
+     * @uxon-property hint_scale
+     * @uxon-type string[]
+     * @uxon-template {"// <value>": "<hint>"}
+     *
+     * @param UxonObject $value
+     * @return ProgressBar
+     */
+    protected function setHintScale(UxonObject $uxon) : ProgressBar
+    {
+        $this->hintScale = $uxon;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveHintScaleInterface::getHintScale()
+     */
+    public function getHintScale() : WidgetPropertyScaleInterface
+    {
+        if ($this->hintScale === null) {
+            $this->hintScale = new WidgetPropertyScale($this, $this->getValueDataType());
+        } elseif ($this->hintScale instanceof UxonObject) {
+            $uxon = new UxonObject(['scale' => $this->hintScale]);
+            $this->hintScale = new WidgetPropertyScale($this, $this->getValueDataType(), $uxon);
+        }
+        return $this->hintScale;
     }
 }

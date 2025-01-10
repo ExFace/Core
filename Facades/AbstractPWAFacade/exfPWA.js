@@ -56,7 +56,7 @@ self.addEventListener('sync', function(event) {
 
 		dexie.open().catch(function (e) {
 			_indexedDbInitError = e;
-			console.error("PWA error: " + e.stack);
+			console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
 		});
 		return dexie;
 	}();
@@ -72,10 +72,10 @@ self.addEventListener('sync', function(event) {
 		var _networkStatTable = _db.table('networkStat');
 		var _connectionTable = _db.table('connection');
 		var _autoOfflineToggle = _db.table('autoOfflineToggle');
-	}
 
-	(function () {
-		_deviceIdTable.toArray()
+		(function () {
+			_deviceIdTable
+			.toArray()
 			.then(function (data) {
 				if (data.length !== 0) {
 					_deviceId = data[0].id;
@@ -86,7 +86,14 @@ self.addEventListener('sync', function(event) {
 					});
 				}
 			})
-	})();
+			// There were cases when dexie.open() worked, but reading threw an error, which blocked everything else.
+			// Since reading the device ID is the first operation, turn off PWA if this fails
+			.catch(function(e){
+				_indexedDbInitError = e;
+				console.error("PWA faild to initialized. Falling back to online-only mode. " + e.stack);
+			})
+		})();
+	}
 
 	var _merge = function mergeObjects(target, ...sources) {
 		// The last argument may be an array containing excludes
@@ -184,57 +191,85 @@ self.addEventListener('sync', function(event) {
 		});
 	};
 
+	// Init network status
+	var _oNetStat = {
+		_bForcedOffline: false,
+		_bAutoOffline: false,
+		_bSlowNetwork: false,
+		isOnline: function() {
+			switch (true) {
+				case _oNetStat._bForcedOffline === true: return true;
+				case _oNetStat._bAutoOffline && _oNetStat._bSlowNetwork: return false;
+				default: return _oNetStat.isBrowserOnline();
+			}
+		},
+		isOfflineVirtually: function() {
+			return _oNetStat._bForcedOffline || (_oNetStat._bAutoOffline && _oNetStat._bSlowNetwork);
+		},
+		isBrowserOnline: function() {
+			return navigator.onLine !== undefined ? navigator.onLine : true;
+		},
+		toString : function() {
+			switch (true) {
+				case _oNetStat._bForcedOffline === true: 'Offline forced';
+				case _oNetStat._bAutoOffline && _oNetStat._bSlowNetwork: 'Offline due to low speed';
+				default: return _oNetStat.isBrowserOnline() ? 'Online' : 'Offline';
+			}
+		},
+		serialize: function() {
+			return {
+				forcedOffline: _oNetStat._bAutoOffline,
+				autoOffline: _oNetStat._bAutoOffline,
+				slowNetwork: _oNetStat._bSlowNetwork
+			}
+		}
+	}
+
+	// Init the PWA
 	var _pwa = {
 
-		isVirtuallyOffline: false,
-
-		setVirtuallyOffline: function (status) {
-			this.isVirtuallyOffline = status;
-			if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-				navigator.serviceWorker.controller.postMessage({
-					action: status ? 'virtuallyOfflineEnabled' : 'virtuallyOfflineDisabled'
-				});
-			}
+		/**
+		 * 
+		 * @returns {boolean}
+		 */
+		isOnline: function() {
+			return _oNetStat.isOnline();
 		},
 
-		isSemiOffline: async function () {
-			try {
-				const status = await this.data.getLatestConnectionStatus();
-				return status === 'offline_bad_connection';
-			} catch (error) { 
-				return false; // Return error if it has error
-			}
+		/**
+		 * 
+		 * @returns {boolean}
+		 */
+		isOfflineVirtually: function() {
+			return _oNetStat.isOfflineVirtually()
 		},
 
-		getLatestConnectionStatus: function () {
-            return checkIndexedDB()
-                .then((exists) => {
-                    if (!exists) {
-                        return Promise.reject("IndexedDB does not exist");
-                    }
-
-                    // if (_error) {
-                    //     return Promise.reject("IndexedDB error");
-                    // }
-
-                    return _connectionTable
-                        .orderBy('time')
-                        .last()
-                        .then(function (lastRecord) {
-                            if (lastRecord) {
-                                return Promise.resolve(lastRecord.status);
-                            } else {
-                                return Promise.resolve('online'); // Default to online if no records exist
-                            }
-                        })
-                        .catch(function (error) { 
-                            return Promise.reject(error);
-                        });
-                })
-                .catch((error) => { 
-                    return Promise.reject(error);
-                });
-        },
+		/**
+		 * 
+		 * @returns {Object}
+		 */
+		getConnectionStatus: function() {
+			// Copy the current
+			return _connectionTable
+			.orderBy('time')
+			.last()
+			.then(function (lastRecord) {
+				if (lastRecord) {
+					// TODO save individual flags in IndexedDB instead of the status string. Calculate
+					// the status here based on what was loaded. Get rid of the status strings generally!
+					switch (lastRecord.status) {
+						case 'offline_bad_connection': _oNetStat._bAutoOffline = true; _oNetStat._bSlowNetwork = true; break;
+						case 'offline_forced': _oNetStat._bForcedOffline = true; break;
+						case 'online': _oNetStat._bForcedOffline = false; break;
+					}
+				}
+				return Promise.resolve(_oNetStat);
+			})
+			.catch(function (error) { 
+				console.warn('Failed to get network status', error);
+				return Promise.resolve(_oNetStat);
+			});
+		},
 
 		
 		/**
@@ -835,6 +870,9 @@ self.addEventListener('sync', function(event) {
 
 			/**
 			 * Retrieves the auto offline toggle status from the IndexedDB.
+			 * 
+			 * TODO move to getNetworkStatus().isForcedOffline()
+			 * 
 			 * @return {Promise<boolean>} A promise that resolves to the auto offline toggle status.
 			 */
 			getAutoOfflineToggleStatus: function () {
@@ -855,6 +893,8 @@ self.addEventListener('sync', function(event) {
 			/**
 			 * saveAutoOfflineToggleStatus - Saves or updates the auto offline toggle status in IndexedDB.
 			 * If the table is empty, it initializes with a default value of true.
+			 * 
+			 * TODO move to saveConnectionStatus() 
 			 *
 			 * @param {boolean} [status] - The auto offline toggle status to be saved. If not provided, it will check for existing data.
 			 *
@@ -898,7 +938,7 @@ self.addEventListener('sync', function(event) {
 			* @return {Promise} - Returns a Promise that resolves if the status is saved successfully, 
 			*                     or does nothing if the status is the same as the last saved status.
 			*/
-			saveConnectionStatus: function (status) {
+			saveConnectionStatus: function (status, bLowSpeed, bAutoOffline, bForcedOffline) {
 				if (exfPWA.isAvailable() === false) {
 					return Promise.resolve(status);
 				}
@@ -913,10 +953,25 @@ self.addEventListener('sync', function(event) {
 					status: status,
 					time: currentTime
 				};
+
+				// TODO get rid of the string status here. Just save the flags!
+				switch (status) {
+					case bLowSpeed !== undefined: _oNetStat._bSlowNetwork = bLowSpeed; _oNetStat._bAutoOffline = bAutoOffline; _oNetStat._bForcedOffline = bForcedOffline; break; 
+					case 'offline_forced': _oNetStat._bForcedOffline = true; break;
+					case 'offline_bad_connection': _oNetStat._bSlowNetwork = true; _oNetStat._bAutoOffline = true; break;
+					case 'online': _oNetStat._bForcedOffline = false; break;
+				}
 			
 				return _connectionTable.put(connectionData)
 					.then(() => {
 						this._lastSavedConnectionStatus = status; 
+						// Let the service worker know, the network has changed
+						navigator.serviceWorker.controller?.postMessage({
+							action: 'networkStatusChanged',
+							status: _oNetStat.serialize()
+						});
+						// Let the page DOM know, the network has changed
+						$(document).trigger('networkchanged', {status: _oNetStat});
 					})
 					.catch((error) => { 
 						return Promise.reject(error);
@@ -1402,22 +1457,30 @@ self.addEventListener('sync', function(event) {
 					return Promise.resolve({});
 				}
 
+				if (exfPWA.isOnline() === false) {
+					return Promise.resolve({});
+				}
+
 				return fetch('api/pwa/errors?deviceId=' + _pwa.getDeviceId(), {
 					method: 'GET'
 				})
-					.then(function (response) {
-						if (response.ok) {
-							return response.json();
-						} else {
-							return {};
-						}
-					})
-					.catch(function (error) { 
-						console.error('Cannot read sync errors from server:', error); 
+				.then(function (response) {
+					if (response.ok) {
+						return response.json();
+					} else {
 						return {};
-					})
+					}
+				})
+				.catch(function (error) { 
+					console.error('Cannot read sync errors from server:', error); 
+					return {};
+				})
 			}
 		} // EOF errors
 	} // EOF _pwa
+
+	// Make sure to load the current connection status from IndexedDB when starting and override the defaults
+	_pwa.getConnectionStatus();
+
 	return _pwa;
 })));

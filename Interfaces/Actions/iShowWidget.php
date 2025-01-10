@@ -5,6 +5,11 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
+/**
+ * Common interface for actions that render and show widgets
+ * 
+ * @triggers \exface\Core\Events\Widgets\OnUiActionWidgetInitEvent after its widget was rendered
+ */
 interface iShowWidget extends iNavigate
 {
 

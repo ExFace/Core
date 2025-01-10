@@ -340,7 +340,7 @@ class StringDataType extends AbstractDataType
      * @param bool $strict
      * @param bool $recursive
      * 
-     * @throws RangeException if no value is found for a placeholder
+     * @throws PlaceholderValueInvalidError if $strict === true AND a placeholder has no value
      * 
      * @return string
      */
@@ -373,10 +373,14 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * Replaces a single placeholder in a string with the given value
      * 
      * @param string $string
      * @param string $placeholder
      * @param mixed $value
+     * 
+     * @throws \exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError
+     * 
      * @return string
      */
     public static function replacePlaceholder(string $string, string $placeholder, $value) : string
@@ -667,5 +671,28 @@ class StringDataType extends AbstractDataType
             throw new RuntimeException('Cannot transliterate "' . static::truncate($string, 100, false, true, true, true) . '": ' . $transliterator->getErrorMessage());
         }
         return $result;
+    }
+    
+    /**
+     * Returns TRUE if the given string is one enclosed is quotes (single or double quotes) and FALSE otherwise
+     * 
+     * Currently this does not check, if there are also some closing quotes in the middle of the string.
+     * Possible enhanced solution: https://stackoverflow.com/questions/74963883/php-regular-expression-to-grab-values-enclosed-in-double-quotes
+     * 
+     * @param string $str
+     * @return bool
+     */
+    public static function isQuotedString(string $str) : bool
+    {
+        $str = trim($str);
+        $firstChar = mb_substr($str, 0, 1);
+        if ($firstChar !== '"' && $firstChar !== "'") {
+            return false;
+        }
+        $lastChar = mb_substr($str, -1);
+        if ($lastChar !== '"' && $lastChar !== "'") {
+            return false;
+        }
+        return true;
     }
 }

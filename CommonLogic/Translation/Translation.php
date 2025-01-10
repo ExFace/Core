@@ -73,7 +73,9 @@ class Translation implements TranslationInterface
         } elseif ($plural_number === null) {
             $result = $this->translator->trans($message_id, $placeholder_values ?? [], $domain);
         } else {
-            $result = $this->translator->transChoice($message_id, $plural_number, $placeholder_values ?? [], $domain);
+            $placeholder_values = $placeholder_values ?? [];
+            $placeholder_values['%count%'] = $plural_number;
+            $result = $this->translator->trans($message_id, $placeholder_values, $domain);
         }
         
         if ($fallback !== null && $result === $message_id) {

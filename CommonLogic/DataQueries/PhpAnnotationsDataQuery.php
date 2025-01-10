@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataQueries;
 
+use exface\Core\Exceptions\FileNotFoundError;
 use Wingu\OctopusCore\Reflection\ReflectionClass;
 use exface\Core\DataTypes\PhpFilePathDataType;
 
@@ -13,8 +14,12 @@ class PhpAnnotationsDataQuery extends FileContentsDataQuery
 
     public function getClassNameWithNamespace()
     {
-        if (is_null($this->class_name_with_namespace)) {
-            return PhpFilePathDataType::findClassInFile($this->getPathAbsolute());
+        if (null === $this->class_name_with_namespace) {
+            try {
+                return PhpFilePathDataType::findClassInFile($this->getPathAbsolute());
+            } catch (FileNotFoundError $e) {
+                return null;
+            }
         }
         
         return $this->class_name_with_namespace;

@@ -74,7 +74,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
     		throw new AuthenticationFailedError($this, 'API key not found!', null, null, $token);
     	}
     	
-    	$authenticatedToken = new ApiKeyAuthToken($token->getApiKey(), $usernameVerified);
+    	$authenticatedToken = new ApiKeyAuthToken($token->getApiKey(), $usernameVerified, $token->getFacade());
     	$this->checkAuthenticatorDisabledForUsername($authenticatedToken->getUsername());
     	$this->authenticatedToken = $authenticatedToken;
         return $authenticatedToken;

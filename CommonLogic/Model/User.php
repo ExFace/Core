@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Representation of an Exface user.
@@ -58,11 +59,11 @@ class User implements UserInterface
     /**
      * 
      * @deprecated use UserFactory instead!
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param DataSheetInterface $dataSheet
      * @param boolean $anonymous
      */
-    public function __construct(Workbench $exface, string $username = null, ModelLoaderInterface $loader = null)
+    public function __construct(WorkbenchInterface $exface, string $username = null, ModelLoaderInterface $loader = null)
     {
         $this->exface = $exface;
         $username = $username === '' ? null : $username;
@@ -426,6 +427,30 @@ class User implements UserInterface
         }
         
         return false;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::hasRolesAll()
+     */
+    public function hasRolesAll(array $selectorsOrStrings) : bool
+    {
+        $roles = [];
+        foreach ($selectorsOrStrings as $role) {
+            if ($role instanceof UserRoleSelectorInterface) {
+                $roles[] = $role;
+            } else {
+                $roles[] = new UserRoleSelector($this->getWorkbench(), $role);
+            }
+        }
+    
+        foreach ($roles as $selector) {
+            if ($this->hasRole($selector) === false) {
+                return false;
+            }
+        }
+        return true;
     }
     
     /**

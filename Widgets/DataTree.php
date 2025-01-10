@@ -229,7 +229,7 @@ class DataTree extends DataTable
     {
         $keyAlias = $this->getTreeParentRelation()->getRightKeyAttribute()->getAliasWithRelationPath();
         if ($this->getTreeParentRelationAttribute()->isRelated()) {
-            $keyAlias = RelationPath::relationPathAdd($this->getTreeParentRelationAttribute()->getRelationPath()->toString(), $keyAlias);
+            $keyAlias = RelationPath::join($this->getTreeParentRelationAttribute()->getRelationPath()->toString(), $keyAlias);
         }
         return $this->getMetaObject()->getAttribute($keyAlias);
     }

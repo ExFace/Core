@@ -1,34 +1,34 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 abstract class DataSheetMapperFactory extends AbstractUxonFactory
 {
 
     /**
      *
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @return DataSheetMapperInterface
      */
-    public static function createEmpty(Workbench $workbench) : DataSheetMapperInterface
+    public static function createEmpty(WorkbenchInterface $workbench) : DataSheetMapperInterface
     {
         return new DataSheetMapper($workbench);
     }
     
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param UxonObject $uxon
      * @param MetaObjectInterface $from_object
      * @param MetaObjectInterface $to_object
      * @return DataSheetMapperInterface
      */
-    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, MetaObjectInterface $from_object = null, MetaObjectInterface $to_object = null) : DataSheetMapperInterface
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon, MetaObjectInterface $from_object = null, MetaObjectInterface $to_object = null) : DataSheetMapperInterface
     {
         $mapper = static::createEmpty($workbench);
         

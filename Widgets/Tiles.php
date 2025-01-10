@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * A special container for Tile widget - it makes it easier to create tile menus quickly.
@@ -10,7 +12,7 @@ use exface\Core\Factories\WidgetFactory;
  * @author Andrej Kabachnik
  *        
  */
-class Tiles extends WidgetGrid
+class Tiles extends WidgetGrid implements iFillEntireContainer
 {    
     private $centerContent = null;
     
@@ -112,5 +114,14 @@ class Tiles extends WidgetGrid
     {
         $this->hiddenIfEmpty = $value;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
+    {
+        return null;
     }
 }

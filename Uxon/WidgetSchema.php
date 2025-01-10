@@ -9,8 +9,6 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
-use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Widgets\Tab;
 

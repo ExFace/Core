@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2022-01-22 15:54:09",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2023-09-19 11:35:04",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2024-11-18 08:37:18",
     "contents": {
         "widget_type": "SplitHorizontal",
         "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
@@ -51,6 +51,10 @@
                                 "attribute_alias": "DATA_CONNECTION__LABEL"
                             },
                             {
+                                "attribute_alias": "COMMUNICATION_TEMPLATE__UID:COUNT",
+                                "caption": "Templates"
+                            },
+                            {
                                 "calculation": "=Left(DESCRIPTION, 60)"
                             },
                             {
@@ -62,8 +66,8 @@
                         ],
                         "sorters": [
                             {
-                                "attribute_alias": "CREATED_ON",
-                                "direction": "desc"
+                                "attribute_alias": "NAME",
+                                "direction": "ASC"
                             }
                         ],
                         "buttons": [

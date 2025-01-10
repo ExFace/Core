@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\CommonLogic\UxonObject;
@@ -52,6 +53,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     
     private $widget = null;
 
+    private $widget_was_enriched = false;
+
     private $widget_uxon = null;
 
     private $widget_id = null;
@@ -99,6 +102,13 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     /**
      * Returns the widget, that this action will show.
      * 
+     * This method will instantiate the widget if not done yet and trigger the OnUiActionWidgetInitEvent.
+     * 
+     * You can customize instantiation by overriding the following methods:
+     * 
+     * - `initWidget()` will instantiate a widget from the config of the action - e.g. the UXON
+     * - `enrichWidget()` can modify the instantiated widget - e.g. generate default contents, etc.
+     * 
      * FIXME Currently this will even return a widget if the action links to another page.
      * This means, that all linked pages will be loaded when searching for a widget id -
      * and they will be searched too!!!
@@ -109,23 +119,55 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     public function getWidget()
     {
         if ($this->widget === null) {
-            switch (true) {
-                case $this->getWidgetUxon():
-                    $this->widget = WidgetFactory::createFromUxon($this->getWidgetDefinedIn()->getPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
-                    break;
-                case $this->widget_id && ! $this->page_alias:
-                    $this->widget = $this->getWidgetDefinedIn()->getPage()->getWidget($this->widget_id);
-                    break;
-                case $this->page_alias && ! $this->widget_id:
-                    // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
-                    // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias)->getWidgetRoot();
-                    break;
-                case $this->page_alias && $this->widget_id:
-                    $this->widget = $this->getPage()->getWidget($this->widget_id);
-                    break;
+            $this->widget = $this->initWidget();
+            if ($this->widget !== null) {
+                $this->widget = $this->enrichWidget($this->widget);
+                $this->getWorkbench()->eventManager()->dispatch(new OnUiActionWidgetInitEvent($this->widget, $this->widget->getMetaObject(), $this));
             }
         }
         return $this->widget;
+    }
+
+    /**
+     * Instantiates the widget of this action from its config: widget UXON page or widget id refs.
+     * 
+     * Override this method to change the way the widget is instatiated - e.g. make sure
+     * it has a certain widget type like Dialog or Popup. See the corresponding classes
+     * for examples
+     * 
+     * @return WidgetInterface
+     */
+    protected function initWidget() : ?WidgetInterface
+    {
+        switch (true) {
+            case $this->getWidgetUxon():
+                $widget = WidgetFactory::createFromUxon($this->getWidgetDefinedIn()->getPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
+                break;
+            case $this->widget_id && ! $this->page_alias:
+                $widget = $this->getWidgetDefinedIn()->getPage()->getWidget($this->widget_id);
+                break;
+            case $this->page_alias && ! $this->widget_id:
+                // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
+                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias)->getWidgetRoot();
+                break;
+            case $this->page_alias && $this->widget_id:
+                $widget = $this->getPage()->getWidget($this->widget_id);
+                break;
+        }
+        return $widget;
+    }
+
+    /**
+     * Enrich a freshly instantiated widget: e.g. add default content, etc.
+     * 
+     * Override this method to add widget defaults: see ShowObjectInfoDialog for an example
+     * 
+     * @param \exface\Core\Interfaces\WidgetInterface $widget
+     * @return \exface\Core\Interfaces\WidgetInterface
+     */
+    protected function enrichWidget(WidgetInterface $widget) : WidgetInterface
+    {
+        return $widget;
     }
     
     /**
@@ -173,14 +215,15 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     public function setWidget($widget_or_uxon_object) : iShowWidget
     {
         if ($widget_or_uxon_object instanceof WidgetInterface) {
-            $widget = $widget_or_uxon_object;
+            $this->widget = $widget_or_uxon_object;
+            $this->getWorkbench()->eventManager()->dispatch(new OnUiActionWidgetInitEvent($this->widget, $this->widget->getMetaObject(), $this));
         } elseif ($widget_or_uxon_object instanceof UxonObject) {
             $this->setWidgetUxon($widget_or_uxon_object);
-            $widget = null;
+            $this->widget = null;
         } else {
             throw new ActionConfigurationError($this, 'Action "' . $this->getAlias() . '" expects the parameter "widget" to be either an instantiated widget or a valid UXON widget description object!', '6T91H2S');
         }
-        $this->widget = $widget;
+
         return $this;
     }
 

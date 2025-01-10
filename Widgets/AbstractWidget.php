@@ -991,8 +991,18 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     * Sets a hint message for the widget.
-     * The hint will typically be used for pop-overs, etc.
+     * Sets a hint message for the widget - this is what is used as tooltip or popover.
+     * 
+     * If not set, the widget will attempt to generate a meaninguful hint automatically:
+     * 
+     * - If the widget is bound to an attribute
+     *      - If it has an aggregation like `:SUM`, the hint will remain empty
+     *      - If it is relation and the left-most attribute is the LABEL of its object, the description
+     *      of the relation attribute in the model will be used (not the description of the LABEL attribute)
+     *      - otherwise the description of the attribute will be used as hint
+     * - If the widget is a button, that calls an action, the description of the action will be used
+     * 
+     * You can use a static formula as widget hint: e.g. `=Translate()` or `=GetConfg()` or even `=Lookup()`.
      *
      * @uxon-property hint
      * @uxon-type string|metamodel:formula
