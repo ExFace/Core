@@ -85,13 +85,23 @@ class StringDataType extends AbstractDataType
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.
-     *
-     * @param string $string            
+     * 
+     * The second (optional) argument controls if the first character is to be forced
+     * to be lower case (default) or left as-is.
+     * 
+     * @param mixed $string
+     * @param bool $lowerCaseFirst
      * @return string
      */
-    public static function convertCaseUnderscoreToCamel($string)
+    public static function convertCaseUnderscoreToCamel($string, bool $lowerCaseFirst = true)
     {
-        return lcfirst(static::convertCaseUnderscoreToPascal($string));
+        if ($lowerCaseFirst === false) {
+            $firstChar = mb_substr($string, 0, 1);
+            $string = mb_substr($string, 1);
+        } else {
+            $firstChar = '';
+        }
+        return $firstChar . lcfirst(static::convertCaseUnderscoreToPascal($string));
     }
 
     /**

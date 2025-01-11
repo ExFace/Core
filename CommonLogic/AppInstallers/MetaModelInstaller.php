@@ -128,10 +128,10 @@ class MetaModelInstaller extends DataInstaller
             'COMBINING_ALGORITHM',
             'COMBINING_ALGORITHM_LOCAL',
             'DISABLED_FLAG'
-        ], 'Security/[#=Transliterate(NAME, "' . $translitRule . '")#]/15_AUTHORIZATION_POINT.json');
+        ], 'Security/[#=Transliterate(Filename(CLASS), "' . $translitRule . '")#]/15_AUTHORIZATION_POINT.json');
         $this->addDataOfObject('exface.Core.AUTHORIZATION_POLICY', 'CREATED_ON', 'APP', [
             'DISABLED_FLAG'
-        ], 'Security/[#=Transliterate(AUTHORIZATION_POINT__NAME, "' . $translitRule . '")#]/16_AUTHORIZATION_POLICY.json');
+        ], 'Security/[#=Transliterate(Filename(AUTHORIZATION_POINT__CLASS), "' . $translitRule . '")#]/16_AUTHORIZATION_POLICY.json');
         $this->addDataOfObject('exface.Core.QUEUE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.SCHEDULER', 'CREATED_ON', 'APP', [
             'LAST_RUN'
