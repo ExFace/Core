@@ -95,13 +95,25 @@ class StringDataType extends AbstractDataType
      */
     public static function convertCaseUnderscoreToCamel($string, bool $lowerCaseFirst = true)
     {
+        return static::convertCaseDelimiterToCamel($string ?? '', '_', $lowerCaseFirst);
+    }
+
+    /**
+     * 
+     * @param string $string
+     * @param string $delimiter
+     * @param bool $lowerCaseFirst
+     * @return string
+     */
+    public static function convertCaseDelimiterToCamel(string $string, string $delimiter = '_', bool $lowerCaseFirst = true)
+    {
         if ($lowerCaseFirst === false) {
             $firstChar = mb_substr($string, 0, 1);
             $string = mb_substr($string, 1);
         } else {
             $firstChar = '';
         }
-        return $firstChar . lcfirst(static::convertCaseUnderscoreToPascal($string));
+        return $firstChar . lcfirst(static::convertCaseDelimiterToPascal($string, $delimiter));
     }
 
     /**
@@ -123,7 +135,18 @@ class StringDataType extends AbstractDataType
      */
     public static function convertCaseUnderscoreToPascal($string)
     {
-        return str_replace('_', '', ucwords($string, "_"));
+        return static::convertCaseDelimiterToPascal($string ?? '', '_');
+    }
+
+    /**
+     * 
+     * @param string $string
+     * @param string $delimiter
+     * @return string
+     */
+    public static function convertCaseDelimiterToPascal(string $string, string $delimiter = '_') : string
+    {
+        return str_replace($delimiter, '', ucwords($string, $delimiter));
     }
 
     /**
