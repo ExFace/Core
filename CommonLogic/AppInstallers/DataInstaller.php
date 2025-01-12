@@ -534,11 +534,15 @@ class DataInstaller extends AbstractAppInstaller
             $uxon = $sheet->exportUxonObject();
             foreach ($rowsByPath as $filePathRel => $filteredRows) {
                 $filePathRel = trim(FilePathDataType::normalize($filePathRel, DIRECTORY_SEPARATOR));
-                $fileName = FilePathDataType::findFileName($filePathRel, true);
-                $folderPathRel = mb_substr($filePathRel, 0, (-1) * mb_strlen($fileName));
-                $folderPathRel = str_replace(' ', '_', subject: $folderPathRel);
-                $folderPathRel = StringDataType::convertCaseUnderscoreToCamel($folderPathRel, false);
-                $filePathRel = $folderPathRel . $fileName;
+                // Make sure the path has no white spaces to avoid issues when calling
+                // CLI commands
+                if (mb_stripos($filePathRel, ' ') !== false) {
+                    $fileName = FilePathDataType::findFileName($filePathRel, true);
+                    $folderPathRel = mb_substr($filePathRel, 0, (-1) * mb_strlen($fileName));
+                    $folderPathRel = str_replace(' ', '_', subject: $folderPathRel);
+                    $folderPathRel = StringDataType::convertCaseUnderscoreToCamel($folderPathRel, false);
+                    $filePathRel = $folderPathRel . $fileName;
+                }
                 // Put only the filtered rows into the UXON. For now NO prettifying!!! Otherwise the
                 // diff with the previous version below will produces false positives!
                 $uxon->setProperty('rows', $filteredRows);
