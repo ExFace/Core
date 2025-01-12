@@ -539,8 +539,8 @@ class DataInstaller extends AbstractAppInstaller
                 if (mb_stripos($filePathRel, ' ') !== false) {
                     $fileName = FilePathDataType::findFileName($filePathRel, true);
                     $folderPathRel = mb_substr($filePathRel, 0, (-1) * mb_strlen($fileName));
-                    $folderPathRel = str_replace(' ', '_', subject: $folderPathRel);
-                    $folderPathRel = StringDataType::convertCaseUnderscoreToCamel($folderPathRel, false);
+                    $folderPathRel = str_replace(' ', '::', subject: $folderPathRel);
+                    $folderPathRel = StringDataType::convertCaseDelimiterToCamel($folderPathRel, '::', false);
                     $filePathRel = $folderPathRel . $fileName;
                 }
                 // Put only the filtered rows into the UXON. For now NO prettifying!!! Otherwise the
