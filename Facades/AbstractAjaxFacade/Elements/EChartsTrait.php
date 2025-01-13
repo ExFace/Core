@@ -293,7 +293,7 @@ trait EChartsTrait
             $togglePercentUxon->setProperty('hide_caption', false);
             $togglePercentUxon->setProperty('visibility', 'optional');
             $togglePercentBtn = WidgetFactory::createFromUxon($widget->getPage(), $togglePercentUxon, $menu);
-            $togglePercentBtn->getAction()->setScript($this->buildJsToggleLabelPercent());
+            $togglePercentBtn->getAction()->setScript($this->buildJsToggleValueLabels());
             $tb->getButtonGroupForGlobalActions()->addButton($togglePercentBtn);
         }
     }
@@ -323,12 +323,12 @@ JS;
     }
 
     /**
-     * Build a JS snippet to toggle percentage displays on all labels of this chart.
+     * Build a JS snippet to toggle value displays on all labels of this chart.
      * Affects all series contained within this chart.
      * 
      * @return string
      */
-    protected function buildJsToggleLabelPercent() : string 
+    protected function buildJsToggleValueLabels() : string 
     {
         return <<<JS
 
@@ -1344,6 +1344,16 @@ JS;
         return '';
     }
 
+    /**
+     * Build a JS snippet that serves as function callback for the ECharts property
+     * `series.label.formatter`.
+     * 
+     * @param string $transformationsJs
+     * @param string $outputJs
+     * @param string $chartVarJs
+     * @param string $paramsVarJs
+     * @return string
+     */
     protected function buildJsLabelFormatterCallback(
         string $transformationsJs, 
         string $outputJs, string 
