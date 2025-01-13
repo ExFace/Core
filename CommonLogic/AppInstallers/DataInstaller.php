@@ -71,7 +71,24 @@ use exface\Core\DataTypes\DateDataType;
  *  $installer->addInstaller($dataInstaller);
  * ```
  * 
- * ## Folder structure
+ * ## Export format
+ * 
+ * Every data sheet is exported as one or more prettyprinted JSON files. This depends on whether 
+ * there are placeholders in the path. These placeholders will split the JSON into multiple files.
+ * 
+ * In contrast to the regular UXON-export of a data sheet where the value of each column is
+ * stored as a string, the model sheet columns containing UXON have prettyprinted JSON values.
+ * This makes it easier to identify changes in larger UXON objects like default editors, aciton
+ * configurations, etc. Same goes for multiline text: it is transformed into JSON arrays in order
+ * to keep the lines visible in file diffs.
+ * 
+ * When installing, the files are processed in alphabetical order - more precisely in the order
+ * of the numerc filename prefixes. For each entity type a data sheet is instantiated and 
+ * `DataSheetInterface::dataReplaceByFilters()` is preformed filtered by the app - this makes
+ * sure all possibly existing entities bound to this app are completely replaced by the contents
+ * of the data sheet.
+ * 
+ * ### Folder structure
  * 
  * As shown above, the installer can be easily customized to save data in different file and folder
  * structures. Each meta object is always exported and imported as a single DataSheet. However, you
@@ -81,7 +98,7 @@ use exface\Core\DataTypes\DateDataType;
  * 
  * You can even change the folder sturcture without breaking backwards compatibility! 
  * 
- * ## Encryption
+ * ### Encryption
  * 
  * Every content of a attribute with `EncryptedDataType` as data type will be exported as an encrypted string.
  * The used encryption salt will either be build from the app uid or you can provide a custom salt.
@@ -491,6 +508,12 @@ class DataInstaller extends AbstractAppInstaller
         
         $requiredCols = $sheet->getColumns()->getAll();
         $sheet->dataRead();
+        // Reading data might add add some columns (e.g. if one of the "real" columns is a formula
+        // with multiple other attributes), so we need to remove them here to avoid installing things
+        // that were not intended to change. For example, exporting PAGE_GROUP_PAGES also means
+        // including the LABEL column, which is a =Concatenate() with PAGE_GROUP__NAME. This adds
+        // PAGE_GROUP__NAME to the data of PAGE_GROUP_PAGES. When performing dataReplace() this results
+        // in an error.
         foreach ($sheet->getColumns() as $col) {
             if (! in_array($col, $requiredCols)) {
                 $sheet->getColumns()->remove($col);
