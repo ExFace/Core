@@ -657,21 +657,23 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 $checkCol = $checkSheet->getColumns()->addFromUidAttribute();
                 $checkCol->setValues($checkUids);
                 $checkSheet->getFilters()->addConditionFromColumnValues($checkCol);
+                $checkSheet->getFilters()->addConditionFromValueArray('AUTHENTICATOR_ID', [$this->getId(), null]);
                 $checkSheet->dataRead();
                 
                 // see a) as described in the comment above
-                $externalRoleUids = array_column($externalRolesData->getRows(), 'USER_ROLE');
+                $externalRoleUids = array_column($externalRoles = $externalRolesData->getRows(), 'USER_ROLE');
                 foreach ($checkSheet->getRows() as $internalRow) {
-                    if (in_array($internalRow["USER_ROLE"], $externalRoleUids)) {
+                    if ($internalRow["AUTHENTICATOR_ID"] == null && in_array($internalRow["USER_ROLE"], $externalRoleUids)) {
                         $deleteUids[] = $internalRow["UID"];
                     }
                 }
                 
                 // see b) as described in the comment above
-                $checkSheet->getFilters()->addConditionFromString('AUTHENTICATOR_ID', $this->getId());
                 $checkSheet->dataRead();
-                foreach ($checkCol->getValues() as $uid) {
-                    $deleteUids[] = $uid;
+                foreach ($checkSheet->getRows() as $internalRow) {
+                    if($internalRow["AUTHENTICATOR_ID"] === $this->getId()) {
+                        $deleteUids[] = $internalRow["UID"];
+                    }
                 }
             }
 
@@ -683,7 +685,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             
             // Add roles matching the current external roles (see above) 
             $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
-            foreach ($externalRolesData->getRows() as $row) {
+            foreach ($externalRoles as $row) {
                 if ($row['USER_ROLE'] !== null) {
                     $newRolesSheet->addRow([
                         'USER' => $user->getUid(),
