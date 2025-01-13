@@ -23,6 +23,15 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      - 08_OBJECT_ACTION.json
  * - app.alias.object_alias_2
  * - ...
+ * - Security/
+ *      - PageGroups/
+ *          - <name_of_page_group>
+ *              - 12_PAGE_GROUP.json
+ *              - 13_PAGE_GROUP_PAGES.json
+ *      - UserRoles/
+ *          - <alias_of_role>
+ *              - 14_USER_ROLE.json
+ *              - 16_AUTHORIZATION_POLICY.json
  * - 00_APP.json <- entities without an object binding are stored as data sheet UXON
  * - 01_DATATYPE.json
  * - ...
@@ -31,40 +40,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      - app.alias.page_alias_2.json
  *      - ... 
  * 
- * In contrast to the regular UXON-export of a data sheet where the value of each column is
- * stored as a string, the model sheet columns containing UXON have prettyprinted JSON values.
- * This makes it easier to identify changes in larger UXON objects like default editors, aciton
- * configurations, etc.
- * 
- * Object-bound entities like attributes, behaviors, etc. are saved per object in subfolders.
- * This simplifies change management greatly as it is difficult to diff large JSON files properly.
- * 
- * When installing, the files are processed in alphabetical order - more precisely in the order
- * of the numerc filename prefixes. For each entity type a data sheet is instantiated and 
- * `DataSheetInterface::dataReplaceByFilters()` is preformed filtered by the app - this makes
- * sure all possibly existing entities bound to this app are completely replaced by the contents
- * of the data sheet.
- * 
  * Object-bound entities are first collected into a single large data sheet to make sure all
  * data is replaced at once.
  * 
  * Pages are installed last by calling the dedicated `PageInstaller`.
- * 
- * ## Encryption
- * Every content of a attribute with `EncryptedDataType` as data type will be exported as an encrypted string.
- * The used encryption salt will either be build from the app uid or you can provide a custom salt.
- * The custom salt has to be placed in the `Encryption.config.json` file in the `config` folder with the app alias (with namespace) as key.
- * The salt has to be 32 characters long. When importing the metamodell on a different PowerUi installation you will also need that config
- * file with that key you used for encryption.
- * You can use the followign website to create a salt:
- * `http://www.unit-conversion.info/texttools/random-string-generator/`
- * CAREFUL: If you lose the used custom salt for encryption during the export you will not be able to restore the encrypted
- * data and the affected data will be lost.
- * 
- * ## Behaviors
- * 
- * NOTE: The `TimeStampingBehavior` of the model objects is disabled before install, so the
- * create/update stamps of the exported model are saved correctly.
  * 
  * ## Backwards compatibilty issues
  * 
