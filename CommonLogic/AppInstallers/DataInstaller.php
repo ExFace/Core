@@ -489,7 +489,13 @@ class DataInstaller extends AbstractAppInstaller
             $objPathPhColNames[$attrAlias] = $col->getName();
         }
         
+        $requiredCols = $sheet->getColumns()->getAll();
         $sheet->dataRead();
+        foreach ($sheet->getColumns() as $col) {
+            if (! in_array($col, $requiredCols)) {
+                $sheet->getColumns()->remove($col);
+            }
+        }
         
         if ($sheet->isEmpty()) {
             return [];
