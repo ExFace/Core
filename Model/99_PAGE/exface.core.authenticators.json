@@ -68,7 +68,7 @@
                                             {
                                                 "widget_type": "Message",
                                                 "type": "info",
-                                                "text": "For security reasons, the authentication methods can only be changed in the config files of the installation: in `config\/System.config.json` under `SECURITY.AUTHENTICATORS`."
+                                                "text": "For security reasons, the authentication methods can only be changed in the config files of the installation: in `config/System.config.json` under `SECURITY.AUTHENTICATORS`."
                                             }
                                         ]
                                     }
@@ -79,7 +79,7 @@
                 ]
             },
             {
-                "caption": "Synchorized external user roles\/groups",
+                "caption": "Synchorized external user roles/groups",
                 "widgets": [
                     {
                         "widget_type": "DataTable",

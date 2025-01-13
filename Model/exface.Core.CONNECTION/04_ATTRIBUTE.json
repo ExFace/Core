@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Connection Name [LABEL]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-11 10:57:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -216,6 +222,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Connector [CONNECTOR]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-11 10:57:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -252,7 +259,7 @@
             "RELATED_OBJ": "0x11e6aff363ae00c18943e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -260,6 +267,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Configuration [CONFIG]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2022-02-14 12:35:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -293,10 +301,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Configuration options for the data connector to be used in this connection: e.g. username, server address, etc. Refer to the description of the data connector for a list of possible options.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -308,6 +316,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Read-Only [READONLY]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-11 10:57:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -341,10 +350,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, makes writing to this connection impossible",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -352,6 +361,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Connection Alias [ALIAS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-11-23 12:56:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -385,10 +395,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The alias of a connection can be used to force a widget to use this specific connection instead of the one specified in the data source.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -396,6 +406,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2016-03-30 00:58:00",
             "MODIFIED_ON": "2020-11-11 10:57:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -432,7 +443,7 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Optional relation to a specific app. If set, this connection will be part of the app's package. It can still be used in any other app too.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -442,6 +453,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias with namespace [ALIAS_WITH_NS]",
             "CREATED_ON": "2022-01-28 08:41:29",
             "MODIFIED_ON": "2022-01-28 08:42:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -466,7 +478,25 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "(CASE\n  WHEN [#APP#] IS NOT NULL \n  THEN CONCAT(\n    (SELECT \n      (CASE \n        WHEN [#~alias#]_nsa.app_alias IS NOT NULL \nTHEN CONCAT([#~alias#]_nsa.app_alias, '.') \n        ELSE '' \n      END) \n      FROM exf_app [#~alias#]_nsa \n      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n    [#ALIAS#])\n  ELSE\n    [#ALIAS#]\nEND)\n",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "(CASE",
+                "  WHEN [#APP#] IS NOT NULL ",
+                "  THEN CONCAT(",
+                "    (SELECT ",
+                "      (CASE ",
+                "        WHEN [#~alias#]_nsa.app_alias IS NOT NULL ",
+                "THEN CONCAT([#~alias#]_nsa.app_alias, '.') ",
+                "        ELSE '' ",
+                "      END) ",
+                "      FROM exf_app [#~alias#]_nsa ",
+                "      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), ",
+                "    [#ALIAS#])",
+                "  ELSE",
+                "    [#ALIAS#]",
+                "END)",
+                ""
+            ],
             "OBJECT": "0x33380000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -475,10 +505,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Full alias of the connection including the app alias as namespace. This is what is used in UXON to identify the data connection.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -486,6 +516,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Time zone [TIME_ZONE]",
             "CREATED_ON": "2023-02-07 11:32:55",
             "MODIFIED_ON": "2023-02-07 11:35:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -519,10 +550,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

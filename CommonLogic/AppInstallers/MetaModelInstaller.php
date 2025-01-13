@@ -23,6 +23,15 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      - 08_OBJECT_ACTION.json
  * - app.alias.object_alias_2
  * - ...
+ * - Security/
+ *      - PageGroups/
+ *          - <name_of_page_group>
+ *              - 12_PAGE_GROUP.json
+ *              - 13_PAGE_GROUP_PAGES.json
+ *      - UserRoles/
+ *          - <alias_of_role>
+ *              - 14_USER_ROLE.json
+ *              - 16_AUTHORIZATION_POLICY.json
  * - 00_APP.json <- entities without an object binding are stored as data sheet UXON
  * - 01_DATATYPE.json
  * - ...
@@ -31,40 +40,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      - app.alias.page_alias_2.json
  *      - ... 
  * 
- * In contrast to the regular UXON-export of a data sheet where the value of each column is
- * stored as a string, the model sheet columns containing UXON have prettyprinted JSON values.
- * This makes it easier to identify changes in larger UXON objects like default editors, aciton
- * configurations, etc.
- * 
- * Object-bound entities like attributes, behaviors, etc. are saved per object in subfolders.
- * This simplifies change management greatly as it is difficult to diff large JSON files properly.
- * 
- * When installing, the files are processed in alphabetical order - more precisely in the order
- * of the numerc filename prefixes. For each entity type a data sheet is instantiated and 
- * `DataSheetInterface::dataReplaceByFilters()` is preformed filtered by the app - this makes
- * sure all possibly existing entities bound to this app are completely replaced by the contents
- * of the data sheet.
- * 
  * Object-bound entities are first collected into a single large data sheet to make sure all
  * data is replaced at once.
  * 
  * Pages are installed last by calling the dedicated `PageInstaller`.
- * 
- * ## Encryption
- * Every content of a attribute with `EncryptedDataType` as data type will be exported as an encrypted string.
- * The used encryption salt will either be build from the app uid or you can provide a custom salt.
- * The custom salt has to be placed in the `Encryption.config.json` file in the `config` folder with the app alias (with namespace) as key.
- * The salt has to be 32 characters long. When importing the metamodell on a different PowerUi installation you will also need that config
- * file with that key you used for encryption.
- * You can use the followign website to create a salt:
- * `http://www.unit-conversion.info/texttools/random-string-generator/`
- * CAREFUL: If you lose the used custom salt for encryption during the export you will not be able to restore the encrypted
- * data and the affected data will be lost.
- * 
- * ## Behaviors
- * 
- * NOTE: The `TimeStampingBehavior` of the model objects is disabled before install, so the
- * create/update stamps of the exported model are saved correctly.
  * 
  * ## Backwards compatibilty issues
  * 
@@ -101,6 +80,7 @@ class MetaModelInstaller extends DataInstaller
         
         $this->setDataFolderPath(self::FOLDER_NAME_MODEL);
         
+        $translitRule = ':: Any-Latin; :: NFD; :: [:Nonspacing Mark:] Remove; :: NFC; :: [:Punctuation:] Remove;';
         $this->addDataOfObject('exface.Core.APP', 'CREATED_ON', 'UID', ['PUPLISHED']);
         $this->addDataOfObject('exface.Core.DATATYPE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.OBJECT', 'CREATED_ON', 'APP');
@@ -118,25 +98,56 @@ class MetaModelInstaller extends DataInstaller
         $this->addDataOfObject('exface.Core.UXON_PRESET', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.PAGE_TEMPLATE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.ATTRIBUTE_COMPOUND', 'CREATED_ON', 'COMPOUND_ATTRIBUTE__OBJECT__APP');
-        $this->addDataOfObject('exface.Core.PAGE_GROUP', 'CREATED_ON', 'APP');
-        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'PAGE__APP');
-        $this->addDataOfObject('exface.Core.USER_ROLE', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP', 'CREATED_ON', 'APP', [], 'Security/PageGroups/[#=Transliterate(NAME, "' . $translitRule . '")#]/12_PAGE_GROUP.json');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'PAGE__APP', [], 'Security/Page groups/[#=Transliterate(PAGE_GROUP__NAME, "' . $translitRule . '")#]/13_PAGE_GROUP_PAGES.json');
+        $this->addDataOfObject('exface.Core.USER_ROLE', 'CREATED_ON', 'APP', [], 'Security/UserRoles/[#ALIAS#]/14_USER_ROLE.json');
         $this->addDataOfObject('exface.Core.AUTHORIZATION_POINT', 'CREATED_ON', 'APP', [
             'DEFAULT_EFFECT',
             'DEFAULT_EFFECT_LOCAL',
             'COMBINING_ALGORITHM',
             'COMBINING_ALGORITHM_LOCAL',
             'DISABLED_FLAG'
-        ]);
+        ], 'Security/15_AUTHORIZATION_POINT.json');
         $this->addDataOfObject('exface.Core.AUTHORIZATION_POLICY', 'CREATED_ON', 'APP', [
             'DISABLED_FLAG'
-        ]);
+        ], 'Security/UserRoles/[#TARGET_USER_ROLE__ALIAS#]/16_AUTHORIZATION_POLICY.json');
         $this->addDataOfObject('exface.Core.QUEUE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.SCHEDULER', 'CREATED_ON', 'APP', [
             'LAST_RUN'
         ]);
         $this->addDataOfObject('exface.Core.COMMUNICATION_CHANNEL', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.COMMUNICATION_TEMPLATE', 'CREATED_ON', 'APP');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\DataInstaller::getModelFilePath()
+     */
+    protected function getModelFilePath(MetaObjectInterface $object) : string
+    {
+        $folder = '';
+        switch (true) {
+            case $object->isExactly('exface.Core.OBJECT'):
+                $folder = '[#ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
+                break;
+            case $object->isExactly('exface.Core.ATTRIBUTE_COMPOUND'):
+                $folder = '[#COMPOUND_ATTRIBUTE__OBJECT__ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
+                break;
+            default:
+                foreach ($object->getAttributes() as $attr) {
+                    if ($attr->isRelation() 
+                        && $attr->getRelation()->getRightObject()->isExactly('exface.Core.OBJECT') 
+                        && $attr->getRelation()->isForwardRelation() 
+                        && $attr->isRequired()
+                    ) {
+                        $folder = "[#{$attr->getAlias()}__ALIAS_WITH_NS#]" . DIRECTORY_SEPARATOR;
+                        break;
+                    }
+                }
+        }
+        $filename = parent::getModelFilePath($object);
+        return $folder . $filename;
     }
 
     /**
@@ -331,36 +342,5 @@ class MetaModelInstaller extends DataInstaller
         }
         
         return $sheet;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\DataInstaller::getModelFilePath()
-     */
-    protected function getModelFilePath(MetaObjectInterface $object) : string
-    {
-        $folder = '';
-        switch (true) {
-            case $object->isExactly('exface.Core.OBJECT'):
-                $folder = '[#ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
-                break;
-            case $object->isExactly('exface.Core.ATTRIBUTE_COMPOUND'):
-                $folder = '[#COMPOUND_ATTRIBUTE__OBJECT__ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
-                break;
-            default:
-                foreach ($object->getAttributes() as $attr) {
-                    if ($attr->isRelation() 
-                        && $attr->getRelation()->getRightObject()->isExactly('exface.Core.OBJECT') 
-                        && $attr->getRelation()->isForwardRelation() 
-                        && $attr->isRequired()
-                    ) {
-                        $folder = "[#{$attr->getAlias()}__ALIAS_WITH_NS#]" . DIRECTORY_SEPARATOR;
-                        break;
-                    }
-                }
-        }
-        $filename = parent::getModelFilePath($object);
-        return $folder . $filename;
     }
 }

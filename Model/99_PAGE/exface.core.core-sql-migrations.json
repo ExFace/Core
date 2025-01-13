@@ -79,7 +79,7 @@
                 "bind_to_double_click": true
             },
             {
-                "caption": "Disable\/Enable",
+                "caption": "Disable/Enable",
                 "icon": "eye-slash",
                 "disabled_if": {
                     "operator": "AND",

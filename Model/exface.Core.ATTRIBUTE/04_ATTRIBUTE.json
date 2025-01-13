@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Attribute [LABEL]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-09-10 15:26:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -196,7 +202,11 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: CONCAT([#NAME#], ' [', [#ALIAS#], ']')\n@T-SQL: (CASE WHEN [#NAME#] IS NULL THEN NULL ELSE CONCAT([#NAME#], ' [', [#ALIAS#], ']') END)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: CONCAT([#NAME#], ' [', [#ALIAS#], ']')",
+                "@T-SQL: (CASE WHEN [#NAME#] IS NULL THEN NULL ELSE CONCAT([#NAME#], ' [', [#ALIAS#], ']') END)"
+            ],
             "OBJECT": "0x32350000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -205,10 +215,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -216,6 +226,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Attribute Alias [ALIAS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -249,10 +260,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The alias is used to identify the attribute in UXON. Alias are case sensitive and may contain letters, digits and underscores.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -260,6 +271,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Type [DATATYPE]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -296,7 +308,7 @@
             "RELATED_OBJ": "0x32360000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Defines, how the data is treated inside the workbench. Of course this type should be compatible with the data type in the data source, but it can be different: e.g. the SQL-type TEXT can be text, HTML, XML, etc.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -306,6 +318,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Address [DATA_ADDRESS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-08-05 13:15:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -339,17 +352,23 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Data source specific address of the attribute: e.g. the SELECT statement for SQL  sources, the JSON-path for JSON sources, etc. Refer to the documentation of your query builder for more details.\n\nThis field cannot be used for compound attributes as their values are derived from their components.",
+            "RELATED_OBJ_ATTR": null,
+            "SHORT_DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Data source specific address of the attribute: e.g. the SELECT statement for SQL  sources, the JSON-path for JSON sources, etc. Refer to the documentation of your query builder for more details.",
+                "",
+                "This field cannot be used for compound attributes as their values are derived from their components."
+            ],
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Object [OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -386,7 +405,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The object this attribute belongs to",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -396,6 +415,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Calculation [FORMATTER]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-08-05 13:17:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -429,10 +449,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "A formula to calculate the attribute's value: e.g. `=Concatenate(attribute1, attribute2)`. Normally used instead of a data address to add read-only attributes the data source cannot produce. In some cases a combination of a formula and a data address may be used to add specific formatting to a value (e.g. a data stored in some non-standard-format).",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -440,6 +460,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Display Position [DISPLAYORDER]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -473,10 +494,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set to a number greater than 0, this attribute will be used as a default column in tabular widgets with this object: e.g. in DataTable or InputComboTable without explicitly defined columns.  ",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -484,6 +505,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Object Label [LABELFLAG]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -517,10 +539,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Use this attribute as human-oriented identifier of the object: e.g. as default caption for widgets like table columns, inputs, etc.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -528,6 +550,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Object UID [UIDFLAG]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -561,10 +584,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "This attribute is a (technical) unique ID of its object. Typically this is some kind of primary key. There MUST only be one UID-attribute per object. ",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -572,6 +595,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Hidden [HIDDENFLAG]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -605,10 +629,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, the attribute will not be displayed in automatically generated widgets",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -616,6 +640,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Editable [EDITABLEFLAG]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -649,10 +674,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Determines if this attribute should be editable in the UI. If unchecked, all editor widgets will be disabled by default. Non-editable attributes can still be modified by business logic in actions and behaviors as long as they are marked as writable.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -660,6 +685,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Required [REQUIREDFLAG]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -693,10 +719,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, the attribute is expected to always have a value. Required attributes will also produce required input widgets as editors by default. ",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -704,6 +730,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Relation to [RELATED_OBJ]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -740,7 +767,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The object the relation points to, if this attribute is a relation",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -750,6 +777,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Sorter Position [SORTERPOS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -783,10 +811,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, the attribute will be used for sorting in lists of it's object by default. The number specifies the importance of this attribute among other sorting attributes: the list will be sorted by the attribute with a 1 first, the by the attribute wit",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -794,6 +822,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Sorter Direction [SORTERDIR]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -833,10 +862,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Which way to sort this attribute by default. If not set, the default sorting direction of the data type will be used.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -844,6 +873,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Relation to (attribute) [RELATED_OBJ_ATTR]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -880,7 +910,7 @@
             "RELATED_OBJ": "0x32350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, the relation will point to the specified attribute instead of the UID of the related object",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -890,6 +920,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Description [SHORT_DESCRIPTION]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -926,10 +957,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The description is used for hint texts like this one.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -937,6 +968,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Address Settings [DATA_ADDRESS_PROPS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -973,10 +1005,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Custom configuration for the data source of this attribute. Possible options depend on the query builder use - see its documentation for more details.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -984,6 +1016,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Value [DEFAULT_VALUE]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1017,10 +1050,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "This expression will be used when no other value is given (e.g. inputs will be prefilled with this value). You can use attribute aliases, formulas or explicit values (the latter enclosed in quotes!) ",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1028,6 +1061,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Fixed Value [FIXED_VALUE]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1061,10 +1095,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "This expression will allways be evaluated, when the object is saved - eventually overwriting user input. This is handy for attributes like last_update_time, where a fixed value =Now() will automatically set the attribute to the time of saving.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1072,6 +1106,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Custom Data Type Options [CUSTOM_DATA_TYPE]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1105,17 +1140,18 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Overrides\/extends the configuration of the selected data type.",
+            "RELATED_OBJ_ATTR": null,
+            "SHORT_DESCRIPTION": "Overrides/extends the configuration of the selected data type.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Sortable [SORTABLEFLAG]",
             "CREATED_ON": "2016-12-14 14:22:13",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1149,10 +1185,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Uncheck if it should not be possible to sort data over this attribute. If the data source does not support sorting, but it is still desireable, try leaving it no - some query builder can sort data in-memory.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -1160,6 +1196,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Filterable [FILTERABLEFLAG]",
             "CREATED_ON": "2016-12-14 14:22:13",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1193,10 +1230,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Uncheck if it should not be possible to filter data over this attribute. If the data source does not support filtering, but it is still desireable, try leaving it no - some query builder can filter data in-memory.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -1204,6 +1241,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Aggregatable [AGGREGATABLEFLAG]",
             "CREATED_ON": "2016-12-14 14:22:13",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1237,10 +1275,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Uncheck if it should not be possible to aggregate (e.g. sum, count) data over this attribute. If the data source does not support aggregation, but it is still usefull, try leaving it on - some query builders can aggregate data in-memory.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -1248,6 +1286,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Aggregator [DEFAULT_AGGREGATE_FUNCTION]",
             "CREATED_ON": "2016-12-14 14:22:13",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1293,10 +1332,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "How to aggregate values of this attribute by default if multiple values need to be squeezed into a single field for any reason.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1304,6 +1343,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Value List Delimiter [VALUE_LIST_DELIMITER]",
             "CREATED_ON": "2017-06-21 10:57:42",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1337,10 +1377,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Used to separate values of this attribute in concatenaded strings. Change it to a character, that is unlikely to be a regular part of the value if your values will contain commas.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "','",
@@ -1348,6 +1388,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Readable [READABLEFLAG]",
             "CREATED_ON": "2017-10-12 07:32:22",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1381,17 +1422,18 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "If unchecked, the attribute will be ignored when reading the object from the data source. It can still be used for filtering, sorting or even writing. Typical examples are parameter-attributes of objects based on web services, SQL procedures or RFC\/RPC logic.",
+            "RELATED_OBJ_ATTR": null,
+            "SHORT_DESCRIPTION": "If unchecked, the attribute will be ignored when reading the object from the data source. It can still be used for filtering, sorting or even writing. Typical examples are parameter-attributes of objects based on web services, SQL procedures or RFC/RPC logic.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Writable [WRITABLEFLAG]",
             "CREATED_ON": "2017-10-12 07:32:22",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1425,10 +1467,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If unchecked, the attribute will be ignored in write-operations even if it is editable. Typical examples are calculated attributes or those used for calculations: e.g. quantity and price when only the total value is to be saved.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -1436,6 +1478,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "System [SYSTEMFLAG]",
             "CREATED_ON": "2017-10-12 07:32:22",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1469,10 +1512,10 @@
             "HIDDENFLAG": 1,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1480,6 +1523,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Editor Widget [DEFAULT_EDITOR_UXON]",
             "CREATED_ON": "2017-10-18 11:14:54",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1513,10 +1557,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If defined, autogenerated editor widgets for this attribute will use this UXON configuration. Otherwise the default editor of the data type will be used.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1524,6 +1568,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Copy with related object [COPY_WITH_RELATED_OBJECT]",
             "CREATED_ON": "2018-10-05 15:32:50",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1557,10 +1602,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If checked, this attribute's object will always be copied together with the related object. Use this, if this object should never be shared between copies of the related object - but only if the data source does not take care of it iteself!",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1568,6 +1613,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Delete with related object [DELETE_WITH_RELATED_OBJECT]",
             "CREATED_ON": "2018-10-05 15:32:50",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1601,10 +1647,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If checked, this attribute's object (i.e. child) will be deleted together with the related object (i.e. parent). Use this, if this object should never become an orphan - but only if the data source will not take care of it itself!",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1612,6 +1658,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Display Widget [DEFAULT_DISPLAY_UXON]",
             "CREATED_ON": "2018-11-19 08:40:58",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1645,10 +1692,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Custom configuration for display widgets (i.e. cell widgets in data widgets, etc.): e.g. ProgressBar for percentual values, InputSelect for enumerations, etc.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1656,6 +1703,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Comments [COMMENTS]",
             "CREATED_ON": "2018-11-19 08:40:58",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1689,10 +1737,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Internal information for app designers - not visible to users in contrast to the description!",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1700,6 +1748,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Attribute Name [NAME]",
             "CREATED_ON": "2019-01-31 09:03:07",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1733,10 +1782,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The attribute name will be used as default caption for most widgets: table columns, inputs, filters, etc.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1744,6 +1793,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Cardinality [RELATION_CARDINALITY]",
             "CREATED_ON": "2019-02-01 11:37:14",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1761,7 +1811,12 @@
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": null,
-            "COMMENTS": "The custom enum-type only includes cardinalities, that a relation can have from the point of view of the attribute, it is defined in: e.g an attribute cannot be an 1-to-n relation, because this relation must then be defined as n-to-1 on the key-attribute at the other end. \n\nThe key for the n-to-1 option is empty to make every relation relations without a type be treated as regular ones (instead of forcing the user to select a type in every case).",
+            "COMMENTS": [
+                "// Multiline text delimited by `\n`",
+                "The custom enum-type only includes cardinalities, that a relation can have from the point of view of the attribute, it is defined in: e.g an attribute cannot be an 1-to-n relation, because this relation must then be defined as n-to-1 on the key-attribute at the other end. ",
+                "",
+                "The key for the n-to-1 option is empty to make every relation relations without a type be treated as regular ones (instead of forcing the user to select a type in every case)."
+            ],
             "NAME": "Cardinality",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
@@ -1777,10 +1832,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The cardinality shows, how many objects on the left (this) and the right side of it belong together. Attributes holding foreign keys will generally be an n-to-1 relation.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1795,6 +1850,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Attribute Type [TYPE]",
             "CREATED_ON": "2020-01-30 18:12:29",
             "MODIFIED_ON": "2021-08-05 13:14:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1828,10 +1884,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "`Data` for regular attributes read from data sources, `Calculated` for formula-based in-memory calculations or `Compound` for attributes that consist of multiple other attributes glued together.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'D'",
@@ -1839,6 +1895,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Copyable [COPYABLEFLAG]",
             "CREATED_ON": "2021-01-11 22:15:13",
             "MODIFIED_ON": "2021-01-12 15:03:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1872,10 +1929,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Uncheck if this attribute must not be copied with its object. This is usefull if for attributes that represent object lifecycle data like statuses, errors, etc.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 1,
@@ -1883,6 +1940,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Display widget [DEFAULT_DISPLAY_FLAG]",
             "CREATED_ON": "2023-11-04 08:00:57",
             "MODIFIED_ON": "2023-11-04 08:15:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1916,10 +1974,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1927,6 +1985,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Editor widget [DEFAULT_EDITOR_FLAG]",
             "CREATED_ON": "2023-11-04 08:07:24",
             "MODIFIED_ON": "2023-11-04 08:10:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1960,10 +2019,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1971,6 +2030,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Custom data type [CUSTOM_DATA_TYPE_FLAG]",
             "CREATED_ON": "2023-11-04 08:08:32",
             "MODIFIED_ON": "2023-11-04 08:10:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2004,10 +2064,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
