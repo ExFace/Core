@@ -285,11 +285,11 @@ trait EChartsTrait
         $exportJPGBtn->getAction()->setScript($this->buildJsExport('jpeg'));
         $tb->getButtonGroupForGlobalActions()->addButton($exportJPGBtn);
         
-        // Toggle percentage labels button.
+        // Toggle value labels button.
         if($this->getWidget()->hasLabelPercentToggle()) {
             $togglePercentUxon = $buttonTemplate->copy();
             $togglePercentUxon->setProperty('caption', $this->getWorkbench()->getCoreApp()->getTranslator()->translate("WIDGET.BUTTON.TOGGLE_PERCENT"));
-            $togglePercentUxon->setProperty('icon', 'percent');
+            $togglePercentUxon->setProperty('icon', 'tags');
             $togglePercentUxon->setProperty('hide_caption', false);
             $togglePercentUxon->setProperty('visibility', 'optional');
             $togglePercentBtn = WidgetFactory::createFromUxon($widget->getPage(), $togglePercentUxon, $menu);
@@ -334,8 +334,8 @@ JS;
 
 (function() {
     var chart = {$this->buildJsEChartsVar()};
-    var current = "__showLabelPercent" in chart && chart.__showLabelPercent;
-    chart.__showLabelPercent = !current;
+    var current = "__showValueLabel" in chart && chart.__showValueLabel;
+    chart.__showValueLabel = !current;
     {$this->buildJsRefresh()}
 }())
 
@@ -1344,30 +1344,56 @@ JS;
         return '';
     }
 
-    /**
-     * Returns a short string formatted according to the ECharts documentation, to render
-     * element percentages. 
-     * 
-     * The string must be displayed in the "label" option of a series, that supports the
-     * `{d}` template. Check the ECharts documentation (`Option > series > YOUR SERIES > label > formatter`)
-     * for further details.
-     * 
-     * @return string
-     */
-    protected function buildJsGetLabelPercent() : string
+    protected function buildJsLabelFormatterCallback(
+        string $transformationsJs, 
+        string $outputJs, string 
+        $chartVarJs = 'chart', 
+        string $paramsVarJs = 'params') : string
     {
         return <<<JS
 
-(function (){
-    var chart = {$this->buildJsEChartsVar()};
-    if("__showLabelPercent" in chart && chart.__showLabelPercent){
-        return ' ({d}%)';
-    } else {
-        return '';
-    }
-})()
+function({$paramsVarJs}) {
+    var {$chartVarJs} = {$this->buildJsEChartsVar()};
+    
+    {$transformationsJs}
+    
+    return {$outputJs};
+}
 JS;
+    }
 
+    /**
+     * Returns JS snippet that evaluates the value of any element in a series.
+     *
+     * @param ChartSeries $series
+     * @param bool        $showValues
+     * @param string      $paramsPropertyJs
+     * @param string      $chartVarJs
+     * @return string
+     */
+    protected function buildJsGetFormattedValue(
+        ChartSeries $series, 
+        string      $paramsPropertyJs = 'params.value', 
+        string      $chartVarJs = 'chart',
+        bool        $showValues = false) : string
+    {
+        $showValues = $showValues ? 'true' : 'false';
+        
+        return <<<JS
+
+(function (chart){
+    if (!("__showValueLabel" in chart)) {
+    chart.__showValueLabel = {$showValues};
+}
+
+if (chart.__showValueLabel) {
+    return {$this->buildJsLabelFormatter($series->getValueDataColumn(), $paramsPropertyJs)};
+} else {
+    return  '';
+}
+})({$chartVarJs})
+
+JS;
     }
     
     /**
@@ -1459,20 +1485,13 @@ JS;
         } else {
             $color = '';
         }
-
-        $showValues = $series->getShowValues() ? 'true' : 'false';
+        
+        $getFormattedValueJs = 'var value = ' . $this->buildJsGetFormattedValue($series, 'params.value.' . $series->getValueDataColumn()->getDataColumnName(), 'chart', $series->getShowValues()) . ';';
         $label = <<<JS
 
     label: {
         show: true,
-        formatter: function(params) {
-            var chart = {$this->buildJsEChartsVar()};
-            if({$showValues} || ("__showLabelPercent" in chart && chart.__showLabelPercent)) {
-                return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
-            } else {
-                return '';
-            }
-        }
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'value')}
     },
          
 JS;
@@ -1559,12 +1578,21 @@ JS;
      */
     protected function buildJsRoseChart(RoseChartSeries $series) : string
     {
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+        
         $label = <<<JS
 
-{
-    show: true,
-    formatter: '{b}' + {$this->buildJsGetLabelPercent()}
-}
+    label: {
+        show: true,
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')}
+    }
+         
 JS;
         
         $position = $this->getWidget()->getLegendPosition();
@@ -1596,7 +1624,7 @@ JS;
     radius: ['$radius', '80%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: {$label},
+    {$label},
     roseType: '{$valueMode}'
     
 }
@@ -1612,12 +1640,21 @@ JS;
      */
     protected function buildJsPieChart(PieChartSeries $series) : string
     {
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+
         $label = <<<JS
 
-{
-    show: true,
-    formatter: '{b}' + {$this->buildJsGetLabelPercent()}
-}
+    label: {
+        show: true,
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')}
+    }
+         
 JS;
         
 
@@ -1671,7 +1708,7 @@ JS;
     radius: ['$radius','60%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: {$label},
+    {$label},
     {$itemStyleJs}
     //selectedMode: 'single',
     animationType: 'scale',
@@ -1704,6 +1741,15 @@ JS;
         } else {
             $color = '';
         }
+
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+        
         return <<<JS
         
 {
@@ -1736,7 +1782,7 @@ JS;
     },
     label: {
         position: 'right',
-        formatter: '{b}' . {$this->buildJsGetLabelPercent()},
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')},
 		show: true
     },
     lineStyle: {
@@ -1791,7 +1837,7 @@ JS;
                         if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
                             return 'N/A';
                         } else {
-                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}'] + {$this->buildJsGetLabelPercent()};
+                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}'];
                         }
                     }
                 }

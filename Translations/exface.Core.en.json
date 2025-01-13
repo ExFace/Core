@@ -403,7 +403,7 @@
 	"WIDGET.BUTTON.ERROR_DATA_MAX_SIZE": "Max size: %size_formatted%.",
 	"WIDGET.BUTTON.ERROR_DATA_TO_LARGE_DESCRIPTION": "For security reasons the maximum size of a data sent to your web server is limited.\n\nTry to send the data in parts: e.g. if you are uploading files, upload them separately. Bear in mind, that data and files are enncoded for transmission, which increases their size!",
 	"WIDGET.BUTTON.HINT_DATA_MAX_SIZE": "Max. size of all data in total: ca. %size_formatted%",
-	"WIDGET.BUTTON.TOGGLE_PERCENT": "Percentages",
+	"WIDGET.BUTTON.TOGGLE_PERCENT": "Value Labels",
 	
 	"WIDGET.CONSOLE.PRESET_BTN_CANCEL": "Cancel",
 	"WIDGET.CONSOLE.PRESET_BTN_OK": "OK",
