@@ -37,12 +37,24 @@ class ActionLogBook implements DataLogBookInterface
         $this->action = $action;
         $this->logBook = new DataLogBook($title);
         $this->logBook->addSection('Action ' . $action->getAliasWithNamespace() . ' "' . $action->getName() . '"');
+        $this->logBook->addIndent(1);
         $this->logBook->addLine('Prototype class: ' . get_class($action));
         try {
             $this->logBook->addLine('Action object: ' . $action->getMetaObject()->__toString());
         } catch (\Throwable $e) {
             $this->logBook->addLine('Action object not found');
         }
+        if ($task->isTriggeredByWidget()) {
+            try {
+                $trigger = $task->getWidgetTriggeredBy();
+                $this->logBook->addLine('Trigger widget: ' . $trigger->getWidgetType() . ' "**' . $trigger->getCaption() . '**"');
+            } catch (\Throwable $e) {
+                $this->logBook->addLine('Trigger widget not accessible: ' . $e->getMessage());
+            }
+        } else {
+            $this->logBook->addLine('Trigger widget not known');
+        }
+        $this->logBook->addIndent(-1);
     }
     
     /**
