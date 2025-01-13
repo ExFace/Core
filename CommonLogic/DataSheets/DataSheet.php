@@ -1466,6 +1466,14 @@ class DataSheet implements DataSheetInterface
             $update_ds = $this;
         }
         
+        // Check if the sheet contains columns with related data. This is not supporeted
+        // because it is not clear, what replacing a related column would actually mean!
+        foreach ($update_ds->getColumns() as $col) {
+            if ($col->isAttribute() && $col->getAttribute()->isRelated()) {
+                throw new DataSheetWriteError($this, 'Cannot replace data for object ' . $this->getMetaObject()->__toString() . ' because it contains the column "' . $col->getAttributeAlias() . '" with a relation path - related data is not supported in replace operations!');
+            }
+        }
+
         $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
