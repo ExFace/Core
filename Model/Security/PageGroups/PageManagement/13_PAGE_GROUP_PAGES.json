@@ -1,0 +1,215 @@
+{
+    "object_alias": "exface.Core.PAGE_GROUP_PAGES",
+    "columns": [
+        {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "PAGE",
+            "attribute_alias": "PAGE"
+        },
+        {
+            "name": "PAGE_GROUP",
+            "attribute_alias": "PAGE_GROUP"
+        }
+    ],
+    "rows": [
+        {
+            "_EXPORT_SUMMARY": "Page Management / Page Groups",
+            "CREATED_ON": "2020-05-11 09:21:35",
+            "MODIFIED_ON": "2020-05-11 09:21:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9368cf618c74a9d10205857feb80",
+            "PAGE": "0x11ea630d9cdcc7f1a2e30205857feb80",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Pages",
+            "CREATED_ON": "2020-05-11 09:21:35",
+            "MODIFIED_ON": "2020-05-11 09:21:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9368cf61b98ca9d10205857feb80",
+            "PAGE": "0xaab623e6632411e8aab30205857feb80",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Administration",
+            "CREATED_ON": "2020-05-11 09:22:18",
+            "MODIFIED_ON": "2020-05-11 09:22:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9368e8e38a3aa9d10205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Facades",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec8a8a93c167a28a8a025041000001",
+            "PAGE": "0xb38cface203a11ea8c920205857feb80",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Behavior Prototypes",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec8f3793c1221a8f37025041000001",
+            "PAGE": "0xd5bf319a949e11e79bd9028037ec0200",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Action Prototypes",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec905f93c119fa905f025041000001",
+            "PAGE": "0xb00f0326949e11e79341028037ec0200",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Data Sorces",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec926a93c14772926a025041000001",
+            "PAGE": "0xcdf966ba949e11e7a875028037ec0200",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Formulas",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec95c793c1514a95c7025041000001",
+            "PAGE": "0xf831b3ccba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Docs editor",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec965893c170449658025041000001",
+            "PAGE": "0x11ec9f659762251e9f65025041000001",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Data Types",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca03593c13e8aa035025041000001",
+            "PAGE": "0xf831c47aba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Events",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca23993c12b0ca239025041000001",
+            "PAGE": "0x31ea203cc0b911e8ae0a0205857feb80",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / App-Docs",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca4dc93c10276a4dc025041000001",
+            "PAGE": "0xf831c625ba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Documentation",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecac7793c09bb0ac77025041000001",
+            "PAGE": "0xf831c595ba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Widgets",
+            "CREATED_ON": "2022-02-14 16:05:41",
+            "MODIFIED_ON": "2022-02-14 16:05:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecb28093c10f82b280025041000001",
+            "PAGE": "0x3187ce4c949f11e7b01d028037ec0200",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Page Management / Authenticators",
+            "CREATED_ON": "2023-06-27 13:41:26",
+            "MODIFIED_ON": "2023-06-27 13:41:26",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eea5338ca57a1aa533747827435ce5",
+            "PAGE": "0x11ee9b3a8c96a4549b3a747827435ce5",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.PAGE_GROUP_PAGES",
+        "conditions": [
+            {
+                "expression": "PAGE__APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.PAGE_GROUP_PAGES"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
