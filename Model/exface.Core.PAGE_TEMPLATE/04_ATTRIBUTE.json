@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2019-12-16 18:46:52",
             "MODIFIED_ON": "2019-12-16 20:47:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -208,7 +214,7 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Name [NAME]",
             "CREATED_ON": "2019-12-16 18:46:52",
             "MODIFIED_ON": "2019-12-16 18:53:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -251,10 +258,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -262,6 +269,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Description [DESCRIPTION]",
             "CREATED_ON": "2019-12-16 18:46:52",
             "MODIFIED_ON": "2019-12-16 18:53:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -295,10 +303,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -306,6 +314,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Facade [FACADE]",
             "CREATED_ON": "2019-12-16 18:46:52",
             "MODIFIED_ON": "2019-12-16 18:53:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -342,7 +351,7 @@
             "RELATED_OBJ": "0x11ea2034d60c84adaa030205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -350,6 +359,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Facade Configuration [FACADE_UXON]",
             "CREATED_ON": "2019-12-16 18:46:52",
             "MODIFIED_ON": "2019-12-17 09:15:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -383,10 +393,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

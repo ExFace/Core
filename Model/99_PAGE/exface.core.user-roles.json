@@ -90,7 +90,7 @@
                 ]
             },
             {
-                "caption": "Synchorized external user roles\/groups",
+                "caption": "Synchorized external user roles/groups",
                 "widgets": [
                     {
                         "widget_type": "DataTable",

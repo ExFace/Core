@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Token Class [AUTH_TOKEN_CLASS]",
             "CREATED_ON": "2020-01-07 17:16:14",
             "MODIFIED_ON": "2020-01-07 20:34:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 1,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -216,6 +222,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "User Name [USERNAME]",
             "CREATED_ON": "2020-01-07 17:16:48",
             "MODIFIED_ON": "2020-01-07 20:34:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -249,10 +256,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -260,6 +267,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Password [PASSWORD]",
             "CREATED_ON": "2020-01-07 17:17:41",
             "MODIFIED_ON": "2020-01-07 20:34:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -295,10 +303,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -306,6 +314,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Connection [CONNECTION]",
             "CREATED_ON": "2020-01-07 17:18:28",
             "MODIFIED_ON": "2020-01-07 20:34:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -342,7 +351,7 @@
             "RELATED_OBJ": "0x33380000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -350,6 +359,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Save Credentials for User [CONNECTION_SAVE_FOR_USER]",
             "CREATED_ON": "2020-01-09 17:21:47",
             "MODIFIED_ON": "2020-03-17 08:39:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -386,7 +396,7 @@
             "RELATED_OBJ": "0x31343400000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, the credentials will be saved for this user - either creating a new credential set or updating the existing one. If no user specified, a shared credential set will be created and the user-associations may be added later.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -394,6 +404,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Save Credentials [CONNECTION_SAVE]",
             "CREATED_ON": "2020-01-10 09:23:20",
             "MODIFIED_ON": "2020-03-17 08:38:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -427,10 +438,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, the credentials will be saved as a credential set.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -438,6 +449,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Reload on success [RELOAD_ON_SUCCESS]",
             "CREATED_ON": "2020-03-23 19:21:54",
             "MODIFIED_ON": "2020-03-23 19:21:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -471,10 +483,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 1,

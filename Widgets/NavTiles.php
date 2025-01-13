@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Factories\UiPageTreeFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * NavTiles show a hierarchical navigational tile menu starting from a given parent page.
@@ -41,7 +42,7 @@ use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
  * @author Andrej Kabachnik
  *        
  */
-class NavTiles extends WidgetGrid
+class NavTiles extends WidgetGrid implements iFillEntireContainer
 {
     use TranslatablePropertyTrait;
     
@@ -333,5 +334,14 @@ class NavTiles extends WidgetGrid
     public function hasNavBar(bool $default = true) : bool
     {
         return $this->showNavbar ?? $default;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
+    {
+        return null;
     }
 }

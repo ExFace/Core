@@ -55,13 +55,17 @@ class CommandRunner
         if ($isWindows) {
             $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"], "microsoft-iis") !== false);
             if ($isIIS) {
+                return false;
+                /* TODO solve remaining probelms with Symfony Process with IIS: it seems,
+                // it cannot read errors now. So the below check should be a command, that
+                // produces an error. Successful commands seem fine now (01.2025)
                 // Check, if symfony process will return non-empty output: 
                 // `whoami` should always return something
                 $process = new Process(['whoami']);
                 $process->run();                
                 if (! $process->isSuccessful() || $process->getOutput() === '') {
                     return false;
-                }
+                }*/
             }
         }
         return true;

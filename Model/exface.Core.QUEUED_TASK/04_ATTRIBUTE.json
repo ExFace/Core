@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Parent [PARENT_ITEM]",
             "CREATED_ON": "2020-09-22 13:06:27",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -208,8 +214,8 @@
             "RELATED_OBJ": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Parent task if the this task is had been modified and\/or reinserted",
+            "RELATED_OBJ_ATTR": null,
+            "SHORT_DESCRIPTION": "Parent task if the this task is had been modified and/or reinserted",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
             },
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Result [RESULT]",
             "CREATED_ON": "2020-09-22 13:06:27",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -251,10 +258,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Result message",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -264,6 +271,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Task UXON [TASK_UXON]",
             "CREATED_ON": "2020-09-22 13:06:27",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -297,10 +305,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Complete task model as UXON",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -310,6 +318,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Error [ERROR_MESSAGE]",
             "CREATED_ON": "2020-09-22 13:06:27",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -343,10 +352,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Error message",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -356,6 +365,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Owner [OWNER]",
             "CREATED_ON": "2020-09-22 13:06:27",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -392,7 +402,7 @@
             "RELATED_OBJ": "0x31343400000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The user that produced the task",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -402,6 +412,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Status [STATUS]",
             "CREATED_ON": "2020-09-22 13:06:27",
             "MODIFIED_ON": "2023-10-18 17:47:50",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -435,10 +446,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Current status of the task",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 10,
@@ -446,6 +457,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Log-ID [ERROR_LOGID]",
             "CREATED_ON": "2020-09-22 13:06:27",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -479,10 +491,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Log-ID of the error",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -492,6 +504,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Producer [PRODUCER]",
             "CREATED_ON": "2020-09-25 12:04:32",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -525,10 +538,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Original producer of the task (e.g. mobile device id, etc.)",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'GUI'",
@@ -538,6 +551,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Tasked on [TASK_ASSIGNED_ON]",
             "CREATED_ON": "2020-09-25 12:04:32",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -571,10 +585,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The time, when the task was created within the producer. May be different from the enqueueing time if the task was sent to the queue later or had been reinserted multiple times",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "=Now()",
@@ -582,6 +596,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Topics [TOPICS]",
             "CREATED_ON": "2020-09-28 12:44:10",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -615,10 +630,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Comma-separated list of topics provided by the producer",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -628,6 +643,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Object alias [OBJECT_ALIAS]",
             "CREATED_ON": "2020-09-29 12:02:21",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -652,7 +668,11 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "OBJECT_ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.meta_object'))\n@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.meta_object')",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.meta_object'))",
+                "@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.meta_object')"
+            ],
             "OBJECT": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -661,10 +681,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Alias or the UID of the object the action is to be performed upon",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -672,6 +692,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Action Alias [ACTION_ALIAS]",
             "CREATED_ON": "2020-09-29 12:23:36",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -696,7 +717,11 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "ACTION_ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))\n@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))",
+                "@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')"
+            ],
             "OBJECT": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -705,10 +730,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Alias or UID of the action to be performed",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -716,6 +741,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Queue [QUEUE]",
             "CREATED_ON": "2020-09-30 15:17:12",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -752,7 +778,7 @@
             "RELATED_OBJ": "0x11eb83a866a06a1a83a8847beb4a5184",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The queue, where the task had been routed to. If task is created manually, leave empty for automatic routing via topics.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -762,6 +788,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Producer msg.-ID [MESSAGE_ID]",
             "CREATED_ON": "2020-10-01 13:11:32",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -795,10 +822,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Unique identifier originally provided by the produces (e.g. request-id of the facade, etc.)",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -808,6 +835,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Result code [RESULT_CODE]",
             "CREATED_ON": "2020-10-13 14:05:52",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -841,10 +869,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "HTTP response code of the result",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -852,6 +880,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Enqueued on [ENQUEUED_ON]",
             "CREATED_ON": "2020-10-29 10:07:50",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -885,10 +914,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The time, when the task was sent to the queue",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -896,6 +925,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "User agent [USER_AGENT]",
             "CREATED_ON": "2020-11-04 13:25:09",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -929,10 +959,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "User-Agent header sent by the producer device",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -942,6 +972,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Has successor [HAS_SUCCESSOR]",
             "CREATED_ON": "2020-12-28 13:02:12",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -975,10 +1006,10 @@
             "HIDDENFLAG": 1,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -986,6 +1017,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Channel [CHANNEL]",
             "CREATED_ON": "2021-01-07 13:17:27",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1019,10 +1051,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Name of the channel used to send this task",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1032,6 +1064,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Duration (ms) [DURATION_MS]",
             "CREATED_ON": "2021-01-08 14:33:22",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1065,10 +1098,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1076,6 +1109,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Processed on [PROCESSED_ON]",
             "CREATED_ON": "2021-01-08 14:33:22",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1109,10 +1143,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -1120,6 +1154,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Scheduler [SCHEDULER]",
             "CREATED_ON": "2021-01-29 11:24:07",
             "MODIFIED_ON": "2021-02-02 10:25:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1156,7 +1191,7 @@
             "RELATED_OBJ": "0x11ebb374ef0b5eacb374847beb4a5184",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The message originated from this scheduled task",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -1166,6 +1201,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Error [MONITOR_ERROR]",
             "CREATED_ON": "2022-08-26 14:07:55",
             "MODIFIED_ON": "2022-08-26 14:18:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

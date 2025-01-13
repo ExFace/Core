@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Log-ID [LOG_ID]",
             "CREATED_ON": "2021-04-06 13:44:54",
             "MODIFIED_ON": "2021-05-19 19:10:26",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -218,6 +224,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Error widget [ERROR_WIDGET]",
             "CREATED_ON": "2021-04-06 13:44:54",
             "MODIFIED_ON": "2021-04-21 11:12:51",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -251,10 +258,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -264,6 +271,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Level [ERROR_LEVEL]",
             "CREATED_ON": "2021-04-06 13:44:54",
             "MODIFIED_ON": "2022-10-07 16:42:26",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -297,10 +305,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -310,6 +318,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Message [MESSAGE]",
             "CREATED_ON": "2021-04-06 13:44:54",
             "MODIFIED_ON": "2021-04-21 10:36:44",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -343,10 +352,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -356,6 +365,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Action [MONITOR_ACTION]",
             "CREATED_ON": "2021-04-06 17:42:17",
             "MODIFIED_ON": "2021-04-21 10:36:44",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -392,7 +402,7 @@
             "RELATED_OBJ": "0x11eb830a07a3fc70830a025041000001",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -402,6 +412,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Date [DATE]",
             "CREATED_ON": "2021-04-08 17:53:57",
             "MODIFIED_ON": "2021-04-21 10:36:44",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -446,6 +457,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "User [USER]",
             "CREATED_ON": "2021-04-08 18:12:35",
             "MODIFIED_ON": "2021-04-21 10:36:44",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -482,7 +494,7 @@
             "RELATED_OBJ": "0x31343400000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -492,6 +504,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Status [STATUS]",
             "CREATED_ON": "2021-04-14 12:53:54",
             "MODIFIED_ON": "2022-10-11 10:28:39",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -527,10 +540,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 10,
@@ -541,13 +554,14 @@
                     "15": "Reported",
                     "20": "ToDo",
                     "40": "Ticket",
-                    "90": "Obsolete\/Duplicate",
+                    "90": "Obsolete/Duplicate",
                     "99": "Resolved"
                 },
                 "show_values": false
             }
         },
         {
+            "_EXPORT_SUMMARY": "Log file [LOG_FILE]",
             "CREATED_ON": "2021-04-21 09:49:52",
             "MODIFIED_ON": "2021-04-21 11:01:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -572,7 +586,12 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "LOG_FILE",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: CONCAT('logs\/', DATE_FORMAT([#CREATED_ON#], '%Y-%m-%d'), '.log')\n\n@T-SQL: CONCAT('logs\/', FORMAT([#CREATED_ON#], 'yyyy-MM-dd'), '.log')",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: CONCAT('logs/', DATE_FORMAT([#CREATED_ON#], '%Y-%m-%d'), '.log')",
+                "",
+                "@T-SQL: CONCAT('logs/', FORMAT([#CREATED_ON#], 'yyyy-MM-dd'), '.log')"
+            ],
             "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -584,7 +603,7 @@
             "RELATED_OBJ": "0x11e7359214da6ecbba83e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -592,6 +611,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Request ID [REQUEST_ID]",
             "CREATED_ON": "2021-04-21 10:35:29",
             "MODIFIED_ON": "2021-04-21 10:36:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -625,10 +645,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -638,6 +658,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Ticket no [TICKET_NO]",
             "CREATED_ON": "2021-04-21 10:35:29",
             "MODIFIED_ON": "2021-04-21 10:36:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -671,10 +692,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -684,6 +705,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Comment [COMMENT]",
             "CREATED_ON": "2021-04-21 10:35:29",
             "MODIFIED_ON": "2021-04-21 10:36:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -717,10 +739,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -730,6 +752,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Repeated [REPEATED]",
             "CREATED_ON": "2022-10-10 18:28:26",
             "MODIFIED_ON": "2022-10-11 10:32:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -763,10 +786,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Current number of other non-closed entries with the same error",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

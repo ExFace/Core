@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.DATASRC",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -56,6 +61,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Metamodel Data Source",
             "CREATED_ON": "2011-01-01 00:00:00",
             "MODIFIED_ON": "2020-06-03 17:25:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -63,7 +69,7 @@
             "UID": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11ea72c00f0fadeca3480205857feb80",
-            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/ModelLoaderQueryBuilder.php",
+            "DEFAULT_QUERY_BUILDER": "exface/Core/QueryBuilders/ModelLoaderQueryBuilder.php",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
             "BASE_OBJECT": "0x32370000000000000000000000000000",
@@ -71,6 +77,7 @@
             "ALIAS": "METAMODEL_SOURCE"
         },
         {
+            "_EXPORT_SUMMARY": "Local Vendor Folders",
             "CREATED_ON": "2016-11-21 10:54:08",
             "MODIFIED_ON": "2020-08-26 07:54:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -78,7 +85,7 @@
             "UID": "0x11e6afd8d2fa47e78943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e6b09c8ccac11d8943e4b318306b9a",
-            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/FileBuilder.php",
+            "DEFAULT_QUERY_BUILDER": "exface/Core/QueryBuilders/FileBuilder.php",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
             "BASE_OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
@@ -86,6 +93,7 @@
             "ALIAS": "LOCAL_VENDOR_FOLDERS"
         },
         {
+            "_EXPORT_SUMMARY": "Local Folders",
             "CREATED_ON": "2016-11-22 10:26:30",
             "MODIFIED_ON": "2019-10-01 07:58:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -93,7 +101,7 @@
             "UID": "0x11e6b09e2002641f8943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e6afd88b5ffcd28943e4b318306b9a",
-            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/FileBuilder.php",
+            "DEFAULT_QUERY_BUILDER": "exface/Core/QueryBuilders/FileBuilder.php",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
             "BASE_OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
@@ -101,6 +109,7 @@
             "ALIAS": "LOCAL_FOLDERS"
         },
         {
+            "_EXPORT_SUMMARY": "PHP Annotations",
             "CREATED_ON": "2016-12-06 15:19:26",
             "MODIFIED_ON": "2017-04-19 10:35:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -108,7 +117,7 @@
             "UID": "0x11e6bbc75f27b3a29ee0e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e6bbc738b084ae9ee0e4b318306b9a",
-            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/PhpAnnotationsReader.php",
+            "DEFAULT_QUERY_BUILDER": "exface/Core/QueryBuilders/PhpAnnotationsReader.php",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
             "BASE_OBJECT": "0x11e6bae2326c99b59ee0e4b318306b9a",
@@ -116,6 +125,7 @@
             "ALIAS": "PHP_ANNOTATIONS"
         },
         {
+            "_EXPORT_SUMMARY": "Local CSV file",
             "CREATED_ON": "2017-04-28 10:08:31",
             "MODIFIED_ON": "2017-04-28 10:08:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -123,14 +133,15 @@
             "UID": "0x11e72bfa9ebaa493a3bee4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e72b5df9840faea3bee4b318306b9a",
-            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/CsvBuilder.php",
+            "DEFAULT_QUERY_BUILDER": "exface/Core/QueryBuilders/CsvBuilder.php",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
-            "BASE_OBJECT": "",
+            "BASE_OBJECT": null,
             "LABEL": "Local CSV file",
             "ALIAS": "LOCAL_CSV_FILE"
         },
         {
+            "_EXPORT_SUMMARY": "Workbench Config",
             "CREATED_ON": "2020-04-24 09:27:38",
             "MODIFIED_ON": "2020-04-24 09:27:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -138,14 +149,15 @@
             "UID": "0x11ea860dd0a323c697940205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11ea860db216206d97940205857feb80",
-            "DEFAULT_QUERY_BUILDER": "exface\/UrlDataConnector\/QueryBuilders\/JsonUrlBuilder.php",
+            "DEFAULT_QUERY_BUILDER": "exface/UrlDataConnector/QueryBuilders/JsonUrlBuilder.php",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 0,
-            "BASE_OBJECT": "",
+            "BASE_OBJECT": null,
             "LABEL": "Workbench Config",
             "ALIAS": "WORKBENCH_CONFIG"
         },
         {
+            "_EXPORT_SUMMARY": "Active Authenticators",
             "CREATED_ON": "2020-04-24 09:49:54",
             "MODIFIED_ON": "2020-04-24 09:50:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -153,10 +165,10 @@
             "UID": "0x11ea8610ecc0537d97940205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e7d421dd76d008a3da0205857feb80",
-            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/WorkbenchAuthenticatorsReader.php",
+            "DEFAULT_QUERY_BUILDER": "exface/Core/QueryBuilders/WorkbenchAuthenticatorsReader.php",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 0,
-            "BASE_OBJECT": "",
+            "BASE_OBJECT": null,
             "LABEL": "Active Authenticators",
             "ALIAS": "WORKBENCH_AUTHENTICATORS"
         }

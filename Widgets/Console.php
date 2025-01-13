@@ -78,6 +78,15 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 class Console extends AbstractWidget
 {
     use TranslatablePropertyTrait;
+
+    /**
+	 * Run the given console command
+	 *
+	 * @uxon-property run_command
+	 *
+	 * @var string
+	 */
+    const FUNCTION_RUN_COMMAND = 'run_command';
     
     private $allowedCommands = [];
     

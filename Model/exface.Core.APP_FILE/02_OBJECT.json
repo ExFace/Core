@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -80,6 +85,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "App file [exface.Core.APP_FILE]",
             "CREATED_ON": "2022-11-02 16:38:48",
             "MODIFIED_ON": "2022-11-02 16:55:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -94,11 +100,11 @@
             "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
-            "PARENT_OBJECT": "",
+            "PARENT_OBJECT": null,
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "APP_FILE",
-            "DATA_ADDRESS": "[#APP#]\/*"
+            "DATA_ADDRESS": "[#APP#]/*"
         }
     ],
     "totals_rows": [],
