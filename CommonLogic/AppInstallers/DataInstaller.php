@@ -205,8 +205,15 @@ class DataInstaller extends AbstractAppInstaller
                 // The trouble is, that after new properties of objects or attributes are added, the export will already contain them
                 // as columns, which would lead to an error because the model entities for these columns are not there yet.
                 foreach ($data_sheet->getColumns() as $column) {
-                    if (! $column->isAttribute() || ! $column->getMetaObject()->hasAttribute($column->getAttributeAlias())) {
-                        $data_sheet->getColumns()->remove($column);
+                    switch (true) {
+                        // Ignore non-attributes
+                        case ! $column->isAttribute():
+                        // Ignore attributes, that do not exist (anymore)
+                        case ! $column->getMetaObject()->hasAttribute($column->getAttributeAlias()):
+                        // Ignore columns with related data - see. `exportModelFile()` for explanation.
+                        case $column->getAttribute()->isRelated():
+                            $data_sheet->getColumns()->remove($column);
+                            break;
                     }
                 }
                 
