@@ -1,0 +1,385 @@
+{
+    "object_alias": "exface.Core.PAGE_GROUP_PAGES",
+    "columns": [
+        {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "PAGE",
+            "attribute_alias": "PAGE"
+        },
+        {
+            "name": "PAGE_GROUP",
+            "attribute_alias": "PAGE_GROUP"
+        }
+    ],
+    "rows": [
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Metamodel",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8d593ba3480205857feb80",
+            "PAGE": "0x8f9e3238949e11e7aa5f028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Apps",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8d8cc4a3480205857feb80",
+            "PAGE": "0xa7760458949e11e7a353028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Connections",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8db6bda3480205857feb80",
+            "PAGE": "0xa05b7202949e11e7acc3028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Data Sources",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8de2bea3480205857feb80",
+            "PAGE": "0x57bfceca96ca11e79702028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Objects",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8e17b1a3480205857feb80",
+            "PAGE": "0xe6ea2a1a949e11e78de5028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Relations",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8e5f9da3480205857feb80",
+            "PAGE": "0x078d42f06f1611e8bb520205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Attributes",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8e8eeba3480205857feb80",
+            "PAGE": "0xfcda43fa949e11e789c6028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Object Actions",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8ebcb8a3480205857feb80",
+            "PAGE": "0x2cbeb8ba628211e8b7db0205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Object Behaviors",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8eeec5a3480205857feb80",
+            "PAGE": "0xe43ae9c0e42111e8b2fe0205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Data Types",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f1b24a3480205857feb80",
+            "PAGE": "0x25d98c16949f11e7b780028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Messages",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f4943a3480205857feb80",
+            "PAGE": "0xdd41b032949e11e798a5028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Translations",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f7622a3480205857feb80",
+            "PAGE": "0x9d1ad1d03bda11e8934200a0c6000012",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / UXON Presets",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f9f93a3480205857feb80",
+            "PAGE": "0xb9d24bcaa23e11e9ae46106530e7aff7",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Pages",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8fcb57a3480205857feb80",
+            "PAGE": "0xaab623e6632411e8aab30205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Page Groups",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b902176a3480205857feb80",
+            "PAGE": "0x11ea630d9cdcc7f1a2e30205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Page Templates",
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b905dc4a3480205857feb80",
+            "PAGE": "0xb108669020a211ea8d5600a0c6000009",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Logs",
+            "CREATED_ON": "2020-03-26 19:45:38",
+            "MODIFIED_ON": "2020-03-26 19:45:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a5dc4bbc9a3480205857feb80",
+            "PAGE": "0xb90bb0b8949f11e7a605028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Administration",
+            "CREATED_ON": "2020-05-04 09:48:02",
+            "MODIFIED_ON": "2020-05-04 09:48:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8dec3abf1efe97940205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Docs editor",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec813e5f3000ac813e025041000001",
+            "PAGE": "0x11ec9f659762251e9f65025041000001",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Widgets",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec83725f2f99508372025041000001",
+            "PAGE": "0x3187ce4c949f11e7b01d028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Events",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec84565f2fc7f48456025041000001",
+            "PAGE": "0x31ea203cc0b911e8ae0a0205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / App-Docs",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec84b15f2f8fdc84b1025041000001",
+            "PAGE": "0xf831c625ba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Action Prototypes",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec88955f2fb7328895025041000001",
+            "PAGE": "0xb00f0326949e11e79341028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Data Sorces",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca2015f2fdfb4a201025041000001",
+            "PAGE": "0xcdf966ba949e11e7a875028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Behavior Prototypes",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca23c5f2fbfaca23c025041000001",
+            "PAGE": "0xd5bf319a949e11e79bd9028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Facades",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca81d5f2ff6caa81d025041000001",
+            "PAGE": "0xb38cface203a11ea8c920205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Formulas",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecac945f2fe7c0ac94025041000001",
+            "PAGE": "0xf831b3ccba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Data Types",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecb33d5f2fd668b33d025041000001",
+            "PAGE": "0xf831c47aba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Documentation",
+            "CREATED_ON": "2022-02-14 16:04:12",
+            "MODIFIED_ON": "2022-02-14 16:04:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecb4565f1f901eb456025041000001",
+            "PAGE": "0xf831c595ba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Communication",
+            "CREATED_ON": "2022-05-02 11:09:52",
+            "MODIFIED_ON": "2022-05-02 11:09:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecb6aca0384f28b6ac025041000001",
+            "PAGE": "0x11ecad0b27c711b2ad0b025041000001",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Authenticators",
+            "CREATED_ON": "2023-06-27 13:41:26",
+            "MODIFIED_ON": "2023-06-27 13:41:26",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eea4458ca30352a445747827435ce5",
+            "PAGE": "0x11ee9b3a8c96a4549b3a747827435ce5",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "_EXPORT_SUMMARY": "Metamodel / Search model",
+            "CREATED_ON": "2023-11-07 09:49:19",
+            "MODIFIED_ON": "2023-11-07 09:49:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eeaf4e8a3a1ad2af4e025041000001",
+            "PAGE": "0x11eebe87b259a6eabe87025041000001",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.PAGE_GROUP_PAGES",
+        "conditions": [
+            {
+                "expression": "PAGE__APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.PAGE_GROUP_PAGES"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
