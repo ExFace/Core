@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\ModelBuilders;
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
@@ -49,13 +50,17 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
             $type = $col['TYPE_NAME'];
             if (StringDataType::endsWith($type, ' identity') === true) {
                 $type = substr($type, 0, (-1)*strlen(' identity'));
-                $isUid = 1;
-                $isRequired = 0;
-                $isEditable = 0;
+                $isUid = true;
+                $isRequired = false;
+                $isEditable = false;
+                // IDENTITY columns cannot be used in CREATE/UPDATE queries, so they need to be marked
+                // as such and made non-writable in the model (see below)
+                $isIdentity = true;
             } else {
-                $isUid = 0;
+                $isUid = false;
                 $isRequired = $col['NULLABLE'] == 0 ? 1 : 0;
-                $isEditable = 1;
+                $isEditable = true;
+                $isIdentity = false;
             }
             
             $dataType = $this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE']);
@@ -86,9 +91,14 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => $isRequired,
                 'EDITABLEFLAG' => $isEditable,
+                'WRITABLEFLAG' => ($isIdentity === false),
                 'DEFAULT_VALUE' => $default,
                 'UIDFLAG' => $isUid
             ];
+
+            if ($isIdentity === true) {
+                $row['DATA_ADDRESS_PROPS'] = (new UxonObject(['SQL_IDENTITY_COLUMN' => true]))->toJson();
+            }
             
             $dataTypeProps = $this->getDataTypeConfig($dataType, $type);
             if (! $dataTypeProps->isEmpty()) {
