@@ -266,7 +266,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         // same as the right object of the combos relation (not the best match, but helpful in
         // some cases?).
         // In any case, do not use this prefill method if multiple columns in the prefill data
-        // fulfill the abov criteria!
+        // fulfill the above criteria!
         $fitsRelation = null;
         $fitsRightObject = null;
         foreach ($data_sheet->getColumns()->getAll() as $column) {
@@ -274,12 +274,18 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                 $colRel = $colAttr->getRelation();
                 if ($colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
                     if ($colRel->is($this->getRelation())) {
-                        if ($fitsRelation !== null) {
+                        // FIXME currently when the input fits multiple columns, it is not prefilled. This
+                        // is not understandable for app designers as they have no chance to see, what is
+                        // hapenning. There where cases, when a subsheet multi-select InputComboTable failed
+                        // to prefill because there was an input column REL__ATTR:LIST or even REL__ATTR:LIST_DISTINCT
+                        // and REL__ATTR:LIST_DISTINCT(,) at the same time! They mean the same value, but have
+                        // slightly different expressions. This prevented the prefill and was really hard to find out!
+                        if ($fitsRelation !== null && $fitsRelation->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
                             return;
                         }
                         $fitsRelation = $column;
                     } else {
-                        if ($fitsRightObject !== null) {
+                        if ($fitsRightObject !== null && $fitsRightObject->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
                             return;
                         }
                         $fitsRightObject = $column;
