@@ -181,10 +181,11 @@ class MySqlConnector extends AbstractSqlConnector
                 // Constraint errors on binary keys will contain the key value in unreadable format like
                 // "Duplicate entry '\x11\xEF\x91{WY\xA7`\x91{\x00PV\xBE\xF7]' for key ...".
                 // Here we attempt to find the binary part and transform it to our standard hex
-                // format. These binary keys will be either enclosed in single quotes or in spaces
-                // (in case of multi-column constraints).
+                // format. The constraint violating values are enclosed in single quotes `'` and separated
+                // by dashes `-`, so we search for potential binary values: `'\x...'`, `'\x...-`, `-\x...-`
+                // or `-\x...'`.
                 $binaryMatches = [];
-                $foundBinaries = preg_match_all("/['\s](\\\\x.*?)['\s]/", $message, $binaryMatches);
+                $foundBinaries = preg_match_all("/['\-](\\\\x.*?)['\-]/", $message, $binaryMatches);
                 if ($foundBinaries === 1) {
                     foreach ($binaryMatches[1] as $binaryString) {
                         // Decode the binary string
