@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataPointerFactory;
@@ -258,50 +258,65 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         if (! $this->isRelation()){
             return;
         }
+
+        $preparePrefillSheet = DataSheetFactory::createFromObject($data_sheet->getMetaObject());
+        $preparePrefillSheet = $this->prepareDataSheetToPrefill($preparePrefillSheet);
+
         
         // If the object of the prefill data is not the one selected within the combo, than we 
         // still can look for columns in the sheet, that contain selectors (UIDs) of the combo object. 
-        // This means, we need to look for data columns showing relations and see if they either
-        // match the relation of the combo (good match) or at least their related object is the 
-        // same as the right object of the combos relation (not the best match, but helpful in
-        // some cases?).
-        // In any case, do not use this prefill method if multiple columns in the prefill data
-        // fulfill the above criteria!
-        $fitsRelation = null;
-        $fitsRightObject = null;
-        foreach ($data_sheet->getColumns()->getAll() as $column) {
-            if (($colAttr = $column->getAttribute()) && $colAttr->isRelation()) {
-                $colRel = $colAttr->getRelation();
-                if ($colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
-                    if ($colRel->is($this->getRelation())) {
-                        // FIXME currently when the input fits multiple columns, it is not prefilled. This
-                        // is not understandable for app designers as they have no chance to see, what is
-                        // hapenning. There where cases, when a subsheet multi-select InputComboTable failed
-                        // to prefill because there was an input column REL__ATTR:LIST or even REL__ATTR:LIST_DISTINCT
-                        // and REL__ATTR:LIST_DISTINCT(,) at the same time! They mean the same value, but have
-                        // slightly different expressions. This prevented the prefill and was really hard to find out!
-                        if ($fitsRelation !== null && $fitsRelation->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
-                            return;
+        switch (true) {
+            // If prepareDataSheetToPrefill() found a column, see if it is included in the prefill data.
+            // In most cases, it will be, because the prefill data normall built by prepareDataSheetToPrefill()
+            case $preparePrefillSheet->getColumns()->count() === 1 && null !== $column = $data_sheet->getColumns()->getByExpression($preparePrefillSheet->getColumns()->getFirst()->getExpressionObj()):
+                // No need to do anything here - the $column is already assigned
+                break;
+
+            // Otherwise, we do not know the exact relation path from the prefill object to our combo
+            // object. But we can look for prefill columns showing relations and see if they either
+            // match the relation of the combo (good match) or at least their related object is the 
+            // same as the right object of the combos relation (not the best match, but helpful in
+            // some cases?).
+            // In any case, do not use this prefill method if multiple columns in the prefill data
+            // fulfill the above criteria because we cannot know, which relation is actually correct then!
+            default:
+                $fitsRelationCol = null;
+                $fitsRightObjectCol = null;
+                foreach ($data_sheet->getColumns()->getAll() as $column) {
+                    if (($colAttr = $column->getAttribute()) && $colAttr->isRelation()) {
+                        $colRel = $colAttr->getRelation();
+                        // Make sure, the column relation actually points to our object
+                        if (! $colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
+                            // TODO It is also quite clear, what to do with aggregated columns. If it is a single-select
+                            // combo, it cannot handle multiple values. On the other hand, it would theoretically be able to
+                            // handle MAX(MYRELATION) - resulting in max. UID - or similar aggregations. But is that usefull?
+
+                            // Now if the column relation matches the widget, we can use this column.
+                            // If not, there are multiple relations between the two objects. So which one do we pick?
+                            if ($colRel->is($this->getRelation())) {
+                                if ($fitsRelationCol !== null && $fitsRelationCol->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
+                                    return;
+                                }
+                                $fitsRelationCol = $column;
+                            } else {
+                                if ($fitsRightObjectCol !== null && $fitsRightObjectCol->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
+                                    return;
+                                }
+                                $fitsRightObjectCol = $column;
+                            }
                         }
-                        $fitsRelation = $column;
-                    } else {
-                        if ($fitsRightObject !== null && $fitsRightObject->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
+                        /* TODO add other options to prefill from related data?
+                        if ($colRel->getLeftKeyAttribute()->isExactly($this->getAttribute())) {
+                            $this->setValuesFromArray($column->getValues(false));
+                            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
+                            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
                             return;
-                        }
-                        $fitsRightObject = $column;
+                        }*/
                     }
                 }
-                /* TODO add other options to prefill from related data?
-                 if ($colRel->getLeftKeyAttribute()->isExactly($this->getAttribute())) {
-                 $this->setValuesFromArray($column->getValues(false));
-                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
-                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
-                 return;
-                 }*/
-            }
+                $column = $fitsRelationCol !== null ? $fitsRelationCol : $fitsRightObjectCol;
+                break;
         }
-        
-        $column = $fitsRelation !== null ? $fitsRelation : $fitsRightObject;
         
         if ($column !== null) {
             $pointer = DataPointerFactory::createFromColumn($column);
@@ -380,69 +395,98 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         
         $sheetObj = $data_sheet->getMetaObject();
         $widgetObj = $this->getMetaObject();
-        if ($sheetObj->is($widgetObj)) {
-            if ($this->isBoundToAttribute()) {
-                $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
-                // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
-                // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
-                // set it here. In most facades, setting merely the value of the combo will make the facade load the
-                // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
-                if ($this->getAttribute()->isRelation()) {
-                    // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-                    $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
-                    // When the text for a combo comes from another data source, reading it in advance
-                    // might have a serious performance impact. Since adding the text column to the prefill
-                    // is generally optional (see above), it is a good idea to check, if the text column
-                    // can be read with the same query, as the rest of the prefill da and, if not, exclude
-                    // it from the prefill.
-                    $sheetObj = $sheetObj;
-                    if ($sheetObj->isReadable() && $sheetObj->hasAttribute($text_column_expr)) {
-                        $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
-                        if (! $sheetQuery->canRead($text_column_expr)) {
-                            unset($text_column_expr);
-                        }
-                    }
-                } elseif ($widgetObj->isExactly($this->getOptionsObject())) {
-                    $text_column_expr = $this->getTextColumn()->getExpression()->toString();
-                }
-            }
+        switch (true) {
             
-            if ($text_column_expr) {
-                $data_sheet->getColumns()->addFromExpression($text_column_expr);
-            }
-        } elseif ($this->isRelation() && $this->getRelation()->getRightObject()->is($sheetObj)) {
-            $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
-        } else {
+            // If the prefill is based on the same object as the combo, see if we can include the text attribute
+            // in the prefill data too to avoid the need to load it asynchronously in the UI
+            case $sheetObj->is($widgetObj):
+                if ($this->isBoundToAttribute()) {
+                    $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
+                    // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
+                    // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
+                    // set it here. In most facades, setting merely the value of the combo will make the facade load the
+                    // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
+                    if ($this->getAttribute()->isRelation()) {
+                        // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
+                        $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
+                        // When the text for a combo comes from another data source, reading it in advance
+                        // might have a serious performance impact. Since adding the text column to the prefill
+                        // is generally optional (see above), it is a good idea to check, if the text column
+                        // can be read with the same query, as the rest of the prefill da and, if not, exclude
+                        // it from the prefill.
+                        if ($sheetObj->isReadable() && $sheetObj->hasAttribute($text_column_expr)) {
+                            $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
+                            if (! $sheetQuery->canRead($text_column_expr)) {
+                                unset($text_column_expr);
+                            }
+                        }
+                    } elseif ($widgetObj->isExactly($this->getOptionsObject())) {
+                        $text_column_expr = $this->getTextColumn()->getExpression()->toString();
+                    }
+                }
+                
+                if ($text_column_expr) {
+                    $data_sheet->getColumns()->addFromExpression($text_column_expr);
+                }
+                break;
+
+            // If the combo represents a relation pointing to the prefill object directly, just make sure,
+            // the prefill data includes the key attribute
+            case $this->isRelation() && $this->getRelation()->getRightObject()->is($sheetObj):
+                $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
+                break;
+            
+            // If the combo knows its relation to its parent (e.g. a multi-select combo used to create tags
+            // or other simple mappings via subsheet) AND the prefill data is based on the object of the
+            // parent widget, than we know the relation exactly. 
+            case (null !== $relPathFromParent = $this->getObjectRelationPathFromParent()) && $data_sheet->getMetaObject()->is($relPathFromParent->getStartObject()):
+                $attrAlias = RelationPath::join($relPathFromParent->__toString(), $this->getAttributeAlias());
+                if ($this->getMultiSelect() === true && $relPathFromParent->containsReverseRelations()) {
+                    $aggregator = new Aggregator(
+                        $this->getWorkbench(), 
+                        AggregatorFunctionsDataType::LIST_DISTINCT, 
+                        [
+                            $this->getMultipleValuesDelimiter()
+                        ]
+                    );
+                    $attrAlias = DataAggregation::addAggregatorToAlias($attrAlias, $aggregator);
+                }
+                if (! $column = $data_sheet->getColumns()->getByExpression($attrAlias)) {
+                    $data_sheet->getColumns()->addFromExpression($attrAlias);
+                }
+                break;
+
             // If the prefill object is not the same as the widget object, try to find a relation
             // path from prefill to widget. If found, we can add the required column by prefixing
             // them with this relation. If the path contains reverse relations, the data will need
             // to be aggregated!
-            if ($this->isBoundToAttribute() && $relPath = $this->findRelationPathFromObject($sheetObj)) {
-                $isRevRel = $relPath->containsReverseRelations();
-                $keyPrefillAlias = RelationPath::join($relPath->toString(), $this->getAttributeAlias());
-                if ($isRevRel) {
-                    $keyPrefillAlias = DataAggregation::addAggregatorToAlias(
-                        $keyPrefillAlias,
-                        new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getAttribute()->getValueListDelimiter()])
-                        );
-                }
-                if (! $data_sheet->getColumns()->getByExpression($keyPrefillAlias)) {
-                    $data_sheet->getColumns()->addFromExpression($keyPrefillAlias);
-                }
-                
-                if ($this->isRelation()) {
-                    $textPrefillAlias = RelationPath::join(DataAggregation::stripAggregator($keyPrefillAlias), $this->getTextAttributeAlias());
+            default:
+                if ($this->isBoundToAttribute() && $relPath = $this->findRelationPathFromObject($sheetObj)) {
+                    $isRevRel = $relPath->containsReverseRelations();
+                    $keyPrefillAlias = RelationPath::join($relPath->toString(), $this->getAttributeAlias());
                     if ($isRevRel) {
-                        $textPrefillAlias = DataAggregation::addAggregatorToAlias(
-                            $textPrefillAlias,
-                            new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getTextAttribute()->getValueListDelimiter()])
+                        $keyPrefillAlias = DataAggregation::addAggregatorToAlias(
+                            $keyPrefillAlias,
+                            new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getAttribute()->getValueListDelimiter()])
                             );
                     }
-                    if (! $data_sheet->getColumns()->getByExpression($textPrefillAlias)) {
-                        $data_sheet->getColumns()->addFromExpression($textPrefillAlias);
+                    if (! $data_sheet->getColumns()->getByExpression($keyPrefillAlias)) {
+                        $data_sheet->getColumns()->addFromExpression($keyPrefillAlias);
+                    }
+                    
+                    if ($this->isRelation()) {
+                        $textPrefillAlias = RelationPath::join(DataAggregation::stripAggregator($keyPrefillAlias), $this->getTextAttributeAlias());
+                        if ($isRevRel) {
+                            $textPrefillAlias = DataAggregation::addAggregatorToAlias(
+                                $textPrefillAlias,
+                                new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getTextAttribute()->getValueListDelimiter()])
+                                );
+                        }
+                        if (! $data_sheet->getColumns()->getByExpression($textPrefillAlias)) {
+                            $data_sheet->getColumns()->addFromExpression($textPrefillAlias);
+                        }
                     }
                 }
-            }
         }
         
         return $data_sheet;
