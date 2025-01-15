@@ -248,6 +248,8 @@ trait EChartsTrait
             'hint' => 'Change chart type'
         ]));
         $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
+        
+        // Toggle graph type buttons.
         if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             $buttonUxon = $buttonTemplate->copy();
             $buttonUxon->setProperty('caption', 'Circle');
@@ -266,6 +268,7 @@ trait EChartsTrait
             $menu->addButton($button);
         }
         
+        // Export PNG button.
         $exportPNGUxon = $buttonTemplate->copy();        
         $exportPNGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTPNG.NAME')}");
         $exportPNGUxon->setProperty('icon', 'file-image-o');
@@ -275,13 +278,24 @@ trait EChartsTrait
         $exportPNGBtn->getAction()->setScript($this->buildJsExport('png'));
         $tb->getButtonGroupForGlobalActions()->addButton($exportPNGBtn);
         
+        // Export JPEG button.
         $exportJPGUxon = $exportPNGUxon->copy();
         $exportJPGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTJPEG.NAME')}");
         $exportJPGBtn = WidgetFactory::createFromUxon($widget->getPage(), $exportJPGUxon, $menu);
         $exportJPGBtn->getAction()->setScript($this->buildJsExport('jpeg'));
         $tb->getButtonGroupForGlobalActions()->addButton($exportJPGBtn);
         
-        return;
+        // Toggle value labels button.
+        if($this->getWidget()->hasLabelPercentToggle()) {
+            $togglePercentUxon = $buttonTemplate->copy();
+            $togglePercentUxon->setProperty('caption', $this->getWorkbench()->getCoreApp()->getTranslator()->translate("WIDGET.BUTTON.TOGGLE_PERCENT"));
+            $togglePercentUxon->setProperty('icon', 'tags');
+            $togglePercentUxon->setProperty('hide_caption', false);
+            $togglePercentUxon->setProperty('visibility', 'optional');
+            $togglePercentBtn = WidgetFactory::createFromUxon($widget->getPage(), $togglePercentUxon, $menu);
+            $togglePercentBtn->getAction()->setScript($this->buildJsToggleValueLabels());
+            $tb->getButtonGroupForGlobalActions()->addButton($togglePercentBtn);
+        }
     }
     
     /**
@@ -306,6 +320,26 @@ trait EChartsTrait
 
 JS;
         
+    }
+
+    /**
+     * Build a JS snippet to toggle value displays on all labels of this chart.
+     * Affects all series contained within this chart.
+     * 
+     * @return string
+     */
+    protected function buildJsToggleValueLabels() : string 
+    {
+        return <<<JS
+
+(function() {
+    var chart = {$this->buildJsEChartsVar()};
+    var current = "__showValueLabel" in chart && chart.__showValueLabel;
+    chart.__showValueLabel = !current;
+    {$this->buildJsRefresh()}
+}())
+
+JS;
     }
     
     /**
@@ -362,7 +396,7 @@ JS;
     }
     
     /**
-     * js script for to change grapt to a circle graph
+     * js script to change graph to a circle graph
      *
      * @param DataButton $button
      * @return string
@@ -386,7 +420,7 @@ JS;
     }
     
     /**
-     * js script for to change grapt to a network graph
+     * js script to change graph to a network graph
      *
      * @param DataButton $button
      * @return string
@@ -485,6 +519,16 @@ JS;
     {
         return $this->buildJsFunctionPrefix() . 'select';
     }
+
+    /**
+     * Build a JS function call that dispatches an OnChange event for this chart.
+     * 
+     * @return string
+     */
+    protected function buildJsDispatchChangeEvent() : string
+    {
+        return $this->getOnChangeScript();
+    }
     
     /**
      * Body for the javascript function that gets called when series data point gets selected
@@ -506,7 +550,7 @@ JS;
                     return;
                 }
                 echart._oldSelection = {$selection};
-                {$this->getOnChangeScript()}
+                {$this->buildJsDispatchChangeEvent()}
                 echart._redrawSelection = undefined;
                 return;
             }
@@ -522,7 +566,7 @@ JS;
                     return;
                 }
             }
-            {$this->getOnChangeScript()}
+            {$this->buildJsDispatchChangeEvent()}
             return;
             
 JS;
@@ -1309,6 +1353,68 @@ JS;
         
         return '';
     }
+
+    /**
+     * Build a JS snippet that serves as function callback for the ECharts property
+     * `series.label.formatter`.
+     * 
+     * @param string $transformationsJs
+     * @param string $outputJs
+     * @param string $chartVarJs
+     * @param string $paramsVarJs
+     * @return string
+     */
+    protected function buildJsLabelFormatterCallback(
+        string $transformationsJs, 
+        string $outputJs, string 
+        $chartVarJs = 'chart', 
+        string $paramsVarJs = 'params') : string
+    {
+        return <<<JS
+
+function({$paramsVarJs}) {
+    var {$chartVarJs} = {$this->buildJsEChartsVar()};
+    
+    {$transformationsJs}
+    
+    return {$outputJs};
+}
+JS;
+    }
+
+    /**
+     * Returns JS snippet that evaluates the value of any element in a series.
+     *
+     * @param ChartSeries $series
+     * @param bool        $showValues
+     * @param string      $paramsPropertyJs
+     * @param string      $chartVarJs
+     * @return string
+     */
+    protected function buildJsGetFormattedValue(
+        ChartSeries $series, 
+        string      $paramsPropertyJs = 'params.value', 
+        string      $chartVarJs = 'chart',
+        bool        $showValues = false) : string
+    {
+        $showValues = $showValues ? 'true' : 'false';
+        
+        return <<<JS
+
+(function (chart){
+    if (!("__showValueLabel" in chart)) {
+    chart.__showValueLabel = {$showValues};
+}
+
+if (chart.__showValueLabel) {
+    return {$this->buildJsLabelFormatter($series->getValueDataColumn(), $paramsPropertyJs)};
+} else {
+    return  '';
+}
+})({$chartVarJs})
+
+JS;
+    }
     
     /**
      * build line series configuration
@@ -1399,20 +1505,16 @@ JS;
         } else {
             $color = '';
         }
-        //TODO option to show label, define position of it, maybe rotation etc.
-        $label = '';
-        if ($series->getShowValues() === true) {
-            $label = <<<JS
+        
+        $getFormattedValueJs = 'var value = ' . $this->buildJsGetFormattedValue($series, 'params.value.' . $series->getValueDataColumn()->getDataColumnName(), 'chart', $series->getShowValues()) . ';';
+        $label = <<<JS
 
     label: {
         show: true,
-        formatter: function(params) {
-            return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
-        }
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'value')}
     },
          
 JS;
-        }
         
         return <<<JS
         
@@ -1496,7 +1598,23 @@ JS;
      */
     protected function buildJsRoseChart(RoseChartSeries $series) : string
     {
-        $label = '{}';
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+        
+        $label = <<<JS
+
+    label: {
+        show: true,
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')}
+    }
+         
+JS;
+        
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
             $label = '{show: false}';
@@ -1526,7 +1644,7 @@ JS;
     radius: ['$radius', '80%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: {$label},
+    {$label},
     roseType: '{$valueMode}'
     
 }
@@ -1542,7 +1660,24 @@ JS;
      */
     protected function buildJsPieChart(PieChartSeries $series) : string
     {
-        $label = '{}';
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+
+        $label = <<<JS
+
+    label: {
+        show: true,
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')}
+    }
+         
+JS;
+        
+
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
             $label = '{show: false}';
@@ -1593,7 +1728,7 @@ JS;
     radius: ['$radius','60%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: {$label},
+    {$label},
     {$itemStyleJs}
     //selectedMode: 'single',
     animationType: 'scale',
@@ -1626,6 +1761,15 @@ JS;
         } else {
             $color = '';
         }
+
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+        
         return <<<JS
         
 {
@@ -1658,7 +1802,7 @@ JS;
     },
     label: {
         position: 'right',
-        formatter: '{b}',
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')},
 		show: true
     },
     lineStyle: {
@@ -1713,7 +1857,7 @@ JS;
                         if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
                             return 'N/A';
                         } else {
-                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
+                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}'];
                         }
                     }
                 }
@@ -2256,7 +2400,7 @@ JS;
     }
     
     /**
-     * javascript function body to draw chart, iniatlize global variables, show overlay message if data is empty
+     * javascript function body to draw chart, initialize global variables, show overlay message if data is empty
      *
      * @param string $dataJs
      * @return string
@@ -3201,9 +3345,10 @@ JS;
     protected function buildJsMessageOverlayShow(string $message) : string
     {
         return <<<JS
+
 {$this->buildJsMessageOverlayHide()}      
 $({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->getId()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
-
+{$this->buildJsDispatchChangeEvent()}
 JS;
     }
     
