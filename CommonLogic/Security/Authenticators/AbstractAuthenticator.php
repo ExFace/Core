@@ -640,21 +640,39 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             }
             
             // Filter the roles in $checkUids by the AUTHENTICATOR_ID
-            // a) if no AUTHENTICATOR_ID is set, then it is a local/manually assigned role. Then it should NOT be added to $deleteUids so that is is kept instead of deleted.
+            // a) if no AUTHENTICATOR_ID is set, then it is a local/manually assigned role. 
+            // Then it should ONLY be added to $deleteUids if the role UID matches any role UID inside $externalRolesData. 
+            // Otherwise it is kept instead of deleted.
+            // Scenario 1:
+            // "Role A" is set as a local/manually assigned role but "Role A" is not found in the external roles to be synchronized.
+            // In this case the role is NOT added to $deleteUids to keep the role as a local/manually assigned role.
+            // Scenario 2:
+            // "Role B" is set as a  local/manually assigned role and "Role B" is also found in the external roles to be sychronized.
+            // In this case the role is added to $deleteUids to overwrite the local/manually assigned role with the external synchronized role.
             // b) if AUTHENTICATOR_ID is equal to the current authenticator used, then it is an external role and it should be added to $deleteUids to be deleted.
             if (! empty($checkUids)) {
                 $checkSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
                 $checkSheet->getColumns()->addFromExpression('AUTHENTICATOR_ID');
+                $checkSheet->getColumns()->addFromExpression('USER_ROLE');
                 $checkCol = $checkSheet->getColumns()->addFromUidAttribute();
                 $checkCol->setValues($checkUids);
-                $checkSheet->getFilters()->addConditionFromString('AUTHENTICATOR_ID', $this->getId());
                 $checkSheet->getFilters()->addConditionFromColumnValues($checkCol);
-                $checkSheet->dataRead();
-                foreach ($checkCol->getValues() as $uid) {
-                    $deleteUids[] = $uid;
+                $checkSheet->getFilters()->addConditionFromValueArray('AUTHENTICATOR_ID', [$this->getId(), null]);
+                $checkSheet->dataRead();               
+
+                $externalRoleUids = array_column($externalRoles = $externalRolesData->getRows(), 'USER_ROLE');
+                foreach ($checkSheet->getRows() as $internalRow) {
+                    // see b) as described in the comment above
+                if ($internalRow["AUTHENTICATOR_ID"] === $this->getId()) {
+                        $deleteUids[] = $internalRow["UID"];
+                    }
+                // see a) as described in the comment above
+                else if ($internalRow["AUTHENTICATOR_ID"] == null && in_array($internalRow["USER_ROLE"], $externalRoleUids)) {
+                        $deleteUids[] = $internalRow["UID"];
+                    }
                 }
             }
-            
+
             $deleteUids = array_unique($deleteUids);
             $deleteCol->setValues($deleteUids);
             if ($deleteSheet->countRows() !== 0) {
@@ -663,7 +681,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             
             // Add roles matching the current external roles (see above) 
             $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
-            foreach ($externalRolesData->getRows() as $row) {
+            foreach ($externalRoles as $row) {
                 if ($row['USER_ROLE'] !== null) {
                     $newRolesSheet->addRow([
                         'USER' => $user->getUid(),
