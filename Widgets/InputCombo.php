@@ -295,11 +295,13 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                             // If not, there are multiple relations between the two objects. So which one do we pick?
                             if ($colRel->is($this->getRelation())) {
                                 if ($fitsRelationCol !== null && $fitsRelationCol->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
+                                    $this->getWorkbench()->getLogger()->warning('Cannot prefill ' . $this->getWidgetType() . ': found multiple columns matching the relation of the widget (' . $fitsRelationCol->getExpressionObj()->__toString() . ', ' . $column->getExpressionObj()->__toString() . ')', [], $this);
                                     return;
                                 }
                                 $fitsRelationCol = $column;
                             } else {
                                 if ($fitsRightObjectCol !== null && $fitsRightObjectCol->getExpressionObj()->__toString() !== $column->getExpressionObj()->__toString()) {
+                                    $this->getWorkbench()->getLogger()->warning('Cannot prefill ' . $this->getWidgetType() . ': found multiple columns matching the right object of the relation of the widget (' . $fitsRightObjectCol->getExpressionObj()->__toString() . ', ' . $column->getExpressionObj()->__toString() . ')', [], $this);
                                     return;
                                 }
                                 $fitsRightObjectCol = $column;
