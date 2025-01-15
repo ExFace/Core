@@ -453,7 +453,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                     );
                     $attrAlias = DataAggregation::addAggregatorToAlias($attrAlias, $aggregator);
                 }
-                if (! $column = $data_sheet->getColumns()->getByExpression($attrAlias)) {
+                if (! $data_sheet->getColumns()->getByExpression($attrAlias)) {
                     $data_sheet->getColumns()->addFromExpression($attrAlias);
                 }
                 break;
