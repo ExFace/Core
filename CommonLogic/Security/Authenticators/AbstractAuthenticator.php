@@ -658,9 +658,10 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 $checkCol->setValues($checkUids);
                 $checkSheet->getFilters()->addConditionFromColumnValues($checkCol);
                 $checkSheet->getFilters()->addConditionFromValueArray('AUTHENTICATOR_ID', [$this->getId(), null]);
-                $checkSheet->dataRead();               
+                $checkSheet->dataRead();     
 
-                $externalRoleUids = array_column($externalRoles = $externalRolesData->getRows(), 'USER_ROLE');
+                $externalRoles = $externalRolesData->getRows();
+                $externalRoleUids = array_column($externalRoles, 'USER_ROLE');
                 foreach ($checkSheet->getRows() as $internalRow) {
                     // see b) as described in the comment above
                 if ($internalRow["AUTHENTICATOR_ID"] === $this->getId()) {
