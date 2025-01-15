@@ -519,6 +519,16 @@ JS;
     {
         return $this->buildJsFunctionPrefix() . 'select';
     }
+
+    /**
+     * Build a JS function call that dispatches an OnChange event for this chart.
+     * 
+     * @return string
+     */
+    protected function buildJsDispatchChangeEvent() : string
+    {
+        return $this->getOnChangeScript();
+    }
     
     /**
      * Body for the javascript function that gets called when series data point gets selected
@@ -540,7 +550,7 @@ JS;
                     return;
                 }
                 echart._oldSelection = {$selection};
-                {$this->getOnChangeScript()}
+                {$this->buildJsDispatchChangeEvent()}
                 echart._redrawSelection = undefined;
                 return;
             }
@@ -556,7 +566,7 @@ JS;
                     return;
                 }
             }
-            {$this->getOnChangeScript()}
+            {$this->buildJsDispatchChangeEvent()}
             return;
             
 JS;
@@ -3335,9 +3345,10 @@ JS;
     protected function buildJsMessageOverlayShow(string $message) : string
     {
         return <<<JS
+
 {$this->buildJsMessageOverlayHide()}      
 $({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->getId()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
-
+{$this->buildJsDispatchChangeEvent()}
 JS;
     }
     
