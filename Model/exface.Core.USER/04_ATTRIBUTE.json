@@ -806,7 +806,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": null,
-            "SHORT_DESCRIPTION": "The user will not be able to log on if the current date is ahead of this value.",
+            "SHORT_DESCRIPTION": "The user will no longer be able to log on after this date.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
