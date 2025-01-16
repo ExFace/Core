@@ -83,6 +83,7 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                     $isRequired = 0;
             }
             
+            // Setup general attribute properties
             $row = [
                 'NAME' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $this->generateAlias($col['COLUMN_NAME']),
@@ -96,10 +97,19 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                 'UIDFLAG' => $isUid
             ];
 
+            // Add custom data address settings
+            $addrProps = new UxonObject();
+            if (stripos($type, 'binary') !== false || stripos($type, 'blob') !== false) {
+                $addrProps->setProperty('SQL_DATA_TYPE', 'binary');
+            }
             if ($isIdentity === true) {
-                $row['DATA_ADDRESS_PROPS'] = (new UxonObject(['SQL_IDENTITY_COLUMN' => true]))->toJson();
+                $addrProps->setProperty('SQL_IDENTITY_COLUMN', true);
+            }
+            if (! $addrProps->isEmpty()) {
+                $row['DATA_ADDRESS_PROPS'] = $addrProps->toJson();
             }
             
+            // Add data type customizing
             $dataTypeProps = $this->getDataTypeConfig($dataType, $type);
             if (! $dataTypeProps->isEmpty()) {
                 $row['CUSTOM_DATA_TYPE'] = $dataTypeProps->toJson();
