@@ -61,9 +61,6 @@ class ColumnChartSeries extends ChartSeries implements StackableChartSeriesInter
     
     public function getShowValues() : bool
     {
-        if (! $this->showValues) {
-            return false;
-        }
-        return $this->showValues;
+        return $this->showValues ?? false;
     }
 }

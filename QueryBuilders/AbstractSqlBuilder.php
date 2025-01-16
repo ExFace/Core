@@ -715,6 +715,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($attr->isUidForObject()) {
                 $uidQpart = $qpart;
             }
+            // There are cases, when system attributes like the UID are non-writable, but still present
+            // (since they are system). Their values should be ignored here. For example, MS SQL Server
+            // IDENTITY columns are often used as UIDs, but cannot be included in CREATE or UPDATE queries.
+            if ($attr->isWritable() === false) {
+                continue;
+            }
             
             // Prepare arrays with column aliases and values to implode them later when building the query
             // Make sure, every column is only addressed once! So the keys of both array actually need to be the column aliases
@@ -988,6 +994,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // $cases = '';
                 if (count($qpart->getUids()) == 0) {
                     throw new QueryBuilderException('Cannot update attribute "' . $qpart->getAlias() . "': no UIDs for rows to update given!");
+                }
+                // There are cases, when system attributes like the UID are non-writable, but still present
+                // (since they are system). Their values should be ignored here. For example, MS SQL Server
+                // IDENTITY columns are often used as UIDs, but cannot be included in CREATE or UPDATE queries.
+                if ($qpart->getAttribute()->isWritable() === false) {
+                    continue;
                 }
                 
                 foreach ($qpart->getValues() as $row_nr => $value) {
