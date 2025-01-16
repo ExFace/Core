@@ -1,7 +1,7 @@
 -- UP
 
 ALTER TABLE `exf_user`
-ADD COLUMN disable_date DATETIME NULL;
+ADD disable_date DATETIME NULL;
 
 UPDATE `exf_user`
 SET disable_date = NOW()
@@ -13,7 +13,7 @@ DROP COLUMN disabled_flag;
 -- DOWN
 
 ALTER TABLE `exf_user`
-ADD COLUMN disabled_flag TINYINT NOT NULL;
+ADD disabled_flag TINYINT NOT NULL;
 
 UPDATE `exf_user`
 SET disabled_flag = 1
