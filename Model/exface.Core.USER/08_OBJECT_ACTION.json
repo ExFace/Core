@@ -191,9 +191,9 @@
         {
             "_EXPORT_SUMMARY": "User: Disable",
             "CREATED_ON": "2020-06-07 15:59:54",
-            "MODIFIED_ON": "2023-08-29 20:18:58",
+            "MODIFIED_ON": "2025-01-17 10:57:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa8d7c1d6c637bba0e4b318306b9a",
             "OBJECT": "0x31343400000000000000000000000000",
             "ACTION_PROTOTYPE": "exface/Core/Actions/UpdateData.php",
@@ -205,19 +205,12 @@
                 "input_object_alias": "exface.Core.USER",
                 "icon": "toggle-off",
                 "input_mapper": {
-                    "inherit_columns": "none",
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
-                            "from": "=1",
-                            "to": "DISABLED_FLAG"
-                        },
-                        {
-                            "from": "UID",
-                            "to": "UID"
-                        },
-                        {
-                            "from": "MODIFIED_ON",
-                            "to": "MODIFIED_ON"
+                            "//": "Set the date to 1 second in the past to make sure the user is already shown as disabled when the data refreshes after the action",
+                            "from": "=DateAdd(Now(), -1, 's')",
+                            "to": "DISABLE_DATE"
                         }
                     ]
                 }
@@ -229,33 +222,25 @@
         {
             "_EXPORT_SUMMARY": "User: Enable",
             "CREATED_ON": "2020-06-07 19:52:45",
-            "MODIFIED_ON": "2023-08-29 20:26:31",
+            "MODIFIED_ON": "2025-01-17 10:57:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa8f848d0cba3bba0e4b318306b9a",
             "OBJECT": "0x31343400000000000000000000000000",
             "ACTION_PROTOTYPE": "exface/Core/Actions/UpdateData.php",
             "ALIAS": "EnableUser",
             "NAME": "Enable",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": "Allow the user to log in again",
             "CONFIG_UXON": {
                 "input_rows_min": 1,
                 "input_object_alias": "exface.Core.USER",
                 "icon": "toggle-on",
                 "input_mapper": {
-                    "inherit_columns": "none",
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
-                            "from": "=0",
-                            "to": "DISABLED_FLAG"
-                        },
-                        {
-                            "from": "UID",
-                            "to": "UID"
-                        },
-                        {
-                            "from": "MODIFIED_ON",
-                            "to": "MODIFIED_ON"
+                            "from": "=NullValue()",
+                            "to": "DISABLE_DATE"
                         }
                     ]
                 }
