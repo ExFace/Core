@@ -482,7 +482,7 @@
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
-                "@T-SQL2016: (CASE ",
+                "@T-SQL: (CASE ",
                 "  WHEN ([#DISABLE_DATE#] < GETDATE()) ",
                 "  THEN 1",
                 "  ELSE 0",
