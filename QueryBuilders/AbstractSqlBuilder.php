@@ -739,9 +739,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $columnIsJson = $this->isJsonDataAddress($column) && ! $custom_insert_sql;
             if ($columnIsJson === true) {
                 list($column, $jsonPath) = $this->parseJsonDataAddress($column);
-            } else {
-                $columns[$column] = $column;
-            }
+            } 
+            
+            $columns[$column] = $column;
+            
             foreach ($qpart->getValues() as $row => $value) {
                 try {
                     $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
@@ -844,7 +845,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $insertedIds = [];
         $insertedCounter = 0;
-        
+        $lastColumn = array_key_last($columns);
 
         // We now have the following prepared data:
         // - $values - array of rows, where each row is an array with SQL column for keys and their respective prepared values
@@ -871,7 +872,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         break;
                 }
             }
-            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
+
+            $insertValues = '';
+            foreach ($columns as $column) {
+                $jsonColumn = $valuesForJsonCols[$nr];
+                if(!empty($jsonColumn) && key_exists($column, $jsonColumn)) {
+                    $resultJson = "'{}'";
+                    foreach ($jsonColumn[$column] as $attributePath => $attributeValue) {
+                        $attributeValue = is_string($attributeValue) ? $this->escapeString($attributeValue) : $attributeValue;
+                        $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', '" . $attributeValue . "')";
+                    }
+                    
+                    $insertValues .= $resultJson;
+                } else {
+                    $insertValues .= $row[$column];
+                } 
+                
+                if($column !== $lastColumn) {
+                    $insertValues .= ',';
+                }
+            }
+            
+            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . $insertValues . ')';
             
             $beforeSql = $before_each_insert_sqls[$nr] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$nr] . ($uidAfterEach ?? '');
