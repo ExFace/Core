@@ -180,12 +180,12 @@ class MsSqlConnector extends AbstractSqlConnector
         
         if ($this->getWarningsReturnAsErrors() === false) {
             if(sqlsrv_configure("WarningsReturnAsErrors", 0) === false) {
-                throw new DataConnectionFailedError($this, 'PHP function "sqlsrv_connect" not available!', '76BJXFH');
+                throw new DataConnectionFailedError($this, 'Failed to set configuration for MS SQL Server connection.');
             }
         }
         
         if (! $conn = sqlsrv_connect($this->getHost() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
-            throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastErrorMessage());
+            throw new DataConnectionFailedError($this, "Failed to connect to MS SQL Server database. " . $this->getLastErrorMessage(), '7ZBVB1G');
         } else {
             $this->setCurrentConnection($conn);
         }
