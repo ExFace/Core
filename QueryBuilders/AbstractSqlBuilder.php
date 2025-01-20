@@ -875,15 +875,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
             $insertValues = '';
             foreach ($columns as $column) {
-                $jsonColumn = $valuesForJsonCols[$nr];
-                if(!empty($jsonColumn) && key_exists($column, $jsonColumn)) {
-                    $resultJson = "'{}'";
-                    foreach ($jsonColumn[$column] as $attributePath => $attributeValue) {
-                        $attributeValue = is_string($attributeValue) ? $this->escapeString($attributeValue) : $attributeValue;
-                        $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', '" . $attributeValue . "')";
-                    }
-                    
-                    $insertValues .= $resultJson;
+                $jsonsForRow = $valuesForJsonCols[$nr];
+                if(!empty($jsonsForRow) && key_exists($column, $jsonsForRow)) {
+                    $insertValues .= $this->buildSqlEncodeAsJsonFlat($jsonsForRow[$column]);
                 } else {
                     $insertValues .= $row[$column];
                 } 
@@ -1001,9 +995,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Array of SET statements for the single-value-query which updates all rows matching the given filters
         // [ 'data_address = value' ]
         $updates_by_filter = array();
+        $jsonColumnsByFilter = array();
         // Array of SET statements to update multiple values per attribute. They will be used to build one UPDATE statement per UID value
         // [ uid_value => [ data_address => 'data_address = value' ] ]
         $updates_by_uid = array();
+        $jsonColumnsByUid = array();
         // Array of query parts to be placed in subqueries
         $subqueries_qparts = array();
         foreach ($this->getValues() as $qpart) {
@@ -1041,7 +1037,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Otherwise there would not be any possibility to save explicit values
                     $updates_by_filter[] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
                 } else {
-                    $updates_by_filter[] = $column . ' = ' . $value;
+                    if($this->isJsonDataAddress($column)) {
+                        list($column, $jsonPath) = $this->parseJsonDataAddress($column);
+                        $jsonColumnsByFilter[$column][$jsonPath] = $value;
+                    } else {
+                        $updates_by_filter[] = $column . ' = ' . $value;
+                    }
                 }
             } else {
                 // TODO check, if there is an id for each value. Those without ids should be put into another query to make an insert
@@ -1077,11 +1078,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                          * the UIDs they address and a new filter with exactly this list of UIDs.
                          */
                         // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
-                        $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
+                        if($this->isJsonDataAddress($column)) {
+                            list($column, $jsonPath) = $this->parseJsonDataAddress($column);
+                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$column][$jsonPath] = $value;
+                        } else {
+                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
+                        }
                     }
                 }
                 // See comment about CASE-based updates a few lines above
                 // $updates_by_filter[] = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $attr->getDataAddress() . " = CASE " . $this->getMainObject()->getUidAttribute()->getDataAddress() . " \n" . implode($cases) . " END";
+            }
+        }
+        
+        // Process JSON values for update by filter columns.
+        foreach ($jsonColumnsByFilter as $columnName => $keyValuePairs) {
+            $updates_by_filter[] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs);
+        }
+
+        // Process JSON values for update by UID columns.
+        foreach ($jsonColumnsByUid as $uid => $columns) {
+            foreach ($columns as $columnName => $keyValuePairs) {
+                $updates_by_uid[$uid][$columnName] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs);
             }
         }
         
@@ -1122,6 +1140,31 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return new DataQueryResultData([], $affected_rows ?? 0);
+    }
+
+    /**
+     * Builds an inline SQL-Snippet that encodes the provided key value pairs as JSON, using
+     * only native SQL functions of the corresponding dialect.
+     *
+     * - Keys must be strings, matching the following pattern: `$.key`.
+     * - This function can only generate a JSON that is exactly 1 level deep. Keys that try to access
+     * deeper levels (e.g. `$.allowed.forbidden`) will not function properly.
+     *
+     * NOTE: JSON manipulation may not be fully supported by all dialects.
+     *
+     * @param array  $keyValuePairs
+     * @param string $initialJson
+     * @return string
+     */
+    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = '{}') : string
+    {
+        $resultJson = "'" . $initialJson . "'";
+        
+        foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+        }
+
+        return $resultJson;
     }
     
     /**
