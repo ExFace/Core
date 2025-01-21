@@ -1141,41 +1141,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         return new DataQueryResultData([], $affected_rows ?? 0);
     }
-
-    /**
-     * Builds an inline SQL-Snippet that encodes the provided key value pairs as JSON, using
-     * only native SQL functions of the corresponding dialect.
-     *
-     * - Keys must be strings, matching the following pattern: `$.key`.
-     * - This function can only generate a JSON that is exactly 1 level deep. Keys that try to access
-     * deeper levels (e.g. `$.allowed.forbidden`) will not function properly.
-     *
-     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns
-     * a json_encoded string. 
-     * 
-     * TODO geb 2025-01-21: We might need a better default implementation.
-     *
-     * @param array  $keyValuePairs
-     * @param string $initialJson
-     * @return string
-     */
-    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'") : string
-    {
-        return json_encode($keyValuePairs);
-    }
-
-    /**
-     * Build an inline SQL-Snippet that generates an initial JSON value for native JSON-Functions.
-     * 
-     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns `'{}'`.
-     * 
-     * @param string $columnName
-     * @return string
-     */
-    protected function buildSqlInitialJson(string $columnName) : string
-    {
-        return '{}';
-    }
     
     /**
      * Splits the a seta of query parts of the current query into multiple separate queries, each of them containing only query
@@ -3283,7 +3248,42 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlJsonRead(string $address, string $jsonPath) : string
     {
-        return "JSON_VALUE({$address}, '{$jsonPath}')";
+        return "JSON_VALUE({$this->buildSqlInitialJson($address)}, '{$jsonPath}')";
+    }
+
+    /**
+     * Builds an inline SQL-Snippet that encodes the provided key value pairs as JSON, using
+     * only native SQL functions of the corresponding dialect.
+     *
+     * - Keys must be strings, matching the following pattern: `$.key`.
+     * - This function can only generate a JSON that is exactly 1 level deep. Keys that try to access
+     * deeper levels (e.g. `$.allowed.forbidden`) will not function properly.
+     *
+     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns
+     * a json_encoded string.
+     *
+     * TODO geb 2025-01-21: We might need a better default implementation.
+     *
+     * @param array  $keyValuePairs
+     * @param string $initialJson
+     * @return string
+     */
+    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'") : string
+    {
+        return json_encode($keyValuePairs);
+    }
+
+    /**
+     * Build an inline SQL-Snippet that generates an initial JSON value for native JSON-Functions.
+     *
+     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns `'{}'`.
+     *
+     * @param string $columnName
+     * @return string
+     */
+    protected function buildSqlInitialJson(string $columnName) : string
+    {
+        return '{}';
     }
 
     /**

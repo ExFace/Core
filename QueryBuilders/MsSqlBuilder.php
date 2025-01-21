@@ -826,7 +826,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         return <<<SQL
 
 CASE 
-    WHEN {$columnName} IS NOT NULL AND ISJSON({$columnName})
+    WHEN {$columnName} IS NOT NULL AND ISJSON({$columnName}) > 0
     THEN {$columnName}
     ELSE '{}'
 END 
