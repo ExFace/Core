@@ -137,6 +137,14 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
      * @return bool
      */
     public function hasRole(UserRoleSelectorInterface $selector) : bool;
+
+    /**
+     * Returns TRUE if the user has all given roles and FALSE if at least one is not present
+     * 
+     * @param UserRoleSelectorInterface[] $arrayOfSelectorsOrString
+     * @return bool
+     */
+    public function hasRolesAll(array $selectorsOrStrings) : bool;
     
     /**
      * 

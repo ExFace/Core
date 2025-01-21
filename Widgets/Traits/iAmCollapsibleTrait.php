@@ -12,7 +12,7 @@ use exface\Core\Interfaces\Widgets\iAmCollapsible;
  */
 trait iAmCollapsibleTrait {
     
-    private $collapsible = false;
+    private $collapsible = null;
     
     private $collapsed = false;
     
@@ -21,9 +21,9 @@ trait iAmCollapsibleTrait {
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::isCollapsible()
      */
-    public function isCollapsible() : bool
+    public function isCollapsible(bool $default = false) : bool
     {
-        return $this->collapsible;
+        return $this->collapsible ?? $default;
     }
     
     /**
@@ -34,9 +34,9 @@ trait iAmCollapsibleTrait {
      * 
      * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::setCollapsible()
      */
-    public function setCollapsible($value) : iAmCollapsible
+    public function setCollapsible(bool $value) : iAmCollapsible
     {
-        $this->collapsible = BooleanDataType::cast($value);
+        $this->collapsible = $value;
         return $this;
     }
     
@@ -50,12 +50,17 @@ trait iAmCollapsibleTrait {
      * 
      * @uxon-property collapsed
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::setCollapsed()
      */
-    public function setCollapsed($trueOrFalse) : iAmCollapsible
+    public function setCollapsed(bool $trueOrFalse) : iAmCollapsible
     {
-        $this->collapsed = BooleanDataType::cast($trueOrFalse);
+        $this->collapsed = $trueOrFalse;
+        // Make sure the widget is automatically collapsible if it is set to be collapsed!
+        if ($trueOrFalse === true) {
+            $this->setCollapsible(true);
+        }
         return $this;
     }
 }

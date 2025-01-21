@@ -1,0 +1,95 @@
+{
+    "object_alias": "exface.Core.USER_ROLE",
+    "columns": [
+        {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "SYNC_WITH_EXT_ROLE",
+            "attribute_alias": "SYNC_WITH_EXT_ROLE"
+        },
+        {
+            "name": "START_PAGE",
+            "attribute_alias": "START_PAGE"
+        }
+    ],
+    "rows": [
+        {
+            "_EXPORT_SUMMARY": "Support",
+            "CREATED_ON": "2021-04-21 18:41:36",
+            "MODIFIED_ON": "2021-04-22 11:07:10",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebadc4702cd376adc4025041000001",
+            "NAME": "Support",
+            "DESCRIPTION": "Start with monitor after logon",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "SUPPORT",
+            "SYNC_WITH_EXT_ROLE": null,
+            "START_PAGE": "0x11ebb1630a28048ab163025041000001"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.USER_ROLE",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.USER_ROLE"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

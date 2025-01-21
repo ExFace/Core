@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\ModelBuilders;
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
@@ -49,13 +50,17 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
             $type = $col['TYPE_NAME'];
             if (StringDataType::endsWith($type, ' identity') === true) {
                 $type = substr($type, 0, (-1)*strlen(' identity'));
-                $isUid = 1;
-                $isRequired = 0;
-                $isEditable = 0;
+                $isUid = true;
+                $isRequired = false;
+                $isEditable = false;
+                // IDENTITY columns cannot be used in CREATE/UPDATE queries, so they need to be marked
+                // as such and made non-writable in the model (see below)
+                $isIdentity = true;
             } else {
-                $isUid = 0;
+                $isUid = false;
                 $isRequired = $col['NULLABLE'] == 0 ? 1 : 0;
-                $isEditable = 1;
+                $isEditable = true;
+                $isIdentity = false;
             }
             
             $dataType = $this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE']);
@@ -78,6 +83,7 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                     $isRequired = 0;
             }
             
+            // Setup general attribute properties
             $row = [
                 'NAME' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $this->generateAlias($col['COLUMN_NAME']),
@@ -86,10 +92,24 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => $isRequired,
                 'EDITABLEFLAG' => $isEditable,
+                'WRITABLEFLAG' => ($isIdentity === false),
                 'DEFAULT_VALUE' => $default,
                 'UIDFLAG' => $isUid
             ];
+
+            // Add custom data address settings
+            $addrProps = new UxonObject();
+            if (stripos($type, 'binary') !== false || stripos($type, 'blob') !== false) {
+                $addrProps->setProperty('SQL_DATA_TYPE', 'binary');
+            }
+            if ($isIdentity === true) {
+                $addrProps->setProperty('SQL_IDENTITY_COLUMN', true);
+            }
+            if (! $addrProps->isEmpty()) {
+                $row['DATA_ADDRESS_PROPS'] = $addrProps->toJson();
+            }
             
+            // Add data type customizing
             $dataTypeProps = $this->getDataTypeConfig($dataType, $type);
             if (! $dataTypeProps->isEmpty()) {
                 $row['CUSTOM_DATA_TYPE'] = $dataTypeProps->toJson();

@@ -78,7 +78,7 @@
                         "start_commands": [
                             "action exface.Core:RunScheduler"
                         ],
-                        "working_directory_path": "vendor\/bin"
+                        "working_directory_path": "vendor/bin"
                     }
                 }
             },

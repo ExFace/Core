@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Custom Connection [CUSTOM_CONNECTION]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -208,7 +214,7 @@
             "RELATED_OBJ": "0x33380000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Overrides the default data connection for this installation only.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Base Object [BASE_OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -254,7 +261,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If set, any object from this source will inherit from the base object.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -264,6 +271,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Source Name [LABEL]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -297,10 +305,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Bezeichnung des Quellsystems",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -308,6 +316,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Source Alias [ALIAS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-11-23 12:56:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -341,10 +350,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -352,6 +361,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Query Builder [QUERYBUILDER]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -388,7 +398,7 @@
             "RELATED_OBJ": "0x11e6afdba24a42e58943e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -396,6 +406,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2016-03-30 01:00:39",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -432,7 +443,7 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Optional relation to a specific app. If set, this data source will be part of the app's package. It can still be used in any other app too.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -442,6 +453,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Connection [DEFAULT_CONNECTION]",
             "CREATED_ON": "2017-04-18 16:46:09",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -478,7 +490,7 @@
             "RELATED_OBJ": "0x33380000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The default connection is part of the app's metamodel and is maintained by the author of the app. In contrast to CUSTOM_CONNECTION, it will be overwritten by updates.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -488,6 +500,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Connection [CONNECTION]",
             "CREATED_ON": "2017-04-19 13:10:01",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -524,7 +537,7 @@
             "RELATED_OBJ": "0x33380000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The data connection, that is currently used for this data source.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -534,6 +547,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Query Builder [DEFAULT_QUERY_BUILDER]",
             "CREATED_ON": "2017-04-27 11:53:59",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -570,7 +584,7 @@
             "RELATED_OBJ": "0x11e6afdba24a42e58943e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The default query builder is maintained by the developer of the app containing the data source and may be overridden by the custom query builder for a specific installation.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -578,6 +592,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Custom Query Builder [CUSTOM_QUERY_BUILDER]",
             "CREATED_ON": "2017-04-27 11:59:49",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -614,7 +629,7 @@
             "RELATED_OBJ": "0x11e6afdba24a42e58943e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The custom query builder overrides the default one for a specific installation. It will not get overwritten when the app of the data source is updated.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -622,6 +637,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Readable [READABLE_FLAG]",
             "CREATED_ON": "2017-10-12 12:15:47",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -655,10 +671,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If disabled, no read-operations will be possible on this data source (e.g. for a one-way webservice)",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -666,6 +682,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Writable [WRITABLE_FLAG]",
             "CREATED_ON": "2017-10-12 12:15:47",
             "MODIFIED_ON": "2020-11-11 10:58:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -699,10 +716,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If disabled, no write-operations will be possible on this data source (e.g. a read-only DB)",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -710,6 +727,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias with namespace [ALIAS_WITH_NS]",
             "CREATED_ON": "2022-01-25 18:30:27",
             "MODIFIED_ON": "2022-01-28 08:26:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -734,7 +752,17 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "CONCAT(\n  (SELECT [#~alias#]_nsa.app_alias \n    FROM exf_app [#~alias#]_nsa \n    WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n  '.', \n  [#ALIAS#]\n)\n",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "CONCAT(",
+                "  (SELECT [#~alias#]_nsa.app_alias ",
+                "    FROM exf_app [#~alias#]_nsa ",
+                "    WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), ",
+                "  '.', ",
+                "  [#ALIAS#]",
+                ")",
+                ""
+            ],
             "OBJECT": "0x32340000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -743,10 +771,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Full alias of the data source including the app alias as namespace. This is what is used in UXON to identify the data source.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

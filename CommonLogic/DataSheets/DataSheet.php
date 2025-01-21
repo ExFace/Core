@@ -1466,6 +1466,15 @@ class DataSheet implements DataSheetInterface
             $update_ds = $this;
         }
         
+        // IDEA we had check for related data at this point and an error if the sheet had related column with
+        // the aim to make these cases visible to the user and avoid useless updates. However it did not work
+        // out. It turned out, having related data is actually IMPORTANT for the FileAttachmentBehavior
+        // that handles related data (e.g. __content of the attachment) separately. Similarly, other event
+        // handlers might be interested in the related data. So the problem remains: if we have related column
+        // (like PRODUCT__NAME for a ORDER_POS object), they get updated here too, but this is absolutely not
+        // obvious for the app designer. Indeed, it is very hard to understand, why the timestamps of related
+        // objects get updated in these cases.
+
         $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface

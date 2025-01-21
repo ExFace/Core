@@ -2,9 +2,9 @@
 namespace exface\Core\Facades;
 
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Facades\ConsoleFacade\CommandRunner;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Symfony\Component\Process\Process;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7;
 use exface\Core\Facades\AbstractHttpFacade\IteratorStream;
@@ -154,28 +154,8 @@ class WebConsoleFacade extends AbstractHttpFacade
                 }
                 $envVars = array_merge($envVars, $widget->getEnvironmentVars());
                 
-                if ($this->canUseSymfonyProcess()) {
-                    $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
-                    $process->start();
-                    $generator = function ($process) {
-                        foreach ($process as $output) {
-                            yield $output;
-                        }
-                    };
-                    $stream = new IteratorStream($generator($process));
-                } else {
-                    // This workaround resulted from an issue with Microsoft IIS:
-                    // `$process->start()` seems not to produce any output.
-                    // See https://github.com/symfony/symfony/issues/24924
-                    $result = null;
-                    $code = 0;
-                    foreach ($envVars as $var => $val) {
-                        putenv($var . '=' . $val);
-                    }
-                    exec($cmd . ' 2>&1', $result, $code);
-                    $resultStr = implode("\n", $result);
-                    $stream = Psr7\Utils::streamFor($resultStr);
-                }
+                $generator = CommandRunner::runCliCommand($cmd, $envVars, $widget->getCommandTimeout());
+                $stream = new IteratorStream($generator);
         }
         
         try {
@@ -293,31 +273,5 @@ class WebConsoleFacade extends AbstractHttpFacade
             return null;
         }
         return $norml;       
-    }
-    
-    /**
-     * Returns TRUE if Symfony process should work on the current server setup
-     * 
-     * Currently known systems not compatible with Symfony process:
-     * - Some IIS versions on Windows
-     * 
-     * @return bool
-     */
-    protected function canUseSymfonyProcess() : bool
-    {
-        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
-        if ($isWindows) {
-            $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"], "microsoft-iis") !== false);
-            if ($isIIS) {
-                // Check, if symfony process will return non-empty output: 
-                // `whoami` should always return something
-                $process = new Process(['whoami']);
-                $process->run();                
-                if (! $process->isSuccessful() || $process->getOutput() === '') {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 }

@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Component Attribute [ATTRIBUTE]",
             "CREATED_ON": "2020-01-30 18:24:29",
             "MODIFIED_ON": "2020-02-04 15:26:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -208,7 +214,7 @@
             "RELATED_OBJ": "0x32350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The attribute, which is part of the compound",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Compound Attribute [COMPOUND_ATTRIBUTE]",
             "CREATED_ON": "2020-01-30 18:24:29",
             "MODIFIED_ON": "2020-01-31 09:02:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -254,7 +261,7 @@
             "RELATED_OBJ": "0x32350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -264,8 +271,9 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Sequence [SEQUENCE_INDEX]",
             "CREATED_ON": "2020-01-30 18:24:29",
-            "MODIFIED_ON": "2020-01-31 09:02:46",
+            "MODIFIED_ON": "2024-12-10 18:35:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea438dc150b6e2bb290205857feb80",
@@ -285,7 +293,7 @@
             "NAME": "Sequence",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
-            "COPYABLEFLAG": 1,
+            "COPYABLEFLAG": 0,
             "ALIAS": "SEQUENCE_INDEX",
             "DATATYPE": "0x11e7b0277435425e98350205857feb80",
             "DATA_ADDRESS": "sequence_index",
@@ -297,17 +305,18 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Zero-based sequence number used to order components when concatenating the compound value",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_VALUE": 0,
+            "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Prefix [VALUE_PREFIX]",
             "CREATED_ON": "2020-01-31 09:01:18",
             "MODIFIED_ON": "2020-02-04 15:30:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -341,10 +350,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The prefix is prepended before the value of this component attribute when concatenating component values into a single compound value.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -352,6 +361,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Suffix [VALUE_SUFFIX]",
             "CREATED_ON": "2020-01-31 09:01:18",
             "MODIFIED_ON": "2020-02-04 15:29:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -385,10 +395,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The suffix is appended after the value of this component-attribute when concatenating component values into a single compound value.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

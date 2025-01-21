@@ -41,6 +41,8 @@ class Attribute implements MetaAttributeInterface
 
     private $data_address_properties;
 
+    private $data_type_selector;
+
     private $data_type;
 
     private $calculationString = null;
@@ -197,9 +199,9 @@ class Attribute implements MetaAttributeInterface
      */
     public function getDataType()
     {
-        if (is_string($this->data_type) === true){
+        if ($this->data_type === null && is_string($this->data_type_selector) === true){
             try {
-                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type)->copy();
+                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type_selector)->copy();
                 $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
             } catch (\Throwable $e) {
                 throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
@@ -215,10 +217,17 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDataType($instance_or_resolvable_string)
     {
-        if (is_string($instance_or_resolvable_string) || ($instance_or_resolvable_string instanceof DataTypeInterface)) {
-            $this->data_type = $instance_or_resolvable_string;
-        } else {
-            throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
+        switch (true) {
+            case is_string($instance_or_resolvable_string):
+                $this->data_type_selector = $instance_or_resolvable_string;
+                $this->data_type = null;
+                break;
+            case $instance_or_resolvable_string instanceof DataTypeInterface:
+                $this->data_type_selector = $instance_or_resolvable_string->getAliasWithNamespace();
+                $this->data_type = $instance_or_resolvable_string;
+                break;
+            default: 
+                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
         }
         return $this;
     }
@@ -1050,23 +1059,7 @@ class Attribute implements MetaAttributeInterface
         } else {
             throw new InvalidArgumentException('Invalid custom data type UXON for attribute ' . $this->getAlias() . ' of object ' . $this->getObject()->getAliasWithNamespace() . ': expecting string or UXON object!');
         }
-        $this->resetDataType();
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return \exface\Core\CommonLogic\Model\Attribute
-     */
-    private function resetDataType()
-    {
-        // If the data type had already been instantiated, degrade it back to a string alias.
-        // Next time the getDataType() is called, it will reinstantiate the data type uxing
-        // the new custom setting.
-        if ($this->data_type instanceof UxonObject){
-            $this->data_type = $this->data_type->getAliasWithNamespace();
-        }
-        
+        $this->data_type = null;
         return $this;
     }
 

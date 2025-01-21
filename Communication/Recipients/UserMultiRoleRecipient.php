@@ -25,6 +25,8 @@ class UserMultiRoleRecipient implements RecipientGroupInterface
     private $recipients = null;
     
     private $workbench = null;
+
+    private $users = null;
     
     /**
      * 
@@ -51,10 +53,24 @@ class UserMultiRoleRecipient implements RecipientGroupInterface
         }
         return $this->users;
     }
+
+    /**
+     * 
+     * @return \exface\Core\Interfaces\Selectors\UserRoleSelectorInterface[]
+     */
+    public function getRoleSelectors() : array
+    {
+        $roles = [];
+        $parts = explode(self::ROLE_DELIMITER, $this->selectorString);
+        foreach ($parts as $role) {
+            $roles[] = new UserRoleSelector($this->workbench, $role);
+        }
+        return $roles;
+    }
     
     /**
      * 
-     * @return array
+     * @return string[]
      */
     protected function getRecipientUids() : array
     {
