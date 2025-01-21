@@ -249,14 +249,15 @@ class SqlModelLoader implements ModelLoaderInterface
             // Take care of inheritance: first the data source base object, than the
             // explicit parent if specified. Also avoid reccurrance with self-inheritance.
             // If an explicit parent is specified, load it first
+            $parent = null;
             if ($row['parent_object_oid'] && $row['parent_object_oid'] !== $object->getId()) {
                 $parent = $this->getModel()->getObject($row['parent_object_oid']);
-            } else {
-                $parent = null;
-            }
+            } 
+
             // See if the data source has a base object. If so, double-check 
             // - that it was not already inherited by the parent object (should not inherit twice as this would register all behaviors twice too!) 
             // - that base inheritance is not turned off for this particular object 
+            $baseObject = null;
             if ($row['base_object_oid'] && $row['base_object_oid'] !== $object->getId() && ! ($parent && $parent->isExtendedFrom($row['base_object_oid'])) && ($row['inherit_data_source_base_object'] ?? 1)) {
                 $baseObject = $this->getModel()->getObject($row['base_object_oid']);
                 $object->extendFromObject($baseObject);
@@ -264,7 +265,7 @@ class SqlModelLoader implements ModelLoaderInterface
             // Now that we handled the base object, we can extend from the explicit parent.
             // Still double check if it's the same object in case the user accidently specified
             // the same object as base and parent in the metamodel.
-            if ($parent && $parent !== $baseObject) {
+            if ($parent !== null && $parent !== $baseObject) {
                 $object->extendFromObject($parent);
             }
 
@@ -273,7 +274,7 @@ class SqlModelLoader implements ModelLoaderInterface
             // no calls to `getAttribute()` should be made!!!
             
             // Overwrite inherited properties
-            if (is_null($object->getDataAddress()) || $object->getDataAddress() == '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
+            if (is_null($object->getDataAddress()) || $object->getDataAddress() === '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
                 $object->setDataAddress($row['data_address']);
             }
             if (! is_null($row['readable_flag'])){
