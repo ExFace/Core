@@ -803,4 +803,33 @@ class MsSqlBuilder extends AbstractSqlBuilder
         
         return true;
     }
+
+    /**
+     * @inheritdoc 
+     */
+    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
+    {
+        $resultJson = $initialJson;
+
+        foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+        }
+
+        return $resultJson;
+    }
+
+    /**
+     * @inheritdoc 
+     */
+    protected function buildSqlInitialJson(string $columnName): string
+    {
+        return <<<SQL
+
+CASE 
+    WHEN {$columnName} IS NOT NULL AND ISJSON({$columnName})
+    THEN {$columnName}
+    ELSE '{}'
+END 
+SQL;
+    }
 }
