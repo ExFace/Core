@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Events\Widget\OnUiRootWidgetInitEvent;
+use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\CommonLogic\UxonObject;
@@ -102,7 +102,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     /**
      * Returns the widget, that this action will show.
      * 
-     * This method will instantiate the widget if not done yet and trigger the OnUiRootWidgetInitEvent.
+     * This method will instantiate the widget if not done yet and trigger the OnUiActionWidgetInitEvent.
      * 
      * You can customize instantiation by overriding the following methods:
      * 
@@ -122,7 +122,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
             $this->widget = $this->initWidget();
             if ($this->widget !== null) {
                 $this->widget = $this->enrichWidget($this->widget);
-                $this->getWorkbench()->eventManager()->dispatch(new OnUiRootWidgetInitEvent($this->widget, $this->widget->getMetaObject()));
+                $this->getWorkbench()->eventManager()->dispatch(new OnUiActionWidgetInitEvent($this->widget, $this->widget->getMetaObject(), $this));
             }
         }
         return $this->widget;
@@ -216,7 +216,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     {
         if ($widget_or_uxon_object instanceof WidgetInterface) {
             $this->widget = $widget_or_uxon_object;
-            $this->getWorkbench()->eventManager()->dispatch(new OnUiRootWidgetInitEvent($this->widget, $this->widget->getMetaObject()));
+            $this->getWorkbench()->eventManager()->dispatch(new OnUiActionWidgetInitEvent($this->widget, $this->widget->getMetaObject(), $this));
         } elseif ($widget_or_uxon_object instanceof UxonObject) {
             $this->setWidgetUxon($widget_or_uxon_object);
             $this->widget = null;

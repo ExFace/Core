@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.AUTHORIZATION_POINT",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -80,6 +85,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Access to pages and menus",
             "CREATED_ON": "2020-03-05 12:41:34",
             "MODIFIED_ON": "2022-04-25 12:07:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -97,10 +103,11 @@
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\UiPageAuthorizationPolicy",
-            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Page_AP.md",
+            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Page_AP.md",
             "TARGET_APP_APPLICABLE": 0
         },
         {
+            "_EXPORT_SUMMARY": "Access to contexts",
             "CREATED_ON": "2020-03-22 13:41:44",
             "MODIFIED_ON": "2020-05-05 10:27:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -118,10 +125,11 @@
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPolicy",
-            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Context_AP.md",
+            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Context_AP.md",
             "TARGET_APP_APPLICABLE": 0
         },
         {
+            "_EXPORT_SUMMARY": "Access via HTTP request",
             "CREATED_ON": "2020-05-04 16:17:42",
             "MODIFIED_ON": "2022-12-02 09:54:17",
             "CREATED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
@@ -139,10 +147,11 @@
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\HttpRequestAuthorizationPolicy",
-            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Facade_AP.md",
+            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Facade_AP.md",
             "TARGET_APP_APPLICABLE": 0
         },
         {
+            "_EXPORT_SUMMARY": "Access to actions",
             "CREATED_ON": "2020-05-05 16:36:16",
             "MODIFIED_ON": "2023-12-20 12:15:59",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
@@ -160,10 +169,11 @@
             "DEFAULT_EFFECT_IN_APP": "P",
             "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPolicy",
-            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Action_AP.md",
+            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Action_AP.md",
             "TARGET_APP_APPLICABLE": 1
         },
         {
+            "_EXPORT_SUMMARY": "Access to data",
             "CREATED_ON": "2022-04-24 17:05:28",
             "MODIFIED_ON": "2023-12-20 12:16:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -181,10 +191,11 @@
             "DEFAULT_EFFECT_IN_APP": "P",
             "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\DataAuthorizationPolicy",
-            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Data_AP.md",
+            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Data_AP.md",
             "TARGET_APP_APPLICABLE": 1
         },
         {
+            "_EXPORT_SUMMARY": "Access via local CLI",
             "CREATED_ON": "2022-12-02 09:55:22",
             "MODIFIED_ON": "2022-12-02 09:56:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -202,7 +213,7 @@
             "DEFAULT_EFFECT_IN_APP": "P",
             "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\CommandLineAuthorizationPolicy",
-            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Facade_AP.md",
+            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Facade_AP.md",
             "TARGET_APP_APPLICABLE": 0
         }
     ],

@@ -11,6 +11,12 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Widgets\Parts\Charts\BarChartSeries;
+use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
+use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
+use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
+use exface\Core\Widgets\Parts\Charts\PieChartSeries;
+use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
@@ -151,7 +157,9 @@ class Chart extends AbstractWidget implements
     
     private $colorScheme = null;
     
-    private string $outputListDelimiter = ',';
+    private ?string $legendAttributeAlias = null;
+    
+    private bool $hideLabelPercentToggle = false;
 
     /**
      * 
@@ -1040,29 +1048,63 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     * Define a custom output list delimiter that will be used whenever this
-     * widget produces an array output.
+     * @deprecated 
+     * TODO Remove after 04.2024
      * 
-     * The default delimiter is `,`.
-     * 
-     * @uxon-property output_list_delimiter
-     * @uxon-type string
-     * @uxon-default ,
-     * 
-     * @param string $delimiter
-     * @return $this
+     * @param string|null $alias
+     * @return Chart
      */
-    public function setOutputListDelimiter(string $delimiter) : Chart
+    protected function setLegendAttributeAlias(?string $alias) : Chart
     {
-        $this->outputListDelimiter = $delimiter;
+        $this->legendAttributeAlias = $alias;
         return $this;
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    public function getOutputListDelimiter() : string
+    public function getHideLabelPercentToggle() : bool
     {
-        return $this->outputListDelimiter;
+        return $this->hideLabelPercentToggle;
+    }
+
+    /**
+     * Hide the button that allows the user to toggle percentage displays in the chart labels.
+     * This property  only affects charts with series, that support percentage labels in the first place.
+     * 
+     * @uxon-property hide_label_percent_toggle
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setHideLabelPercentToggle(bool $value) : Chart
+    {
+        $this->hideLabelPercentToggle = $value;
+        return $this;
+    }
+    
+    /**
+     * Check, whether this chart should have a button to toggle label percentages.
+     * 
+     * @return bool
+     */
+    public function hasLabelPercentToggle () : bool
+    {
+        if($this->getHideLabelPercentToggle()) {
+            return false;
+        }
+        
+        foreach ($this->getSeries() as $series) {
+            if(
+                $series instanceof PieChartSeries ||
+                $series instanceof GraphChartSeries ||
+                $series instanceof ColumnChartSeries) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

@@ -2,6 +2,7 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
@@ -85,13 +86,35 @@ class StringDataType extends AbstractDataType
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.
-     *
-     * @param string $string            
+     * 
+     * The second (optional) argument controls if the first character is to be forced
+     * to be lower case (default) or left as-is.
+     * 
+     * @param mixed $string
+     * @param bool $lowerCaseFirst
      * @return string
      */
-    public static function convertCaseUnderscoreToCamel($string)
+    public static function convertCaseUnderscoreToCamel($string, bool $lowerCaseFirst = true)
     {
-        return lcfirst(static::convertCaseUnderscoreToPascal($string));
+        return static::convertCaseDelimiterToCamel($string ?? '', '_', $lowerCaseFirst);
+    }
+
+    /**
+     * 
+     * @param string $string
+     * @param string $delimiter
+     * @param bool $lowerCaseFirst
+     * @return string
+     */
+    public static function convertCaseDelimiterToCamel(string $string, string $delimiter = '_', bool $lowerCaseFirst = true)
+    {
+        if ($lowerCaseFirst === false) {
+            $firstChar = mb_substr($string, 0, 1);
+            $string = mb_substr($string, 1);
+        } else {
+            $firstChar = '';
+        }
+        return $firstChar . lcfirst(static::convertCaseDelimiterToPascal($string, $delimiter));
     }
 
     /**
@@ -113,7 +136,18 @@ class StringDataType extends AbstractDataType
      */
     public static function convertCaseUnderscoreToPascal($string)
     {
-        return str_replace('_', '', ucwords($string, "_"));
+        return static::convertCaseDelimiterToPascal($string ?? '', '_');
+    }
+
+    /**
+     * 
+     * @param string $string
+     * @param string $delimiter
+     * @return string
+     */
+    public static function convertCaseDelimiterToPascal(string $string, string $delimiter = '_') : string
+    {
+        return str_replace($delimiter, '', ucwords($string, $delimiter));
     }
 
     /**
@@ -319,7 +353,7 @@ class StringDataType extends AbstractDataType
     public static function findPlaceholders($string)
     {
         $placeholders = array();
-        preg_match_all("/\[#([^\]\[#]+)#\]/", $string, $placeholders);
+        preg_match_all("/\[#([^#]+)#\]/", $string, $placeholders);
         return is_array($placeholders[1]) ? $placeholders[1] : array();
     }
     
@@ -581,6 +615,9 @@ class StringDataType extends AbstractDataType
         $result = '';
         foreach ($lines as $line) {
             $line = trim($line);
+            if ($line === false) {
+                throw new DataTypeCastingError('Cannot truncate string - invalid characters detected!');
+            }
             if ($line === '') {
                 continue;
             }
@@ -628,6 +665,9 @@ class StringDataType extends AbstractDataType
     public static function endSentence(string $text, string $puct = '.') : string
     {
         $text = trim($text);
+        if ($text === false) {
+            throw new DataTypeCastingError('Cannot process string - invalid characters detected!');
+        }
         $end = mb_substr($text, -1);
         switch ($end) {
             case '.':
@@ -648,6 +688,7 @@ class StringDataType extends AbstractDataType
      * 
      * - `transliterate('Änderung')` -> Anderung
      * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
+     * - `transliterate('ä/B', ':: Any-Latin; [:Punctuation:] Remove;')` -> a b
      * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;)` -> aufgaben im uberblick
      * 
      * @link https://unicode-org.github.io/icu/userguide/transforms/general/
@@ -685,6 +726,9 @@ class StringDataType extends AbstractDataType
     public static function isQuotedString(string $str) : bool
     {
         $str = trim($str);
+        if ($str === false) {
+            throw new DataTypeCastingError('Cannot process string - invalid characters detected!');
+        }
         $firstChar = mb_substr($str, 0, 1);
         if ($firstChar !== '"' && $firstChar !== "'") {
             return false;
@@ -694,5 +738,18 @@ class StringDataType extends AbstractDataType
             return false;
         }
         return true;
+    }
+
+    /**
+     * Determines, which line break characters are used in a string and returns them as an array
+     * 
+     * @param string $str
+     * @return array
+     */
+    public static function findLineBreakChars(string $str) : array
+    {
+        $matches = [];
+        preg_match('/\R/', $str, $matches);
+        return array_unique($matches);
     }
 }

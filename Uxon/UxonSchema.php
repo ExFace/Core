@@ -942,7 +942,7 @@ class UxonSchema implements UxonSchemaInterface
      * @param string $prototypeClass
      * @return UxonSchema
      */
-    protected function getSchemaForClass(string $prototypeClass) : UxonSchema
+    public function getSchemaForClass(string $prototypeClass) : UxonSchema
     {
         $class = null;
         if (is_subclass_of($prototypeClass, iCanBeConvertedToUxon::class)) {

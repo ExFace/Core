@@ -4,6 +4,7 @@ namespace exface\Core\Events\Facades;
 use exface\Core\Events\AbstractEvent;
 use exface\Core\Interfaces\Events\FacadeEventInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Events\WidgetEventInterface;
 
@@ -70,6 +71,16 @@ class OnFacadeWidgetRendererExtendedEvent extends AbstractEvent implements Facad
     public function getWidget(): WidgetInterface
     {
         return $this->widget;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\UiPageEventInterface::getPage()
+     */
+    public function getPage() : UiPageInterface
+    {
+        return $this->getWidget()->getPage();
     }
     
     /**

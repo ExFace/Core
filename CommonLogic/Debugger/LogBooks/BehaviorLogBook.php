@@ -26,11 +26,14 @@ class BehaviorLogBook extends DataLogBook
         $this->event = $event;
         $this->behavior = $behavior;
         $this->addSection($behavior->getName());
+        $this->addIndent(1);
         $this->addLine(PhpClassDataType::findClassNameWithoutNamespace($behavior) . ' of ' . $behavior->getObject()->__toString());
+        $this->addLine('Behavior instance "' . spl_object_id($behavior) . '"');
         if ($event !== null) {
             $eventObj = $this->getObjectOfEvent($event);
-            $this->addLine('Reacting to event `' . $event::getEventName() . '`' . ($eventObj !== null ? ' for object ' . $eventObj->__toString() : ''));
+            $this->addLine('Reacting to event `' . $event::getEventName() . '`' . ($eventObj !== null ? ' for object ' . $eventObj->__toString() : '') . ' (event instance "' . spl_object_id($event) . '")');
         }
+        $this->addIndent(-1);
     }
     
     /**

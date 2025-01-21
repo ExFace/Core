@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT_BEHAVIORS",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -56,12 +61,13 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Check access time before writing",
             "CREATED_ON": "2018-04-16 11:56:16",
             "MODIFIED_ON": "2019-10-01 09:24:16",
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8415c67741bddafce74e5434dc47d",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
+            "BEHAVIOR": "exface/Core/Behaviors/TimeStampingBehavior.php",
             "CONFIG_UXON": {
                 "updated_on_attribute_alias": "MODIFIED_ON"
             },
@@ -73,12 +79,13 @@
             "PRIORITY": null
         },
         {
+            "_EXPORT_SUMMARY": "Allow to handle rows as files",
             "CREATED_ON": "2022-05-05 09:06:21",
             "MODIFIED_ON": "2024-07-05 12:56:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec947bde10227a947b025041000001",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/FileBehavior.php",
+            "BEHAVIOR": "exface/Core/Behaviors/FileBehavior.php",
             "CONFIG_UXON": {
                 "filename_attribute": "FILENAME",
                 "contents_attribute": "CONTENTS",

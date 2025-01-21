@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Data Source [DATA_SOURCE]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2017-11-28 10:28:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -208,7 +214,7 @@
             "RELATED_OBJ": "0x32340000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The data source, where these objects are stored. If an object has no data source, it can only be used at runtime (e.g. in an input data sheet for an action), but cannot be saved or read.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "App [APP]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2007-01-01 00:00:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -254,8 +261,8 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Zuordnung des Meta-Objektes zu einer App. Anders als Quellsyteme, stehen Apps f\u00fcr fachliche Anwendungsgebiete. Eine App kann mehrere Quellsysteme umfassen und umgekehrt.",
+            "RELATED_OBJ_ATTR": null,
+            "SHORT_DESCRIPTION": "Zuordnung des Meta-Objektes zu einer App. Anders als Quellsyteme, stehen Apps für fachliche Anwendungsgebiete. Eine App kann mehrere Quellsysteme umfassen und umgekehrt.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
             },
@@ -264,6 +271,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Description [SHORT_DESCRIPTION]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2018-11-19 11:44:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -297,10 +305,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Used for hints and contextual help",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -308,6 +316,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Extends Object [PARENT_OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2017-06-05 06:01:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -344,7 +353,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Extending an another object will make this object inherit all properties, attributes, actions, behaviors, etc. They can be overridden by defining the a property with the same ALIAS for this object.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -354,6 +363,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Source Settings [DATA_ADDRESS_PROPS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2017-06-05 06:01:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -387,10 +397,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Custom settings for the specified data source",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -398,6 +408,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Editor [DEFAULT_EDITOR_UXON]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2018-12-21 11:52:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -431,10 +442,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Widget to be used as an editor for instances of this object by default",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -442,6 +453,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Object [LABEL]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2024-08-13 15:22:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -466,7 +478,11 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: CONCAT([#NAME#], ' [', [#ALIAS_WITH_NS#], ']')\n@T-SQL: (CASE WHEN [#NAME#] IS NULL THEN NULL ELSE CONCAT([#NAME#], ' [', [#ALIAS_WITH_NS#], ']') END)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: CONCAT([#NAME#], ' [', [#ALIAS_WITH_NS#], ']')",
+                "@T-SQL: (CASE WHEN [#NAME#] IS NULL THEN NULL ELSE CONCAT([#NAME#], ' [', [#ALIAS_WITH_NS#], ']') END)"
+            ],
             "OBJECT": "0x31350000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -475,10 +491,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Name of the meta object",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -486,6 +502,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Object Alias [ALIAS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2019-01-31 09:04:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -519,10 +536,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The alias of the object is particularly important as it is used to bind a widget to the object in UXON. In uxon the object alias will always be prefixed by the app alias: e.g.  \"My.App.MyObject\" for an object with the alias \"MyObject\" within the app ",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -530,6 +547,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data Address [DATA_ADDRESS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2017-11-28 10:20:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -563,17 +581,18 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "This address tells the data source where to find instances of the object: e.g. a table name for SQL sources, a file name for file sources, an URL for HTML\/JSON\/XML sources, etc",
+            "RELATED_OBJ_ATTR": null,
+            "SHORT_DESCRIPTION": "This address tells the data source where to find instances of the object: e.g. a table name for SQL sources, a file name for file sources, an URL for HTML/JSON/XML sources, etc",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Readable [READABLE_FLAG]",
             "CREATED_ON": "2017-10-12 12:08:27",
             "MODIFIED_ON": "2017-11-28 10:29:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -607,10 +626,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If disabled, no read-operations on the data source will be possible with this object: e.g. for a one-way webservice.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -618,6 +637,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Writable [WRITABLE_FLAG]",
             "CREATED_ON": "2017-10-12 12:08:27",
             "MODIFIED_ON": "2017-11-28 10:29:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -651,10 +671,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "If disabled, no write-operations on the data source will be possible with this object: e.g. for a DB view.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
@@ -662,6 +682,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Comments (internal) [COMMENTS]",
             "CREATED_ON": "2018-11-19 08:40:52",
             "MODIFIED_ON": "2018-11-19 11:44:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -695,10 +716,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Comments for model designers - not visible to users!",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -706,6 +727,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Documentation [DOCS]",
             "CREATED_ON": "2018-11-25 21:33:26",
             "MODIFIED_ON": "2018-11-25 21:35:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -742,7 +764,7 @@
             "RELATED_OBJ": "0x11e7b7d9e1203963995b0205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -750,6 +772,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Object Name [NAME]",
             "CREATED_ON": "2019-01-31 09:00:08",
             "MODIFIED_ON": "2019-01-31 09:02:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -783,10 +806,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Name of the meta object",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -794,6 +817,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Inherit Data Source Base Object [INHERIT_DATA_SOURCE_BASE_OBJECT]",
             "CREATED_ON": "2019-04-17 08:49:20",
             "MODIFIED_ON": "2019-04-17 08:56:22",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
@@ -827,10 +851,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Uncheck if this object has a totally different structure, than a typical object in it's data source - e.g. if all tables in an SQL source have certain columns and the table for this object does not.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 1,
@@ -838,6 +862,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Editor [HAS_DEFAULT_EDITOR]",
             "CREATED_ON": "2019-08-30 09:10:14",
             "MODIFIED_ON": "2020-06-03 16:57:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -871,10 +896,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Checked if a default editor is configured for this object",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -882,6 +907,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias with namespace [ALIAS_WITH_NS]",
             "CREATED_ON": "2020-09-14 13:20:32",
             "MODIFIED_ON": "2021-09-10 15:28:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -906,7 +932,11 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#])\n@T-SQL: (CASE WHEN [#ALIAS#] IS NULL THEN NULL ELSE CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#]) END)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#])",
+                "@T-SQL: (CASE WHEN [#ALIAS#] IS NULL THEN NULL ELSE CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#]) END)"
+            ],
             "OBJECT": "0x31350000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -915,10 +945,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Full alias of the meta object including the app alias as namespace. This is what is used in UXON to identify the object.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

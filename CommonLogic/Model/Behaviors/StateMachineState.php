@@ -381,6 +381,7 @@ class StateMachineState implements iHaveIcon
      * 
      * @uxon-property name
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $name            
      */
@@ -630,6 +631,7 @@ class StateMachineState implements iHaveIcon
      * 
      * @uxon-property description
      * @uxon-type string
+     * @uxon-translatable true
      * 
      * @param string $text
      * @return StateMachineBehavior

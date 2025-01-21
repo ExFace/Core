@@ -2,6 +2,7 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
@@ -13,8 +14,6 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -53,10 +52,21 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * @uxon-default false
      */
     const DAP_SQL_SELECT_WITH_NOLOCK = 'SQL_SELECT_WITH_NOLOCK';
+
+    /**
+     * Set to TRUE if this column is the IDENTITY column of its table.
+     * 
+     * This will tell the query builder, that it cannot be included in CREATE or UPDATE queries as this
+     * will cause errors in MS SQL Server.
+     * 
+     * @uxon-property SQL_IDENTITY_COLUMN
+     * @uxon-target attribute
+     * @uxon-type bool
+     * @uxon-default false
+     */
+    const DAP_SQL_IDENTITY_COLUMN = 'SQL_IDENTITY_COLUMN';
     
     const MAX_BUILD_RUNS = 5;
-    
-    private $selectWithNoLock = null;
     
     /**
      *
@@ -427,9 +437,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelect()
      */
-    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
+    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null, $addComments = true)
     {        
-        $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
+        $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable, $addComments);
         $aggr = $aggregator ?? $qpart->getAggregator();
         if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {
             $sql = StringDataType::substringBefore($sql, ' AS ', $sql, false, true);
@@ -673,33 +683,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlAsForTables(string $alias) : string
     {
-        if ($this->getMainObject()->getDataAddressProperty('SQL_SELECT_WITH_NOLOCK') === true) {
+        if ($this->getMainObject()->getDataAddressProperty(self::DAP_SQL_SELECT_WITH_NOLOCK) === true) {
             return ' (NOLOCK) AS ' . $alias;
         }
         return ' AS ' . $alias;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::create()
-     */
-    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
-    {
-        // SQL Server does not accept NULL as value for an IDENTITY column, so we remove 
-        // UID columns here entirely if they
-        // - are not required in the metamodel
-        // - do not have non-empty values
-        // - do not use the optimized UUID generator
-        // - do not have a custom SQL generator
-        if ($this->getMainObject()->hasUidAttribute()) {
-            $uidAttr = $this->getMainObject()->getUidAttribute();
-            $uidQpart = $this->getValue($uidAttr->getAlias());
-            if ($uidQpart && $uidAttr->isRequired() === false && $uidQpart->hasValues() === false && ! $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT) && ! $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_DATA_ADDRESS) && ! $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_UUID_OPTIMIZED)) {
-                $this->removeQueryPart($uidQpart);
-            }
-        }
-        return parent::create($data_connection);
     }
     
     /**
