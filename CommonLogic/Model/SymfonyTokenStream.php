@@ -83,23 +83,26 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             $delim = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
             $tokens = $this->getTokens();
             $buffer = null;
+            $count = count($tokens);
             foreach ($tokens as $i => $token) {
+                $prev = $i > 0 ? $tokens[$i-1] : null;
+                $next = $i < $count - 1 ? $tokens[$i+1] : null;
                 $name = $token['name'] ?? null;
                 if ($name === null) {
                     continue;
                 }
                 //if token is preceeded by a ':' it might be an aggregation, so check that, else it's a formula
-                if ($tokens[$i-1]['punctuation'] === ':' && AggregatorFunctionsDataType::isValidStaticValue($name) === true) {
+                if ($prev !== null && (':' === $prev['punctuation'] ?? null) && AggregatorFunctionsDataType::isValidStaticValue($name) === true) {
                     continue;
                 }
                 
                 //if the token is followd by a '.' it's a formula with namespace, therefor buffer the token
-                if ($tokens[$i+1]['punctuation'] === $delim) {
+                if ($next !== null && $delim === $next['punctuation'] ?? null) {
                     $buffer .= $name . $delim;
                     continue;
                 }
-                if ($tokens[$i+1]['punctuation'] === '(') {
-                    if ($tokens[$i-1]['punctuation'] === $delim && $buffer) {
+                if ($next !== null && '(' === $next['punctuation'] ?? null) {
+                    if ($prev !== null && ($delim === $prev['punctuation'] ?? null) && $buffer) {
                         $forms[] = $buffer . $name;
                     } else {
                         $forms[] = $name;
@@ -204,15 +207,14 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
         $tokens = $this->getTokens();
         $buffer = null;
         foreach ($tokens as $i => $token) {
-            if ($token['string'] !== null) {
-                $args[] = $token['string'];
+            if (null !== $t = $token['string'] ?? null) {
+                $args[] = $t;
                 continue;
             }
-            if ($token['number'] !== null) {
-                $args[] = $token['number'];
+            if (null !== $t = $token['number'] ?? null) {
+                $args[] = $t;
                 continue;
             }
-            
             
             //every token with 'name' key gets to the arguments unless it is the formula name itself
             // TODO maybe should also extract nested formulas here so we can run this functions once and have all tokens categorized
