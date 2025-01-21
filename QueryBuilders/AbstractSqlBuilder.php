@@ -1090,16 +1090,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // $updates_by_filter[] = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $attr->getDataAddress() . " = CASE " . $this->getMainObject()->getUidAttribute()->getDataAddress() . " \n" . implode($cases) . " END";
             }
         }
-        
+
         // Process JSON values for update by filter columns.
         foreach ($jsonColumnsByFilter as $columnName => $keyValuePairs) {
-            $updates_by_filter[] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs);
+            $updates_by_filter[] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs, $this->buildSqlInitialJson($columnName));
         }
 
         // Process JSON values for update by UID columns.
         foreach ($jsonColumnsByUid as $uid => $columns) {
             foreach ($columns as $columnName => $keyValuePairs) {
-                $updates_by_uid[$uid][$columnName] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs);
+                $updates_by_uid[$uid][$columnName] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs, $this->buildSqlInitialJson($columnName));
             }
         }
         
@@ -1150,21 +1150,31 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * - This function can only generate a JSON that is exactly 1 level deep. Keys that try to access
      * deeper levels (e.g. `$.allowed.forbidden`) will not function properly.
      *
-     * NOTE: JSON manipulation may not be fully supported by all dialects.
+     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns
+     * a json_encoded string. 
+     * 
+     * TODO geb 2025-01-21: We might need a better default implementation.
      *
      * @param array  $keyValuePairs
      * @param string $initialJson
      * @return string
      */
-    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = '{}') : string
+    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'") : string
     {
-        $resultJson = "'" . $initialJson . "'";
-        
-        foreach ($keyValuePairs as $attributePath => $attributeValue) {
-            $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
-        }
+        return json_encode($keyValuePairs);
+    }
 
-        return $resultJson;
+    /**
+     * Build an inline SQL-Snippet that generates an initial JSON value for native JSON-Functions.
+     * 
+     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns `'{}'`.
+     * 
+     * @param string $columnName
+     * @return string
+     */
+    protected function buildSqlInitialJson(string $columnName) : string
+    {
+        return '{}';
     }
     
     /**
