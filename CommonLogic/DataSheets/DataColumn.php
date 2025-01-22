@@ -744,7 +744,7 @@ class DataColumn implements DataColumnInterface
 
     public static function sanitizeColumnName($string)
     {
-        $name = preg_replace('/' . self::COLUMN_NAME_VALIDATOR . '/', '_', $string);
+        $name = preg_replace('/' . self::COLUMN_NAME_VALIDATOR . '/', '_', $string ?? '');
         return $name;
     }
 
