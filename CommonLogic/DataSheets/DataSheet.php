@@ -1762,12 +1762,18 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetWriteError($this, 'Cannot create nested data: ' . count($column->getValues(false)) . ' nested data sheets found for ' . count($newKeys) . ' foreign keys in the parent sheet.');
         }
         
+        $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
         foreach ($column->getValues(false) as $rowNr => $sheetArr) {
             if (! $sheetArr) {
                 continue;
             }
             
-            $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+            $nestedSheet = DataSheetFactory::createSubsheetFromUxon(
+                $this, 
+                UxonObject::fromAnything($sheetArr), 
+                $nestedFKeyAttr->getAlias(), 
+                $thisSheetKeyAttr->getAliasWithRelationPath()
+            );
             
             if ($nestedSheet === null || $nestedSheet->isEmpty(true) === true) {
                 continue;
@@ -1787,7 +1793,6 @@ class DataSheet implements DataSheetInterface
                 $nestedSheet->getUidColumn()->setValueOnAllRows('');
             }
             
-            $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
             $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
             $nestedFKeyCol->setValueOnAllRows($rowKey);
             
