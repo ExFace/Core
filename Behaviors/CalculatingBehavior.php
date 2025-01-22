@@ -191,7 +191,7 @@ class CalculatingBehavior extends AbstractBehavior
 		
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         
-        $logbook->addDataSheet('Input data', $inputSheet);
+        $logbook->addDataSheet('Event data', $inputSheet);
         $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
@@ -237,7 +237,7 @@ class CalculatingBehavior extends AbstractBehavior
             $filteredSheet = $inputSheet->copy();
         }
 
-        if (! $inputSheet->hasUidColumn(true)) {
+        if (! $inputSheet->hasUidColumn(true) && $this->willNeedToUpdateData($event)) {
             $logbook->addLine('**FAILED** because of input data has no or empty UID column!');
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
@@ -248,11 +248,17 @@ class CalculatingBehavior extends AbstractBehavior
         $mapper = $this->getDataMapper($inputSheet, $onlyExistingCols);
         $calculatedSheet = $mapper->map($filteredSheet, true, $logbook);
 
+        $logbook->addDataSheet('Calculation data', $calculatedSheet);
+
         if ($this->willNeedToUpdateData($event)) {
+            $logbook->addLine('Performing an update using the calculation data');
             $calculatedSheet->merge($inputSheet->extractSystemColumns(), false, true);
             $calculatedSheet->dataUpdate(false, ($event instanceof DataTransactionEventInterface) ? $event->getTransaction() : null);
+        } else {
+            $logbook->addLine('No update in data source required - all calculation can be directly applied to event data');
         }
 
+        $logbook->addLine('Merging calculation data into event data overwriting previous values');
         $inputSheet->merge($calculatedSheet, true);
         $this->inProgress = false;
 

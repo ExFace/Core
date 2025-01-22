@@ -53,10 +53,10 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
     /**
      * Creates a filter from a given condition object, adds it to the group and returns the resulting query part.
      *
-     * @param Condition $condition            
+     * @param Condition $condition
      * @return QueryPartFilter
      */
-    public function addCondition(Condition $condition)
+    public function addCondition(Condition $condition) : QueryPartFilter
     {
         $qpart = $this::createQueryPartFromCondition($condition, $this->getQuery());
         $this->addFilter($qpart);
@@ -377,4 +377,3 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
         return $result_rows;
     }
 }
-?>

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\DataTypes\ListDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -207,7 +208,7 @@ class DataColumn implements DataColumnInterface
      */
     public function getDataType()
     {
-        if (is_null($this->data_type)) {
+        if (null === $this->data_type) {
             if ($attribute_alias = $this->getAttributeAlias()) {
                 // If the column's alias expression is actually a reverse relation, it must
                 // contain a subsheet because a reverse relation is not an attribute of it's
@@ -219,9 +220,14 @@ class DataColumn implements DataColumnInterface
                     }
                 }
                 try {
-                    $attrDataType = $this->getMetaObject()->getAttribute($attribute_alias)->getDataType();
+                    $attr = $this->getMetaObject()->getAttribute($attribute_alias);
+                    $attrDataType = $attr->getDataType();
                     if ($this->hasAggregator()) {
                         $this->data_type = $this->getAggregator()->getResultDataType($attrDataType);
+                        // If the aggregator produces a list, give the list the delimiter of this attribute
+                        if ($this->data_type instanceof ListDataType) {
+                            $this->data_type->setListDelimiter($attr->getValueListDelimiter());
+                        }
                     } else {
                         $this->data_type = $attrDataType;
                     }

@@ -27,7 +27,8 @@ use exface\Core\Interfaces\Selectors\PWASelectorInterface;
  * on the facade selection strategy of the CMS every page can be rendered as
  * a mobile or desktop application or even as a REST-API.
  * 
- * @triggers \exface\Core\Events\Widgets\OnUiPageInitializedEvent
+ * @triggers \exface\Core\Events\Widgets\OnUiPageInitEvent after its widget was fully initialized
+ * @triggers \exface\Core\Events\Widgets\OnUiActionWidgetInitEvent after its widget was fully initialized
  * 
  * @author Andrej Kabachnik
  *

@@ -10,7 +10,7 @@ interface DebuggerInterface
      * @param \Throwable $exception            
      * @return string
      */
-    public function printException(\Throwable $exception, $use_html = true);
+    public static function printException(\Throwable $exception, $use_html = true);
 
     /**
      * Returns a human-readable string dump of the given variable (similar to var_dump(), but returning a string)
@@ -20,7 +20,7 @@ interface DebuggerInterface
      * @param integer $expand_depth            
      * @return string
      */
-    public function printVariable($anything, $use_html = true, $expand_depth = 1);
+    public static function printVariable($anything, $use_html = true, $expand_depth = 1);
 
     /**
      * Returns the timestamp of workbench initialization (request start time) in milliseconds from 01.01.1970

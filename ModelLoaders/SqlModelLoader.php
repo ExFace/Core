@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\ModelLoaders;
 
+use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -248,14 +249,15 @@ class SqlModelLoader implements ModelLoaderInterface
             // Take care of inheritance: first the data source base object, than the
             // explicit parent if specified. Also avoid reccurrance with self-inheritance.
             // If an explicit parent is specified, load it first
+            $parent = null;
             if ($row['parent_object_oid'] && $row['parent_object_oid'] !== $object->getId()) {
                 $parent = $this->getModel()->getObject($row['parent_object_oid']);
-            } else {
-                $parent = null;
-            }
+            } 
+
             // See if the data source has a base object. If so, double-check 
             // - that it was not already inherited by the parent object (should not inherit twice as this would register all behaviors twice too!) 
             // - that base inheritance is not turned off for this particular object 
+            $baseObject = null;
             if ($row['base_object_oid'] && $row['base_object_oid'] !== $object->getId() && ! ($parent && $parent->isExtendedFrom($row['base_object_oid'])) && ($row['inherit_data_source_base_object'] ?? 1)) {
                 $baseObject = $this->getModel()->getObject($row['base_object_oid']);
                 $object->extendFromObject($baseObject);
@@ -263,12 +265,16 @@ class SqlModelLoader implements ModelLoaderInterface
             // Now that we handled the base object, we can extend from the explicit parent.
             // Still double check if it's the same object in case the user accidently specified
             // the same object as base and parent in the metamodel.
-            if ($parent && $parent !== $baseObject) {
+            if ($parent !== null && $parent !== $baseObject) {
                 $object->extendFromObject($parent);
             }
+
+            // Once we have extended from all parents, any calls to `$object->getAttribute()` will start
+            // populating the caches inside the object, so from here to the end of the attribute initialization
+            // no calls to `getAttribute()` should be made!!!
             
             // Overwrite inherited properties
-            if (is_null($object->getDataAddress()) || $object->getDataAddress() == '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
+            if (is_null($object->getDataAddress()) || $object->getDataAddress() === '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
                 $object->setDataAddress($row['data_address']);
             }
             if (! is_null($row['readable_flag'])){
@@ -386,6 +392,9 @@ class SqlModelLoader implements ModelLoaderInterface
                     ];
                 }
             }
+
+            // Now the object has all its attributes - own and inherited ones. From now on it is safe to call
+            // `$object->getAttribute()` and thus populate the internal alias caches.
             
             // Now populate the relations of the object 
             $parentObjIds = $object->getParentObjectsIds();
@@ -513,7 +522,11 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($load_behaviors) {
             $query = $this->getDataConnection()->runSql("
                 /* Load behaviors */
-				SELECT *, {$this->buildSqlUuidSelector('oid')} AS oid FROM exf_object_behaviors WHERE object_oid = {$objectUid}");
+				SELECT *, 
+                    {$this->buildSqlUuidSelector('oid')} AS oid,
+                    {$this->buildSqlUuidSelector('behavior_app_oid')} AS behavior_app_oid
+                FROM exf_object_behaviors 
+                WHERE object_oid = {$objectUid}");
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
                     $configUxon = UxonObject::fromJson($row['config_uxon'] ? $row['config_uxon'] : '{}');
@@ -524,7 +537,18 @@ class SqlModelLoader implements ModelLoaderInterface
                     if ($row['priority'] !== null) {
                         $configUxon->setProperty('priority', $row['priority']);
                     }
-                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, ($row['app_oid'] ?? null));
+
+                    $this->getWorkbench()->eventManager()->dispatch(
+                        new OnBeforeMetaObjectBehaviorLoadedEvent(
+                            $row['behavior'], 
+                            $row['oid'], 
+                            $row['behavior_app_oid'], 
+                            $object, 
+                            $configUxon
+                        )
+                    );
+                
+                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, $row['behavior_app_oid']);
                     $object->getBehaviors()->add($behavior, $row['oid']);
                 }
             }
@@ -1059,9 +1083,15 @@ class SqlModelLoader implements ModelLoaderInterface
             WHERE ac.compound_attribute_oid = {$attrId}
             ORDER BY ac.sequence_index ASC
         ");
+        $obj = $attribute->getObject();
+        $relPath = $attribute->getRelationPath();
         foreach ($query->getResultArray() as $row) {
+            $compAttr = $obj->getAttributes()->getByAttributeId($row['attribute_oid']);
+            if (! $relPath->isEmpty()) {
+                $compAttr = $compAttr->rebase($relPath);
+            }
             $attribute->addComponentAttribute(
-                $attribute->getObject()->getAttributes()->getByAttributeId($row['attribute_oid']),
+                $compAttr,
                 $row['value_prefix'] ?? '',
                 $row['value_suffix'] ?? ''
             );

@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "PWA [PWA]",
             "CREATED_ON": "2023-01-02 14:55:32",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -208,7 +214,7 @@
             "RELATED_OBJ": "0x11edbb694cebd4babb69747827435ce5",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Offline strategy [OFFLINE_STRATEGY]",
             "CREATED_ON": "2023-01-02 14:55:32",
             "MODIFIED_ON": "2023-03-07 16:44:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -251,10 +258,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -264,6 +271,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Object action [OBJECT_ACTION]",
             "CREATED_ON": "2023-01-02 14:55:32",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -300,7 +308,7 @@
             "RELATED_OBJ": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -310,6 +318,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Action alias [ACTION_ALIAS]",
             "CREATED_ON": "2023-01-02 14:55:32",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -343,10 +352,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -356,6 +365,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Action [DESCRIPTION]",
             "CREATED_ON": "2023-01-02 14:55:32",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -389,10 +399,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -402,6 +412,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Page [PAGE]",
             "CREATED_ON": "2023-01-02 15:37:21",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -438,7 +449,7 @@
             "RELATED_OBJ": "0x11e86314af5caf7f971b0205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -448,6 +459,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Trigger widget ID [TRIGGER_WIDGET_ID]",
             "CREATED_ON": "2023-01-02 15:37:21",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -481,10 +493,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -492,6 +504,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Trigger widget type [TRIGGER_WIDGET_TYPE]",
             "CREATED_ON": "2023-01-02 15:40:50",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -525,10 +538,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -538,6 +551,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Offline data [PWA_DATASET]",
             "CREATED_ON": "2023-01-02 17:11:55",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -574,7 +588,7 @@
             "RELATED_OBJ": "0x11eda34a71852896a34a025041000001",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -584,6 +598,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Offline data [OFFLINE_DATA_FLAG]",
             "CREATED_ON": "2023-01-03 09:36:36",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -617,10 +632,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -628,6 +643,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Object [OBJECT]",
             "CREATED_ON": "2023-03-03 17:07:34",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -664,7 +680,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -674,6 +690,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Offline strategy in facade [OFFLINE_STRATEGY_IN_FACADE]",
             "CREATED_ON": "2023-03-07 16:26:39",
             "MODIFIED_ON": "2023-03-07 16:45:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -707,10 +724,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -720,6 +737,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Offline strategy in model [OFFLINE_STRATEGY_IN_MODEL]",
             "CREATED_ON": "2023-03-07 16:26:39",
             "MODIFIED_ON": "2023-03-07 16:28:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -753,10 +771,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -766,6 +784,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Trigger widget hash [TRIGGER_WIDGET_HASH]",
             "CREATED_ON": "2023-03-07 17:44:31",
             "MODIFIED_ON": "2023-03-09 18:11:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -799,10 +818,10 @@
             "HIDDENFLAG": 1,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

@@ -9,9 +9,20 @@ use exface\Core\Interfaces\Widgets\iCanWrapText;
 
 /**
  * Displays multiline text with an optional title (created from the caption of the widget) and some simple formatting.
+ * You **must** use text or value as attribute for this widget to fill the text.
  * 
  * In contrast to the more generic `Display` widget, `Text` allows line breaks and will wrap long values. It also
- * allows some simple formatting like `style`, `size` and `align`.
+ * allows some simple formatting like `style`, `size` and `align` though they are very inconsistent between ui's.
+ *
+ *  ```
+ *  {
+ *      "value": "=IfNull(Bemerkung, '')",
+ *      "widget_type": "Text",
+ *      "width": 1,
+ *      "hide_caption": true
+ *  }
+ *
+ *  ```
  *
  * @author Andrej Kabachnik
  *        

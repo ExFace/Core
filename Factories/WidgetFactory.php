@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
@@ -16,12 +17,10 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\DataTypes\MessageTypeDataType;
-use exface\Core\Widgets\Parts\WidgetInheritance;
 use exface\Core\Widgets\Parts\WidgetInheriter;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
-use exface\Core\Widgets\ErrorMessage;
 
 /**
  * 
@@ -54,7 +53,11 @@ abstract class WidgetFactory extends AbstractStaticFactory
             $widget = $page->getWorkbench()->getApp($selector->getAppSelector())->get($selector, null, [$page, $parent_widget]);
         } else {
             $widget_class = static::getWidgetClassFromType($widget_type);
-            $widget = new $widget_class($page, $parent_widget);
+            try {
+                $widget = new $widget_class($page, $parent_widget);
+            } catch (\Throwable $e) {
+                throw new WidgetNotFoundError('Cannot load widget "' . $widget_type . '": ' . $e->getMessage());
+            }
         }
         
         return $widget;
@@ -164,7 +167,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
             throw new UxonParserError($uxon_object, 'Failed to create a widget from UXON! ' . $e->getMessage(), null, $e);
         }
         
-        // Now import the UXON description. Since the import is not an atomic operation, be wure to remove this widget
+        // Now import the UXON description. Since the import is not an atomic operation, be sure to remove this widget
         // and all it's children if anything goes wrong. This is important, as leaving the broken widget there may
         // produce an inconsistan stage of the application: e.g. the widget is registered in the page, but is not
         // properly referenced in whatever instance had produced it.

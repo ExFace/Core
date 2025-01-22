@@ -22,7 +22,7 @@
         "php": "^7.2||^8",
         "symfony/filesystem": "^4.0||^5.0",
         "symfony/event-dispatcher": "^4.0||^5.0",
-        "symfony/translation": "^4.4",
+        "symfony/translation": "^4.4||^5",
         "symfony/config": "^4.0||^5.0",
         "symfony/error-handler": "^4.0||^5.0",
         "symfony/var-dumper": "^4.0||^5.0",
@@ -53,7 +53,6 @@
         "phpoffice/phpspreadsheet": "^1.17",
         "npm-asset/workbox-sw": "^5.1.3",
         "npm-asset/dexie": "^2.0.4",
-        "npm-asset/mermaid": "^10.0||^9.3",
         "ramsey/uuid": "^3.0||^4.0",
         "dragonmantank/cron-expression": "^3.1",
         "intervention/image": "^2.7",
@@ -61,7 +60,8 @@
         "robthree/twofactorauth": "^1.8",
         "npm-asset/eruda": "^2",
         "justinrainbow/json-schema": "^5.2",
-        "composer/semver": "^3"
+        "composer/semver": "^3",
+        "softcreatr/jsonpath": "~0.7"
     },
     "bin": [
         "Facades/ConsoleFacade/bin/action"

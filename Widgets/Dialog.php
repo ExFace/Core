@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;

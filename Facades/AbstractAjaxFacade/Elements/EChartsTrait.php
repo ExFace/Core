@@ -1,14 +1,18 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\Input;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
@@ -124,20 +128,6 @@ trait EChartsTrait
         "CHART_TYPE_HEATMAP" => 'heatmap',        
         "CHART_TYPE_SANKEY" => 'sankey'
     ];
-
-    /**
-     * This token can be used in UXON editors to reference the currently active (selected) elements in the legend.
-     * 
-     * @var string 
-     */
-    protected string $legendActiveToken = '~legend_active';
-
-    /**
-     * This token can be used in UXON editors to reference the currently disabled (de-selected) elements in the legend.
-     * 
-     * @var string 
-     */
-    protected string $legendDisabledToken = '~legend_disabled';
     
     /**
      * Returns the javascript to react to legend active change events
@@ -258,6 +248,8 @@ trait EChartsTrait
             'hint' => 'Change chart type'
         ]));
         $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
+        
+        // Toggle graph type buttons.
         if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             $buttonUxon = $buttonTemplate->copy();
             $buttonUxon->setProperty('caption', 'Circle');
@@ -276,6 +268,7 @@ trait EChartsTrait
             $menu->addButton($button);
         }
         
+        // Export PNG button.
         $exportPNGUxon = $buttonTemplate->copy();        
         $exportPNGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTPNG.NAME')}");
         $exportPNGUxon->setProperty('icon', 'file-image-o');
@@ -285,13 +278,24 @@ trait EChartsTrait
         $exportPNGBtn->getAction()->setScript($this->buildJsExport('png'));
         $tb->getButtonGroupForGlobalActions()->addButton($exportPNGBtn);
         
+        // Export JPEG button.
         $exportJPGUxon = $exportPNGUxon->copy();
         $exportJPGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTJPEG.NAME')}");
         $exportJPGBtn = WidgetFactory::createFromUxon($widget->getPage(), $exportJPGUxon, $menu);
         $exportJPGBtn->getAction()->setScript($this->buildJsExport('jpeg'));
         $tb->getButtonGroupForGlobalActions()->addButton($exportJPGBtn);
         
-        return;
+        // Toggle value labels button.
+        if($this->getWidget()->hasLabelPercentToggle()) {
+            $togglePercentUxon = $buttonTemplate->copy();
+            $togglePercentUxon->setProperty('caption', $this->getWorkbench()->getCoreApp()->getTranslator()->translate("WIDGET.BUTTON.TOGGLE_PERCENT"));
+            $togglePercentUxon->setProperty('icon', 'tags');
+            $togglePercentUxon->setProperty('hide_caption', false);
+            $togglePercentUxon->setProperty('visibility', 'optional');
+            $togglePercentBtn = WidgetFactory::createFromUxon($widget->getPage(), $togglePercentUxon, $menu);
+            $togglePercentBtn->getAction()->setScript($this->buildJsToggleValueLabels());
+            $tb->getButtonGroupForGlobalActions()->addButton($togglePercentBtn);
+        }
     }
     
     /**
@@ -316,6 +320,26 @@ trait EChartsTrait
 
 JS;
         
+    }
+
+    /**
+     * Build a JS snippet to toggle value displays on all labels of this chart.
+     * Affects all series contained within this chart.
+     * 
+     * @return string
+     */
+    protected function buildJsToggleValueLabels() : string 
+    {
+        return <<<JS
+
+(function() {
+    var chart = {$this->buildJsEChartsVar()};
+    var current = "__showValueLabel" in chart && chart.__showValueLabel;
+    chart.__showValueLabel = !current;
+    {$this->buildJsRefresh()}
+}())
+
+JS;
     }
     
     /**
@@ -362,7 +386,6 @@ JS;
      */
     protected function buildJsEventHandlers() : string
     {
-        $handlersJs = '';
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
@@ -373,7 +396,7 @@ JS;
     }
     
     /**
-     * js script for to change grapt to a circle graph
+     * js script to change graph to a circle graph
      *
      * @param DataButton $button
      * @return string
@@ -397,7 +420,7 @@ JS;
     }
     
     /**
-     * js script for to change grapt to a network graph
+     * js script to change graph to a network graph
      *
      * @param DataButton $button
      * @return string
@@ -496,6 +519,16 @@ JS;
     {
         return $this->buildJsFunctionPrefix() . 'select';
     }
+
+    /**
+     * Build a JS function call that dispatches an OnChange event for this chart.
+     * 
+     * @return string
+     */
+    protected function buildJsDispatchChangeEvent() : string
+    {
+        return $this->getOnChangeScript();
+    }
     
     /**
      * Body for the javascript function that gets called when series data point gets selected
@@ -517,7 +550,7 @@ JS;
                     return;
                 }
                 echart._oldSelection = {$selection};
-                {$this->getOnChangeScript()}
+                {$this->buildJsDispatchChangeEvent()}
                 echart._redrawSelection = undefined;
                 return;
             }
@@ -533,7 +566,7 @@ JS;
                     return;
                 }
             }
-            {$this->getOnChangeScript()}
+            {$this->buildJsDispatchChangeEvent()}
             return;
             
 JS;
@@ -729,7 +762,7 @@ JS;
         $invokeDisabledGetter = $this->buildJsLegendDisabledEventHandler('aLegendDisabled');
         return <<<JS
         
-        {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
+        var handler = function(params){
             // Invoke getters.
             var aLegendActive = Object.keys(params.selected).filter(function (item) {return params.selected[item];});
             {$invokeActiveGetter};
@@ -784,7 +817,10 @@ JS;
                     }
                 }
             }
-        });
+        };
+
+        {$this->buildJsEChartsVar()}.on('legendselectchanged', handler);
+        {$this->buildJsEChartsVar()}.on('legendselectall', handler);
         
 JS;
                         
@@ -802,11 +838,11 @@ JS;
     {
         if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
-            
+
             return <<<JS
             
             (function ({$column}){
-                return {$column}.join(', ');
+                return {$column}.join('{$this->getLegendValueListDelimiter()}');
             })(oEvent)
 JS;
 
@@ -848,6 +884,50 @@ JS;
                 })()
                 
 JS;
+    }
+
+    /**
+     * Get the delimiter string used to separate items in the output list.
+     * 
+     * This function first tries to deduce a meaningful delimiter from its incoming widget links, using the
+     * first non-standard delimiter it finds. If all incoming links use standard-delimiters, it defaults to `,`.
+     * 
+     * @return string
+     */
+    // TODO 2024-12-09 geb: At the moment we simply use the first non-standard delimiter for ALL outputs, maybe we can 
+    // TODO                 identify consumers of the JS getter and send bespoke delimiters per consumer.
+    protected function getLegendValueListDelimiter() : string
+    {
+        $widget = $this->getWidget();
+        $links = WidgetLink::getLinksToWidget($widget);
+
+        // IDEA if this chart has a split series, the values of the legend are
+        // actually the values of getSplitByAttributeAlias(). We could look for
+        // this attribute and use its value list delimiter here.
+        
+        // Search among incoming links for a unusual delimiter
+        foreach ($links as $link) {
+            $targetColName = $link->getTargetColumnId();
+            if ($targetColName !== Chart::VALUE_LEGEND_ACTIVE && $targetColName !== Chart::VALUE_LEGEND_INACTIVE) {
+                continue;
+            }
+
+            $source = $link->getSourceWidget();
+            // IDEA add an interface like iSupportMultipleValues
+            if($source instanceof Input) {
+                return $source->getMultipleValuesDelimiter();
+            }
+            
+            // If not an input (e.g. a DataColumn)
+            if($source instanceof iShowSingleAttribute && $source->isBoundToAttribute()) {
+                $attribute = $source->getAttribute();
+                if(($delimiter = $attribute->getValueListDelimiter()) !== EXF_LIST_SEPARATOR) {
+                    return $delimiter;
+                }
+            }
+        }
+        
+        return EXF_LIST_SEPARATOR;
     }
     
     /**
@@ -1273,6 +1353,68 @@ JS;
         
         return '';
     }
+
+    /**
+     * Build a JS snippet that serves as function callback for the ECharts property
+     * `series.label.formatter`.
+     * 
+     * @param string $transformationsJs
+     * @param string $outputJs
+     * @param string $chartVarJs
+     * @param string $paramsVarJs
+     * @return string
+     */
+    protected function buildJsLabelFormatterCallback(
+        string $transformationsJs, 
+        string $outputJs, string 
+        $chartVarJs = 'chart', 
+        string $paramsVarJs = 'params') : string
+    {
+        return <<<JS
+
+function({$paramsVarJs}) {
+    var {$chartVarJs} = {$this->buildJsEChartsVar()};
+    
+    {$transformationsJs}
+    
+    return {$outputJs};
+}
+JS;
+    }
+
+    /**
+     * Returns JS snippet that evaluates the value of any element in a series.
+     *
+     * @param ChartSeries $series
+     * @param bool        $showValues
+     * @param string      $paramsPropertyJs
+     * @param string      $chartVarJs
+     * @return string
+     */
+    protected function buildJsGetFormattedValue(
+        ChartSeries $series, 
+        string      $paramsPropertyJs = 'params.value', 
+        string      $chartVarJs = 'chart',
+        bool        $showValues = false) : string
+    {
+        $showValues = $showValues ? 'true' : 'false';
+        
+        return <<<JS
+
+(function (chart){
+    if (!("__showValueLabel" in chart)) {
+    chart.__showValueLabel = {$showValues};
+}
+
+if (chart.__showValueLabel) {
+    return {$this->buildJsLabelFormatter($series->getValueDataColumn(), $paramsPropertyJs)};
+} else {
+    return  '';
+}
+})({$chartVarJs})
+
+JS;
+    }
     
     /**
      * build line series configuration
@@ -1363,20 +1505,16 @@ JS;
         } else {
             $color = '';
         }
-        //TODO option to show label, define position of it, maybe rotation etc.
-        $label = '';
-        if ($series->getShowValues() === true) {
-            $label = <<<JS
+        
+        $getFormattedValueJs = 'var value = ' . $this->buildJsGetFormattedValue($series, 'params.value.' . $series->getValueDataColumn()->getDataColumnName(), 'chart', $series->getShowValues()) . ';';
+        $label = <<<JS
 
     label: {
         show: true,
-        formatter: function(params) {
-            return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
-        }
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'value')}
     },
          
 JS;
-        }
         
         return <<<JS
         
@@ -1460,7 +1598,23 @@ JS;
      */
     protected function buildJsRoseChart(RoseChartSeries $series) : string
     {
-        $label = '{}';
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+        
+        $label = <<<JS
+
+    label: {
+        show: true,
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')}
+    }
+         
+JS;
+        
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
             $label = '{show: false}';
@@ -1490,7 +1644,7 @@ JS;
     radius: ['$radius', '80%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: {$label},
+    {$label},
     roseType: '{$valueMode}'
     
 }
@@ -1506,7 +1660,24 @@ JS;
      */
     protected function buildJsPieChart(PieChartSeries $series) : string
     {
-        $label = '{}';
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+
+        $label = <<<JS
+
+    label: {
+        show: true,
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')}
+    }
+         
+JS;
+        
+
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
             $label = '{show: false}';
@@ -1557,7 +1728,7 @@ JS;
     radius: ['$radius','60%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: {$label},
+    {$label},
     {$itemStyleJs}
     //selectedMode: 'single',
     animationType: 'scale',
@@ -1590,6 +1761,15 @@ JS;
         } else {
             $color = '';
         }
+
+        $getFormattedValueJs =  <<<JS
+
+var value = {$this->buildJsGetFormattedValue($series)};
+if (value !== '') {
+    value = ' (' + value + ')';
+}
+JS;
+        
         return <<<JS
         
 {
@@ -1622,7 +1802,7 @@ JS;
     },
     label: {
         position: 'right',
-        formatter: '{b}',
+        formatter: {$this->buildJsLabelFormatterCallback($getFormattedValueJs, 'params.name + value')},
 		show: true
     },
     lineStyle: {
@@ -1677,7 +1857,7 @@ JS;
                         if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
                             return 'N/A';
                         } else {
-                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
+                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}'];
                         }
                     }
                 }
@@ -2220,7 +2400,7 @@ JS;
     }
     
     /**
-     * javascript function body to draw chart, iniatlize global variables, show overlay message if data is empty
+     * javascript function body to draw chart, initialize global variables, show overlay message if data is empty
      *
      * @param string $dataJs
      * @return string
@@ -2308,7 +2488,27 @@ JS;
     //build and set dataset,config and options depending on chart type
     $js
     
+    {$this->buildJsForceLegendSelectUpdate()}
 JS;
+    }
+
+    /**
+     * A JS snippet that forces an update of the legend selected getters.
+     * 
+     * NOTE: This is a bit of a hack, maybe there is a cleaner way.
+     * 
+     * @return string
+     */
+    protected function buildJsForceLegendSelectUpdate() : string
+    {
+        return <<<JS
+
+        {$this->buildJsEChartsVar()}.dispatchAction({
+            type: 'legendAllSelect'
+        });
+
+JS;
+
     }
     
     /**
@@ -3145,9 +3345,10 @@ JS;
     protected function buildJsMessageOverlayShow(string $message) : string
     {
         return <<<JS
+
 {$this->buildJsMessageOverlayHide()}      
 $({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->getId()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
-
+{$this->buildJsDispatchChangeEvent()}
 JS;
     }
     

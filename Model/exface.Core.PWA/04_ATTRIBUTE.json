@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Active [ACTIVE_FLAG]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 1,
@@ -216,6 +222,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Start page [START_PAGE]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -252,7 +259,7 @@
             "RELATED_OBJ": "0x11e86314af5caf7f971b0205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -262,6 +269,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Installable [INSTALLABLE_FLAG]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -295,10 +303,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 1,
@@ -306,6 +314,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "App name [NAME]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -339,10 +348,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -352,6 +361,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Icon URI [ICON_URI]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -385,10 +395,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Relative to workbench root",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -398,6 +408,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Available offline [AVAILABLE_OFFLINE_FLAG]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -431,10 +442,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 1,
@@ -442,6 +453,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -478,7 +490,7 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -488,6 +500,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Page template [PAGE_TEMPLATE]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -524,7 +537,7 @@
             "RELATED_OBJ": "0x11ea20345279b7ceaa030205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -534,6 +547,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Base URL path [URL]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -567,10 +581,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Relative to workbench root",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -580,6 +594,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "PWA alias [ALIAS]",
             "CREATED_ON": "2022-12-27 17:34:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -613,10 +628,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -626,6 +641,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Help available offline [AVAILABLE_OFFLINE_HELP_FLAG]",
             "CREATED_ON": "2023-01-03 16:42:34",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -659,10 +675,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 0,
@@ -670,6 +686,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Unpublished pages offline [AVAILABLE_OFFLINE_UNPUBLISHED_FLAG]",
             "CREATED_ON": "2023-01-03 16:42:34",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -703,10 +720,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 0,
@@ -714,6 +731,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Description [DESCRIPTION]",
             "CREATED_ON": "2023-01-03 16:44:53",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -747,10 +765,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -760,6 +778,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Generated on [GENERATED_ON]",
             "CREATED_ON": "2023-03-14 14:54:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -793,10 +812,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -804,6 +823,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Regenerate after [REGENERATE_AFTER]",
             "CREATED_ON": "2023-03-14 14:54:15",
             "MODIFIED_ON": "2023-04-04 17:47:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -837,10 +857,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": null,
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -848,6 +868,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "App version [VERSION_NO]",
             "CREATED_ON": "2023-05-11 15:39:33",
             "MODIFIED_ON": "2023-05-11 15:45:57",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -881,10 +902,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1.0'",
@@ -894,6 +915,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Version build [VERSION_BUILD]",
             "CREATED_ON": "2023-05-11 15:44:17",
             "MODIFIED_ON": "2023-05-11 15:44:39",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -927,10 +949,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -940,6 +962,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Version [VERSION]",
             "CREATED_ON": "2023-05-15 08:29:05",
             "MODIFIED_ON": "2023-05-15 11:06:55",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -973,10 +996,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

@@ -229,8 +229,8 @@ class DateDataType extends AbstractDataType
     {
         return new \IntlDateFormatter(
             $locale, 
-            null, // date type
-            null, // time type
+            \IntlDateFormatter::FULL, // date type
+            \IntlDateFormatter::FULL, // time type
             ($timezone === null ? null : new \DateTimeZone($timezone)), // time zone
             null, // calendar
             $format // pattern

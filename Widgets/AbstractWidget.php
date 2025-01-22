@@ -24,6 +24,7 @@ use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Uxon\WidgetSchema;
 use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
@@ -819,12 +820,15 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getObjectRelationPathFromParent()
      */
-    public function getObjectRelationPathFromParent() : ? MetaRelationPathInterface
+    public function getObjectRelationPathFromParent() : ?MetaRelationPathInterface
     {
-        return $this->getObjectRelationPathToParent()->reverse();
+        $toParent = $this->getObjectRelationPathToParent();
+        if ($toParent === null) {
+            return null;
+        }
+        return $toParent->reverse();
     }
 
     /**
@@ -991,8 +995,18 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     * Sets a hint message for the widget.
-     * The hint will typically be used for pop-overs, etc.
+     * Sets a hint message for the widget - this is what is used as tooltip or popover.
+     * 
+     * If not set, the widget will attempt to generate a meaninguful hint automatically:
+     * 
+     * - If the widget is bound to an attribute
+     *      - If it has an aggregation like `:SUM`, the hint will remain empty
+     *      - If it is relation and the left-most attribute is the LABEL of its object, the description
+     *      of the relation attribute in the model will be used (not the description of the LABEL attribute)
+     *      - otherwise the description of the attribute will be used as hint
+     * - If the widget is a button, that calls an action, the description of the action will be used
+     * 
+     * You can use a static formula as widget hint: e.g. `=Translate()` or `=GetConfg()` or even `=Lookup()`.
      *
      * @uxon-property hint
      * @uxon-type string|metamodel:formula
@@ -1609,5 +1623,64 @@ abstract class AbstractWidget implements WidgetInterface
     protected function hasPropertyDefined(string $uxonPropertyName) : bool
     {
         return ! empty($this->uxon_original) && $this->exportUxonObjectOriginal()->hasProperty($uxonPropertyName);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $debug_widget)
+    {
+        if ($debug_widget->findChildById('widget_uxon_tab') === false) {
+            $uxon_tab = $debug_widget->createTab();
+            $uxon_tab->setId('widget_uxon_tab');
+            $uxon_tab->setCaption('Widget');
+            
+            $widgetUxon = $this->exportUxonObjectOriginal();
+            
+            $parent = $this;
+            $parentUxon = new UxonObject();
+            while ($parent->hasParent() && $parentUxon->isEmpty()) {
+                $parent = $parent->getParent();
+                $parentUxon = $parent->exportUxonObjectOriginal();
+            }
+            
+            if (($trigger = $this->getParentByClass(iTriggerAction::class)) && $trigger->hasAction()) {
+                $action = $trigger->getAction();
+                $actionInfo = $action->getAliasWithNamespace() . ' (' . $action->getName() . ')';
+            } else {
+                $actionInfo = 'exface.Core.ShowWidget (root)';
+            }
+            
+            $tabContents = <<<MD
+
+# Widget `{$this->getWidgetType()}`
+
+- Widget ID: `{$this->getId()}`
+- Page: `{$this->getPage()->getAliasWithNamespace()}`
+- Called by action: `{$actionInfo}`
+
+## Widget UXON
+
+```
+{$widgetUxon->toJson(true)}
+```
+
+## Parent widget UXON
+
+```
+{$parentUxon->toJson(true)}
+```
+
+MD;
+            $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
+                'widget_type' => 'Markdown',
+                'value' => $tabContents,
+                'width' => '100%',
+                'height' => '100%'
+            ])));
+            $debug_widget->addTab($uxon_tab);
+        }
+        return $debug_widget;
     }
 }
