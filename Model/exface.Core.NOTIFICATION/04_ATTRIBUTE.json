@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Title [TITLE]",
             "CREATED_ON": "2021-03-15 11:39:41",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -218,6 +224,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Recipient [USER]",
             "CREATED_ON": "2021-03-15 11:39:41",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -264,6 +271,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Icon [ICON]",
             "CREATED_ON": "2021-03-15 11:39:41",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -310,6 +318,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Widget uxon [WIDGET_UXON]",
             "CREATED_ON": "2021-03-15 11:39:41",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -356,6 +365,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Read on [READ_ON]",
             "CREATED_ON": "2023-04-11 14:24:01",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -400,6 +410,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Read [ISREAD]",
             "CREATED_ON": "2023-04-11 14:25:24",
             "MODIFIED_ON": "2024-11-22 12:29:52",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -450,6 +461,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Text [TEXT]",
             "CREATED_ON": "2023-04-11 18:21:34",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -474,7 +486,14 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "TEXT",
             "DATATYPE": "0x31310000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL:\n(CASE WHEN\n(JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) IS NULL OR (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) = '' THEN (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].text'))) ELSE (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) END)\n@T-SQL:(CASE WHEN\n(JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) IS NULL OR (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) = '' THEN (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].text')) ELSE (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) END)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL:",
+                "(CASE WHEN",
+                "(JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) IS NULL OR (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) = '' THEN (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].text'))) ELSE (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) END)",
+                "@T-SQL:(CASE WHEN",
+                "(JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) IS NULL OR (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) = '' THEN (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].text')) ELSE (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) END)"
+            ],
             "OBJECT": "0x11ebaf7bbfb71838af7b025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -494,6 +513,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Date Created On [CREATED_ON_DATE]",
             "CREATED_ON": "2023-04-12 12:33:14",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -518,7 +538,11 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "CREATED_ON_DATE",
             "DATATYPE": "0x32000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: (DATE([#CREATED_ON#]))\n@T-SQL: (CONVERT(date, [#CREATED_ON#]))",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: (DATE([#CREATED_ON#]))",
+                "@T-SQL: (CONVERT(date, [#CREATED_ON#]))"
+            ],
             "OBJECT": "0x11ebaf7bbfb71838af7b025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -538,6 +562,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Hide from inbox [HIDE_FROM_INBOX]",
             "CREATED_ON": "2024-11-18 09:09:44",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -582,6 +607,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Folder [FOLDER]",
             "CREATED_ON": "2024-11-18 09:09:44",
             "MODIFIED_ON": "2024-11-18 09:10:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -628,6 +654,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Sender [SENT_BY]",
             "CREATED_ON": "2024-11-18 09:46:53",
             "MODIFIED_ON": "2024-11-22 12:28:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -674,6 +701,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Reference [REFERENCE]",
             "CREATED_ON": "2024-11-20 09:53:28",
             "MODIFIED_ON": "2024-11-20 09:55:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -720,6 +748,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Announcement [ANNOUNCEMENT]",
             "CREATED_ON": "2024-11-20 09:54:56",
             "MODIFIED_ON": "2024-11-25 11:53:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -759,7 +788,11 @@
             "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
-                "SQL_JOIN_ON": "@T-SQL: [#~left_alias#].reference = LOWER(CONVERT(VARCHAR(34), [#~right_alias#].oid, 1))\n@MySQL: [#~left_alias#].reference = CONCAT('0x', LOWER(HEX([#~right_alias#].oid)))"
+                "SQL_JOIN_ON": [
+                    "// Multiline text delimited by `\n`",
+                    "@T-SQL: [#~left_alias#].reference = LOWER(CONVERT(VARCHAR(34), [#~right_alias#].oid, 1))",
+                    "@MySQL: [#~left_alias#].reference = CONCAT('0x', LOWER(HEX([#~right_alias#].oid)))"
+                ]
             },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
@@ -768,6 +801,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Sent on [SENT_ON]",
             "CREATED_ON": "2024-11-21 11:35:25",
             "MODIFIED_ON": "2024-11-21 11:36:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

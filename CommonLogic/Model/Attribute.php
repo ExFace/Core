@@ -31,6 +31,8 @@ class Attribute implements MetaAttributeInterface
 
     private $inherited_from_object_id = null;
 
+    private $inheritedOriginalAttribute = null;
+
     private $alias;
 
     private $name;
@@ -38,6 +40,8 @@ class Attribute implements MetaAttributeInterface
     private $data;
 
     private $data_address_properties;
+
+    private $data_type_selector;
 
     private $data_type;
 
@@ -58,6 +62,8 @@ class Attribute implements MetaAttributeInterface
     private $system = false;
 
     private $default_display_order;
+
+    private $default_aggregate_function;
 
     private $is_relation;
 
@@ -145,7 +151,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function getAliasWithRelationPath()
     {
-        return RelationPath::relationPathAdd($this->getRelationPath()->toString(), $this->getAlias());
+        return RelationPath::join($this->getRelationPath()->toString(), $this->getAlias());
     }
 
     /**
@@ -195,9 +201,9 @@ class Attribute implements MetaAttributeInterface
      */
     public function getDataType()
     {
-        if (is_string($this->data_type) === true){
+        if ($this->data_type === null && is_string($this->data_type_selector) === true){
             try {
-                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type)->copy();
+                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type_selector)->copy();
                 $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
             } catch (\Throwable $e) {
                 throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
@@ -213,10 +219,17 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDataType($instance_or_resolvable_string)
     {
-        if (is_string($instance_or_resolvable_string) || ($instance_or_resolvable_string instanceof DataTypeInterface)) {
-            $this->data_type = $instance_or_resolvable_string;
-        } else {
-            throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
+        switch (true) {
+            case is_string($instance_or_resolvable_string):
+                $this->data_type_selector = $instance_or_resolvable_string;
+                $this->data_type = null;
+                break;
+            case $instance_or_resolvable_string instanceof DataTypeInterface:
+                $this->data_type_selector = $instance_or_resolvable_string->getAliasWithNamespace();
+                $this->data_type = $instance_or_resolvable_string;
+                break;
+            default: 
+                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
         }
         return $this;
     }
@@ -455,13 +468,61 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getObjectInheritedFrom()
      */
-    public function getObjectInheritedFrom()
+    public function getObjectInheritedFrom() : ?MetaObjectInterface
     {
         if ($this->isInherited()) {
-            return $this->getModel()->getObjectById($this->getInheritedFromObjectId());
-        } else {
-            return $this->getObject();
+            return $this->getModel()->getObjectById($this->inherited_from_object_id);
         }
+        return null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getInheritedOriginalAttribute()
+     */
+    public function getInheritedOriginalAttribute() : ?MetaAttributeInterface
+    {
+        return $this->inheritedOriginalAttribute;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::withExtendedObject()
+     */
+    public function withExtendedObject(MetaObjectInterface $newObject) : MetaAttributeInterface
+    {
+        // Copy the attribute ignoring its relation path. In fact, it should not have any relation path because
+        // only direct attributes can be inherited. Not sure, if we need to double-check it somehow?
+        // IDEA copying will also copy the UXON objects for the default editor/display widgets. Not quite sure
+        // if this is correct. The way it is now, changes to the default editor of the original attribute will
+        // not affect the inheriting one. It has always been this way though... Same goes for the data type.
+        // Although, inheriting attributes are unlikely to change the data type aren't they?
+        $clone = $this->copy(true);
+            
+        // Save the object, we are inheriting from in the attribute
+        $clone->inherited_from_object_id = $this->getObject()->getId();
+        // Save the very first attribute, that is being inherited - in case the attribute is inherited from object
+        // to object multiple times
+        $clone->inheritedOriginalAttribute = $this->inheritedOriginalAttribute ?? $this;
+        
+        // IDEA Is it a good idea to set the object of the inheridted attribute to the inheriting object? Would it be
+        // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
+        //
+        // Currently the attribute is attached to the inheriting object, but the reference to the original object is saved in the
+        // inherited_from_object_id property. This is important because otherwise there is no easy way to find out, which object
+        // the attribute belongs to. Say, we want to get the object filtered over if the filter attribute_alias is RELATION__RELATION__ATTRIBUTE
+        // and ATTRIBUTE is inherited. In this case ATTRIBUTE->getObject() should return the inheriting object and not the base object.
+        //
+        // One place, this is used at is \exface\Core\Widgets\Data::doPrefill(). When trying to prefill from the filters of the prefill sheet,
+        // we need to find a filter widget over the object the prefill filters attribute belong to. Now, if that attribute is a UID or a
+        // create/update-timestamp, it will often be inherited from some base object of the data source - perhaps the same base object, the
+        // widget's object inherits from as well. In this case, there is no way to know, whose UID it is, unless the object_id of the inherited
+        // attribute points to the object it directly belongs to (working example in Administration > Core > App > Button "Show Objects").
+        $clone->object = $newObject;
+
+        return $clone;
     }
     
     /**
@@ -649,31 +710,11 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getInheritedFromObjectId()
-     */
-    public function getInheritedFromObjectId()
-    {
-        return $this->inherited_from_object_id;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setInheritedFromObjectId()
-     */
-    public function setInheritedFromObjectId($value)
-    {
-        $this->inherited_from_object_id = $value;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isInherited()
      */
     public function isInherited()
     {
-        return $this->getInheritedFromObjectId() !== null;
+        return $this->inherited_from_object_id !== null;
     }
 
     /**
@@ -799,6 +840,11 @@ class Attribute implements MetaAttributeInterface
         // Do not use getDefaultEditorUxon() here as it already performs some enrichment
         if ($this->default_editor_uxon instanceof UxonObject){
             $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
+        }
+        
+        // Do not use getDefaultDisplayUxon() here as it already performs some enrichment
+        if ($this->default_display_uxon instanceof UxonObject){
+            $copy->setDefaultDisplayUxon($this->default_display_uxon->copy());
         }
         
         return $copy;
@@ -1015,23 +1061,7 @@ class Attribute implements MetaAttributeInterface
         } else {
             throw new InvalidArgumentException('Invalid custom data type UXON for attribute ' . $this->getAlias() . ' of object ' . $this->getObject()->getAliasWithNamespace() . ': expecting string or UXON object!');
         }
-        $this->resetDataType();
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return \exface\Core\CommonLogic\Model\Attribute
-     */
-    private function resetDataType()
-    {
-        // If the data type had already been instantiated, degrade it back to a string alias.
-        // Next time the getDataType() is called, it will reinstantiate the data type uxing
-        // the new custom setting.
-        if ($this->data_type instanceof UxonObject){
-            $this->data_type = $this->data_type->getAliasWithNamespace();
-        }
-        
+        $this->data_type = null;
         return $this;
     }
 

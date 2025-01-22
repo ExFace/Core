@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -109,6 +110,9 @@ abstract class Formula implements FormulaInterface
             
             return $result;
         } catch (\Throwable $e) {
+            if ($e instanceof DataConnectionFailedError) {
+                throw $e;
+            }
             $errorText = 'Cannot evaluate formula `' . $this->__toString() . '`';
             if ($dataSheet === null) {
                 $errorText .= ' statically!';
@@ -163,7 +167,7 @@ abstract class Formula implements FormulaInterface
             $attrs = $this->requiredAttributeAliases;
             $relPathStr = $this->getRelationPathString();
             foreach ($attrs as $i => $attr) {
-                $attrs[$i] = RelationPath::relationPathAdd($relPathStr, $attr);
+                $attrs[$i] = RelationPath::join($relPathStr, $attr);
             }
             return $attrs;
         }

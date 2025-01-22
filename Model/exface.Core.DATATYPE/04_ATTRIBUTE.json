@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Default editor [DEFAULT_EDITOR_UXON]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-06-17 13:42:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Base configuration for editor widgets (`Input` or derivatives). This configuration is used for attribute editors, that are not completely defined: e.g. only the `attribute_alias` is set.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -216,6 +222,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias [ALIAS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-06-17 12:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -249,10 +256,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -260,6 +267,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Description [SHORT_DESCRIPTION]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2021-06-17 12:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -293,10 +301,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -304,6 +312,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2017-09-11 09:52:49",
             "MODIFIED_ON": "2021-06-17 12:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -340,7 +349,7 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -350,6 +359,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Data type name [NAME]",
             "CREATED_ON": "2017-09-11 09:52:49",
             "MODIFIED_ON": "2021-06-17 12:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -383,10 +393,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -394,6 +404,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Prototype [PROTOTYPE]",
             "CREATED_ON": "2017-09-11 09:52:49",
             "MODIFIED_ON": "2021-06-17 12:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -430,7 +441,7 @@
             "RELATED_OBJ": "0x11e796d66279d4a3b6e3e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -438,6 +449,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Configuration [CONFIG_UXON]",
             "CREATED_ON": "2017-10-13 14:19:12",
             "MODIFIED_ON": "2021-06-17 12:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -471,10 +483,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -482,6 +494,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Validation error code [VALIDATION_ERROR]",
             "CREATED_ON": "2017-10-13 14:19:12",
             "MODIFIED_ON": "2021-06-17 12:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -518,7 +531,7 @@
             "RELATED_OBJ": "0x11e6c3859abc5faea3e40205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "This error code will be used for all validation errors. Define a custom error to explain users, how values of this data type should look like.",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -528,6 +541,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default display [DEFAULT_DISPLAY_UXON]",
             "CREATED_ON": "2021-06-17 12:50:15",
             "MODIFIED_ON": "2021-06-17 13:44:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -561,10 +575,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Base configuration for display widgets (`Dispaly` or derivatives). This configuration is used for attribute displays, that are not completely defined: e.g. only the `attribute_alias` is set. In particular, this configuration is used in table cells!",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",

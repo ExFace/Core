@@ -233,7 +233,7 @@ class DataSheet implements DataSheetInterface
                         }
                         $right_row = $other_sheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
-                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                            $this->setCellValue(RelationPath::join($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
                         }
                         $needRowCopy = true;
                     }                    
@@ -243,7 +243,7 @@ class DataSheet implements DataSheetInterface
                     // do not empty its values just because the right sheet did not has less data!
                     if ($relation_path !== '') {
                         foreach ($right_cols as $col) {
-                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                            $this->setCellValue(RelationPath::join($relation_path, $col->getName()), $left_row_nr, null);
                         }
                     }
                 }
@@ -1040,7 +1040,7 @@ class DataSheet implements DataSheetInterface
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($fixedExpr = $attr->getFixedValue()) {
-                    $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
+                    $alias_with_relation_path = RelationPath::join($rel_path, $attr->getAlias());
                     if (! $fixedCol = $this->getColumn($alias_with_relation_path)) {
                         $fixedCol = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
                     } elseif ($fixedCol->getIgnoreFixedValues()) {
@@ -1466,6 +1466,15 @@ class DataSheet implements DataSheetInterface
             $update_ds = $this;
         }
         
+        // IDEA we had check for related data at this point and an error if the sheet had related column with
+        // the aim to make these cases visible to the user and avoid useless updates. However it did not work
+        // out. It turned out, having related data is actually IMPORTANT for the FileAttachmentBehavior
+        // that handles related data (e.g. __content of the attachment) separately. Similarly, other event
+        // handlers might be interested in the related data. So the problem remains: if we have related column
+        // (like PRODUCT__NAME for a ORDER_POS object), they get updated here too, but this is absolutely not
+        // obvious for the app designer. Indeed, it is very hard to understand, why the timestamps of related
+        // objects get updated in these cases.
+
         $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface

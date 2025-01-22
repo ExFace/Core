@@ -36,7 +36,8 @@ abstract class AbstractWidgetEvent extends AbstractEvent implements WidgetEventI
     
     /**
      * 
-     * @return UiPageInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\UiPageEventInterface::getPage()
      */
     public function getPage() : UiPageInterface
     {

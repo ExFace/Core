@@ -11,6 +11,12 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Widgets\Parts\Charts\BarChartSeries;
+use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
+use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
+use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
+use exface\Core\Widgets\Parts\Charts\PieChartSeries;
+use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
@@ -35,7 +41,34 @@ use exface\Core\Interfaces\Widgets\iCanAutoloadData;
  * 
  * Every Chart contains a Data widget, that fetches data visualized by the chart.
  * Chart series as well as axis legends are extracted for columns in that data.
- *
+ * 
+ * ## Life References
+ * 
+ * You can ask this widget for the current selection status of the chart legend, by using
+ * the following reference tokens:
+ * 
+ *  - `~legend_active`: Get all currently `enabled` elements in the chart legend.
+ *  - `~legend_disabled`: Get all currently `disabled` elements in the chart legend.
+ * 
+ * For example:
+ * 
+ * ```
+ * 
+ *  "widgets" : [
+ *      {
+ *          "widget_type": "Chart",
+ *          "id": "my_id",
+ *          ...
+ *      },
+ *      {
+ *          "widget_type": "Display",
+ *          "value": "=my_id!~legend_active",
+ *          ...
+ *      }
+ *  ]
+ * 
+ * ```
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -123,6 +156,10 @@ class Chart extends AbstractWidget implements
     private $empty_text = null;
     
     private $colorScheme = null;
+    
+    private ?string $legendAttributeAlias = null;
+    
+    private bool $hideLabelPercentToggle = false;
 
     /**
      * 
@@ -581,10 +618,11 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     * If a valid link to another data widget is specified, it's data will be used instead of the data property of the chart itself.
+     * If a valid link to another data widget is specified, it's data will be used instead of the data property of the
+     * chart itself.
      *
-     * This is very handy if you want to visualize the data presented by a table or so. Using the link will make the chart automatically react to filters
-     * and other setting of the target data widget.
+     * This is very handy if you want to visualize the data presented by a table or so. Using the link will make the
+     * chart automatically react to filters and other setting of the target data widget.
      *
      * @uxon-property data_widget_link
      * @uxon-type uxon:$..id
@@ -674,9 +712,9 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     * A Chart can be prefilled just like all the other data widgets, but only if it has it's own data. If the data is fetched from
-     * a linked widget, the prefill does not make sense and will be ignored. But the linked widget will surely be prefilled, so the
-     * the chart will get the correct data anyway.
+     * A Chart can be prefilled just like all the other data widgets, but only if it has it's own data. If the data is
+     * fetched from a linked widget, the prefill does not make sense and will be ignored. But the linked widget will
+     * surely be prefilled, so the the chart will get the correct data anyway.
      * 
      * {@inheritdoc}
      * @see \exface\Core\Widgets\Data::prefill()
@@ -1007,5 +1045,66 @@ class Chart extends AbstractWidget implements
     {
         $this->colorScheme = $value;
         return $this;
+    }
+
+    /**
+     * @deprecated 
+     * TODO Remove after 04.2024
+     * 
+     * @param string|null $alias
+     * @return Chart
+     */
+    protected function setLegendAttributeAlias(?string $alias) : Chart
+    {
+        $this->legendAttributeAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getHideLabelPercentToggle() : bool
+    {
+        return $this->hideLabelPercentToggle;
+    }
+
+    /**
+     * Hide the button that allows the user to toggle percentage displays in the chart labels.
+     * This property  only affects charts with series, that support percentage labels in the first place.
+     * 
+     * @uxon-property hide_label_percent_toggle
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setHideLabelPercentToggle(bool $value) : Chart
+    {
+        $this->hideLabelPercentToggle = $value;
+        return $this;
+    }
+    
+    /**
+     * Check, whether this chart should have a button to toggle label percentages.
+     * 
+     * @return bool
+     */
+    public function hasLabelPercentToggle () : bool
+    {
+        if($this->getHideLabelPercentToggle()) {
+            return false;
+        }
+        
+        foreach ($this->getSeries() as $series) {
+            if(
+                $series instanceof PieChartSeries ||
+                $series instanceof GraphChartSeries ||
+                $series instanceof ColumnChartSeries) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

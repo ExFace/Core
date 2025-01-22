@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -310,8 +312,7 @@ class UxonSchema implements UxonSchemaInterface
      */
     public function getFilenameForEntity(string $prototypeClass) : string
     {
-        $path = str_replace('\\', '/', $prototypeClass);
-        return ltrim($path, "/") . '.php';
+        return PhpFilePathDataType::findFileOfClass($prototypeClass);
     }
     
     /**
@@ -941,7 +942,7 @@ class UxonSchema implements UxonSchemaInterface
      * @param string $prototypeClass
      * @return UxonSchema
      */
-    protected function getSchemaForClass(string $prototypeClass) : UxonSchema
+    public function getSchemaForClass(string $prototypeClass) : UxonSchema
     {
         $class = null;
         if (is_subclass_of($prototypeClass, iCanBeConvertedToUxon::class)) {

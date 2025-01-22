@@ -41,6 +41,7 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
      */
     public function __construct(string $prototype, string $actionAlias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon = null, WidgetInterface $triggerWidget = null)
     {
+        $this->prototype = $prototype;
         $this->object = $object;
         $this->actionAlias = $actionAlias;
         $this->app = $app;
@@ -57,6 +58,15 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
     public function getObject() : MetaObjectInterface
     {
         return $this->object;
+    }
+
+    /**
+     * 
+     * @return string
+     */
+    public function getPrototype() : string
+    {
+        return $this->prototype;
     }
     
     /**

@@ -73,8 +73,6 @@ use exface\Core\DataTypes\StringDataType;
  */
 class ShowDialog extends ShowWidget implements iShowDialog
 {
-    private $widget_was_enhanced = false;
-
     private $dialog_buttons_uxon = null;
     
     private $maximize = null;
@@ -134,9 +132,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * @param Dialog $dialog            
      * @return \exface\Core\Widgets\Dialog
      */
-    protected function enhanceDialogWidget(Dialog $dialog)
-    {
-        
+    protected function enrichDialogWidget(Dialog $dialog) : Dialog
+    {     
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
         if ($this->getWidgetDefinedIn()) {
             if (! $dialog->getIcon() && ($this->getWidgetDefinedIn() instanceof iHaveIcon) && null !== $icon = $this->getWidgetDefinedIn()->getIcon()) {
@@ -180,37 +177,41 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     /**
      * The widget shown by ShowDialog is a dialog of course.
+     * 
      * However, specifying the entire dialog widget for custom dialogs is a lot of work,
      * so you can also specify just the contents of the dialog in the widget property of the action in UXON. In this case, those widgets
      * specified there will be automatically wrapped in a dialog. This makes creating dialog easier and you can also reuse existing widgets,
      * that are no dialogs (for example an entire page can be easily show in a dialog).
      *
-     * @see \exface\Core\Actions\ShowWidget::getWidget()
+     * @see \exface\Core\Actions\ShowWidget::initWidget()
      */
-    public function getWidget()
+    protected function initWidget() : ?WidgetInterface
     {
-        $widget = parent::getWidget();
-        if (is_null($widget)) {
+        $widget = parent::initWidget();
+        if (null === $widget) {
             try {
                 $page = $this->getWidgetDefinedIn()->getPage();
             } catch (\Throwable $e) {
                 $page = UiPageFactory::createEmpty($this->getWorkbench());
             }
             $widget = $this->createDialogWidget($page);
-            $this->setWidget($widget);
         }
         
         if (! ($widget instanceof Dialog)) {
             $widget = $this->createDialogWidget($widget->getPage(), $widget);
-            $this->setWidget($widget);
         }
         
-        if (! $this->widget_was_enhanced) {
-            $widget = $this->enhanceDialogWidget($widget);
-            $this->setWidget($widget);
-            $this->widget_was_enhanced = true;
-        }
         return $widget;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::enrichWidget()
+     */
+    protected function enrichWidget(WidgetInterface $widget) : WidgetInterface
+    {
+        return $this->enrichDialogWidget($widget);
     }
     
     /**
@@ -257,7 +258,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
      */
     public function setDialog($widget_or_uxon_object) : ShowDialog
     {
-        return $this->setWidget($widget_or_uxon_object);
+        $this->setWidget($widget_or_uxon_object);
+        return $this;
     }
 
     /**

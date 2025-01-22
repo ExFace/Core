@@ -40,7 +40,8 @@ use exface\Core\DataTypes\StringDataType;
  * 
  * - `some_widget` - references the entire widget with id `some_widget`
  * - `some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
- * - `some_widget!mycol?` - references the column `mycol` only if it has a non-empty value. Otherwise the reference is not applied!
+ * - `some_widget!mycol?` - references the column `mycol` only if it has a non-empty value. Otherwise the reference is
+ * not applied!
  * - `[my.App.page1]` - references the root widget of the page with alias `my.App.page1`
  * - `[my.App.page1]some_widget` - references the widget with id `some_widget` on page `my.App.page1`
  * - `~self!mycol` - references the column `mycol` in the data of the current widget
@@ -72,6 +73,17 @@ class WidgetLink implements WidgetLinkInterface
     private $ifNotEmpty = false;
 
     /**
+     * Serves as a global storage for all established widget links, across all pages.
+     * 
+     * The idea is that it should always be possible to find out what links exist or point to a particular
+     * widget, regardless of event timings or local context.
+     * 
+     * @see self::getLinksAll(), self::getLinksOnPage(), self::getLinksToWidget()
+     * @var array 
+     */
+    private static array $linkCache = [];
+
+    /**
      * 
      * @param UiPageInterface $sourcePage
      * @param WidgetInterface $sourceWidget
@@ -84,7 +96,122 @@ class WidgetLink implements WidgetLinkInterface
         $this->sourcePage = $sourcePage;
         $this->sourceWidget = $sourceWidget;
         $this->parseLink($stringOrUxon);
+        
+        self::addLinkToCache($this);
         $this->getWorkbench()->eventManager()->dispatch(new OnWidgetLinkedEvent($this));
+    }
+
+    public function __destruct()
+    {
+        self::removeLinkFromCache($this);
+    }
+
+    /**
+     * Remove a WidgetLinkInterface instance from the link cache.
+     * 
+     * Returns TRUE only if the specified instance was actually found and removed from the cache.
+     * 
+     * @param WidgetLinkInterface $link
+     * @return bool
+     */
+    private static function removeLinkFromCache(WidgetLinkInterface $link) : bool
+    {
+        $targetPageAlias = $link->getOrLoadTargetPageAlias();
+        if(!key_exists($targetPageAlias, self::$linkCache)) {
+            return false;
+        }
+        
+        $targetWidgetId = $link->getTargetWidgetId() ?? '';
+        if(!key_exists($targetWidgetId, self::$linkCache[$targetPageAlias])) {
+            return  false;
+        }
+        
+        foreach (self::$linkCache[$targetPageAlias][$targetWidgetId] as $index => $cachedLink) {
+            if($cachedLink === $link) {
+                unset(self::$linkCache[$targetPageAlias][$targetWidgetId][$index]);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Add a WidgetLinkInterface instance to the cache.
+     * 
+     * Overwrites any instance with the same target page alias and target widget ID already
+     * stored in the cache. 
+     * 
+     * @param WidgetLinkInterface $link
+     * @return void
+     */
+    private static function addLinkToCache(WidgetLinkInterface $link) : void
+    {
+        $targetPageAlias = $link->getOrLoadTargetPageAlias();
+        $targetWidgetId = $link->getTargetWidgetId() ?? '';
+        
+        self::$linkCache[$targetPageAlias][$targetWidgetId][] = $link;
+    }
+
+    /**
+     * Returns ALL WidgetLinkInterface instances for all pages and widgets as a flat
+     * array with numeric indices.
+     * 
+     * @see self::$linkCache
+     * @return WidgetLinkInterface[]
+     */
+    public static function getLinksAll() : array
+    {
+        $result = [];
+        
+        foreach (self::$linkCache as $widgetsPerPage) {
+            foreach ($widgetsPerPage as $linksPerWidget) {
+                $result = array_merge($result, $linksPerWidget);
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Returns any WidgetLinkInterface instances on a given page as a flat array with
+     * numeric indices.
+     * 
+     * @see self::$linkCache
+     * @param UiPageInterface $page
+     * @return WidgetLinkInterface[]
+     */
+    public static function getLinksOnPage(UiPageInterface $page) : array
+    {
+        $result = [];
+        $pageAlias = $page->getAlias() ?? '';
+        
+        foreach (self::$linkCache[$pageAlias] as $linksPerWidget) {
+            $result = array_merge($result, $linksPerWidget);
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Returns any WidgetLinkInterface instances pointing to the specified widget.
+     * 
+     * @see self::$linkCache
+     * @param WidgetInterface $widget
+     * @return WidgetLinkInterface[]
+     */
+    public static function getLinksToWidget(WidgetInterface $widget) : array
+    {
+        $page = $widget->getPage();
+        $pageAlias = $page !== null ? ($page->getAlias() ?? '') : '';
+        $widgetId = $widget->getId() ?? '';
+        
+        if( key_exists($pageAlias, self::$linkCache) && 
+            key_exists($widgetId, self::$linkCache[$pageAlias])) {
+            return self::$linkCache[$pageAlias][$widgetId];
+        }
+        
+        return [];
     }
 
     /**
@@ -254,6 +381,22 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getTargetPageAlias() : ?string
     {
+        return $this->targetPageAlias;
+    }
+
+    /**
+     * Shortcut to get the alias of the target page. If the alias is `null`, the return
+     * value will be loaded from the target page. 
+     * 
+     * @return string
+     */
+    // TODO 2024-12-09 geb: This could be merged with getTargetPageAlias(), but was kept as a separate method to avoid refactoring. 
+    public function getOrLoadTargetPageAlias() : string
+    {
+        if($this->targetPageAlias === null) {
+            return $this->getTargetPage()->getAlias() ?? '';
+        }
+        
         return $this->targetPageAlias;
     }
 

@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT_BEHAVIORS",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -56,17 +61,42 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Model validation",
             "CREATED_ON": "2022-04-25 16:57:33",
             "MODIFIED_ON": "2022-04-25 16:57:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca3bd09db0c9aa3bd025041000001",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/ModelValidatingBehavior.php",
+            "BEHAVIOR": "exface/Core/Behaviors/ModelValidatingBehavior.php",
             "CONFIG_UXON": null,
             "OBJECT": "0x11e60ad7563429b089840050568905af",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Model validation",
             "DESCRIPTION": "This behavior makes sure, every behavior is instantiated and validated every time an editor for it's model is opened. This behavior also fires the onBehaviorValidated event, which allows other behaviors to append their own checks or modifications for metamodel editors.",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
+        },
+        {
+            "_EXPORT_SUMMARY": "Translations",
+            "CREATED_ON": "2024-12-11 15:17:26",
+            "MODIFIED_ON": "2024-12-11 16:31:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ef8e1ea5a47b628e1e025041000001",
+            "BEHAVIOR": "exface/Core/Behaviors/TranslatableBehavior.php",
+            "CONFIG_UXON": {
+                "translation_subfolder": "Behaviors",
+                "translation_filename_attribute_alias": "TRANSLATION_FILENAME",
+                "translation_app_determined_by_relation": "APP",
+                "translatable_uxon_prototype_attribute": "BEHAVIOR",
+                "translatable_uxon_properties": [
+                    "CONFIG_UXON"
+                ]
+            },
+            "OBJECT": "0x11e60ad7563429b089840050568905af",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Translations",
+            "DESCRIPTION": "Makes behavior config translatable",
             "DISABLED_FLAG": 0,
             "PRIORITY": null
         }

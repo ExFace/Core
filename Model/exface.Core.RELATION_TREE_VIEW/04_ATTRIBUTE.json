@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Owner Object [OBJECT]",
             "CREATED_ON": "2018-06-13 14:24:32",
             "MODIFIED_ON": "2018-06-13 15:19:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -208,7 +214,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Left Object [LEFT_OBJECT]",
             "CREATED_ON": "2018-06-13 14:24:56",
             "MODIFIED_ON": "2018-06-13 15:19:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -254,7 +261,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -264,6 +271,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Right Object [RIGHT_OBJECT]",
             "CREATED_ON": "2018-06-13 14:25:22",
             "MODIFIED_ON": "2018-06-13 15:19:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -300,7 +308,7 @@
             "RELATED_OBJ": "0x31350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -310,6 +318,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Attribute [ATTRIBUTE]",
             "CREATED_ON": "2018-06-13 14:26:15",
             "MODIFIED_ON": "2019-06-05 15:21:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -346,7 +355,7 @@
             "RELATED_OBJ": "0x32350000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -356,6 +365,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Type [RELATION_TYPE]",
             "CREATED_ON": "2018-06-13 14:38:11",
             "MODIFIED_ON": "2018-06-14 10:35:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -389,10 +399,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Regular relations are those defined in an attribute of their left object, while reverse relations are defined in another object.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -406,6 +416,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "&hArr; [DIRECTION]",
             "CREATED_ON": "2018-06-13 14:43:31",
             "MODIFIED_ON": "2018-06-18 08:54:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -439,10 +450,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The arrow points from the object with the attribute, where there relation is defined (foreign key), to the object, this relations references.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -456,6 +467,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Unamgibuous [UNAMBIGUOUS_RELATION_FLAG]",
             "CREATED_ON": "2018-06-14 08:50:29",
             "MODIFIED_ON": "2018-06-14 08:54:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -489,10 +501,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -500,6 +512,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Relation Alias [RELATION_ALIAS]",
             "CREATED_ON": "2018-06-14 08:51:40",
             "MODIFIED_ON": "2018-06-14 08:54:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -533,10 +546,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -544,6 +557,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Modifier [RELATION_ALIAS_MODIFIER]",
             "CREATED_ON": "2018-06-14 08:52:06",
             "MODIFIED_ON": "2018-06-14 08:54:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -577,10 +591,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -588,6 +602,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Full Alias [RELATION_ALIAS_FULL]",
             "CREATED_ON": "2018-06-14 08:52:29",
             "MODIFIED_ON": "2018-06-14 08:54:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -621,10 +636,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -632,6 +647,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias [RELATION_ALIAS_SHORT]",
             "CREATED_ON": "2018-06-14 08:52:50",
             "MODIFIED_ON": "2018-06-14 08:54:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -665,10 +681,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -676,6 +692,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Name [RELATION_NAME]",
             "CREATED_ON": "2018-06-18 04:31:03",
             "MODIFIED_ON": "2018-06-18 04:38:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -709,10 +726,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -720,6 +737,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "UID [UID]",
             "CREATED_ON": "2019-06-05 14:59:50",
             "MODIFIED_ON": "2019-06-05 15:01:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -753,10 +771,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "varchar"

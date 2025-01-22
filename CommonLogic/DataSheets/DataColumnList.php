@@ -89,7 +89,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         $relPathString = $relationPath === null ? '' : $relationPath->toString();
         foreach ($columns as $col) {
             if ($col instanceof DataColumn) {
-                $col_name = $relPathString ? RelationPath::relationPathAdd($relPathString, $col->getName()) : $col->getName();
+                $col_name = $relPathString ? RelationPath::join($relPathString, $col->getName()) : $col->getName();
                 // If there is no such column alread, add it
                 if (! $this->get($col_name)) {
                     // If a relation path is given, need to copy the column and modify it's expressions
@@ -119,7 +119,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                     }
                 }
             } else {
-                $col_name = $relPathString ? RelationPath::relationPathAdd($relPathString, $col) : $col;
+                $col_name = $relPathString ? RelationPath::join($relPathString, $col) : $col;
                 if ($this->get($col_name) === null) {
                     try {
                         $this->addFromExpression($col_name);

@@ -51,61 +51,10 @@ trait WidgetExceptionTrait {
         return $this;
     }
 
+    
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $debug_widget = $this->parentCreateDebugWidget($debug_widget);
-        if ($debug_widget->findChildById('widget_uxon_tab') === false) {
-            $uxon_tab = $debug_widget->createTab();
-            $uxon_tab->setId('widget_uxon_tab');
-            $uxon_tab->setCaption('Widget');
-            
-            $widget = $this->getWidget();
-            $widgetUxon = $widget->exportUxonObjectOriginal();
-            
-            $parent = $widget;
-            $parentUxon = new UxonObject();
-            while ($parent->hasParent() && $parentUxon->isEmpty()) {
-                $parent = $parent->getParent();
-                $parentUxon = $parent->exportUxonObjectOriginal();
-            }
-            
-            if (($trigger = $widget->getParentByClass(iTriggerAction::class)) && $trigger->hasAction()) {
-                $action = $trigger->getAction();
-                $actionInfo = $action->getAliasWithNamespace() . ' (' . $action->getName() . ')';
-            } else {
-                $actionInfo = 'exface.Core.ShowWidget (root)';
-            }
-            
-            $tabContents = <<<MD
-
-# Widget `{$widget->getWidgetType()}`
-
-- Widget ID: `{$widget->getId()}`
-- Page: `{$widget->getPage()->getAliasWithNamespace()}`
-- Called by action: `{$actionInfo}`
-
-## Widget UXON
-
-```
-{$widgetUxon->toJson(true)}
-```
-
-## Parent widget UXON
-
-```
-{$parentUxon->toJson(true)}
-```
-
-MD;
-            $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
-                'widget_type' => 'Markdown',
-                'value' => $tabContents,
-                'width' => '100%',
-                'height' => '100%'
-            ])));
-            $debug_widget->addTab($uxon_tab);
-        }
-        return $debug_widget;
+        return $this->getWidget()->createDebugWidget($debug_widget);
     }
 }
-?>

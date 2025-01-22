@@ -2,8 +2,12 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Interfaces\Model\ConditionInterface;
 
 /**
  * Logical comparison operators: `=`, `==`, `<`, `>`, etc.
@@ -141,22 +145,26 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const NOT_IN = '![';
     
     /**
-     * @const LIST_INTERSECTS compares two lists with each other. Becomes true when there is at least one element in both lists.
+     * @const LIST_INTERSECTS compares two lists with each other. Becomes true when at least one element is present in
+     *     both lists.
      */
     const LIST_INTERSECTS = '][';
     
     /**
-     * @const LIST_NOT_INTERSECTS the inverse of `][`. Becomes true when there is no element, that is part of both lists.
+     * @const LIST_NOT_INTERSECTS the inverse of `][`. Becomes true when no element is present in both
+     *     lists.
      */
     const LIST_NOT_INTERSECTS = '!][';
     
     /**
-     * @const LIST_SUBSET compares two lists with each other. Becomes true when all elements of the left list are in the right list too.
+     * @const LIST_SUBSET compares two lists with each other. Becomes true when all elements of the left list are
+     *     present in the right list.
      */
     const LIST_SUBSET = '[[';
     
     /**
-     * @const LIST_NOT_SUBSET the inverse of `[[`. Becomes true when at least one element of the left list is NOT in the right list.
+     * @const LIST_NOT_SUBSET the inverse of `[[`. Becomes true when at least one element of the left list is NOT
+     *     present in the right list.
      */
     const LIST_NOT_SUBSET = '![[';
     
@@ -218,18 +226,10 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param string|ComparatorDataType $comparatorOrString
      * @return bool
      */
-    public static function isNegative($comparatorOrString) : bool
+    public static function isNegative(string|ComparatorDataType $comparatorOrString) : bool
     {
         $cmp = ($comparatorOrString instanceof ComparatorDataType) ? $comparatorOrString->__toString() : $comparatorOrString;
-        switch ($cmp) {
-            case self::EQUALS_NOT:
-            case self::IS_NOT:
-            case self::NOT_IN:
-            case self::LIST_NOT_INTERSECTS:
-            case self::LIST_NOT_SUBSET:
-                return true;
-        }
-        return false;
+        return $cmp[0] === '!';
     }
     
     /**
@@ -340,6 +340,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param string $side
      * @return bool
      */
+    // TODO geb 2024-12-03: Do we really need this switch case? This is actually covered by isExplicit().
     public static function isListComparator(string $comparator, string $side = null) : bool
     {
         switch ($side) {
@@ -392,5 +393,100 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
         }
         return $result;
     }
+
+    /**
+     * Check if a comparator is atomic.
+     * 
+     * A comparator is atomic if it cannot be separated into a concatenation of SCALAR comparators.
+     * In other words all LIST comparators are not atomic, because they can be separated into a set
+     * of SCALAR comparators concatenated by a logical operator. 
+     * 
+     * @param string $comparator
+     * @return bool
+     */
+    public static function isAtomic(string $comparator) : bool
+    {
+        switch ($comparator) {
+            case self::EQUALS:
+            case self::EQUALS_NOT:
+            case self::GREATER_THAN:
+            case self::GREATER_THAN_OR_EQUALS:
+            case self::IS:
+            case self::IS_NOT:
+            case self::LESS_THAN:
+            case self::LESS_THAN_OR_EQUALS:
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Divide a condition into sub-conditions that are guaranteed to be atomic.
+     *
+     * @param ConditionInterface $condition
+     * @param bool               $trimValues
+     * @return ConditionalExpressionInterface
+     * @see ComparatorDataType::isExplicit()
+     *
+     */
+    public static function atomizeCondition(ConditionInterface $condition, bool $trimValues = true) : ConditionalExpressionInterface
+    {
+        // IDEA also support ConditionGroups atomizing their inner conditions and nested groups recursively
+        $rightSideValues = $condition->getValue();
+        if(!is_array($rightSideValues)) {
+            $expression = $condition->getExpression();
+            $delimiter = $expression->isMetaAttribute() ? $expression->getAttribute()->getValueListDelimiter() : ',';
+            $rightSideValues = explode($delimiter, $rightSideValues);
+        }
+
+        $comparator = $condition->getComparator();
+        
+        if(self::isAtomic($comparator)) {
+            return $condition;
+        }
+
+        if($isNegative = self::isNegative($comparator)){
+            $comparator = substr($comparator, 1);
+        }
+        
+        $scalarComparator = str_replace(['[',']'], '', $comparator);
+        /*$setComparator = self::substringBefore($comparator, $scalarComparator);
+        
+        $operator = match ($setComparator) {
+            '[', '[[', '][' => EXF_LOGICAL_OR,
+            default => EXF_LOGICAL_AND,
+        };*/
+        
+        if(empty($scalarComparator)) {
+            $scalarComparator = '==';
+        }
+        
+        if($isNegative) {
+            $scalarOperator = EXF_LOGICAL_AND;
+            $scalarComparator = '!' . $scalarComparator;
+        } else {
+            $scalarOperator = EXF_LOGICAL_OR;
+        }
+
+        $workbench = $condition->getWorkbench();
+        $ignoreEmpty = $condition->willIgnoreEmptyValues();
+        $expression = $condition->getExpression();
+        $conditionGroup = ConditionGroupFactory::createEmpty($workbench, $scalarOperator, null, $ignoreEmpty);
+        foreach ($rightSideValues as $value) {
+            if($trimValues) {
+                $value = trim($value);
+            }
+            
+            $condition = new Condition(
+                $workbench,
+                $expression,
+                $scalarComparator,
+                $value,
+                $ignoreEmpty
+            );
+            $conditionGroup->addCondition($condition);
+        }
+        
+        return $conditionGroup;
+    }
 }
-?>

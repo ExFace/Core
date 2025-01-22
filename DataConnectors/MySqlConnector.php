@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataConnectors;
 
+use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
@@ -177,6 +178,26 @@ class MySqlConnector extends AbstractSqlConnector
         
         switch ($sqlErrorNo) {
             case self::ERRRO_CODE_CONTRAINT:
+                // Constraint errors on binary keys will contain the key value in unreadable format like
+                // "Duplicate entry '\x11\xEF\x91{WY\xA7`\x91{\x00PV\xBE\xF7]' for key ...".
+                // Here we attempt to find the binary part and transform it to our standard hex
+                // format. The constraint violating values are enclosed in single quotes `'` and separated
+                // by dashes `-`, so we search for potential binary values: `'\x...'`, `'\x...-`, `-\x...-`
+                // or `-\x...'`.
+                $binaryMatches = [];
+                $foundBinaries = preg_match_all("/['\-](\\\\x.*?)['\-]/", $message, $binaryMatches);
+                if ($foundBinaries === 1) {
+                    foreach ($binaryMatches[1] as $binaryString) {
+                        // Decode the binary string
+                        $raw_binary = preg_replace_callback('/\\\\x([0-9A-Fa-f]{2})/', function ($matches) {
+                            return chr(hexdec($matches[1]));
+                        }, $binaryString);
+                        
+                        // Convert the raw binary to a hex string (optional, for better readability)
+                        $decodedHex = BinaryDataType::convertBinaryToHex($raw_binary);
+                        $message = str_replace($binaryString, $decodedHex, $message);
+                    }
+                }
                 return new DataQueryConstraintError($query, $message, '73II64M', $sqlException);
             default:
                 return new DataQueryFailedError($query, $message, '6T2T2UI', $sqlException);

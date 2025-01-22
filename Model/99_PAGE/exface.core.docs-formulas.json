@@ -32,8 +32,8 @@
                     {
                         "widget_type": "Browser",
                         "object_alias": "exface.Core.Docs",
-                        "base_url": "[#api#]\/docs\/",
-                        "url": "exface\/Core\/Docs\/UXON\/Expressions_and_formulas.md"
+                        "base_url": "[#api#]/docs/",
+                        "url": "exface/Core/Docs/UXON/Expressions_and_formulas.md"
                     }
                 ]
             }

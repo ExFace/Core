@@ -2,6 +2,8 @@
 namespace exface\Core\Facades\AbstractAjaxFacade;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\DataTypes\ListDataType;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Widgets\AbstractWidget;
@@ -386,6 +388,7 @@ HTML;
     public function getDataTypeFormatter(DataTypeInterface $dataType)
     {
         switch (true) {
+            case $dataType instanceof ListDataType: return new JsListFormatter($dataType, $this->getDataTypeFormatter($dataType->getValuesDataType()));
             case $dataType instanceof EnumDataTypeInterface: return new JsEnumFormatter($dataType);
             case $dataType instanceof NumberDataType: return new JsNumberFormatter($dataType);
             case $dataType instanceof DateDataType: return new JsDateFormatter($dataType);
