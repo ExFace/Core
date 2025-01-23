@@ -88,6 +88,8 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequir
     
     private $disableValidation = false;
 
+    private $ignore_default_value = null;
+
     /**
      * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,
      * that is a required one.

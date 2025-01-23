@@ -2,6 +2,7 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
@@ -614,6 +615,9 @@ class StringDataType extends AbstractDataType
         $result = '';
         foreach ($lines as $line) {
             $line = trim($line);
+            if ($line === false) {
+                throw new DataTypeCastingError('Cannot truncate string - invalid characters detected!');
+            }
             if ($line === '') {
                 continue;
             }
@@ -661,6 +665,9 @@ class StringDataType extends AbstractDataType
     public static function endSentence(string $text, string $puct = '.') : string
     {
         $text = trim($text);
+        if ($text === false) {
+            throw new DataTypeCastingError('Cannot process string - invalid characters detected!');
+        }
         $end = mb_substr($text, -1);
         switch ($end) {
             case '.':
@@ -719,6 +726,9 @@ class StringDataType extends AbstractDataType
     public static function isQuotedString(string $str) : bool
     {
         $str = trim($str);
+        if ($str === false) {
+            throw new DataTypeCastingError('Cannot process string - invalid characters detected!');
+        }
         $firstChar = mb_substr($str, 0, 1);
         if ($firstChar !== '"' && $firstChar !== "'") {
             return false;

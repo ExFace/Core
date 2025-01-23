@@ -297,7 +297,7 @@ class ChildObjectBehavior
         // If the input sheet did not contain the Target-UID, we need to load it from the database.
         if(! $targetUidCol){
             $logbook->addLine('Target relation column not found. Attempting to read target UIDs from data source.');
-            if ($inputSheet->hasUidColumn()) {
+            if ($inputSheet->hasUidColumn(true)) {
                 $relSheet = $inputSheet->copy();
                 $relSheet->getFilters()->addConditionFromColumnValues($relSheet->getUidColumn());
                 $targetUidCol = $relSheet->getColumns()->addFromExpression($relation);
@@ -311,6 +311,9 @@ class ChildObjectBehavior
         }
 
         $targetUids = $targetUidCol->getValues();
+        if (!empty($targetUids)) {
+            return $result;
+        }
         $targetUidsString = '['.implode(',',$targetUids).']';
         $logbook->addLine('Found the following target UIDs: '.$targetUidsString);
         $targetSheet->getFilters()->addConditionFromValueArray($targetSheet->getUidColumn()->getExpressionObj(), $targetUids);
@@ -324,6 +327,7 @@ class ChildObjectBehavior
             if(!$onAfter) {
                 $logbook->addLine('Saving loaded data to cache, with key "' . $cacheKey . '".');
                 $this->dataCache[$cacheKey] = $targetSheet;
+                // FIXME why is result an array? It will always have at least one element here
                 $result[] = $targetSheet;
             }
         } else {
