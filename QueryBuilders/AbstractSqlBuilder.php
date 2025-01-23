@@ -2512,19 +2512,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
         }
         
-        if ($customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY)) {
-            $phs = StringDataType::findPlaceholders($customOrderBy);
-            if (empty($phs)) {
-                // Fallback to older code in case the SQL_ORDER_BY has no placeholders
-                return $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy . ' ' . $qpart->getOrder();
-            } else {
-                return StringDataType::replacePlaceholders($customOrderBy, [
-                    '~alias' => $select_from,
-                    '~order' => $qpart->getOrder()
-                ]);
-            }
-        } else {
-            $sort_by = $this->getShortAlias($qpart->getColumnKey());
+        switch (true) {
+            case $customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY):
+                $phs = StringDataType::findPlaceholders($customOrderBy);
+                if (empty($phs)) {
+                    // Fallback to older code in case the SQL_ORDER_BY has no placeholders
+                    return $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy . ' ' . $qpart->getOrder();
+                } else {
+                    return StringDataType::replacePlaceholders($customOrderBy, [
+                        '~alias' => $select_from,
+                        '~order' => $qpart->getOrder()
+                    ]);
+                }
+            case $qpart->isCompound():
+                $sorters = [];
+                foreach ($qpart->getCompoundChildren() as $child) {
+                    $sorters[] = $this->buildSqlOrderBy($child, $select_from);
+                }
+                return implode(', ', $sorters);
+            default:
+                $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
         
         return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
