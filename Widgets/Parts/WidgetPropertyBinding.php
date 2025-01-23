@@ -99,7 +99,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     protected function setAttributeAlias(string $alias) : WidgetPropertyBindingInterface
     {
         $this->attributeAlias = $alias;
-        $this->type = null;
+        $this->dataBindingType = null;
         return $this;
     }
     
@@ -118,7 +118,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
             return $this->setAttributeAlias($name);
         }
         $this->dataColumnName = DataColumn::sanitizeColumnName($name);
-        $this->type = null;
+        $this->dataBindingType = null;
         return $this;
     }
 
@@ -358,7 +358,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
             default:
                 throw new InvalidArgumentException('Invalid type of value for a widget property binding: expecting an expression as string or object, "' . get_class($value) . '" received.');
         }
-        $this->type = null;
+        $this->dataBindingType = null;
         return $this;
     }
     

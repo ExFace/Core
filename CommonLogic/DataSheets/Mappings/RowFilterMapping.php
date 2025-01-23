@@ -68,10 +68,12 @@ class RowFilterMapping extends AbstractDataSheetMapping
         switch ($this->getApplyTo()) {
             case self::APPLY_TO_FROM_SHEEET:
                 $condGrp = $this->getConditionGroup($fromSheet->getMetaObject());
+                if ($logbook !== null) $logbook->addLine("Row filter for from-data: `{$condGrp->__toString()}`");
                 $sheetToFilter = $fromSheet;
                 break;
             case self::APPLY_TO_TO_SHEET:
                 $condGrp = $this->getConditionGroup($toSheet->getMetaObject());
+                if ($logbook !== null) $logbook->addLine("Row filter for to-data: `{$condGrp->__toString()}`");
                 $sheetToFilter = $toSheet;
                 break;
             default:
@@ -90,6 +92,7 @@ class RowFilterMapping extends AbstractDataSheetMapping
             default:
                 throw new DataMappingConfigurationError($this, 'Invalid data mapping configuration: "' . $this->getApplyTo() . '" is not a valid value for `mode`');
         }
+        if ($logbook !== null) $logbook->addLine("Found **{$diffSheet->countRows()} rows** matching conditions. Will apply mode `{$this->getMode()}`.");
         
         if ($this->getApplyTo() === self::APPLY_TO_TO_SHEET) {
             $toSheet = $diffSheet;
