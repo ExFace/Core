@@ -2972,7 +2972,7 @@ class DataSheet implements DataSheetInterface
                     $checkSheet = $this->copy();
                     $checkSheet->joinLeft($missingSheet, $checkSheet->getUidColumnName(), $missingSheet->getUidColumnName());
                 } else {
-                    throw new DataSheetExtractError($this, 'Cannot filter data rows: information required for conditions is not available in the data sheet!', null, null, $condGrp);
+                    throw new DataSheetExtractError($this, 'Cannot filter/extract data rows! Information required for conditions is not available in the data sheet: `' . implode('`, `', $missingCols). '`!', null, null, $condGrp);
                 }
             } else {
                 $checkSheet = $this;
