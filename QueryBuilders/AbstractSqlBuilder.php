@@ -200,7 +200,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * 
      * It replaces the entire select generator and will be used as-is except for replacing placeholders. 
      * The placeholder `[#~alias#]` is supported as well as placeholders for other attributes.
-     * This is usefull to write wrappers for columns (e.g. `NVL([#~value#].MY_COLUMN, 0)`.
+     * This is usefull to write wrappers for columns (e.g. `NVL([#~alias#].MY_COLUMN, 0)`.
      * If the wrapper is placed here, the data address would remain writable, while
      * replacing the column name with a custom SQL statement in the data address itself,
      * would cause an SQL error when writing to it (unless `SQL_UPDATE` and `SQL_INSERT`
