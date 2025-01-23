@@ -1466,13 +1466,14 @@ class DataSheet implements DataSheetInterface
             $update_ds = $this;
         }
         
-        // Check if the sheet contains columns with related data. This is not supporeted
-        // because it is not clear, what replacing a related column would actually mean!
-        foreach ($update_ds->getColumns() as $col) {
-            if ($col->isAttribute() && $col->getAttribute()->isRelated()) {
-                throw new DataSheetWriteError($this, 'Cannot replace data for object ' . $this->getMetaObject()->__toString() . ' because it contains the column "' . $col->getAttributeAlias() . '" with a relation path - related data is not supported in replace operations!');
-            }
-        }
+        // IDEA we had check for related data at this point and an error if the sheet had related column with
+        // the aim to make these cases visible to the user and avoid useless updates. However it did not work
+        // out. It turned out, having related data is actually IMPORTANT for the FileAttachmentBehavior
+        // that handles related data (e.g. __content of the attachment) separately. Similarly, other event
+        // handlers might be interested in the related data. So the problem remains: if we have related column
+        // (like PRODUCT__NAME for a ORDER_POS object), they get updated here too, but this is absolutely not
+        // obvious for the app designer. Indeed, it is very hard to understand, why the timestamps of related
+        // objects get updated in these cases.
 
         $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
@@ -1761,12 +1762,18 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetWriteError($this, 'Cannot create nested data: ' . count($column->getValues(false)) . ' nested data sheets found for ' . count($newKeys) . ' foreign keys in the parent sheet.');
         }
         
+        $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
         foreach ($column->getValues(false) as $rowNr => $sheetArr) {
             if (! $sheetArr) {
                 continue;
             }
             
-            $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+            $nestedSheet = DataSheetFactory::createSubsheetFromUxon(
+                $this, 
+                UxonObject::fromAnything($sheetArr), 
+                $nestedFKeyAttr->getAlias(), 
+                $thisSheetKeyAttr->getAliasWithRelationPath()
+            );
             
             if ($nestedSheet === null || $nestedSheet->isEmpty(true) === true) {
                 continue;
@@ -1786,7 +1793,6 @@ class DataSheet implements DataSheetInterface
                 $nestedSheet->getUidColumn()->setValueOnAllRows('');
             }
             
-            $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
             $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
             $nestedFKeyCol->setValueOnAllRows($rowKey);
             

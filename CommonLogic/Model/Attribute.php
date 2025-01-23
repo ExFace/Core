@@ -63,6 +63,8 @@ class Attribute implements MetaAttributeInterface
 
     private $default_display_order;
 
+    private $default_aggregate_function;
+
     private $is_relation;
 
     private $formula;

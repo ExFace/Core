@@ -13,3 +13,4 @@
 11. [Publishing/deploying apps](publishing_apps/index.md)
 12. [Documenting your apps](documentation/index.md)
 13. [Developer's docs](developer_docs/index.md)
+14. [Troubleshooting](Cookbook/Troubleshooting.md)

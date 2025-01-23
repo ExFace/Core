@@ -103,6 +103,10 @@ use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
  * 
  * Place the folloing code into a *.php file on the server to test the connection independently from the workbench.
  * 
+ * ## Troubleshooting
+ * 
+ * @link https://github.com/ExFace/Core/tree/1.x-dev/Docs/creating_metamodels/data_sources/SQL/Troubleshooting_MS_SQL.md
+ * 
  * ```
 <?php
     $serverName = "<SERVER>\<INSTANCE>";  
@@ -171,17 +175,17 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         if (function_exists('sqlsrv_connect') === false) {
-            throw new DataConnectionFailedError($this, 'PHP function "sqlsrv_connect" not available!', '76BJXFH');
+            throw new DataConnectionFailedError($this, 'MS SQL Server drivers for PHP (extension "sqlsrv") not installed!', '76BJXFH');
         }
         
         if ($this->getWarningsReturnAsErrors() === false) {
             if(sqlsrv_configure("WarningsReturnAsErrors", 0) === false) {
-                throw new DataConnectionFailedError($this, 'PHP function "sqlsrv_connect" not available!', '76BJXFH');
+                throw new DataConnectionFailedError($this, 'Failed to set configuration for MS SQL Server connection.');
             }
         }
         
         if (! $conn = sqlsrv_connect($this->getHost() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
-            throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastErrorMessage());
+            throw new DataConnectionFailedError($this, "Failed to connect to MS SQL Server database. " . $this->getLastErrorMessage(), '7ZBVB1G');
         } else {
             $this->setCurrentConnection($conn);
         }
