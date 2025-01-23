@@ -200,7 +200,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * 
      * It replaces the entire select generator and will be used as-is except for replacing placeholders. 
      * The placeholder `[#~alias#]` is supported as well as placeholders for other attributes.
-     * This is usefull to write wrappers for columns (e.g. `NVL([#~value#].MY_COLUMN, 0)`.
+     * This is usefull to write wrappers for columns (e.g. `NVL([#~alias#].MY_COLUMN, 0)`.
      * If the wrapper is placed here, the data address would remain writable, while
      * replacing the column name with a custom SQL statement in the data address itself,
      * would cause an SQL error when writing to it (unless `SQL_UPDATE` and `SQL_INSERT`
@@ -2512,19 +2512,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
         }
         
-        if ($customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY)) {
-            $phs = StringDataType::findPlaceholders($customOrderBy);
-            if (empty($phs)) {
-                // Fallback to older code in case the SQL_ORDER_BY has no placeholders
-                return $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy . ' ' . $qpart->getOrder();
-            } else {
-                return StringDataType::replacePlaceholders($customOrderBy, [
-                    '~alias' => $select_from,
-                    '~order' => $qpart->getOrder()
-                ]);
-            }
-        } else {
-            $sort_by = $this->getShortAlias($qpart->getColumnKey());
+        switch (true) {
+            case $customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY):
+                $phs = StringDataType::findPlaceholders($customOrderBy);
+                if (empty($phs)) {
+                    // Fallback to older code in case the SQL_ORDER_BY has no placeholders
+                    return $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy . ' ' . $qpart->getOrder();
+                } else {
+                    return StringDataType::replacePlaceholders($customOrderBy, [
+                        '~alias' => $select_from,
+                        '~order' => $qpart->getOrder()
+                    ]);
+                }
+            case $qpart->isCompound():
+                $sorters = [];
+                foreach ($qpart->getCompoundChildren() as $child) {
+                    $sorters[] = $this->buildSqlOrderBy($child, $select_from);
+                }
+                return implode(', ', $sorters);
+            default:
+                $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
         
         return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
