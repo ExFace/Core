@@ -452,6 +452,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $eventDataCols = $eventSheet->getColumns();
         $logbook->addSection('Searching for potential duplicates');
         
+        $logbook->addDataSheet('Event data', $eventSheet);
+        
         $compareCols = [];
         $missingCols = [];
         $missingAttrs = [];
@@ -466,7 +468,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         if (empty($missingAttrs) === false) {
-            $logbook->addLine('Missing attributes in original data:');
+            $logbook->addLine('Missing attributes in original data: `' . implode('`, `', $missingAttrs) . '`');
             if ($eventSheet->hasUidColumn(true) === false) {
                 $logbook->addLine('Cannot read missing attributes because data has no UIDs!');
                 throw new BehaviorRuntimeError($this, 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!', '7PNKJ50', null, $logbook);
