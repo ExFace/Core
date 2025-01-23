@@ -22,6 +22,8 @@ class WidgetPropertyScale implements WidgetPropertyScaleInterface
 {
     use ImportUxonObjectTrait;
 
+    private $workbench = null;
+
     private $valueScale = null;
 
     private $dataType = null;

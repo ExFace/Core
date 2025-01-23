@@ -44,7 +44,7 @@ trait iUseInputWidgetTrait {
         if ($this->input_widget === null) {
             if ($this->input_widget_id) {
                 $page = $this->getPage();
-                if (strpos($this->input_widget, $page->getWidgetIdSpaceSeparator()) === false && $idSpace = $this->getIdSpace()) {
+                if (mb_strpos($this->input_widget_id, $page->getWidgetIdSpaceSeparator()) === false && $idSpace = $this->getIdSpace()) {
                     $widgetId = $idSpace . $page->getWidgetIdSpaceSeparator() . $this->input_widget_id;
                 } else {
                     $widgetId = $this->input_widget_id;

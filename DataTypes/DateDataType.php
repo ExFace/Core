@@ -81,7 +81,9 @@ class DateDataType extends AbstractDataType
      */
     public static function cast($string, bool $returnPhpDate = false, string $fromTimeZone = null, bool $parseRelative = true)
     {
-        $string = trim($string);
+        if (is_string($string)) {
+            $string = trim($string);
+        }
         if ($fromTimeZone !== null && $fromTimeZone === date_default_timezone_get()) {
             $fromTimeZone = null;
         }
@@ -229,8 +231,8 @@ class DateDataType extends AbstractDataType
     {
         return new \IntlDateFormatter(
             $locale, 
-            null, // date type
-            null, // time type
+            \IntlDateFormatter::FULL, // date type
+            \IntlDateFormatter::FULL, // time type
             ($timezone === null ? null : new \DateTimeZone($timezone)), // time zone
             null, // calendar
             $format // pattern
