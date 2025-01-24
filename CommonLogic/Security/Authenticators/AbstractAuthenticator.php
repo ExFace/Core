@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -569,12 +570,16 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         if ($this->hasSyncRoles() === false) {
             return $this;
         }
+
+        $logbook = new DataLogBook($this->getName());
         
         try {
             $transaction = $this->getWorkbench()->data()->startTransaction();
             
             // Get external roles the user should have according to the remote
             $externalRolesData = $this->getExternalRolesForUser($user, $token);
+            $logbook->addDataSheet('External roles', $externalRolesData);
+            $logbook->addLine('Received ' . $externalRolesData->countRows() . ' external roles');
             
             // Get current workbench user-role-relations, that were added by this authenticator previously
             $localRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
@@ -607,6 +612,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
              *   - User loses Role2 because it is now actively synced. 
              *   See more specific scenarios for local/manual roles below.
             */
+
+            $logbook->addLine('Looking for local roles with the following filters: `' . $localRolesSheet->getFilters()->__toString() . '`');
             
             // Delete roles assigned by this sync previously
             $deleteSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
@@ -614,6 +621,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             $deleteUids = [];
             $checkUids = [];
             $localRolesSheet->dataRead();
+            $logbook->addDataSheet('Local rows', $localRolesSheet);
+            $logbook->addLine('Found ' . $localRolesSheet->countRows() . ' local roles');
 
             /*
              * Scenarios for local/manually assigned roles:
@@ -676,6 +685,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
 
             $deleteUids = array_unique($deleteUids);
             $deleteCol->setValues($deleteUids);
+            $logbook->addDataSheet('Local roles to delete', $deleteSheet);
             if ($deleteSheet->countRows() !== 0) {
                 $deleteSheet->dataDelete($transaction);
             }
@@ -694,6 +704,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             if($newRolesSheet->countRows() !== 0){
                 $newRolesSheet->dataCreate(false, $transaction);
             }
+            $this->getWorkbench()->getLogger()->notice('Authentication roles synced for user ' . $user->getUsername() . ' with authenticator ' . $this->getName(), [], $logbook);
             $transaction->commit();
         } catch (\Throwable $e) {
             // If roles cannot be synced, do not stop the authentication!
