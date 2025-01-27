@@ -578,6 +578,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             
             // Get external roles the user should have according to the remote
             $externalRolesData = $this->getExternalRolesForUser($user, $token);
+            $externalRoles = $externalRolesData->getRows();
+            $externalRoleUids = array_column($externalRoles, 'USER_ROLE');
             $logbook->addDataSheet('External roles', $externalRolesData);
             $logbook->addLine('Received ' . $externalRolesData->countRows() . ' external roles');
             
@@ -669,8 +671,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 $checkSheet->getFilters()->addConditionFromValueArray('AUTHENTICATOR_ID', [$this->getId(), null]);
                 $checkSheet->dataRead();     
 
-                $externalRoles = $externalRolesData->getRows();
-                $externalRoleUids = array_column($externalRoles, 'USER_ROLE');
+                
                 foreach ($checkSheet->getRows() as $internalRow) {
                     // see b) as described in the comment above
                 if ($internalRow["AUTHENTICATOR_ID"] === $this->getId()) {
@@ -701,6 +702,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                     ]);
                 }
             }
+            $logbook->addDataSheet('Local roles to add', $newRolesSheet);
             if($newRolesSheet->countRows() !== 0){
                 $newRolesSheet->dataCreate(false, $transaction);
             }
