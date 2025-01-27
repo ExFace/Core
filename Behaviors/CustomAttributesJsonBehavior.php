@@ -47,6 +47,8 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     private ?string $jsonDefinitionObjectAlias = null;
 
     private ?string $jsonDefinitionAttributeAlias = null;
+    private string $jsonAttributeAlias;
+    private ?string $ownerAttributeAlias = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -88,19 +90,14 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
 
     protected function loadAttributesFromData(BehaviorLogBook $logBook): array
     {
-        if( empty($this->getJsonDefinitionAttributeAlias()) ) {
+        if(empty($this->getJsonAttributeAlias()) ) {
             return [];
-        }
-        
-        $definitionObjectAlias = $this->getJsonDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
-        
-        if(!$this->getObject()->isExactly($definitionObjectAlias)) {
-            return $this->loadAttributesFromDefinition($logBook);
         }
 
         try {
             $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
-            $jsonAttribute = $this->getObject()->getAttribute($this->getJsonDefinitionAttributeAlias());
+            $jsonAttributeAlias = $this->getJsonAttributeAlias();
+            $jsonAttribute = $this->getObject()->getAttribute($jsonAttributeAlias);
         } catch (MetaAttributeNotFoundError $error) {
             throw new BehaviorRuntimeError($this, 'Cannot load custom attributes.', null, $error, $logBook);
         }
@@ -110,7 +107,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         $dataSheet->dataRead();
 
         $customAttributes = [];
-        foreach ($dataSheet->getColumnValues($this->getJsonDefinitionAttributeAlias()) as $json) {
+        foreach ($dataSheet->getColumnValues($jsonAttributeAlias) as $json) {
             if(empty($json) || $json === '{}') {
                 continue;
             }
@@ -129,38 +126,44 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     
     protected function loadAttributesFromDefinition(BehaviorLogBook $logBook) : array
     {
-        if( empty($this->getJsonDefinitionAttributeAlias()) || empty($this->getJsonDefinitionObjectAlias()) ) {
+        $definitionObjectAlias = $this->getDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
+        if(empty($definitionObjectAlias)) {
             return [];
         }
-
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getJsonDefinitionObjectAlias());
-        $object = $dataSheet->getMetaObject();
-
+        
+        if($this->getObject()->isExactly($definitionObjectAlias)) {
+            return $this->loadAttributesFromData($logBook);
+        }
+        
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $definitionObjectAlias);
+        $definitionObject = $dataSheet->getMetaObject();
+        
         try {
-            $jsonAttribute = $object->getAttribute($this->getJsonDefinitionAttributeAlias());
+            $definitionAttributeAlias = $this->getDefinitionAttributeAlias();
+            $definitionAttribute = $definitionObject->getAttribute($definitionAttributeAlias);
+            $dataSheet->getColumns()->addFromAttribute($definitionAttribute);
+            
+            $jsonAttribute = $this->getObject()->getAttribute($this->getJsonAttributeAlias());
+            $dataAddress = $jsonAttribute->getDataAddress();
+            
+            if($ownerAttributeAlias = $this->getOwnerAttributeAlias()) {
+                $ownerAttribute = $definitionObject->getAttribute($ownerAttributeAlias);
+                $dataSheet->getColumns()->addFromAttribute($ownerAttribute);
+                $dataSheet->getFilters()->addConditionFromAttribute($ownerAttribute, $this->getObject()->getAliasWithNamespace());
+            }
         } catch (MetaAttributeNotFoundError $error) {
             throw new BehaviorRuntimeError($this, 'Cannot load custom attributes.', null, $error, $logBook);
         }
-
-        $dataAddress = $jsonAttribute->getDataAddress();
-        $dataSheet->getColumns()->addFromAttribute($jsonAttribute);
-        $dataSheet->getColumns()->addFromUidAttribute();
-        $dataSheet->getFilters()->addConditionFromAttribute($dataSheet->getUidColumn()->getAttribute(), $object->getId());
+        
         $dataSheet->dataRead();
 
         $customAttributes = [];
-        foreach ($dataSheet->getColumnValues($this->getJsonDefinitionAttributeAlias()) as $json) {
-            if(empty($json) || $json === '{}') {
+        foreach ($dataSheet->getColumnValues($definitionAttributeAlias) as $customAttributeAlias) {
+            if(empty($customAttributeAlias)) {
                 continue;
             }
-
-            foreach (json_decode($json) as $attribute => $value) {
-                if(key_exists($attribute, $customAttributes)) {
-                    continue;
-                }
-
-                $customAttributes[$attribute] = $dataAddress . '::$.' . $attribute;
-            }
+            
+            $customAttributes[$customAttributeAlias] = $dataAddress . '::$.' . $customAttributeAlias;
         }
 
         return $customAttributes;
@@ -183,38 +186,74 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     }
 
     /**
-     * @uxon-property json_definition_object_alias
+     * @uxon-property definition_object_alias
      * @uxon-type metamodel:object
      *
      * @param string|null $alias
      * @return CustomAttributesJsonBehavior
      */
-    public function setJsonDefinitionObjectAlias(?string $alias) : CustomAttributesJsonBehavior
+    public function setDefinitionObjectAlias(?string $alias) : CustomAttributesJsonBehavior
     {
         $this->jsonDefinitionObjectAlias = $alias;
         return $this;
     }
 
-    public function getJsonDefinitionObjectAlias() : ?string
+    public function getDefinitionObjectAlias() : ?string
     {
         return $this->jsonDefinitionObjectAlias;
     }
 
     /**
-     * @uxon-property json_definition_attribute_alias
+     * @uxon-property definition_attribute_alias
      * @uxon-type metamodel:attribute
      *
      * @param string|null $alias
      * @return CustomAttributesJsonBehavior
      */
-    public function setJsonDefinitionAttributeAlias(?string $alias) : CustomAttributesJsonBehavior
+    public function setDefinitionAttributeAlias(?string $alias) : CustomAttributesJsonBehavior
     {
         $this->jsonDefinitionAttributeAlias = $alias;
         return $this;
     }
 
-    public function getJsonDefinitionAttributeAlias() : ?string
+    public function getDefinitionAttributeAlias() : ?string
     {
         return $this->jsonDefinitionAttributeAlias;
+    }
+
+    /**
+     * @uxon-property json_attribute_alias 
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setJsonAttributeAlias(string $alias) : CustomAttributesJsonBehavior
+    {
+        $this->jsonAttributeAlias = $alias;
+        return $this;
+    }
+    
+    public function getJsonAttributeAlias() : string
+    {
+        return $this->jsonAttributeAlias;
+    }
+
+    /**
+     * @uxon-property owner_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string|null $alias
+     * @return $this
+     */
+    public function setOwnerAttributeAlias(?string $alias) : CustomAttributesJsonBehavior
+    {
+        $this->ownerAttributeAlias = $alias;
+        return $this;
+    }
+    
+    public function getOwnerAttributeAlias() : ?string
+    {
+        return $this->ownerAttributeAlias;
     }
 }
