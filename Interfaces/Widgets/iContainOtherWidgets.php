@@ -34,16 +34,22 @@ interface iContainOtherWidgets extends WidgetInterface
     public function getWidgets(callable $filter = null);
     
     /**
-     * Returns the first widget matching the filter or the first one overall 
-     * if no filter is defined.
+     * Returns the first widget matching the filter or the first one overall if no filter is defined.
      * 
      * @param callable $filter
-     * 
      * @throws UnderflowException if the container is empty or no widget matches the filter
-     * 
      * @return WidgetInterface
      */
-    public function getWidgetFirst(callable $filter = null);
+    public function getWidgetFirst(callable $filter = null) : WidgetInterface;
+
+    /**
+     * Returns the last widget matching the filter or the first one overall if no filter is defined.
+     * 
+     * @param callable $filter
+     * @throws UnderflowException if the container is empty or no widget matches the filter
+     * @return WidgetInterface
+     */
+    public function getWidgetLast(callable $filter = null) : WidgetInterface;
     
     /**
      * Returns the N-th widget from the container (specified by the index 
