@@ -195,19 +195,20 @@ class CalculatingBehavior extends AbstractBehavior
         $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
 
         // Don't bother if this read is caused by the same behavior - e.g. loading additional data
         if ($this->inProgress === true) {
             $logbook->addLine('**Skipped** because of operation performed from within the same behavior (e.g. reading missing data)');
-            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
 
         // Ignore empty sheets - nothing to calculate here!
         if ($inputSheet->isEmpty()) {
+            $logbook->addLine('**Skipped** because of empty data - nothing to calculate!');
             return;
         }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
 
         $onlyExistingCols = ! $this->willAddColumns($event);
 

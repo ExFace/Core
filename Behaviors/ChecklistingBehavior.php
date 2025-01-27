@@ -11,9 +11,6 @@ use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Events\DataSheetEventInterface;
-use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
