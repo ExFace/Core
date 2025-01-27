@@ -18,27 +18,28 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 /**
  * Automatically adds custom attributes to the object, whenever it is loaded from into memory.
  *
- * ### Design Considerations
+ * ### Usage Modes
  *
- * 1. Somebody defines a CA (CustomAttribute)
- *      - this can happen anywhere in PUI
- *      - Nobody will know this has happened (by default)
- *      - &rarr; We need a central CONFIG that stores and exposes these definitions
- * 2. Object is loaded into memory
- *      - this may happen without loading its data
- *      - we need to add any CAs to the object at this point to ensure designers and users can understand them
- *      - &rarr; We need to load CA info from the central DEFINITION
- *
- * **Question:** Where should we store the CA DEFINITION?
- *
- * - **Explicit:** Add an JSON column to the MetaObject table, that stores CA structure per MetaObject directly.
- * Clean from a PUI perspective, but messy in terms of maintenance and separation of concerns.
- * - **Implicit:** CA structure is derived from actual data [ row -> JSON-Colum (data and structure)]
- * Clean in terms of maintenance and separation of concerns, but requires loading data whenever we wish to
- * reason about CA structure. It is also difficult to deduce the structure, since data may be incomplete.
- * - **Table:** Create a special table PER PROJECT, where CA structure is stored like [ MetaObjectId -> CA Definitions
- * ]. We need to discuss pros and cons for this one.
- * - Any other options?
+ * The current implementation supports loading CA definitions from three different sources, depending on the
+ * configuration of this behavior:
+ * 1. **From Data (implicit):** If you do not define a value for `definition_object_alias` the behavior will instead try to
+ * deduce its custom attribute definitions from the data stored in the data address of `json_attribute_alias`. This required loading and parsing 
+ * the entire data set, which is very slow. NOT RECOMMENDED.
+ * 2. **From an exclusive definition table (explicit):** If you define a value for `definition_object_alias` and `definition_attribute_alias`, 
+ * but leave `owner_attribute_alias` undefined, the behavior will assume that you provided a specialized table that only contains
+ * custom attribute definitions for the object it is attached to. This is very fast, but requires you to set up an exclusive table for
+ * this MetaObject. RECOMMENDED.
+ * 3. **From a general definition table (explicit):** If you also define a value for `owner_attribute_alias`, the behavior will assume that you
+ * provided a general definition table that contains custom attribute definitions for any number of MetaObjects. This is reasonably fast and requires
+ * little setup. RECOMMENDED.
+ * 
+ * ### TO DOs
+ * 
+ * - The DataType of all JSON-Attributes is hard-coded to be `Text`. We should update this with an option to load a data-type from the definition.
+ * - If `definition_object_alias` references an object, that has itself a custom attributes behavior will cause an error to be thrown.
+ * In rare cases this might even result in infinite recursion. This happens, because the object referenced in `definition_object_alias` must be
+ * loaded into memory, which in turn would trigger a new instance of this behavior.
+ * TODO geb 2025-27-01: How to properly guard against this? (Idea: Static list?)
  */
 class CustomAttributesJsonBehavior extends AbstractBehavior
 {
@@ -70,6 +71,13 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
 
         return $this;
     }
+
+    /**
+     * Loads and adds temporary custom attributes from JSON definitions to the object this behavior is attached to.
+     * 
+     * @param OnMetaObjectLoadedEvent $event
+     * @return void
+     */
     public function onLoadedAddCustomAttributes(OnMetaObjectLoadedEvent $event) : void
     {
         if($this->isDisabled() || $this->processed) {
@@ -88,24 +96,103 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
     }
 
-    protected function loadAttributesFromData(BehaviorLogBook $logBook): array
+    /**
+     * Loads custom attributes from an explicit definition.
+     * 
+     * NOTE: This is the default behavior, because it is flexible and fast.
+     * 
+     * @param BehaviorLogBook $logBook
+     * @return array
+     */
+    protected function loadAttributesFromDefinition(BehaviorLogBook $logBook) : array
     {
-        if(empty($this->getJsonAttributeAlias()) ) {
-            return [];
+        $definitionObjectAlias = $this->getDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
+        if($this->getObject()->isExactly($definitionObjectAlias)) {
+            return $this->loadAttributesFromData($logBook);
+        }
+
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $definitionObjectAlias);
+        $definitionObject = $dataSheet->getMetaObject();
+        
+        foreach ($definitionObject->getBehaviors() as $behavior) {
+            if($behavior instanceof CustomAttributesJsonBehavior) {
+                throw new BehaviorRuntimeError(
+                    $this, 
+                    'Loading custom attributes from objects with custom attributes is not allowed!',
+                    null, 
+                    null,
+                    $logBook);
+            }
         }
 
         try {
-            $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
-            $jsonAttributeAlias = $this->getJsonAttributeAlias();
-            $jsonAttribute = $this->getObject()->getAttribute($jsonAttributeAlias);
+            $definitionAttributeAlias = $this->getDefinitionAttributeAlias();
+            $definitionAttribute = $definitionObject->getAttribute($definitionAttributeAlias);
+            $dataSheet->getColumns()->addFromAttribute($definitionAttribute);
+            $logBook->addLine('Initialized definition attribute: "' . $definitionAttributeAlias . '".');
+
+            $jsonAttribute = $this->getObject()->getAttribute($this->getJsonAttributeAlias());
+            $dataAddress = $jsonAttribute->getDataAddress();
+            $logBook->addLine('Generated data address: "' . $dataAddress . '".');
+
+            if($ownerAttributeAlias = $this->getOwnerAttributeAlias()) {
+                $logBook->addLine('Owner attribute alias: "' . $ownerAttributeAlias . '".');
+                $ownerAttribute = $definitionObject->getAttribute($ownerAttributeAlias);
+                $dataSheet->getColumns()->addFromAttribute($ownerAttribute);
+                $dataSheet->getFilters()->addConditionFromAttribute($ownerAttribute, $this->getObject()->getAliasWithNamespace());
+                $logBook->addLine('Initialized owner attribute. Loading only attributes with "' . $ownerAttributeAlias . '" == "' . $this->getObject()->getAliasWithNamespace() . '".');
+            } else {
+                $logBook->addLine('Owner attribute undefined. Loading all attributes present in "' . $definitionObjectAlias . '".');
+            }
         } catch (MetaAttributeNotFoundError $error) {
             throw new BehaviorRuntimeError($this, 'Cannot load custom attributes.', null, $error, $logBook);
         }
 
-        $dataAddress = $jsonAttribute->getDataAddress();
-        $dataSheet->getColumns()->addFromAttribute($jsonAttribute);
         $dataSheet->dataRead();
+        $logBook->addDataSheet('Definitions', $dataSheet);
+        $logBook->addLine('Successfully loaded custom attribute definitions (see "Definitions").');
 
+        $customAttributes = [];
+        foreach ($dataSheet->getColumnValues($definitionAttributeAlias) as $customAttributeAlias) {
+            if(empty($customAttributeAlias)) {
+                continue;
+            }
+
+            $customAttributes[$customAttributeAlias] = $dataAddress . '::$.' . $customAttributeAlias;
+        }
+
+        return $customAttributes;
+    }
+
+    /**
+     * Deduces custom attributes from data stored in the `json_attribute_alias`.
+     * 
+     * NOTE: This mode is very slow and is only viable as a fallback.
+     * 
+     * @param BehaviorLogBook $logBook
+     * @return array
+     */
+    protected function loadAttributesFromData(BehaviorLogBook $logBook): array
+    {
+        $logBook->addLine('"definition_object_alias" was undefined. Loading custom attribute definitions from data instead.');
+        
+        try {
+            $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
+            $jsonAttributeAlias = $this->getJsonAttributeAlias();
+            $jsonAttribute = $this->getObject()->getAttribute($jsonAttributeAlias);
+            $logBook->addLine('Initialized definition attribute: "' . $jsonAttributeAlias . '".');
+            
+            $dataAddress = $jsonAttribute->getDataAddress();
+            $dataSheet->getColumns()->addFromAttribute($jsonAttribute);
+            $logBook->addLine('Generated data address: "' . $dataAddress . '".');
+        } catch (MetaAttributeNotFoundError $error) {
+            throw new BehaviorRuntimeError($this, 'Cannot load custom attributes.', null, $error, $logBook);
+        }
+
+        $dataSheet->dataRead();
+        $logBook->addDataSheet('Definitions', $dataSheet);
+        $logBook->addLine('Successfully loaded custom attribute definitions (see "Definitions").');
+        
         $customAttributes = [];
         foreach ($dataSheet->getColumnValues($jsonAttributeAlias) as $json) {
             if(empty($json) || $json === '{}') {
@@ -123,56 +210,19 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
 
         return $customAttributes;
     }
-    
-    protected function loadAttributesFromDefinition(BehaviorLogBook $logBook) : array
-    {
-        $definitionObjectAlias = $this->getDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
-        if(empty($definitionObjectAlias)) {
-            return [];
-        }
-        
-        if($this->getObject()->isExactly($definitionObjectAlias)) {
-            return $this->loadAttributesFromData($logBook);
-        }
-        
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $definitionObjectAlias);
-        $definitionObject = $dataSheet->getMetaObject();
-        
-        try {
-            $definitionAttributeAlias = $this->getDefinitionAttributeAlias();
-            $definitionAttribute = $definitionObject->getAttribute($definitionAttributeAlias);
-            $dataSheet->getColumns()->addFromAttribute($definitionAttribute);
-            
-            $jsonAttribute = $this->getObject()->getAttribute($this->getJsonAttributeAlias());
-            $dataAddress = $jsonAttribute->getDataAddress();
-            
-            if($ownerAttributeAlias = $this->getOwnerAttributeAlias()) {
-                $ownerAttribute = $definitionObject->getAttribute($ownerAttributeAlias);
-                $dataSheet->getColumns()->addFromAttribute($ownerAttribute);
-                $dataSheet->getFilters()->addConditionFromAttribute($ownerAttribute, $this->getObject()->getAliasWithNamespace());
-            }
-        } catch (MetaAttributeNotFoundError $error) {
-            throw new BehaviorRuntimeError($this, 'Cannot load custom attributes.', null, $error, $logBook);
-        }
-        
-        $dataSheet->dataRead();
 
-        $customAttributes = [];
-        foreach ($dataSheet->getColumnValues($definitionAttributeAlias) as $customAttributeAlias) {
-            if(empty($customAttributeAlias)) {
-                continue;
-            }
-            
-            $customAttributes[$customAttributeAlias] = $dataAddress . '::$.' . $customAttributeAlias;
-        }
-
-        return $customAttributes;
-    }
-
+    /**
+     * Adds the list of attributes to the object this behavior is attached to.
+     * 
+     * @param array           $customAttributes
+     * @param BehaviorLogBook $logBook
+     * @return void
+     */
     protected function addAttributes(array $customAttributes, BehaviorLogBook $logBook) : void
     {
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), StringDataType::class);
         foreach ($customAttributes as $alias => $address) {
+            $logBook->addLine('Adding attribute "' . $alias . '" with data address "' . $address . '".');
             $attribute = MetaObjectFactory::addAttributeTemporary(
                 $this->getObject(), 
                 $alias, 
