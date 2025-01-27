@@ -262,13 +262,14 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         $preparePrefillSheet = DataSheetFactory::createFromObject($data_sheet->getMetaObject());
         $preparePrefillSheet = $this->prepareDataSheetToPrefill($preparePrefillSheet);
 
+        $column = false; // false and not NULL because getByExpression() returns false if not found
         
         // If the object of the prefill data is not the one selected within the combo, than we 
         // still can look for columns in the sheet, that contain selectors (UIDs) of the combo object. 
         switch (true) {
             // If prepareDataSheetToPrefill() found a column, see if it is included in the prefill data.
             // In most cases, it will be, because the prefill data normall built by prepareDataSheetToPrefill()
-            case $preparePrefillSheet->getColumns()->count() === 1 && null !== $column = $data_sheet->getColumns()->getByExpression($preparePrefillSheet->getColumns()->getFirst()->getExpressionObj()):
+            case $preparePrefillSheet->getColumns()->count() === 1 && $column = $data_sheet->getColumns()->getByExpression($preparePrefillSheet->getColumns()->getFirst()->getExpressionObj()):
                 // No need to do anything here - the $column is already assigned
                 break;
 
@@ -320,7 +321,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                 break;
         }
         
-        if ($column !== null) {
+        if ($column) {
             $pointer = DataPointerFactory::createFromColumn($column);
             $value = $pointer->getValue(true, $this->getMultipleValuesDelimiter());
             // See if there are multiple prefill values and, if so, if this is applicable to the config of the widget
