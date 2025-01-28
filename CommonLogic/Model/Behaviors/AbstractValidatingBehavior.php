@@ -56,13 +56,13 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
     // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
-    private array $uxonsPerEventContext = [
+    protected array $uxonsPerEventContext = [
         self::CONTEXT_ON_UPDATE => null,
         self::CONTEXT_ON_CREATE => null,
         self::CONTEXT_ON_ANY => null
     ];
 
-    private bool $inProgress = false;
+    protected bool $inProgress = false;
 
     private $requiresOldData = null;
 
@@ -173,13 +173,11 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             $logbook->addIndent(-1);
         }
         $logbook->addIndent(-1);
-        
-        if($error) {
-            $logbook->addLine('Processing validation results...');
-            $logbook->addIndent(1);
-            $this->processValidationResult($error, $logbook);
-            $logbook->addIndent(-1);
-        }
+
+        $logbook->addLine('Processing validation results...');
+        $logbook->addIndent(1);
+        $this->processValidationResult($event, $error, $logbook);
+        $logbook->addIndent(-1);
 
         $this->inProgress = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
@@ -192,11 +190,12 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      * While the class name suggests error handling, you should view these objects as neutral data containers
      * that you can process any way you like.
      *
-     * @param DataCheckFailedErrorMultiple $result
-     * @param BehaviorLogBook              $logbook
+     * @param DataSheetEventInterface           $event
+     * @param DataCheckFailedErrorMultiple|null $result
+     * @param BehaviorLogBook                   $logbook
      * @return void
      */
-    protected abstract function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
+    protected abstract function processValidationResult(DataSheetEventInterface $event, ?DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
 
     /**
      * @param EventInterface  $event
