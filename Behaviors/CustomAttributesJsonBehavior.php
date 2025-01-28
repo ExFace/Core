@@ -138,7 +138,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
             $dataAddress = $jsonAttribute->getDataAddress();
             $logBook->addLine('Generated data address: "' . $dataAddress . '".');
 
-            if($ownerAttributeAlias = $this->getOwnerAttributeAlias()) {
+            if($ownerAttributeAlias = $this->getDefinitionOwnerAttributeAlias()) {
                 $logBook->addLine('Owner attribute alias: "' . $ownerAttributeAlias . '".');
                 $ownerAttribute = $definitionObject->getAttribute($ownerAttributeAlias);
                 $dataSheet->getColumns()->addFromAttribute($ownerAttribute);
@@ -243,12 +243,13 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * 
      * @uxon-property definition_object_alias
      * @uxon-type metamodel:object
-     *
+     * 
      * @param string|null $alias
      * @return CustomAttributesJsonBehavior
      */
     public function setDefinitionObjectAlias(?string $alias) : CustomAttributesJsonBehavior
     {
+        
         $this->jsonDefinitionObjectAlias = $alias;
         return $this;
     }
@@ -265,7 +266,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * 
      * @uxon-property definition_attribute_alias
      * @uxon-type metamodel:attribute
-     *
+     * 
      * @param string|null $alias
      * @return CustomAttributesJsonBehavior
      */
@@ -314,7 +315,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * 
      * @uxon-property definition_owner_attribute_alias
      * @uxon-type metamodel:attribute
-     *
+     * 
      * @param string|null $alias
      * @return $this
      */
