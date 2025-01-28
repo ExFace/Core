@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
+use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Action\OnActionFailedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
@@ -151,11 +152,11 @@ class ActionLogBook implements DataLogBookInterface
                     break;
                 case $event instanceof OnBeforeBehaviorAppliedEvent:
                     $behavior = $event->getBehavior();
-                    $this->addLine("Behavior `{$behavior->getName()}` (instance " . spl_object_id($behavior) . ") for object {$behavior->getObject()->__toString()}", $idt);
+                    $this->addLine("{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($action) . ")", $idt);
                     break;
                 case $event instanceof OnBeforeActionPerformedEvent:
                     $action = $event->getAction();
-                    $this->addLine("Action `{$action->getAliasWithNamespace()}` (instance " . spl_object_id($action) . ") on object {$action->getMetaObject()->__toString()}", $idt);
+                    $this->addLine("Action `{$action->getAliasWithNamespace()}` on object {$action->getMetaObject()->getAliasWithNamespace()} (inst. " . spl_object_id($action) . ")", $idt);
                     break;
                 case $event instanceof OnBeforeCreateDataEvent:
                     $this->addLine('Create data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`', $idt);
