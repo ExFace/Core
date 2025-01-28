@@ -35,8 +35,8 @@ class UiPageTree
     private $startRootNodes = [];
         
     private $rootNodes = [];
-    
-    private $expandPathToNode = null;
+
+    private $expandPathToPage = null;
     
     /**
      * 

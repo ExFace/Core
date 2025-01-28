@@ -906,6 +906,7 @@ class DataInstaller extends AbstractAppInstaller
     protected function readModelSheetsFromFolders($absolutePath) : \Generator
     {
         $uxons = [];
+        $files = [];
         $folderSheetUxons = $this->readDataSheetUxonsFromFolder($absolutePath);
         
         // Sort by leading numbers in the file names accross all folders
@@ -915,10 +916,11 @@ class DataInstaller extends AbstractAppInstaller
         foreach ($folderSheetUxons as $key => $uxon) {
             $type = StringDataType::substringBefore($key, '@');
             $uxons[$type][] = $uxon;
+            $files[$type][] = $key;
         }
         
         // For each object, combine it's UXONs into a single data sheet
-        foreach ($uxons as $key => $array) {
+        foreach ($uxons as $type => $array) {
             $cnt = count($array);
             // Init the data sheet from the first UXON, but without any rows. We will preprocess
             // the rows later and transform expanded UXON values into strings.
@@ -926,7 +928,7 @@ class DataInstaller extends AbstractAppInstaller
             
             $objAlias = $baseUxon->getProperty('object_alias');
             if ($objAlias === null || ! $this->isInstallableObject($objAlias)) {
-                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $key . '": object not known to this installer!');
+                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $type . '": object not known to this installer!');
                 continue;
             }
             
@@ -947,7 +949,7 @@ class DataInstaller extends AbstractAppInstaller
                         throw new InstallerRuntimeError($this, 'Model sheet type mismatch: model sheets with same name must have the same structure in all subfolders of the model!');
                     }
                     if ($sheet->getColumns()->count() !== $baseColCount) {
-                        throw new InstallerRuntimeError($this, 'Corrupted model data: all model sheets of the same type must have the same columns!');
+                        throw new InstallerRuntimeError($this, 'Corrupted model data in "' . $files[$type][$i] . '": all model sheets of the same type must have the same columns!');
                     }
                     $rows = array_merge($rows, $partRows);
                 }
