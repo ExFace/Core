@@ -152,7 +152,7 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
                 $dataSheet = $this->getHelpData($widget->getWidgets(), $dataSheet, $groupName);
             } elseif ($widget->getCaption()) {
                 $title = $widget->getCaption();
-                $hint = $widget->getHint();
+                $hint = $widget->getHint(false);
                 $row = [
                     'TITLE' => $title,
                     'GROUP' => $groupName ?? '',

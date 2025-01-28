@@ -282,7 +282,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         } else {
             $subfolders = glob($absolutePath . '*', GLOB_ONLYDIR);
         }
-        array_map('self::emptyDir', $subfolders);
+        array_map(self::class . '::emptyDir', $subfolders);
         
         // Now delete subfolders and files
         if ($removeHiddenFiles){

@@ -1133,7 +1133,7 @@ class Data
         $data_sheet = DataSheetFactory::createFromObject($table->getMetaObject());
         
         foreach ($this->getFilters() as $filter) {
-            $hint = $filter->getHint();
+            $hint = $filter->getHint(false);
             $title = $filter->getCaption();
             $row = array(
                 'TITLE' => $filter->getCaption(),
@@ -1148,7 +1148,7 @@ class Data
                 continue;
             }
             $title = $col->getCaption();
-            $hint = $col->getHint();
+            $hint = $col->getHint(false);
             $row = array(
                 'TITLE' => $title,
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS'),
