@@ -273,7 +273,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
 
             foreach ($uxon as $dataCheckUxon) {
                 $dataCheck = new DataCheckWithOutputData($this->getWorkbench(), $dataCheckUxon);
-                $uidAlias = $dataCheck->getAffectedUidAlias();
+                $uidAlias = $dataCheck->getAffectedUidAlias($eventSheet->getMetaObject());
                 $objectAlias = $dataCheck->getOutputDataSheetUxon()->getProperty('object_alias');
 
                 if(!empty($uidAlias) && !empty($objectAlias)) {
