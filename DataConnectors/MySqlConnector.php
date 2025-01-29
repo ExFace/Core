@@ -15,6 +15,33 @@ use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 
 /**
  * Data source connector for MySQL databases
+ * 
+ * ## Configuration
+ * 
+ * ```
+ *  {
+ *      "host": "localhost",
+ *      "user": "root",
+ *      "password": ""
+ *  }
+ * 
+ * ```
+ * 
+ * ### Enabling SSL
+ * 
+ * For example, for Azure SQL for MySQL you will need to download a CA certificate `.pem`
+ * file and put it at some place on your server. Assuming we put it into the `config`
+ * folder of the workbench installation, the configuration would look like this:
+ * 
+ * ```
+ *  {
+ *      "host": "<service-name>.mysql.database.azure.com",
+ *      "user": "<username>",
+ *      "password": "<password>"
+ *      "ssl_ca_certificate_path": "config/DigiCertGlobalRootG2.crt.pem"
+ *  }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  */
@@ -38,6 +65,13 @@ class MySqlConnector extends AbstractSqlConnector
     
     private $reconnects = 0;
 
+    // SSL settings - see https://www.php.net/manual/en/mysqli.ssl-set.php
+    private $sslCACertificatePath = null;
+    private $sslCertificatePath = null;
+    private $sslCaPath = null;
+    private $sslCipherAlgos = null;
+    private $sslKey = null;
+
     /**
      *
      * {@inheritdoc}
@@ -51,19 +85,24 @@ class MySqlConnector extends AbstractSqlConnector
         
         $this->enableErrorExceptions();
         $e = null;
-        while (! $conn && $safe_count < 3) {
+        $host = ($this->getUsePersistantConnection() ? 'p:' : '') . $this->getHost();
+        $conn = mysqli_init();
+        if ($this->isSslEnabled() === true) {
+            mysqli_ssl_set($conn, $this->getSslKey(), $this->getSslCertificatePath(), $this->getSslCaCertificatePath(), null, null);
+        }
+        $connected = false;
+        while (! $connected && $safe_count < 3) {
             try {
-                $host = ($this->getUsePersistantConnection() ? 'p:' : '') . $this->getHost();
-                $conn = mysqli_connect($host, $this->getUser(), $this->getPassword(), $this->getDbase(), $this->getPort(), $this->getSocket());
+                $connected = mysqli_real_connect($conn, $host, $this->getUser(), $this->getPassword(), $this->getDbase(), $this->getPort(), $this->getSocket());
             } catch (\mysqli_sql_exception $e) {
                 // Do nothing, try again later
             }
-            if (! $conn) {
+            if ($connected === false) {
                 sleep(1);
                 $safe_count ++;
             }
         }
-        if (! $conn) {
+        if ($connected === false || ! $conn) {
             throw new DataConnectionFailedError($this, 'Failed to create the database connection for "' . $this->getAliasWithNamespace() . '"' . ($e ? ': ' . $e->getMessage() : '') . '!', '6T2TBVR', $e);
         } else {
             // Apply autocommit option
@@ -570,5 +609,124 @@ class MySqlConnector extends AbstractSqlConnector
     public function escapeString(string $string) : string
     {
         return mysqli_real_escape_string($this->getCurrentConnection(), $string);
+    }
+
+    protected function getSslCaCertificatePath() : ?string
+    {
+        return $this->sslCACertificatePath;
+    }
+
+    /**
+     * Path to the certificate authority .pem file - either absolute or relative to workbench folder
+     * 
+     * See https://www.php.net/manual/en/mysqli.ssl-set.php for details.
+     * 
+     * @uxon-property ssl_ca_certificate_path
+     * @uxon-type string
+     * 
+     * @param string $sslCertificatePath
+     * @return \exface\Core\DataConnectors\MySqlConnector
+     */
+    protected function setSslCaCertificatePath(string $sslCertificatePath) : MySqlConnector
+    {
+        $this->sslCACertificatePath = $sslCertificatePath;
+        return $this;
+    }
+
+    protected function getSslCertificatePath() : ?string
+    {
+        return $this->sslCertificatePath;
+    }
+
+    /**
+     * Path path name to the certificate .pem file - either absolute or relative to workbench folder
+     * 
+     * See https://www.php.net/manual/en/mysqli.ssl-set.php for details.
+     * 
+     * @uxon-property ssl_certificate_path
+     * @uxon-type string
+     * 
+     * @param string $sslCertificatePath
+     * @return \exface\Core\DataConnectors\MySqlConnector
+     */
+    protected function setSslCertificatePath(string $sslCertificatePath) : MySqlConnector
+    {
+        $this->sslCertificatePath = $sslCertificatePath;
+        return $this;
+    }
+
+    protected function getSslKey() : ?string
+    {
+        return $this->sslKey;
+    }
+
+    /**
+     * Path SSL private key file - either absolute or relative to workbench folder
+     * 
+     * See https://www.php.net/manual/en/mysqli.ssl-set.php for details.
+     * 
+     * @uxon-property ssl_key
+     * @uxon-type string
+     * 
+     * @param string $sslKey
+     * @return \exface\Core\DataConnectors\MySqlConnector
+     */
+    protected function setSslKey(string $sslKey) : MySqlConnector
+    {
+        $this->sslKey = $sslKey;
+        return $this;
+    }
+
+    protected function getSslCaPath() : ?string
+    {
+        return $this->sslCaPath;
+    }
+
+    /**
+     * Path to a directory that contains trusted SSL CA certificates in PEM format - either absolute or relative to workbench folder
+     * 
+     * See https://www.php.net/manual/en/mysqli.ssl-set.php for details.
+     * 
+     * @uxon-property ssl_ca_path
+     * @uxon-type string
+     * 
+     * @param string $sslCaPath
+     * @return \exface\Core\DataConnectors\MySqlConnector
+     */
+    protected function setSslCaPath(string $sslCaPath) : MySqlConnector
+    {
+        $this->sslCaPath = $sslCaPath;
+        return $this;
+    }
+
+    protected function getSslCipherAlgos() : ?string
+    {
+        return $this->sslCipherAlgos;
+    }
+
+    /**
+     * A list of allowable ciphers to use for SSL encryption
+     * 
+     * See https://www.php.net/manual/en/mysqli.ssl-set.php for details.
+     * 
+     * @uxon-property ssl_cipher_algos
+     * @uxon-type string
+     * 
+     * @param string $sslCipherAlgos
+     * @return \exface\Core\DataConnectors\MySqlConnector
+     */
+    protected function setSslCipherAlgos(string $sslCipherAlgos) : MySqlConnector
+    {
+        $this->sslCipherAlgos = $sslCipherAlgos;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function isSslEnabled() : bool
+    {
+        return $this->getSslCertificatePath() !== null || $this->getSslCaCertificatePath() || $this->getSslCaPath();
     }
 }
