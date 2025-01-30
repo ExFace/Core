@@ -42,16 +42,14 @@ use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
  * In technical terms any `OnUpdateData` event of `PendingOrderPosition` triggers `OnUpdateData` for its related `PendingOrder`. 
  * The full event mapping is as follows:
  * 
- * | Source Event | Target Event |
- * |--|--|
- * | OnBefore**Create**Data | OnBefore**Update**Data |
- * | OnBefore**Update**Data | OnBefore**Update**Data |
- * | OnBefore**Replace**Data | OnBefore**Update**Data |
- * | OnBefore**Delete**Data | OnBefore**Update**Data |
- * | On**Create**Data | On**Update**Data |
- * | On**Update**Data | On**Update**Data |
- * | On**Replace**Data | On**Update**Data |
- * | On**Delete**Data | On**Update**Data |
+ * - OnBefore**Create**Data -> OnBefore**Update**Data 
+ * - OnBefore**Update**Data -> OnBefore**Update**Data 
+ * - OnBefore**Replace**Data -> OnBefore**Update**Data 
+ * - OnBefore**Delete**Data -> OnBefore**Update**Data 
+ * - On**Create**Data -> On**Update**Data 
+ * - On**Update**Data -> On**Update**Data 
+ * - On**Replace**Data -> On**Update**Data 
+ * - On**Delete**Data -> On**Update**Data 
  * 
  * ## Underlying rules for loading data
  * 
