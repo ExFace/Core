@@ -228,18 +228,21 @@ class ProgressBar extends Display implements iCanBeAligned, iHaveHintScale
     {
         $range = $max - $min;
         $m = $range / 100;
+        // Keys of arrays MUST be integers according to the documentation. Not
+        // casting them explicitly will result in a deprecated warning since PHP 7.4.
+        // @link https://www.php.net/manual/en/language.types.array.php
         $map = [
-            $m*10 => "#FFEF9C",
-            $m*20 => "#EEEA99",
-            $m*30 => "#DDE595",
-            $m*40 => "#CBDF91",
-            $m*50 => "#BADA8E",
-            $m*60 => "#A9D48A",
-            $m*70 => "#97CF86",
-            $m*80 => "#86C983",
-            $m*90 => "#75C47F",
-            $m*100 => "#63BE7B",
-            $m*110 => "orange"
+            round($m*10) => "#FFEF9C",
+            round($m*20) => "#EEEA99",
+            round($m*30) => "#DDE595",
+            round($m*40) => "#CBDF91",
+            round($m*50) => "#BADA8E",
+            round($m*60) => "#A9D48A",
+            round($m*70) => "#97CF86",
+            round($m*80) => "#86C983",
+            round($m*90) => "#75C47F",
+            round($m*100) => "#63BE7B",
+            round($m*110) => "orange"
         ];
         
         return $invert === false ? $map : array_reverse($map);
