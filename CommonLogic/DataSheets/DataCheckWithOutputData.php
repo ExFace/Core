@@ -2,13 +2,15 @@
 
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\Behaviors\ChecklistingBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * Functions just like a regular `DataCheck`, with the option of defining an output datasheet, that
@@ -19,7 +21,10 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  */
 class DataCheckWithOutputData extends DataCheck
 {
-    private string $affectedUidAlias = 'AFFECTED_UID';
+    private string $affectedUidAlias = null;
+
+    private string $relationStringFromCheckedObject = null;
+
     private ?UxonObject $outputDataSheetUxon = null;
     private ?DataSheetInterface $outputDataSheet = null;
 
@@ -56,7 +61,8 @@ class DataCheckWithOutputData extends DataCheck
                 throw $error;
             }
             
-            if(!$badData->hasUidColumn()) {
+            // FIXME if(! $badData->getColumns()->getByAttribute($this->getRelationPathFromCheckedObject($sheet->getMetaObject())->getRelationFirst()->getLeftKeyAttribute())) {
+            if(! $badData->hasUidColumn()) {
                 throw new DataCheckRuntimeError(
                     $sheet,
                     'Cannot generate output data: Input data has no UID column!',
@@ -154,10 +160,54 @@ class DataCheckWithOutputData extends DataCheck
     }
 
     /**
+     * Relation from the object of the object being checked (e.g. behavior object) to the object of the data in this check.
+     * 
+     * For example, if the behavior shoud produce ALERT items by performing checks
+     * on DELIVERY_POS items, and the ALERT has a relation DELIVERY_POS to the 
+     * affected deliver position, than this relation would be `ALERT`. It
+     * is the relation from the checked DELIVERY_POS to the ALERT - thus, the
+     * reverse of the DELIVER_POS relation on the ALERT object. 
+     * 
+     * @uxon-property relation_from_checked_object_to_data
+     * @uxon-type metamodel:relation 
+     * 
+     * @param string $relationPath
+     * @return \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData
+     */
+    protected function setRelationFromCheckedObjectToData(string $relationPath) : DataCheckWithOutputData
+    {
+        $this->relationStringFromCheckedObject = $relationPath;
+        return $this;
+    }
+
+    /**
+     * Returns the foreign key of the data object, that points to the checked object
+     * 
+     * Concider the following example: DELIVERY_NOTE<-DELIVERY_POS<-DELIVERY_POS_ALERT. 
+     * A ChecklistingBehavior can be used to gnerate DELIVER_POS_ALERTs whenever any 
+     * DELIVERY_POS is changed. This method will return the alias of the attribute of 
+     * DELIVERY_POS_ALERT, that contains the foreign key to the DELIVERY_POS.
+     * 
      * @return string
      */
-    public function getAffectedUidAlias() : string
+    public function getAffectedUidAlias(MetaObjectInterface $checkedObject) : string
     {
+        if ($this->affectedUidAlias !== null) {
+            return $this->affectedUidAlias;
+        }
+        $relPath = $this->getRelationPathFromCheckedObject($checkedObject);
+        $this->affectedUidAlias = $relPath->getRelationLast()->getRightKeyAttribute()->getAlias();
         return $this->affectedUidAlias;
+    }
+
+    /**
+     * Returns the relation path from the checked object to the data object
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $checkedObject
+     * @return \exface\Core\Interfaces\Model\MetaRelationPathInterface
+     */
+    public function getRelationPathFromCheckedObject(MetaObjectInterface $checkedObject) : MetaRelationPathInterface
+    {
+        return RelationPathFactory::createFromString($checkedObject, $this->relationStringFromCheckedObject);
     }
 }

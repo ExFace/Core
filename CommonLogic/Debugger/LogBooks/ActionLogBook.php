@@ -1,13 +1,26 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
+use exface\Core\DataTypes\PhpFilePathDataType;
+use exface\Core\Events\Action\OnActionFailedEvent;
+use exface\Core\Events\Action\OnActionPerformedEvent;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
+use exface\Core\Events\DataSheet\OnDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Interfaces\Events\ActionEventInterface;
+use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\DataLogBookInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\DebugMessage;
-use exface\Core\Widgets\Tabs;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PhpClassDataType;
@@ -23,6 +36,12 @@ class ActionLogBook implements DataLogBookInterface
     private $autoSectionsAdded = false;
     
     private $flowDiagram = null;
+
+    private $eventStack = [];
+
+    private $eventStackIndent = 0;
+
+    private $eventStackProcessed = false;
 
     /**
      * 
@@ -55,6 +74,102 @@ class ActionLogBook implements DataLogBookInterface
             $this->logBook->addLine('Trigger widget not known');
         }
         $this->logBook->addIndent(-1);
+    }
+
+    public function startLogginEvents() : void
+    {
+        $eventMgr = $this->action->getWorkbench()->eventManager();
+        $eventMgr->addListener(OnBeforeActionPerformedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnActionFailedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnCreateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnUpdateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnDeleteDataEvent::getEventName(), [$this, 'onEvent']);
+    }
+
+    public function stopLoggingEvents() : void
+    {
+        $eventMgr = $this->action->getWorkbench()->eventManager();
+        $eventMgr->removeListener(OnBeforeActionPerformedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnActionFailedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBeforeBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnCreateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnUpdateDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnDeleteDataEvent::getEventName(), [$this, 'onEvent']);
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Events\EventInterface $event
+     * @return void
+     */
+    public function onEvent(EventInterface $event)
+    {
+        switch (true) {
+            // Do not include events from this action itself in the inner log
+            case ($event instanceof ActionEventInterface) && $event->getAction() === $this->action:
+                break;
+            case $event->isOnBefore():
+                $this->eventStackIndent++;
+                $this->eventStack[] = [
+                    'event' => $event,
+                    'indent' => $this->eventStackIndent
+                ];
+                break;
+            case $event->isOnAfter():
+                $this->eventStack[] = [
+                    'event' => $event,
+                    'indent' => $this->eventStackIndent
+                ];
+                $this->eventStackIndent--;
+                break;
+        }
+    }
+
+    /**
+     * 
+     * @return void
+     */
+    protected function generateEventsSection() : void
+    {
+        $this->logBook->addSection('Inner events');
+        foreach ($this->eventStack as $entry) {
+            $event = $entry['event'];	
+            $idt = $entry['indent'];
+            switch (true) {
+                // Skip the after-events in this list
+                case $event->isOnAfter():
+                    break;
+                case $event instanceof OnBeforeBehaviorAppliedEvent:
+                    $behavior = $event->getBehavior();
+                    $this->addLine("{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($action) . ")", $idt);
+                    break;
+                case $event instanceof OnBeforeActionPerformedEvent:
+                    $action = $event->getAction();
+                    $this->addLine("Action `{$action->getAliasWithNamespace()}` on object {$action->getMetaObject()->getAliasWithNamespace()} (inst. " . spl_object_id($action) . ")", $idt);
+                    break;
+                case $event instanceof OnBeforeCreateDataEvent:
+                    $this->addLine('Create data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`', $idt);
+                    break;
+                case $event instanceof OnBeforeUpdateDataEvent:
+                    $this->addLine('Update data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`', $idt);
+                    break;
+                case $event instanceof OnBeforeDeleteDataEvent:
+                    $this->addLine('Delete data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`', $idt);
+                    break;
+            }
+        }
+        return;
     }
     
     /**
@@ -103,13 +218,18 @@ class ActionLogBook implements DataLogBookInterface
      */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
+        if ($this->eventStackProcessed === false) {
+            $this->eventStackProcessed = true;
+            $this->generateEventsSection();
+        }
+
         $debug_widget = $this->logBook->createDebugWidget($debug_widget);
-        $tabs = $debug_widget->getWidgetFirst()->getWidgetFirst();
-        if ($tabs instanceof Tabs) {
-            $tab = $tabs->createTab();
+        $actionTabs = $debug_widget->getWidgetFirst()->getWidgetFirst();
+        if ($actionTabs instanceof DebugMessage) {
+            $tab = $actionTabs->createTab();
             $tab->setCaption('Action config');
-            $tabs->addTab($tab);
-            $tab->addWidget(WidgetFactory::createFromUxonInParent($tabs, new UxonObject([
+            $actionTabs->addTab($tab);
+            $tab->addWidget(WidgetFactory::createFromUxonInParent($actionTabs, new UxonObject([
                 'widget_type' => 'InputUxon',
                 'width' => 'max',
                 'height' => '100%',
@@ -118,6 +238,19 @@ class ActionLogBook implements DataLogBookInterface
                 'value' => $this->action->exportUxonObject()->toJson(true),
                 'root_prototype' => '\\' . get_class($this->action)
             ])));
+            /* TODO add behavior and data sheet tabs? On first try this also added their
+            log output to this log as further sections and cause other side-effects
+            foreach ($this->innerStack as $events) {
+                foreach ($events as $event) {
+                    switch (true) {
+                        case $event->isOnBefore():
+                            break;
+                        case ($event instanceof OnBehaviorAppliedEvent) && null !== $logbook = $event->getLogbook():
+                            $logbook->createDebugWidget($actionTabs);
+                            break;
+                    }
+                }
+            }*/
         }
         return $debug_widget;
     }
