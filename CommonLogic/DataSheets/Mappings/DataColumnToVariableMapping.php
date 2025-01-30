@@ -39,11 +39,14 @@ class DataColumnToVariableMapping extends AbstractDataSheetMapping
     }
     
     /**
-     *
-     * {@inheritDoc}
+     * 
+     * @param \exface\Core\Interfaces\Model\ExpressionInterface $expression
+     * @throws \exface\Core\Exceptions\DataSheets\DataMappingConfigurationError
+     * @return DataColumnToVariableMapping
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setFromExpression()
      */
-    public function setFromExpression(ExpressionInterface $expression)
+    public function setFromExpression(ExpressionInterface $expression) : DataColumnToVariableMapping
     {
         if ($expression->isReference()){
             throw new DataMappingConfigurationError($this, 'Cannot use widget links as expressions in data mappers!');
@@ -59,11 +62,14 @@ class DataColumnToVariableMapping extends AbstractDataSheetMapping
      *
      * @uxon-property from
      * @uxon-type metamodel:expression
+     * @uxon-required true
      *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::setFrom()
+     * @param mixed $string
+     * @return DataColumnToVariableMapping
+     * 
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setFrom()
      */
-    public function setFrom($string)
+    public function setFrom($string) : DataColumnToVariableMapping
     {
         $this->setFromExpression(ExpressionFactory::createFromString($this->getWorkbench(), $string, $this->getMapper()->getFromMetaObject()));
         return $this;
@@ -74,7 +80,7 @@ class DataColumnToVariableMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::getToExpression()
      */
-    public function getVariableName()
+    public function getVariableName() : string
     {
         return $this->varName;
     }
@@ -84,14 +90,29 @@ class DataColumnToVariableMapping extends AbstractDataSheetMapping
      *
      * @uxon-property variable
      * @uxon-type string
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::setTo()
+     * @uxon-required true
+     * 
+     * @param mixed $string
+     * @return DataColumnToVariableMapping
      */
-    public function setVariable($string)
+    public function setVariable($string) : DataColumnToVariableMapping
     {
         $this->varName = $string;
         return $this;
+    }
+
+    /**
+     * Same as `variable` - same as `to` - just to make moving typical mappings between types easier.
+     * 
+     * @uxon-property to
+     * @uxon-type string
+     * 
+     * @param string $string
+     * @return DataColumnToVariableMapping
+     */
+    protected function setTo(string $string) : DataColumnToVariableMapping
+    {
+        return $this->setVariable($string);
     }
     
     /**
@@ -154,9 +175,11 @@ class DataColumnToVariableMapping extends AbstractDataSheetMapping
      * 
      * @param string $name
      * @param mixed $value
+     * @return DataColumnToVariableMapping
      */
-    protected function storeVariable(string $name, $value)
+    protected function storeVariable(string $name, $value) : DataColumnToVariableMapping
     {
         $this->getWorkbench()->getContext()->getScopeRequest()->setVariable($name, $value);
+        return $this;
     }
 }
