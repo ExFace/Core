@@ -2,6 +2,8 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Exceptions\DataSources\DataConnectionConfigurationError;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
@@ -629,7 +631,7 @@ class MySqlConnector extends AbstractSqlConnector
      */
     protected function setSslCaCertificatePath(string $sslCertificatePath) : MySqlConnector
     {
-        $this->sslCACertificatePath = $sslCertificatePath;
+        $this->sslCACertificatePath = $this->getSslPathAbsolute($sslCertificatePath);
         return $this;
     }
 
@@ -651,7 +653,7 @@ class MySqlConnector extends AbstractSqlConnector
      */
     protected function setSslCertificatePath(string $sslCertificatePath) : MySqlConnector
     {
-        $this->sslCertificatePath = $sslCertificatePath;
+        $this->sslCertificatePath = $this->getSslPathAbsolute($sslCertificatePath);
         return $this;
     }
 
@@ -676,8 +678,14 @@ class MySqlConnector extends AbstractSqlConnector
         $this->sslKey = $sslKey;
         return $this;
     }
-
-    protected function getSslCaPath() : ?string
+    
+    /**
+    /**
+     * Summary of getSslCaPath
+     * @return string
+     */
+     * @return string
+     */
     {
         return $this->sslCaPath;
     }
@@ -695,8 +703,24 @@ class MySqlConnector extends AbstractSqlConnector
      */
     protected function setSslCaPath(string $sslCaPath) : MySqlConnector
     {
-        $this->sslCaPath = $sslCaPath;
+        $this->sslCaPath = $this->getSslPathAbsolute($sslCaPath);
         return $this;
+    }
+
+    protected function getSslPathAbsolute(string $path) : ?string
+    {
+        if ($path === '') {
+            return null;
+        }
+        if (FilePathDataType::isAbsolute($path)) {
+            $abs = FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
+        } else {
+            $abs = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
+        }
+        if (! file_exists($abs)) {
+            throw new DataConnectionConfigurationError($this, 'Invalid SSL certificate path for MySQL provided: "' . $abs . '"');
+        }
+        return $abs;
     }
 
     protected function getSslCipherAlgos() : ?string
@@ -727,6 +751,6 @@ class MySqlConnector extends AbstractSqlConnector
      */
     protected function isSslEnabled() : bool
     {
-        return $this->getSslCertificatePath() !== null || $this->getSslCaCertificatePath() || $this->getSslCaPath();
+        return $this->sslCACertificatePath !== null || $this->sslCertificatePath !== null || $this->sslCaPath !== null;
     }
 }
