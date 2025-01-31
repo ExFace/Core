@@ -680,13 +680,10 @@ class MySqlConnector extends AbstractSqlConnector
     }
     
     /**
-    /**
-     * Summary of getSslCaPath
+     * 
      * @return string
      */
-     * @return string
-     */
-    {
+    protected function getSslCaPath() : ?string{
         return $this->sslCaPath;
     }
 
