@@ -21,9 +21,9 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
  */
 class DataCheckWithOutputData extends DataCheck
 {
-    private string $affectedUidAlias = null;
+    private ?string $affectedUidAlias = null;
 
-    private string $relationStringFromCheckedObject = null;
+    private ?string $relationStringFromCheckedObject = null;
 
     private ?UxonObject $outputDataSheetUxon = null;
     private ?DataSheetInterface $outputDataSheet = null;
