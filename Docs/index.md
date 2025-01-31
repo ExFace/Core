@@ -1,6 +1,6 @@
 # Documentation
 
-1. [Installation](Installation/index.md)
+1. [Introduction & installation](Getting_started/index.md)
 2. [Walkthrough Tutorial](Tutorials/BookClub_walkthrough/index.md)
 3. [Cookbook](Cookbook/index.md) - best recipies for common tasks
 4. [UXON stynax](UXON/index.md) - our "User eXpericnce Object Notation"
