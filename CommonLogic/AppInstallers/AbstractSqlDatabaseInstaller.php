@@ -495,6 +495,16 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         return '-- BATCH-DELIMITER';
     }
+
+    /**
+     * Returns a string containing an indicator which marks the beginning of a PHP function call in a migration.
+     *
+     * @return string
+     */
+    protected function getMarkerPhpFunction() : string
+    {
+        return '/* PHP';
+    }
     
     /**
      * Function to perform migrations on the database.
@@ -717,6 +727,30 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         }
         return $this->stripLinebreaks($migstr);
     }
+
+    /**
+     * Retrieves an optional PHP function all by a migration script.
+     *
+     * @param string $src the raw migration script to be searched
+     * @return ?string null when no PHP migration script is found, otherwise the trimmed PHP function call of the script
+     */
+    protected function getPhpMigrationScript(string $src) : ?string
+    {
+        $length=strlen($src);
+        $cut_down=stripos($src, $this->getMarkerPhpFunction());
+        if ($cut_down == FALSE)
+        {
+            return null; // no marker for PHP function call found, so return null
+        }
+        $cut_up=stripos($src, '*/', $cut_down);
+        if ($cut_up == FALSE)
+        {
+           $cut_up = $length; // no end of multiline comment found, so function call is to the end
+        }
+        // cut to function call only
+        $migstr = substr($src, $cut_down, ($cut_up-$cut_down));
+        return $this->stripLinebreaks($migstr);
+    }
     
     /**
      * Returns a string or regex pattern, that should separate SQL batches - e.g. the GO keyword in Microsoft SQL
@@ -811,6 +845,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             if ($wrapInTransaction === true) {
                 $connection->transactionStart();
             }
+            // TODO jsc 241113 add getMarkerPhpFunction()
             if (null !== $delim = $this->getBatchDelimiter($script)) {
                 if (! RegularExpressionDataType::isRegex($delim)) {
                     $delim = '/' . preg_quote($delim, '/') . '/';
