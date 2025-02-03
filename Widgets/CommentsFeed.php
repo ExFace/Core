@@ -96,6 +96,8 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     private $filesFacade = null;
     
     private $checkedBehaviorForObject = null;
+
+    private $btnCreate;
     
     protected function init()
     {
@@ -104,6 +106,24 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
         // explicitly enabled by the user.
         $this->setHideHeader(true);
         $this->setHideFooter(true);
+
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        
+        //if (! $widget->isReadOnly()) {
+            $this->btnCreate = $this->createButton(new UxonObject([
+                'widget_type' => 'DataButton',
+                'caption' => $translator->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE'),
+                'visibility' => 'hidden',
+                'action_alias' => 'exface.Core.CreateData'
+            ]));
+            $this->addButton($this->btnCreate);
+        //}
+        return;
+    }
+
+    public function getButtonCreate() : DataButton
+    {
+        return $this->btnCreate;
     }
     
     /**
