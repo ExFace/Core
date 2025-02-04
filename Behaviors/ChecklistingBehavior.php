@@ -265,7 +265,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     protected function clearPreviousChecklistItems(DataSheetInterface $eventSheet, array $uxons, BehaviorLogBook $logBook) : DataTransactionInterface
     {
-        $affectedUidAliases = [];
+        $keyAliases = [];
         foreach ($uxons as $uxon) {
             if(empty($uxon) || !$uxon instanceof UxonObject) {
                 continue;
@@ -273,33 +273,33 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
 
             foreach ($uxon as $dataCheckUxon) {
                 $dataCheck = new DataCheckWithOutputData($this->getWorkbench(), $dataCheckUxon);
-                $uidAlias = $dataCheck->getAffectedUidAlias($eventSheet->getMetaObject());
+                $keyAlias = $dataCheck->getAffectedUidAlias($eventSheet->getMetaObject());
                 $objectAlias = $dataCheck->getOutputDataSheetUxon()->getProperty('object_alias');
 
-                if(!empty($uidAlias) && !empty($objectAlias)) {
-                    $affectedUidAliases[$objectAlias] = $uidAlias;
+                if(!empty($keyAlias) && !empty($objectAlias)) {
+                    $keyAliases[$objectAlias] = $keyAlias;
                 }
             }
         }
         
         $transaction = $eventSheet->getWorkbench()->data()->startTransaction();
-        $uids = $eventSheet->getColumnValues($eventSheet->getUidColumnName());
+        $keys = $eventSheet->getColumnValues($eventSheet->getUidColumnName());
         
-        foreach ($affectedUidAliases as $objectAlias => $uidAlias) {
+        foreach ($keyAliases as $objectAlias => $keyAlias) {
             $deleteSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectAlias);
-            foreach ($uids as $uid) {
-                $deleteSheet->addRow([$uidAlias => $uid]);
+            foreach ($keys as $key) {
+                $deleteSheet->addRow([$keyAlias => $key]);
             }
 
-            $logBook->addLine('Affected UID-Alias is '.$uidAlias.'.');
+            $logBook->addLine('Key-Alias is '.$keyAlias.'.');
             // We filter by affected UID rather than by native UID to ensure that our delete operation finds all cached outputs,
             // especially if they were part of the source transaction.
-            $deleteSheet->getFilters()->addConditionFromValueArray($uidAlias, $deleteSheet->getColumnValues($uidAlias));
+            $deleteSheet->getFilters()->addConditionFromValueArray($keyAlias, $deleteSheet->getColumnValues($keyAlias));
             // We want to delete ALL entries for any given affected UID to ensure that the cache only contains outputs
             // that actually matched the current round of validations. This way we essentially clean up stale data.
             // Remove the UID column, because otherwise dataDelete() ignores filters and goes by UID.
             $deleteSheet->getColumns()->remove($deleteSheet->getUidColumn());
-            $logBook->addLine('Deleting data with affected UIDs from cache.');
+            $logBook->addLine('Deleting data with matching keys from cache.');
             $count = $deleteSheet->dataDelete($transaction);
             $logBook->addLine('Deleted '.$count.' lines from checklist.');
         }

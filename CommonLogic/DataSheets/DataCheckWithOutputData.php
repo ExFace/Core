@@ -7,6 +7,7 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -60,12 +61,14 @@ class DataCheckWithOutputData extends DataCheck
                 $this->outputDataSheet = $outputSheet;
                 throw $error;
             }
-            
-            // FIXME if(! $badData->getColumns()->getByAttribute($this->getRelationPathFromCheckedObject($sheet->getMetaObject())->getRelationFirst()->getLeftKeyAttribute())) {
-            if(! $badData->hasUidColumn()) {
+
+            $relationPath = $this->getRelationPathFromCheckedObject($outputSheet->getMetaObject());
+            $ownerKeyAttribute = $relationPath->getRelationFirst()->getLeftKeyAttribute();
+            $keyColumn = $badData->getColumns()->getByAttribute($ownerKeyAttribute);
+            if(! $keyColumn) {
                 throw new DataCheckRuntimeError(
                     $sheet,
-                    'Cannot generate output data: Input data has no UID column!',
+                    'Cannot generate output data: Missing key attribute "' . $keyColumn->getAttributeAlias() . '"!',
                     null,
                     null,
                     $this,
@@ -75,16 +78,16 @@ class DataCheckWithOutputData extends DataCheck
             if(!$outputSheet->getMetaObject()->hasUidAttribute()) {
                 throw new DataCheckRuntimeError(
                     $outputSheet,
-                    'Cannot generate output data: The MetaObject ('.$outputSheet->getMetaObject()->getAlias().') used for caching has no UID-Attribute!',
+                    'Cannot generate output data: Missing UID-Attribute on the MetaObject ('.$outputSheet->getMetaObject()->getAlias().') used for caching!',
                     null,
                     null,
                     $this,
                     $badData);
             }
             
-            foreach ($badData->getUidColumn()->getValues() as $affectedUid) {
-                $logBook?->addLine('Adding row for affected item with UID "'.$affectedUid.'".');
-                $rowTemplate[$this->affectedUidAlias] = $affectedUid;
+            foreach ($keyColumn->getValues() as $checkedKey) {
+                $logBook?->addLine('Adding row for affected item with key "'. $checkedKey .'".');
+                $rowTemplate[$this->affectedUidAlias] = $checkedKey;
                 $outputSheet->addRow($rowTemplate);
             }
             
@@ -97,10 +100,9 @@ class DataCheckWithOutputData extends DataCheck
         return $sheet;
     }
 
-
     /**
-     * Define the output data that this data check will append to its error message, if it does apply. For every input row 
-     * this check applies to, it adds a new row based on this template to the output sheet.
+     * Define the output data that this data check will append to its error message, if it does apply. For every input
+     * row  this check applies to, it adds a new row based on this template to the output sheet.
      * 
      * The associated MetaObject must have a UID-Attribute!
      * 
@@ -110,7 +112,8 @@ class DataCheckWithOutputData extends DataCheck
      * 
      * @uxon-property output_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
-     * @uxon-template {"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}
+     * @uxon-template {"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"",
+     *     "ICON":"sap-icon://message-warning"}]}
      * 
      * @param UxonObject|null $uxon
      * @return $this
@@ -160,7 +163,8 @@ class DataCheckWithOutputData extends DataCheck
     }
 
     /**
-     * Relation from the object of the object being checked (e.g. behavior object) to the object of the data in this check.
+     * Relation from the object of the object being checked (e.g. behavior object) to the object of the data in this
+     * check.
      * 
      * For example, if the behavior shoud produce ALERT items by performing checks
      * on DELIVERY_POS items, and the ALERT has a relation DELIVERY_POS to the 
