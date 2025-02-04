@@ -155,4 +155,75 @@ JS;
         $hint .= PHP_EOL . '- ' . $translator->translate('WIDGET.UPLOADER.HINT_FILENAME_TOO_LONG', ['%length%' => $maxFilenameLength]);
         return $hint;
     }
+
+    /**
+     * Returns a JS promise that will resolve to a JS File object with a resized image
+     * 
+     * Usage in JS facade elements:
+     * 
+     * ```
+     *  {$this->buildJsResizeImageFile()}
+     *  .then(function(oFileResized){
+     *      // Do something with the resized file
+     *  })
+     * ```
+     * 
+     * @param string $fileObjectJs
+     * @param string $maxSizeJs
+     * @return string
+     */
+    protected function buildJsResizeImageFile(string $fileObjectJs, string $maxSizeJs, string $blobQualityJs = '0.9') : string
+    {
+        return <<<JS
+
+            (function(oFile, iMaxSize, fQuality) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(oFile);
+                    reader.onload = event => {
+                        const img = new Image();
+                        img.src = event.target.result;
+                        img.onload = () => {
+                            const { width, height } = img;
+                            let newWidth = width;
+                            let newHeight = height;
+
+                            // Maintain aspect ratio
+                            if (width > height) {
+                                if (width > iMaxSize) {
+                                    newWidth = iMaxSize;
+                                    newHeight = (height * iMaxSize) / width;
+                                }
+                            } else {
+                                if (height > iMaxSize) {
+                                    newHeight = iMaxSize;
+                                    newWidth = (width * iMaxSize) / height;
+                                }
+                            }
+
+                            const canvas = document.createElement('canvas');
+                            canvas.width = newWidth;
+                            canvas.height = newHeight;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                            // Convert to Blob and create new File
+                            canvas.toBlob(blob => {
+                                if (!blob) {
+                                    return reject(new Error("Failed to create blob"));
+                                }
+                                const newFile = new File([blob], oFile.name, {
+                                    type: oFile.type,
+                                    lastModified: oFile.lastModified
+                                });
+                                resolve(newFile);
+                            }, oFile.type, fQuality); // Adjust quality if needed (0.0 to 1.0)
+                        };
+                        img.onerror = error => reject(error);
+                    };
+                    reader.onerror = error => reject(error);
+                });
+            })($fileObjectJs, $maxSizeJs, $blobQualityJs)
+JS;
+    }
 }
