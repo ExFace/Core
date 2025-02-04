@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Events\Transaction\OnBeforeTransactionCommitEvent;
+use exface\Core\Events\Transaction\OnBeforeTransactionRollbackEvent;
+use exface\Core\Events\Transaction\OnTransactionStartEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
@@ -47,6 +50,7 @@ class DataTransaction implements DataTransactionInterface
     public function start() : DataTransactionInterface
     {
         $this->is_started = true;
+        $this->getWorkbench()->eventManager()->dispatch(new OnTransactionStartEvent($this));
         return $this;
     }
 
@@ -61,6 +65,8 @@ class DataTransaction implements DataTransactionInterface
         if ($this->isRolledBack()) {
             throw new DataTransactionCommitError('Cannot commit a transaction, that has already been rolled back!', '6T5VIIA');
         }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeTransactionCommitEvent($this));
         
         foreach ($this->getDataConnections() as $connection) {
             try {
@@ -85,6 +91,8 @@ class DataTransaction implements DataTransactionInterface
         if ($this->isCommitted()) {
             throw new DataTransactionRollbackError('Cannot roll back a transaction, that has already been committed!', '6T5VIT8');
         }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeTransactionRollbackEvent($this));
         
         foreach ($this->getDataConnections() as $connection) {
             try {
