@@ -9,10 +9,15 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Events\Transaction\OnBeforeTransactionCommitEvent;
+use exface\Core\Events\Transaction\OnBeforeTransactionRollbackEvent;
+use exface\Core\Events\Transaction\OnTransactionStartEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -27,6 +32,7 @@ use exface\Core\DataTypes\PhpClassDataType;
 
 class ActionLogBook implements DataLogBookInterface
 {
+    const SECTION_INNER_EVENTS = 'Inner events';
     private $task = null;
     
     private $action = null;
@@ -79,33 +85,51 @@ class ActionLogBook implements DataLogBookInterface
     public function startLogginEvents() : void
     {
         $eventMgr = $this->action->getWorkbench()->eventManager();
+        // Action
         $eventMgr->addListener(OnBeforeActionPerformedEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnActionFailedEvent::getEventName(), [$this, 'onEvent']);
+        // Behaviors
         $eventMgr->addListener(OnBeforeBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
+        // DataSheet events
         $eventMgr->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnCreateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnUpdateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->addListener(OnDeleteDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeReplaceDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnReplaceDataEvent::getEventName(), [$this, 'onEvent']);
+        // Transactions
+        $eventMgr->addListener(OnTransactionStartEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeTransactionCommitEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeTransactionRollbackEvent::getEventName(), [$this, 'onEvent']);
     }
 
     public function stopLoggingEvents() : void
     {
         $eventMgr = $this->action->getWorkbench()->eventManager();
+        // Actions
         $eventMgr->removeListener(OnBeforeActionPerformedEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnActionFailedEvent::getEventName(), [$this, 'onEvent']);
+        // Behaviors
         $eventMgr->removeListener(OnBeforeBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
+        // DataSheet events
         $eventMgr->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnCreateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnUpdateDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onEvent']);
         $eventMgr->removeListener(OnDeleteDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBeforeReplaceDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnReplaceDataEvent::getEventName(), [$this, 'onEvent']);
+        // Transactions
+        $eventMgr->removeListener(OnTransactionStartEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBeforeTransactionCommitEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->removeListener(OnBeforeTransactionRollbackEvent::getEventName(), [$this, 'onEvent']);
     }
 
     /**
@@ -142,7 +166,7 @@ class ActionLogBook implements DataLogBookInterface
      */
     protected function generateEventsSection() : void
     {
-        $this->logBook->addSection('Inner events');
+        $this->logBook->addSection(self::SECTION_INNER_EVENTS);
         foreach ($this->eventStack as $entry) {
             $event = $entry['event'];	
             $idt = $entry['indent'];
@@ -159,13 +183,27 @@ class ActionLogBook implements DataLogBookInterface
                     $this->addLine("Action `{$action->getAliasWithNamespace()}` on object {$action->getMetaObject()->getAliasWithNamespace()} (inst. " . spl_object_id($action) . ")", $idt);
                     break;
                 case $event instanceof OnBeforeCreateDataEvent:
-                    $this->addLine('Create data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`', $idt);
+                    $this->addLine('**Create** data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`' . ($event->isDefaultPrevented() ? ' - **cancelled** by Event::preventDefault' : ''), $idt);
                     break;
                 case $event instanceof OnBeforeUpdateDataEvent:
-                    $this->addLine('Update data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`', $idt);
+                    $this->addLine('**Update** data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`' . ($event->isDefaultPrevented() ? ' - **cancelled** by Event::preventDefault' : ''), $idt);
                     break;
                 case $event instanceof OnBeforeDeleteDataEvent:
-                    $this->addLine('Delete data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`', $idt);
+                    $this->addLine('**Delete** data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`' . ($event->isDefaultPrevented() ? ' - **cancelled** by Event::preventDefault' : ''), $idt);
+                    break;
+                case $event instanceof OnBeforeReplaceDataEvent:
+                    $this->addLine('**Replace** data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`' . ($event->isDefaultPrevented() ? ' - **cancelled** by Event::preventDefault' : ''), $idt);
+                    break;
+                case $event instanceof OnTransactionStartEvent:
+                    $this->addLine('Transaction start', $idt);
+                    break;
+                case $event instanceof OnBeforeTransactionCommitEvent:
+                case $event instanceof OnBeforeTransactionRollbackEvent:
+                    $connections = [];
+                    foreach ($event->getTransaction()->getDataConnections() as $connection) {
+                        $connections[] = $connection->getAlias();
+                    }
+                    $this->addLine('Transaction **' . ($event instanceof OnBeforeTransactionRollbackEvent ? 'roll back' : 'commit') . '** for connections `' . implode('`, `', $connections) . '`.', $idt);
                     break;
             }
         }
@@ -238,19 +276,21 @@ class ActionLogBook implements DataLogBookInterface
                 'value' => $this->action->exportUxonObject()->toJson(true),
                 'root_prototype' => '\\' . get_class($this->action)
             ])));
-            /* TODO add behavior and data sheet tabs? On first try this also added their
-            log output to this log as further sections and cause other side-effects
-            foreach ($this->innerStack as $events) {
-                foreach ($events as $event) {
-                    switch (true) {
-                        case $event->isOnBefore():
-                            break;
-                        case ($event instanceof OnBehaviorAppliedEvent) && null !== $logbook = $event->getLogbook():
-                            $logbook->createDebugWidget($actionTabs);
-                            break;
-                    }
+            
+            foreach ($this->eventStack as $i => $item) {
+                $event = $item['event'];
+                switch (true) {
+                    case $event->isOnBefore():
+                        break;
+                    case ($event instanceof OnBehaviorAppliedEvent) && null !== $logbook = $event->getLogbook():
+                        $logbook->createDebugWidget($actionTabs);
+                        break;
                 }
-            }*/
+                if ($i > 10 && $item['indent'] === 0) {
+                    $logbook->addLine('Skipping event details tabs after item ' . $i . ': too many events!', 0, self::SECTION_INNER_EVENTS);
+                    break;
+                }
+            }
         }
         return $debug_widget;
     }
