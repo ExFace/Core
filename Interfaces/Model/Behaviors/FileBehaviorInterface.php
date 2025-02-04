@@ -77,4 +77,26 @@ interface FileBehaviorInterface extends BehaviorInterface
      * @return MetaAttributeInterface[]
      */
     public function getFileAttributes() : array;
+
+    /**
+     * Returns the maximum size of the longest image side in pixels
+     * 
+     * @return int|null
+     */
+    public function getImageResizeToMaxSide() : ?int;
+
+    /**
+     * Returns the default quality setting for file resize operations.
+     * 
+     * A Number between 0 and 100 indicating the image quality to be used when resizing 
+     * images with file formats that support lossy compression (such as image/jpeg or 
+     * image/webp). 
+     * 
+     * Smaller number lead to lower quality and smaller files while higher values
+     * produce better quality and larger files.
+     * 
+     * @param int $default
+     * @return int
+     */
+    public function getImageResizeQuality(int $default = 92) : int;
 }
