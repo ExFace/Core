@@ -2135,6 +2135,22 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsByIndex()
+     */
+    public function getRowsByIndex(array $indexes) : array
+    {
+        $result = [];
+        foreach ($this->getRows() as $i => $row) {
+            if (in_array($i, $indexes, true)) {
+                $result[$i] = $row;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Returns the specified row as an associative array (e.g.
      * [col1 => val1, col2 => val2, ...])
      *
@@ -2527,7 +2543,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRows()
      */
     public function removeRows(array $rowIndexes = null)
@@ -2547,7 +2562,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRow()
      */
     public function removeRow(int $row_number) : DataSheetInterface
@@ -2560,7 +2574,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRowsByUid()
      */
     public function removeRowsByUid($uid)
@@ -2587,7 +2600,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isEmpty()
      */
     public function isEmpty(bool $checkValues = false) : bool
