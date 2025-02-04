@@ -527,10 +527,11 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
             // timestamp check. The probability of conflicts within the 3-5 seconds, when the undo link is displayed
             // is very small. Still, this really needs to be fixed!
         } else {
+            $uidCol = $data_sheet->hasUidColumn() ? $data_sheet->getUidColumn() : null;
             // Check the current update timestamp in the data source
             $check_attrs = [$this->getUpdatedOnAttribute()];
-            if ($data_sheet->hasUidColumn()) {
-                $check_attrs[] = $data_sheet->getUidColumn()->getAttribute();
+            if ($uidCol !== null) {
+                $check_attrs[] = $uidCol->getAttribute();
             }
             $check_sheet = $this->readCurrentData($data_sheet, $check_attrs, $logbook);
             $logbook->addSection('Comparing timestamps');
@@ -545,15 +546,14 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 // An update via UID with create-if-no-UID could also result in less current rows than updated ones (1)
                 // Same could apply to a mass-update via filters if no current rows found - but that is not an issues
                 // since it would not actually do anything (2)
-                case $check_cnt < $update_cnt && $event->getCreateIfUidNotFound():
+                case $check_cnt < $update_cnt && $event->getCreateIfUidNotFound() && $uidCol !== null:
                     if ($check_cnt === $update_cnt) {
                         $logbook->addLine('Check mode: regular update line-by-line', 1);
                     } else {
                         $logbook->addLine('Check mode: update via UID with create-if-no-UID (because number of rows is different and create-if-no-UID is on', 1);
                     }
-                    $uidCol = $data_sheet->getUidColumn();
                     foreach ($update_times as $data_sheet_row_nr => $updated_val) {
-                        $rowUid = $uidCol->getCellValue($data_sheet_row_nr);
+                        $rowUid = $uidCol->getValue($data_sheet_row_nr);
                         // If no UID is found in the original data
                         if (empty($rowUid)) {
                             if ($event->getCreateIfUidNotFound()) {
@@ -570,7 +570,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                         
                         // If we have a UID, look for conflicts!
                         $check_sheet_row_nr = $check_sheet->getUidColumn()->findRowByValue($rowUid);
-                        $check_val = $check_column->getCellValue($check_sheet_row_nr);
+                        $check_val = $check_column->getValue($check_sheet_row_nr);
                         $updated_date = new \DateTime($updated_val);
                         $check_date = new \DateTime($check_val);
                         if ($updated_date != $check_date) {
