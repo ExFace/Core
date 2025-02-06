@@ -60,14 +60,14 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * ### Placeholders
  * 
  * Placeholders can be used within custom SQL data addresses to include reuse other parts of the
- * model or inlcude runtime information of the query builer like the current set of filters. They 
+ * model or include runtime information of the query builder like the current set of filters. They 
  * will be replaced by their values when the query is built, so the data source will never get to 
  * see them.
  * 
  * #### Object-level placeholders
  * 
- * On object level the `[#~alias#]` placehloder will be replaced by the alias of
- * the current object. This is especially usefull to prevent table alias collisions
+ * On object level the `[#~alias#]` placeholder will be replaced by the alias of
+ * the current object. This is especially useful to prevent table alias collisions
  * in custom subselects:
  * 
  * `(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )`
@@ -84,7 +84,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * On attribute level any other attribute alias can be used as placeholder
  * additionally to `[#~alias#]`. Thus, attribute addresses can be reused. This
- * is handy if an attribute builds upon other attributes. E.g. a precentage
+ * is handy if an attribute builds upon other attributes. E.g. a percentage
  * would be an attribute being calculated from two other attributes. This can
  * easily be done via attribute placeholders in it's data address:
  * 
@@ -93,7 +93,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * You can even use relation paths here! It will even work if the placeholders
  * point to attributes, that are based on custom SQL statements themselves.
  * Just keep in mind, that these expressions may easily become complex and
- * kill query performance if used uncarefully.
+ * kill query performance if used carelessly.
  * 
  * ### Multi-dialect data addresses
  * 
@@ -112,7 +112,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * Multi-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`) 
  * MUST be placed at the beginning of a new line (illustrated by the pipes in the example
- * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is concidered to 
+ * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is considered to 
  * be the data address in this dialect. 
  * 
  * Every SQL query builder supports one or more dialects listed in the respective
@@ -125,10 +125,10 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * ### JSON support
  * 
- * You can use JSONpath expressions in data addresses to access data inside JSON columns: e.g.
+ * You can use JSON path expressions in data addresses to access data inside JSON columns: e.g.
  * `myColumn::$.prop1` will select the value of `prop1` saved in a JSON inside `myColumn`.
  * 
- * Most SQL databases support JSONpath queries to access data inside JSON columns. However, every
+ * Most SQL databases support JSON path queries to access data inside JSON columns. However, every
  * SQL dialect has its own syntax - typically functions like `JSON_VALUE(column, jsonPath)` or
  * `JSON_SET(column, jsonPath, value)` or similar. The common syntax introduced above will be
  * automatically translated into these JSON functions by the query builder.
@@ -141,14 +141,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     /**
      * Custom where statement automatically appended to direct selects for this object (not if the object's table is joined!).
      * 
-     * Usefull for generic tables, where different meta objects are stored and
+     * Useful for generic tables, where different meta objects are stored and
      * distinguished by specific keys in a special column. The value of
      * `SQL_SELECT_WHERE` should contain the `[#~alias#]` placeholder: e.g.
      * `[#~alias#].mycolumn = 'myvalue'`.
      * 
      * You can also use attribute aliases as placeholders: e.g. `[#MY_ATTRIBUTE#]`
      * or even `[#RELATION__RELATED_ATTRIBUTE#]`. Keep in mind, that using relations
-     * will produce JOINs or subselects in the resulting SQL, which whill ALWAYS
+     * will produce JOINs or subselects in the resulting SQL, which will ALWAYS
      * be the case if they are used in parts of the data address of the object.
      *
      * @uxon-property SQL_SELECT_WHERE
@@ -873,21 +873,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
 
-            $insertValues = '';
+            $jsonsForRow = $valuesForJsonCols[$nr];
+            $output = [];
             foreach ($columns as $column) {
-                $jsonsForRow = $valuesForJsonCols[$nr];
                 if(!empty($jsonsForRow) && key_exists($column, $jsonsForRow)) {
-                    $insertValues .= $this->buildSqlEncodeAsJsonFlat($jsonsForRow[$column]);
+                    $output[$column] = $this->buildSqlEncodeAsJsonFlat($jsonsForRow[$column]);
                 } else {
-                    $insertValues .= $row[$column];
-                } 
-                
-                if($column !== $lastColumn) {
-                    $insertValues .= ',';
+                    $output[$column] = $row[$column];
                 }
             }
             
-            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . $insertValues . ')';
+            $insertColumns = implode(', ', $columns);
+            $insertValues = implode(',', $output);
+            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
             
             $beforeSql = $before_each_insert_sqls[$nr] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$nr] . ($uidAfterEach ?? '');
@@ -3266,8 +3264,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * - This function can only generate a JSON that is exactly 1 level deep. Keys that try to access
      * deeper levels (e.g. `$.allowed.forbidden`) will not function properly.
      *
-     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns
-     * a json_encoded string.
+     * NOTE: JSON manipulation may not be fully supported by all dialects. This functions returns MySQL
+     * syntax by default.
      *
      * TODO geb 2025-01-21: We might need a better default implementation.
      *
@@ -3277,20 +3275,34 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'") : string
     {
-        return json_encode($keyValuePairs);
+        $resultJson = $initialJson;
+
+        foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+        }
+
+        return $resultJson;
     }
 
     /**
      * Build an inline SQL-Snippet that generates an initial JSON value for native JSON-Functions.
      *
-     * NOTE: JSON manipulation may not be fully supported by all dialects. In that case this function returns `'{}'`.
+     * NOTE: JSON manipulation may not be fully supported by all dialects. This functions returns MySQL
+     *  syntax by default.
      *
      * @param string $columnName
      * @return string
      */
     protected function buildSqlInitialJson(string $columnName) : string
     {
-        return '{}';
+        return <<<SQL
+
+CASE 
+    WHEN {$columnName} IS NOT NULL AND JSON_VALID({$columnName})
+    THEN {$columnName}
+    ELSE '{}'
+END 
+SQL;
     }
 
     /**
