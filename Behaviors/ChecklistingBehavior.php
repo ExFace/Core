@@ -142,7 +142,6 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
         $evtManager->addListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
         $evtManager->addListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
         $evtManager->addListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData(), $this->getPriority());
-        $evtManager->addListener(OnBeforeDeleteDataEvent::getEventName(), $this->getEventHandlerToClearData(), $this->getPriority());
         
         return $this;
     }
@@ -156,14 +155,8 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
         $evtManager->removeListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
         $evtManager->removeListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
         $evtManager->removeListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData());
-        $evtManager->removeListener(OnBeforeDeleteDataEvent::getEventName(), $this->getEventHandlerToClearData());
         
         return $this;
-    }
-
-    protected function getEventHandlerToClearData() : callable
-    {
-        return [$this, 'onDeleteClearStaleData'];
     }
     
     protected function generateDataChecks(UxonObject $uxonObject): DataCheckListInterface
@@ -230,28 +223,6 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
     }
 
     /**
-     * Clears all related checklist entries, whenever one or more rows of the associated MetaObkect are deleted.
-     * 
-     * @param DataSheetEventInterface $event
-     * @return void
-     */
-    public function onDeleteClearStaleData(DataSheetEventInterface $event) : void
-    {
-        $eventSheet = $event->getDataSheet();
-        if(!$this->isRelevantData($eventSheet)) {
-            return;
-        }
-
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-
-        $this->inProgress = true;
-        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $logbook->addDataSheet('Data', $eventSheet);
-        $logbook->addLine('Clearing checklist data for ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
-        $this->clearPreviousChecklistItems($eventSheet, $this->uxonsPerEventContext, $logbook);
-    }
-
-    /**
      * Clears the previous data items from the checklist, for a given set of data check UXONs and UIDs.
      * 
      * This function deletes all checklist items, that match both the data checks in the given UXONs and
@@ -273,7 +244,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
 
             foreach ($uxon as $dataCheckUxon) {
                 $dataCheck = new DataCheckWithOutputData($this->getWorkbench(), $dataCheckUxon);
-                $keyAlias = $dataCheck->getAffectedUidAlias($eventSheet->getMetaObject());
+                $keyAlias = $dataCheck->getForeignKeyAttributeAlias($eventSheet->getMetaObject());
                 $objectAlias = $dataCheck->getOutputDataSheetUxon()->getProperty('object_alias');
 
                 if(!empty($keyAlias) && !empty($objectAlias)) {
@@ -323,6 +294,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     public function setCheckOnCreate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_CREATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_CREATE);
         return $this;
     }
@@ -345,6 +317,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     public function setCheckOnUpdate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_UPDATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_UPDATE);
         return $this;
     }
@@ -365,6 +338,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     public function setCheckAlways(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_ANY);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_ANY);
         return $this;
     }
