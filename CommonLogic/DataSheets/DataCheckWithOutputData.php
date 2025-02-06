@@ -111,8 +111,7 @@ class DataCheckWithOutputData extends DataCheck
      * 
      * @uxon-property output_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
-     * @uxon-template {"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"",
-     *     "ICON":"sap-icon://message-warning"}]}
+     * @uxon-template {"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"","ICON":"sap-icon://message-warning"}]}
      * 
      * @param UxonObject|null $uxon
      * @return $this
