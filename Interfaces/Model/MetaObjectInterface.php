@@ -505,6 +505,18 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return BehaviorListInterface|BehaviorInterface[]
      */
     public function getBehaviors() : BehaviorListInterface;
+
+    /**
+     * Searches for a behavior of the specified type on this object and returns the first match
+     * or NULL if no match was found.
+     *
+     * If `allowMultiple` is set to FALSE, an error will be thrown, if more than one match was found.
+     *
+     * @param string $class
+     * @param bool   $allowMultiple
+     * @return BehaviorInterface|null
+     */
+    public function findBehavior(string $class, bool $allowMultiple = false) : ?BehaviorInterface;
     
     /**
      *

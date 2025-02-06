@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Model\MetaObjectModelError;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\AttributeListFactory;
@@ -15,6 +16,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
@@ -1148,6 +1150,24 @@ class MetaObject implements MetaObjectInterface
     {
         return $this->behaviors;
     }
+
+    /**
+     * @inheritdoc 
+     */
+    public function findBehavior(string $class, bool $allowMultiple = false): ?BehaviorInterface
+    {
+        $hits = $this->getBehaviors()->getByPrototypeClass($class);
+        if ($hits->isEmpty()) {
+            return null;
+        }
+        
+        if (!$allowMultiple && $hits->count() > 1) {
+            throw new MetaObjectModelError($this, 'Only one behavior of type "' . $class . '" allowed per object!');
+        }
+
+        return $hits->getFirst();
+    }
+
 
     /**
      *
