@@ -1152,24 +1152,6 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * @inheritdoc 
-     */
-    public function findBehavior(string $class, bool $allowMultiple = false): ?BehaviorInterface
-    {
-        $hits = $this->getBehaviors()->getByPrototypeClass($class);
-        if ($hits->isEmpty()) {
-            return null;
-        }
-        
-        if (!$allowMultiple && $hits->count() > 1) {
-            throw new MetaObjectModelError($this, 'Only one behavior of type "' . $class . '" allowed per object!');
-        }
-
-        return $hits->getFirst();
-    }
-
-
-    /**
      *
      * @return MetaObjectActionListInterface|ActionInterface[]
      */
