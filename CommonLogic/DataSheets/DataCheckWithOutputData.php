@@ -7,7 +7,6 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\RelationPathFactory;
-use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -22,7 +21,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
  */
 class DataCheckWithOutputData extends DataCheck
 {
-    private ?string $affectedUidAlias = null;
+    private ?string $foreignKeyAttributeAlias = null;
 
     private ?string $relationStringFromCheckedObject = null;
 
@@ -62,7 +61,7 @@ class DataCheckWithOutputData extends DataCheck
                 throw $error;
             }
 
-            $relationPath = $this->getRelationPathFromCheckedObject($outputSheet->getMetaObject());
+            $relationPath = $this->getRelationPathFromCheckedObject($sheet->getMetaObject());
             $ownerKeyAttribute = $relationPath->getRelationFirst()->getLeftKeyAttribute();
             $keyColumn = $badData->getColumns()->getByAttribute($ownerKeyAttribute);
             if(! $keyColumn) {
@@ -87,7 +86,7 @@ class DataCheckWithOutputData extends DataCheck
             
             foreach ($keyColumn->getValues() as $checkedKey) {
                 $logBook?->addLine('Adding row for affected item with key "'. $checkedKey .'".');
-                $rowTemplate[$this->affectedUidAlias] = $checkedKey;
+                $rowTemplate[$this->foreignKeyAttributeAlias] = $checkedKey;
                 $outputSheet->addRow($rowTemplate);
             }
             
@@ -141,74 +140,97 @@ class DataCheckWithOutputData extends DataCheck
     }
 
     /**
-     * If this data check applied to a given row, the UID of that row will be output
-     * to a column with this alias.
+     * The relation that points from the object being checked to the object where the output sheet is stored (i.e. the checklist).
      * 
-     * Default is `AFFECTED_UID`.
+     * For example: If the behavior checks DELIVERY_POS items and stores the results in ALERT items, then ALERT must
+     * have a relation to DELIVERY_POS (if it doesn't, add one). In that case, simply enter `ALERT` as relation path.
+     * (properly defined relations should appear as auto-complete options).
      * 
-     * @uxon-property affected_uid_alias
-     * @uxon-type string
-     * @uxon-default "AFFECTED_UID"
-     * 
-     * @param string $alias
-     * @return $this
-     */
-    protected function setAffectedUidAlias(string $alias) : static
-    {
-        if(!empty($alias)) {
-            $this->affectedUidAlias = $alias;
-        }
-        
-        return $this;
-    }
-
-    /**
-     * Relation from the object of the object being checked (e.g. behavior object) to the object of the data in this
-     * check.
-     * 
-     * For example, if the behavior shoud produce ALERT items by performing checks
-     * on DELIVERY_POS items, and the ALERT has a relation DELIVERY_POS to the 
-     * affected deliver position, than this relation would be `ALERT`. It
-     * is the relation from the checked DELIVERY_POS to the ALERT - thus, the
-     * reverse of the DELIVER_POS relation on the ALERT object. 
-     * 
-     * @uxon-property relation_from_checked_object_to_data
-     * @uxon-type metamodel:relation 
+     * @uxon-property relation_from_checked_object_to_checklist
+     * @uxon-type metamodel:relation
      * 
      * @param string $relationPath
-     * @return \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData
+     * @return DataCheckWithOutputData
      */
-    protected function setRelationFromCheckedObjectToData(string $relationPath) : DataCheckWithOutputData
+    protected function setRelationFromCheckedObjectToChecklist(string $relationPath) : DataCheckWithOutputData
     {
         $this->relationStringFromCheckedObject = $relationPath;
         return $this;
     }
 
     /**
-     * Returns the foreign key of the data object, that points to the checked object
+     * Returns the foreign key of the data object, that points to the checked object.
      * 
-     * Concider the following example: DELIVERY_NOTE<-DELIVERY_POS<-DELIVERY_POS_ALERT. 
-     * A ChecklistingBehavior can be used to gnerate DELIVER_POS_ALERTs whenever any 
-     * DELIVERY_POS is changed. This method will return the alias of the attribute of 
-     * DELIVERY_POS_ALERT, that contains the foreign key to the DELIVERY_POS.
+     * Consider the following example: DELIVERY_NOTE<-DELIVERY_POS<-ALERT.
+     * A ChecklistingBehavior can be used to generate ALERTs whenever any
+     * DELIVERY_POS is changed. This method will return the alias of the attribute of
+     * ALERT, that contains the foreign key to the DELIVERY_POS.
      * 
+     * @param MetaObjectInterface $checkedObject
+     * @return string
+     */
+    public function getForeignKeyAttributeAlias(MetaObjectInterface $checkedObject) : string
+    {
+        if ($this->foreignKeyAttributeAlias !== null) {
+            return $this->foreignKeyAttributeAlias;
+        }
+        $relPath = $this->getRelationPathFromCheckedObject($checkedObject);
+        $this->foreignKeyAttributeAlias = $relPath->getRelationLast()->getRightKeyAttribute()->getAlias();
+        return $this->foreignKeyAttributeAlias;
+    }
+
+    /**
+     * Each checklist item must know, which object it belongs to. The identity of that object will be stored as a foreign key on the 
+     * checklist MetaObject in the attribute defined here.
+     * 
+     * Consider the following example: DELIVERY_NOTE<-DELIVERY_POS<-ALERT.
+     * A ChecklistingBehavior can be used to generate ALERTs whenever any
+     * DELIVERY_POS is changed. This property will define the alias of the attribute of
+     * ALERT, that contains the foreign key to the DELIVERY_POS.
+     * 
+     * Default is `FOREIGN_KEY`.
+     * 
+     * @uxon-property foreign_key_attribute_alias
+     * @uxon-type string
+     * @uxon-default "FOREIGN_KEY"
+     *
+     * @param string $alias
+     * @return $this
+     */
+    protected function setForeignKeyAttributeAlias(string $alias) : static
+    {
+        if(!empty($alias)) {
+            $this->foreignKeyAttributeAlias = $alias;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @deprecated Use `getOutputKeyAttributeAlias(MetaObjectInterface)` instead.
+     * @param MetaObjectInterface $checkedObject
      * @return string
      */
     public function getAffectedUidAlias(MetaObjectInterface $checkedObject) : string
     {
-        if ($this->affectedUidAlias !== null) {
-            return $this->affectedUidAlias;
-        }
-        $relPath = $this->getRelationPathFromCheckedObject($checkedObject);
-        $this->affectedUidAlias = $relPath->getRelationLast()->getRightKeyAttribute()->getAlias();
-        return $this->affectedUidAlias;
+        return $this->getForeignKeyAttributeAlias($checkedObject);
+    }
+
+    /**
+     * @deprecated Use `setOutputKeyAttributeAlias(string)` instead.
+     * @param string $alias
+     * @return $this
+     */
+    protected function setAffectedUidAlias(string $alias) : static
+    {
+        return $this->setForeignKeyAttributeAlias($alias);
     }
 
     /**
      * Returns the relation path from the checked object to the data object
      * 
-     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $checkedObject
-     * @return \exface\Core\Interfaces\Model\MetaRelationPathInterface
+     * @param MetaObjectInterface $checkedObject
+     * @return MetaRelationPathInterface
      */
     public function getRelationPathFromCheckedObject(MetaObjectInterface $checkedObject) : MetaRelationPathInterface
     {

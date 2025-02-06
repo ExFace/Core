@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
@@ -438,5 +439,34 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             }
         }
         return $this->requiresOldData;
+    }
+
+    /**
+     * Validates a UXON for a given event context and throws an error if it is invalid.
+     * 
+     * @param UxonObject           $contextUxon
+     * @param string               $context
+     * @param BehaviorLogBook|null $logBook
+     * @return void
+     */
+    protected function validateContextUxon(UxonObject $contextUxon, string $context, ?BehaviorLogBook $logBook = null) : void
+    {
+        if($contextUxon->isArray()){
+            return;
+        }
+        
+        $msg = 'Invalid UXON for context "' . $context . '". Must be of type array!';
+        if($logBook) {
+            throw new BehaviorRuntimeError(
+                $this,
+                $msg,
+                null,
+                null,
+                $logBook);
+        } else {
+            throw  new BehaviorConfigurationError(
+                $this, 
+                $msg);
+        }
     }
 }
