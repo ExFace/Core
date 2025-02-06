@@ -2,32 +2,41 @@
 
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\MetaObjectFactory;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Widgets\Value;
 
 /**
- * Automatically adds custom attributes to the object, whenever it is loaded from into memory.
+ * Automatically adds custom attributes to the object, whenever it is loaded into memory.
  * 
+ * ## Type Models
+ * 
+ * Type models are special templates that simplify the creation of new custom attributes. Each
  * 
  * ## Examples
  * 
  * ```
  *  {
- *      "attribute_object_alias": "my.App.ART", // The object, that will receive the custom attributes
- *      "relation_to_values_object": "ATTR_VAL", // The object, that contins values of the attribute (?)
+ *      xxx "attribute_object_alias": "my.App.ART", // The object, that will receive the custom attributes
+ *      xxx "relation_to_values_object": "ATTR_VAL", // The object, that contins values of the attribute (?)
  *      "attribute_name_alias": "NAME", // Attribute of the definition object, that contins the future attribute name
- *      "attribute_hint_alias": "DESCRIPTION", // Attribute of the definition object, that contins the future attribute description
- *      "attribute_required_alias": "REQUIRED", // Attribute of the definition object, that contins the future attribute alias
+ *      "attribute_hint_alias": "DESCRIPTION", // Attribute of the definition object, that contins the future attribute
+ * description
+ *      "attribute_required_alias": "REQUIRED", // Attribute of the definition object, that contins the future
+ * attribute alias
  *      "attribute_type_alias": "TYPE", // Attribute of the definition object, that contins the future attribute type 
- *      "attribute_type_models": {
+ *      +++ "attribute_type_models": {
  *          "DATUM": {      
  *              "DATATYPE": "exface.Core.Date",
  *          },
@@ -67,8 +76,15 @@ use exface\Core\Widgets\Container;
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
-
-    private $typeDefs = [];
+    protected const BASE_TEMPLATE_KEY = "BASE";
+    protected const DATA_TYPE_KEY = "data_type";
+    
+    private array $typeModels = [];
+    private ?string $attributeTypeModelAlias = null;
+    private ?string $attributeNameAlias = null;
+    private ?string $attributeHintAlias = null;
+    private ?string $attributeRequiredAlias = null;
+    private ?string $definitionOwnerAttributeAlias = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -94,81 +110,297 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function onWidgetInitModifyEditor(OnUiActionWidgetInitEvent $event) : void
     {
         $widget = $event->getWidget();
-        // TODO if this widget is based on the behavior object AND it contains editable fields
+        if(! $widget->getMetaObject()->isExactly($this->getObject()) || 
+           ! $widget instanceof iContainOtherWidgets) {
+            return;
+        }
+        
+        $inputWidgets = $widget->getInputWidgets();
+        
+        if(empty($inputWidgets)) {
+            return;
+        }
 
-        if ($widget instanceof Container) {
-            foreach ($widget->getInputWidgets() as $input) {
-                // TODO if input is `attribute_type_alias` - make sure, it shows a dorpdown with the
-                // available types in this behavior (e.g. DATUM, PRIO, USER from above).
+        $typeAlias = $this->attributeTypeModelAlias;
+        foreach ($inputWidgets as $input) {
+            if(!$input instanceof Value || $input->getAttributeAlias() !== $typeAlias) {
+                continue;
             }
+            
+            
+            // TODO if input is `attribute_type_alias` - make sure, it shows a dorpdown with the
+            // available types in this behavior (e.g. DATUM, PRIO, USER from above).
         }
     }
 
     /**
      * Summary of getAttributes
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface[]
+     * @return MetaAttributeInterface[]
      */
-    public function getCustomAttributes(MetaObjectInterface $targetObject) : array
+    public function addCustomAttributes(MetaObjectInterface $targetObject, BehaviorLogBook $logBook) : array
     {
+        if(empty($this->getTypeModelsAll())) {
+            throw new BehaviorRuntimeError($this, 'Could not load custom attributes: Missing type models!');
+        }
+        
         $attrs = [];
-        $sheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
-        $sheet->getColumns()->addMultiple([
-            // TODO all the attributes defined in this behavior
+        
+        $attributeDefinitionsSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
+        $attributeDefinitionsSheet->getColumns()->addMultiple([
+            $modelAlias = $this->getAttributeTypeModelAlias(),
+            $nameAlias = $this->getAttributeNameAlias(),
+            $hintAlias = $this->getAttributeHintAlias(),
+            $requiredAlias = $this->getAttributeRequiredAlias()
         ]);
-        foreach ($sheet->getRows() as $row) {
-            $name = $row['...'];
-            $alias = $row['...'];
-            $template = $row['TYPE']; // The key of the data type model stored in the definition row
-            $attr = MetaObjectFactory::addAttributeTemporary($targetObject, $name, $alias, $template['DATATYPE']);
-            unset($template['DATATYPE']);
-            // TODO add this method to Attribute class.
-            $attr->importUxonObject(new UxonObject([$template]));
+        
+        if($ownerAlias = $this->getDefinitionOwnerAttributeAlias()) {
+            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerAlias, $targetObject->getAliasWithNamespace());
+        }
+        
+        $attributeDefinitionsSheet->dataRead();
+        
+        foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
+            $typeKey = $definitionRow[$modelAlias];
+            if(! $typeModel = $this->getTypeModel($typeKey)) {
+                throw new BehaviorRuntimeError($this, 'Custom attribute type "' . $typeKey . '" not defined for "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            }
+            
+            $name = $definitionRow[$nameAlias];
+            $alias = StringDataType::convertCasePascalToUnderscore($name);
+            $attr = MetaObjectFactory::addAttributeTemporary($targetObject, $name, $alias, '', $typeModel[self::DATA_TYPE_KEY]);
+            
+            unset($typeModel[self::DATA_TYPE_KEY]);
+            unset($typeModel[$nameAlias]);
+            
+            $attr->importUxonObject(new UxonObject($typeModel));
+            $attr->setShortDescription($definitionRow[$hintAlias]);
+            $attr->setRequired($definitionRow[$requiredAlias]);
+            
             $attrs[] = $attr;
         }
+        
         return $attrs;
     }
-
-    protected function getTypeDefinition(string $typeKey) : array
+    
+    public function getTypeModelsAll() : array
     {
-        return $this->typeDefs[$typeKey] ?? null;
+        if(empty($this->typeModels)) {
+            $this->setTypeModels(new UxonObject());
+        }
+        
+        return  $this->typeModels;
     }
 
-    protected function setAttributeTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    public function getTypeModel(string $typeKey) : ?array
     {
-        $this->typeDefs = array_merge($uxon->toArray(), $this->getDefaultTypeModels());
+        return $this->getTypeModelsAll()[$typeKey];
+    }
+
+    protected function setTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    {
+        // Prepare type models.
+        $inputTypeModels = $uxon->toArray();
+        $defaultTypeModels = $this->getDefaultTypeModels();
+        
+        // Prepare base model.
+        $baseModel = $defaultTypeModels[self::BASE_TEMPLATE_KEY];
+        if(key_exists(self::BASE_TEMPLATE_KEY, $inputTypeModels)) {
+            // Optionally, apply changes from input to base model.
+            $baseModel = array_merge($baseModel, $inputTypeModels[self::BASE_TEMPLATE_KEY]);
+        }
+
+        $this->typeModels = [];
+        // Merge defaults with input.
+        foreach (array_merge($defaultTypeModels, $inputTypeModels) as $typeKey => $typeModel) {
+            // Inherit from base model, then store the result.
+            $this->typeModels[$typeKey] = array_merge($baseModel, $typeModel);
+        }
+        
         return $this;
     }
 
+    /**
+     * @return string
+     */
+    public function getAttributeTypeModelAlias() : string
+    {
+        if(! $this->attributeTypeModelAlias) {
+            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_type_model_alias"!');
+        }
+        
+        return $this->attributeTypeModelAlias;
+    }
+
+    /**
+     * Tell this behavior, in which attribute it will find the type model of a custom attribute.
+     * 
+     * @uxon-property attribute_type_model_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-template "type_model"
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setAttributeTypeModelAlias(string $alias) : static
+    {
+        $this->attributeTypeModelAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAttributeNameAlias() : string
+    {
+        if(! $this->attributeNameAlias) {
+            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_name_alias"!');
+        }
+        
+        return $this->attributeNameAlias;
+    }
+
+    /**
+     * Tell this behavior, in which attribute it will find the name of a custom attribute.
+     * 
+     * @uxon-property attribute_name_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-template "name"
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setAttributeNameAlias(string $alias) : static
+    {
+        $this->attributeNameAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAttributeHintAlias() : string
+    {
+        if(! $this->attributeHintAlias) {
+            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_hint_alias"!');
+        }
+        
+        return $this->attributeHintAlias;
+    }
+
+    /**
+     * Tell this behavior, in which attribute it will find the description of a custom attribute.
+     * 
+     * @uxon-property attribute_hint_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-template "hint"
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setAttributeHintAlias(string $alias) : static
+    {
+        $this->attributeHintAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAttributeRequiredAlias() : string
+    {
+        if(! $this->attributeRequiredAlias) {
+            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_required_alias"!');
+        }
+        
+        return $this->attributeRequiredAlias;
+    }
+
+    /**
+     * Tell this behavior, in which attribute it will find whether an attribute will be required.
+     * 
+     * @uxon-property attribute_required_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-template "required"
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setAttributeRequiredAlias(string $alias) : static
+    {
+        $this->attributeRequiredAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDefinitionOwnerAttributeAlias() : ?string
+    {
+        return $this->definitionOwnerAttributeAlias;
+    }
+
+    /**
+     * (Optional) The attribute alias used to determine, what object a custom attribute belongs to.
+     * 
+     * You only need to set a value for this property, if you are storing custom attribute
+     * definitions for more than one MetaObject in the same table.
+     * 
+     * @uxon-property definition_owner_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string|null $alias
+     * @return $this
+     */
+    public function setDefinitionOwnerAttributeAlias(?string $alias) : static
+    {
+        $this->definitionOwnerAttributeAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * An associative array with `[TypeModelKey => [...(TypeModel)]]` that contains some
+     * basic type model definitions, as well as the base type model.
+     * 
+     * All default type models, including the base, can be overwritten with `type_models`.
+     * 
+     * @return string[][]
+     */
     protected function getDefaultTypeModels() : array
     {
         return [
             'DATE' => [
-                "DATATYPE" => "exface.Core.Date"
+                self::DATA_TYPE_KEY => "exface.Core.Date"
             ],
             'TEXT' => [
-                "DATATYPE" => "exface.Core.String"
+                self::DATA_TYPE_KEY => "exface.Core.String"
             ],
             'NUMBER' => [
-                "DATATYPE" => "exface.Core.Number"
+                self::DATA_TYPE_KEY => "exface.Core.Number"
             ],
             'TIME' => [
-                "DATATYPE" => "exface.Core.Time"
+                self::DATA_TYPE_KEY => "exface.Core.Time"
+            ],
+            // The base template is intentionally incomplete, ignoring fields like
+            // "name", "description" and so on.
+            self::BASE_TEMPLATE_KEY => [
+                // DATATYPE
+                self::DATA_TYPE_KEY => "exface.Core.String",
+                // BASIC FLAGS
+                "readable" => "true",
+                "writable" => "true",
+                "copyable" => "true",
+                "editable" => "true",
+                "required" => "false",
+                "hidden" => "false",
+                "sortable" => "true",
+                "filterable" => "true",
+                "aggregatable" => "true",
+                // DEFAULTS
+                "default_aggregate_function" => "",
+                "default_sorter_dir" => "ASC",
+                "value_list_delimiter" => ",",
+                "default_display_order" => "",
             ]
         ];
-    }
-
-    // TODO move the below to the CustomAtteributeJsonBehavior
-
-    protected function findAttributeDefinitionBehavior(MetaObjectInterface $obj) : ?CustomAttributeDefinitionBehavior
-    {
-        $hits = $obj->getBehaviors()->getByPrototypeClass(CustomAttributeDefinitionBehavior::class);
-        if ($hits->isEmpty()) {
-            return null;
-        }
-        if ($hits->count() > 1) {
-            // TODO throw exception
-        }
-
-        return $hits->getFirst();
     }
 }
