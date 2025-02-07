@@ -5,7 +5,6 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -77,8 +76,8 @@ use exface\Core\Widgets\Value;
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
-    protected const BASE_TEMPLATE_KEY = "BASE";
-    protected const DATA_TYPE_KEY = "data_type";
+    protected const KEY_DATA_TYPE = "data_type";
+    protected const KEY_INHERITS_FROM = "inherits";
     
     private array $typeModels = [];
     private ?string $attributeTypeModelAlias = null;
@@ -190,12 +189,15 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $name, 
                 $alias, 
                 $address, 
-                $typeModel[self::DATA_TYPE_KEY]);
+                $typeModel[self::KEY_DATA_TYPE]);
             
-            unset($typeModel[self::DATA_TYPE_KEY]);
+            // Remove properties from the template that should or could not be applied to the attribute.
+            unset($typeModel[self::KEY_DATA_TYPE]);
+            unset($typeModel[self::KEY_INHERITS_FROM]);
             unset($typeModel[$nameAlias]);
-            
+            // Apply the template.
             $attr->importUxonObject(new UxonObject($typeModel));
+            // Set values that were not stored in the template.
             $attr->setShortDescription($definitionRow[$hintAlias]);
             $attr->setRequired($definitionRow[$requiredAlias]);
             
@@ -207,7 +209,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return $attrs;
     }
     
-    public function getTypeModelsAll() : array
+    protected function getTypeModelsAll() : array
     {
         if(empty($this->typeModels)) {
             $this->setTypeModels(new UxonObject());
@@ -216,32 +218,84 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return  $this->typeModels;
     }
 
-    public function getTypeModel(string $typeKey) : ?array
+    protected function getTypeModel(string $typeKey) : ?array
     {
         return $this->getTypeModelsAll()[$typeKey];
     }
 
-    protected function setTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    /**
+     * @uxon-property type_models
+     * @uxon-type array
+     * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":"true","writable":"true","copyable":"true","editable":"true","required":"false","hidden":"false","sortable":"true","filterable":"true","aggregatable":"true","default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":""}}
+     * 
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    public function setTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
     {
         // Prepare type models.
+        $this->typeModels = [];
         $inputTypeModels = $uxon->toArray();
         $defaultTypeModels = $this->getDefaultTypeModels();
-        
-        // Prepare base model.
-        $baseModel = $defaultTypeModels[self::BASE_TEMPLATE_KEY];
-        if(key_exists(self::BASE_TEMPLATE_KEY, $inputTypeModels)) {
-            // Optionally, apply changes from input to base model.
-            $baseModel = array_merge($baseModel, $inputTypeModels[self::BASE_TEMPLATE_KEY]);
-        }
 
-        $this->typeModels = [];
         // Merge defaults with input.
-        foreach (array_merge($defaultTypeModels, $inputTypeModels) as $typeKey => $typeModel) {
-            // Inherit from base model, then store the result.
-            $this->typeModels[$typeKey] = array_merge($baseModel, $typeModel);
+        $mergedModels = array_merge($defaultTypeModels, $inputTypeModels);
+        
+        // Resolve inheritance hierarchy.
+        foreach ($mergedModels as $typeKey => $typeModel) {
+            if(key_exists($typeKey, $this->typeModels)) {
+                continue;
+            }
+            
+            $resolvedModels = $this->resolveInheritanceHierarchy(
+                $typeKey, 
+                $typeModel, 
+                $mergedModels, 
+                $this->typeModels);
+            
+            $this->typeModels = array_merge($this->typeModels, $resolvedModels);
         }
         
         return $this;
+    }
+    
+    protected function resolveInheritanceHierarchy(
+        string $key, 
+        array $model, 
+        array $allModels, 
+        array $resolvedModels) : array
+    {
+        // If we have already been resolved, return without changes.
+        if(key_exists($key, $resolvedModels)) {
+            return $resolvedModels[$key];
+        }
+
+        // If model has no explicit parent OR that parent is invalid, inherit from base.
+        $parentKey = $model[self::KEY_INHERITS_FROM];
+        if(!$parentKey || $parentKey === $key || !key_exists($parentKey, $allModels)) {
+            return [$key => array_merge($this->getBaseTypeModel(), $model)];
+        }
+
+        // If model has an explicit parent that has already been resolved,
+        // we can inherit from it directly.
+        if(key_exists($parentKey, $resolvedModels)) {
+            return [$key => array_merge($resolvedModels[$parentKey], $model)];
+        }
+        
+        // Otherwise, we have to resolve the parent model recursively.
+        // We add ourselves to the resolved list to prevent loops. 
+        // This is safe, because each type model has a single root.
+        $resolvedModels[$key] = array_merge($this->getBaseTypeModel(), $model);
+        $result = $this->resolveInheritanceHierarchy(
+            $parentKey,
+            $allModels[$parentKey],
+            $allModels,
+            $resolvedModels
+        );
+        // Now we merge with our resolved parent.
+        $result[$key] = array_merge($result[$parentKey], $model);
+        
+        return $result;
     }
 
     /**
@@ -422,38 +476,45 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         return [
             'DATE' => [
-                self::DATA_TYPE_KEY => "exface.Core.Date"
+                self::KEY_DATA_TYPE => "exface.Core.Date",
             ],
             'TEXT' => [
-                self::DATA_TYPE_KEY => "exface.Core.String"
+                self::KEY_DATA_TYPE => "exface.Core.String",
             ],
             'NUMBER' => [
-                self::DATA_TYPE_KEY => "exface.Core.Number"
+                self::KEY_DATA_TYPE => "exface.Core.Number",
             ],
             'TIME' => [
-                self::DATA_TYPE_KEY => "exface.Core.Time"
+                self::KEY_DATA_TYPE => "exface.Core.Time",
             ],
-            // The base template is intentionally incomplete, ignoring fields like
-            // "name", "description" and so on.
-            self::BASE_TEMPLATE_KEY => [
-                // DATATYPE
-                self::DATA_TYPE_KEY => "exface.Core.String",
-                // BASIC FLAGS
-                "readable" => "true",
-                "writable" => "true",
-                "copyable" => "true",
-                "editable" => "true",
-                "required" => "false",
-                "hidden" => "false",
-                "sortable" => "true",
-                "filterable" => "true",
-                "aggregatable" => "true",
-                // DEFAULTS
-                "default_aggregate_function" => "",
-                "default_sorter_dir" => "ASC",
-                "value_list_delimiter" => ",",
-                "default_display_order" => "",
-            ]
+        ];
+    }
+
+    /**
+     * Returns the base from which all type models inherit by default.
+     * 
+     * @return string[]
+     */
+    protected function getBaseTypeModel() : array
+    {
+        return [
+            // DATATYPE
+            self::KEY_DATA_TYPE => "exface.Core.String",
+            // BASIC FLAGS
+            "readable" => "true",
+            "writable" => "true",
+            "copyable" => "true",
+            "editable" => "true",
+            "required" => "false",
+            "hidden" => "false",
+            "sortable" => "true",
+            "filterable" => "true",
+            "aggregatable" => "true",
+            // DEFAULTS
+            "default_aggregate_function" => "",
+            "default_sorter_dir" => "ASC",
+            "value_list_delimiter" => ",",
+            "default_display_order" => "",
         ];
     }
 }
