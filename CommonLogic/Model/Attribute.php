@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
@@ -25,7 +26,8 @@ use exface\Core\Exceptions\Model\MetaObjectModelError;
  */
 class Attribute implements MetaAttributeInterface
 {
-
+    use ImportUxonObjectTrait;
+    
     // Properties to be dublicated on copy()
     private $id;
 
