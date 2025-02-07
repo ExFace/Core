@@ -2,6 +2,9 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\CommonLogic\UxonObject;
@@ -32,7 +35,7 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
  * an error, ignores the new data or performs an update on the existing data row - depending
  * on the properties `on_duplicate_multi_row` and `on_duplicate_single_row`.
  * 
- * By default an error message will be thrown if a duplicate is found. 
+ * By default an error message will be shown if a duplicate is found. 
  * 
  * In addition to specifying the `compare_attributes`, you can also customize the filters
  * used to search the data source for potential duplicates: `compare_conditions`. These
@@ -42,6 +45,34 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
  * You can customize the error message by setting `duplicate_error_code` (to load a message from
  * the messages model) or `duplicate_error_text` to specify a custom text directly without creating
  * a message in the metamodel.
+ * 
+ * ## Effects on data and other behaviors
+ * 
+ * If there are duplicates, this behavior will effectively split your data in regular and duplicate
+ * rows. The original create/update operation will be only performed on the regular rows, while the
+ * other rows will be handled independently. 
+ * 
+ * **This may have unexpected effects on your data sheets!**
+ * 
+ * In general, it is a good idea, to place the PreventDuplicatesBehavior first in line for the before
+ * create/update events, so that the row split will be performed as early as possible! If not priority
+ * is set, the behavior will automatically attempt to move itself into the right position.
+ * 
+ * ### Updating duplicates on create operations
+ * 
+ * If you create data with duplicates and the behavior is set to update those, only non-duplicate rows
+ * will be created. Rows identified as duplicates will be split off into a different data sheet and
+ * will be updated. 
+ * 
+ * This means, any other behaviors reacting to create-events will only "see" the regular non-duplicate
+ * rows! The duplicates will be handled in a spearate update operation, so update-based behaviors will
+ * see those independently. After the create is done, the updated rows will be inserted back on their
+ * original places, so that the resulting data sheet will look just like after a regular create without
+ * any duplicate handling.
+ * 
+ * In the extreme case, when ALL rows are duplicates, there will be no create at all, and other create-based
+ * behaviors will not be triggered. Instead, there will be a totally independent update operation triggering
+ * update-events and their behaviors.
  * 
  * ## Examples
  * 
@@ -118,6 +149,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     private $errorText = null;
     
     private $ignoreDataSheets = [];
+
+    private $needRestoreDataSheets = [];
     
     /**
      *
@@ -126,19 +159,33 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $priority = $this->getPriority();
-        
-        if ($priority === null) {
+        // Make sure, this behavior 
+        // - splits data BEFORE all data behaviors listening to create/update events
+        // - restores data AFTER all other data behaviors 
+        // For example, duplilcates should be split off the data in case of a create operation before 
+        // the TimeStampingBehavior will set its initial stamp values and should be restored at the 
+        // very end of the operation. This way, the TimeStampingBehavior will not have any effect on 
+        // the duplicate rows - which is correct because these rows did not actually get created.
+        $beforePriority = $afterPriority = $this->getPriority();
+        if ($beforePriority === null) {
             foreach ($this->getObject()->getBehaviors() as $behavior) {
                 if (($behavior instanceof DataModifyingBehaviorInterface) && $behavior->canAddColumnsToData() === true) {
-                    $priority = 1 + ($priority === null ? $behavior->getPriority() : max($priority, $behavior->getPriority()));
+                    $otherPriority = $behavior->getPriority();
+                    $beforePriority = 1 + ($beforePriority === null ? $otherPriority : max($beforePriority, $otherPriority));
+                    $afterPriority = (-1) + ($afterPriority === null ? $otherPriority : min($afterPriority, $otherPriority));
                 }
             }
         }
-        
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate'], $priority);
-        
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate'], $priority);
+
+        $eventMgr = $this->getWorkbench()->eventManager();
+        // BEFORE create/update operation, split off data rows, that need different treatment because 
+        // these they are duplicates
+        $eventMgr->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onBeforeCreateCheckDuplicates'], $beforePriority);
+        $eventMgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckDuplicates'], $beforePriority);
+        // AFTER create/update include these rows back in the data sheet ot ensure it looks like the
+        // original operation completed normally
+        $eventMgr->addListener(OnCreateDataEvent::getEventName(), [$this, 'onOperationFinishedRestoreRows'], $afterPriority);    
+        $eventMgr->addListener(OnUpdateDataEvent::getEventName(), [$this, 'onOperationFinishedRestoreRows'], $afterPriority);
         
         return $this;
     }
@@ -150,9 +197,11 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate']);
-        
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate']);
+        $eventMgr = $this->getWorkbench()->eventManager();
+        $eventMgr->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onBeforeCreateCheckDuplicates']); 
+        $eventMgr->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckDuplicates']);
+        $eventMgr->removeListener(OnCreateDataEvent::getEventName(), [$this, 'onOperationFinishedRestoreRows']);
+        $eventMgr->removeListener(OnUpdateDataEvent::getEventName(), [$this, 'onOperationFinishedRestoreRows']);
         
         return $this;
     }
@@ -164,7 +213,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * @throws BehaviorRuntimeError
      * @return void
      */
-    public function handleOnBeforeCreate(OnBeforeCreateDataEvent $event)
+    public function onBeforeCreateCheckDuplicates(OnBeforeCreateDataEvent $event)
     {
         if ($this->isDisabled()) {
             return ;
@@ -182,7 +231,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $logbook->setIndentActive(1);
         
         // Ignore creates that do not contain all compare attributes
         foreach ($this->getCompareAttributeAliases() as $attrAlias) {
@@ -196,6 +244,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         $mode = $this->getMode($eventSheet);
         $logbook->addLine('Received ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
+        $logbook->setIndentActive(1);
         $logbook->addLine('Running in `' . $mode . '` mode');
         $matcher = $this->getDuplicatesMatcher($eventSheet, $mode, $logbook, true);
         
@@ -204,23 +253,33 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
-        
+
         switch ($mode) {
             case self::ON_DUPLICATE_IGNORE:
-                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher, $logbook);
+                $handledRowIdxs = $this->ignoreDuplicates($eventSheet, $matcher, $logbook);
                 break;
             case self::ON_DUPLICATE_UPDATE:
-                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), $logbook);
+                $handledRowIdxs = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), $logbook);
                 break;
             case self::ON_DUPLICATE_ERROR:
             default:
                 throw $this->createDuplicatesError($eventSheet, $matcher, $logbook);
                 
         }
-        
-        if ($eventSheet->isEmpty()) {
-            $logbook->addLine('No rows left in original data, preventing default event logic!');
-            $event->preventCreate();
+
+        if (! empty($handledRowIdxs)) {
+            if (count($handledRowIdxs) === $eventSheet->countRows()) {
+                $logbook->addLine('All rows are duplicates. Preventing default create logic and further create-behaviors! No changes made to data sheet.');
+                $event->preventCreate();
+                $event->stopPropagation();
+            } else {
+                $this->needRestoreDataSheets[] = [
+                    'rows' => $eventSheet->getRowsByIndex($handledRowIdxs),
+                    'sheet' => $eventSheet
+                ];
+                $eventSheet->removeRows($handledRowIdxs);
+                $logbook->addLine('Removed ' . count($handledRowIdxs) . ' duplicate rows: row indexes ' . implode(', ', $handledRowIdxs) . ' will be restored after the regular create operation');
+            }
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
@@ -233,7 +292,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * @throws DataSheetDuplicatesError
      * @return void
      */
-    public function handleOnBeforeUpdate(OnBeforeUpdateDataEvent $event)
+    public function onBeforeUpdateCheckDuplicates(OnBeforeUpdateDataEvent $event)
     {
         if ($this->isDisabled()) {
             return;
@@ -285,7 +344,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         switch ($mode) {
                 // This should never be reached, as the exceptions will be thrown earlier
             case self::ON_DUPLICATE_IGNORE:
-                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher, $logbook);
+                $handledRowIdxs = $this->ignoreDuplicates($eventSheet, $matcher, $logbook);
                 break;
             case self::ON_DUPLICATE_UPDATE:
                 // When updating with on_duplicate_xxx_update, exact UID-matches must be ignored. Otherwise
@@ -293,23 +352,62 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 // - create finds duplicate and orders and update inheriting the duplicates UID
                 // - the following update will check AGAIN, find the same duplicate, order another
                 // update, and so on.
-                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), $logbook);
+                $handledRowIdxs = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), $logbook);
                 break;
             case self::ON_DUPLICATE_ERROR:
             default:
                 throw $this->createDuplicatesError($eventSheet, $matcher, $logbook);
                 
         }
-        
-        if ($eventSheet->isEmpty()) {
-            $logbook->addLine('No rows left in original data, preventing default event logic!');
-            $event->preventUpdate();
+
+        if (! empty($handledRowIdxs)) {
+            if (count($handledRowIdxs) === $eventSheet->countRows()) {
+                $logbook->addLine('All rows are duplicates. Preventing default update logic! No changes made to data sheet');
+                $event->preventUpdate();
+            } else {
+                $this->needRestoreDataSheets[] = [
+                    'rows' => $eventSheet->getRowsByIndex($handledRowIdxs),
+                    'sheet' => $eventSheet
+                ];
+                $eventSheet->removeRows($handledRowIdxs);
+                $logbook->addLine('Removed ' . count($handledRowIdxs) . ' duplicate rows: row indexes ' . implode(', ', $handledRowIdxs) . ' will be restored after the regular update operation');
+            }
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
         return; 
     }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Events\DataSheetEventInterface $event
+     * @return void
+     */
+    public function onOperationFinishedRestoreRows(DataSheetEventInterface $event)
+    {
+        foreach ($this->needRestoreDataSheets as $i => $item) {
+            if ($item['sheet'] === $event->getDataSheet()) {
+                $eventSheet = $event->getDataSheet();
+                $restoreRows = $item['rows'];
+                unset($this->needRestoreDataSheets[$i]);
+                break;
+            }
+        }
+        if (empty($restoreRows)) {
+            return;
+        }
+
+        foreach ($restoreRows as $i => $row) {
+            $eventSheet->addRow($row, false, false, $i);
+        }
+        return;
+    }
     
+    /**
+     * 
+     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $eventSheet
+     * @return string
+     */
     protected function getMode(DataSheetInterface $eventSheet) : string
     {
         $cnt = $eventSheet->countRows();
@@ -321,15 +419,16 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     }
     
     /**
+     * Updates duplicates found by the given matcher and returns an array of row numbers affected
      * 
      * @param DataSheetInterface $eventSheet
      * @param DataMatcherInterface $matcher
      * @param DataTransactionInterface $transaction
      * @param bool $ignoreUidMatches
      * @throws BehaviorRuntimeError
-     * @return DataSheetInterface
+     * @return int[]
      */
-    protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction, BehaviorLogBook $logbook) : DataSheetInterface
+    protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction, BehaviorLogBook $logbook) : array
     {
         $logbook->addSection('Updating duplicates');
         if (! $eventSheet->getMetaObject()->hasUidAttribute())  {
@@ -344,11 +443,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $uidColName = $uidCol->getName();
         }
         $duplRowNos = $matcher->getMatchedRowIndexes();
-        $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: ' . implode(', ', $duplRowNos));
-        $rowsToRemove = [];
+        $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: row number(s) ' . implode(', ', $duplRowNos));
+        $logbook->addIndent(+1);
+        $rowsHandled = [];
+        $updateSheetRowIdxToEventRowIdx = [];
         foreach ($duplRowNos as $duplRowNo) {
             // Don't bother about rows, that need to be removed anyway
-            if (in_array($duplRowNo, $rowsToRemove)) {
+            if (in_array($duplRowNo, $rowsHandled)) {
                 continue;
             }
             $row = $eventSheet->getRow($duplRowNo);
@@ -373,8 +474,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                             $row[$systemAttr->getAlias()] = $matchedRow[$systemAttr->getAlias()];
                         }
                     }
-                    $updateSheet->addRow($row);
-                    $rowsToRemove[] = $duplRowNo;
+                    $updateSheet->addRow($row, false, true);
+                    $updateSheetRowIdxToEventRowIdx[] = $duplRowNo;
+                    $rowsHandled[] = $duplRowNo;
                 } else {
                     throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!', null, null, $logbook);
                 }
@@ -384,62 +486,90 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             // (duplicate) rows in the sheet.
             $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_EVENT_DATA);
             foreach ($matches as $match) {
-                $rowsToRemove[] = $match->getMatchedRowIndex();
+                $rowsHandled[] = $match->getMatchedRowIndex();
             }
         }
         
-        if (! empty($rowsToRemove)) {
-            $rowsToRemove = array_unique($rowsToRemove);
-            $eventSheet->removeRows($rowsToRemove);
-            $logbook->addLine('Removed ' . count($rowsToRemove) . ' rows from original data: ' . implode(', ', $rowsToRemove));
-        } else {
-            $logbook->addLine('No rows to remove');
-        }
-        
         if (! $updateSheet->isEmpty()) {
+            // Do the update
+            $ignoreIdx = count($this->ignoreDataSheets);
             $this->ignoreDataSheets[] = $updateSheet;
             $logbook->addLine('Updating ' . $updateSheet->countRows() . ' rows instead of original operation');
+            $logbook->addDataSheet('Updated data', $updateSheet);
             $updateSheet->dataUpdate(false, $transaction);
+            unset($this->ignoreDataSheets[$ignoreIdx]);
+
+            // Transfer update results to event data
+            $addedColsAliases = [];
+            $updatedRowHints = [];
+            foreach ($updateSheet->getColumns() as $updateCol) {
+                // Make sure the original data sheet gets all the system columns that were eventually
+                // added when updating: e.g. if the original sheet did not have a UID column, the
+                // update will add one and it will be important to put its values into the original
+                // sheet now!
+                if (! $eventCol = $eventSheet->getColumns()->getByExpression($updateCol->getExpressionObj())) {
+                    if ($updateCol->isAttribute() && $updateCol->getAttribute()->isSystem()) {
+                        $eventCol = $eventSheet->getColumns()->addFromExpression($updateCol->getExpressionObj(), $updateCol->getName(), $updateCol->getHidden());
+                        $addedColsAliases[] = $updateCol->getAttributeAlias();
+                    } else {
+                        continue;
+                    }
+                }
+                // Write all values from the updated-sheet back to the original sheet. This is particularly
+                // important for system columns like UIDs and updated timestamps, but can also be beneficial
+                // for calculated columns.
+                foreach ($updateCol->getValues() as $i => $val) {
+                    $updatedRowHints[$i] = "`{$i}` -> `{$updateSheetRowIdxToEventRowIdx[$i]}`";
+                    $eventCol->setValue($updateSheetRowIdxToEventRowIdx[$i], $val);
+                }
+            }
+            if (! empty($addedColsAliases)) {
+                $logbook->addLine('Added missing system columns to event data: `' . implode('`, `', $addedColsAliases) . '`');
+            }
+            $logbook->addLine('Transferred update result values to event data: e.g. the event data has now all timestamps, that were modified during the update. Updates (`update row` -> `event row`): ' . implode(', ', $updatedRowHints));
         }
-        
-        return $eventSheet;
+
+        $logbook->addIndent(-1);
+        $rowsHandled = array_unique($rowsHandled);
+        return $rowsHandled;
     }
     
-    protected function ignoreDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, BehaviorLogBook $logbook) : DataSheetInterface
+    /**
+     * Returns an array of row number to be ignored as duplicates
+     * 
+     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $eventSheet
+     * @param \exface\Core\CommonLogic\DataSheets\Matcher\MultiMatcher $matcher
+     * @param \exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook $logbook
+     * @return int[]
+     */
+    protected function ignoreDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, BehaviorLogBook $logbook) : array
     {
         $logbook->addSection('Ignoring duplicates');
         $duplRowNos = $matcher->getMatchedRowIndexes();
         $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: ' . implode(', ', $duplRowNos));
-        $rowsToRemove = [];
+        $rowsHandled = [];
         foreach ($duplRowNos as $duplRowNo) {
             // Don't bother about rows, that need to be removed anyway
-            if (in_array($duplRowNo, $rowsToRemove)) {
+            if (in_array($duplRowNo, $rowsHandled)) {
                 continue;
             }
             
             // First check duplicates in the data source. Remove this rows from the data source if it
             // has a match here.
             if (! empty($matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_DATA_SOURCE))) {
-                $rowsToRemove[] = $duplRowNo;
+                $rowsHandled[] = $duplRowNo;
             }
             
             // For duplicates found within the event data, just keep the first one. So remove all other
             // (duplicate) rows in the sheet.
             $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_EVENT_DATA);
             foreach ($matches as $match) {
-                $rowsToRemove[] = $match->getMatchedRowIndex();
+                $rowsHandled[] = $match->getMatchedRowIndex();
             }
         }
         
-        if (! empty($rowsToRemove)) {
-            $rowsToRemove = array_unique($rowsToRemove);
-            $eventSheet->removeRows($rowsToRemove);
-            $logbook->addLine('Removed ' . count($rowsToRemove) . ' rows: ' . implode(', ', $rowsToRemove));
-        } else {
-            $logbook->addLine('No rows to remove');
-        }
-        
-        return $eventSheet;
+        $rowsHandled = array_unique($rowsHandled);        
+        return $rowsHandled;
     }
     
     /**
@@ -467,6 +597,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             }
         }
         
+        $logbook->addIndent(+1);
         if (empty($missingAttrs) === false) {
             $logbook->addLine('Missing attributes in original data: `' . implode('`, `', $missingAttrs) . '`');
             if ($eventSheet->hasUidColumn(true) === false) {
@@ -498,6 +629,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $logbook->addLine('All required columns found in original data');
             $mainSheet = $eventSheet;
         }
+        $logbook->addIndent(-1);
         
         $matcher = new MultiMatcher($mainSheet);
         
@@ -518,6 +650,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $logbook->addDataSheet('Data to compare', $mainSheet);
         
         // See if there are duplicates within the current set of data
+        $logbook->addIndent(+1);
         switch ($mainSheet->countRows()) {
             case 0:
                 $logbook->addLine('Data to compare is empty - no need to search for duplicates');
@@ -586,8 +719,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $logbook->addLine('No potential duplicates found in data source');
             return $matcher;
         } else {
-            $logbook->addLine($checkSheet->countRows() . ' potential duplicates found in data source according to the computed filters');
+            $logbook->addLine($checkSheet->countRows() . ' potential duplicate(s) found in data source according to the computed filters');
         }
+        $logbook->addIndent(-1);
         
         $dataSourceMatcher = new DataRowMatcher($mainSheet, $checkSheet, $compareCols, self::LOCATED_IN_DATA_SOURCE);
         if ($treatUidMatchesAsDuplicates === false) {
