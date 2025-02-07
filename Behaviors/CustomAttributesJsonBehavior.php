@@ -21,31 +21,19 @@ use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
  * 
  * ### Usage Modes
  * 
- * The current implementation supports loading custom attribute definitions from three different sources, depending on
+ * The current implementation supports loading custom attribute definitions from two different sources, depending on
  * the configuration of this behavior:
  * 
- * 1. **From Data (implicit):** If you do not define a value for `definition_object_alias` the behavior will instead
+ * 1. **From an exclusive definition table:** If you define a value for `definition_object_alias`, the custom attribute
+ *  definitions will be loaded from that object. It MUST have a `CustomAttributeDefinitionBehavior` attached to it.
+ *  This is very fast and can handle a wide range of data types, but requires you to set up the definition object,
+ *  behavior and table. RECOMMENDED.
+ * 
+ * 2. **From data:** If you do not define a value for `definition_object_alias` the behavior will instead
  * try to deduce its custom attribute definitions from the data stored in the data address of `json_attribute_alias`.
- * This requires loading and parsing  the entire data set, which is very slow. NOT RECOMMENDED.
+ * This requires loading and parsing the entire data set, which is very slow. In addition, this approach can only
+ * produce attributes with data type string. NOT RECOMMENDED.
  * 
- * 2. **From an exclusive definition table (explicit):** If you define a value for `definition_object_alias` and
- * `definition_attribute_alias`,  but leave `definition_owner_attribute_alias` undefined, the behavior will assume that
- * you provided a specialized table that only contains custom attribute definitions for the object it is attached to.
- * This is very fast, but requires you to set up an exclusive table for this MetaObject. RECOMMENDED.
- * 
- * 3. **From a general definition table (explicit):** If you also define a value for
- * `definition_owner_attribute_alias`, the behavior will assume that you provided a general definition table that
- * contains custom attribute definitions for any number of MetaObjects. This is reasonably fast and requires little
- * setup. RECOMMENDED.
- * 
- * ### TO DOs
- * 
- * - The DataType of all JSON-Attributes is hard-coded to be `Text`. We should update this with an option to load a
- * data-type from the definition.
- * - If `definition_object_alias` references an object, that has itself a custom attributes behavior an error will be
- * thrown. In rare cases this might even result in infinite recursion. This happens, because the object referenced in
- * `definition_object_alias` must be loaded into memory, which in turn would trigger a new instance of this behavior.
- * TODO geb 2025-27-01: How to properly guard against this? (Idea: Static list?)
  */
 class CustomAttributesJsonBehavior 
     extends AbstractBehavior
@@ -126,18 +114,15 @@ class CustomAttributesJsonBehavior
                 null,
                 $logBook);
         }
-        
-        if(! $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class)) {
+
+        $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
+        if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
             throw new BehaviorRuntimeError(
                 $this,
                 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!',
                 null,
                 null,
                 $logBook);
-        }
-        
-        if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
-            return [];
         }
         
         return $definitionBehavior->addCustomAttributes(
@@ -210,6 +195,8 @@ class CustomAttributesJsonBehavior
     /**
      * Define from which object this behavior should try to load its custom attribute definitions.
      * 
+     * The definition object MUST have a behavior of type `CustomAttributeDefinitionBehavior` attached to it!
+     * 
      * @uxon-property definition_object_alias
      * @uxon-type metamodel:object
      * 
@@ -222,6 +209,9 @@ class CustomAttributesJsonBehavior
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getDefinitionObjectAlias() : ?string
     {
         return $this->jsonDefinitionObjectAlias;
@@ -244,6 +234,9 @@ class CustomAttributesJsonBehavior
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getJsonAttributeAlias() : string
     {
         return $this->jsonAttributeAlias;
