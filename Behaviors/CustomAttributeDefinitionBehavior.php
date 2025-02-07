@@ -12,6 +12,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
@@ -82,6 +83,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private array $typeModels = [];
     private ?string $attributeTypeModelAlias = null;
     private ?string $attributeNameAlias = null;
+    private ?string $attributeStorageKeyAlias = null;
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
     private ?string $definitionOwnerAttributeAlias = null;
@@ -137,10 +139,10 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * Summary of getAttributes
      * @return MetaAttributeInterface[]
      */
-    public function addCustomAttributes(MetaObjectInterface $targetObject, BehaviorLogBook $logBook) : array
+    public function addCustomAttributes(MetaObjectInterface $targetObject, CustomAttributeLoaderInterface $attributeLoader, BehaviorLogBook $logBook) : array
     {
         if(empty($this->getTypeModelsAll())) {
-            throw new BehaviorRuntimeError($this, 'Could not load custom attributes: Missing type models!');
+            throw new BehaviorRuntimeError($this, 'Could not load custom attributes: Missing type models!', null, null, $logBook);
         }
         
         $attrs = [];
@@ -149,6 +151,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $attributeDefinitionsSheet->getColumns()->addMultiple([
             $modelAlias = $this->getAttributeTypeModelAlias(),
             $nameAlias = $this->getAttributeNameAlias(),
+            $keyAlias = $this->getAttributeStorageKeyAlias(),
             $hintAlias = $this->getAttributeHintAlias(),
             $requiredAlias = $this->getAttributeRequiredAlias()
         ]);
@@ -162,12 +165,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
             $typeKey = $definitionRow[$modelAlias];
             if(! $typeModel = $this->getTypeModel($typeKey)) {
-                throw new BehaviorRuntimeError($this, 'Custom attribute type "' . $typeKey . '" not defined for "' . $this->getObject()->getAliasWithNamespace() . '"!');
+                throw new BehaviorRuntimeError($this, 'Custom attribute type "' . $typeKey . '" not defined for "' . $this->getObject()->getAliasWithNamespace() . '"!', null , null, $logBook);
             }
             
             $name = $definitionRow[$nameAlias];
-            $alias = StringDataType::convertCasePascalToUnderscore($name);
-            $attr = MetaObjectFactory::addAttributeTemporary($targetObject, $name, $alias, '', $typeModel[self::DATA_TYPE_KEY]);
+            $storageKey = $definitionRow[$keyAlias];
+            $alias = $attributeLoader->customAttributeStorageKeyToAlias($storageKey);
+            $attr = MetaObjectFactory::addAttributeTemporary(
+                $targetObject, 
+                $name, 
+                $alias, 
+                $attributeLoader->getCustomAttributeDataAddress($storageKey), 
+                $typeModel[self::DATA_TYPE_KEY]);
             
             unset($typeModel[self::DATA_TYPE_KEY]);
             unset($typeModel[$nameAlias]);
@@ -272,6 +281,34 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function setAttributeNameAlias(string $alias) : static
     {
         $this->attributeNameAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAttributeStorageKeyAlias() : string
+    {
+        if(! $this->attributeStorageKeyAlias) {
+            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_storage_key_alias"!');
+        }
+
+        return $this->attributeStorageKeyAlias;
+    }
+
+    /**
+     * Tell this behavior, in which attribute it will find the storage key of a custom attribute.
+     *
+     * @uxon-property attribute_storage_key_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-template "storage_key"
+     *
+     * @param string $alias
+     * @return $this
+     */
+    public function setAttributeStorageKeyAlias(string $alias) : static
+    {
+        $this->attributeStorageKeyAlias = $alias;
         return $this;
     }
 
