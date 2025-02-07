@@ -903,9 +903,12 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
      */
-    public function getAttributesModified(): array
+    public function getAttributesModified(DataSheetInterface $inputSheet): array
     {
         $attrs = [];
+        if (! $inputSheet->getMetaObject()->isExactly($this->getObject())) {
+            return $attrs;
+        }
         if ($this->hasCreatedOnAttribute()) {
             $attrs[] = $this->getCreatedOnAttribute();
         }
