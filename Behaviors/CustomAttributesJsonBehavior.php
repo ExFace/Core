@@ -14,6 +14,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
 
 /**
  * Automatically adds custom attributes to the object, whenever it is loaded from into memory.
@@ -46,13 +47,14 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * `definition_object_alias` must be loaded into memory, which in turn would trigger a new instance of this behavior.
  * TODO geb 2025-27-01: How to properly guard against this? (Idea: Static list?)
  */
-class CustomAttributesJsonBehavior extends AbstractBehavior
+class CustomAttributesJsonBehavior 
+    extends AbstractBehavior
+    implements CustomAttributeLoaderInterface
 {
     private bool $processed = false;
-
     private ?string $jsonDefinitionObjectAlias = null;
-
-    private string $jsonAttributeAlias;
+    private ?string $jsonAttributeAlias = null;
+    private ?string $jsonDataAddress = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -94,9 +96,9 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
 
         $definitionObjectAlias = $this->getDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
         if($this->getObject()->isExactly($definitionObjectAlias)) {
-            $this->addAttributesFromData($logBook);
+            $this->loadAttributesFromData($logBook);
         } else {
-            $this->addAttributesFromDefinition($logBook, $definitionObjectAlias);
+            $this->loadAttributesFromDefinition($logBook, $definitionObjectAlias);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
@@ -111,7 +113,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * @param string          $definitionObjectAlias
      * @return array
      */
-    protected function addAttributesFromDefinition(BehaviorLogBook $logBook, string $definitionObjectAlias) : array
+    protected function loadAttributesFromDefinition(BehaviorLogBook $logBook, string $definitionObjectAlias) : array
     {
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $definitionObjectAlias);
         $definitionObject = $dataSheet->getMetaObject();
@@ -137,54 +139,29 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
             return [];
         }
-
-        $targetObject = $this->getObject();
-        $customAttributes = $definitionBehavior->addCustomAttributes($targetObject, $logBook);
         
-        if(empty($customAttributes)) {
-            return [];
-        }
-        
-        try {
-            $jsonAttribute = $targetObject->getAttribute($this->getJsonAttributeAlias());
-            $dataAddressPrefix = $jsonAttribute->getDataAddress() . '::$.';
-            $logBook->addLine('Generated data address prefix: "' . $dataAddressPrefix . '".');
-        } catch (MetaAttributeNotFoundError $error) {
-            throw new BehaviorRuntimeError($this, 'Cannot load custom attributes:', null, $error, $logBook);
-        }
-
-        $logBook->addIndent(1);
-        foreach ($customAttributes as $attribute) {
-            $alias = $attribute->getAlias();
-            $attribute->setDataAddress($dataAddressPrefix . $alias);
-            $logBook->addLine('Set data address for attribute "' . $alias . '" to "' . $attribute->getDataAddress() . '".');
-        }
-        $logBook->addIndent(-1);
-
-        return $customAttributes;
+        return $definitionBehavior->addCustomAttributes(
+            $this->getObject(), 
+            $this, 
+            $logBook);
     }
 
     /**
-     * Deduces custom attributes from data stored in the `json_attribute_alias` as associative array `[AttributeAlias => DataAddress]`.
+     * Deduces custom attributes from data stored in the `json_attribute_alias` as associative array `[AttributeAlias
+     * => DataAddress]`.
      * 
      * NOTE: This mode is very slow and is only viable as a fallback.
      * 
      * @param BehaviorLogBook $logBook
      * @return array
      */
-    protected function addAttributesFromData(BehaviorLogBook $logBook): array
+    protected function loadAttributesFromData(BehaviorLogBook $logBook): array
     {
         $logBook->addLine('"definition_object_alias" was undefined. Loading custom attribute definitions from data instead.');
         
         try {
             $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
             $jsonAttributeAlias = $this->getJsonAttributeAlias();
-            $jsonAttribute = $this->getObject()->getAttribute($jsonAttributeAlias);
-            $logBook->addLine('Initialized definition attribute: "' . $jsonAttributeAlias . '".');
-            
-            $dataAddressPrefix = $jsonAttribute->getDataAddress() . '::$.';
-            $dataSheet->getColumns()->addFromAttribute($jsonAttribute);
-            $logBook->addLine('Generated data address: "' . $dataAddressPrefix . '".');
         } catch (MetaAttributeNotFoundError $error) {
             throw new BehaviorRuntimeError($this, 'Cannot load custom attributes:', null, $error, $logBook);
         }
@@ -199,12 +176,12 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
                 continue;
             }
 
-            foreach (json_decode($json) as $attributeAlias => $value) {
-                if(key_exists($attributeAlias, $customAttributes)) {
+            foreach (json_decode($json) as $storageKey => $value) {
+                if(key_exists($storageKey, $customAttributes)) {
                     continue;
                 }
 
-                $customAttributes[$attributeAlias] = $dataAddressPrefix . $attributeAlias;
+                $customAttributes[$storageKey] = $this->getCustomAttributeDataAddress($storageKey);
             }
         }
 
@@ -266,9 +243,31 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         $this->jsonAttributeAlias = $alias;
         return $this;
     }
-    
+
     public function getJsonAttributeAlias() : string
     {
         return $this->jsonAttributeAlias;
+    }
+
+    function getCustomAttributeDataAddressPrefix(): string
+    {
+        if(!$this->jsonDataAddress) {
+            $jsonAttribute = $this->getObject()->getAttribute($this->getJsonAttributeAlias());
+            $this->jsonDataAddress = $jsonAttribute->getDataAddress();
+        }
+        
+        return $this->jsonDataAddress . '::$.';
+    }
+
+    public function customAttributeStorageKeyToAlias(string $storageKey) : string
+    {
+        $storageKey = StringDataType::substringAfter($storageKey, '.');
+        return StringDataType::convertCasePascalToUnderscore($storageKey);
+    }
+    
+    public function getCustomAttributeDataAddress(string $storageKey) : string
+    {
+        $storageKey = StringDataType::substringAfter($storageKey, '.');
+        return $this->getCustomAttributeDataAddressPrefix() . $storageKey;
     }
 }
