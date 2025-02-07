@@ -2,11 +2,13 @@
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
 use exface\Core\DataTypes\PhpFilePathDataType;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Action\OnActionFailedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Events\DataSheet\AbstractDataSheetEvent;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
@@ -20,6 +22,7 @@ use exface\Core\Events\Transaction\OnBeforeTransactionRollbackEvent;
 use exface\Core\Events\Transaction\OnTransactionStartEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\DataLogBookInterface;
@@ -86,25 +89,25 @@ class ActionLogBook implements DataLogBookInterface
     {
         $eventMgr = $this->action->getWorkbench()->eventManager();
         // Action
-        $eventMgr->addListener(OnBeforeActionPerformedEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnActionFailedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeActionPerformedEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MAX);
+        $eventMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
+        $eventMgr->addListener(OnActionFailedEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
         // Behaviors
-        $eventMgr->addListener(OnBeforeBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnBehaviorAppliedEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeBehaviorAppliedEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MAX);
+        $eventMgr->addListener(OnBehaviorAppliedEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
         // DataSheet events
-        $eventMgr->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnCreateDataEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnUpdateDataEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnDeleteDataEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnBeforeReplaceDataEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnReplaceDataEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MAX);
+        $eventMgr->addListener(OnCreateDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
+        $eventMgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MAX);
+        $eventMgr->addListener(OnUpdateDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
+        $eventMgr->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MAX);
+        $eventMgr->addListener(OnDeleteDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
+        $eventMgr->addListener(OnBeforeReplaceDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MAX);
+        $eventMgr->addListener(OnReplaceDataEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
         // Transactions
-        $eventMgr->addListener(OnTransactionStartEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnBeforeTransactionCommitEvent::getEventName(), [$this, 'onEvent']);
-        $eventMgr->addListener(OnBeforeTransactionRollbackEvent::getEventName(), [$this, 'onEvent']);
+        $eventMgr->addListener(OnTransactionStartEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MAX);
+        $eventMgr->addListener(OnBeforeTransactionCommitEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
+        $eventMgr->addListener(OnBeforeTransactionRollbackEvent::getEventName(), [$this, 'onEvent'], EventManagerInterface::PRIORITY_MIN);
     }
 
     public function stopLoggingEvents() : void
@@ -143,6 +146,16 @@ class ActionLogBook implements DataLogBookInterface
             // Do not include events from this action itself in the inner log
             case ($event instanceof ActionEventInterface) && $event->getAction() === $this->action:
                 break;
+            // Do not change the indentation for transaction-events. Otherwise the indentation becomes too
+            // deep. The transaction is also not really a good group of events - it is too big
+            case ($event instanceof OnTransactionStartEvent):
+            case ($event instanceof OnBeforeTransactionCommitEvent):
+            case ($event instanceof OnBeforeTransactionRollbackEvent):
+                $this->eventStack[] = [
+                    'event' => $event,
+                    'indent' => $this->eventStackIndent
+                ];
+                break;
             case $event->isOnBefore():
                 $this->eventStackIndent++;
                 $this->eventStack[] = [
@@ -167,16 +180,30 @@ class ActionLogBook implements DataLogBookInterface
     protected function generateEventsSection() : void
     {
         $this->logBook->addSection(self::SECTION_INNER_EVENTS);
+        $cancelledEvents = [];
+        $cancelledIdtFix = 0;
         foreach ($this->eventStack as $entry) {
             $event = $entry['event'];	
-            $idt = $entry['indent'];
+            $idt = max($entry['indent'], 1) - $cancelledIdtFix;
             switch (true) {
+                case $event instanceof OnTransactionStartEvent:
+                    $this->addLine('Transaction start', $idt);
+                    break;
+                case $event instanceof OnBeforeTransactionCommitEvent:
+                case $event instanceof OnBeforeTransactionRollbackEvent:
+                    $connections = [];
+                    foreach ($event->getTransaction()->getDataConnections() as $connection) {
+                        $connections[] = $connection->getAlias();
+                    }
+                    $this->addLine('Transaction **' . ($event instanceof OnBeforeTransactionRollbackEvent ? 'roll back' : 'commit') . '** for connections `' . implode('`, `', $connections) . '`.', $idt);
+                    break;
                 // Skip the after-events in this list
                 case $event->isOnAfter():
                     break;
                 case $event instanceof OnBeforeBehaviorAppliedEvent:
                     $behavior = $event->getBehavior();
-                    $this->addLine("{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
+                    $eventName = StringDataType::substringAfter($event->getEventProcessed()::getEventName(), '.', $event->getEventProcessed()::getEventName(), false, true);
+                    $this->addLine("`{$eventName}` {$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
                     break;
                 case $event instanceof OnBeforeActionPerformedEvent:
                     $action = $event->getAction();
@@ -194,16 +221,21 @@ class ActionLogBook implements DataLogBookInterface
                 case $event instanceof OnBeforeReplaceDataEvent:
                     $this->addLine('**Replace** data `' . DataLogBook::buildTitleForData($event->getDataSheet()) . '`' . ($event->isDefaultPrevented() ? ' - **cancelled** by Event::preventDefault' : ''), $idt);
                     break;
-                case $event instanceof OnTransactionStartEvent:
-                    $this->addLine('Transaction start', $idt);
-                    break;
-                case $event instanceof OnBeforeTransactionCommitEvent:
-                case $event instanceof OnBeforeTransactionRollbackEvent:
-                    $connections = [];
-                    foreach ($event->getTransaction()->getDataConnections() as $connection) {
-                        $connections[] = $connection->getAlias();
+            }
+            // DataSheets will not fire after-events if the before-event is prevented. So there will be no
+            // indent decrease. This also cannot be handled when collecting events because the logbook listener
+            // is called first on before-events and will not know if any of the subsequent listeners will
+            // prevent the default on this event.
+            // TODO not sure, if other event types also need this treatment...
+            switch (true) {
+                case $event instanceof AbstractDataSheetEvent:
+                    if (! empty($cancelledEvents) && $idt <= $cancelledEvents[array_key_last($cancelledEvents)]['indent']) {
+                        array_pop($cancelledEvents);
+                        $cancelledIdtFix++;
                     }
-                    $this->addLine('Transaction **' . ($event instanceof OnBeforeTransactionRollbackEvent ? 'roll back' : 'commit') . '** for connections `' . implode('`, `', $connections) . '`.', $idt);
+                    if ($event->isDefaultPrevented()) {
+                        $cancelledEvents[] = $entry;
+                    }
                     break;
             }
         }
