@@ -147,6 +147,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         $attrs = [];
         
+        $logBook->addLine('Loading attribute definitions...');
+        $logBook->addIndent(1);
+        
         $attributeDefinitionsSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
         $attributeDefinitionsSheet->getColumns()->addMultiple([
             $modelAlias = $this->getAttributeTypeModelAlias(),
@@ -155,12 +158,22 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $hintAlias = $this->getAttributeHintAlias(),
             $requiredAlias = $this->getAttributeRequiredAlias()
         ]);
-        
+
+        $targetAlias = $targetObject->getAliasWithNamespace();
         if($ownerAlias = $this->getDefinitionOwnerAttributeAlias()) {
-            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerAlias, $targetObject->getAliasWithNamespace());
+            $logBook->addLine('Loading only definitions that match "' . $targetAlias . '" in "' . $ownerAlias . '" from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerAlias, $targetAlias);
+        } else {
+            $logBook->addLine('No value was set for "definition_owner_attribute_alias". Loading all definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
         
         $attributeDefinitionsSheet->dataRead();
+        
+        $logBook->addLine('Attribute definitions loaded successfully.');
+        $logBook->addDataSheet('Attribute Definitions', $attributeDefinitionsSheet);
+        $logBook->addIndent(-1);
+        $logBook->addLine('Adding custom attributes to "' . $targetAlias . '"...');
+        $logBook->addIndent(1);
         
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
             $typeKey = $definitionRow[$modelAlias];
@@ -171,11 +184,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $name = $definitionRow[$nameAlias];
             $storageKey = $definitionRow[$keyAlias];
             $alias = $attributeLoader->customAttributeStorageKeyToAlias($storageKey);
+            $address = $attributeLoader->getCustomAttributeDataAddress($storageKey);
             $attr = MetaObjectFactory::addAttributeTemporary(
                 $targetObject, 
                 $name, 
                 $alias, 
-                $attributeLoader->getCustomAttributeDataAddress($storageKey), 
+                $address, 
                 $typeModel[self::DATA_TYPE_KEY]);
             
             unset($typeModel[self::DATA_TYPE_KEY]);
@@ -186,7 +200,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $attr->setRequired($definitionRow[$requiredAlias]);
             
             $attrs[] = $attr;
+            $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
         }
+        $logBook->addIndent(-1);
         
         return $attrs;
     }
