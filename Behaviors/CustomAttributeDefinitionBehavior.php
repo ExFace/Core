@@ -18,60 +18,116 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Widgets\Value;
 
 /**
- * Automatically adds custom attributes to the object, whenever it is loaded into memory.
+ * Handles custom attribute definitions and type models. 
+ * 
+ * Custom attribute definitions are stored on the object this behavior is attached to, while
+ * type models can be defined by adding or editing them via the `type_models` property (see below).
+ * 
+ * ## Custom Attribute Definitions
+ * 
+ * Each custom attribute is based off of a unique definition, stored on the object this behavior is attached to.
+ * Whenever a custom attribute needs to be loaded, this behavior instantiates that attribute with the help of its definition,
+ * which is assembled from these properties:
+ * 
+ * - **Name**(`attribute_name_alias`): The attribute that holds the display name of the custom attribute.
+ * - **Storage Key**(`attribute_storage_key_alias`): The attribute that holds the storage key. The storage key is used to generate a
+ * data address and a technical alias of the custom attribute. Make sure it matches whatever storage scheme you are using. For example
+ * JSON storage keys should be written in snake_case, have no hierarchies and may omit the root accessor: `$.some_alias`, `some_alias`.
+ * - **Type Model**(`attribute_type_model_alias`): The attribute that holds the type model key. Type models simplify the configuration of
+ * custom attributes, by assigning meaningful defaults to most attribute properties. They are identified with a key, that must either match a
+ * default type model or a type model that you defined in `type_models` (see below).
+ * - **Hint**(`attribute_hint_alias`): The attribute that holds a short description of the custom attribute.
+ * - **Required**(`attribute_required_alias`): The attribute that holds the setting for whether the custom attribute is required.
+ * - **Owner Alias**(`attribute_definition_owner_alias`): This property is optional. You only need to set it if you wish to store definitions
+ * for attributes that belong to multiple different MetaObjects in the same table. In that case, the definition owner is used to identify what 
+ * MetaObject a custom attribute definition belongs to.
  * 
  * ## Type Models
  * 
- * Type models are special templates that simplify the creation of new custom attributes. Each
+ * Type models are special templates that simplify the creation of new custom attributes. They automatically set the properties of the
+ * attribute to match a pre-configured template, meaning users won't have to know about the technical details of attribute configuration.
+ * When creating a new custom attribute they must assign a type model to it. They can choose from all type models configured in the `type_models`
+ * property, as well as some basic default type models, such as "DATE", "TIME", "TEXT" and "NUMBER".
+ * 
+ * To define a new type model, add a new entry to the `type_models` property or duplicate an existing one. Type models use a simple form
+ * of inheritance. Any property that you omitted from your new type model will instead be inherited from the parent of that type model.
+ * You can assign a parent by entering it in the `inherits` property. If you omit that property or have entered an invalid parent, your
+ * type model will inherit from a default configuration. Inheritance will never overwrite properties that you specified in your type model.
  * 
  * ## Examples
  * 
+ * ### Behavior Configuration
+ * 
  * ```
+ * 
  *  {
- *      xxx "attribute_object_alias": "my.App.ART", // The object, that will receive the custom attributes
- *      xxx "relation_to_values_object": "ATTR_VAL", // The object, that contins values of the attribute (?)
- *      "attribute_name_alias": "NAME", // Attribute of the definition object, that contins the future attribute name
- *      "attribute_hint_alias": "DESCRIPTION", // Attribute of the definition object, that contins the future attribute
- * description
- *      "attribute_required_alias": "REQUIRED", // Attribute of the definition object, that contins the future
- * attribute alias
- *      "attribute_type_alias": "TYPE", // Attribute of the definition object, that contins the future attribute type 
- *      +++ "attribute_type_models": {
- *          "DATUM": {      
- *              "DATATYPE": "exface.Core.Date",
+ *      "attribute_hint_alias": "hint",
+ *      "attribute_name_alias": "name",
+ *      "attribute_required_alias": "required",
+ *      "attribute_type_model_alias": "type_model",
+ *      "attribute_storage_key_alias": "storage_key",
+ *      "attribute_definition_owner_alias": "owner_alias",
+ *      "type_models": {
+ *          "INHERITS_DEFAULT": {
+ *              "inherits": "",
+ *              "required": true,
+ *              "copyable": false
  *          },
- *          "PRIO": {
- *              "DATATYPE": "exface.Core.StringEnum",
- *              "CUSTOM_DATA_TYPE": {
- *                  "values": {
- *                      1: "High",
- *                      2: "Medium",
- *                      3: "Low"
- *                  }
- *              } 
- *          }, 
- *          "USER": {
- *              "DATATYPE": "exface.Core.HexadecimalNumber",
- *              "RELATED_OBJ": "exface.Core.USER"
- *              "RELATED_OBJ_ATTR": "USERNAME",
- *              "RELATION_CARDINALITY": null
+ *          "INHERITS_TIME": {
+ *              "inherits": "TIME",
+ *              "hidden": true,
+ *              "editable": false
  *          }
  *      }
- *  }
+ * }
+ * 
+ * ```
+ * 
+ * ### Default Type Model
+ * 
+ * The default type model is defined in code and is shown here for demonstrative purposes only. 
+ * You don't have to add it manually. Any type model without a valid parent will inherit these
+ * settings.
+ * 
+ * ```
+ * 
+ *  "DEFAULT" : {
+ *      "inherits": "",
+ *      "data_type": "exface.Core.String",
+ *      "readable": true,
+ *      "writable": true,
+ *      "copyable": true,
+ *      "editable": true,
+ *      "required": false,
+ *      "hidden": false,
+ *      "sortable": true,
+ *      "filterable": true,
+ *      "aggregatable": true,
+ *      "default_aggregate_function": "",
+ *      "default_sorter_dir": "ASC",
+ *      "value_list_delimiter": ",",
+ *      "default_display_order": ""
+ *  } 
  * 
  * ```
  * 
  * ## Usage
  * 
- * How to use this behavior in another one (e.g. CustomAttributesJsonBehavior)
+ * How to use this behavior in another one (e.g. `CustomAttributesJsonBehavior`)
  * 
  * ```
- * $defBehavior = $this->findAttributeDefinitionBehavior($this->getObject());
- * // Load definitions
- * foreach ($defBehavior->getCustomAttributes($this->getObject()) as $attr) {
- *    $attr->setDataAddress(...);
- *    $this->getObject()->addAttribute($attr);
+ * 
+ * $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
+ * if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
+ *      $msg = 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!';
+ *      throw new BehaviorRuntimeError( $this, $msg, null, null, $logBook);
  * }
+ *
+ * $customAttributes = $definitionBehavior->addCustomAttributes(
+ *      $this->getObject(),
+ *      $this,
+ *      $logBook);
+ * 
  * ```
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
@@ -85,7 +141,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $attributeStorageKeyAlias = null;
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
-    private ?string $definitionOwnerAttributeAlias = null;
+    private ?string $attributeDefinitionOwnerAlias = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -108,6 +164,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return $this;
     }
 
+    /**
+     * Add type models as dropdown to any widget editors that access `$this->typeModels`.
+     * 
+     * @param OnUiActionWidgetInitEvent $event
+     * @return void
+     */
     public function onWidgetInitModifyEditor(OnUiActionWidgetInitEvent $event) : void
     {
         $widget = $event->getWidget();
@@ -135,7 +197,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * Summary of getAttributes
+     * Load and add custom attributes to the target object.
+     * 
      * @return MetaAttributeInterface[]
      */
     public function addCustomAttributes(MetaObjectInterface $targetObject, CustomAttributeLoaderInterface $attributeLoader, BehaviorLogBook $logBook) : array
@@ -159,11 +222,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         ]);
 
         $targetAlias = $targetObject->getAliasWithNamespace();
-        if($ownerAlias = $this->getDefinitionOwnerAttributeAlias()) {
+        if($ownerAlias = $this->getAttributeDefinitionOwnerAlias()) {
             $logBook->addLine('Loading only definitions that match "' . $targetAlias . '" in "' . $ownerAlias . '" from "' . $this->getObject()->getAliasWithNamespace() . '".');
             $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerAlias, $targetAlias);
         } else {
-            $logBook->addLine('No value was set for "definition_owner_attribute_alias". Loading all definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $logBook->addLine('No value was set for "attribute_definition_owner_alias". Loading all definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
         
         $attributeDefinitionsSheet->dataRead();
@@ -208,7 +271,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         return $attrs;
     }
-    
+
+    /**
+     * Returns an array with all currently defined type models.
+     * 
+     * @return array
+     */
     protected function getTypeModelsAll() : array
     {
         if(empty($this->typeModels)) {
@@ -218,15 +286,29 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return  $this->typeModels;
     }
 
+    /**
+     * Returns the type model for the specified key or NULL if no match was found.
+     * 
+     * @param string $typeKey
+     * @return array|null
+     */
     protected function getTypeModel(string $typeKey) : ?array
     {
         return $this->getTypeModelsAll()[$typeKey];
     }
 
     /**
+     * Type models are special templates that simplify the creation of new custom attributes. 
+     * 
+     * They automatically set the properties of the attribute to match a pre-configured template, 
+     * meaning users won't have to know about the technical details of attribute configuration.
+     * When creating a new custom attribute they must assign a type model to it. They can choose 
+     * from all type models configured in the `type_models` property, as well as some basic default 
+     * type models, such as "DATE", "TIME", "TEXT" and "NUMBER".
+     * 
      * @uxon-property type_models
-     * @uxon-type array
-     * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":"true","writable":"true","copyable":"true","editable":"true","required":"false","hidden":"false","sortable":"true","filterable":"true","aggregatable":"true","default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":""}}
+     * @uxon-type \exface\core\CommonLogic\Model\Attribute[]
+     * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":true,"writable":true,"copyable":true,"editable":true,"required":false,"hidden":false,"sortable":true,"filterable":true,"aggregatable":true,"default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":""}}
      * 
      * @param UxonObject $uxon
      * @return $this
@@ -258,7 +340,23 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         return $this;
     }
-    
+
+    /**
+     * Resolves the inheritance hierarchy of a given type model by applying naive recursion.
+     * 
+     * Loops, and empty or invalid parent keys resolve to `array_merge($model, $this->getBaseTypeModel())`.
+     * NOTE: Loops can only be detected if you provide an accurate value for `$resolvedModels`!
+     * 
+     * @param string $key The type model key for the model you want to resolve.
+     * @param array  $model An associative array with `[property => value]` that represents 
+     * the model you wish to resolve.
+     * @param array  $allModels An associative array with `[modelKey => model[]]` that contains all models, 
+     * regardless of whether they have been resolved or not.
+     * @param array  $resolvedModels An associative array with `[modelKey => model[]]` that contains all models
+     * which have already been resolved. Make sure this value is accurate and up-to-date!
+     * @return array An associative array with `[modelKey => model[]]` that contains the resolved model, as well
+     * as the models resolved during all recursions.
+     */
     protected function resolveInheritanceHierarchy(
         string $key, 
         array $model, 
@@ -441,9 +539,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string|null
      */
-    public function getDefinitionOwnerAttributeAlias() : ?string
+    public function getAttributeDefinitionOwnerAlias() : ?string
     {
-        return $this->definitionOwnerAttributeAlias;
+        return $this->attributeDefinitionOwnerAlias;
     }
 
     /**
@@ -452,23 +550,22 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * You only need to set a value for this property, if you are storing custom attribute
      * definitions for more than one MetaObject in the same table.
      * 
-     * @uxon-property definition_owner_attribute_alias
+     * @uxon-property attribute_definition_owner_alias
      * @uxon-type metamodel:attribute
      * 
      * @param string|null $alias
      * @return $this
      */
-    public function setDefinitionOwnerAttributeAlias(?string $alias) : static
+    public function setAttributeDefinitionOwnerAlias(?string $alias) : static
     {
-        $this->definitionOwnerAttributeAlias = $alias;
+        $this->attributeDefinitionOwnerAlias = $alias;
         return $this;
     }
 
     /**
-     * An associative array with `[TypeModelKey => [...(TypeModel)]]` that contains some
-     * basic type model definitions, as well as the base type model.
+     * An associative array with `[TypeModelKey => []]` that contains some basic type model definitions
      * 
-     * All default type models, including the base, can be overwritten with `type_models`.
+     * All default type models can be overwritten with `type_models`.
      * 
      * @return string[][]
      */
