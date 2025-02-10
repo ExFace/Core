@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
@@ -25,7 +26,8 @@ use exface\Core\Exceptions\Model\MetaObjectModelError;
  */
 class Attribute implements MetaAttributeInterface
 {
-
+    use ImportUxonObjectTrait;
+    
     // Properties to be dublicated on copy()
     private $id;
 
@@ -245,6 +247,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property default_display_order
+     * @uxon-type integer
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultDisplayOrder()
@@ -265,6 +269,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property editable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setEditable()
@@ -318,6 +324,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property hidden
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setHidden()
@@ -358,6 +366,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property readable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setReadable()
@@ -379,6 +389,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property writable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setWritable()
@@ -400,6 +412,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property required
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setRequired()
@@ -420,6 +434,9 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * 
+     * @uxon-property data_type
+     * @uxon-type metamodel:datatype
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddress()
@@ -639,6 +656,9 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property default_sorter_dir
+     * @uxon-type string
+     * @uxon-template "ASC"
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()
@@ -907,6 +927,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property default_aggregate_function
+     * @uxon-type string
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultAggregateFunction()
@@ -931,6 +953,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property sortable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setSortable()
@@ -952,6 +976,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property filterable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFilterable()
@@ -973,6 +999,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property aggregatable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setAggregatable()
@@ -994,6 +1022,9 @@ class Attribute implements MetaAttributeInterface
     }
     
     /**
+     * @uxon-property value_list_delimiter
+     * @uxon-type string
+     * @uxon-template ","
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setValueListDelimiter()
@@ -1203,6 +1234,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property copyable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCopyable()
