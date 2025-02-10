@@ -6,11 +6,17 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractValidatingBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
@@ -132,10 +138,11 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData(), $this->getPriority());
-
+        $evtManager = $this->getWorkbench()->eventManager();
+        $evtManager->addListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
+        $evtManager->addListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks(), $this->getPriority());
+        $evtManager->addListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData(), $this->getPriority());
+        
         return $this;
     }
 
@@ -144,14 +151,14 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
-        $this->getWorkbench()->eventManager()->removeListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData());
-
+        $evtManager = $this->getWorkbench()->eventManager();
+        $evtManager->removeListener(OnCreateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
+        $evtManager->removeListener(OnUpdateDataEvent::getEventName(), $this->getEventHandlerToPerformChecks());
+        $evtManager->removeListener(OnBeforeUpdateDataEvent::getEventName(), $this->getEventHandlerToCacheOldData());
+        
         return $this;
     }
-
-
+    
     protected function generateDataChecks(UxonObject $uxonObject): DataCheckListInterface
     {
         $dataCheckList = new BehaviorDataCheckList($this->getWorkbench(), $this);
@@ -163,11 +170,22 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
     }
 
 
-    protected function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook): void
+    protected function processValidationResult(
+        DataSheetEventInterface $event, 
+        ?DataCheckFailedErrorMultiple $result, 
+        BehaviorLogBook $logbook): void
     {
-        $outputSheets = [];
-        $affectedUidAliases = [];
+        $transaction = $this->clearPreviousChecklistItems(
+            $event->getDataSheet(), 
+            $this->getRelevantUxons($event, $logbook),
+            $logbook);
+
+        if(!$result) {
+            $logbook->addLine('The data did not match any of the data checks.');
+            return;
+        }
         
+        $outputSheets = [];
         foreach ($result->getAllErrors() as $error) {
             $check = $error->getCheck();
             if(!$check instanceof DataCheckWithOutputData) {
@@ -185,7 +203,6 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
                 // We need to maintain separate sheets for each MetaObjectAlias, in case the designer
                 // configured data checks associated with different MetaObjects.
                 $outputSheets[$metaObjectAlias] = $checkOutputSheet;
-                $affectedUidAliases[$metaObjectAlias] = $check->getAffectedUidAlias();
             }
         }
         
@@ -198,26 +215,67 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
 
             $logbook->addDataSheet('Output-'.$metaObjectAlias, $outputSheet);
             $logbook->addLine('Working on sheet for '.$metaObjectAlias.'...');
-            $affectedUidAlias = $affectedUidAliases[$metaObjectAlias];
-            $logbook->addLine('Affected UID-Alias is '.$affectedUidAlias.'.');
-            // We filter by affected UID rather than by native UID to ensure that our delete operation finds all cached outputs,
-            // especially if they were part of the source transaction.
-            $outputSheet->getFilters()->addConditionFromValueArray($affectedUidAlias, $outputSheet->getColumnValues($affectedUidAlias));
-            // We want to delete ALL entries for any given affected UID to ensure that the cache only contains outputs
-            // that actually matched the current round of validations. This way we essentially clean up stale data.
-            $deleteSheet = $outputSheet->copy();
-            // Remove the UID column, because otherwise dataDelete() ignores filters and goes by UID.
-            $deleteSheet->getColumns()->remove($deleteSheet->getUidColumn());
-            $logbook->addLine('Deleting data with affected UIDs from cache.');
-            $transaction = $deleteSheet->getWorkbench()->data()->startTransaction();
-            $count = $deleteSheet->dataDelete($transaction);
-            $logbook->addLine('Deleted '.$count.' lines from cache.');
-            // Finally, write the most recent outputs to the cache.
             $logbook->addLine('Writing data to cache.');
             $count = $outputSheet->dataUpdate(true, $transaction);
             $logbook->addLine('Added '.$count.' lines to cache.');
         }
         $logbook->addIndent(-1);
+    }
+
+    /**
+     * Clears the previous data items from the checklist, for a given set of data check UXONs and UIDs.
+     * 
+     * This function deletes all checklist items, that match both the data checks in the given UXONs and
+     * any of the UIDs in the event sheet. This essentially clears the way for overwriting or updating the checklist
+     * for these UIDs.
+     * 
+     * @param DataSheetInterface $eventSheet
+     * @param array              $uxons
+     * @param BehaviorLogBook    $logBook
+     * @return DataTransactionInterface
+     */
+    protected function clearPreviousChecklistItems(DataSheetInterface $eventSheet, array $uxons, BehaviorLogBook $logBook) : DataTransactionInterface
+    {
+        $keyAliases = [];
+        foreach ($uxons as $uxon) {
+            if(empty($uxon) || !$uxon instanceof UxonObject) {
+                continue;
+            }
+
+            foreach ($uxon as $dataCheckUxon) {
+                $dataCheck = new DataCheckWithOutputData($this->getWorkbench(), $dataCheckUxon);
+                $keyAlias = $dataCheck->getForeignKeyAttributeAlias($eventSheet->getMetaObject());
+                $objectAlias = $dataCheck->getOutputDataSheetUxon()->getProperty('object_alias');
+
+                if(!empty($keyAlias) && !empty($objectAlias)) {
+                    $keyAliases[$objectAlias] = $keyAlias;
+                }
+            }
+        }
+        
+        $transaction = $eventSheet->getWorkbench()->data()->startTransaction();
+        $keys = $eventSheet->getColumnValues($eventSheet->getUidColumnName());
+        
+        foreach ($keyAliases as $objectAlias => $keyAlias) {
+            $deleteSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectAlias);
+            foreach ($keys as $key) {
+                $deleteSheet->addRow([$keyAlias => $key]);
+            }
+
+            $logBook->addLine('Key-Alias is '.$keyAlias.'.');
+            // We filter by affected UID rather than by native UID to ensure that our delete operation finds all cached outputs,
+            // especially if they were part of the source transaction.
+            $deleteSheet->getFilters()->addConditionFromValueArray($keyAlias, $deleteSheet->getColumnValues($keyAlias));
+            // We want to delete ALL entries for any given affected UID to ensure that the cache only contains outputs
+            // that actually matched the current round of validations. This way we essentially clean up stale data.
+            // Remove the UID column, because otherwise dataDelete() ignores filters and goes by UID.
+            $deleteSheet->getColumns()->remove($deleteSheet->getUidColumn());
+            $logBook->addLine('Deleting data with matching keys from cache.');
+            $count = $deleteSheet->dataDelete($transaction);
+            $logBook->addLine('Deleted '.$count.' lines from checklist.');
+        }
+        
+        return $transaction;
     }
 
     /**
@@ -236,6 +294,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     public function setCheckOnCreate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_CREATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_CREATE);
         return $this;
     }
@@ -258,6 +317,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     public function setCheckOnUpdate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_UPDATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_UPDATE);
         return $this;
     }
@@ -278,6 +338,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      */
     public function setCheckAlways(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_ANY);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_ANY);
         return $this;
     }

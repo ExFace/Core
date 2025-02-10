@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Widgets\iHaveVisibility;
  *
  */
 trait iHaveVisibilityTrait {
-    
+    private $visibility = null;
     /**
      *
      * {@inheritdoc}

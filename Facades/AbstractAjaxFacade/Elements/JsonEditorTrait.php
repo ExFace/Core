@@ -827,7 +827,6 @@ JS;
                     .uxoneditor-preset-card.text-only {position: relative;}
                     .uxoneditor-preset-card.text-only .uxoneditor-preset-name {padding: 0 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 20px);}
                    
-
                     .uxoneditor-checkbox {-webkit-appearance: checkbox; -moz-appearance: checkbox;}
                     .uxoneditor-table {margin-bottom: 20px}
                     .uxoneditor-table-selectable tr:hover {background-color: #3883fa;}
@@ -836,39 +835,10 @@ JS;
                     .uxoneditor-table td {padding: 3px !important;}
                     .uxoneditor-table tr.selected {background-color: #3883fa;}
                     .uxoneditor-table tr.selected > td {color: white;}
-                    .uxoneditor-table p {margin: 0.3em 0 0.7em 0;}
-                    .uxoneditor-table code {
-                        padding: 0.2em 0.4em;
-                        margin: 0;
-                        font-size: 85%;
-                        background-color: rgba(27,31,35,0.05);
-                        border-radius: 3px;
-                    }
-                    .uxoneditor-table pre {
-                        padding: 16px;
-                        overflow: auto;
-                        font-size: 85%;
-                        line-height: 1.45;
-                        background-color: #f6f8fa;
-                        border-radius: 3px;
-                    }
-                    .uxoneditor-table pre code {
-                        display: inline;
-                        max-width: auto;
-                        padding: 0;
-                        margin: 0;
-                        overflow: visible;
-                        line-height: inherit;
-                        word-wrap: normal;
-                        background-color: transparent;
-                        border: 0;
-                    }
-
-    
+                    .uxoneditor-table tr.row-details > td:first-of-type {border-left: 1px solid #3883fa}
+                    .uxoneditor-table p {margin: 0.3em 0 0.7em 0;}    
                     .uxoneditor-object-details-title {margin: 0.3em 0 0.7em 0;}
-                    .uxoneditor-object-details-description {margin: 0.3em 0 0.7em 0;}
-                    
-                    
+                    .uxoneditor-object-details-description {padding: 0.7em 0 0.7em 0; margin-bottom: 0.7em; border-width: 2px 0 2px 0; border-color: #3883fa; border-style: solid;} 
 CSS;
     }
     
@@ -879,6 +849,7 @@ CSS;
         $includes[] = '<link href="' . $facade->buildUrlToSource('LIBS.JSONEDITOR.CSS') . '" rel="stylesheet">';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource("LIBS.JSONEDITOR.JS") . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource("LIBS.JSONEDITOR.PICOMODAL") . '"></script>';
+        $includes[] = '<link href="' . $facade->buildUrlToSource('LIBS.MARKDOWN.CSS') . '" rel="stylesheet">';
         $includes[] = '<style type=' . '"text/css"' . '>' . $this::buildCssModalStyles() . '</style>';
         
         return $includes; 
@@ -1325,7 +1296,7 @@ CSS;
                     '       <div style="width: 30%; height: 100%; display: inline-block">' +
                     '          <div class="jsoneditor-jmespath-label">{$trans['PRESETS.PREVIEW']} </div>' +
                     '          <div class="jsoneditor-jmespath-block">' +
-                    '              <div id="uxonPresetDescription" style="height: 180px;"></div>' +
+                    '              <div id="uxonPresetDescription" class="markdown-body" style="height: 180px; overflow: auto;"></div>' +
                     '          </div>' +
                     '          <div class="jsoneditor-jmespath-block" style="height: calc(100% - 10px - 188px - 25px - 10px)">' +
                     '              <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
@@ -1544,17 +1515,17 @@ CSS;
         function {$funcPrefix}_getDetailsBtnContent(node){
 
             return  '   <p class="uxoneditor-object-details-title" style="display:none"></p>' + 
-                    '   <div class="uxoneditor-object-details-description" style="display:none"></div>' +
+                    '   <div class="uxoneditor-object-details-description markdown-body" style="display:none"></div>' +
                     '   <table class="uxoneditor-table">' +
                     '       <thead>' +
                     '           <tr>' +
                     '               <th style="text-align: center"><i class="fa fa-eye"></i></th>' +
+                    '               <th> </th>' +
                     '               <th>{$trans['DETAILS.PROPERTY']}</th>' +
                     '               <th>{$trans['DETAILS.VALUE']}</th>' +
                     '               <th>{$trans['DETAILS.DEFAULT']}</th>' +
                     '               <th>{$trans['DETAILS.DESCRIPTION']}</th>' +
                     '               <th>{$trans['DETAILS.REQUIRED']}</th>' +
-                    '               <th> </th>' +
                     '           </tr>' +
                     '       </thead>' +
                     '       <tbody>' +
@@ -1662,18 +1633,17 @@ CSS;
 
                     jqTableBody.append($(
                         '<tr>' + 
-                        '   <td style="text-align: center"><input class="uxoneditor-checkbox" type="checkbox" name="' + oRow['PROPERTY'] + '" ' + (oCurrentValues[oRow['PROPERTY']] !== undefined ? 'checked ' : '') + '></input></td>' + 
+                        '   <td style="text-align: center"><input class="uxoneditor-checkbox" type="checkbox" name="' + oRow['PROPERTY'] + '" ' + (oCurrentValues[oRow['PROPERTY']] !== undefined ? 'checked ' : '') + '></input></td>' +
+                        sBtnRowDetails + 
                         '   <td>' + oRow['PROPERTY'] + '</td>' + 
                         '   <td style="font-style: italic;">' + (oCurrentValues[oRow['PROPERTY']] || '') + '</td>' + 
                         '   <td>' + (oRow['DEFAULT'] || '') + '</td>' + 
                         '   <td>' + (oRow['TITLE'] || '') + '</td>' + 
                         '   <td style="text-align: center;">' + (oRow['REQUIRED'] ? '<i class="fa fa-check" aria-hidden="true"></i>' : '') + '</td>' +
-                        sBtnRowDetails + 
                         '</tr>' + 
-                        '<tr style="display: none;">' + 
+                        '<tr style="display: none;" class="row-details">' + 
                         '   <td></td>' +
-                        '   <td colspan="5" class="row-description">' + oRow['DESCRIPTION'] + ' </td>' +
-                        '   <td></td>' +
+                        '   <td colspan="6" class="row-description markdown-body">' + oRow['DESCRIPTION'] + ' </td>' +
                         '</tr>'
                     ));
                 }
