@@ -254,13 +254,19 @@ class CustomAttributesJsonBehavior
 
     public function customAttributeStorageKeyToAlias(string $storageKey) : string
     {
-        $storageKey = StringDataType::substringAfter($storageKey, '.');
+        if($keyWithoutPrefix = StringDataType::substringAfter($storageKey, '.')){
+            $storageKey = $keyWithoutPrefix;
+        }
+        
         return StringDataType::convertCasePascalToUnderscore($storageKey);
     }
     
     public function getCustomAttributeDataAddress(string $storageKey) : string
     {
-        $storageKey = StringDataType::substringAfter($storageKey, '.');
+        if($keyWithoutPrefix = StringDataType::substringAfter($storageKey, '.')){
+            $storageKey = $keyWithoutPrefix;
+        }
+        
         return $this->getCustomAttributeDataAddressPrefix() . $storageKey;
     }
 }
