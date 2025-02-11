@@ -226,7 +226,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $logBook->addLine('Loading only definitions that match "' . $targetAlias . '" in "' . $ownerAlias . '" from "' . $this->getObject()->getAliasWithNamespace() . '".');
             $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerAlias, $targetAlias);
         } else {
-            $logBook->addLine('No value was set for "attribute_definition_owner_alias". Loading all definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $logBook->addLine('No value was set for "attribute_definition_owner_alias". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
         
         $attributeDefinitionsSheet->dataRead();
@@ -239,11 +239,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
             $typeKey = $definitionRow[$modelAlias];
+            $name = $definitionRow[$nameAlias];
+
             if(! $typeModel = $this->getTypeModel($typeKey)) {
-                throw new BehaviorRuntimeError($this, 'Custom attribute type "' . $typeKey . '" not defined for "' . $this->getObject()->getAliasWithNamespace() . '"!', null , null, $logBook);
+                throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
             }
             
-            $name = $definitionRow[$nameAlias];
             $storageKey = $definitionRow[$keyAlias];
             $alias = $attributeLoader->customAttributeStorageKeyToAlias($storageKey);
             $address = $attributeLoader->getCustomAttributeDataAddress($storageKey);
