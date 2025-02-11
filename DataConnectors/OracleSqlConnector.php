@@ -6,6 +6,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\ModelBuilders\OracleSqlModelBuilder;
 
 /**
@@ -306,5 +307,21 @@ class OracleSqlConnector extends AbstractSqlConnector
     {
         return new OracleSqlModelBuilder($this);
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::canJoin()
+     */
+    public function canJoin(DataConnectionInterface $otherConnection) : bool
+    {
+        $parentResult = parent::canJoin($otherConnection);
+        if ($parentResult === false) {
+            return false;
+        }
+        if (! $otherConnection instanceof $this) {
+            return false;
+        }
+        return $this->getSid() === $otherConnection->getSid();
+    }
 }
-?>
