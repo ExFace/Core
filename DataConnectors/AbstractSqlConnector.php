@@ -2,6 +2,7 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\AbstractDataConnector;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
@@ -438,5 +439,24 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     protected function getBatchDelimiterPattern() : ?string
     {
         return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::canJoin()
+     */
+    public function canJoin(DataConnectionInterface $otherConnection) : bool
+    {
+        if (! $otherConnection instanceof SqlDataConnectorInterface) {
+            return false;
+        }
+        if (! $otherConnection instanceof $this) {
+            return false;
+        }
+        if ($this->getHost() !== $otherConnection->getHost()) {
+            return false;
+        }
+        return true;
     }
 }

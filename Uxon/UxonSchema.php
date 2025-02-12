@@ -1,7 +1,10 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -819,7 +822,8 @@ class UxonSchema implements UxonSchemaInterface
             $namespace = str_replace(['/Formulas', '/'], ['', $dot], $row['PATH_RELATIVE']);
             $options[] = $namespace . $dot . $row['NAME'];
             if (strcasecmp($namespace, 'exface.Core') === 0) {
-                $options[] = $row['NAME'];
+                $shortName = array_search($row['NAME'], FormulaSelector::SHORT_NAMES);
+                $options[] = $shortName !== false ? $shortName : $row['NAME'];
             }
         }
        sort($options);
@@ -1038,6 +1042,7 @@ class UxonSchema implements UxonSchemaInterface
         $ds->dataRead();
         
         foreach ($ds->getRows() as $row) {
+            $row['DESCRIPTION'] = self::buildHtmlFromMarkdown($row['DESCRIPTION'] ?? '');
             // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung
             // Class Plus Wrapper-Presets (ausser AbstractWidget)
             $presets[] = $row;
@@ -1056,5 +1061,27 @@ class UxonSchema implements UxonSchemaInterface
         $col = $ds->getColumns()->addFromExpression($attribute);
         $ds->dataRead();
         return $col->getValues(false);
+    }    
+    
+    /**
+     * Converts markdown into html, removing all <a> tags. 
+     * On failure it just returns the markdown string instead.
+     * 
+     * @param string $markdown
+     * @param bool $removeLokalUrls
+     * @return string
+     */
+    public static function buildHtmlFromMarkdown(string $markdown, bool $removeLokalUrls = true) : string 
+    {
+        try{
+            $html = MarkdownDataType::convertMarkdownToHtml($markdown);
+            if ($removeLokalUrls === true) {
+                $html = HtmlDataType::stripLinks($html, HtmlDataType::URL_TYPE_RELATIVE);
+            }
+        } catch (\Throwable $e) {
+            $html = $markdown;
+        }
+        
+        return $html;
     }
 }

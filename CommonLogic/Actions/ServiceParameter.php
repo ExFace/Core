@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Actions;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
@@ -9,6 +10,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\ServiceParameterInterface;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 class ServiceParameter implements ServiceParameterInterface
 {
@@ -30,13 +32,13 @@ class ServiceParameter implements ServiceParameterInterface
     
     private $dataTypeUxon = null;
     
-    private $action = null;
+    private $service = null;
     
     private $dataSourceProperties = null;
     
-    public function __construct(ActionInterface $action, UxonObject $uxon = null)
+    public function __construct(WorkbenchDependantInterface $service, UxonObject $uxon = null)
     {
-        $this->action = $action;
+        $this->service = $service;
         if ($uxon !== null) {
             $this->importUxonObject($uxon);
         }
@@ -51,8 +53,24 @@ class ServiceParameter implements ServiceParameterInterface
     {
         $uxon = new UxonObject([
             'name' => $this->getName(),
-            'required' => $this->isRequired()
+            'data_type' => $this->getDataType()->exportUxonObject()
         ]);
+
+        if (null !== $val = $this->getDescription()) {
+            $uxon->setProperty('description', $val);
+        }
+        if (null !== $val = $this->getGroup()) {
+            $uxon->setProperty('group', $val);
+        }
+        if (true === $val = $this->isRequired()) {
+            $uxon->setProperty('required', $val);
+        }
+        if (null !== $val = $this->getDefaultValue()) {
+            $uxon->setProperty('default_value', $val);
+        }
+        if (! ($val = $this->getCustomProperties())->isEmpty()) {
+            $uxon->setProperty('custom_properties', $val);
+        }
         
         return $uxon;
     } 
@@ -166,9 +184,9 @@ class ServiceParameter implements ServiceParameterInterface
         return $this;
     }
     
-    public function getAction() : ActionInterface
+    protected function getService() : WorkbenchDependantInterface
     {
-        return $this->action;
+        return $this->service;
     }
     
     /**
@@ -178,7 +196,7 @@ class ServiceParameter implements ServiceParameterInterface
      */
     public function getWorkbench()
     {
-        return $this->action->getWorkbench();
+        return $this->service->getWorkbench();
     }
     
     /**
@@ -198,8 +216,14 @@ class ServiceParameter implements ServiceParameterInterface
     
     public function parseValue($val) : string
     {
+        $service = $this->getService();
         if ($this->isRequired() && $this->getDataType()->isValueEmpty($val)) {
-            throw new ActionInputMissingError($this->getAction(), 'Service parameter "' . $this->getName() . '" cannot be empty!');
+            switch (true) {
+                case $service instanceof ActionInterface:
+                    throw new ActionInputMissingError($service, 'Service parameter "' . $this->getName() . '" cannot be empty!');
+                default:
+                    throw new UnexpectedValueException('Service parameter "' . $this->getName() . '" cannot be empty!');
+            }
         }
         
         return $this->getDataType()->parse($val);
@@ -300,7 +324,7 @@ class ServiceParameter implements ServiceParameterInterface
     }
     
     /**
-     * The group of the perameter in case tha action takes different parameter groups (e.g. CLI arguments and options)
+     * The group of the perameter in case tha service takes different parameter groups (e.g. CLI arguments and options)
      * 
      * @uxon-property group
      * @uxon-type string

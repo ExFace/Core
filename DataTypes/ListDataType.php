@@ -40,7 +40,7 @@ class ListDataType extends StringDataType
         $valuesType = $this->getValuesDataType();
         $vals = explode($this->getListDelimiter(), $list);
         foreach ($vals as $val) {
-            $parsedVals = $valuesType->parse(trim($val));
+            $parsedVals[] = $valuesType->parse(trim($val));
         }
         $parsed = implode($this->getListDelimiter(), $parsedVals);
         return $parsed;        
