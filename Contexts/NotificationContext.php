@@ -245,29 +245,29 @@ class NotificationContext extends AbstractContext
         $grps = [];
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         foreach ($data->getRows() as $rowNo => $row) {
-            $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-            $renderer->addPlaceholder(
-                (new DataRowPlaceholders($data, $rowNo, '~notification:'))
-                ->setSanitizeAsUxon(true)
-            );
-            $widgetJson = $renderer->render($row['WIDGET_UXON']);
-            
-            $dateDiff = DateDataType::diff($row['SENT_ON'])->days;
-            switch (true) {
-                case $dateDiff === 0: $grpCaption = $translator->translate('LOCALIZATION.DATE.TODAY'); break;
-                case $dateDiff === 1: $grpCaption = $translator->translate('LOCALIZATION.DATE.YESTERDAY'); break;
-                default: $grpCaption = DateDataType::formatDateLocalized(new \DateTime($row['SENT_ON']), $this->getWorkbench());
-            }
-            
-            if (null === $btnGrp = ($grps[$grpCaption] ?? null)) {
-                $btnGrp = $menu->createButtonGroup(new UxonObject([
-                    'caption' => $grpCaption
-                ]));
-                $menu->addButtonGroup($btnGrp);
-                $grps[$grpCaption] = $btnGrp;
-            }
-            
             try {
+                $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+                $renderer->addPlaceholder(
+                    (new DataRowPlaceholders($data, $rowNo, '~notification:'))
+                    ->setSanitizeAsUxon(true)
+                );
+                $widgetJson = $renderer->render($row['WIDGET_UXON']);
+                
+                $dateDiff = DateDataType::diff($row['SENT_ON'])->days;
+                switch (true) {
+                    case $dateDiff === 0: $grpCaption = $translator->translate('LOCALIZATION.DATE.TODAY'); break;
+                    case $dateDiff === 1: $grpCaption = $translator->translate('LOCALIZATION.DATE.YESTERDAY'); break;
+                    default: $grpCaption = DateDataType::formatDateLocalized(new \DateTime($row['SENT_ON']), $this->getWorkbench());
+                }
+                
+                if (null === $btnGrp = ($grps[$grpCaption] ?? null)) {
+                    $btnGrp = $menu->createButtonGroup(new UxonObject([
+                        'caption' => $grpCaption
+                    ]));
+                    $menu->addButtonGroup($btnGrp);
+                    $grps[$grpCaption] = $btnGrp;
+                }
+            
                 $btn = $btnGrp->createButton(new UxonObject([
                     'caption' => $row['TITLE'],
                     'action' => [
