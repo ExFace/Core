@@ -1073,7 +1073,7 @@ class DataSheet implements DataSheetInterface
             $columnAttr = $col->getAttribute();
             switch (true) {
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
-                case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
+                case $col->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
                     continue 2;
                 // Update nested sheets - i.e. replace all rows in the data source, that are related to
                 // the each row of the main sheet with the nested rows here.
@@ -1622,7 +1622,7 @@ class DataSheet implements DataSheetInterface
             } 
             
             // Skip columns with read-only attributes
-            if (! $columnAttr->isWritable()) {
+            if (! $column->isWritable()) {
                 continue;
             }
             

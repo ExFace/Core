@@ -439,4 +439,17 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return void
      */
     public function normalizeValues();
+
+    /**
+     * Set to FALSE to explicitly exclude this column from create/update operations
+     * @param bool $trueOrFalse
+     * @return DataColumnInterface
+     */
+    public function setWritable(bool $trueOrFalse) : DataColumnInterface;
+
+    /**
+     * 
+     * @return boolean
+     */
+    public function isWritable() : bool;
 }
