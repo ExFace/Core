@@ -35,6 +35,7 @@ use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
  * This requires loading and parsing the entire data set, which is very slow. In addition, this approach can only
  * produce attributes with data type string. NOT RECOMMENDED.
  * 
+ * @author Georg Bieger
  */
 class CustomAttributesJsonBehavior 
     extends AbstractBehavior

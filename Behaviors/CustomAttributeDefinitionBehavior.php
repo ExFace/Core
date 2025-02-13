@@ -130,6 +130,8 @@ use exface\Core\Widgets\Value;
  *      $logBook);
  * 
  * ```
+ * 
+ * @author Georg Bieger
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
