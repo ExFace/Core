@@ -392,6 +392,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
             $this->onUpdateCheckForConflicts($event);
         }
         
+        // Set new values for the updated on/by columns
         $now = DateTimeDataType::now();
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         if ($this->hasUpdatedOnAttribute()) {
@@ -404,6 +405,14 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 $userVal = $user->getUid();
             }
             $this->setAttributeValues($data_sheet, $this->getUpdatedByAttribute(), $userVal);
+        }
+
+        // Make created on/by column non-writable to guarantee, that their values never change
+        if ($this->hasCreatedByAttribute() && $col = $data_sheet->getColumns()->getByAttribute($this->getCreatedByAttribute())) {
+            $col->setWritable(false);
+        }
+        if ($this->hasCreatedOnAttribute() && $col = $data_sheet->getColumns()->getByAttribute($this->getCreatedOnAttribute())) {
+            $col->setWritable(false);
         }
     }
     
