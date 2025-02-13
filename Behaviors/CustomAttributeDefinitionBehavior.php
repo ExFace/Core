@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
@@ -253,7 +254,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $name, 
                 $alias, 
                 $address, 
-                $typeModel[self::KEY_DATA_TYPE]);
+                $typeModel[self::KEY_DATA_TYPE],
+                CustomAttribute::class);
             
             // Remove properties from the template that should or could not be applied to the attribute.
             unset($typeModel[self::KEY_DATA_TYPE]);
