@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
@@ -172,15 +173,17 @@ class CustomAttributesJsonBehavior
 
         $logBook->addLine("Adding custom attributes...");
         $logBook->addIndent(1);
+        $targetObject = $this->getObject();
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), StringDataType::class);
         foreach ($customAttributes as $alias => $address) {
             $logBook->addLine('Adding attribute "' . $alias . '" with data address "' . $address . '".');
             $attribute = MetaObjectFactory::addAttributeTemporary(
-                $this->getObject(),
+                $targetObject,
                 $alias,
                 $alias,
                 $address,
-                $dataType);
+                $dataType,
+                CustomAttribute::class);
 
             $attribute->setFilterable(true);
             $attribute->setSortable(true);

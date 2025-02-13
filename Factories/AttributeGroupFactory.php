@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
@@ -62,8 +63,8 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
             return $attributeList;
         }
         
-        $spell = array_shift($spells);
-        if (substr($spell, 0, 1) === '!') {
+        $spell = mb_trim(array_shift($spells));
+        if (str_starts_with($spell, '!')) {
             $invert = true;
             $alias = '~' . substr($spell, 1);
         } else {
@@ -113,9 +114,13 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                     return $invert XOR $attr->isCopyable();
                 });
                 break;
+            case MetaAttributeGroupInterface::CUSTOM:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                    return $invert XOR $attr instanceof CustomAttribute;
+                });
+                break;
         }
         
         return static::getAttributesByMagic($attributeList, $spells);
     }
 }
-?>
