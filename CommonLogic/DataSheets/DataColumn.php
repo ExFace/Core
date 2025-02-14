@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\DataTypes\ListDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -55,6 +54,8 @@ class DataColumn implements DataColumnInterface
     /** @var Formula */
     private $formula = null;
 
+    private $writable = null;
+
     function __construct($expression, DataSheetInterface $data_sheet, $name = '')
     {
         $this->data_sheet = $data_sheet;
@@ -97,9 +98,17 @@ class DataColumn implements DataColumnInterface
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
             $expression = $expression_or_string;
+            $exprObj = $expression->getMetaObject;
+            $thisObj = $this->getMetaObject();
+            if ($exprObj === null) {
+                $expression->setMetaObject($thisObj);
+            } elseif (! $thisObj->is($exprObj)) {
+                throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot add expression "' . $expression->__toString() . '" based on object ' . $exprObj->__toString() . ' to data sheet of ' . $thisObj->__toString() . '!');
+            }
         }
         
         $this->expression = $expression;
+        $this->data_type = null;
         
         if ($expression->isMetaAttribute()) {
             $this->setAttributeAlias($expression->toString());
@@ -209,34 +218,31 @@ class DataColumn implements DataColumnInterface
     public function getDataType()
     {
         if (null === $this->data_type) {
-            if ($attribute_alias = $this->getAttributeAlias()) {
+            // Determine the data type from the columns expression.
+            // However, attributes need some special treatment as we need to detect columns
+            // with subsheets - that is, attributes, that represent a reverse relation.
+            if (null !== $attribute_alias = $this->getAttributeAlias()) {
                 // If the column's alias expression is actually a reverse relation, it must
                 // contain a subsheet because a reverse relation is not an attribute of it's
                 // left object and, thus, cannot contain scalar values.
-                if ($this->getMetaObject()->hasRelation($attribute_alias) === true){
-                    if ($this->getMetaObject()->getRelation($attribute_alias)->isReverseRelation() === true){
-                        $this->data_type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DataSheetDataType::class);
-                        return $this->data_type;
+                if ($this->getMetaObject()->hasRelation($attribute_alias) === true && $this->getMetaObject()->getRelation($attribute_alias)->isReverseRelation() === true){
+                    $this->data_type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DataSheetDataType::class);
+                } else {
+                    try {
+                        $this->data_type = $this->getExpressionObj()->getDataType();
+                    } catch (MetaAttributeNotFoundError $e) {
+                        // ignore expressions with invalid attribute aliases
                     }
                 }
-                try {
-                    $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-                    $attrDataType = $attr->getDataType();
-                    if ($this->hasAggregator()) {
-                        $this->data_type = $this->getAggregator()->getResultDataType($attrDataType);
-                        // If the aggregator produces a list, give the list the delimiter of this attribute
-                        if ($this->data_type instanceof ListDataType) {
-                            $this->data_type->setListDelimiter($attr->getValueListDelimiter());
-                        }
-                    } else {
-                        $this->data_type = $attrDataType;
-                    }
-                    return $this->data_type;
-                } catch (MetaAttributeNotFoundError $e) {
-                    // ignore expressions with invalid attribute aliases
-                }
+            } else {
+                $this->data_type = $this->getExpressionObj()->getDataType(); 
             }
-            $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
+
+            // If the data type could not be determined from the expression, set the default
+            // data type - string.
+            if ($this->data_type === null) {
+                $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
+            }
         }
         return $this->data_type;
     }
@@ -691,6 +697,7 @@ class DataColumn implements DataColumnInterface
     public function setAttributeAlias($value)
     {
         $this->attribute_alias = $value;
+        $this->data_type = null;
         return $this;
     }
 
@@ -1035,5 +1042,26 @@ class DataColumn implements DataColumnInterface
         }
         
         return false;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setWritable()
+     */
+    public function setWritable(bool $trueOrFalse) : DataColumnInterface
+    {
+        $this->writable = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isWritable()
+     */
+    public function isWritable() : bool
+    {
+        return $this->writable ?? $this->isAttribute() && $this->getAttribute()->isWritable();
     }
 }

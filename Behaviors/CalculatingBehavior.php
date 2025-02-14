@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Events\DataTransactionEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -109,7 +110,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * @author Andrej Kabachnik
  *
  */
-class CalculatingBehavior extends AbstractBehavior
+class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
 {
     private $onlyIfDataMatchesConditionGroupUxon = null;
 
@@ -410,5 +411,38 @@ class CalculatingBehavior extends AbstractBehavior
     {
         $this->calculateOnEventNames = $arrayOfEvents->toArray();
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
+     */
+    public function getAttributesModified(DataSheetInterface $inputSheet): array
+    {
+        if (! $inputSheet->getMetaObject()->isExactly($this->getObject())) {
+            return [];
+        }
+        
+        $mapper = $this->getDataMapper($inputSheet, false);
+        $attrs = [];
+        foreach ($mapper->getMappings() as $map) {
+            foreach ($map->getRequiredExpressions($inputSheet) as $expr) {
+                if ($expr->isMetaAttribute()) {
+                    $attrs[] = $expr->getAttribute();
+                }
+            }
+        }
+        return $attrs;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::canAddColumnsToData()
+     */
+    public function canAddColumnsToData(): bool
+    {
+        return true;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Behaviors\CommentBehavior;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\ImageUrlDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -13,10 +14,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Facades\HttpFileServerFacade;
-use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iCanEditData;
-use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
@@ -35,7 +34,7 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
  *    "comment_edited_date_attribute_alias": "MODIFY_ON",
  *    "comment_author_id_attribute_alias": "CREATED_BY",
  *    "comment_author_attribute_alias": "CREATED_BY__FULL_NAME",
- *    "comment_title_attribute_alias": "TITLE",
+ *    "comment_content_attribute_alias": "TITLE",
  * }
  * 
  * ```
@@ -53,9 +52,9 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
 
     private $imageUrlAttributeAlias = null;
     
-    private $commentTitleColumn = null;
+    private $commentContentColumn = null;
     
-    private $commentTitleAttributeAlias = null;
+    private $commentContentAttributeAlias = null;
     
     private $commentCreatedDateColumn = null;
     
@@ -98,7 +97,11 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     private $checkedBehaviorForObject = null;
 
     private $btnCreate;
-    
+
+    private $btnEdit;
+
+    private $btnDelete;
+
     protected function init()
     {
         parent::init();
@@ -109,15 +112,24 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
 
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         
-        //if (! $widget->isReadOnly()) {
-            $this->btnCreate = $this->createButton(new UxonObject([
-                'widget_type' => 'DataButton',
-                'caption' => $translator->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE'),
-                'visibility' => 'hidden',
-                'action_alias' => 'exface.Core.CreateData'
-            ]));
-            $this->addButton($this->btnCreate);
-        //}
+        //buttons are created from the framework their click functions will be used in the ui 
+        $this->btnCreate = $this->createButton(new UxonObject([
+            'widget_type' => 'DataButton',
+            'visibility' => 'hidden',
+            'action_alias' => 'exface.Core.CreateData'
+        ]));
+        $this->addButton($this->btnCreate);$this->btnEdit = $this->createButton(new UxonObject([
+            'widget_type' => 'DataButton',
+            'visibility' => 'hidden',
+            'action_alias' => 'exface.Core.UpdateData'
+        ]));
+        $this->addButton($this->btnEdit);
+        $this->btnDelete = $this->createButton(new UxonObject([
+            'widget_type' => 'DataButton',
+            'visibility' => 'hidden',
+            'action_alias' => 'exface.Core.DeleteObject'
+        ]));
+        $this->addButton($this->btnDelete);
         return;
     }
 
@@ -125,19 +137,15 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     {
         return $this->btnCreate;
     }
-    
-    /**
-     * 
-     * @return DataColumn|NULL
-     */
-    public function getImageUrlColumn() : ?DataColumn
+
+    public function getButtonDelete() : DataButton
     {
-        return $this->imageUrlColumn;
+        return $this->btnDelete;
     }
-    
-    public function hasImageUrlColumn() : bool
+
+    public function getButtonEdit() : DataButton
     {
-        return $this->commentTitleColumn !== null;
+        return $this->btnEdit;
     }
 
     /**
@@ -145,73 +153,44 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
      * @throws WidgetConfigurationError
      * @return DataColumn
      */
-    public function getCommentTitleColumn() : DataColumn
+    public function getCommentContentColumn() : DataColumn
     {
-        if ($this->commentTitleAttributeAlias === null) {
+        if ($this->commentContentAttributeAlias === null) {
             $this->guessColumns();
         }
-        if ($this->commentTitleColumn !== null) {
-            return $this->commentTitleColumn;
+        if ($this->commentContentColumn !== null) {
+            return $this->commentContentColumn;
         } 
-        throw new WidgetConfigurationError($this, 'No data column to be used for comment titles could be found!');
+        throw new WidgetConfigurationError($this, 'No data column to be used for comment contents could be found!');
     }
     
     /**
      * 
      * @return bool
      */
-    public function hasCommentTitleColumn() : bool
+    public function hasCommentContentColumn() : bool
     {
-        if ($this->commentTitleAttributeAlias === null) {
+        if ($this->commentContentAttributeAlias === null) {
             $this->guessColumns();
         }
-        return $this->commentTitleAttributeAlias !== null;
+        return $this->commentContentAttributeAlias !== null;
     }
     
     /**
-     * The alias of the attribute with the image titles.
-     * 
-     * If the gallery shows an object with `FileBehavior`, the filename attribute will be used for
-     * `image_title_attribute_alias` by default.
-     * 
-     * @uxon-property comment_title_attribute_alias
+     * @uxon-property comment_content_attribute_alias
      * @uxon-type metamodel:attribute
      * 
      * @param string $value
      * @return CommentsFeed
      */
-    public function setCommentTitleAttributeAlias(string $value) : CommentsFeed
+    public function setCommentContentAttributeAlias(string $value) : CommentsFeed
     {
-        $this->commentTitleAttributeAlias = $value;
+        $this->commentContentAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
         $this->addColumn($col);
-        $this->commentTitleColumn = $col;
+        $this->commentContentColumn = $col;
         return $this;
-    }
-    
-    /**
-     * The alias of the attribute with the image URLs
-     * 
-     * @uxon-property image_url_attribute_alias
-     * @uxon-type metamodel:attribute
-     * 
-     * @param string $value
-     * @return CommentsFeed
-     */
-    public function setImageUrlAttributeAlias(string $value) : CommentsFeed
-    {
-        $this->imageUrlAttributeAlias = $value;
-        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
-        // Make the column show images. This ensures backward compatibility to other data widget (e.g. DataTable),
-        // so facades, that do not have a gallery implementation, can simply fall back to a table and it
-        // would automatically show the images.
-        $col->setCellWidget(new UxonObject([
-            "widget_type" => "Image"
-        ]));
-        $this->addColumn($col);
-        $this->imageUrlColumn = $col;       
-        return $this;
-    }
+    }    
     
     /**
      *
@@ -253,6 +232,7 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
         $this->commentCreatedDateColumn = $col;
         return $this;
     }
+
     /**
      *
      * @throws WidgetConfigurationError
@@ -374,7 +354,8 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
         $this->addColumn($col);
         $this->commentAuthorIdColumn = $col;
 
-        $col2 = $this->createColumnFromUxon(new UxonObject(["Calculation"=>"=Calc(User('UID') == $value ? true : false)"]));
+        $col2 = $this->createColumnFromUxon(new UxonObject(["Calculation"=>"=IsTrue(User('UID') == $value)"]));
+        $col2->setHidden(true);
         $this->addColumn($col2);
         $this->isCurrentUserAuthor = $col2;
 
@@ -611,19 +592,7 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     {
         return $this->isUploadEnabled() === false || $this->getUploader()->isInstantUpload();
     }
-    
-    /**
-     * 
-     * @return HttpFileServerFacade
-     */
-    protected function getFilesFacade() : HttpFileServerFacade
-    {
-        if ($this->filesFacade === null) {
-            $this->filesFacade = FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench());
-        }
-        return $this->filesFacade;
-    }
-    
+
     /**
      * 
      * @param string $uid
@@ -643,115 +612,35 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
             $url = HttpFileServerFacade::buildUrlToViewData($this->getMetaObject(), $uid, false, $relativeToSiteRoot);
         }
         return $url;
-    }
-    
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function isDownloadEnabled() : bool
-    {
-        return $this->downloadEnabled;
-    }
-    
-    /**
-     * Set to FALSE to remove the download button
-     * 
-     * @uxon-property download_enabled
-     * @uxon-type boolean
-     * @uxon-default true
-     * 
-     * @param bool $value
-     * @return CommentsFeed
-     */
-    public function setDownloadEnabled(bool $value) : CommentsFeed
-    {
-        $this->downloadEnabled = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return DataColumn
-     */
-    public function getFilenameColumn() : ?DataColumn
-    {
-        if ($this->filenameAttributeAlias === null) {
-            $this->guessColumns();
-        }
-        return $this->filenameColumn;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasFilenameColumn() : bool
-    {
-        if ($this->filenameAttributeAlias === null) {
-            $this->guessColumns();
-        }
-        return $this->filenameAttributeAlias !== null;
-    }
-    
-    /**
-     * Alias of the attribute containing the file name (e.g. for downloads).
-     * 
-     * If the gallery shows an object with `FileBehavior`, the `filename_attribute_alias`
-     * will be determined automatically by default.
-     * 
-     * @uxon-property filename_attribute_alias
-     * @uxon-type metamodel:attribute
-     * 
-     * @param string $value
-     * @return CommentsFeed
-     */
-    public function setFilenameAttributeAlias(string $value) : CommentsFeed
-    {
-        $this->filenameAttributeAlias = $value;
-        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
-        $this->addColumn($col);
-        $this->filenameColumn = $col;
-        return $this;
-    }
+    }    
     
     protected function guessColumns()
     {
-        /* @var $behavior \exface\Core\Behaviors\FileBehavior */
-        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
-            if ($this->filenameColumn === null && $attr = $behavior->getFilenameAttribute()) {
-                $this->setFilenameAttributeAlias($attr->getAliasWithRelationPath());
+        /* @var $behavior \exface\Core\Behaviors\CommentBehavior */
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(CommentBehavior::class)->getFirst()) {
+            if ($this->commentAuthorColumn === null && $attr = $behavior->getCommentAuthorAttribute()) {
+                $this->setCommentAuthorAttributeAlias($attr->getAliasWithRelationPath());
             }
             
-            if ($this->commentTitleColumn === null && $attr = $behavior->getFilenameAttribute()) {
-                $this->setCommentTitleAttributeAlias($attr->getAliasWithRelationPath());
+            if ($this->commentContentColumn === null && $attr = $behavior->getCommentContentAttribute()) {
+                $this->setCommentContentAttributeAlias($attr->getAliasWithRelationPath());
             }
             
-            if ($this->commentCreatedDateColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
+            if ($this->commentCreatedDateColumn === null && $attr = $behavior->getCommentCreatedDateAttribute()) {
                 $this->setCommentCreatedDateAttributeAlias($attr->getAliasWithRelationPath());
             }
 
-            if ($this->commentEditedDateColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
+            if ($this->commentEditedDateColumn === null && $attr = $behavior->getCommentEditedDateAttribute()) {
                 $this->setCommentEditedDateAttributeAlias($attr->getAliasWithRelationPath());
             }
 
-            if ($this->commentIdColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
+            if ($this->commentIdColumn === null && $attr = $behavior->getCommentIdAttribute()) {
                 $this->setCommentIdAttributeAlias($attr->getAliasWithRelationPath());
             }
 
-            if ($this->commentAuthorIdColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
+            if ($this->commentAuthorIdColumn === null && $attr = $behavior->getCommentAuthorIdAttribute()) {
                 $this->setCommentAuthorIdAttributeAlias($attr->getAliasWithRelationPath());
-            }
-            
-            if ($this->imageUrlColumn === null) {
-                foreach ($this->getColumns() as $col) {
-                    if ($col->getDataType() instanceof ImageUrlDataType) {
-                        $this->imageUrlColumn = $col;
-                        break;
-                    }
-                }
-            }
+            }            
         }
         $this->checkedBehaviorForObject = $this->getMetaObject();
     }
@@ -787,9 +676,9 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     {
         $this->guessColumns();
         $cols = parent::getActionDataColumnNames();
-        if ($this->isUploadEnabled()) {
-            $cols = array_merge($cols, $this->getUploader()->getActionDataColumnNames());
-        }
+        // if ($this->isUploadEnabled()) {
+        //     $cols = array_merge($cols, $this->getUploader()->getActionDataColumnNames());
+        // }
         return array_unique($cols);
     }
 
