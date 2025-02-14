@@ -200,6 +200,7 @@ class ValidatingBehavior extends AbstractValidatingBehavior
      */
     public function setInvalidIfOnCreate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_CREATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_CREATE);
         return $this;
     }
@@ -221,6 +222,7 @@ class ValidatingBehavior extends AbstractValidatingBehavior
      */
     public function setInvalidIfOnUpdate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_UPDATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_UPDATE);
         return $this;
     }
@@ -241,6 +243,7 @@ class ValidatingBehavior extends AbstractValidatingBehavior
      */
     public function setInvalidIfAlways(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_ANY);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_ANY);
         return $this;
     }

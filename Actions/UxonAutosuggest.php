@@ -18,7 +18,6 @@ use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Uxon\QueryBuilderSchema;
-use exface\Core\DataTypes\MarkdownDataType;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -251,7 +250,7 @@ class UxonAutosuggest extends AbstractAction
         
         //convert markdown to html, remove <a> tags 
         foreach ($rows as &$propertyRow){
-            $propertyRow['DESCRIPTION'] = $this->buildHtmlFromMarkdown($propertyRow['DESCRIPTION']);
+            $propertyRow['DESCRIPTION'] = UxonSchema::buildHtmlFromMarkdown($propertyRow['DESCRIPTION'] ?? '');
         }
         
         // Get class annotations
@@ -268,7 +267,7 @@ class UxonAutosuggest extends AbstractAction
             // TODO
         }
         $classInfo = $dsClass->getRow(0);
-        $classInfo['DESCRIPTION'] = $this->buildHtmlFromMarkdown($classInfo['DESCRIPTION']);
+        $classInfo['DESCRIPTION'] = UxonSchema::buildHtmlFromMarkdown($classInfo['DESCRIPTION'] ?? '');
         
         // TODO transform enum-types to arrays
         
@@ -302,26 +301,5 @@ class UxonAutosuggest extends AbstractAction
     protected function suggestPropertyValues(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $valueText, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
         return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
-    }
-    
-    
-    /**
-     * Converts markdown into html, removing all <a> tags. 
-     * On failure it just returns the markdown string instead.
-     * 
-     * @param string $markdown
-     * @return string
-     */
-    protected function buildHtmlFromMarkdown(string $markdown) : string 
-    {
-        try{
-            $html = MarkdownDataType::convertMarkdownToHtml($markdown);
-            $html = preg_replace("(</?a[^>]*\>)i", "", $html);
-            return $html;
-        } catch (\Throwable $e) {
-            return $markdown;
-        }
-        
-        
     }
 }
