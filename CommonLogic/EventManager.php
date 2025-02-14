@@ -22,6 +22,10 @@ class EventManager implements EventManagerInterface
 
     private $dispatcher = null;
 
+    private $priorityMinVals = [];
+
+    private $priorityMaxVals = [];
+
     /**
      * 
      * @param WorkbenchInterface $exface
@@ -40,6 +44,7 @@ class EventManager implements EventManagerInterface
      */
     public function addListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface
     {
+        $priority = $this->sanitizePriority($eventName, $priority);
         $this->dispatcher->addListener(mb_strtoupper($eventName), $listener_callable, $priority ?? 0);
         return $this;
     }
@@ -181,5 +186,17 @@ class EventManager implements EventManagerInterface
     public function hasStaticListeners(string $eventName) : bool
     {
         return ! empty($this->getStaticListeners($eventName));
+    }
+
+    protected function sanitizePriority(string $evenName, int $priority = null) : ?int
+    {
+        if ($priority === EventManagerInterface::PRIORITY_MIN) {
+            $priority = ($this->priorityMinVals[$eventName] ?? $priority) - 1;
+            $this->priorityMinVals[$eventName] = $priority;
+        } elseif ($priority === EventManagerInterface::PRIORITY_MAX) {
+            $priority = ($this->priorityMaxVals[$eventName] ?? $priority) + 1;
+            $this->priorityMaxVals[$eventName] = $priority;
+        }
+        return $priority;
     }
 }

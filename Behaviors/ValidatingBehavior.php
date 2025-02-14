@@ -8,6 +8,7 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
@@ -164,8 +165,16 @@ class ValidatingBehavior extends AbstractValidatingBehavior
         return $this;
     }
 
-    protected function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook): void
+    protected function processValidationResult(
+        DataSheetEventInterface $event, 
+        ?DataCheckFailedErrorMultiple $result, 
+        BehaviorLogBook $logbook): void
     {
+        if(!$result) {
+            $logbook->addLine('The data did not match any of the data checks.');
+            return;
+        }
+        
         $result->setUseExceptionMessageAsTitle(true);
         
         $logbook->addLine('Rendering error message...');
@@ -191,6 +200,7 @@ class ValidatingBehavior extends AbstractValidatingBehavior
      */
     public function setInvalidIfOnCreate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_CREATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_CREATE);
         return $this;
     }
@@ -212,6 +222,7 @@ class ValidatingBehavior extends AbstractValidatingBehavior
      */
     public function setInvalidIfOnUpdate(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_UPDATE);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_UPDATE);
         return $this;
     }
@@ -232,6 +243,7 @@ class ValidatingBehavior extends AbstractValidatingBehavior
      */
     public function setInvalidIfAlways(UxonObject $uxon) : AbstractValidatingBehavior
     {
+        $this->validateContextUxon($uxon, self::CONTEXT_ON_ANY);
         $this->setUxonForEventContext($uxon,self::CONTEXT_ON_ANY);
         return $this;
     }

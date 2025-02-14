@@ -2,13 +2,15 @@
 
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\Behaviors\ChecklistingBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * Functions just like a regular `DataCheck`, with the option of defining an output datasheet, that
@@ -19,7 +21,10 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  */
 class DataCheckWithOutputData extends DataCheck
 {
-    private string $affectedUidAlias = 'AFFECTED_UID';
+    private ?string $foreignKeyAttributeAlias = null;
+
+    private ?string $relationStringFromCheckedObject = null;
+
     private ?UxonObject $outputDataSheetUxon = null;
     private ?DataSheetInterface $outputDataSheet = null;
 
@@ -55,11 +60,14 @@ class DataCheckWithOutputData extends DataCheck
                 $this->outputDataSheet = $outputSheet;
                 throw $error;
             }
-            
-            if(!$badData->hasUidColumn()) {
+
+            $relationPath = $this->getRelationPathFromCheckedObject($sheet->getMetaObject());
+            $ownerKeyAttribute = $relationPath->getRelationFirst()->getLeftKeyAttribute();
+            $keyColumn = $badData->getColumns()->getByAttribute($ownerKeyAttribute);
+            if(! $keyColumn) {
                 throw new DataCheckRuntimeError(
                     $sheet,
-                    'Cannot generate output data: Input data has no UID column!',
+                    'Cannot generate output data: Missing key attribute "' . $keyColumn->getAttributeAlias() . '"!',
                     null,
                     null,
                     $this,
@@ -69,16 +77,16 @@ class DataCheckWithOutputData extends DataCheck
             if(!$outputSheet->getMetaObject()->hasUidAttribute()) {
                 throw new DataCheckRuntimeError(
                     $outputSheet,
-                    'Cannot generate output data: The MetaObject ('.$outputSheet->getMetaObject()->getAlias().') used for caching has no UID-Attribute!',
+                    'Cannot generate output data: Missing UID-Attribute on the MetaObject ('.$outputSheet->getMetaObject()->getAlias().') used for caching!',
                     null,
                     null,
                     $this,
                     $badData);
             }
             
-            foreach ($badData->getUidColumn()->getValues() as $affectedUid) {
-                $logBook?->addLine('Adding row for affected item with UID "'.$affectedUid.'".');
-                $rowTemplate[$this->affectedUidAlias] = $affectedUid;
+            foreach ($keyColumn->getValues() as $checkedKey) {
+                $logBook?->addLine('Adding row for affected item with key "'. $checkedKey .'".');
+                $rowTemplate[$this->foreignKeyAttributeAlias] = $checkedKey;
                 $outputSheet->addRow($rowTemplate);
             }
             
@@ -91,10 +99,9 @@ class DataCheckWithOutputData extends DataCheck
         return $sheet;
     }
 
-
     /**
-     * Define the output data that this data check will append to its error message, if it does apply. For every input row 
-     * this check applies to, it adds a new row based on this template to the output sheet.
+     * Define the output data that this data check will append to its error message, if it does apply. For every input
+     * row  this check applies to, it adds a new row based on this template to the output sheet.
      * 
      * The associated MetaObject must have a UID-Attribute!
      * 
@@ -104,7 +111,7 @@ class DataCheckWithOutputData extends DataCheck
      * 
      * @uxon-property output_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
-     * @uxon-template {"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}
+     * @uxon-template {"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"","ICON":"sap-icon://message-warning"}]}
      * 
      * @param UxonObject|null $uxon
      * @return $this
@@ -132,32 +139,100 @@ class DataCheckWithOutputData extends DataCheck
     }
 
     /**
-     * If this data check applied to a given row, the UID of that row will be output
-     * to a column with this alias.
+     * The relation that points from the object being checked to the object where the output sheet is stored (i.e. the checklist).
      * 
-     * Default is `AFFECTED_UID`.
+     * For example: If the behavior checks DELIVERY_POS items and stores the results in ALERT items, then ALERT must
+     * have a relation to DELIVERY_POS (if it doesn't, add one). In that case, simply enter `ALERT` as relation path.
+     * (properly defined relations should appear as auto-complete options).
      * 
-     * @uxon-property affected_uid_alias
+     * @uxon-property relation_from_checked_object_to_checklist
+     * @uxon-type metamodel:relation
+     * 
+     * @param string $relationPath
+     * @return DataCheckWithOutputData
+     */
+    protected function setRelationFromCheckedObjectToChecklist(string $relationPath) : DataCheckWithOutputData
+    {
+        $this->relationStringFromCheckedObject = $relationPath;
+        return $this;
+    }
+
+    /**
+     * Returns the foreign key of the data object, that points to the checked object.
+     * 
+     * Consider the following example: DELIVERY_NOTE<-DELIVERY_POS<-ALERT.
+     * A ChecklistingBehavior can be used to generate ALERTs whenever any
+     * DELIVERY_POS is changed. This method will return the alias of the attribute of
+     * ALERT, that contains the foreign key to the DELIVERY_POS.
+     * 
+     * @param MetaObjectInterface $checkedObject
+     * @return string
+     */
+    public function getForeignKeyAttributeAlias(MetaObjectInterface $checkedObject) : string
+    {
+        if ($this->foreignKeyAttributeAlias !== null) {
+            return $this->foreignKeyAttributeAlias;
+        }
+        $relPath = $this->getRelationPathFromCheckedObject($checkedObject);
+        $this->foreignKeyAttributeAlias = $relPath->getRelationLast()->getRightKeyAttribute()->getAlias();
+        return $this->foreignKeyAttributeAlias;
+    }
+
+    /**
+     * Each checklist item must know, which object it belongs to. The identity of that object will be stored as a foreign key on the 
+     * checklist MetaObject in the attribute defined here.
+     * 
+     * Consider the following example: DELIVERY_NOTE<-DELIVERY_POS<-ALERT.
+     * A ChecklistingBehavior can be used to generate ALERTs whenever any
+     * DELIVERY_POS is changed. This property will define the alias of the attribute of
+     * ALERT, that contains the foreign key to the DELIVERY_POS.
+     * 
+     * Default is `FOREIGN_KEY`.
+     * 
+     * @uxon-property foreign_key_attribute_alias
      * @uxon-type string
-     * @uxon-default "AFFECTED_UID"
-     * 
+     * @uxon-default "FOREIGN_KEY"
+     *
+     * @param string $alias
+     * @return $this
+     */
+    protected function setForeignKeyAttributeAlias(string $alias) : static
+    {
+        if(!empty($alias)) {
+            $this->foreignKeyAttributeAlias = $alias;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @deprecated Use `getOutputKeyAttributeAlias(MetaObjectInterface)` instead.
+     * @param MetaObjectInterface $checkedObject
+     * @return string
+     */
+    public function getAffectedUidAlias(MetaObjectInterface $checkedObject) : string
+    {
+        return $this->getForeignKeyAttributeAlias($checkedObject);
+    }
+
+    /**
+     * @deprecated Use `setOutputKeyAttributeAlias(string)` instead.
      * @param string $alias
      * @return $this
      */
     protected function setAffectedUidAlias(string $alias) : static
     {
-        if(!empty($alias)) {
-            $this->affectedUidAlias = $alias;
-        }
-        
-        return $this;
+        return $this->setForeignKeyAttributeAlias($alias);
     }
 
     /**
-     * @return string
+     * Returns the relation path from the checked object to the data object
+     * 
+     * @param MetaObjectInterface $checkedObject
+     * @return MetaRelationPathInterface
      */
-    public function getAffectedUidAlias() : string
+    public function getRelationPathFromCheckedObject(MetaObjectInterface $checkedObject) : MetaRelationPathInterface
     {
-        return $this->affectedUidAlias;
+        return RelationPathFactory::createFromString($checkedObject, $this->relationStringFromCheckedObject);
     }
 }
