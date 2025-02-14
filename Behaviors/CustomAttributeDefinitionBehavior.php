@@ -333,7 +333,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * type models, such as "DATE", "TIME", "TEXT" and "NUMBER".
      * 
      * @uxon-property type_models
-     * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute[""]
+     * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute[]
      * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":true,"writable":true,"copyable":true,"editable":true,"required":false,"hidden":false,"sortable":true,"filterable":true,"aggregatable":true,"default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":"","categories":[]}}
      * 
      * @param UxonObject $uxon

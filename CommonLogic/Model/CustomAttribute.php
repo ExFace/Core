@@ -9,9 +9,10 @@ class CustomAttribute extends Attribute
     private array $categories = [];
 
     /**
+     * 
      * @uxon-property categories
      * @uxon-type array
-     * @uxon-template []
+     * @uxon-template [""]
      * 
      * @param UxonObject $categories
      * @return $this
