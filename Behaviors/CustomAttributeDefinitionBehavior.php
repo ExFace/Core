@@ -152,6 +152,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     
     private array $typeModels = [];
     private ?string $attributeTypeModelAlias = null;
+    private ?string $attributeCategoryAlias = null;
     private ?string $attributeNameAlias = null;
     private ?string $attributeStorageKeyAlias = null;
     private ?string $attributeHintAlias = null;
@@ -187,37 +188,39 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
-        
-        try {
-            $attribute = $object->getAttribute($this->getAttributeTypeModelAlias());
-        } catch (MetaAttributeNotFoundError $error) {
-            throw new BehaviorRuntimeError(
-                $this, 'Invalid value in "attribute_type_model_alias"!', 
-                null, 
-                $error, 
-                $logBook);
+
+
+        // TypeModel editor
+        $keyValuePairs = [];
+        foreach (array_keys($this->getTypeModelsAll()) as $modelKey) {
+            $keyValuePairs[$modelKey] = $modelKey;
         }
 
-        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.GenericStringEnum");
-        $attribute->setDataType($dataType);
-        $attribute->setCustomDataTypeUxon($this->buildUxonEnumCustomDataType(array_keys($this->getTypeModelsAll())));
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
-    }
-    
-    protected function buildUxonEnumCustomDataType(array $values) : UxonObject
-    {
-        $keyValuePairs = [];
-        foreach ($values as $value) {
-            $keyValuePairs[$value] = $value; 
-        }
-        
-        $properties = [
+        $typeModelEditorUxon = new UxonObject([
             "show_values" => false,
             "values" => $keyValuePairs
-        ];
-        
-        return new UxonObject($properties);
+        ]);
+
+        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.GenericStringEnum");
+        $typeModelAttribute = $object->getAttribute($this->getAttributeTypeModelAlias());
+        $typeModelAttribute->setDataType($dataType);
+        $typeModelAttribute->setCustomDataTypeUxon($typeModelEditorUxon);
+
+        // Category selector
+        $allCategories = $this->getCategories();
+        $categorySelectorUxon = new UxonObject([
+            "widget_type" => "InputCombo",
+            "multi_select" => true,
+            "values" => [],
+            "selectable_options" => $allCategories
+        ]);
+
+        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.String");
+        $categoryAttribute = $object->getAttribute($this->getAttributeCategoryAlias());
+        //$categoryAttribute->setDataType($dataType);
+        //$categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
     }
 
     /**
@@ -296,6 +299,23 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $logBook->addIndent(-1);
         
         return $attrs;
+    }
+    
+    protected function getCategories() : array
+    {
+        $allCategories = [];
+        foreach ($this->getTypeModelsAll() as $model){
+            $modelCategories = $model[self::KEY_CATEGORIES];
+            if(empty($modelCategories)) {
+                continue;
+            }
+            
+            foreach ($modelCategories as $category) {
+                $allCategories[$category] = $category;
+            }
+        }
+        
+        return $allCategories;
     }
     
     /**
@@ -468,7 +488,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_type_model_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "type_model"
+     * @uxon-template type_model
      * 
      * @param string $alias
      * @return $this
@@ -477,6 +497,36 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         $this->attributeTypeModelAlias = $alias;
         return $this;
+    }
+
+    /**
+     * Tell this behavior, in which attribute it will find the categories a custom attribute is assigned to.
+     * 
+     * Categories can be used to filter custom attributes in automated display and editor widgets.
+     * 
+     * @uxon-property attribute_category_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-template attribute_category_alias
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setAttributeCategoryAlias(string $alias) : CustomAttributeDefinitionBehavior
+    {
+        $this->attributeCategoryAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAttributeCategoryAlias() : string
+    {
+        if(! $this->attributeCategoryAlias) {
+            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_category_alias"!');
+        }
+
+        return $this->attributeCategoryAlias;
     }
 
     /**
@@ -496,7 +546,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_name_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "name"
+     * @uxon-template name
      * 
      * @param string $alias
      * @return $this
@@ -524,7 +574,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      *
      * @uxon-property attribute_storage_key_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "storage_key"
+     * @uxon-template storage_key
      *
      * @param string $alias
      * @return $this
@@ -552,7 +602,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_hint_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "hint"
+     * @uxon-template hint
      * 
      * @param string $alias
      * @return $this
@@ -580,7 +630,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_required_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "required"
+     * @uxon-template required
      * 
      * @param string $alias
      * @return $this
