@@ -11,3 +11,4 @@ interface AppInstallerInterface extends InstallerInterface
      */
     public function getApp();
 }
+?>

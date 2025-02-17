@@ -5,7 +5,6 @@ use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\AppExporterInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\CommonLogic\Filemanager;
@@ -120,7 +119,7 @@ use exface\Core\DataTypes\DateDataType;
  * @author Andrej Kabachnik
  *
  */
-class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
+class DataInstaller extends AbstractAppInstaller
 {
     const ENCRYPTION_CONFIG_FILE = 'Encryption.config.json';
     
@@ -323,15 +322,6 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         }
         
         yield $idt . 'Created ' . $this->getName() . ' backup for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AppExporterInterface::exportModel()
-     */
-    public function exportModel() : \Iterator
-    {
-        yield from $this->backup($this->getApp()->getDirectoryAbsolutePath());
     }
     
     /**

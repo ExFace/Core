@@ -140,16 +140,4 @@ class PhpFilePathDataType extends FilePathDataType
         $path = str_replace('\\', '/', $prototypeClass);
         return ltrim($path, "/") . $extension;
     }
-
-    /**
-     * Returns the class name without the namespace
-
-     * @param string $class
-     * @return string
-     */
-    public static function stripNamespace(string $class) : string
-    {
-        $parts = explode('\\', $class);
-        return array_pop($parts);
-    }
 }

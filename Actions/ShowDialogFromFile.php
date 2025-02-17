@@ -64,8 +64,6 @@ class ShowDialogFromFile extends ShowDialog
     private $file_path_attribute_alias = null;
 
     private $file_extension = null;
-
-    private $folder_path = null;
     
     /**
      * 
@@ -211,3 +209,5 @@ class ShowDialogFromFile extends ShowDialog
         return $this;
     }
 }
+
+?>

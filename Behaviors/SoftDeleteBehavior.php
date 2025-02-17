@@ -3,7 +3,6 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
@@ -239,11 +238,8 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
      */
-    public function getAttributesModified(DataSheetInterface $inputSheet): array
+    public function getAttributesModified(): array
     {
-        if (! $inputSheet->getMetaObject()->isExactly($this->getObject())) {
-            return [];
-        }
         return [
             $this->getSoftDeleteAttribute()
         ];

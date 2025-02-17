@@ -7,9 +7,6 @@ use Gajus\Dindent\Indenter;
 
 class HtmlDataType extends TextDataType
 {
-    const URL_TYPE_RELATIVE = 'relative';
-    CONST URL_TYPE_ALL = 'all';
-    
     /**
      * Returns TRUE if the given string contains HTML tags and FALSE otherwise.
      * 
@@ -53,21 +50,5 @@ class HtmlDataType extends TextDataType
         }
 
         return $html;
-    }
-
-    public static function stripLinks(string $html, string $linkType = self::URL_TYPE_ALL) : string
-    {
-        $result = '';
-        switch ($linkType) {
-            case self::URL_TYPE_RELATIVE:
-                $result = preg_replace_callback('/<a\s+[^>]*href=["\'](?!https?:\/\/)([^"\']+)["\'][^>]*>(.*?)<\/a>/is', function ($matches) {
-                    return $matches[2]; // Return only the inner text, removing the anchor tag
-                }, $html);
-                break;
-            case self::URL_TYPE_ALL:
-                $result = preg_replace("(</?a[^>]*\>)i", "", $html);
-                break;
-        }
-        return $result;
     }
 }

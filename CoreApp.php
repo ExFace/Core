@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core;
 
-use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
@@ -167,10 +166,6 @@ Disallow: /
         $schedulerName = 'Workbench scheduler (' . $this->getWorkbench()->getInstallationName() . ')';
         $schedulerInstaller->addTask($schedulerName, 'exface.Core:RunScheduler', 60, true);
         $installer->addInstaller($schedulerInstaller);
-
-        // Docs installer
-        $docsInstaller = new AppDocsInstaller($this->getSelector());
-        $installer->addInstaller($docsInstaller);
         
         return $installer;
     }

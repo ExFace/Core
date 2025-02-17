@@ -345,7 +345,7 @@ class SessionContextScope extends AbstractContextScope
             $sessionId, // value
             (time() + $config->getOption('SECURITY.SESSION_COOKIE_LIFETIME')), // expires
             $config->getOption('SECURITY.SESSION_COOKIE_PATH'), // path
-            '', // domain
+            null, // domain
             $config->getOption('SECURITY.FORCE_HTTPS'), // secure
             true // httponly
         );

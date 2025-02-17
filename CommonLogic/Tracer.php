@@ -266,7 +266,7 @@ class Tracer extends Profiler
                 $name = 'Communication message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
                 break;
             case $event instanceof BehaviorEventInterface:
-                $name = PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior() . '"' . $event->getBehavior()->getName() . '" of "' . $event->getBehavior()->getObject()->getAliasWithNamespace()) . '"';
+                $name = 'Behavior ' . PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior() . ' of "' . $event->getBehavior()->getObject()->getAliasWithNamespace()) . '"';
                 break;
             default:
                 $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);

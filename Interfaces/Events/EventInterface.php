@@ -29,16 +29,5 @@ interface EventInterface extends WorkbenchDependantInterface, AliasInterface
      * @return string
      */
     public static function getEventName() : string;
-
-    /**
-     * Returns TRUE if this event is triggered before something and FALSE otherwise
-     * @return bool
-     */
-    public function isOnBefore() : bool;
-
-    /**
-     * Returns TRUE if this event is triggered after something and FALSE otherwise
-     * @return bool
-     */
-    public function isOnAfter() : bool;
 }
+?>

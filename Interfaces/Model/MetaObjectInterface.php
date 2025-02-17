@@ -6,6 +6,7 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -504,7 +505,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return BehaviorListInterface|BehaviorInterface[]
      */
     public function getBehaviors() : BehaviorListInterface;
-
+    
     /**
      *
      * @return MetaObjectActionListInterface|ActionInterface[]

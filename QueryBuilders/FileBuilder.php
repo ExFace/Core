@@ -464,25 +464,8 @@ class FileBuilder extends AbstractQueryBuilder
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $addrPhsValues = [];
             $uidPaths = [];
-            $filterAddr = $qpart->getDataAddress();
-            $filterVal = $qpart->getCompareValue();
-            $filterComp = $qpart->getComparator();
-            $isPathNameFilter = $this->isFilePathAddress($filterAddr);
-            $isFolderFilter = $this->isFolderPathAddress($filterAddr);
-
-            // Calculate folder and filename patters from some other data addresses too
-            switch (true) {
-                // `~folder:name ==` or `~folder:name =` 
-                case $addr === '' && $filterAddr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_NAME:
-                    $isFolderFilter = true;
-                    if ($filterComp === ComparatorDataType::EQUALS) {
-                        $filterVal = "*/{$filterVal}";
-                    } elseif ($filterComp === ComparatorDataType::IS) {
-                        $filterVal = "*/*{$filterVal}*";
-                    }
-                    break;
-            }
-
+            $isPathNameFilter = $this->isFilePathAddress($qpart->getDataAddress());
+            $isFolderFilter = $this->isFolderPathAddress($qpart->getDataAddress());
             if ($isPathNameFilter || $isFolderFilter || in_array($qpart->getAlias(), $addrPhs)) {
                 // Path filters need to be applied after reading too as there may be trouble with 
                 // files with the same name in different (sub-)folders mathing the folder pattern
@@ -495,26 +478,26 @@ class FileBuilder extends AbstractQueryBuilder
                         $pathPatterns[] = $addr;
                     }
                 }
-                switch ($filterComp) {
+                switch ($qpart->getComparator()) {
                     case ComparatorDataType::IS:
                     case ComparatorDataType::EQUALS:
                         //if attribute alias is a placeholder in the path patterns, replace it with the value
                         if (in_array($qpart->getAlias(), $addrPhs)) {                            
-                            $addrPhsValues[$qpart->getAlias()] = $filterVal;
+                            $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
                             foreach ($pathPatterns as $i => $pattern) {
                                 $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                             }
                         } else {
                             if ($isPathNameFilter) {
-                                $uidPaths[] = Filemanager::pathNormalize($filterVal);
+                                $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
                             }
                             if ($isFolderFilter) {
-                                $pathPatterns[] = Filemanager::pathNormalize($filterVal);
+                                $pathPatterns[] = Filemanager::pathNormalize($qpart->getCompareValue());
                             }
                         }
                         break;
                     case ComparatorDataType::IN:
-                        $values = explode($qpart->getValueListDelimiter(), $filterVal);
+                        $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
                         //if attribute alias is a placeholder in the path patterns, replace it with the values (therefore creating more pattern entries)
                         if (in_array($qpart->getAlias(), $addrPhs)) {
                             foreach ($values as $val) {
