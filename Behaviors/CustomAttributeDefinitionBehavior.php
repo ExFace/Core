@@ -307,7 +307,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         return $attrs;
     }
-    
+
+    /**
+     * Extract a list of all categories defined for this behavior.
+     * 
+     * @return array
+     */
     protected function getCategories() : array
     {
         $allCategories = [];
