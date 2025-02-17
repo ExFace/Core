@@ -266,7 +266,7 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
                 foreach ($child->getFilters() as $childFilter) {
                     $mapper = $this->getFilterForForeignObject($filter->getAttributeAlias(), $childFilter->getMetaObject());
                     switch (true) {
-                        case $mapper !== null && $mapper->isDisabled():
+                        case $mapper !== null && $mapper->isDisabled($child):
                             $filterApplied = true;
                             break 2;
                         // If filters are to be applied to matching attribute aliases and the alias matches, link the filter
@@ -276,17 +276,19 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
                             break;
                         // If existing filter has the same object, attribute_alias and comparator, link it
                         case $childFilter->getMetaObject()->is($filter->getMetaObject()) && $childFilter->getAttributeAlias() === $filter->getAttributeAlias():
-                            if ($childFilter->getValueWidgetLink() === null) {
-                                $childFilter->setValue($filterLinkValue);
-                                $filterApplied = true;
+                            if ($childFilter->getValueWidgetLink() !== null) {
+                                break;
                             }
+                            $childFilter->setValue($filterLinkValue);
+                            $filterApplied = true;
                             break;
                         // If there is a foreign filter mapping with the same alias as the found filter, link the filter
                         case $mapper !== null:
-                            if ($childFilter->getAttributeAlias() === $mapper->getSourceFilterAttributeAlias()) {
-                                $childFilter->setValue($filterLinkValue);
-                                $filterApplied = true;
+                            if ($childFilter->getAttributeAlias() !== $mapper->getSourceFilterAttributeAlias()) {
+                                break;
                             }
+                            $childFilter->setValue($filterLinkValue);
+                            $filterApplied = true;
                             break;
                     }
                 }

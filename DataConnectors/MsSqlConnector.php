@@ -7,6 +7,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\ModelBuilders\MsSqlModelBuilder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
@@ -715,5 +716,22 @@ class MsSqlConnector extends AbstractSqlConnector
     protected function getBatchDelimiterPattern() : ?string
     {
         return '/^GO;?/m';
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::canJoin()
+     */
+    public function canJoin(DataConnectionInterface $otherConnection) : bool
+    {
+        $parentResult = parent::canJoin($otherConnection);
+        if ($parentResult === false) {
+            return false;
+        }
+        if (! $otherConnection instanceof $this) {
+            return false;
+        }
+        return $this->getDatabase() === $otherConnection->getDatabase();
     }
 }
