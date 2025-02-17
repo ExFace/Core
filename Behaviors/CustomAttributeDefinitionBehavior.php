@@ -716,7 +716,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         return [
             'Date' => [
-                self::KEY_DATA_TYPE => "exface.Core.Date",
+                self::KEY_DATA_TYPE => "exface.Core.DateTime",
+                "default_editor_uxon" => ["widget_type" => "InputDateTime"]
             ],
             'Text' => [
                 self::KEY_DATA_TYPE => "exface.Core.String",
