@@ -4,11 +4,18 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\StringEnumDataType;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
@@ -26,33 +33,38 @@ use exface\Core\Widgets\Value;
  * ## Custom Attribute Definitions
  * 
  * Each custom attribute is based off of a unique definition, stored on the object this behavior is attached to.
- * Whenever a custom attribute needs to be loaded, this behavior instantiates that attribute with the help of its definition,
- * which is assembled from these properties:
+ * Whenever a custom attribute needs to be loaded, this behavior instantiates that attribute with the help of its
+ * definition, which is assembled from these properties:
  * 
  * - **Name**(`attribute_name_alias`): The attribute that holds the display name of the custom attribute.
- * - **Storage Key**(`attribute_storage_key_alias`): The attribute that holds the storage key. The storage key is used to generate a
- * data address and a technical alias of the custom attribute. Make sure it matches whatever storage scheme you are using. For example
- * JSON storage keys should be written in snake_case, have no hierarchies and may omit the root accessor: `$.some_alias`, `some_alias`.
- * - **Type Model**(`attribute_type_model_alias`): The attribute that holds the type model key. Type models simplify the configuration of
- * custom attributes, by assigning meaningful defaults to most attribute properties. They are identified with a key, that must either match a
- * default type model or a type model that you defined in `type_models` (see below).
+ * - **Storage Key**(`attribute_storage_key_alias`): The attribute that holds the storage key. The storage key is used
+ * to generate a data address and a technical alias of the custom attribute. Make sure it matches whatever storage
+ * scheme you are using. For example JSON storage keys should be written in snake_case, have no hierarchies and may
+ * omit the root accessor: `$.some_alias`, `some_alias`.
+ * - **Type Model**(`attribute_type_model_alias`): The attribute that holds the type model key. Type models simplify
+ * the configuration of custom attributes, by assigning meaningful defaults to most attribute properties. They are
+ * identified with a key, that must either match a default type model or a type model that you defined in `type_models`
+ * (see below).
  * - **Hint**(`attribute_hint_alias`): The attribute that holds a short description of the custom attribute.
- * - **Required**(`attribute_required_alias`): The attribute that holds the setting for whether the custom attribute is required.
- * - **Owner Alias**(`attribute_definition_owner_alias`): This property is optional. You only need to set it if you wish to store definitions
- * for attributes that belong to multiple different MetaObjects in the same table. In that case, the definition owner is used to identify what 
- * MetaObject a custom attribute definition belongs to.
+ * - **Required**(`attribute_required_alias`): The attribute that holds the setting for whether the custom attribute is
+ * required.
+ * - **Owner Alias**(`attribute_definition_owner_alias`): This property is optional. You only need to set it if you
+ * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
+ * case, the definition owner is used to identify what  MetaObject a custom attribute definition belongs to.
  * 
  * ## Type Models
  * 
- * Type models are special templates that simplify the creation of new custom attributes. They automatically set the properties of the
- * attribute to match a pre-configured template, meaning users won't have to know about the technical details of attribute configuration.
- * When creating a new custom attribute they must assign a type model to it. They can choose from all type models configured in the `type_models`
- * property, as well as some basic default type models, such as "DATE", "TIME", "TEXT" and "NUMBER".
+ * Type models are special templates that simplify the creation of new custom attributes. They automatically set the
+ * properties of the attribute to match a pre-configured template, meaning users won't have to know about the technical
+ * details of attribute configuration. When creating a new custom attribute they must assign a type model to it. They
+ * can choose from all type models configured in the `type_models` property, as well as some basic default type models,
+ * such as "DATE", "TIME", "TEXT" and "NUMBER".
  * 
- * To define a new type model, add a new entry to the `type_models` property or duplicate an existing one. Type models use a simple form
- * of inheritance. Any property that you omitted from your new type model will instead be inherited from the parent of that type model.
- * You can assign a parent by entering it in the `inherits` property. If you omit that property or have entered an invalid parent, your
- * type model will inherit from a default configuration. Inheritance will never overwrite properties that you specified in your type model.
+ * To define a new type model, add a new entry to the `type_models` property or duplicate an existing one. Type models
+ * use a simple form of inheritance. Any property that you omitted from your new type model will instead be inherited
+ * from the parent of that type model. You can assign a parent by entering it in the `inherits` property. If you omit
+ * that property or have entered an invalid parent, your type model will inherit from a default configuration.
+ * Inheritance will never overwrite properties that you specified in your type model.
  * 
  * ## Examples
  * 
@@ -119,8 +131,8 @@ use exface\Core\Widgets\Value;
  * 
  * $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
  * if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
- *      $msg = 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!';
- *      throw new BehaviorRuntimeError( $this, $msg, null, null, $logBook);
+ *      $msg = 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' .
+ * $definitionObjectAlias . '"!'; throw new BehaviorRuntimeError( $this, $msg, null, null, $logBook);
  * }
  *
  * $customAttributes = $definitionBehavior->addCustomAttributes(
@@ -129,27 +141,31 @@ use exface\Core\Widgets\Value;
  *      $logBook);
  * 
  * ```
+ * 
+ * @author Georg Bieger
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
     protected const KEY_DATA_TYPE = "data_type";
     protected const KEY_INHERITS_FROM = "inherits";
+    protected const KEY_CATEGORIES = "categories";
     
     private array $typeModels = [];
     private ?string $attributeTypeModelAlias = null;
+    private ?string $attributeCategoryAlias = null;
     private ?string $attributeNameAlias = null;
     private ?string $attributeStorageKeyAlias = null;
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
     private ?string $attributeDefinitionOwnerAlias = null;
+    private bool $modelsInheritCategories = false;
 
     protected function registerEventListeners(): BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener(
-            OnUiActionWidgetInitEvent::getEventName(),
-            [$this,'onWidgetInitModifyEditor'],
-            $this->getPriority())
-        ;
+            OnMetaObjectLoadedEvent::getEventName(),
+            [$this,'onLoadedConfigureEnums'],
+            $this->getPriority());
 
         return $this;
     }
@@ -157,43 +173,54 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function unregisterEventListeners(): BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->removeListener(
-            OnUiActionWidgetInitEvent::getEventName(),
-            [$this,'onWidgetInitModifyEditor'],
+            OnMetaObjectLoadedEvent::getEventName(),
+            [$this,'onLoadedConfigureEnums'],
         );
 
         return $this;
     }
 
-    /**
-     * Add type models as dropdown to any widget editors that access `$this->typeModels`.
-     * 
-     * @param OnUiActionWidgetInitEvent $event
-     * @return void
-     */
-    public function onWidgetInitModifyEditor(OnUiActionWidgetInitEvent $event) : void
+    public function onLoadedConfigureEnums(OnMetaObjectLoadedEvent $event) : void
     {
-        $widget = $event->getWidget();
-        if(! $widget->getMetaObject()->isExactly($this->getObject()) || 
-           ! $widget instanceof iContainOtherWidgets) {
+        $object = $event->getObject();
+        if(!$object->isExactly($this->getObject())) {
             return;
         }
         
-        $inputWidgets = $widget->getInputWidgets();
-        
-        if(empty($inputWidgets)) {
-            return;
+        $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
+
+
+        // TypeModel editor
+        $keyValuePairs = [];
+        foreach (array_keys($this->getTypeModelsAll()) as $modelKey) {
+            $keyValuePairs[$modelKey] = $modelKey;
         }
 
-        $typeAlias = $this->attributeTypeModelAlias;
-        foreach ($inputWidgets as $input) {
-            if(!$input instanceof Value || $input->getAttributeAlias() !== $typeAlias) {
-                continue;
-            }
-            
-            
-            // TODO if input is `attribute_type_alias` - make sure, it shows a dorpdown with the
-            // available types in this behavior (e.g. DATUM, PRIO, USER from above).
-        }
+        $typeModelEditorUxon = new UxonObject([
+            "show_values" => false,
+            "values" => $keyValuePairs
+        ]);
+
+        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.GenericStringEnum");
+        $typeModelAttribute = $object->getAttribute($this->getAttributeTypeModelAlias());
+        $typeModelAttribute->setDataType($dataType);
+        $typeModelAttribute->setCustomDataTypeUxon($typeModelEditorUxon);
+
+        // Category selector
+        $allCategories = $this->getCategories();
+        $categorySelectorUxon = new UxonObject([
+            "widget_type" => "InputSelect",
+            "multi_select" => true,
+            "selectable_options" => $allCategories
+        ]);
+
+        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.String");
+        $categoryAttribute = $object->getAttribute($this->getAttributeCategoryAlias());
+        $categoryAttribute->setDataType($dataType);
+        $categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
     }
 
     /**
@@ -218,7 +245,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $nameAlias = $this->getAttributeNameAlias(),
             $keyAlias = $this->getAttributeStorageKeyAlias(),
             $hintAlias = $this->getAttributeHintAlias(),
-            $requiredAlias = $this->getAttributeRequiredAlias()
+            $requiredAlias = $this->getAttributeRequiredAlias(),
+            $categoryAlias = $this->getAttributeCategoryAlias()
         ]);
 
         $targetAlias = $targetObject->getAliasWithNamespace();
@@ -253,9 +281,10 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $name, 
                 $alias, 
                 $address, 
-                $typeModel[self::KEY_DATA_TYPE]);
+                $typeModel[self::KEY_DATA_TYPE],
+                CustomAttribute::class);
             
-            // Remove properties from the template that should or could not be applied to the attribute.
+            // Remove properties from the template that should not be applied to the attribute.
             unset($typeModel[self::KEY_DATA_TYPE]);
             unset($typeModel[self::KEY_INHERITS_FROM]);
             unset($typeModel[$nameAlias]);
@@ -265,6 +294,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $attr->setShortDescription($definitionRow[$hintAlias]);
             $attr->setRequired($definitionRow[$requiredAlias]);
             
+            if($attr instanceof CustomAttribute) {
+                $delimiter = $this->getObject()->getAttribute($categoryAlias)->getValueListDelimiter();
+                $categories = explode($delimiter, $definitionRow[$categoryAlias]);
+                $attr->addCategories($categories);
+            }
+            
             $attrs[] = $attr;
             $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
         }
@@ -273,6 +308,28 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return $attrs;
     }
 
+    /**
+     * Extract a list of all categories defined for this behavior.
+     * 
+     * @return array
+     */
+    protected function getCategories() : array
+    {
+        $allCategories = [];
+        foreach ($this->getTypeModelsAll() as $model){
+            $modelCategories = $model[self::KEY_CATEGORIES];
+            if(empty($modelCategories)) {
+                continue;
+            }
+            
+            foreach ($modelCategories as $category) {
+                $allCategories[$category] = $category;
+            }
+        }
+        
+        return $allCategories;
+    }
+    
     /**
      * Returns an array with all currently defined type models.
      * 
@@ -308,7 +365,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * type models, such as "DATE", "TIME", "TEXT" and "NUMBER".
      * 
      * @uxon-property type_models
-     * @uxon-type \exface\core\CommonLogic\Model\Attribute[]
+     * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute[]
      * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":true,"writable":true,"copyable":true,"editable":true,"required":false,"hidden":false,"sortable":true,"filterable":true,"aggregatable":true,"default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":""}}
      * 
      * @param UxonObject $uxon
@@ -368,23 +425,28 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         if(key_exists($key, $resolvedModels)) {
             return $resolvedModels[$key];
         }
-
-        // If model has no explicit parent OR that parent is invalid, inherit from base.
+        
+        // Add the type model key to the list of categories that attributes derived from this type model belong to.
+        if(empty($model[self::KEY_CATEGORIES]) || !in_array($key, $model[self::KEY_CATEGORIES],true)) {
+            $model[self::KEY_CATEGORIES][] = $key;
+        }
+        
+        // If the model has no explicit parent OR that parent is invalid, inherit from base.
         $parentKey = $model[self::KEY_INHERITS_FROM];
         if(!$parentKey || $parentKey === $key || !key_exists($parentKey, $allModels)) {
-            return [$key => array_merge($this->getBaseTypeModel(), $model)];
+            return [$key => $this->mergeTypeModels($this->getBaseTypeModel(), $model)];
         }
 
-        // If model has an explicit parent that has already been resolved,
+        // If the model has an explicit parent that has already been resolved,
         // we can inherit from it directly.
         if(key_exists($parentKey, $resolvedModels)) {
-            return [$key => array_merge($resolvedModels[$parentKey], $model)];
+            return [$key => $this->mergeTypeModels($resolvedModels[$parentKey], $model)];
         }
         
         // Otherwise, we have to resolve the parent model recursively.
         // We add ourselves to the resolved list to prevent loops. 
         // This is safe, because each type model has a single root.
-        $resolvedModels[$key] = array_merge($this->getBaseTypeModel(), $model);
+        $resolvedModels[$key] = $this->mergeTypeModels($this->getBaseTypeModel(), $model);
         $result = $this->resolveInheritanceHierarchy(
             $parentKey,
             $allModels[$parentKey],
@@ -392,9 +454,35 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $resolvedModels
         );
         // Now we merge with our resolved parent.
-        $result[$key] = array_merge($result[$parentKey], $model);
+        $result[$key] = $this->mergeTypeModels($result[$parentKey], $model);
         
         return $result;
+    }
+
+    /**
+     * Merge two type models with one another, as per `array_merge()`.
+     * 
+     * @param array $left
+     * @param array $right
+     * @return array
+     */
+    protected function mergeTypeModels(array $left, array $right) : array
+    {
+        // Merge categories.
+        if($this->getModelsInheritCategories()) {
+            $categoriesLeft = $left[self::KEY_CATEGORIES];
+            $categoriesRight = $right[self::KEY_CATEGORIES];
+            
+            if (empty($categoriesRight)) {
+                $right[self::KEY_CATEGORIES] = $categoriesLeft;
+            } else if (!empty($categoriesLeft)) {
+                $right[self::KEY_CATEGORIES] = array_unique(array_merge(
+                    $categoriesLeft, $categoriesRight
+                ));
+            }
+        } 
+        
+        return array_merge($left, $right);
     }
 
     /**
@@ -414,7 +502,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_type_model_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "type_model"
+     * @uxon-template type_model
      * 
      * @param string $alias
      * @return $this
@@ -423,6 +511,36 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         $this->attributeTypeModelAlias = $alias;
         return $this;
+    }
+
+    /**
+     * Tell this behavior, in which attribute it will find the categories a custom attribute is assigned to.
+     * 
+     * Categories can be used to filter custom attributes in automated display and editor widgets.
+     * 
+     * @uxon-property attribute_category_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-template attribute_category_alias
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setAttributeCategoryAlias(string $alias) : CustomAttributeDefinitionBehavior
+    {
+        $this->attributeCategoryAlias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAttributeCategoryAlias() : string
+    {
+        if(! $this->attributeCategoryAlias) {
+            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_category_alias"!');
+        }
+
+        return $this->attributeCategoryAlias;
     }
 
     /**
@@ -442,7 +560,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_name_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "name"
+     * @uxon-template name
      * 
      * @param string $alias
      * @return $this
@@ -470,7 +588,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      *
      * @uxon-property attribute_storage_key_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "storage_key"
+     * @uxon-template storage_key
      *
      * @param string $alias
      * @return $this
@@ -498,7 +616,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_hint_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "hint"
+     * @uxon-template hint
      * 
      * @param string $alias
      * @return $this
@@ -526,7 +644,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_required_alias
      * @uxon-type metamodel:attribute
-     * @uxon-template "required"
+     * @uxon-template required
      * 
      * @param string $alias
      * @return $this
@@ -564,6 +682,30 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
+     * If TRUE, type models will inherit categories from their parents.
+     * 
+     * @uxon-property models_inherit_categories
+     * @uxon-type boolean
+     * @uxon-template false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setModelsInheritCategories(bool $value) : CustomAttributeDefinitionBehavior
+    {
+        $this->modelsInheritCategories = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getModelsInheritCategories() : bool
+    {
+        return $this->modelsInheritCategories;
+    }
+
+    /**
      * An associative array with `[TypeModelKey => []]` that contains some basic type model definitions
      * 
      * All default type models can be overwritten with `type_models`.
@@ -573,16 +715,17 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function getDefaultTypeModels() : array
     {
         return [
-            'DATE' => [
-                self::KEY_DATA_TYPE => "exface.Core.Date",
+            'Date' => [
+                self::KEY_DATA_TYPE => "exface.Core.DateTime",
+                "default_editor_uxon" => ["widget_type" => "InputDateTime"]
             ],
-            'TEXT' => [
+            'Text' => [
                 self::KEY_DATA_TYPE => "exface.Core.String",
             ],
-            'NUMBER' => [
+            'Number' => [
                 self::KEY_DATA_TYPE => "exface.Core.Number",
             ],
-            'TIME' => [
+            'Time' => [
                 self::KEY_DATA_TYPE => "exface.Core.Time",
             ],
         ];
@@ -613,6 +756,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             "default_sorter_dir" => "ASC",
             "value_list_delimiter" => ",",
             "default_display_order" => "",
+            "categories" => []
         ];
     }
 }

@@ -1078,8 +1078,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                          */
                         // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
                         if($this->isJsonDataAddress($column)) {
-                            list($column, $jsonPath) = $this->parseJsonDataAddress($column);
-                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$column][$jsonPath] = $value;
+                            list($jsonColumn, $jsonPath) = $this->parseJsonDataAddress($column);
+                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$jsonColumn][$jsonPath] = $value;
                         } else {
                             $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
                         }
@@ -2173,6 +2173,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $dataAddressProps = $qpart->getDataAddressProperties();
         $value_list_delimiter = $qpart->getValueListDelimiter();
         $valueIsSQL = $valueIsSQL ?? $qpart->isValueDataAddress();
+        
+        if($this->isJsonDataAddress($subject)) {
+            [$column, $path] = $this->parseJsonDataAddress($subject);
+            $subject = $this->buildSqlJsonRead($column, $path);
+        }
 
         $valueRaw = $value;
         // Check if the value is of valid type.
