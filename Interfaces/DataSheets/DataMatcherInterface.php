@@ -22,6 +22,7 @@ interface DataMatcherInterface
     public function getMatches() : array;
     
     /**
+     * Get all matches for the given row index (starting with 0)
      * 
      * @param int $mainSheetRowIdx
      * @return DataMatchInterface[]
