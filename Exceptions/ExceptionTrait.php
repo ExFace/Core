@@ -110,9 +110,10 @@ trait ExceptionTrait {
                         ->setWidth(WidgetDimension::MAX)
                         ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $msgModel->getTitle());
                     $error_tab->addWidget($error_heading);
-                    $error_text = WidgetFactory::create($page, 'Text', $error_tab)
+                    $error_text = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setWidth(WidgetDimension::MAX)
-                        ->setValue($this->getMessage());
+                        ->setHideCaption(true)
+                        ->setValue("> {$this->getMessage()}");
                     $error_tab->addWidget($error_text);
                     if ($hint = $msgModel->getHint()) {
                         $error_hint = WidgetFactory::create($page, 'Message', $error_tab)
