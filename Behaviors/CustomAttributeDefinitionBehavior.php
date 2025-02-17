@@ -158,6 +158,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
     private ?string $attributeDefinitionOwnerAlias = null;
+    private bool $modelsInheritCategories = false;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -209,16 +210,15 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         // Category selector
         $allCategories = $this->getCategories();
         $categorySelectorUxon = new UxonObject([
-            "widget_type" => "InputCombo",
+            "widget_type" => "InputSelect",
             "multi_select" => true,
-            "values" => [],
             "selectable_options" => $allCategories
         ]);
 
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.String");
         $categoryAttribute = $object->getAttribute($this->getAttributeCategoryAlias());
-        //$categoryAttribute->setDataType($dataType);
-        //$categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
+        $categoryAttribute->setDataType($dataType);
+        $categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
     }
@@ -245,7 +245,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $nameAlias = $this->getAttributeNameAlias(),
             $keyAlias = $this->getAttributeStorageKeyAlias(),
             $hintAlias = $this->getAttributeHintAlias(),
-            $requiredAlias = $this->getAttributeRequiredAlias()
+            $requiredAlias = $this->getAttributeRequiredAlias(),
+            $categoryAlias = $this->getAttributeCategoryAlias()
         ]);
 
         $targetAlias = $targetObject->getAliasWithNamespace();
@@ -292,6 +293,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             // Set values that were not stored in the template.
             $attr->setShortDescription($definitionRow[$hintAlias]);
             $attr->setRequired($definitionRow[$requiredAlias]);
+            
+            if($attr instanceof CustomAttribute) {
+                $delimiter = $this->getObject()->getAttribute($categoryAlias)->getValueListDelimiter();
+                $categories = explode($delimiter, $definitionRow[$categoryAlias]);
+                $attr->addCategories($categories);
+            }
             
             $attrs[] = $attr;
             $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
@@ -354,7 +361,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property type_models
      * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute[]
-     * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":true,"writable":true,"copyable":true,"editable":true,"required":false,"hidden":false,"sortable":true,"filterable":true,"aggregatable":true,"default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":"","categories":[]}}
+     * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":true,"writable":true,"copyable":true,"editable":true,"required":false,"hidden":false,"sortable":true,"filterable":true,"aggregatable":true,"default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":""}}
      * 
      * @param UxonObject $uxon
      * @return $this
@@ -457,16 +464,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function mergeTypeModels(array $left, array $right) : array
     {
         // Merge categories.
-        $categoriesLeft = $left[self::KEY_CATEGORIES];
-        $categoriesRight = $right[self::KEY_CATEGORIES];
-        
-        if(empty($categoriesRight)) {
-            $right[self::KEY_CATEGORIES] = $categoriesLeft;
-        } else if (!empty($categoriesLeft)) {
-            $right[self::KEY_CATEGORIES] = array_unique(array_merge(
-                $categoriesLeft, $categoriesRight
-            ));
-        }
+        if($this->getModelsInheritCategories()) {
+            $categoriesLeft = $left[self::KEY_CATEGORIES];
+            $categoriesRight = $right[self::KEY_CATEGORIES];
+            
+            if (empty($categoriesRight)) {
+                $right[self::KEY_CATEGORIES] = $categoriesLeft;
+            } else if (!empty($categoriesLeft)) {
+                $right[self::KEY_CATEGORIES] = array_unique(array_merge(
+                    $categoriesLeft, $categoriesRight
+                ));
+            }
+        } 
         
         return array_merge($left, $right);
     }
@@ -665,6 +674,30 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         $this->attributeDefinitionOwnerAlias = $alias;
         return $this;
+    }
+
+    /**
+     * If TRUE, type models will inherit categories from their parents.
+     * 
+     * @uxon-property models_inherit_categories
+     * @uxon-type boolean
+     * @uxon-template false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setModelsInheritCategories(bool $value) : CustomAttributeDefinitionBehavior
+    {
+        $this->modelsInheritCategories = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getModelsInheritCategories() : bool
+    {
+        return $this->modelsInheritCategories;
     }
 
     /**

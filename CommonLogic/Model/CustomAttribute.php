@@ -9,6 +9,19 @@ class CustomAttribute extends Attribute
     private array $categories = [];
 
     /**
+     * @param array $categories
+     * @return void
+     */
+    public function addCategories(array $categories) : void
+    {
+        if(empty($this->categories)) {
+            $this->categories = $categories;
+        } else {
+            $this->categories = array_merge($this->categories, $categories);
+        }
+    }
+    
+    /**
      * 
      * @uxon-property categories
      * @uxon-type array
