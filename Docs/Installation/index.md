@@ -5,11 +5,10 @@
 - Web server. The automatic installer supports
 	- Apache 2.4+
 	- Microsoft IIS
-	- nginx on Linux is supported with some manual setup
-- PHP 8.1+ with
+- PHP 7.2+ with
 	- `sodium` extension
 - SQL database for the metamodel, users, permissions, etc. Supported engines are
-	- MySQL 8+
+	- MySQL 5.7+
 	- MariaDB 10+
 	- Microsoft SQL Server 2016+ (requires PHP extension `sqlsrv`)
 

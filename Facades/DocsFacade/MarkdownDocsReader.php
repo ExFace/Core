@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Facades\DocsFacade;
 
-use GuzzleHttp\Psr7\Query;
 use kabachello\FileRoute\Interfaces\ContentInterface;
 use kabachello\FileRoute\FileReaders\MarkdownReader;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -9,6 +8,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\StringDataType;
+use function GuzzleHttp\Psr7\parse_query;
 
 class MarkdownDocsReader extends MarkdownReader 
 {    
@@ -64,7 +64,7 @@ class MarkdownDocsReader extends MarkdownReader
     
     protected function buildSearchResult($query)
     {
-        $params = Query::parse($query);
+        $params = parse_query($query);
         $q = urldecode($params['q']);
         $md = "# Search for \"{$this->escapeString($q)}\" \n";
         

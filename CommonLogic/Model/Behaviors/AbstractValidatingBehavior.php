@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
-use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
@@ -57,13 +56,13 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
     // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
-    protected array $uxonsPerEventContext = [
+    private array $uxonsPerEventContext = [
         self::CONTEXT_ON_UPDATE => null,
         self::CONTEXT_ON_CREATE => null,
         self::CONTEXT_ON_ANY => null
     ];
 
-    protected bool $inProgress = false;
+    private bool $inProgress = false;
 
     private $requiresOldData = null;
 
@@ -174,11 +173,13 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             $logbook->addIndent(-1);
         }
         $logbook->addIndent(-1);
-
-        $logbook->addLine('Processing validation results...');
-        $logbook->addIndent(1);
-        $this->processValidationResult($event, $error, $logbook);
-        $logbook->addIndent(-1);
+        
+        if($error) {
+            $logbook->addLine('Processing validation results...');
+            $logbook->addIndent(1);
+            $this->processValidationResult($error, $logbook);
+            $logbook->addIndent(-1);
+        }
 
         $this->inProgress = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
@@ -191,12 +192,11 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      * While the class name suggests error handling, you should view these objects as neutral data containers
      * that you can process any way you like.
      *
-     * @param DataSheetEventInterface           $event
-     * @param DataCheckFailedErrorMultiple|null $result
-     * @param BehaviorLogBook                   $logbook
+     * @param DataCheckFailedErrorMultiple $result
+     * @param BehaviorLogBook              $logbook
      * @return void
      */
-    protected abstract function processValidationResult(DataSheetEventInterface $event, ?DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
+    protected abstract function processValidationResult(DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
 
     /**
      * @param EventInterface  $event
@@ -439,34 +439,5 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             }
         }
         return $this->requiresOldData;
-    }
-
-    /**
-     * Validates a UXON for a given event context and throws an error if it is invalid.
-     * 
-     * @param UxonObject           $contextUxon
-     * @param string               $context
-     * @param BehaviorLogBook|null $logBook
-     * @return void
-     */
-    protected function validateContextUxon(UxonObject $contextUxon, string $context, ?BehaviorLogBook $logBook = null) : void
-    {
-        if($contextUxon->isArray(true)){
-            return;
-        }
-        
-        $msg = 'Invalid UXON for context "' . $context . '". Must be of type array!';
-        if($logBook) {
-            throw new BehaviorRuntimeError(
-                $this,
-                $msg,
-                null,
-                null,
-                $logBook);
-        } else {
-            throw  new BehaviorConfigurationError(
-                $this, 
-                $msg);
-        }
     }
 }

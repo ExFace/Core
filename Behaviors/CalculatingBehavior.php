@@ -14,7 +14,6 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Events\DataTransactionEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -110,7 +109,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * @author Andrej Kabachnik
  *
  */
-class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
+class CalculatingBehavior extends AbstractBehavior
 {
     private $onlyIfDataMatchesConditionGroupUxon = null;
 
@@ -196,20 +195,19 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
         $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
 
         // Don't bother if this read is caused by the same behavior - e.g. loading additional data
         if ($this->inProgress === true) {
             $logbook->addLine('**Skipped** because of operation performed from within the same behavior (e.g. reading missing data)');
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
 
         // Ignore empty sheets - nothing to calculate here!
         if ($inputSheet->isEmpty()) {
-            $logbook->addLine('**Skipped** because of empty data - nothing to calculate!');
             return;
         }
-
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
 
         $onlyExistingCols = ! $this->willAddColumns($event);
 
@@ -411,38 +409,5 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
     {
         $this->calculateOnEventNames = $arrayOfEvents->toArray();
         return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
-     */
-    public function getAttributesModified(DataSheetInterface $inputSheet): array
-    {
-        if (! $inputSheet->getMetaObject()->isExactly($this->getObject())) {
-            return [];
-        }
-        
-        $mapper = $this->getDataMapper($inputSheet, false);
-        $attrs = [];
-        foreach ($mapper->getMappings() as $map) {
-            foreach ($map->getRequiredExpressions($inputSheet) as $expr) {
-                if ($expr->isMetaAttribute()) {
-                    $attrs[] = $expr->getAttribute();
-                }
-            }
-        }
-        return $attrs;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::canAddColumnsToData()
-     */
-    public function canAddColumnsToData(): bool
-    {
-        return true;
     }
 }

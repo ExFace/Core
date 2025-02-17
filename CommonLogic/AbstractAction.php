@@ -310,9 +310,6 @@ abstract class AbstractAction implements ActionInterface
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {        
-        $logbook = $this->getLogBook($task);
-        $logbook->startLogginEvents();
-
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -329,11 +326,11 @@ abstract class AbstractAction implements ActionInterface
             $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction, function() use ($task) {
                 return $this->getInputDataSheet($task);
             }));
-            $logbook->stopLoggingEvents();
             $this->getWorkbench()->getLogger()->warning('Action "' . $this->getAliasWithNamespace() . '" failed', [], $this->getLogBook($task));
             throw $e;
         }
         
+        $logbook = $this->getLogBook($task);
         $logbook->addSection('Output data');
         $logbook->setIndentActive(1);
         if ($result instanceof ResultData) {
@@ -354,7 +351,6 @@ abstract class AbstractAction implements ActionInterface
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
         $this->performAfter($result, $transaction);
         
-        $logbook->stopLoggingEvents();
         return $result;
     }
 

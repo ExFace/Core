@@ -850,7 +850,7 @@ HTML;
      */
     public function getFileVersionHash(string $filename = null) : string
     {
-        return $this->fileVersionHash ?? 'v' . str_replace(['-', ' ', ':'], '', $this->getWorkbench()->getContext()->getScopeInstallation()->getVariable('last_metamodel_install') ?? '');
+        return $this->fileVersionHash ?? 'v' . str_replace(['-', ' ', ':'], '', $this->getWorkbench()->getContext()->getScopeInstallation()->getVariable('last_metamodel_install'));
     }
     
     /**

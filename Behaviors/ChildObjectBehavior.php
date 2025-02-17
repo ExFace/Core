@@ -13,6 +13,7 @@ use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -22,36 +23,35 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Triggers an update for related (parent) objects, whenever the data on this object changes.
- * 
- * For example, if you have an ORDER object and an ORDER_POS object, they both are part of the hierarchical
- * business entity "order", that might also include other objects like discounts, addresses, etc. If any of
- * these "child objects" change, the order will change as a whole. 
- * 
- * This behavior tells the model, that its object (the ORDER_POS in the example above) is part of one or more 
- * such complex hierarchical business entities. In particular, this means, that changes to this object also 
- * effect its parent objects.
+ * Triggers an update for related objects, whenever the data on this object changes.
  * 
  * You can specify which other objects are affected with the property `changes_affect_relations`. Any object
- * listed in that property will be synchronized with the object this behavior is attached to. Now every time 
- * any `ORDER_POS` is changed, the `ORDER` they are related to will be updated as well.
+ * listed in that property will be synchronized with the object this behavior is attached to.
  * 
- * In technical terms any `OnUpdateData`, `OnCreateData` or `OnDeleteData` events of `ORDER_POS` will also
- * trigger `OnUpdateData` for its related `ORDER`. 
+ * Imagine, for example, an object called `PendingOrder` that represents a list of ordered materials. It consists of 
+ * any number of objects called `PendingOrderPosition`, which hold information on what material was ordered and how much of it.
+ * Now imagine that the user updates a `PendingOrderPosition`: They will expect to see that change reflected in their `PendingOrder`, 
+ * but since we are working with two distinct MetaObjects, this won't be the case. 
  * 
+ * You can solve this issue with the `ChildObjectBehavior`: Simply attach it to the `PendingOrderPosition` MetaObject and add 
+ * `PendingOrder` to its `changes_affect_relations` property. Now every time any `PendingOrderPosition` is changed, the `PendingOrder` 
+ * they are related to will be updated as well.
+ * 
+ * In technical terms any `OnUpdateData` event of `PendingOrderPosition` triggers `OnUpdateData` for its related `PendingOrder`. 
  * The full event mapping is as follows:
  * 
- * - OnBefore**Create**Data -> OnBefore**Update**Data - in an ORDER_POS is create, it means a change to the ORDER
- * - OnBefore**Update**Data -> OnBefore**Update**Data - in an ORDER_POS is updated, it means a change to the ORDER
- * - OnBefore**Replace**Data -> OnBefore**Update**Data - in an ORDER_POS is replaced, it means a change to the ORDER
- * - OnBefore**Delete**Data -> OnBefore**Update**Data - in an ORDER_POS is deleted, it means a change to the ORDER
- * - On**Create**Data -> On**Update**Data 
- * - On**Update**Data -> On**Update**Data 
- * - On**Replace**Data -> On**Update**Data 
- * - On**Delete**Data -> On**Update**Data 
+ * | Source Event | Target Event |
+ * |--|--|
+ * | OnBefore**Create**Data | OnBefore**Update**Data |
+ * | OnBefore**Update**Data | OnBefore**Update**Data |
+ * | OnBefore**Replace**Data | OnBefore**Update**Data |
+ * | OnBefore**Delete**Data | OnBefore**Update**Data |
+ * | On**Create**Data | On**Update**Data |
+ * | On**Update**Data | On**Update**Data |
+ * | On**Replace**Data | On**Update**Data |
+ * | On**Delete**Data | On**Update**Data |
  * 
  * ## Underlying rules for loading data
  * 
@@ -68,26 +68,18 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * - For `OnUpdateData` and `OnReplaceData` the target objects may have been altered by the transaction itself, which this behavior can detect
  * and resolve by loading additional data from source.
  * 
- * ## Exceptions
- * 
- * There are a couple of edge cases, where it is not a good idea to trigger parent-events:
- * 
- * - If the create/update/delete event is fired for a subsheet belonging to a data sheet with the parent object.
- * In the above example that would happen if an ORDER is saved with a subsheet for all its ORDER_POS. In this
- * case, the ORDER will be saved in any case and we do not need any additional events for it.
- * 
  * ## Examples
  * 
  * ### Order positions change their order
  * 
- * The behavior is to be attached to `ORDER_POS`. Assuming this object has a relation called `ORDER`, the behavior
+ * The behavior is to be attached to `PendingOrderPosition`. Assuming this object has a relation called `PendingOrder`, the behavior
  * configuration would look like this:
  * 
  * ```
  * 
  * {
  *	    "changes_affect_relations": [
- *		    ORDER
+ *		    PendingOrder
  *	    ]
  * }
  * 
@@ -210,12 +202,6 @@ class ChildObjectBehavior
             $logbook->setIndentActive(0);
             $logbook->addLine('Relation alias: "'.$relationString.'"...');
             $logbook->setIndentActive(1);
-
-            $targetObject = $this->getObject()->getRelatedObject($relationString);
-            if ($this->isObjectDataIncluded($targetObject, $inputSheet)) {
-                $logbook->addLine('Relation target object ' . $targetObject->__toString() . ' is already included in input data.');
-                continue;
-            }
             
             $targetData = $this->loadTargetData($inputSheet, $relationString, $typeOfSourceEvent, $logbook);
             $logbook->setIndentActive(1);
@@ -238,34 +224,6 @@ class ChildObjectBehavior
 
         $this->inProgress = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-    }
-
-    /**
-     * Returns TRUE if the given data includes data of the provided object or is a subsheet of data of this object
-     * 
-     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
-     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $dataSheet
-     * @return bool
-     */
-    protected function isObjectDataIncluded(MetaObjectInterface $object, DataSheetInterface $dataSheet) : bool
-    {
-        if ($dataSheet->getMetaObject()->is($object)) {
-            return true;
-        }
-
-        foreach ($dataSheet->getColumns() as $col) {
-            if ($col->getDataType() instanceof DataSheetDataType) {
-                // TODO see if the relation behind this subsheet column goes to the object
-            }
-        }
-
-        if ($dataSheet instanceof DataSheetSubsheetInterface) {
-            if (true === $this->isObjectDataIncluded($object, $dataSheet->getParentSheet())) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

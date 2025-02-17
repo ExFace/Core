@@ -645,11 +645,8 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
      */
-    public function getAttributesModified(DataSheetInterface $inputSheet): array
+    public function getAttributesModified(): array
     {
-        if (! $inputSheet->getMetaObject()->isExactly($this->getObject())) {
-            return [];
-        }
         return [
             $this->getTargetAttribute()
         ];

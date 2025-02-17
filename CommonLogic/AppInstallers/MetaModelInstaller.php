@@ -117,8 +117,6 @@ class MetaModelInstaller extends DataInstaller
         ]);
         $this->addDataOfObject('exface.Core.COMMUNICATION_CHANNEL', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.COMMUNICATION_TEMPLATE', 'CREATED_ON', 'APP');
-        $this->addDataOfObject('exface.Core.API', 'CREATED_ON', 'APP');
-        $this->addDataOfObject('exface.Core.EXTERNAL_SYSTEM', 'CREATED_ON', 'APP');
     }
     
     /**

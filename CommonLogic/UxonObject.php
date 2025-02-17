@@ -389,18 +389,8 @@ class UxonObject implements \IteratorAggregate
         }
         return $this;
     }
-
-    /**
-     * Returns true if this UXON is an array with numeric keys only.
-     *
-     * If `$ignore_gaps_in_keys` is false, the array must also be contiguous, i.e.
-     * not have any gaps in between indices. For example, an array where one or more
-     * elements are commented out, would return FALSE.
-     *
-     * @param bool $ignore_gaps_in_keys
-     * @return bool
-     */
-    public function isArray(bool $ignore_gaps_in_keys = false) : bool
+    
+    public function isArray($ignore_gaps_in_keys = false)
     {
         if ($this->isEmpty()){
             return true;

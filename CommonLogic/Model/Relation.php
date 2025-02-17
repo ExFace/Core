@@ -412,7 +412,7 @@ class Relation implements MetaRelationInterface
         // address, etc.
         // In this case, we also unset the cached right-object and right-key to make the relation recalculate
         // them when needed.
-        if ($thisObj->getId() === $this->getRightObjectId()) {
+        if ($thisObj->getId() === $this->rightKeyAttributeUid) {
             $clone->rightObjectUid = $newObject->getId();
             $clone->rightKeyAttribute = null;
             $clone->rightObject = null;

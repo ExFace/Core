@@ -496,7 +496,6 @@ class DebugContext extends AbstractContext
                                             ]
                                         ], [
                                             'caption' => 'Stop tracing',
-                                            'refresh_input' => true,
                                             'action' => [
                                                 'alias' => 'exface.Core.CallContext',
                                                 'context_scope' => $this->getScope()->getName(),

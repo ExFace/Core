@@ -61,8 +61,6 @@ class DataFilterMapping implements WidgetPartInterface
 
     private $disabled = false;
 
-    private $disabledForWidgetIds = [];
-
     private $filterUxon = null;
     
     public function __construct(iHaveFilters $widget, string $fromFilterAlias, UxonObject $uxon = null)
@@ -135,35 +133,11 @@ class DataFilterMapping implements WidgetPartInterface
     }
 
     /**
-     * Only disable this filter mapping for certain ids of data widgets in the dashboard
-     * 
-     * @uxon-property disabled_for_widget_ids
-     * @uxon-type array
-     * @uxon-template [""]
-     * 
-     * @param \exface\Core\CommonLogic\UxonObject $arrayOfWidgetIds
-     * @return DataFilterMapping
-     */
-    protected function setDisabledForWidgetIds(UxonObject $arrayOfWidgetIds) : DataFilterMapping
-    {
-        $this->disabledForWidgetIds = $arrayOfWidgetIds->toArray();
-        return $this;
-    }
-
-    /**
      * 
      * @return bool
      */
-    public function isDisabled(iHaveFilters $dataWidget) : bool
+    public function isDisabled() : bool
     {
-        if ($this->disabled === true) {
-            return true;
-        }
-        foreach ($this->disabledForWidgetIds as $id) {
-            if ($dataWidget->getId(false) === $id) {
-                return true;
-            }
-        }
         return $this->disabled;
     }
 

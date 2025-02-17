@@ -259,7 +259,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgetFirst()
      */
-    public function getWidgetFirst(callable $filter = null) : WidgetInterface
+    public function getWidgetFirst(callable $filter = null)
     {
         foreach ($this->getWidgets() as $widget){
             if (is_null($filter) || $filter($widget) === true){
@@ -267,16 +267,6 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
             }
         }
         throw new UnderflowException('Cannot get first widget from ' . $this->getWidgetType() . ': no widgets matching the filter were found!');
-    }
-
-    public function getWidgetLast(callable $filter = null) : WidgetInterface
-    {
-        foreach (array_reverse($this->getWidgets()) as $widget){
-            if (is_null($filter) || $filter($widget) === true){
-                return $widget;
-            }
-        }
-        throw new UnderflowException('Cannot get last widget from ' . $this->getWidgetType() . ': no widgets matching the filter were found!');
     }
 
     /**

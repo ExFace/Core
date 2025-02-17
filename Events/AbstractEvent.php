@@ -117,14 +117,4 @@ abstract class AbstractEvent extends Event implements EventInterface
     {
         return $this->preventDefault;
     }
-
-    public function isOnBefore() : bool
-    {
-        return mb_stripos($this->getEventName(), '.OnBefore') !== false;
-    }
-
-    public function isOnAfter() : bool
-    {
-        return ! $this->isOnBefore();
-    }
 }

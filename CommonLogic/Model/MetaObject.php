@@ -1108,9 +1108,6 @@ class MetaObject implements MetaObjectInterface
      */
     public function isExactly($object_or_alias_or_id)
     {
-        if ($object_or_alias_or_id === null) {
-            return false;
-        }
         if ($object_or_alias_or_id instanceof MetaObjectInterface) {
             if ($object_or_alias_or_id->getId() === $this->getId()) {
                 return true;

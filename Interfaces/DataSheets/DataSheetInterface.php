@@ -398,13 +398,6 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array
      */
     public function getRows($how_many = 0, $offset = 0);
-
-    /**
-     * 
-     * @param array $indexes
-     * @return void
-     */
-    public function getRowsByIndex(array $indexes) : array;
     
     /**
      * Returns only those rows from the current sheet, that are not present in the other sheet provided.
