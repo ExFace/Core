@@ -2,6 +2,7 @@
 
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\Factories\FormulaFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
@@ -495,6 +496,29 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         return '-- BATCH-DELIMITER';
     }
+
+    /**
+     * Returns a string that indicates a call of a PHP plugin function.
+     *
+     * Override this method to define a custom marker for a specific SQL dialect.
+     *
+     * @return string
+     */
+    protected function getMarkerPhpFunction() : string
+    {
+        return '@install\.';
+    }
+
+    /**
+     * Returns a regular expression which matches the beginning and the end of a multiline comment.
+     *
+     *  Override this method to define a custom marker for a specific SQL dialect.
+     *
+     * @return string
+     */
+    protected function getMarkerMultilineComment() : string{
+        return '\/\*|\*\/';
+    }
     
     /**
      * Function to perform migrations on the database.
@@ -812,19 +836,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $connection->transactionStart();
             }
             if (null !== $delim = $this->getBatchDelimiter($script)) {
-                if (! RegularExpressionDataType::isRegex($delim)) {
+                if (!RegularExpressionDataType::isRegex($delim)) {
                     $delim = '/' . preg_quote($delim, '/') . '/';
                 }
                 foreach (preg_split($delim, $script) as $statement) {
-                    if ($statement) {
-                        if ($this->isPlugin($statement)) {
-                            $this->runPlugin($statement);
-                        }
-                        $results[] = $connection->runSql($statement, true);
+                    if(!$statement){
+                        continue;
                     }
+                    $results = $this->interpretAndRunStatements($connection, $statement, $results);
                 }
             } else {
-                $results[] = $connection->runSql($script, true);
+                $results = $this->interpretAndRunStatements($connection, $script, $results);
             }
             
             if ($wrapInTransaction === true) {
@@ -950,17 +972,74 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $this->dataSourceSelector = $value;
         return $this;
     }
-
-    protected function isPlugin(string $statement) : bool
+    /**
+     * Returns an indicator if the statement provided as argument contains the marker interpreted as
+     * Plugin Call subjected by getMarkerPhpFunction().
+     *
+     * @param string $statement the statement to be checked
+     * @return bool TRUE if the value of getMarkerPhpFunction() is contained in $statement, otherwise FALSE
+     */
+    protected function isPluginCallContained(string $statement) : bool
     {
-        // TODO regex to search for @installer.xxx()
-        return false;
+        $matches = [];
+        $found = preg_match($this->getMarkerPhpFunction(), $statement, $matches);
+        return $found && $matches[1] !== null;
     }
 
+    /**
+     * Returns an indicator if the statement provided as argument is a Plugin Call.
+     *
+     * @param string $statement the statement to be checked
+     * @return bool TRUE if $statement is a Plugin Call, otherwise FALSE
+     */
+    protected function isPlugin(string $statement) : bool
+    {
+        $matches = [];
+        $found = preg_match('/'.$this->getMarkerPhpFunction().'(?<fnc>(.|\s|\S)+?)/', $statement, $matches);
+        return $found && $matches[1] !== null;
+    }
+
+    /**
+     * Executes the Plugin Call.
+     *
+     * @param string $statement
+     * @return void
+     */
     protected function runPlugin(string $statement)
     {
-        // TODO @installer.xxx() -> xxx() -> Plugin -> Formula
-        return;
+        $matches = [];
+        $found = preg_match_all('/'.$this->getMarkerPhpFunction().'(?<fnc>[.|\s|\S]*?\))/', $statement, $matches);
+        if(!$found){
+            return;
+        }
+        foreach ($matches['fnc'] as $match) {
+            $formula = FormulaFactory::createFromString($this->getWorkbench(), $match);
+            $formula->evaluate();
+        }
+    }
+
+    /**
+     * @param SqlDataConnectorInterface $connection
+     * @param string $script
+     * @param array $results
+     * @return array
+     */
+    protected function interpretAndRunStatements(SqlDataConnectorInterface $connection, string $script, array $results): array
+    {
+        if (null === $mlDelim = $this->getMarkerMultilineComment()) {
+            $results[] = $connection->runSql($script, true);
+        }
+        if (!RegularExpressionDataType::isRegex($mlDelim)) {
+            $mlDelim = '/' . preg_quote($mlDelim, '/') . '/';
+        }
+        foreach (preg_split($mlDelim, $script) as $mlStmt) {
+            if ($this->isPlugin($mlStmt)) {
+                $this->runPlugin($mlStmt);
+            } else {
+                $results[] = $connection->runSql($script, true);
+            }
+        }
+        return $results;
     }
 }
 ?>
