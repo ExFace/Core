@@ -135,6 +135,11 @@ class OrderingBehavior extends AbstractBehavior
      */
     public function onCacheOldData(DataSheetEventInterface $event) : void
     {
+        // Ignore MetaObjects we are not associated with.
+        if (!$event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+        
         if($this->working) {
             return;
         }

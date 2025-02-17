@@ -65,10 +65,15 @@ class LoginPrompt extends Container implements iFillEntireContainer, iShowMessag
         }
         return parent::getWidgets($filter);
     }
-
-    
     public function addForm(Form $widget, int $position = null) : LoginPrompt
     {
+        // Make sure the default number of columns for a form is not applied
+        // to the login widget, which is significantly smaller. If not done here,
+        // the inner form might easily get 2-3 columns if the author of an
+        // authenticator forgets to set this setting.
+        if ($widget->getColumnsInGrid() === null) {
+            $widget->setColumnsInGrid(1);
+        }
         return $this->addWidget($widget, $position);
     }
 
@@ -97,6 +102,7 @@ class LoginPrompt extends Container implements iFillEntireContainer, iShowMessag
         foreach ($widget_or_uxon_array as $w) {
             if ($w instanceof UxonObject) {
                 $widget = WidgetFactory::createFromUxonInParent($this, $w, 'Form');
+                $widget->setColumnsInGrid(1);
             } elseif ($w instanceof WidgetInterface) {
                 // If it is already a widget, take it for further checks
                 $widget = $w;
