@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\DataTypes\ListDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -54,6 +53,8 @@ class DataColumn implements DataColumnInterface
 
     /** @var Formula */
     private $formula = null;
+
+    private $writable = null;
 
     function __construct($expression, DataSheetInterface $data_sheet, $name = '')
     {
@@ -555,7 +556,7 @@ class DataColumn implements DataColumnInterface
             $result = array_keys($this->getValues(false), $cell_value);
         } else {
             foreach ($this->getValues(false) as $row_nr => $row_val) {
-                if (strcasecmp($cell_value, $row_val) === 0) {
+                if (strcasecmp($cell_value ?? '', $row_val ?? '') === 0) {
                     $result[] = $row_nr;
                 }
             }
@@ -1041,5 +1042,26 @@ class DataColumn implements DataColumnInterface
         }
         
         return false;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setWritable()
+     */
+    public function setWritable(bool $trueOrFalse) : DataColumnInterface
+    {
+        $this->writable = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isWritable()
+     */
+    public function isWritable() : bool
+    {
+        return $this->writable ?? $this->isAttribute() && $this->getAttribute()->isWritable();
     }
 }
