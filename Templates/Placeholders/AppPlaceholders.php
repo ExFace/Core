@@ -25,7 +25,7 @@ class AppPlaceholders extends AbstractPlaceholderResolver
     public function __construct(AppInterface $app, string $prefix = '~app')
     {
         $this->setPrefix($prefix);
-        $this->workbench = $app;
+        $this->app = $app;
     }
 
     /**

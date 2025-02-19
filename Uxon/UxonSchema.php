@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
@@ -821,7 +822,8 @@ class UxonSchema implements UxonSchemaInterface
             $namespace = str_replace(['/Formulas', '/'], ['', $dot], $row['PATH_RELATIVE']);
             $options[] = $namespace . $dot . $row['NAME'];
             if (strcasecmp($namespace, 'exface.Core') === 0) {
-                $options[] = $row['NAME'];
+                $shortName = array_search($row['NAME'], FormulaSelector::SHORT_NAMES);
+                $options[] = $shortName !== false ? $shortName : $row['NAME'];
             }
         }
        sort($options);

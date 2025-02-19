@@ -471,7 +471,7 @@ class Expression implements ExpressionInterface
                                 $this->data_type->setListDelimiter($this->getAttribute()->getValueListDelimiter());
                             }
                         } else {
-                            $this->data_type = $attribute_type->copy();
+                            $this->data_type = $attribute_type;
                         }
                         break;
                     }                 
