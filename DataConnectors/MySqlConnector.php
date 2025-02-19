@@ -10,6 +10,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\ModelBuilders\MySqlModelBuilder;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
@@ -749,5 +750,22 @@ class MySqlConnector extends AbstractSqlConnector
     protected function isSslEnabled() : bool
     {
         return $this->sslCACertificatePath !== null || $this->sslCertificatePath !== null || $this->sslCaPath !== null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::canJoin()
+     */
+    public function canJoin(DataConnectionInterface $otherConnection) : bool
+    {
+        $parentResult = parent::canJoin($otherConnection);
+        if ($parentResult === false) {
+            return false;
+        }
+        if (! $otherConnection instanceof $this) {
+            return false;
+        }
+        return $this->getDbase() === $otherConnection->getDbase();
     }
 }

@@ -451,7 +451,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      */
     protected function validateContextUxon(UxonObject $contextUxon, string $context, ?BehaviorLogBook $logBook = null) : void
     {
-        if($contextUxon->isArray()){
+        if($contextUxon->isArray(true)){
             return;
         }
         

@@ -12,6 +12,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\StringDataType;
@@ -2196,7 +2197,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                     
                 default:
-                    $values = explode($value_list_delimiter, $value);
+                    $values = explode($value_list_delimiter, $value ?? '');
                     $value = '';
                     $valueNullChecks = [];
                     
@@ -2852,9 +2853,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function canReadAttribute(MetaAttributeInterface $attribute) : bool
     {
-        // TODO Check if all objects along the relation path also belong to the data source
-        // TODO Instead of checking the data source, check if it points to the same data base
-        return $attribute->getObject()->getDataSource()->getId() === $this->getMainObject()->getDataSource()->getId();
+        // TODO Check if all objects along the relation path also can be read
+        $attrObj = $attribute->getObject();
+        $queryObj = $this->getMainObject();
+        if ($attrObj->getDataSource()->getId() === $queryObj->getDataSource()->getId()) {
+            return true;
+        }
+        $attrConn = $attrObj->getDataConnection();
+        $queryConn = $queryObj->getDataConnection();
+        if ($attrConn === $queryConn) {
+            return true;
+        }
+        if ($queryConn instanceof SqlDataConnectorInterface) {
+            if ($queryConn->canJoin($attrConn)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**

@@ -16,6 +16,10 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 class FormulaSelector extends AbstractSelector implements FormulaSelectorInterface
 {
+    const SHORT_NAMES = [
+        'If' => 'IfThenElse'
+    ];
+
     use ResolvableNameSelectorTrait;
     
     private $defaultAppAlias = '';
@@ -27,8 +31,17 @@ class FormulaSelector extends AbstractSelector implements FormulaSelectorInterfa
      */
     public function __construct(WorkbenchInterface $workbench, string $selectorString)
     {
+        // Some of the core formulas have short names, that could not be used as PHP class
+        // names. The following code translates the short names into
+        foreach (self::SHORT_NAMES as $short => $full) {
+            if (strcasecmp($short, $selectorString) === 0) {
+                $selectorString = $full;
+                break;
+            }
+        }
         parent::__construct($workbench, $selectorString);
         if (! $this->isClassname() && ! $this->isFilepath()) {
+            // If no app alias provided, assume this is a core formula
             if (strpos($selectorString, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
                 $this->defaultAppAlias = 'exface.Core.';
             }
