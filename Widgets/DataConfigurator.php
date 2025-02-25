@@ -161,7 +161,16 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     {
         return WidgetFactory::createFromUxonInParent($this->getFilterTab(), $uxon, 'Filter');
     }
-    
+
+    /**
+     * Creates filters based on the attribute group associated with the given alias.
+     * 
+     * Adding these filters will filter out any entries that do not match that attribute group.
+     * 
+     * @param string     $groupAlias
+     * @param UxonObject $uxon
+     * @return array
+     */
     public function createFiltersForAttributeGroupAlias(string $groupAlias, UxonObject $uxon) : array
     {
         $object = $this->getMetaObject();
