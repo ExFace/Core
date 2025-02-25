@@ -561,7 +561,9 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
         
         $editors = [];
         $object = $this->getMetaObject();
-        foreach ($object->getAttributeGroup($groupAlias) as $attribute) {
+        $attributeGroups = $object->getAttributeGroup($groupAlias);
+        $attributeGroups->sortByDefaultDisplayOrder();
+        foreach ($attributeGroups as $attribute) {
             $editor = WidgetFactory::createDefaultEditorForAttributeAlias($object, $attribute->getAlias(), $this);
             $editors[] = $editor;
         }
