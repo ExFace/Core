@@ -196,7 +196,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     private $useHiddenInput = false;
 
     private bool $appliesToAggregatedValues = true;
-    
+    private ?string $attributeGroupAlias = null;
+
     /**
      * Returns TRUE if the input widget was already instantiated.
      * 
@@ -596,6 +597,25 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
             $this->getInputWidget()->setAttributeAlias($value);
         }
         return $this;
+    }
+
+    /**
+     * @uxon-property attribute_group_alias
+     * @uxon-type string
+     * @uxon-template ~VISIBLE
+     *
+     * @param string|null $groupAlias
+     * @return $this
+     */
+    public function setAttributeGroupAlias(?string $groupAlias) : Filter
+    {
+        $this->attributeGroupAlias = $groupAlias;
+        return $this;
+    }
+    
+    public function getAttributeGroupAlias() : ?string
+    {
+        return $this->attributeGroupAlias;
     }
 
     /**
@@ -1084,7 +1104,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     }
 
     /**
-     * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by default.
+     * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by
+     * default.
      * 
      * The following states of input widgets are available:
      * - display_only = true - active (user can interact with the widget), but not considered as input for actions
