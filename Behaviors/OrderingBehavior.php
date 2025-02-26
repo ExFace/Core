@@ -386,23 +386,20 @@ class OrderingBehavior extends AbstractBehavior
                 continue;
             }
             
-            // Find, load and cache the row and its siblings.
-            $siblingData = $this->extractSiblings(
-                $eventSheet,
-                $loadedData,
-                $row
-            );
+            $loadedSiblingsSheet = $this->extractLoadedSiblings($loadedData, $rowParents);
+            $changedSiblingsSheet = $this->extractChangedSiblings($loadedSiblingsSheet, $eventSheet, $rowParents);
+            $allSiblingsSheet = $loadedSiblingsSheet->merge($changedSiblingsSheet);
             
             // Add new nodes to the cache.
-            foreach ($siblingData['all']->getRows() as $siblingRow) {
+            foreach ($allSiblingsSheet->getRows() as $siblingRow) {
                 $cache->addElement($this->getParentsForRow($siblingRow), $rowParents);
             }
 
             // On delete, all changed rows will be removed from the database,
             // so we have to remove them from our ordering data as well.
             if($onDelete) {
-                foreach ($siblingData['changed']->getRows() as $changedRow) {
-                    $siblingData['all']->removeRowsByUid($changedRow[$uidAlias]);
+                foreach ($changedSiblingsSheet->getRows() as $changedRow) {
+                    $allSiblingsSheet->removeRowsByUid($changedRow[$uidAlias]);
                 }
             }
 
@@ -479,57 +476,39 @@ class OrderingBehavior extends AbstractBehavior
         return $siblingData;
     }
     
-    protected function extractSiblings(
-        DataSheetInterface        $eventSheet, 
-        DataSheetInterface        $loadedData,
-        array                     $sourceRow) : array
+    protected function extractLoadedSiblings(DataSheetInterface $loadedData, array $parents) : DataSheetInterface
     {
-        // Prepare variables.
-        $indexingAlias = $this->getOrderNumberAttributeAlias();
-        $uidAlias = $eventSheet->getUidColumnName();
-        $parents = $this->getParentsForRow($sourceRow);
-        $groupId = json_encode($parents);
-
-        // Extract all rows from the loaded data that belong to this group.
         $loadedSiblingsSheet = $this->createEmptyCopy($loadedData, true, false);
+        
         foreach ($loadedData->getRows() as $loadedRow) {
             if ($this->belongsToGroup($loadedRow, $parents)) {
                 $loadedSiblingsSheet->addRow($loadedRow);
             }
         }
-
-        // Extract rows from event sheet that belong to this group.
-        $allSiblingsSheet = $loadedSiblingsSheet->copy();
-        $changedSiblingsSheet = $this->createEmptyCopy($eventSheet, true, false);
-        foreach ($eventSheet->getRows() as $changedRow) {
-            if(!$this->belongsToGroup($changedRow, $parents)) {
+        
+        return $loadedSiblingsSheet;
+    }
+    
+    protected function extractChangedSiblings(DataSheetInterface $loadedSiblingSheet, DataSheetInterface $eventData, array $parents) : DataSheetInterface
+    {
+        $uidAlias = $loadedSiblingSheet->getUidColumnName();
+        $indexingAlias = $this->getOrderNumberAttributeAlias();
+        $changedSiblingsSheet = $this->createEmptyCopy($eventData, true, false);
+        
+        foreach ($eventData->getRows() as $changedRow) {
+            if (!$this->belongsToGroup($changedRow, $parents)) {
                 continue;
             }
 
-            $rowNr = $allSiblingsSheet->getUidColumn()->findRowByValue($sourceRow[$uidAlias]);
-            $loadedRow = $allSiblingsSheet->getRow($rowNr);
+            $loadedRow = $loadedSiblingSheet->getRowByColumnValue($uidAlias, $changedRow[$uidAlias]);
             
-            // If the row we are working with is new or has had its ordering index changed, we add it to the changed list.
             if ($loadedRow === null || $loadedRow[$indexingAlias] !== $changedRow[$indexingAlias]) {
                 $changedSiblingsSheet->addRow($changedRow, true, false);
-
-                if($rowNr !== false) {
-                    // If the row already exists, we update its ordering index.
-                    $allSiblingsSheet->setCellValue($indexingAlias, $rowNr, $sourceRow[$indexingAlias]);
-                } else {
-                    // Otherwise we add it.
-                    $allSiblingsSheet->addRow($changedRow);
-                }
             }
         }
-        
-        return $this->buildSiblingCacheEntry(
-            $loadedSiblingsSheet,
-            $changedSiblingsSheet,
-            $allSiblingsSheet,
-            $parents,
-            null
-        );
+
+
+        return $changedSiblingsSheet;
     }
 
     private function buildSiblingCacheEntry(
