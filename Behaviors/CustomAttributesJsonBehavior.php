@@ -222,9 +222,7 @@ class CustomAttributesJsonBehavior
     }
 
     /**
-     * Define the attribute alias where the actual JSON data is stored. 
-     * 
-     * This attribute belongs to the object this behavior is attached to.
+     * Define the attribute alias where the actual JSON data is stored. It must belong to the object this behavior is attached to.
      * 
      * @uxon-property json_attribute_alias 
      * @uxon-type metamodel:attribute
