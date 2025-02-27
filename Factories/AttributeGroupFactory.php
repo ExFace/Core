@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
@@ -62,8 +63,14 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
             return $attributeList;
         }
         
-        $spell = array_shift($spells);
-        if (substr($spell, 0, 1) === '!') {
+        $fullSpell = array_shift($spells);
+        $fullSpell = explode(':', $fullSpell);
+        $spell = mb_trim($fullSpell[0]);
+        
+        $components = count($fullSpell) ? $fullSpell[1] : "";
+        $components = empty($components) ? [] : explode(',', $components);
+        
+        if (str_starts_with($spell, '!')) {
             $invert = true;
             $alias = '~' . substr($spell, 1);
         } else {
@@ -113,9 +120,31 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                     return $invert XOR $attr->isCopyable();
                 });
                 break;
+            case MetaAttributeGroupInterface::CUSTOM:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert, $components) {
+                    if(!$attr instanceof CustomAttribute) {
+                        return $invert;
+                    }
+
+                    if($invert) {
+                        return false;
+                    }
+                    
+                    $categories = $attr->getCategories();
+                    foreach ($components as $component) {
+                        $invertResult = str_starts_with($component, '!');
+                        $component = mb_trim($component, ' \n\r\t\v\0!');
+                        $result = ($invertResult XOR in_array($component,$categories,true));
+                        if($result === false) {
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                });
+                break;
         }
         
         return static::getAttributesByMagic($attributeList, $spells);
     }
 }
-?>

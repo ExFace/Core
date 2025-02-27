@@ -93,7 +93,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      * @param DataConnectionInterface|string|\exface\Core\CommonLogic\Selectors\DataConnectionSelector $dataConnectionOrAlias
      * @param bool $readable
      * @param bool $writable
-     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     * @return MetaObjectInterface
      */
     public static function createTemporary(
         WorkbenchInterface $workbench, 
@@ -140,25 +140,32 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     }
 
     /**
-     * Adds a virtual attribute (not stored in the meta model) to the given object.
-     * 
-     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj
-     * @param string $name
-     * @param string $alias
-     * @param string $dataAddress
-     * @param mixed $dataTypeOrSelector
-     * @throws \exface\Core\Exceptions\InvalidArgumentException
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     * Creates a virtual attribute (not stored in the meta model) to the given object.
+     *
+     * @param MetaObjectInterface $obj
+     * @param string              $name
+     * @param string              $alias
+     * @param string              $dataAddress
+     * @param mixed|null          $dataTypeOrSelector
+     * @param string|null         $attributeClass
+     * @return MetaAttributeInterface
      */
     public static function addAttributeTemporary(
-        MetaObjectInterface $obj, 
-        string $name, 
-        string $alias, 
+        MetaObjectInterface $obj,
+        string $name,
+        string $alias,
         string $dataAddress,
-        $dataTypeOrSelector = null
+        mixed $dataTypeOrSelector = null,
+        ?string $attributeClass = null
     ) : MetaAttributeInterface
     {
-        $attr = new Attribute($obj);
+        if(!empty($attributeClass) && 
+            is_subclass_of($attributeClass, MetaAttributeInterface::class)) {
+            $attr = new $attributeClass($obj);
+        } else {
+            $attr = new Attribute($obj);
+        }
+
         $attr->setId(UUIDDataType::generateSqlOptimizedUuid());
         $attr->setAlias($alias);
         $attr->setName($name);
@@ -180,6 +187,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
                 throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . get_class($dataTypeOrSelector));
         }
         $attr->setDataType($type);
+        
         $obj->getAttributes()->add($attr);
         return $attr;
     }
