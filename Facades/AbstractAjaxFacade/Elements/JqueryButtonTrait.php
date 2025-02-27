@@ -353,13 +353,12 @@ JS;
                 $js = $this->buildJsClickResetWidget($action);
                 $jsRequestDataCollector = '';
                 break;
+
+            // DATA COLLECTOR REQUIRED
             // Call a widget function - e.g. click another button
             case $action instanceof iCallWidgetFunction:
                 $js = $this->buildJsClickCallWidgetFunction($action, $jsRequestData);
-                $jsRequestDataCollector = '';
                 break;
-
-            // DATA COLLECTOR REQUIRED
             // Send data to widget
             case $action instanceof SendToWidget:
                 $js = $this->buildJsClickSendToWidget($action, $jsRequestData); break;
