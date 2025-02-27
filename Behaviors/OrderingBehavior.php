@@ -386,6 +386,7 @@ class OrderingBehavior extends AbstractBehavior
                 continue;
             }
             
+            // Extract sibling data.
             $loadedSiblingsSheet = $this->extractLoadedSiblings($loadedData, $rowParents);
             $changedSiblingsSheet = $this->extractChangedSiblings($loadedSiblingsSheet, $eventSheet, $rowParents);
             $allSiblingsSheet = $loadedSiblingsSheet->merge($changedSiblingsSheet);
@@ -403,6 +404,10 @@ class OrderingBehavior extends AbstractBehavior
                 }
             }
 
+            $groupId = json_encode($rowParents);
+            $logbook->addLine('Found ' . ($allSiblingsSheet->countRows()) . ' elements in group ' . $groupId . '.');
+            $logbook->addDataSheet('Group-' . $groupId, $allSiblingsSheet);
+            
             // Find and record changes.
             //$this->findPendingChanges($siblingData, $pendingChanges, $logbook);
 
@@ -417,31 +422,20 @@ class OrderingBehavior extends AbstractBehavior
 
         $logbook->addIndent(-1);
     }
-
-    /**
-     * Get all siblings of a given row. A sibling is any row that has the EXACT same parentage, including EMPTY
-     * values.
-     *
-     * Loads, processes and caches all relevant data for this row and its siblings.
-     *
-     * Multiple calls to this function with either the same row or one of its siblings will return the cached data
-     * without performing any additional work.
-     *
-     * @param array                     $pendingChanges
-     * Any necessary data updates will be appended to this array, since updating is deferred to `On...DataEvent`.
-     */
-    private function getSiblingData(
-        array                     &$pendingChanges,
-        LazyHierarchicalDataCache $cache,
-        BehaviorLogBook           $logbook): array
+    
+    private function determineMissingIndices(
+        DataSheetInterface $allSiblingData,
+        BehaviorLogBook           $logbook) : array
     {
         // Determine where to insert new elements.
         $insertOnTop = ! $this->getAppendToEnd();
+        $indexingAlias = $this->getOrderNumberAttributeAlias();
+        
         if ($insertOnTop) {
             $insertionIndex = $this->getOrderStartsWith();
             $logbook->addLine('New elements will be inserted at the start with index ' . $this->getOrderStartsWith());
         } else {
-            $maxIndex = max($siblingSheet->getColumnValues($indexingAlias));
+            $maxIndex = max($allSiblingData->getColumnValues($indexingAlias));
             if ($maxIndex === "") {
                 $insertionIndex = $this->getOrderStartsWith();
                 $logbook->addLine('Could not determine insertion index, new elements will be inserted at index ' . $insertionIndex . ' by default.');
@@ -451,27 +445,11 @@ class OrderingBehavior extends AbstractBehavior
             }
         }
 
-        // Post-Process rows.
-        foreach ($siblingSheet->getRows() as $rowNumber => $siblingRow) {
-            // Add row as node to cache.
-            $cache->addElement($this->getParentsForRow($siblingRow), $parents);
-        }
-
         // Sort sheet by ordering index.
-        $sorters = new DataSorterList($siblingSheet->getWorkbench(), $siblingSheet);
+        $sorters = new DataSorterList($allSiblingData->getWorkbench(), $allSiblingData);
         $sorters->addFromString($indexingAlias);
-        $siblingSheet->sort($sorters, false);
+        $allSiblingData->sort($sorters, false);
         
-        // Save sibling data to cache.
-        try {
-            $siblingData = $this->buildSiblingCacheEntry($originalSiblingSheet, $siblingSheet, $changeSheet, $parents, null);
-            $cache->setData($parents, $siblingData);
-        } catch (InvalidArgumentException $exception) {
-            throw new BehaviorRuntimeError($this, 'Could not add data to cache: ' . $exception->getMessage(), null, $exception, $logbook);
-        }
-
-        $logbook->addLine('Found ' . ($siblingSheet->countRows()) . ' elements in group ' . $groupId . '.');
-        $logbook->addDataSheet('Group-' . $groupId, $siblingSheet);
 
         return $siblingData;
     }
