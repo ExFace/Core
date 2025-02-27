@@ -550,18 +550,14 @@ JS;
 
         // Since we will be wrapping everything in a callable, 'this' will be undefined.
         // To avoid this issue, we replace any call to 'this' with a cached reference.
-        $oThis = 'oThis';
-        $pendingActionJs = str_replace('this.', $oThis.'.', $pendingActionJs);
-
         return <<< JS
 
-// Cache 'this' to maintain it within the callable.
-var {$oThis} = this;
 
 // Wrap pending action in callable to delay execution.
-var fnAction = function() {
+var self = this;
+var fnAction = (function() {
     {$pendingActionJs}
-};
+}).bind(self);
 
 // Built-In confirmations.
 {$checkChangesJs}
