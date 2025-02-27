@@ -74,7 +74,10 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  */
 class OrderingBehavior extends AbstractBehavior
 {
-    private const FLAG_PROCESSED = "PROCESSED";
+    private const KEY_ALL = 'all';
+    private const KEY_LOADED = 'loaded';
+    private const KEY_PRIORITY = 'priority';
+    private const KEY_MAX_INDEX = 'maxIndex';
     
     // internal variables
     private array $eventCache = [];
@@ -176,9 +179,8 @@ class OrderingBehavior extends AbstractBehavior
         $logbook->addDataSheet('LoadedData', $loadedData->copy());
         
         // Order data.
-        $pendingChanges = [];
         $siblingCache = new LazyHierarchicalDataCache();
-        $this->groupAndOrderDataByParents($event, $loadedData, $siblingCache, $pendingChanges, $logbook);
+        $pendingChanges = $this->groupAndOrderDataByParents($event, $loadedData, $siblingCache, $logbook);
 
         if(empty($pendingChanges)) {
             $logbook->addLine('No changes pending for input data.');
@@ -222,34 +224,33 @@ class OrderingBehavior extends AbstractBehavior
             return;
         }
 
-        $eventCache = null;
+        $cachedData = null;
         foreach ($this->eventCache as $cachedEventData) {
             if($cachedEventData['eventSheet'] === $eventSheet) {
-                $eventCache = $cachedEventData;
+                $cachedData = $cachedEventData;
                 break;
             }
         }
         
-        if($eventCache === null) {
+        if($cachedData === null) {
             throw new BehaviorRuntimeError($this, 'Could not load data from cache!', null, null, $logbook);
         }
         
         // Restore shifted indices. This is needed to restore indices of rows that did not
         // have a UID in the last step.
         $indexAlias = $this->getOrderNumberAttributeAlias();
-        $shiftedIndices = $eventCache['shiftedIndices'];
+        $shiftedIndices = $cachedData['shiftedIndices'];
 
         foreach ($eventSheet->getRows() as $rowNr => $row) {
             $restoredIndex = $shiftedIndices[$row[$indexAlias]];
             if($restoredIndex !== null) {
                 $row[$indexAlias] = $restoredIndex;
-                $eventSheet->addRow($row, true);
+                $eventSheet->addRow($row, true); // TODO use set instead, we might not have a UID
             }
         }
-        
-        $pendingChanges = [];
+
         $siblingCache = new LazyHierarchicalDataCache();
-        $this->groupAndOrderDataByParents($event, $eventCache['loadedData'], $siblingCache, $pendingChanges, $logbook);
+        $pendingChanges = $this->groupAndOrderDataByParents($event, $cachedData['loadedData'], $siblingCache, $logbook);
 
         if(empty($pendingChanges)) {
             $logbook->addLine('No changes pending for input data.');
@@ -289,15 +290,14 @@ class OrderingBehavior extends AbstractBehavior
             $pendingIndex = $pendingRow[$indexAlias];
 
             // If the pending index conflicts with the original data, we need to shift it.
-            $emptyIndex = $pendingIndex === null || $pendingIndex === '';
-            if($emptyIndex || in_array($pendingIndex, $siblingData['loaded']->getColumnValues($indexAlias))) {
-                $safeIndex = $siblingData['maxIndex'] - $startIndex + 1;
+            if(in_array($pendingIndex, $siblingData[self::KEY_LOADED]->getColumnValues($indexAlias))) {
+                $safeIndex = $siblingData[self::KEY_MAX_INDEX] - $startIndex + 1;
                 $newIndex = $pendingIndex + $safeIndex;
                 $pendingRow[$indexAlias] = $newIndex;
                 $shiftedIndices[$newIndex] = $pendingIndex;
             }
 
-            $eventSheet->removeRowsByUid($pendingRow[$uidAlias]);
+            $eventSheet->removeRowsByUid($pendingRow[$uidAlias]); // TODO This should not rely on UID
             $eventSheet->addRow($pendingRow);
         }
 
@@ -322,7 +322,7 @@ class OrderingBehavior extends AbstractBehavior
         $fetchSheet = $this->createEmptyCopy($eventSheet, true, true);
         $sampleRow = $eventSheet->getRow();
         foreach ($this->getParentAliases() as $parentAlias) {
-            // If the row is not present in the event sheet, we need to fetch it.
+            // If the column is not present in the event sheet, we need to fetch it.
             if (!key_exists($parentAlias, $sampleRow)) {
                 $logBook->addLine($parentAlias . ' is missing in event data and will have to be loaded.');
                 $fetchSheet->getColumns()->addFromExpression($parentAlias);
@@ -330,6 +330,7 @@ class OrderingBehavior extends AbstractBehavior
                 $logBook->addLine($parentAlias . ' is already present in event data.');
             }
         }
+        
         // Load missing column data and merge it into the event sheet.
         if ($fetchSheet->getColumns()->count() > 0) {
             $fetchSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn(), true);
@@ -353,17 +354,15 @@ class OrderingBehavior extends AbstractBehavior
      * @param DataSheetEventInterface   $event
      * @param DataSheetInterface        $loadedData
      * @param LazyHierarchicalDataCache $cache
-     * @param array                     $pendingChanges
      * Any necessary data updates will be appended to this array, since updating is deferred to `On...DataEvent`.
      * @param BehaviorLogBook           $logbook
-     * @return void
+     * @return array
      */
     private function groupAndOrderDataByParents(
         DataSheetEventInterface     $event,
         DataSheetInterface          $loadedData,
         LazyHierarchicalDataCache   $cache,
-        array                       &$pendingChanges,
-        BehaviorLogBook             $logbook): void
+        BehaviorLogBook             $logbook): array
     {
         $logbook->addLine('Ordering event data...');
         $logbook->addIndent(1);
@@ -371,7 +370,9 @@ class OrderingBehavior extends AbstractBehavior
         // Prepare variables.
         $eventSheet = $event->getDataSheet();
         $uidAlias = $eventSheet->getUidColumnName();
+        $indexingAlias = $this->getOrderNumberAttributeAlias();
         $onDelete = $event instanceof OnBeforeDeleteDataEvent;
+        $pendingChanges = [];
 
         // Iterate over rows in the event sheet and update their ordering.
         foreach ($eventSheet->getRows() as $rowIndex => $row) {
@@ -396,46 +397,68 @@ class OrderingBehavior extends AbstractBehavior
                 $cache->addElement($this->getParentsForRow($siblingRow), $rowParents);
             }
 
-            // On delete, all changed rows will be removed from the database,
-            // so we have to remove them from our ordering data as well.
-            if($onDelete) {
-                foreach ($changedSiblingsSheet->getRows() as $changedRow) {
-                    $allSiblingsSheet->removeRowsByUid($changedRow[$uidAlias]);
+            $priorityRows = [];
+            foreach ($changedSiblingsSheet->getRows() as $changedRow) {
+                $uid = $changedRow[$uidAlias];
+                if($onDelete) {
+                    // On delete, all changed rows will be removed from the database,
+                    // so we have to remove them from our ordering data as well.
+                    $allSiblingsSheet->removeRowsByUid($uid);
+                } else if($uid !== null && $uid !== "") {
+                        $priorityRows[$uid] = $changedRow;
+                } else {
+                        $priorityRows[] = $changedRow;
                 }
             }
 
+            // Fill missing indices.
+            $modifiedRows = $this->fillMissingIndices($allSiblingsSheet, $logbook);
+            $priorityRows = array_merge($priorityRows, $modifiedRows);
+            $pendingChanges = array_merge($pendingChanges, $modifiedRows);
+
+            // Sort sheet by ordering index.
+            $sorters = new DataSorterList($allSiblingsSheet->getWorkbench(), $allSiblingsSheet);
+            $sorters->addFromString($indexingAlias);
+            $allSiblingsSheet->sort($sorters, false);
+            
             $groupId = json_encode($rowParents);
             $logbook->addLine('Found ' . ($allSiblingsSheet->countRows()) . ' elements in group ' . $groupId . '.');
             $logbook->addDataSheet('Group-' . $groupId, $allSiblingsSheet);
             
             // Find and record changes.
-            //$this->findPendingChanges($siblingData, $pendingChanges, $logbook);
+            $pendingChanges = array_merge($pendingChanges, $this->findPendingChanges($allSiblingsSheet, $pendingChanges, $logbook));
 
             // Mark all siblings as PROCESSED, to avoid ordering the same group multiple times.
             try {
-                $siblingData['flag'] = self::FLAG_PROCESSED;
-                $cache->setData($siblingData['parents'], $siblingData);
+                $siblingData = $this->buildSiblingCacheEntry(
+                    $loadedSiblingsSheet,
+                    $allSiblingsSheet,
+                    $priorityRows
+                );
+                $cache->setData($rowParents, $siblingData);
             } catch (InvalidArgumentException $exception) {
-                throw new BehaviorRuntimeError($this, 'Could not mark data as "' .  self::FLAG_PROCESSED .'": ' . $exception->getMessage(), null, $exception, $logbook);
+                throw new BehaviorRuntimeError($this, 'Could cache data: ' . $exception->getMessage(), null, $exception, $logbook);
             }
         }
 
         $logbook->addIndent(-1);
+        return $pendingChanges;
     }
     
-    private function determineMissingIndices(
-        DataSheetInterface $allSiblingData,
-        BehaviorLogBook           $logbook) : array
+    private function fillMissingIndices(
+        DataSheetInterface $allSiblingsSheet,
+        BehaviorLogBook    $logbook) : array
     {
         // Determine where to insert new elements.
         $insertOnTop = ! $this->getAppendToEnd();
         $indexingAlias = $this->getOrderNumberAttributeAlias();
+        $uidAlias = $allSiblingsSheet->getUidColumnName();
         
         if ($insertOnTop) {
             $insertionIndex = $this->getOrderStartsWith();
             $logbook->addLine('New elements will be inserted at the start with index ' . $this->getOrderStartsWith());
         } else {
-            $maxIndex = max($allSiblingData->getColumnValues($indexingAlias));
+            $maxIndex = max($allSiblingsSheet->getColumnValues($indexingAlias));
             if ($maxIndex === "") {
                 $insertionIndex = $this->getOrderStartsWith();
                 $logbook->addLine('Could not determine insertion index, new elements will be inserted at index ' . $insertionIndex . ' by default.');
@@ -445,13 +468,21 @@ class OrderingBehavior extends AbstractBehavior
             }
         }
 
-        // Sort sheet by ordering index.
-        $sorters = new DataSorterList($allSiblingData->getWorkbench(), $allSiblingData);
-        $sorters->addFromString($indexingAlias);
-        $allSiblingData->sort($sorters, false);
-        
+        $pendingChanges = [];
+        foreach ($allSiblingsSheet->getRows() as $rowNumber => $siblingRow) {
+            // Fill missing indices.
+            $index = $siblingRow[$indexingAlias];
+            if ($index === null || $index === "") {
+                $logbook->addLine('Inserting row ' . $rowNumber . ' at ordering index ' . $insertionIndex . '.');
+                // Update sheet.
+                $allSiblingsSheet->setCellValue($indexingAlias, $rowNumber, $insertionIndex);
+                // Record change.
+                $siblingRow[$indexingAlias] = $insertionIndex;
+                $pendingChanges[] = $siblingRow;
+            }
+        }
 
-        return $siblingData;
+        return $pendingChanges;
     }
     
     protected function extractLoadedSiblings(DataSheetInterface $loadedData, array $parents) : DataSheetInterface
@@ -466,7 +497,7 @@ class OrderingBehavior extends AbstractBehavior
         
         return $loadedSiblingsSheet;
     }
-    
+
     protected function extractChangedSiblings(DataSheetInterface $loadedSiblingSheet, DataSheetInterface $eventData, array $parents) : DataSheetInterface
     {
         $uidAlias = $loadedSiblingSheet->getUidColumnName();
@@ -489,45 +520,27 @@ class OrderingBehavior extends AbstractBehavior
         return $changedSiblingsSheet;
     }
 
-    private function buildSiblingCacheEntry(
-        ?DataSheetInterface $loadedSiblingsSheet,
-        ?DataSheetInterface $changedSiblingsSheet,
-        ?DataSheetInterface $allSiblingsSheet,
-        array               $parents,
-        ?string             $flag) : array
-    {
-        $indexAlias = $this->getOrderNumberAttributeAlias();
-        return [
-            'loaded' => $loadedSiblingsSheet,
-            'all' => $allSiblingsSheet,
-            'changed' => $changedSiblingsSheet,
-            'parents' => $parents,
-            'flag' => $flag,
-            'maxIndex' => max($allSiblingsSheet->getColumnValues($indexAlias))
-        ];
-    }
-    
     /**
      * Finds all indices that need to be changed to successfully update the ordering.
      *
-     * @param array           $siblingData
-     * @param array           $pendingChanges
+     * @param DataSheetInterface $allSiblingsSheet
+     * @param array              $pendingChanges
      * An array to which any changes necessary to achieve the desired ordering will be appended.
-     * @param BehaviorLogBook $logBook
+     * @param BehaviorLogBook    $logBook
+     * @return array
      */
     private function findPendingChanges(
-        array $siblingData, 
-        array &$pendingChanges,
-        BehaviorLogBook $logBook) : void
+        DataSheetInterface $allSiblingsSheet,
+        array $pendingChanges,
+        BehaviorLogBook $logBook) : array
     {
         // Prepare variables.
-        $siblingSheet = $siblingData['all'];
-        $priorityUIds = $siblingData['changed']->getUidColumn()->getValues();
         $indexAlias = $this->getOrderNumberAttributeAlias();
-        $uidAlias = $siblingSheet->getUidColumnName();
-        $countInsertedElements = count($pendingChanges);
+        $uidAlias = $allSiblingsSheet->getUidColumnName();
+        $priorityUIds = array_keys($pendingChanges);
+        $insertedElementsCount = count($pendingChanges);
         $indexingCache = [];
-        
+
         $logBook->addLine('Scanning for pending changes...');
 
         //  We need to sort elements in two stages:
@@ -553,11 +566,11 @@ class OrderingBehavior extends AbstractBehavior
         //  4       8       8       9       No
         //  5       9       9       10      No
         // Result 1,2.,3.,4.,5.,6,7,8,9
-        
+
         // Priority pass.
         if(count($priorityUIds) > 0) {
             $nextIndex = $this->getOrderStartsWith();
-            foreach ($siblingSheet->getRows() as $row) {
+            foreach ($allSiblingsSheet->getRows() as $row) {
                 // In this pass, we only process elements that have been changed by the user.
                 // Their indices have priority over unchanged data to satisfy user expectations.
                 if(!in_array($row[$uidAlias], $priorityUIds)) {
@@ -568,7 +581,7 @@ class OrderingBehavior extends AbstractBehavior
                 $this->validateIndex($index, $indexAlias, $logBook);
                 // Update index and commit row to pending.
                 $row[$indexAlias] = max($index, $nextIndex);
-                $siblingSheet->addRow($row, true);
+                $allSiblingsSheet->addRow($row, true);
                 $pendingChanges[] = $row;
 
                 // Update next index.
@@ -576,7 +589,7 @@ class OrderingBehavior extends AbstractBehavior
                 // Update indexing cache.
                 $indexingCache[$index] = $nextIndex;
             }
-            
+
             // Stitch indexing cache.
             foreach ($indexingCache as $from => $to) {
                 if(key_exists($to, $indexingCache)) {
@@ -585,15 +598,15 @@ class OrderingBehavior extends AbstractBehavior
                 }
             }
         }
-        
+
         // Regular pass.
         $closeGaps = $this->getCloseGaps();
         $nextIndex = $this->getOrderStartsWith();
-        foreach ($siblingSheet->getRows() as $row) {
+        foreach ($allSiblingsSheet->getRows() as $row) {
             // Get current index of row.
             $index = $row[$indexAlias];
             $this->validateIndex($index, $indexAlias, $logBook);
-            
+
             // Check if current row had priority.
             $isPriorityRow = in_array($row[$uidAlias], $priorityUIds);
 
@@ -602,7 +615,7 @@ class OrderingBehavior extends AbstractBehavior
                 $nextIndex = $indexingCache[$index];
                 unset($indexingCache[$index]);
             }
-            
+
             $regularUpdate = $index < $nextIndex && !$isPriorityRow;
             $closeGapUpdate = $index > $nextIndex && $closeGaps;
             if($regularUpdate || $closeGapUpdate) {
@@ -616,8 +629,9 @@ class OrderingBehavior extends AbstractBehavior
                 $nextIndex = $row[$indexAlias] + 1;
             }
         }
-        
-        $logBook->addLine('Pending changes detected in this step: ' . (count($pendingChanges) - $countInsertedElements) . '.');
+
+        $logBook->addLine('Pending changes detected in this step: ' . (count($pendingChanges) - $insertedElementsCount) . '.');
+        return $pendingChanges;
     }
 
     /**
@@ -660,7 +674,7 @@ class OrderingBehavior extends AbstractBehavior
         foreach ($shiftSheet->getRows() as $rowNr => $row) {
             $siblingData = $siblingCache->getData($this->getParentsForRow($row));
             $pendingIndex = $row[$indexAlias];
-            $safeIndex = $siblingData['maxIndex'] - $startIndex + 1;
+            $safeIndex = $siblingData[self::KEY_MAX_INDEX] - $startIndex + 1;
             
             $shiftSheet->setCellValue($indexAlias, $rowNr, $pendingIndex + $safeIndex);
         }
@@ -818,7 +832,7 @@ class OrderingBehavior extends AbstractBehavior
                 $logBook);
         }
     }
-    
+
     /**
      *
      * @param DataSheetInterface $sheet
@@ -839,6 +853,20 @@ class OrderingBehavior extends AbstractBehavior
         }
 
         return $emptyCopy;
+    }
+
+    private function buildSiblingCacheEntry(
+        ?DataSheetInterface $loadedSiblingsSheet,
+        ?DataSheetInterface $allSiblingsSheet,
+        array               $priorityRows) : array
+    {
+        $indexAlias = $this->getOrderNumberAttributeAlias();
+        return [
+            self::KEY_LOADED => $loadedSiblingsSheet,
+            self::KEY_ALL => $allSiblingsSheet,
+            self::KEY_PRIORITY => $priorityRows,
+            self::KEY_MAX_INDEX => max($allSiblingsSheet->getColumnValues($indexAlias))
+        ];
     }
 
     /**
