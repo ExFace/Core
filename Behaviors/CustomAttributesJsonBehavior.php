@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
@@ -34,6 +35,7 @@ use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
  * This requires loading and parsing the entire data set, which is very slow. In addition, this approach can only
  * produce attributes with data type string. NOT RECOMMENDED.
  * 
+ * @author Georg Bieger
  */
 class CustomAttributesJsonBehavior 
     extends AbstractBehavior
@@ -172,15 +174,17 @@ class CustomAttributesJsonBehavior
 
         $logBook->addLine("Adding custom attributes...");
         $logBook->addIndent(1);
+        $targetObject = $this->getObject();
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), StringDataType::class);
         foreach ($customAttributes as $alias => $address) {
             $logBook->addLine('Adding attribute "' . $alias . '" with data address "' . $address . '".');
             $attribute = MetaObjectFactory::addAttributeTemporary(
-                $this->getObject(),
+                $targetObject,
                 $alias,
                 $alias,
                 $address,
-                $dataType);
+                $dataType,
+                CustomAttribute::class);
 
             $attribute->setFilterable(true);
             $attribute->setSortable(true);
@@ -218,9 +222,7 @@ class CustomAttributesJsonBehavior
     }
 
     /**
-     * Define the attribute alias where the actual JSON data is stored. 
-     * 
-     * This attribute belongs to the object this behavior is attached to.
+     * Define the attribute alias where the actual JSON data is stored. It must belong to the object this behavior is attached to.
      * 
      * @uxon-property json_attribute_alias 
      * @uxon-type metamodel:attribute
