@@ -7,7 +7,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Events\MetaObjectEventInterface;
 
 /**
  * The profiler can be used to stop the time for any objects (e.g. actions, data queries, etc.)
@@ -290,9 +289,9 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 <script>
 
 /*
-Fragen:
-    - tooltip daten
-    - on long hover -> anderes tooltip erscheint?
+    questions:
+    - change tooltip data
+    - on long hover -> other tooltip appears? (From powerui itself?) -> could be used instead
 */
 
 const tooltip = document.createElement('div');
@@ -323,6 +322,7 @@ function generateEventTypeFilterOptions() {
     const rows = table.querySelectorAll("tbody tr"); 
     const classSet = new Set();
 
+    // add all distinct types
     rows.forEach(function(row) {
         const rowClasses = row.classList;
         rowClasses.forEach(function(cls) {
@@ -333,7 +333,7 @@ function generateEventTypeFilterOptions() {
     const dropdown = document.getElementById("profiler-event-type-filter");
     dropdown.innerHTML = '<option value="">all types</option>';
 
-    //add evnt types
+    //add event types
     classSet.forEach(function(cls) {
         if (cls !== "") { 
             const option = document.createElement("option");
@@ -364,7 +364,7 @@ document.getElementById("profiler-event-type-filter").addEventListener("change",
     });
 });
 
-// search table
+// search table for terms while applying selected filters
 document.getElementById("profiler-search-button").addEventListener("click", function() {
 
     const searchQuery = document.getElementById("profiler-search-input").value.toLowerCase(); 
@@ -384,6 +384,7 @@ document.getElementById("profiler-search-button").addEventListener("click", func
             
             searchTerms.forEach(function(term) {
                 //search cells
+                // query terms are treated as OR, any match breaks search
                 for (let i = 0; i < cells.length; i++) {
                     if (cells[i].textContent.toLowerCase().includes(term)) {
                         matchFound = true;
@@ -412,7 +413,7 @@ document.getElementById('DebugMessage_Tab_Html_profile').addEventListener('mouse
     tooltip.textContent = "" + row.getAttribute('data-info');
     tooltip.style.visibility = 'visible';
 
-    // pos. tooltip
+    // position tooltip
     const mouseX = event.pageX + 10; 
     const mouseY = event.pageY + 10; 
     tooltip.style.left = mouseX + "px";;
@@ -488,7 +489,7 @@ HTML;
             $subj = $lap[self::LAP_SUBJECT];
 
             # TEST
-            #  jedes subj isobject, nur behaviours haben tostring??
+            
             // $tooltipData = 'isObject '.is_object($subj).' isarray'. is_array($subj). ' is null '.is_null($subj); 
             // if (method_exists($subj , '__toString')){
             //     $tooltipData = 'hasToString ' . $tooltipData;
@@ -506,9 +507,6 @@ HTML;
                 $tooltipData = 'Object: ' .  $lap[self::LAP_NAME]; # 'OPT 2: Class '. get_class($subj) . ', Name ' . $lap[self::LAP_NAME];
             }
 
-            //$tooltipData = $name;
-
-            
             $html .= $this->buildHtmlProfilerRow($eventStart, $name, $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY], $tooltipData);
         }
         
