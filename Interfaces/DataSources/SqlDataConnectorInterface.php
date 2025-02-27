@@ -61,4 +61,17 @@ interface SqlDataConnectorInterface extends DataConnectionInterface, TextualQuer
      * @return string
      */
     public function escapeString(string $string) : string;
+
+    /**
+     * Returns TRUE if a query to this connection can access (e.g. JOIN) data in the other connection and FALSE otherwise.
+     * 
+     * Some SQL engines allow queries to access multiple databases, schemas, etc. On the other hand,
+     * it is often handy to use different data connection for differen areas of a database server,
+     * so this method allows to determine, if a single query can be used to access multiple
+     * data connections or if the query needs to be split.
+     * 
+     * @param \exface\Core\Interfaces\DataSources\DataConnectionInterface $otherConnection
+     * @return void
+     */
+    public function canJoin(DataConnectionInterface $otherConnection) : bool;
 }

@@ -57,7 +57,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     public function getParentSheet() : DataSheetInterface
     {
-        return $this->parent_sheet;
+        return $this->parentSheet;
     }
 
     /**
@@ -67,7 +67,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     protected function setParentSheet(DataSheetInterface $sheet) : DataSheetSubsheetInterface
     {
-        $this->parent_sheet = $sheet;
+        $this->parentSheet = $sheet;
         return $this;
     }
 

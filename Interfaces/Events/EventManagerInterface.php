@@ -16,14 +16,20 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
  */
 interface EventManagerInterface extends WorkbenchDependantInterface
 {
+    const PRIORITY_MAX = '999999';
+    const PRIORITY_MIN = '-999999';
 
     /**
      * Registers a regular listener for the given event name.
      * 
      * The listener can be any PHP-callable.
      * 
-     * If not $priority is specified, listeners are called in the order they are added. Set a higher priority
-     * to ensure a listener is called earlier.
+     * Set a higher priority to ensure a listener is called earlier. If no $priority is specified, listeners 
+     * are called in the order they were added.
+     * 
+     * Use EventManagerInterface::PRIORITY_MAX and PRIORITY_MIN to ensure your listener is call first or
+     * last. If multiple MAX-priority listeners are added, the last one added will be called first.
+     * Similarly the last added MIN-priority listener will be called last. 
      *
      * @param string $eventName            
      * @param callable $listener_callable            

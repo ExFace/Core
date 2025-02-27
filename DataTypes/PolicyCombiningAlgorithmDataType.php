@@ -69,6 +69,8 @@ class PolicyCombiningAlgorithmDataType extends StringDataType implements EnumDat
     const PERMIT_OVERRIDES = "permit-overrides";
     const DENY_UNLESS_PERMIT = "deny-unless-permit";
     const PERMIT_UNLESS_DENY = "permit-unless-deny";
+
+    private $labels = [];
     
     /**
      * 

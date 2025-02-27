@@ -7,6 +7,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
+use Flow\JSONPath\JSONPath;
 
 /**
  * 
@@ -130,6 +131,20 @@ class ArrayDataType extends AbstractDataType
             }
         }
         return $val;
+    }
+
+    /**
+     * Filters the array using JSONPath and returns an array of results
+     * 
+     * @param array $array
+     * @param string $path
+     * @return array|null
+     */
+    public static function filterJsonPath(array $array, string $path) : ?array
+    {
+        $searcher = new JSONPath($array);
+        $result = $searcher->find($path);
+        return $result->getData();
     }
     
     /**

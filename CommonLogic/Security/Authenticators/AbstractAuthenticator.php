@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -569,12 +570,18 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         if ($this->hasSyncRoles() === false) {
             return $this;
         }
+
+        $logbook = new DataLogBook($this->getName());
         
         try {
             $transaction = $this->getWorkbench()->data()->startTransaction();
             
             // Get external roles the user should have according to the remote
             $externalRolesData = $this->getExternalRolesForUser($user, $token);
+            $externalRoles = $externalRolesData->getRows();
+            $externalRoleUids = array_column($externalRoles, 'USER_ROLE');
+            $logbook->addDataSheet('External roles', $externalRolesData);
+            $logbook->addLine('Received ' . $externalRolesData->countRows() . ' external roles');
             
             // Get current workbench user-role-relations, that were added by this authenticator previously
             $localRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
@@ -607,6 +614,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
              *   - User loses Role2 because it is now actively synced. 
              *   See more specific scenarios for local/manual roles below.
             */
+
+            $logbook->addLine('Looking for local roles with the following filters: `' . $localRolesSheet->getFilters()->__toString() . '`');
             
             // Delete roles assigned by this sync previously
             $deleteSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
@@ -614,6 +623,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             $deleteUids = [];
             $checkUids = [];
             $localRolesSheet->dataRead();
+            $logbook->addDataSheet('Local rows', $localRolesSheet);
+            $logbook->addLine('Found ' . $localRolesSheet->countRows() . ' local roles');
 
             /*
              * Scenarios for local/manually assigned roles:
@@ -640,30 +651,49 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             }
             
             // Filter the roles in $checkUids by the AUTHENTICATOR_ID
-            // a) if no AUTHENTICATOR_ID is set, then it is a local/manually assigned role. Then it should NOT be added to $deleteUids so that is is kept instead of deleted.
+            // a) if no AUTHENTICATOR_ID is set, then it is a local/manually assigned role. 
+            // Then it should ONLY be added to $deleteUids if the role UID matches any role UID inside $externalRolesData. 
+            // Otherwise it is kept instead of deleted.
+            // Scenario 1:
+            // "Role A" is set as a local/manually assigned role but "Role A" is not found in the external roles to be synchronized.
+            // In this case the role is NOT added to $deleteUids to keep the role as a local/manually assigned role.
+            // Scenario 2:
+            // "Role B" is set as a  local/manually assigned role and "Role B" is also found in the external roles to be sychronized.
+            // In this case the role is added to $deleteUids to overwrite the local/manually assigned role with the external synchronized role.
             // b) if AUTHENTICATOR_ID is equal to the current authenticator used, then it is an external role and it should be added to $deleteUids to be deleted.
             if (! empty($checkUids)) {
                 $checkSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
                 $checkSheet->getColumns()->addFromExpression('AUTHENTICATOR_ID');
+                $checkSheet->getColumns()->addFromExpression('USER_ROLE');
                 $checkCol = $checkSheet->getColumns()->addFromUidAttribute();
                 $checkCol->setValues($checkUids);
-                $checkSheet->getFilters()->addConditionFromString('AUTHENTICATOR_ID', $this->getId());
                 $checkSheet->getFilters()->addConditionFromColumnValues($checkCol);
-                $checkSheet->dataRead();
-                foreach ($checkCol->getValues() as $uid) {
-                    $deleteUids[] = $uid;
+                $checkSheet->getFilters()->addConditionFromValueArray('AUTHENTICATOR_ID', [$this->getId(), null]);
+                $checkSheet->dataRead();     
+
+                
+                foreach ($checkSheet->getRows() as $internalRow) {
+                    // see b) as described in the comment above
+                if ($internalRow["AUTHENTICATOR_ID"] === $this->getId()) {
+                        $deleteUids[] = $internalRow["UID"];
+                    }
+                // see a) as described in the comment above
+                else if ($internalRow["AUTHENTICATOR_ID"] == null && in_array($internalRow["USER_ROLE"], $externalRoleUids)) {
+                        $deleteUids[] = $internalRow["UID"];
+                    }
                 }
             }
-            
+
             $deleteUids = array_unique($deleteUids);
             $deleteCol->setValues($deleteUids);
+            $logbook->addDataSheet('Local roles to delete', $deleteSheet);
             if ($deleteSheet->countRows() !== 0) {
                 $deleteSheet->dataDelete($transaction);
             }
             
             // Add roles matching the current external roles (see above) 
             $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
-            foreach ($externalRolesData->getRows() as $row) {
+            foreach ($externalRoles as $row) {
                 if ($row['USER_ROLE'] !== null) {
                     $newRolesSheet->addRow([
                         'USER' => $user->getUid(),
@@ -672,9 +702,11 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                     ]);
                 }
             }
+            $logbook->addDataSheet('Local roles to add', $newRolesSheet);
             if($newRolesSheet->countRows() !== 0){
                 $newRolesSheet->dataCreate(false, $transaction);
             }
+            $this->getWorkbench()->getLogger()->notice('Authentication roles synced for user ' . $user->getUsername() . ' with authenticator ' . $this->getName(), [], $logbook);
             $transaction->commit();
         } catch (\Throwable $e) {
             // If roles cannot be synced, do not stop the authentication!

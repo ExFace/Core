@@ -58,6 +58,22 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
         return $this;
     }
 
+    
+
+    /**
+     * Same as `variable` - same as `from` - just to make moving typical mappings between types easier.
+     * 
+     * @uxon-property from
+     * @uxon-type string
+     * 
+     * @param string $string
+     * @return VariableToColumnMapping
+     */
+    protected function setFrom(string $string) : VariableToColumnMapping
+    {
+        return $this->setVariable($string);
+    }
+
     /**
      * 
      * @return \exface\Core\Interfaces\Model\ExpressionInterface
@@ -207,6 +223,11 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
         return [];
     }
     
+    /**
+     * 
+     * @param string $name
+     * @return mixed
+     */
     protected function readVariable(string $name)
     {
         return $this->getWorkbench()->getContext()->getScopeRequest()->getVariable($name);

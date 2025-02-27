@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT_ACTION",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -60,13 +65,14 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "User: My Account",
             "CREATED_ON": "2020-03-23 13:17:24",
             "MODIFIED_ON": "2023-06-05 12:28:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6d08a337463fa3480205857feb80",
             "OBJECT": "0x31343400000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
             "ALIAS": "ShowUserAccountDialog",
             "NAME": "My Account",
             "SHORT_DESCRIPTION": "",
@@ -118,13 +124,14 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "User: Change My Password",
             "CREATED_ON": "2020-03-31 12:54:59",
             "MODIFIED_ON": "2022-06-02 10:24:48",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea733e1117fd49b3cb025041000001",
             "OBJECT": "0x31343400000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
             "ALIAS": "ShowChangePasswordDialog",
             "NAME": "Change My Password",
             "SHORT_DESCRIPTION": "",
@@ -182,13 +189,14 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "User: Disable",
             "CREATED_ON": "2020-06-07 15:59:54",
-            "MODIFIED_ON": "2023-08-29 20:18:58",
+            "MODIFIED_ON": "2025-01-17 10:57:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa8d7c1d6c637bba0e4b318306b9a",
             "OBJECT": "0x31343400000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/UpdateData.php",
             "ALIAS": "DisableUser",
             "NAME": "Disable",
             "SHORT_DESCRIPTION": "The user will not be able to log in anymore",
@@ -197,19 +205,12 @@
                 "input_object_alias": "exface.Core.USER",
                 "icon": "toggle-off",
                 "input_mapper": {
-                    "inherit_columns": "none",
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
-                            "from": "=1",
-                            "to": "DISABLED_FLAG"
-                        },
-                        {
-                            "from": "UID",
-                            "to": "UID"
-                        },
-                        {
-                            "from": "MODIFIED_ON",
-                            "to": "MODIFIED_ON"
+                            "//": "Set the date to 1 second in the past to make sure the user is already shown as disabled when the data refreshes after the action",
+                            "from": "=DateAdd(Now(), -1, 's')",
+                            "to": "DISABLE_DATE"
                         }
                     ]
                 }
@@ -219,34 +220,27 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "User: Enable",
             "CREATED_ON": "2020-06-07 19:52:45",
-            "MODIFIED_ON": "2023-08-29 20:26:31",
+            "MODIFIED_ON": "2025-01-17 10:57:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa8f848d0cba3bba0e4b318306b9a",
             "OBJECT": "0x31343400000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/UpdateData.php",
             "ALIAS": "EnableUser",
             "NAME": "Enable",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": "Allow the user to log in again",
             "CONFIG_UXON": {
                 "input_rows_min": 1,
                 "input_object_alias": "exface.Core.USER",
                 "icon": "toggle-on",
                 "input_mapper": {
-                    "inherit_columns": "none",
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
-                            "from": "=0",
-                            "to": "DISABLED_FLAG"
-                        },
-                        {
-                            "from": "UID",
-                            "to": "UID"
-                        },
-                        {
-                            "from": "MODIFIED_ON",
-                            "to": "MODIFIED_ON"
+                            "from": "=NullValue()",
+                            "to": "DISABLE_DATE"
                         }
                     ]
                 }
@@ -256,13 +250,14 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "User: Mass edit",
             "CREATED_ON": "2020-07-15 09:14:19",
             "MODIFIED_ON": "2024-04-22 17:20:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea892190b84c7889210205857feb80",
             "OBJECT": "0x31343400000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
             "ALIAS": "ShowUserMassEditDialog",
             "NAME": "Mass edit",
             "SHORT_DESCRIPTION": "",
@@ -448,13 +443,14 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "User: Mass import",
             "CREATED_ON": "2024-02-13 12:28:04",
             "MODIFIED_ON": "2024-02-14 11:51:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eea1ddf42f67a2a1dd025041000001",
             "OBJECT": "0x31343400000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
             "ALIAS": "ShowUserImportDialog",
             "NAME": "Mass import",
             "SHORT_DESCRIPTION": "",

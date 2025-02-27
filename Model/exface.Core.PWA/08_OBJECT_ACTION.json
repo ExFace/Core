@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT_ACTION",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -60,13 +65,14 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "PWA: Regenerate PWA",
             "CREATED_ON": "2023-03-07 15:58:41",
             "MODIFIED_ON": "2023-03-07 16:18:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed9da38d181ece9da3025041000001",
             "OBJECT": "0x11edbb694cebd4babb69747827435ce5",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
             "ALIAS": "GeneratePWAInConsole",
             "NAME": "Regenerate PWA",
             "SHORT_DESCRIPTION": "",
@@ -80,7 +86,7 @@
                             "start_commands": [
                                 "action exface.Core:GeneratePWA [#UID#]"
                             ],
-                            "working_directory_path": "vendor\/bin"
+                            "working_directory_path": "vendor/bin"
                         }
                     ]
                 }

@@ -1,6 +1,5 @@
 <?php
 namespace exface\Core\CommonLogic;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\UxonSyntaxError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
@@ -13,7 +12,6 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\WorkbenchCacheInterface;
-use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Communication\CommunicatorInterface;
@@ -297,12 +295,12 @@ class Workbench implements WorkbenchInterface
     protected function findAppRunning(AppSelectorInterface $selector) : ?AppInterface
     {
         if ($selector->isUid() && $this->model()) {
-            // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
-            // geben wird, sonst kommt es zu Problemen beim Update. Um die UID der App zu
-            // erhalten muss ausserdem das Model bereits existieren, sonst kommt es zu
-            // einem Fehler in app->getUid().
+            // Only call $app->getUid() if we really need to compare with a UID because an app will
+            // not always have a UID, which would result in errors einer in getUid() or in strcasecmp().
+            // Apps without UID can happen for example when just being installed. The app already runs,
+            // but the transaction with all its model is not committed yet, so there is no UID to read.
             foreach ($this->running_apps as $app) {
-                if (strcasecmp($app->getUid(), $selector->toString()) === 0) {
+                if (strcasecmp($app->getUid() ?? '', $selector->toString()) === 0) {
                     return $app;
                 }
             }

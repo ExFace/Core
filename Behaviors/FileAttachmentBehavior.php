@@ -117,6 +117,10 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     private $pendingSheets = [];
     
     private $inProgress = false;
+
+    private $imageResizeToMaxSide = null;
+
+    private $imageResizeQuality = null;
     
     /**
      * Relation path to the file storage object
@@ -902,6 +906,68 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     protected function setDeleteFilesWhenAttachmentsDeleted(bool $value) : FileAttachmentBehavior
     {
         $this->deleteFileWhenAttachmentDeleted = $value;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getImageResizeToMaxSide()
+     */
+    public function getImageResizeToMaxSide() : ?int
+    {
+        return $this->imageResizeToMaxSide ?? $this->getFileBehavior()->getImageResizeToMaxSide();
+    }
+
+    /**
+     * Auto-resize uploaded images to the specified maximum of pixels for the longer side of the image.
+     * 
+     * If set, the uploader will resize large images, so that their longest side matches
+     * the given amount of pixels while preserving the aspect ratio.
+     * 
+     * @uxon-property image_resize_to_max_side
+     * @uxon-type int
+     * 
+     * @param int $pixels
+     * @return FileBehaviorInterface
+     */
+    protected function setImageResizeToMaxSide(int $pixels) : FileBehaviorInterface
+    {
+        $this->imageResizeToMaxSide = $pixels;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getImageResizeQuality()
+     */
+    public function getImageResizeQuality(int $default = 92) : int
+    {
+        return $this->imageResizeQuality ?? $this->getFileBehavior()->getImageResizeQuality($default);
+    }
+
+    /**
+     * Controls the quality/size of resized images
+     * 
+     * A Number between 0 and 100 indicating the image quality to be used when resizing 
+     * images with file formats that support lossy compression (such as image/jpeg or 
+     * image/webp). 
+     * 
+     * Smaller number lead to lower quality and smaller files while higher values
+     * produce better quality and larger files.
+     * 
+     * @uxon-property image_resize_quality
+     * @uxon-type int
+     * @uxon-default 92
+     * 
+     * @param float $betweenZeroAndOne
+     * @return FileBehaviorInterface
+     */
+    protected function setImageResizeQuality(int $percent) : FileBehaviorInterface
+    {
+        if ($percent < 0 || $percent > 100) {
+            throw new BehaviorConfigurationError($this, 'Invalid image resize quality setting "' . $percent . '" for FileBehavior: expecting number between 0 and 100');
+        }
+        $this->imageResizeQuality = $percent;
         return $this;
     }
 }

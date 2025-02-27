@@ -81,6 +81,8 @@ use exface\Core\DataTypes\RegularExpressionDataType;
  * - `~file:is_link`
  * - `~folder:~folder:path_relative`
  * - `~file:line(n)` - n-th line of the file starting with 1: e.g. `line(1)` to get the first line. This only works with files!
+ * - `~file:extract(/^Feature: (.*)$/im, 1)` - the first match for the given regular expression in the file. The
+ * second argument specifies the index of the matching group (i.e. `(.*)` in the example) within the pattern.
  * - `~file:content` - the entire content of the file as a string
  * 
  * ## Built-in FILE-object
@@ -155,6 +157,8 @@ class FileBuilder extends AbstractQueryBuilder
     const ATTR_ADDRESS_PATH_RELATIVE = 'path_relative';
     
     const ATTR_ADDRESS_LINE = 'line';
+    
+    const ATTR_ADDRESS_EXTRACT = 'extract';
     
     const ATTR_ADDRESS_SUBPATH = 'subpath';
     
@@ -460,8 +464,25 @@ class FileBuilder extends AbstractQueryBuilder
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $addrPhsValues = [];
             $uidPaths = [];
-            $isPathNameFilter = $this->isFilePathAddress($qpart->getDataAddress());
-            $isFolderFilter = $this->isFolderPathAddress($qpart->getDataAddress());
+            $filterAddr = $qpart->getDataAddress();
+            $filterVal = $qpart->getCompareValue();
+            $filterComp = $qpart->getComparator();
+            $isPathNameFilter = $this->isFilePathAddress($filterAddr);
+            $isFolderFilter = $this->isFolderPathAddress($filterAddr);
+
+            // Calculate folder and filename patters from some other data addresses too
+            switch (true) {
+                // `~folder:name ==` or `~folder:name =` 
+                case $addr === '' && $filterAddr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_NAME:
+                    $isFolderFilter = true;
+                    if ($filterComp === ComparatorDataType::EQUALS) {
+                        $filterVal = "*/{$filterVal}";
+                    } elseif ($filterComp === ComparatorDataType::IS) {
+                        $filterVal = "*/*{$filterVal}*";
+                    }
+                    break;
+            }
+
             if ($isPathNameFilter || $isFolderFilter || in_array($qpart->getAlias(), $addrPhs)) {
                 // Path filters need to be applied after reading too as there may be trouble with 
                 // files with the same name in different (sub-)folders mathing the folder pattern
@@ -474,26 +495,26 @@ class FileBuilder extends AbstractQueryBuilder
                         $pathPatterns[] = $addr;
                     }
                 }
-                switch ($qpart->getComparator()) {
+                switch ($filterComp) {
                     case ComparatorDataType::IS:
                     case ComparatorDataType::EQUALS:
                         //if attribute alias is a placeholder in the path patterns, replace it with the value
                         if (in_array($qpart->getAlias(), $addrPhs)) {                            
-                            $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
+                            $addrPhsValues[$qpart->getAlias()] = $filterVal;
                             foreach ($pathPatterns as $i => $pattern) {
                                 $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                             }
                         } else {
                             if ($isPathNameFilter) {
-                                $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                                $uidPaths[] = Filemanager::pathNormalize($filterVal);
                             }
                             if ($isFolderFilter) {
-                                $pathPatterns[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                                $pathPatterns[] = Filemanager::pathNormalize($filterVal);
                             }
                         }
                         break;
                     case ComparatorDataType::IN:
-                        $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
+                        $values = explode($qpart->getValueListDelimiter(), $filterVal);
                         //if attribute alias is a placeholder in the path patterns, replace it with the values (therefore creating more pattern entries)
                         if (in_array($qpart->getAlias(), $addrPhs)) {
                             foreach ($values as $val) {
@@ -1090,6 +1111,22 @@ class FileBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Cannot read line "' . $lineNo . '" from file! Invalid line number.');
                 }
                 $value = $file->openFile()->readLine($lineNo);
+                break;
+            case StringDataType::startsWith($fieldLC, self::ATTR_ADDRESS_EXTRACT . '('):
+                if (! $file->isFile()) {
+                    throw new QueryBuilderException('Cannot read line from "' . $file->getPathRelative() . '" - it is not a file!');
+                }
+                $options = mb_substr(StringDataType::substringAfter($fieldLC, '('), 0, -1);
+                $lastComma = strrpos($options, ',');
+                $idx = intval(trim(mb_substr($options, $lastComma+1)));
+                $regex = trim(mb_substr($options, 0, $lastComma));
+                if (! RegularExpressionDataType::isRegex($regex)) {
+                    throw new QueryBuilderException('Cannot read extract from file! Invalid regular expression "' . $regex . '"');
+                }
+                $contents = $file->openFile()->read();
+                $matches = [];
+                preg_match($regex, $contents, $matches);
+                $value = $matches[$idx];
                 break;
             case substr($fieldLC, 0, 7) === self::ATTR_ADDRESS_SUBPATH:
                 list($start, $length) = explode(',', trim(substr($fieldLC, 7), '()'));

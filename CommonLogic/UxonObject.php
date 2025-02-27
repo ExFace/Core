@@ -66,12 +66,15 @@ class UxonObject implements \IteratorAggregate
      */
     public function toJson($prettify = false)
     {
-        // IDE Add `| JSON_UNESCAPED_UNICODE` here?
         $options = $prettify ? JSON_PRETTY_PRINT : null;
         // Force number to be numbers and not numeric strings to make sure
         // the JSON looks the same on different systems (e.g. Microsoft IIS would
         // otherwise use numbers and Apache - numeric strings)
         $options = $options | JSON_NUMERIC_CHECK;
+        // Do not hex unicode characters
+        $options = $options | JSON_UNESCAPED_UNICODE;
+        // Leave forward slashes
+        $options = $options | JSON_UNESCAPED_SLASHES;
         return json_encode($this->toArray(), $options);
     }
 
@@ -386,8 +389,18 @@ class UxonObject implements \IteratorAggregate
         }
         return $this;
     }
-    
-    public function isArray($ignore_gaps_in_keys = false)
+
+    /**
+     * Returns true if this UXON is an array with numeric keys only.
+     *
+     * If `$ignore_gaps_in_keys` is false, the array must also be contiguous, i.e.
+     * not have any gaps in between indices. For example, an array where one or more
+     * elements are commented out, would return FALSE.
+     *
+     * @param bool $ignore_gaps_in_keys
+     * @return bool
+     */
+    public function isArray(bool $ignore_gaps_in_keys = false) : bool
     {
         if ($this->isEmpty()){
             return true;

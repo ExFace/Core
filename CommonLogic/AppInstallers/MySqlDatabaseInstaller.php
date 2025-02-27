@@ -1,12 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
-use function GuzzleHttp\json_encode;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\DataTypes\DateTimeDataType;

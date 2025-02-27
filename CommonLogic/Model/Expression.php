@@ -112,7 +112,9 @@ class Expression implements ExpressionInterface
      */
     protected function parse(string $expression = null, $treatUnknownAsString = false)
     {
-        $expression = trim($expression);
+        if (is_string($expression)) {
+            $expression = trim($expression);
+        }
         // see, what type of expression it is. Depending on the type, the evaluate() method will give different results.
         $str = $this->parseQuotedString($expression);
         if ($expression === '' || $expression === null || $str !== false) {
@@ -469,7 +471,7 @@ class Expression implements ExpressionInterface
                                 $this->data_type->setListDelimiter($this->getAttribute()->getValueListDelimiter());
                             }
                         } else {
-                            $this->data_type = $attribute_type->copy();
+                            $this->data_type = $attribute_type;
                         }
                         break;
                     }                 
@@ -687,6 +689,9 @@ class Expression implements ExpressionInterface
      */
     public static function detectQuotedString($value) : bool
     {
+        if (! is_string($value)) {
+            return false;
+        }
         if ($value === '') {
             return true;
         }

@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "App Alias [ALIAS]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-09 08:17:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,20 +211,21 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Unique alias of the app: e.g. \"exface.Core\". The alias must consist of two parts separated by a dot: the vendor (namespace) and the actual app alias.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": {
-                "validator_regex": "\/^[a-zA-Z0-9_]+\\.{1}[a-zA-Z0-9_]+$\/",
+                "validator_regex": "/^[a-zA-Z0-9_]+\\.{1}[a-zA-Z0-9_]+$/",
                 "validation_error_code": "74W2U4X"
             }
         },
         {
+            "_EXPORT_SUMMARY": "App Name [NAME]",
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2020-11-09 08:17:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -252,10 +259,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Name of the app",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -263,6 +270,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Package [PACKAGE]",
             "CREATED_ON": "2016-07-21 10:33:13",
             "MODIFIED_ON": "2021-06-21 08:53:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -287,7 +295,7 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "PACKAGE",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "LOWER(REPLACE([#~alias#].app_alias, '.', '\/'))",
+            "DATA_ADDRESS": "LOWER(REPLACE([#~alias#].app_alias, '.', '/'))",
             "OBJECT": "0x35370000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -299,7 +307,7 @@
             "RELATED_OBJ": "0x11e64d20c9789d1a9409c0f8dae36b4f",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Reference to the installed package",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -307,6 +315,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default Language [DEFAULT_LANGUAGE_CODE]",
             "CREATED_ON": "2017-11-01 12:42:54",
             "MODIFIED_ON": "2020-11-09 08:17:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -340,10 +349,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Default language used in the metamodel and the pages of this app",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'en'",
@@ -351,6 +360,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Last model modification [MODEL_MODIFIED_ON]",
             "CREATED_ON": "2018-02-14 22:16:23",
             "MODIFIED_ON": "2020-11-09 08:17:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -375,7 +385,18 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "MODEL_MODIFIED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
-            "DATA_ADDRESS": "GREATEST(\n\t[#~alias#].modified_on, \n    COALESCE((SELECT GREATEST(COALESCE(MAX([#~alias#]_o.modified_on), 1970-01-01), COALESCE(MAX([#~alias#]_at.modified_on), 1970-01-01)) FROM exf_attribute [#~alias#]_at LEFT JOIN exf_object [#~alias#]_o ON [#~alias#]_o.oid = [#~alias#]_at.object_oid WHERE [#~alias#]_o.oid = [#~alias#].oid), 1970-01-01),\n   \t\/*COALESCE((SELECT MAX([#~alias#]_dt.modified_on) FROM exf_data_source [#~alias#]_dt WHERE [#~alias#]_dt.app_oid = [#~alias#].oid), 1970-01-01), -- ignore data sources because of possible custom connections and query builders *\/\n    COALESCE((SELECT MAX([#~alias#]_ob.modified_on) FROM exf_object_behaviors [#~alias#]_ob WHERE [#~alias#]_ob.behavior_app_oid = [#~alias#].oid), 1970-01-01),\n    COALESCE((SELECT MAX([#~alias#]_dc.modified_on) FROM exf_data_connection [#~alias#]_dc WHERE [#~alias#]_dc.app_oid = [#~alias#].oid), 1970-01-01),\n    COALESCE((SELECT MAX([#~alias#]_er.modified_on) FROM exf_message [#~alias#]_er WHERE [#~alias#]_er.app_oid = [#~alias#].oid), 1970-01-01),\n    COALESCE((SELECT MAX([#~alias#]_oa.modified_on) FROM exf_object_action [#~alias#]_oa WHERE [#~alias#]_oa.action_app_oid = [#~alias#].oid), 1970-01-01)\n)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "GREATEST(",
+                "\t[#~alias#].modified_on, ",
+                "    COALESCE((SELECT GREATEST(COALESCE(MAX([#~alias#]_o.modified_on), 1970-01-01), COALESCE(MAX([#~alias#]_at.modified_on), 1970-01-01)) FROM exf_attribute [#~alias#]_at LEFT JOIN exf_object [#~alias#]_o ON [#~alias#]_o.oid = [#~alias#]_at.object_oid WHERE [#~alias#]_o.oid = [#~alias#].oid), 1970-01-01),",
+                "   \t/*COALESCE((SELECT MAX([#~alias#]_dt.modified_on) FROM exf_data_source [#~alias#]_dt WHERE [#~alias#]_dt.app_oid = [#~alias#].oid), 1970-01-01), -- ignore data sources because of possible custom connections and query builders */",
+                "    COALESCE((SELECT MAX([#~alias#]_ob.modified_on) FROM exf_object_behaviors [#~alias#]_ob WHERE [#~alias#]_ob.behavior_app_oid = [#~alias#].oid), 1970-01-01),",
+                "    COALESCE((SELECT MAX([#~alias#]_dc.modified_on) FROM exf_data_connection [#~alias#]_dc WHERE [#~alias#]_dc.app_oid = [#~alias#].oid), 1970-01-01),",
+                "    COALESCE((SELECT MAX([#~alias#]_er.modified_on) FROM exf_message [#~alias#]_er WHERE [#~alias#]_er.app_oid = [#~alias#].oid), 1970-01-01),",
+                "    COALESCE((SELECT MAX([#~alias#]_oa.modified_on) FROM exf_object_action [#~alias#]_oa WHERE [#~alias#]_oa.action_app_oid = [#~alias#].oid), 1970-01-01)",
+                ")"
+            ],
             "OBJECT": "0x35370000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -384,10 +405,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Time of last modification of the app's metamodel on this system",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'en'",
@@ -395,6 +416,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "App [LABEL]",
             "CREATED_ON": "2019-07-12 07:48:09",
             "MODIFIED_ON": "2021-09-10 15:26:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -419,7 +441,11 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: CONCAT([#NAME#], ' [', [#ALIAS#], ']')\n@T-SQL: (CASE WHEN [#NAME#] IS NULL THEN NULL ELSE CONCAT([#NAME#], ' [', [#ALIAS#], ']') END)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@MySQL: CONCAT([#NAME#], ' [', [#ALIAS#], ']')",
+                "@T-SQL: (CASE WHEN [#NAME#] IS NULL THEN NULL ELSE CONCAT([#NAME#], ' [', [#ALIAS#], ']') END)"
+            ],
             "OBJECT": "0x35370000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -428,10 +454,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -439,6 +465,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Folder [FOLDER]",
             "CREATED_ON": "2020-11-09 08:16:24",
             "MODIFIED_ON": "2020-11-09 08:17:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -463,7 +490,7 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "FOLDER",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "REPLACE([#~alias#].app_alias, '.', '\/')",
+            "DATA_ADDRESS": "REPLACE([#~alias#].app_alias, '.', '/')",
             "OBJECT": "0x35370000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -472,10 +499,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Path to app folder relative to the vendor folder",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -483,6 +510,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Puplished [PUPLISHED]",
             "CREATED_ON": "2021-05-06 12:14:43",
             "MODIFIED_ON": "2021-05-06 12:15:03",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -516,10 +544,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 0,

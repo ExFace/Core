@@ -121,6 +121,10 @@ class Uploader implements WidgetPartInterface
     private $uploadEditPopupUxon = null;
     
     private $uploadEditPopup = null;
+
+    private $imageResizeToMaxSide = null;
+
+    private $imageResizeQuality = null;
     
     /**
      * 
@@ -666,8 +670,9 @@ class Uploader implements WidgetPartInterface
      */
     protected function guessAttributes()
     {
-        /* @var $behavior \exface\Core\Behaviors\FileBehavior */
+        /* @var $behavior exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface */
         if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
+            // Attributes
             if ($this->fileContentAttributeAlias === null && null !== $attr = $behavior->getContentsAttribute()) {
                 $this->setFileContentAttribute($attr->getAliasWithRelationPath());
             }
@@ -692,6 +697,8 @@ class Uploader implements WidgetPartInterface
             if ($this->commentsAttributeAlias === null && ($behavior instanceof FileAttachmentBehavior) && null !== $attr = $behavior->getCommentsAttribute()) {
                 $this->setCommentsAttribute($attr->getAliasWithRelationPath());
             }
+
+            // Restrictions
             if ($this->maxFileSizeMb === null && null !== $val = $behavior->getMaxFileSizeInMb()) {
                 $this->setMaxFileSizeMb($val);
             }
@@ -704,6 +711,15 @@ class Uploader implements WidgetPartInterface
             if (empty($this->allowedFileExtensions) === true && empty($val = $behavior->getAllowedFileExtensions()) === false) {
                 $this->setAllowedFileExtensions($val);
             }
+
+            // Images
+            if ($this->imageResizeToMaxSide === null && null !== $val = $behavior->getImageResizeToMaxSide()) {
+                $this->setImageResizeToMaxSide($val);
+            }
+            if ($this->imageResizeQuality === null) {
+                $this->setImageResizeQuality($behavior->getImageResizeQuality());
+            }
+            
         }
         
         $this->checkedBehaviorForObject = $this->getMetaObject();
@@ -813,5 +829,79 @@ class Uploader implements WidgetPartInterface
     {
         $this->uploadEditPopupUxon = $value;
         return $this;
+    }
+
+    /**
+     * 
+     * @return int|null
+     */
+    public function getImageResizeToMaxSide() : ?int
+    {
+        return $this->imageResizeToMaxSide;
+    }
+
+    /**
+     * Auto-resize uploaded images to the specified maximum of pixels for the longer side of the image.
+     * 
+     * If set, the uploader will resize large images, so that their longest side matches
+     * the given amount of pixels while preserving the aspect ratio.
+     * 
+     * If the widget is based on an object with FileBehavior with image resizing configured, 
+     * this option will be automatically taken from the behavior.
+     * 
+     * @uxon-property image_resize_to_max_side
+     * @uxon-type int
+     * 
+     * @param int $pixels
+     * @return Uploader
+     */
+    public function setImageResizeToMaxSide(int $pixels) : Uploader
+    {
+        $this->imageResizeToMaxSide = $pixels;
+        return $this;
+    }
+
+    /**
+     * 
+     * @param int $default
+     * @return int
+     */
+    public function getImageResizeQuality(int $default = 92) : int
+    {
+        return $this->imageResizeQuality ?? $default;
+    }
+
+    /**
+     * Controls the quality/size of resized images
+     * 
+     * A Number between 0 and 100 indicating the image quality to be used when resizing 
+     * images with file formats that support lossy compression (such as image/jpeg or 
+     * image/webp). 
+     * 
+     * Smaller number lead to lower quality and smaller files while higher values
+     * produce better quality and larger files.
+     * 
+     * If the widget is based on an object with FileBehavior with image resizing configured, 
+     * this option will be automatically taken from the behavior.
+     * 
+     * @uxon-property image_resize_quality
+     * @uxon-type int
+     * @uxon-default 92
+     * 
+     * @param float $betweenZeroAndOne
+     * @return Uploader
+     */
+    public function setImageResizeQuality(int $percent) : Uploader
+    {
+        if ($percent < 0 || $percent > 100) {
+            throw new WidgetConfigurationError($this->getWidget(), 'Invalid image resize quality setting "' . $percent . '" for ' . $this->getWidget()->getWidgetType() . ': expecting number between 0 and 100');
+        }
+        $this->imageResizeQuality = $percent;
+        return $this;
+    }
+
+    public function hasImageResize() : bool
+    {
+        return $this->getImageResizeToMaxSide() !== null;
     }
 }

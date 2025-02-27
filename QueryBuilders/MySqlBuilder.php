@@ -348,7 +348,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
-        $sql_data_type = $dataAddressProps[static::DAP_SQL_DATA_TYPE] === null ? null : mb_strtolower($dataAddressProps[static::DAP_SQL_DATA_TYPE]);
+        $sql_data_type = ($dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? null) === null ? null : mb_strtolower($dataAddressProps[static::DAP_SQL_DATA_TYPE]);
         if ($sql_data_type === 'binary' && $data_type instanceof BinaryDataType) {
             $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
             switch ($data_type->getEncoding()) {
@@ -437,5 +437,34 @@ class MySqlBuilder extends AbstractSqlBuilder
         $query->freeResult();
         
         return new DataQueryResultData([], $cnt);
+    }
+
+    /**
+     * @inheritdoc 
+     */
+    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
+    {
+        $resultJson = $initialJson;
+
+        foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+        }
+
+        return $resultJson;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function buildSqlInitialJson(string $columnName): string
+    {
+        return <<<SQL
+
+CASE 
+    WHEN {$columnName} IS NOT NULL AND JSON_VALID({$columnName})
+    THEN {$columnName}
+    ELSE '{}'
+END 
+SQL;
     }
 }

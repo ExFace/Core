@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
@@ -171,8 +172,12 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
      */
-    public function getAttributesModified(): array
+    public function getAttributesModified(DataSheetInterface $inputSheet): array
     {
+        if (! $inputSheet->getMetaObject()->isExactly($this->getObject())) {
+            return [];
+        }
+
         return [
             $this->getPasswordAttribute()
         ];

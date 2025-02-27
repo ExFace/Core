@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Role name [NAME]",
             "CREATED_ON": "2020-02-09 07:29:06",
             "MODIFIED_ON": "2022-07-01 11:39:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -205,10 +211,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": 1,
             "SORTERDIR": "ASC",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -216,6 +222,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Description [DESCRIPTION]",
             "CREATED_ON": "2020-02-09 07:29:06",
             "MODIFIED_ON": "2022-07-01 11:39:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -249,10 +256,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -260,6 +267,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "App [APP]",
             "CREATED_ON": "2020-02-09 07:29:06",
             "MODIFIED_ON": "2022-07-01 11:39:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -296,7 +304,7 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -306,6 +314,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias [ALIAS]",
             "CREATED_ON": "2020-03-10 17:42:53",
             "MODIFIED_ON": "2022-07-01 11:39:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -339,10 +348,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -350,6 +359,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Sync with external role [SYNC_WITH_EXT_ROLE]",
             "CREATED_ON": "2020-04-07 09:05:56",
             "MODIFIED_ON": "2022-07-01 11:39:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -386,7 +396,7 @@
             "RELATED_OBJ": "0x11ea78ae6a2c1977ac460205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -396,6 +406,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias with namespace [ALIAS_WITH_NS]",
             "CREATED_ON": "2021-03-15 15:34:09",
             "MODIFIED_ON": "2022-07-01 11:39:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -420,7 +431,24 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "(CASE\n  WHEN [#APP#] IS NOT NULL \n  THEN CONCAT(\n    (SELECT \n      (CASE \n        WHEN [#~alias#]_nsa.app_alias IS NOT NULL \nTHEN CONCAT([#~alias#]_nsa.app_alias, '.') \n        ELSE '' \n      END) \n      FROM exf_app [#~alias#]_nsa \n      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n    [#ALIAS#])\n  ELSE\n    [#ALIAS#]\nEND)",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "(CASE",
+                "  WHEN [#APP#] IS NOT NULL ",
+                "  THEN CONCAT(",
+                "    (SELECT ",
+                "      (CASE ",
+                "        WHEN [#~alias#]_nsa.app_alias IS NOT NULL ",
+                "THEN CONCAT([#~alias#]_nsa.app_alias, '.') ",
+                "        ELSE '' ",
+                "      END) ",
+                "      FROM exf_app [#~alias#]_nsa ",
+                "      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), ",
+                "    [#ALIAS#])",
+                "  ELSE",
+                "    [#ALIAS#]",
+                "END)"
+            ],
             "OBJECT": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -429,10 +457,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Full alias of the user role including the app alias as namespace (if bound to an app). This is what is used in UXON to identify the object.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -440,6 +468,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Start page [START_PAGE]",
             "CREATED_ON": "2021-04-21 18:32:12",
             "MODIFIED_ON": "2022-07-01 11:39:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -476,7 +505,7 @@
             "RELATED_OBJ": "0x11e86314af5caf7f971b0205857feb80",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "The page to be used when the user requests the site root (instead of the SERVER.INDEX_PAGE_SELECTOR from the system configuration)",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"

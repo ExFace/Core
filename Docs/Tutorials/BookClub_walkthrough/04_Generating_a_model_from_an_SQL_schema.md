@@ -109,14 +109,14 @@ Let's convert our language object into a base object. We will regenerate a new m
 	
 5. Press <kbd>Save</kbd>
 6. Switch to the <kbd>General</kbd> tab of the object editor
-	- Change the name of the object to `BookClub base object`
-	- Change the alias of the object to `base_object`
+	- Change the name of the object to `BookClub base object <kuerzel>`
+	- Change the alias of the object to `base_object_<kuerzel>`
 	- Empty the data address because the base object itself does not exist in the data source
 	- Uncheck `Readable` and `Writable` for the same reason	
 7. Now `Save` the object
 8. Navigate back to `Administration > Metamodel > Data Sources`
-9. Open the `BookClub DB`
-10. Select the `BookClub base object` as "Base Object"
+9. Open the `BookClub DB <kuerzel>`
+10. Select the `BookClub base object <kuerzel>` as "Base Object"
 11. Save the data source
 
 Now all meta objects of this data source will automatically inherit everything from the base object: attributes, behaviors, actions, etc. In particular, they will inherit the `id` attribute, so that every object will automatically have a UID.
@@ -141,7 +141,7 @@ Even though we've already taken care of user relations and other things for the 
 
 Here are some typical tasks for this phase:
 
-- Give every stand-alone object (= not merely a mapping) a label attribute by marking one of the attributes with the `Is label of object` flag. The label is the human-readable identifier of the object: e.g. the `name` of a language or a category, the `title` of a book, etc. The label will be used in things like select and lookup widgets for the respective meta object.
+- Give every stand-alone object (= not merely a mapping) a label attribute by marking one of the attributes with the `Object label` flag. The label is the human-readable identifier of the object: e.g. the `name` of a language or a category, the `title` of a book, etc. The label will be used in things like select and lookup widgets for the respective meta object.
 - Add relations, that were not generated automatically as we did for `created_by_user_id` and `modified_by_user_id` above.
 - Check `Editable` and `Hidden` properties of every attribute. The model builder cannot know the purpose of the attribute, so if it is meant to be an internal flag set automatically, you probably want to disable editing by users or even mark it as hidden.
 - Describe non-intuitive objects and attributes by filling the respecitve `Description` fields. This information will automatically be used to generate context-sensitive help dialogs. 

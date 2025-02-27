@@ -355,7 +355,7 @@ JS;
                 break;
             // Call a widget function - e.g. click another button
             case $action instanceof iCallWidgetFunction:
-                $js = $this->buildJsClickCallWidgetFunction($action);
+                $js = $this->buildJsClickCallWidgetFunction($action, $jsRequestData);
                 $jsRequestDataCollector = '';
                 break;
 
@@ -1178,8 +1178,10 @@ JS;
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsClickCallWidgetFunction(iCallWidgetFunction $action) : string
+    protected function buildJsClickCallWidgetFunction(iCallWidgetFunction $action, string $jsRequestData) : string
     {
+        // TODO how to replace column-placeholders in function arguments with JS-data? E.g. for functions like
+        // `set_value` or `run_command`.
         $targetEl = $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()));
         $beforeJs = '';
         $afterJs = '';

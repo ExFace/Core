@@ -1,10 +1,22 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Exceptions\Selectors\SelectorInvalidError;
 
 /**
  * This formula can be used to translate certain widget-attributes, e.g. caption.
+ * 
+ * Syntax: `=Translate(<app_alias>, <message_id>, ?<placeholders>, ?<plural_number>)`.
+ * 
+ * Examples: 
+ * 
+ * - `=Translate('exface.Core', 'GLOBAL.MODEL.ACTION')`
+ * 
+ * Translates the passed `message_id` using the translator of the specified app and the optional values for
+ * placeholders and plurification.
+ * 
+ * The `placeholders` has to be a string, e.g. "%placeholder1%=>value1|%placeholder2%=>value2".
  * 
  * @author SFL
  *
@@ -73,6 +85,6 @@ class Translate extends \exface\Core\CommonLogic\Model\Formula
      */
     private function parsePluralNumber(string $input)
     {
-        return intval(trim($input));
+        return IntegerDataType::cast($input);
     }
 }

@@ -264,18 +264,21 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     /**
      * Adds extra buttons to a dialog.
-     *
+     * 
+     * These buttons will be placed opposite to the regular save/cance buttons by default.
+     * You can control the allignment explicitly using the `align` property of each button.
+     * 
      * ```
-     * "dialog_buttons": [
+     *  "dialog_buttons": [
      *      {
      *          "widget_type": "DialogButton",
      *          "action_alias": "exface.Core.UpdateData",
      *          "caption": "Speichern"
      *      }
      *  ]
-     *  
+     * 
      * ```
-     *  
+     * 
      * @uxon-property dialog_buttons
      * @uxon-type \exface\Core\Widgets\DialogButton[]
      * @uxon-template [{"action_alias": ""}]

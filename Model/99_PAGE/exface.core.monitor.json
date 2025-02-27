@@ -46,7 +46,7 @@
                                                     "hidden": true
                                                 },
                                                 {
-                                                    "\/*": "",
+                                                    "/*": "",
                                                     "hidden": true,
                                                     "condition_group": {
                                                         "operator": "OR",
@@ -63,7 +63,7 @@
                                                             }
                                                         ]
                                                     },
-                                                    "*\/": ""
+                                                    "*/": ""
                                                 }
                                             ],
                                             "sorters": [
@@ -80,7 +80,7 @@
                                             {
                                                 "type": "line",
                                                 "y_attribute_alias": "MONITOR_ACTION__DURATION:AVG",
-                                                "caption": "\u00d8 duration (ms)"
+                                                "caption": "Ø duration (ms)"
                                             },
                                             {
                                                 "type": "line",

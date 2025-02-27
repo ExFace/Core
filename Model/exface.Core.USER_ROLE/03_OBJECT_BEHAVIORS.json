@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT_BEHAVIORS",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -56,12 +61,13 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Prevent deleting system roles",
             "CREATED_ON": "2020-05-19 20:21:27",
             "MODIFIED_ON": "2020-07-14 11:36:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9a0e4f8c29fd8abc0205857feb80",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
+            "BEHAVIOR": "exface/Core/Behaviors/UndeletableBehavior.php",
             "CONFIG_UXON": {
                 "condition_group": {
                     "operator": "AND",
@@ -82,18 +88,19 @@
             "PRIORITY": null
         },
         {
+            "_EXPORT_SUMMARY": "Generate alias from name",
             "CREATED_ON": "2021-03-07 18:53:11",
             "MODIFIED_ON": "2021-11-04 11:14:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebbd69fbcdbb00bd69025041000001",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
+            "BEHAVIOR": "exface/Core/Behaviors/AliasGeneratingBehavior.php",
             "CONFIG_UXON": {
                 "source_attribute_alias": "NAME",
                 "target_attribute_alias": "ALIAS",
                 "case": "lower",
                 "replace_characters": {
-                    "\/[^a-zA-Z0-9_]\/": ""
+                    "/[^a-zA-Z0-9_]/": ""
                 }
             },
             "OBJECT": "0x11ea4b0d9c862d5db2cfe4b318306b9a",

@@ -17,9 +17,9 @@
         "widget_type": "Console",
         "object_alias": "exface.Core.ACTION",
         "allowed_commands": [
-            "\/action.*\/",
-            "\/whoami\/",
-            "\/php -i.*\/"
+            "/action.*/",
+            "/whoami/",
+            "/php -i.*/"
         ],
         "start_commands": [
             "action"
@@ -40,6 +40,6 @@
                 ]
             }
         ],
-        "working_directory_path": "vendor\/bin"
+        "working_directory_path": "vendor/bin"
     }
 }

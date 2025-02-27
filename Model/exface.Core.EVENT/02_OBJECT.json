@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -80,6 +85,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Event [exface.Core.EVENT]",
             "CREATED_ON": "2018-09-25 11:49:35",
             "MODIFIED_ON": "2020-05-05 10:26:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -100,7 +106,7 @@
             },
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "EVENT",
-            "DATA_ADDRESS": "*\/*\/Events\/*\/On*.php"
+            "DATA_ADDRESS": "*/*/Events/*/On*.php"
         }
     ],
     "totals_rows": [],

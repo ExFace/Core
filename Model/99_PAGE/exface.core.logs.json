@@ -5,7 +5,7 @@
     "menu_index": 4,
     "menu_visible": true,
     "name": "Logs",
-    "description": "View system\/error logs",
+    "description": "View system/error logs",
     "intro": "",
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",

@@ -1073,7 +1073,7 @@ class DataSheet implements DataSheetInterface
             $columnAttr = $col->getAttribute();
             switch (true) {
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
-                case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
+                case $col->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
                     continue 2;
                 // Update nested sheets - i.e. replace all rows in the data source, that are related to
                 // the each row of the main sheet with the nested rows here.
@@ -1466,6 +1466,15 @@ class DataSheet implements DataSheetInterface
             $update_ds = $this;
         }
         
+        // IDEA we had check for related data at this point and an error if the sheet had related column with
+        // the aim to make these cases visible to the user and avoid useless updates. However it did not work
+        // out. It turned out, having related data is actually IMPORTANT for the FileAttachmentBehavior
+        // that handles related data (e.g. __content of the attachment) separately. Similarly, other event
+        // handlers might be interested in the related data. So the problem remains: if we have related column
+        // (like PRODUCT__NAME for a ORDER_POS object), they get updated here too, but this is absolutely not
+        // obvious for the app designer. Indeed, it is very hard to understand, why the timestamps of related
+        // objects get updated in these cases.
+
         $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
@@ -1613,7 +1622,7 @@ class DataSheet implements DataSheetInterface
             } 
             
             // Skip columns with read-only attributes
-            if (! $columnAttr->isWritable()) {
+            if (! $column->isWritable()) {
                 continue;
             }
             
@@ -1753,12 +1762,18 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetWriteError($this, 'Cannot create nested data: ' . count($column->getValues(false)) . ' nested data sheets found for ' . count($newKeys) . ' foreign keys in the parent sheet.');
         }
         
+        $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
         foreach ($column->getValues(false) as $rowNr => $sheetArr) {
             if (! $sheetArr) {
                 continue;
             }
             
-            $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+            $nestedSheet = DataSheetFactory::createSubsheetFromUxon(
+                $this, 
+                UxonObject::fromAnything($sheetArr), 
+                $nestedFKeyAttr->getAlias(), 
+                $thisSheetKeyAttr->getAliasWithRelationPath()
+            );
             
             if ($nestedSheet === null || $nestedSheet->isEmpty(true) === true) {
                 continue;
@@ -1778,7 +1793,6 @@ class DataSheet implements DataSheetInterface
                 $nestedSheet->getUidColumn()->setValueOnAllRows('');
             }
             
-            $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
             $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
             $nestedFKeyCol->setValueOnAllRows($rowKey);
             
@@ -2118,6 +2132,22 @@ class DataSheet implements DataSheetInterface
             $return = $this->rows;
         }
         return $return;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsByIndex()
+     */
+    public function getRowsByIndex(array $indexes) : array
+    {
+        $result = [];
+        foreach ($this->getRows() as $i => $row) {
+            if (in_array($i, $indexes, true)) {
+                $result[$i] = $row;
+            }
+        }
+        return $result;
     }
 
     /**
@@ -2513,7 +2543,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRows()
      */
     public function removeRows(array $rowIndexes = null)
@@ -2533,7 +2562,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRow()
      */
     public function removeRow(int $row_number) : DataSheetInterface
@@ -2546,7 +2574,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRowsByUid()
      */
     public function removeRowsByUid($uid)
@@ -2573,7 +2600,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isEmpty()
      */
     public function isEmpty(bool $checkValues = false) : bool
@@ -2958,7 +2984,7 @@ class DataSheet implements DataSheetInterface
                     $checkSheet = $this->copy();
                     $checkSheet->joinLeft($missingSheet, $checkSheet->getUidColumnName(), $missingSheet->getUidColumnName());
                 } else {
-                    throw new DataSheetExtractError($this, 'Cannot filter data rows: information required for conditions is not available in the data sheet!', null, null, $condGrp);
+                    throw new DataSheetExtractError($this, 'Cannot filter/extract data rows! Information required for conditions is not available in the data sheet: `' . implode('`, `', $missingCols). '`!', null, null, $condGrp);
                 }
             } else {
                 $checkSheet = $this;

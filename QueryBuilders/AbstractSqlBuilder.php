@@ -12,6 +12,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\StringDataType;
@@ -60,14 +61,14 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * ### Placeholders
  * 
  * Placeholders can be used within custom SQL data addresses to include reuse other parts of the
- * model or inlcude runtime information of the query builer like the current set of filters. They 
+ * model or include runtime information of the query builder like the current set of filters. They 
  * will be replaced by their values when the query is built, so the data source will never get to 
  * see them.
  * 
  * #### Object-level placeholders
  * 
- * On object level the `[#~alias#]` placehloder will be replaced by the alias of
- * the current object. This is especially usefull to prevent table alias collisions
+ * On object level the `[#~alias#]` placeholder will be replaced by the alias of
+ * the current object. This is especially useful to prevent table alias collisions
  * in custom subselects:
  * 
  * `(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )`
@@ -84,7 +85,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * On attribute level any other attribute alias can be used as placeholder
  * additionally to `[#~alias#]`. Thus, attribute addresses can be reused. This
- * is handy if an attribute builds upon other attributes. E.g. a precentage
+ * is handy if an attribute builds upon other attributes. E.g. a percentage
  * would be an attribute being calculated from two other attributes. This can
  * easily be done via attribute placeholders in it's data address:
  * 
@@ -93,7 +94,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * You can even use relation paths here! It will even work if the placeholders
  * point to attributes, that are based on custom SQL statements themselves.
  * Just keep in mind, that these expressions may easily become complex and
- * kill query performance if used uncarefully.
+ * kill query performance if used carelessly.
  * 
  * ### Multi-dialect data addresses
  * 
@@ -112,7 +113,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * Multi-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`) 
  * MUST be placed at the beginning of a new line (illustrated by the pipes in the example
- * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is concidered to 
+ * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is considered to 
  * be the data address in this dialect. 
  * 
  * Every SQL query builder supports one or more dialects listed in the respective
@@ -122,6 +123,16 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * The default dialect-tag and `@OTHER:` can be used to define a fallback for all
  * dialects not explicitly addressed.
+ * 
+ * ### JSON support
+ * 
+ * You can use JSON path expressions in data addresses to access data inside JSON columns: e.g.
+ * `myColumn::$.prop1` will select the value of `prop1` saved in a JSON inside `myColumn`.
+ * 
+ * Most SQL databases support JSON path queries to access data inside JSON columns. However, every
+ * SQL dialect has its own syntax - typically functions like `JSON_VALUE(column, jsonPath)` or
+ * `JSON_SET(column, jsonPath, value)` or similar. The common syntax introduced above will be
+ * automatically translated into these JSON functions by the query builder.
  *
  * @author Andrej Kabachnik
  *
@@ -131,14 +142,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     /**
      * Custom where statement automatically appended to direct selects for this object (not if the object's table is joined!).
      * 
-     * Usefull for generic tables, where different meta objects are stored and
+     * Useful for generic tables, where different meta objects are stored and
      * distinguished by specific keys in a special column. The value of
      * `SQL_SELECT_WHERE` should contain the `[#~alias#]` placeholder: e.g.
      * `[#~alias#].mycolumn = 'myvalue'`.
      * 
      * You can also use attribute aliases as placeholders: e.g. `[#MY_ATTRIBUTE#]`
      * or even `[#RELATION__RELATED_ATTRIBUTE#]`. Keep in mind, that using relations
-     * will produce JOINs or subselects in the resulting SQL, which whill ALWAYS
+     * will produce JOINs or subselects in the resulting SQL, which will ALWAYS
      * be the case if they are used in parts of the data address of the object.
      *
      * @uxon-property SQL_SELECT_WHERE
@@ -190,7 +201,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * 
      * It replaces the entire select generator and will be used as-is except for replacing placeholders. 
      * The placeholder `[#~alias#]` is supported as well as placeholders for other attributes.
-     * This is usefull to write wrappers for columns (e.g. `NVL([#~value#].MY_COLUMN, 0)`.
+     * This is usefull to write wrappers for columns (e.g. `NVL([#~alias#].MY_COLUMN, 0)`.
      * If the wrapper is placed here, the data address would remain writable, while
      * replacing the column name with a custom SQL statement in the data address itself,
      * would cause an SQL error when writing to it (unless `SQL_UPDATE` and `SQL_INSERT`
@@ -386,7 +397,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     const OPERATION_READ = 'read';
     
     const OPERATION_WRITE = 'write';
-    
+
     // Config
     
     // Reserved (forbidden) words in SQL in general
@@ -685,6 +696,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $values = array();
         $columns = array();
+        $valuesForJsonCols = [];
         $before_each_insert_sqls = [];
         $after_each_insert_sqls = [];
         $uidQpart = null;
@@ -715,17 +727,37 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($attr->isUidForObject()) {
                 $uidQpart = $qpart;
             }
+            // There are cases, when system attributes like the UID are non-writable, but still present
+            // (since they are system). Their values should be ignored here. For example, MS SQL Server
+            // IDENTITY columns are often used as UIDs, but cannot be included in CREATE or UPDATE queries.
+            if ($attr->isWritable() === false) {
+                continue;
+            }
             
             // Prepare arrays with column aliases and values to implode them later when building the query
             // Make sure, every column is only addressed once! So the keys of both array actually need to be the column aliases
             // to prevent duplicates
+            $columnIsJson = $this->isJsonDataAddress($column) && ! $custom_insert_sql;
+            if ($columnIsJson === true) {
+                list($column, $jsonPath) = $this->parseJsonDataAddress($column);
+            } 
+            
             $columns[$column] = $column;
+            
             foreach ($qpart->getValues() as $row => $value) {
                 try {
                     $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . StringDataType::truncate($value, 100, false), null, $e);
                 }
+
+                // If the value is to be put into a JSON inside a column, store the prepared value in a separate
+                // array for later use and skip further processing for this value.
+                if ($columnIsJson === true) {
+                    $valuesForJsonCols[$row][$column][$jsonPath] = $value;
+                    continue;
+                }
+
                 $phs = array_merge(['~alias' => $mainObj->getAlias(), '~value' => $value], $rowPlaceholders[$row]);
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
@@ -738,6 +770,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 } else {
                     $insert_sql = $value;
                 }
+
                 $values[$row][$column] = $insert_sql;
                 
                 if ($before_each_insert_sql) {
@@ -792,7 +825,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $uidAddress = $this->buildSqlDataAddress($uidQpart);
         }
         
-        
         if ($uidIsOptimizedUUID && $uidCustomSqlInsert) {
             throw new QueryBuilderException('Invalid SQL data address configuration for UID of object "' . $mainObj->getAliasWithNamespace() . '": Cannot use SQL_INSERT and SQL_INSERT_UUID_OPTIMIZED at the same time!');
         }
@@ -814,7 +846,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $insertedIds = [];
         $insertedCounter = 0;
-        
+        $lastColumn = array_key_last($columns);
+
+        // We now have the following prepared data:
+        // - $values - array of rows, where each row is an array with SQL column for keys and their respective prepared values
+        // - $columns - array of SQL column names, that need to be updated - each key in a row inside $values should be in this array
+        // - $valuesForJsonCols - data for JSON columns: [rowNo => [JSONcol1 => [JSONpath1 => val1, JSONpath2 => val2], JSONcol2 => []]]
+        // FIXME how to handle JSON data here? 
+        // - create a JSON in PHP and put it into the $values/$columns?
+        // - use native SQL functions to update the JSON after the regular INSERT?
         foreach ($values as $nr => $row) {
             // See if a UID (primary key) is provided
             $customUid = null;
@@ -833,7 +873,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         break;
                 }
             }
-            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
+
+            $jsonsForRow = $valuesForJsonCols[$nr];
+            $output = [];
+            foreach ($columns as $column) {
+                if(!empty($jsonsForRow) && key_exists($column, $jsonsForRow)) {
+                    $output[$column] = $this->buildSqlEncodeAsJsonFlat($jsonsForRow[$column]);
+                } else {
+                    $output[$column] = $row[$column];
+                }
+            }
+            
+            $insertColumns = implode(', ', $columns);
+            $insertValues = implode(',', $output);
+            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
             
             $beforeSql = $before_each_insert_sqls[$nr] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$nr] . ($uidAfterEach ?? '');
@@ -941,9 +994,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Array of SET statements for the single-value-query which updates all rows matching the given filters
         // [ 'data_address = value' ]
         $updates_by_filter = array();
+        $jsonColumnsByFilter = array();
         // Array of SET statements to update multiple values per attribute. They will be used to build one UPDATE statement per UID value
         // [ uid_value => [ data_address => 'data_address = value' ] ]
         $updates_by_uid = array();
+        $jsonColumnsByUid = array();
         // Array of query parts to be placed in subqueries
         $subqueries_qparts = array();
         foreach ($this->getValues() as $qpart) {
@@ -981,13 +1036,24 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Otherwise there would not be any possibility to save explicit values
                     $updates_by_filter[] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
                 } else {
-                    $updates_by_filter[] = $column . ' = ' . $value;
+                    if($this->isJsonDataAddress($column)) {
+                        list($column, $jsonPath) = $this->parseJsonDataAddress($column);
+                        $jsonColumnsByFilter[$column][$jsonPath] = $value;
+                    } else {
+                        $updates_by_filter[] = $column . ' = ' . $value;
+                    }
                 }
             } else {
                 // TODO check, if there is an id for each value. Those without ids should be put into another query to make an insert
                 // $cases = '';
                 if (count($qpart->getUids()) == 0) {
                     throw new QueryBuilderException('Cannot update attribute "' . $qpart->getAlias() . "': no UIDs for rows to update given!");
+                }
+                // There are cases, when system attributes like the UID are non-writable, but still present
+                // (since they are system). Their values should be ignored here. For example, MS SQL Server
+                // IDENTITY columns are often used as UIDs, but cannot be included in CREATE or UPDATE queries.
+                if ($qpart->getAttribute()->isWritable() === false) {
+                    continue;
                 }
                 
                 foreach ($qpart->getValues() as $row_nr => $value) {
@@ -1011,11 +1077,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                          * the UIDs they address and a new filter with exactly this list of UIDs.
                          */
                         // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
-                        $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
+                        if($this->isJsonDataAddress($column)) {
+                            list($jsonColumn, $jsonPath) = $this->parseJsonDataAddress($column);
+                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$jsonColumn][$jsonPath] = $value;
+                        } else {
+                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
+                        }
                     }
                 }
                 // See comment about CASE-based updates a few lines above
                 // $updates_by_filter[] = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $attr->getDataAddress() . " = CASE " . $this->getMainObject()->getUidAttribute()->getDataAddress() . " \n" . implode($cases) . " END";
+            }
+        }
+
+        // Process JSON values for update by filter columns.
+        foreach ($jsonColumnsByFilter as $columnName => $keyValuePairs) {
+            $updates_by_filter[] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs, $this->buildSqlInitialJson($columnName));
+        }
+
+        // Process JSON values for update by UID columns.
+        foreach ($jsonColumnsByUid as $uid => $columns) {
+            foreach ($columns as $columnName => $keyValuePairs) {
+                $updates_by_uid[$uid][$columnName] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs, $this->buildSqlInitialJson($columnName));
             }
         }
         
@@ -1247,13 +1330,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string|null|bool $select_as set to false or '' to remove the "AS xxx" part completely
      * @param AggregatorInterface|bool $aggregator set to FALSE to remove grouping completely
      * @param bool $make_groupable set to TRUE to force the result to be compatible with GROUP BY
+     * @param bool $addComments
      * 
      * @return string
      */
-    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
+    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null, $addComments = true)
     {
         $output = '';
-        $comment = "\n" . $this->buildSqlComment("buildSqlSelect(" . $qpart->getAlias() . ", " . $select_from . ", " . $select_as . ", " . $aggregator . ", " . $make_groupable . ")") . "\n";
+        $comment = $addComments === false ? '' : "\n" . $this->buildSqlComment("buildSqlSelect(" . $qpart->getAlias() . ", " . $select_from . ", " . $select_as . ", " . $aggregator . ", " . $make_groupable . ")") . "\n";
         $add_nvl = false;
         $attribute = $qpart->getAttribute();
         $address = $this->buildSqlDataAddress($qpart);
@@ -1321,21 +1405,32 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $add_nvl = true;
         } else {
             // otherwise create a regular select
-            if ($select_column) {
+            switch (true) {
                 // if the column to select is explicitly defined, just select it
-                $output = $select_from . $this->getAliasDelim() . $select_column;
-            } elseif ($this->isSqlStatement($address)) {
+                case $select_column:
+                    $output = $select_from . $this->getAliasDelim() . $select_column;
+                    break;
+                // see if the attribute is a JSON path
+                case $this->isJsonDataAddress($address):
+                    list ($address, $jsonPath) = $this->parseJsonDataAddress($address);
+                    $column = $this->buildSqlSelect($qpart, $select_from, $address, false, null, $make_groupable, false);
+                    $output = $this->buildSqlJsonRead($column, $jsonPath);
+                    break;
                 // see if the attribute is a statement. If so, just replace placeholders
-                $output = $this->replacePlaceholdersInSqlAddress($address, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
-            } elseif ($custom_select = $qpart->getDataAddressProperty(self::DAP_SQL_SELECT)){
+                case $this->isSqlStatement($address):
+                    $output = $this->replacePlaceholdersInSqlAddress($address, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
+                    break;
                 // IF there is a custom SQL_SELECT statement, use it.
-                $output = $this->replacePlaceholdersInSqlAddress($custom_select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
-            } else {
+                case $custom_select = $qpart->getDataAddressProperty(self::DAP_SQL_SELECT):
+                    $output = $this->replacePlaceholdersInSqlAddress($custom_select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
+                    break;
                 // otherwise get the select from the attribute
-                if (! $data_address = $qpart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)){
-                    $data_address = $address;
-                }
-                $output = $select_from . $this->getAliasDelim() . $data_address;
+                default:
+                    if (! $data_address = $qpart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)){
+                        $data_address = $address;
+                    }
+                    $output = $select_from . $this->getAliasDelim() . $data_address;
+                    break;
             }
         }
         
@@ -2078,6 +2173,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $dataAddressProps = $qpart->getDataAddressProperties();
         $value_list_delimiter = $qpart->getValueListDelimiter();
         $valueIsSQL = $valueIsSQL ?? $qpart->isValueDataAddress();
+        
+        if($this->isJsonDataAddress($subject)) {
+            [$column, $path] = $this->parseJsonDataAddress($subject);
+            $subject = $this->buildSqlJsonRead($column, $path);
+        }
 
         $valueRaw = $value;
         // Check if the value is of valid type.
@@ -2102,7 +2202,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                     
                 default:
-                    $values = explode($value_list_delimiter, $value);
+                    $values = explode($value_list_delimiter, $value ?? '');
                     $value = '';
                     $valueNullChecks = [];
                     
@@ -2456,19 +2556,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
         }
         
-        if ($customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY)) {
-            $phs = StringDataType::findPlaceholders($customOrderBy);
-            if (empty($phs)) {
-                // Fallback to older code in case the SQL_ORDER_BY has no placeholders
-                return $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy . ' ' . $qpart->getOrder();
-            } else {
-                return StringDataType::replacePlaceholders($customOrderBy, [
-                    '~alias' => $select_from,
-                    '~order' => $qpart->getOrder()
-                ]);
-            }
-        } else {
-            $sort_by = $this->getShortAlias($qpart->getColumnKey());
+        switch (true) {
+            case $customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY):
+                $phs = StringDataType::findPlaceholders($customOrderBy);
+                if (empty($phs)) {
+                    // Fallback to older code in case the SQL_ORDER_BY has no placeholders
+                    return $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy . ' ' . $qpart->getOrder();
+                } else {
+                    return StringDataType::replacePlaceholders($customOrderBy, [
+                        '~alias' => $select_from,
+                        '~order' => $qpart->getOrder()
+                    ]);
+                }
+            case $qpart->isCompound():
+                $sorters = [];
+                foreach ($qpart->getCompoundChildren() as $child) {
+                    $sorters[] = $this->buildSqlOrderBy($child, $select_from);
+                }
+                return implode(', ', $sorters);
+            default:
+                $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
         
         return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
@@ -2751,9 +2858,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function canReadAttribute(MetaAttributeInterface $attribute) : bool
     {
-        // TODO Check if all objects along the relation path also belong to the data source
-        // TODO Instead of checking the data source, check if it points to the same data base
-        return $attribute->getObject()->getDataSource()->getId() === $this->getMainObject()->getDataSource()->getId();
+        // TODO Check if all objects along the relation path also can be read
+        $attrObj = $attribute->getObject();
+        $queryObj = $this->getMainObject();
+        if ($attrObj->getDataSource()->getId() === $queryObj->getDataSource()->getId()) {
+            return true;
+        }
+        $attrConn = $attrObj->getDataConnection();
+        $queryConn = $queryObj->getDataConnection();
+        if ($attrConn === $queryConn) {
+            return true;
+        }
+        if ($queryConn instanceof SqlDataConnectorInterface) {
+            if ($queryConn->canJoin($attrConn)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
@@ -3070,9 +3191,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $tags = $this->getSqlDialects();
             // Start with the first supported tag and see if it matches any statement. If not,
             // proceed with the next tag, etc.
-            foreach ($tags as $tag) {
-                $tag = $tag . ':';
-                foreach ($stmts as $stmt) {
+                foreach ($tags as $tag) {
+                    $tag = $tag . ':';
+                    foreach ($stmts as $stmt) {
                     if (StringDataType::startsWith($stmt, $tag, false)) {
                         return trim(StringDataType::substringAfter($stmt, $tag));
                     }
@@ -3105,5 +3226,115 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function isDirty() : bool
     {
         return $this->dirtyFlag;
+    }
+
+    /**
+     * Returns TRUE if the given data address points to data inside a JSON value and FALSE otherwise
+     * 
+     * TODO this method should go into an ISupportJSONQueries interface for query builders in order
+     * to allow other code to understand, if structured data can be handled. The exact syntax of
+     * a JSON address is up to the query builder, but we will probably need to distinguish between
+     * those, that can handle JSON and others.
+     * 
+     * @param string $str
+     * @return bool
+     */
+    public function isJsonDataAddress(string $str) : bool
+    {
+        return mb_strpos($str, '::$');
+    }
+
+    /**
+     * Splits the given JSON data address into a SQL column and a JSON path.
+     * 
+     * Use like this:
+     * 
+     * ```
+     * list($column, $jsonPath) = $this->parseJsonDataAddress('myCol::$.prop1')
+     * // $column = "myCol"
+     * // $jsonPath = "$.prop1"
+     * ```
+     * 
+     * @param string $str
+     * @return string[] containing $column and $jsonPath
+     */
+    protected function parseJsonDataAddress(string $str) : array
+    {
+        list($column, $jsonPath) = explode('::$', $str, 2);
+        return [$column, '$' . $jsonPath];
+    }
+
+    /**
+     * Override this method to implement a DB specific JSON reader
+     * 
+     * @param string $address
+     * @param string $jsonPath
+     * @return string
+     */
+    protected function buildSqlJsonRead(string $address, string $jsonPath) : string
+    {
+        return "JSON_VALUE({$this->buildSqlInitialJson($address)}, '{$jsonPath}')";
+    }
+
+    /**
+     * Builds an inline SQL-Snippet that encodes the provided key value pairs as JSON, using
+     * only native SQL functions of the corresponding dialect.
+     *
+     * - Keys must be strings, matching the following pattern: `$.key`.
+     * - This function can only generate a JSON that is exactly 1 level deep. Keys that try to access
+     * deeper levels (e.g. `$.allowed.forbidden`) will not function properly.
+     *
+     * NOTE: JSON manipulation may not be fully supported by all dialects. This functions returns MySQL
+     * syntax by default.
+     *
+     * TODO geb 2025-01-21: We might need a better default implementation.
+     *
+     * @param array  $keyValuePairs
+     * @param string $initialJson
+     * @return string
+     */
+    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'") : string
+    {
+        $resultJson = $initialJson;
+
+        foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+        }
+
+        return $resultJson;
+    }
+
+    /**
+     * Build an inline SQL-Snippet that generates an initial JSON value for native JSON-Functions.
+     *
+     * NOTE: JSON manipulation may not be fully supported by all dialects. This functions returns MySQL
+     *  syntax by default.
+     *
+     * @param string $columnName
+     * @return string
+     */
+    protected function buildSqlInitialJson(string $columnName) : string
+    {
+        return <<<SQL
+
+CASE 
+    WHEN {$columnName} IS NOT NULL AND JSON_VALID({$columnName})
+    THEN {$columnName}
+    ELSE '{}'
+END 
+SQL;
+    }
+
+    /**
+     * Override this method to implement a DB specific JSON writer
+     * 
+     * @param string $address
+     * @param string $jsonPath
+     * @param string $escapedValue
+     * @return string
+     */
+    protected function buildSqlJsonWrite(string $address, string $jsonPath, string $escapedValue) : string
+    {
+        return "JSON_SET({$address}, '{$jsonPath}', $escapedValue)";
     }
 }

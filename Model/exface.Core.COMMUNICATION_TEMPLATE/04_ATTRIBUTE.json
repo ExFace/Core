@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2022-09-19 13:19:22",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Template alias [ALIAS]",
             "CREATED_ON": "2022-09-19 13:19:22",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -264,6 +271,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Message template [MESSAGE_UXON]",
             "CREATED_ON": "2022-09-19 13:19:22",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -310,6 +318,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Base object [OBJECT]",
             "CREATED_ON": "2022-09-19 13:19:22",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -356,6 +365,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Template name [NAME]",
             "CREATED_ON": "2022-09-19 13:19:22",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -402,6 +412,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Channel [COMMUNICATION_CHANNEL]",
             "CREATED_ON": "2022-09-19 13:35:42",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -448,6 +459,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Alias with namespace [ALIAS_WITH_NS]",
             "CREATED_ON": "2022-09-19 16:29:28",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -472,7 +484,25 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "(CASE\n  WHEN [#APP#] IS NOT NULL \n  THEN CONCAT(\n    (SELECT \n      (CASE \n        WHEN [#~alias#]_nsa.app_alias IS NOT NULL \nTHEN CONCAT([#~alias#]_nsa.app_alias, '.') \n        ELSE '' \n      END) \n      FROM exf_app [#~alias#]_nsa \n      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n    [#ALIAS#])\n  ELSE\n    [#ALIAS#]\nEND)\n",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "(CASE",
+                "  WHEN [#APP#] IS NOT NULL ",
+                "  THEN CONCAT(",
+                "    (SELECT ",
+                "      (CASE ",
+                "        WHEN [#~alias#]_nsa.app_alias IS NOT NULL ",
+                "THEN CONCAT([#~alias#]_nsa.app_alias, '.') ",
+                "        ELSE '' ",
+                "      END) ",
+                "      FROM exf_app [#~alias#]_nsa ",
+                "      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), ",
+                "    [#ALIAS#])",
+                "  ELSE",
+                "    [#ALIAS#]",
+                "END)",
+                ""
+            ],
             "OBJECT": "0x11ed830be97308e4830b025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -492,6 +522,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Recipients [RECIPIENTS]",
             "CREATED_ON": "2023-03-16 18:50:48",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -516,7 +547,25 @@
             "COPYABLEFLAG": 1,
             "ALIAS": "RECIPIENTS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipients'))\n\n@MySQL: (SELECT \n REPLACE(\n   REPLACE(\n      REPLACE(\n       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipients')\n       , '['\n       , ''\n     )\n     , ']'\n     , ''\n   )\n   , '\"'\n   , ''\n ))",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipients'))",
+                "",
+                "@MySQL: (SELECT ",
+                " REPLACE(",
+                "   REPLACE(",
+                "      REPLACE(",
+                "       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipients')",
+                "       , '['",
+                "       , ''",
+                "     )",
+                "     , ']'",
+                "     , ''",
+                "   )",
+                "   , '\"'",
+                "   , ''",
+                " ))"
+            ],
             "OBJECT": "0x11ed830be97308e4830b025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -536,6 +585,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Recipient Roles [RECIPIENT_ROLES]",
             "CREATED_ON": "2023-03-16 19:05:49",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -560,7 +610,26 @@
             "COPYABLEFLAG": 1,
             "ALIAS": "RECIPIENT_ROLES",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_roles'))\n\n@MySQL:\n(SELECT \n REPLACE(\n   REPLACE(\n      REPLACE(\n       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipient_roles')\n       , '['\n       , ''\n     )\n     , ']'\n     , ''\n   )\n   , '\"'\n   , ''\n ))",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_roles'))",
+                "",
+                "@MySQL:",
+                "(SELECT ",
+                " REPLACE(",
+                "   REPLACE(",
+                "      REPLACE(",
+                "       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipient_roles')",
+                "       , '['",
+                "       , ''",
+                "     )",
+                "     , ']'",
+                "     , ''",
+                "   )",
+                "   , '\"'",
+                "   , ''",
+                " ))"
+            ],
             "OBJECT": "0x11ed830be97308e4830b025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -580,6 +649,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Recipient Users [RECIPIENT_USERS]",
             "CREATED_ON": "2023-03-16 19:06:29",
             "MODIFIED_ON": "2024-11-26 09:27:26",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -604,7 +674,25 @@
             "COPYABLEFLAG": 1,
             "ALIAS": "RECIPIENT_USERS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_users'))\n\n@MySQL: (SELECT \n REPLACE(\n   REPLACE(\n      REPLACE(\n       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipient_users')\n       , '['\n       , ''\n     )\n     , ']'\n     , ''\n   )\n   , '\"'\n   , ''\n ))",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_users'))",
+                "",
+                "@MySQL: (SELECT ",
+                " REPLACE(",
+                "   REPLACE(",
+                "      REPLACE(",
+                "       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipient_users')",
+                "       , '['",
+                "       , ''",
+                "     )",
+                "     , ']'",
+                "     , ''",
+                "   )",
+                "   , '\"'",
+                "   , ''",
+                " ))"
+            ],
             "OBJECT": "0x11ed830be97308e4830b025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,

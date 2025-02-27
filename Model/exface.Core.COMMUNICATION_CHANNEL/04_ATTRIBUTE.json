@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.ATTRIBUTE",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -172,6 +177,7 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2022-01-22 15:38:57",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -208,7 +214,7 @@
             "RELATED_OBJ": "0x35370000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -218,6 +224,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Message type [MESSAGE_PROTOTYPE]",
             "CREATED_ON": "2022-01-22 15:38:57",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -254,7 +261,7 @@
             "RELATED_OBJ": "0x11ec98d021fca9aa98d0025041000001",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -264,6 +271,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Channel alias [ALIAS]",
             "CREATED_ON": "2022-01-22 15:38:57",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -297,10 +305,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -310,6 +318,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Connection [DATA_CONNECTION]",
             "CREATED_ON": "2022-01-22 15:38:57",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -346,7 +355,7 @@
             "RELATED_OBJ": "0x33380000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -356,6 +365,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Muted [MUTE_FLAG]",
             "CREATED_ON": "2022-01-22 15:38:57",
             "MODIFIED_ON": "2023-08-23 10:10:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -395,10 +405,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -406,6 +416,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Description [DESCRIPTION]",
             "CREATED_ON": "2022-01-22 15:38:57",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -439,10 +450,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -452,6 +463,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Channel name [NAME]",
             "CREATED_ON": "2022-01-22 15:38:57",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -485,10 +497,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -498,6 +510,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Default message model [MESSAGE_DEFAULT_UXON]",
             "CREATED_ON": "2022-01-22 15:44:24",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -531,10 +544,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -544,6 +557,7 @@
             }
         },
         {
+            "_EXPORT_SUMMARY": "Alias with namespace [ALIAS_WITH_NS]",
             "CREATED_ON": "2022-01-28 08:27:56",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -568,7 +582,25 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "(CASE\n  WHEN [#APP#] IS NOT NULL \n  THEN CONCAT(\n    (SELECT \n      (CASE \n        WHEN [#~alias#]_nsa.app_alias IS NOT NULL \nTHEN CONCAT([#~alias#]_nsa.app_alias, '.') \n        ELSE '' \n      END) \n      FROM exf_app [#~alias#]_nsa \n      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n    [#ALIAS#])\n  ELSE\n    [#ALIAS#]\nEND)\n",
+            "DATA_ADDRESS": [
+                "// Multiline text delimited by `\n`",
+                "(CASE",
+                "  WHEN [#APP#] IS NOT NULL ",
+                "  THEN CONCAT(",
+                "    (SELECT ",
+                "      (CASE ",
+                "        WHEN [#~alias#]_nsa.app_alias IS NOT NULL ",
+                "THEN CONCAT([#~alias#]_nsa.app_alias, '.') ",
+                "        ELSE '' ",
+                "      END) ",
+                "      FROM exf_app [#~alias#]_nsa ",
+                "      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), ",
+                "    [#ALIAS#])",
+                "  ELSE",
+                "    [#ALIAS#]",
+                "END)",
+                ""
+            ],
             "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -577,10 +609,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "Full alias of the channel including the app alias as namespace. This is what is used in UXON to identify the communication channel.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
@@ -588,6 +620,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Default connection [DATA_CONNECTION_DEFAULT]",
             "CREATED_ON": "2022-01-31 18:14:24",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -624,7 +657,7 @@
             "RELATED_OBJ": "0x33380000000000000000000000000000",
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
@@ -634,6 +667,7 @@
             "CUSTOM_DATA_TYPE": null
         },
         {
+            "_EXPORT_SUMMARY": "Muted by default [MUTE_FLAG_DEFAULT]",
             "CREATED_ON": "2022-02-01 16:05:38",
             "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -667,10 +701,10 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
-            "RELATED_OBJ_ATTR": "",
+            "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": 0,

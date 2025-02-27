@@ -2,6 +2,11 @@
     "object_alias": "exface.Core.OBJECT_ACTION",
     "columns": [
         {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -60,13 +65,14 @@
     ],
     "rows": [
         {
+            "_EXPORT_SUMMARY": "Announcement: Disable",
             "CREATED_ON": "2024-11-26 09:57:10",
             "MODIFIED_ON": "2024-11-26 10:00:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11efaaf76d188f2eaaf7025041000001",
             "OBJECT": "0x11ef9e18bc6f56149e18025041000001",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/UpdateData.php",
             "ALIAS": "AnnouncementDisable",
             "NAME": "Disable",
             "SHORT_DESCRIPTION": "",
@@ -89,13 +95,14 @@
             "DOCS": ""
         },
         {
+            "_EXPORT_SUMMARY": "Announcement: Enable",
             "CREATED_ON": "2024-11-26 09:57:47",
             "MODIFIED_ON": "2024-11-26 10:00:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11efb5588239ec86b558025041000001",
             "OBJECT": "0x11ef9e18bc6f56149e18025041000001",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/UpdateData.php",
             "ALIAS": "AnnouncementEnable",
             "NAME": "Enable",
             "SHORT_DESCRIPTION": "",

@@ -17,7 +17,7 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  * @author Andrej Kabachnik
  *
  */
-interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon, iHaveCaption, iHaveVisibility
+interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon, iHaveCaption, iHaveVisibility, iCanGenerateDebugWidgets
 {
     /**
      * Prefills the widget with values of a data sheet.
@@ -459,4 +459,6 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return bool
      */
     public function hasFunction(string $functionName) : bool;
+
+    
 }

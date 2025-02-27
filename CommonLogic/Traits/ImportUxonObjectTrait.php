@@ -41,7 +41,6 @@ trait ImportUxonObjectTrait {
                 throw new UxonMapError($uxon, 'No setter method found for UXON property "' . $var . '" in prototype "' . get_class($this) . '"!');
             }
         }
-        return;
     }
     
     /**

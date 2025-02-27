@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\EntityListInterface;
 
@@ -80,4 +81,17 @@ interface BehaviorListInterface extends EntityListInterface, iCanBeConvertedToUx
      * @return boolean
      */
     public function isEmpty();
+
+    /**
+     * Searches for a behavior of the specified type on this object and returns the first match
+     * or NULL if no match was found.
+     *
+     * If `allowMultiple` is set to FALSE, an error will be thrown, if more than one match was found.
+     *
+     * @param string $class
+     * @param bool   $allowMultiple
+     * @return BehaviorInterface|null
+     * @throws RuntimeException
+     */
+    public function findBehavior(string $class, bool $allowMultiple = false) : ?BehaviorInterface;
 }
