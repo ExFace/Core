@@ -71,6 +71,13 @@ interface DataTransactionInterface extends WorkbenchDependantInterface
     public function isOpen() : bool;
 
     /**
+     * Returns TRUE if this transactions does not affect any data connections
+     * 
+     * @return bool
+     */
+    public function isEmpty() : bool;
+
+    /**
      * Assotiates this transaction with a given connection starting a physical transaction there.
      * Adding the same connection
      * multiple times is no problem - there will still be only one physical transaction there.
@@ -86,5 +93,11 @@ interface DataTransactionInterface extends WorkbenchDependantInterface
      * @return DataConnectionInterface[]
      */
     public function getDataConnections() : array;
+
+    /**
+     * Returns an ID of this transaction unique within a the current workbench request
+     * 
+     * @return string
+     */
+    public function getId() : string;
 }
-?>
