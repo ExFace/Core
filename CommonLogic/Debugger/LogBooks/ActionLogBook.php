@@ -187,7 +187,7 @@ class ActionLogBook implements DataLogBookInterface
             $idt = max($entry['indent'], 1) - $cancelledIdtFix;
             switch (true) {
                 case $event instanceof OnTransactionStartEvent:
-                    $this->addLine('Transaction start', $idt);
+                    $this->addLine('Transaction start (ID ' . $event->getTransaction()->getId() . ')', $idt);
                     break;
                 case $event instanceof OnBeforeTransactionCommitEvent:
                 case $event instanceof OnBeforeTransactionRollbackEvent:
@@ -195,7 +195,7 @@ class ActionLogBook implements DataLogBookInterface
                     foreach ($event->getTransaction()->getDataConnections() as $connection) {
                         $connections[] = $connection->getAlias();
                     }
-                    $this->addLine('Transaction **' . ($event instanceof OnBeforeTransactionRollbackEvent ? 'roll back' : 'commit') . '** for connections `' . implode('`, `', $connections) . '`.', $idt);
+                    $this->addLine('Transaction **' . ($event instanceof OnBeforeTransactionRollbackEvent ? 'roll back' : 'commit') . '** for connections `' . implode('`, `', $connections) . '` (ID ' . $event->getTransaction()->getId() . ')', $idt);
                     break;
                 // Skip the after-events in this list
                 case $event->isOnAfter():
