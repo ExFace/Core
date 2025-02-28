@@ -483,28 +483,21 @@ HTML;
                 $name = StringDataType::truncate($name, 40);
             }
 
-
-            # TODO FIX
+            /* Todo: 
+                Tooltip content (subject to string) and structure (multi-line tooltip) still need to be adapted.
+            */
 
             $subj = $lap[self::LAP_SUBJECT];
-
-            # TEST
-            
-            // $tooltipData = 'isObject '.is_object($subj).' isarray'. is_array($subj). ' is null '.is_null($subj); 
-            // if (method_exists($subj , '__toString')){
-            //     $tooltipData = 'hasToString ' . $tooltipData;
-            // }
-
             if ($lap[self::LAP_CATEGORY] == 'behavior') {
                 // behaviors
-                // class, name, and object (TODO)
+                // show class, name, and object 
                 $tooltipData = 'Behavior Class: ' . get_class($subj) . ', Name: ' . $lap[self::LAP_NAME];
                     
             } 
             else {
-                // everything else
-                // obj toString (TODO tostring not working?)
-                $tooltipData = 'Object: ' .  $lap[self::LAP_NAME]; # 'OPT 2: Class '. get_class($subj) . ', Name ' . $lap[self::LAP_NAME];
+                // all other event types
+                // show object to string
+                $tooltipData = 'Object: ' .  $lap[self::LAP_NAME];
             }
 
             $html .= $this->buildHtmlProfilerRow($eventStart, $name, $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY], $tooltipData);
