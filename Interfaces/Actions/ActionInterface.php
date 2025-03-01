@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
+use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -533,4 +534,24 @@ interface ActionInterface extends
      * @return ActionInterface
      */
     public function setOfflineStrategy(string $value) : ActionInterface;
+
+    /**
+     * 
+     * @return ConfirmationWidgetInterface|null
+     */
+    public function getConfirmationForAction() : ?ConfirmationWidgetInterface;
+
+    public function hasConfirmationForAction() : bool;
+
+    /**
+     * 
+     * @return ConfirmationWidgetInterface|null
+     */
+    public function getConfirmationForUnsavedChanges() : ?ConfirmationWidgetInterface;
+
+    /**
+     * 
+     * @return bool
+     */
+    public function hasConfirmationForUnsavedChanges() : bool;
 }
