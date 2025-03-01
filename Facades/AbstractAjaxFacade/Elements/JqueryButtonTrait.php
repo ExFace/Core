@@ -1,9 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Actions\ShowLookupDialog;
+use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Actions\GoBack;
+use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
 use exface\Core\Widgets\Button;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Actions\GoToPage;
@@ -194,52 +195,6 @@ trait JqueryButtonTrait {
      */
     protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element, string $jsVariable = 'requestData') : string
     {
-        $min = $action->getInputRowsMin();
-        $max = $action->getInputRowsMax();
-        
-        // If the action has built-in input data, let the server handle the checks.
-        if ($action->hasInputDataPreset() && ! $action->getInputDataPreset()->isEmpty()) {
-            $min = null;
-            $max = null;
-        }
-        
-        if ($min !== null || $max !== null) {
-            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-            if ($min === $max) {
-                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . " || {$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
-                    '%number%' => $max
-                ), $max) . '"') . " return false;}";
-            } elseif (is_null($max)) {
-                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
-                    '%number%' => $min
-                ), $min) . '"') . " return false;}";
-            } elseif (is_null($min)) {
-                $js_check_input_rows = "if ({$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
-                    '%number%' => $max
-                ), $max) . '"') . " return false;}";
-            } else {
-                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . " || {$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
-                    '%min%' => $min,
-                    '%max%' => $max
-                )) . '"') . " return false;}";
-            }
-            $js_check_input_rows = "if ({$jsVariable}.rows){ {$js_check_input_rows} }";
-        } else {
-            $js_check_input_rows = '';
-        }
-        
-        if (($conditionalProperty = $this->getWidget()->getDisabledIf()) !== null) {
-            $js_check_button_state = <<<JS
-            
-                    if ({$this->buildJsConditionalPropertyIf($conditionalProperty->getConditionGroup())}) {
-                        return false;
-                    }
-
-JS;
-        } else {
-            $js_check_button_state = $this->getWidget()->isDisabled() === true ? 'return false;' : '';
-        }
-        
         if ($customData = $this->getWidget()->getInputData()) {
             $customDataRows = '';
             foreach ($customData->getRows() as $row) {
@@ -280,12 +235,55 @@ JS;
             $js_get_data = $input_element->buildJsDataGetter($action);
         }
         
+        return $js_get_data;
+    }
+
+    protected function buildJsRequestDataCheckRows(string $jsRequestData, AbstractAction $action = null) : string
+    {
+        if ($action === null) {
+            return 'true';
+        }
+
+        $min = $action->getInputRowsMin();
+        $max = $action->getInputRowsMax();
+        
+        // If the action has built-in input data, let the server handle the checks.
+        if ($action->hasInputDataPreset() && ! $action->getInputDataPreset()->isEmpty()) {
+            $min = null;
+            $max = null;
+        }
+        
+        if ($min === null && $max === null) {
+            return 'true';
+        }
+
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        if ($min === $max) {
+            $js_check_input_rows = "if (oInputData.rows.length < " . $min . " || oInputData.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
+                '%number%' => $max
+            ), $max) . '"') . " return false;}";
+        } elseif (is_null($max)) {
+            $js_check_input_rows = "if (oInputData.rows.length < " . $min . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
+                '%number%' => $min
+            ), $min) . '"') . " return false;}";
+        } elseif (is_null($min)) {
+            $js_check_input_rows = "if (oInputData.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
+                '%number%' => $max
+            ), $max) . '"') . " return false;}";
+        } else {
+            $js_check_input_rows = "if (oInputData.rows.length < " . $min . " || oInputData.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
+                '%min%' => $min,
+                '%max%' => $max
+            )) . '"') . " return false;}";
+        }
         return <<<JS
-
-                    $js_check_button_state
-					{$jsVariable} = {$js_get_data};
-					$js_check_input_rows
-
+                    (function(oInputData) {
+                        if (! Array.isArray(oInputData.rows)){
+                            return false;   
+                        }
+                        {$js_check_input_rows} 
+                        return true;
+                    })($jsRequestData)
 JS;
     }
 
@@ -319,52 +317,108 @@ JS;
     {
         $action = $action ?? $this->getWidget()->getAction();
         
+        $collectInputDataJs = '{}';
         if ($jsRequestData === null && $action !== null) {
-            $jsRequestData = 'requestData';
-            $jsRequestDataCollector = "var {$jsRequestData}; \n" . $this->buildJsRequestDataCollector($action, $this->getInputElement(), $jsRequestData);
-        }
-        
+            $collectInputDataJs = "\n" . $this->buildJsRequestDataCollector($action, $this->getInputElement(), 'requestData');
+        } 
+
         switch (true) {
             // Buttons without an action don't do anything
             case ! $action:
-                $js = $this->buildJsClickNoAction(); break;
+                $performActionJs = $this->buildJsClickNoAction(); break;
             // CallAction needs som extra logic because its action is different depending on the input data
             case $action instanceof CallAction:
-                $js = $jsRequestDataCollector . $this->buildJsClickDynamicAction($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickDynamicAction($action, 'requestData'); break;
             // Action chains and other action proxies
             case $action instanceof iCallOtherActions:
-                $js = $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickActionChain($action, 'requestData'); break;
             // Refresh input or other widget - don't need input data here
             case $action instanceof RefreshWidget:
-                $js = $this->buildJsClickRefreshWidget($action); break;
+                $performActionJs = $this->buildJsClickRefreshWidget($action); break;
             // Run custom JS - don't need input data here
             case $action instanceof iRunFacadeScript:
-                $js = $this->buildJsClickRunFacadeScript($action); break;
+                $performActionJs = $this->buildJsClickRunFacadeScript($action); break;
             // Show Dialog
             case $action instanceof iShowDialog:
-                $js = $jsRequestDataCollector . $this->buildJsClickShowDialog($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickShowDialog($action, 'requestData'); break;
             // Navigate to URL
             case $action instanceof iShowUrl:
-                $js = $jsRequestDataCollector . $this->buildJsClickShowUrl($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickShowUrl($action, 'requestData'); break;
             // Other show-widget actions (not simple navigating)
             case $action instanceof iShowWidget:
-                $js = $jsRequestDataCollector . $this->buildJsClickShowWidget($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickShowWidget($action, 'requestData'); break;
             // Back-button - don't need input data here
             case $action instanceof GoBack:
-                $js = $this->buildJsClickGoBack($action); break;
+                $performActionJs = $this->buildJsClickGoBack($action); break;
             // Send data to widget
             case $action instanceof SendToWidget:
-                $js = $jsRequestDataCollector . $this->buildJsClickSendToWidget($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickSendToWidget($action, 'requestData'); break;
             // Reset input or other widget - don't need input data here
             case $action instanceof ResetWidget:
-                $js = $this->buildJsClickResetWidget($action); break;
+                $performActionJs = $this->buildJsClickResetWidget($action); break;
             // Call a widget function - e.g. click another button
             case $action instanceof iCallWidgetFunction:
-                $js = $this->buildJsClickCallWidgetFunction($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickCallWidgetFunction($action, 'requestData'); break;
             // Send all other acitons to the server
             default: 
-                $js = $jsRequestDataCollector . $this->buildJsClickCallServerAction($action, $jsRequestData); break;
+                $performActionJs = $this->buildJsClickCallServerAction($action, 'requestData'); break;
         }
+
+        if (null !== $conditionalProperty = $this->getWidget()->getDisabledIf()) {
+            $checkButtonDisabledJs = $this->buildJsConditionalPropertyIf($conditionalProperty->getConditionGroup());
+        } else {
+            $checkButtonDisabledJs = $this->escapeBool($this->getWidget()->isDisabled() ?? false);
+        }
+
+        $showConfirmationAndPerformActionJs = "fnAction();";
+        if ($action) {
+            if ((null !== $cnfWidget = $action->getConfirmationForAction()) && ! $cnfWidget->isDisabled()) {
+                $showConfirmationAndPerformActionJs = $this->buildJsConfirmation($cnfWidget, 'requestData', 'fnAction()');
+            }
+            if ((null !== $cnfWidget = $action->getConfirmationForUnsavedChanges()) && ! $cnfWidget->isDisabled()) {
+                $inputEl = $this->getInputElement();
+                $showConfirmationAndPerformActionJs = <<<JS
+                
+                (function(fnConfirmAndPerform, fnCancel){
+                    var aChanges = {$inputEl->buildJsChangesGetter(true)};
+                    if (aChanges.length === 0) {
+                        fnConfirmAndPerform();
+                    } else {
+                        {$this->buildJsConfirmation($cnfWidget, '{}', 'fnConfirmAndPerform();')}
+                    }
+                })(function(){ $showConfirmationAndPerformActionJs });
+
+JS;
+            }
+        }
+
+        $js = <<<JS
+
+            (function(requestData){
+                var self = this;
+                var fnAction;
+                var bButtonDisabled = {$checkButtonDisabledJs};
+                
+                if (bButtonDisabled === true) {
+                    return false;
+                }
+
+                if (requestData === undefined) {
+                    requestData = {$collectInputDataJs};
+                }
+
+                if (false === {$this->buildJsRequestDataCheckRows('requestData', $action)}) {
+                    return false;
+                }
+                
+                fnAction = (function() {
+                    {$performActionJs};
+                }).bind(self);
+
+                {$showConfirmationAndPerformActionJs}
+
+            })({$jsRequestData});
+JS;
         
         // In any case, wrap some offline-logic around the action
         if ($action !== null) {
@@ -372,6 +426,32 @@ JS;
         }
         
         return $js;
+    }
+
+    /**
+     * Returns JS code to show a confirmation popup
+     * 
+     * The confirmation will have at least two buttons: continue and cancel. Both will close it and
+     * perform their respective callbacks passed to this method.
+     * 
+     * The confirmation may use the provided input data to fill placeholders.
+     * 
+     * @param \exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface $widget
+     * @param string $jsRequestData
+     * @param string $onContinueJs
+     * @param string $onCancelJs
+     * @return string
+     */
+    protected function buildJsConfirmation(ConfirmationWidgetInterface $widget, string $jsRequestData, string $onContinueJs, string $onCancelJs = null)
+    {
+        return <<<JS
+
+            if (window.confirm({$this->escapeString($widget->getQuestionText())})) {
+                {$onContinueJs};
+            } else {
+                {$onCancelJs};
+            }
+JS;
     }
     
     /**
@@ -437,28 +517,6 @@ JS;
                 return true;
         }
         return false;
-    }
-    
-    /**
-     *  
-     * @param ActionInterface|NULL $action
-     * @return bool
-     */
-    protected function isCheckForUnsavedChangesRequired(ActionInterface $action = null) : bool
-    {
-        $action = $action ?? $this->getAction();
-        switch (true) {
-            case $action instanceof SendToWidget:
-            case $action instanceof ShowLookupDialog:
-            case $action instanceof iCallWidgetFunction:
-            case $action instanceof iRunFacadeScript:
-                $checkChanges = false;
-                break;
-            default:
-                $checkChanges = true;
-                break;
-        }
-        return $checkChanges;
     }
     
     /**
@@ -676,7 +734,7 @@ JS;
         
         $output .= "
 						if ({$this->getInputElement()->buildJsValidator()}) {
-                            {$this->buildJsCheckRequestDataSize($jsRequestData, $this->getAjaxPostSizeMax())}
+                            {$this->buildJsRequestDataCheckSize($jsRequestData, $this->getAjaxPostSizeMax())}
 							{$this->buildJsBusyIconShow()}
 							$.ajax({
 								type: 'POST',
@@ -872,9 +930,11 @@ JS;
     {
         $input_element = $this->getInputElement();
         /* @var $action \exface\Core\Interfaces\Actions\iShowUrl */
-        $output = $this->buildJsRequestDataCollector($action, $input_element) . "
-					var " . $action->getAlias() . "Url='" . $action->getUrl() . "';
-					" . $this->buildJsPlaceholderReplacer($action->getAlias() . "Url", "{$jsRequestData}.rows[0]", $action->getUrl(), ($action->getUrlencodePlaceholders() ? 'encodeURIComponent' : null));
+        $output = <<<JS
+
+					var {$action->getAlias()}Url='{$action->getUrl()}';
+					{$this->buildJsPlaceholderReplacer($action->getAlias() . "Url", "{$jsRequestData}.rows[0]", $action->getUrl(), ($action->getUrlencodePlaceholders() ? 'encodeURIComponent' : null))}
+JS;
         
         switch (true) {
             case $action->getOpenInNewWindow() === true:
@@ -1147,17 +1207,17 @@ JS;
         return parent::buildJsCallFunction($functionName, $parameters);
     }
     
-    protected function buildJsCheckRequestDataSize(string $jsRequestData, int $bytes = null) : string
+    protected function buildJsRequestDataCheckSize(string $jsRequestData, int $bytes = null) : string
     {
         if ($bytes === null) {
             return '';
         }
         
-        if (null === $msgs = $this::$sizeErrors[$bytes]) {
+        if (null === $msgs = self::$sizeErrors[$bytes]) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             $messageJs = $this->escapeString("{$translator->translate('WIDGET.BUTTON.ERROR_DATA_TO_LARGE')}\n\n{$translator->translate('WIDGET.BUTTON.ERROR_DATA_TO_LARGE_DESCRIPTION')}\n\n{$translator->translate('WIDGET.BUTTON.ERROR_DATA_MAX_SIZE', ['%size_formatted%' => ByteSizeDataType::formatWithScale($bytes)])}");
             $titleJs = $this->escapeString($translator->translate('ERROR.CAPTION') . ' 7V9OSYM');
-            $this::$sizeErrors[$bytes] = [$titleJs, $messageJs];
+            self::$sizeErrors[$bytes] = [$titleJs, $messageJs];
         } else {
             list($titleJs, $messageJs) = $msgs;
         }

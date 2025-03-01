@@ -28,6 +28,7 @@ class SendToWidget extends AbstractAction
         parent::init();
         $this->setInputRowsMin(1);
         $this->setIcon(Icons::SIGN_IN);
+        $this->setConfirmationForUnsavedChanges(false);
     }
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction): ResultInterface
