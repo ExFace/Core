@@ -253,7 +253,7 @@ JS;
             $max = null;
         }
         
-        if ($min === null && $max === null) {
+        if (($min ?? 0) === 0 && $max === null) {
             return 'true';
         }
 
@@ -398,7 +398,7 @@ JS;
                 var self = this;
                 var fnAction;
                 var bButtonDisabled = {$checkButtonDisabledJs};
-                
+
                 if (bButtonDisabled === true) {
                     return false;
                 }
