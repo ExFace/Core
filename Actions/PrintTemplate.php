@@ -313,7 +313,6 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     public function setFilename(string $filename) : PrintTemplate
     {
         $this->filename = $filename;
-        $this->pathname = null;
         return $this;
     }
     
