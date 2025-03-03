@@ -1,12 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\StringDataType;
+use TextMode;
+use function Sabre\Event\Loop\instance;
 
 /**
  * The profiler can be used to stop the time for any objects (e.g. actions, data queries, etc.)
@@ -453,7 +456,6 @@ HTML;
             $eventStart = $lap[self::LAP_START] !== null ? $this->roundMs($lap[self::LAP_START]) : null;
             $eventEnd = $lap[self::LAP_STOP] !== null ? $this->roundMs($lap[self::LAP_STOP]) : null;
             $eventOffset = round(($eventStart - $startTime) / $totalDur * 100) . '%';
-            $tooltipData = "test-data";
 
             if ($eventEnd !== null) {
                 $eventDur = round($eventEnd - $eventStart, $this->msDecimals);
@@ -488,17 +490,29 @@ HTML;
             */
 
             $subj = $lap[self::LAP_SUBJECT];
-            if ($lap[self::LAP_CATEGORY] == 'behavior') {
-                // behaviors
-                // show class, name, and object 
-                $tooltipData = 'Behavior Class: ' . get_class($subj) . ', Name: ' . $lap[self::LAP_NAME];
-                    
-            } 
-            else {
-                // all other event types
-                // show object to string
-                $tooltipData = 'Object: ' .  $lap[self::LAP_NAME];
+            $type = ucfirst($lap[self::LAP_CATEGORY]);
+            $phpClass = PhpClassDataType::findClassNameWithoutNamespace($subj);
+            switch (true) {
+                case $type === 'Query':
+                    $query = $lap[self::LAP_SUBJECT];
+                    $queryStr = StringDataType::truncate($query->toString(), 300, false, false, true, true);
+                    $tooltipData = <<<TEXT
+Query: {$queryStr}
+TEXT;
+                    break;
+                case $type === 'Action':
+                    $action = $lap[self::LAP_SUBJECT];
+                    $queryStr = StringDataType::truncate($query->toString(), 500);
+                    $tooltipData = <<<TEXT
+Action name: {$action->getName()}
+TEXT;
+                    break;
             }
+            $tooltipData = <<<TEXT
+Type: {$type}
+PHP class: {$phpClass}
+{$tooltipData}
+TEXT;
 
             $html .= $this->buildHtmlProfilerRow($eventStart, $name, $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY], $tooltipData);
         }
@@ -521,8 +535,9 @@ HTML;
     protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, string $category = null, string $tooltipData='') : string
     {
         $durationText = $duration === null ? '' : $duration . ' ms';
+        $tooltipData = str_replace("\\n", "&#10;", json_encode(htmlspecialchars($tooltipData)));
         $cssClass = $category ?? '';
-        return "<tr class=\"{$cssClass}\" data-info=\"{$tooltipData}\"><td title=\"$start\">{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
+        return "<tr class=\"{$cssClass}\" title={$tooltipData}><td>{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
     }
     
     /**
