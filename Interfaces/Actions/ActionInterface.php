@@ -551,7 +551,8 @@ interface ActionInterface extends
 
     /**
      * 
-     * @return bool
+     * @param bool|null $default
+     * @return bool|null
      */
-    public function hasConfirmationForUnsavedChanges() : bool;
+    public function hasConfirmationForUnsavedChanges(?bool $default = false) : ?bool;
 }

@@ -5,6 +5,9 @@ use exface\Core\Actions\ShowLookupDialog;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\iCallWidgetFunction;
+use exface\Core\Interfaces\Actions\iNavigate;
+use exface\Core\Interfaces\Actions\iRefreshInputWidget;
+use exface\Core\Interfaces\Actions\iResetWidgets;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
@@ -1972,11 +1975,9 @@ abstract class AbstractAction implements ActionInterface
     {
         switch (true) {
             case $uxonOrBoolOrString === false:
-                $this->confirmationForAction = false;
-                return $this;
             case $uxonOrBoolOrString === true:
-                $uxon = new UxonObject();
-                break;
+                $this->confirmationForUnsavedData = $uxonOrBoolOrString;
+                return $this;
             case $uxonOrBoolOrString instanceof UxonObject:
                 $uxon = $uxonOrBoolOrString;
                 break;
@@ -2006,7 +2007,7 @@ abstract class AbstractAction implements ActionInterface
         if ($this->confirmationForUnsavedData === false) {
             return null;
         }
-        if ($this->confirmationForUnsavedData === null && $this->hasConfirmationForUnsavedChanges()) {
+        if (($this->confirmationForUnsavedData ?? true) === true && $this->hasConfirmationForUnsavedChanges()) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             $this->confirmationForUnsavedData = WidgetFactory::createFromUxonInParent($this->getWidgetDefinedIn(), new UxonObject([
                 'widget_type' => 'ConfirmationMessage',
@@ -2027,7 +2028,7 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::hasConfirmationForUnsavedChanges()
      */
-    public function hasConfirmationForUnsavedChanges() : bool
+    public function hasConfirmationForUnsavedChanges(?bool $default = false) : ?bool
     {
         if ($this->confirmationForUnsavedData === false) {
             return false;
@@ -2036,21 +2037,6 @@ abstract class AbstractAction implements ActionInterface
             return true;
         }
 
-        if (! $this->isDefinedInWidget()) {
-            return false;
-        }
-
-        switch (true) {
-            case $this instanceof iCallWidgetFunction:
-            case $this instanceof iRunFacadeScript:
-            case $this instanceof iModifyData:
-                $checkChanges = false;
-                break;
-            default:
-                $checkChanges = true;
-                break;
-        }
-
-        return $checkChanges;
+        return $default;
     }
 }
