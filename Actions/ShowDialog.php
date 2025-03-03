@@ -11,6 +11,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Widgets\DialogButton;
 
 /**
  * Opens a dialog modeled within the actions configuration.

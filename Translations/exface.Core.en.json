@@ -302,9 +302,9 @@
 	"MESSAGE.CONFIRMATION.CANCEL": "Cancel",
 	"MESSAGE.CONFIRMATION.CANCEL_HINT": "Stop here and do not perform the action",
 
-	"MESSAGE.DISCARD_CHANGES.TITLE": "Discard changes?",
+	"MESSAGE.DISCARD_CHANGES.TITLE": "Unsaved changes?",
 	"MESSAGE.DISCARD_CHANGES.TEXT": "There seem to be unsaved changes here. If you navigate away, they will be lost.",
-	"MESSAGE.DISCARD_CHANGES.CONTINUE": "Discard changes",
+	"MESSAGE.DISCARD_CHANGES.CONTINUE": "Ignore changes",
 	"MESSAGE.DISCARD_CHANGES.CANCEL": "Cancel",
     
     "MESSAGE.SELECT_EXACTLY_X_ROWS": "Please select exactly %number% element!|Please select exactly %number% elements!",

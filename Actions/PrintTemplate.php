@@ -126,6 +126,7 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
         parent::init();
         $this->setIcon(Icons::PRINT_);
         $this->setInputRowsMin(1);
+        $this->setConfirmationForUnsavedChanges(true);
     }
 
     /**

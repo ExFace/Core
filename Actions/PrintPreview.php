@@ -52,6 +52,7 @@ class PrintPreview extends GoToUrl
         $this->setIcon(Icons::BINOCULARS);
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(1);
+        $this->setConfirmationForUnsavedChanges(true);
     }
     
     /**
