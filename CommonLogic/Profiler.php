@@ -265,17 +265,10 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         margin-right: 25px;
     }
 
-    .svg-tooltip{
-		position: absolute;
-		pointer-events: none; 
-		z-index: 9999;
-		padding: 5px;
-		background-color: rgba(0, 0, 0, 0.75);
-		color: white;
-		border-radius: 5px;
-		visibility: hidden
-		tooltip.style.color = 'white';
-	}
+    .table-background-highlight{
+        background-color: #e2d7ed;
+    }
+
 
 </style>
 
@@ -290,16 +283,6 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 </div>
 
 <script>
-
-/*
-    questions:
-    - change tooltip data
-    - on long hover -> other tooltip appears? (From powerui itself?) -> could be used instead
-*/
-
-const tooltip = document.createElement('div');
-tooltip.classList.add('svg-tooltip');
-document.body.appendChild(tooltip);
 
 // reset search and UI
 function resetSearch(){
@@ -406,27 +389,23 @@ document.getElementById("profiler-search-button").addEventListener("click", func
     });
 });
 
-//add tooltip overlay
+// highlight rows on mouseover
 document.getElementById('DebugMessage_Tab_Html_profile').addEventListener('mouseover', function(event) {
   
-  if (event.target.tagName.toLowerCase() === 'td') {
-    const row = event.target.closest('tr'); // Find the closest row
-    const cells = row.getElementsByTagName('td');
-    
-    tooltip.textContent = "" + row.getAttribute('data-info');
-    tooltip.style.visibility = 'visible';
+    if (event.target.tagName.toLowerCase() === 'td') {
+        const row = event.target.closest('tr'); // Find the closest row
 
-    // position tooltip
-    const mouseX = event.pageX + 10; 
-    const mouseY = event.pageY + 10; 
-    tooltip.style.left = mouseX + "px";;
-    tooltip.style.top = mouseY + "px";;
-  }
+        row.classList.add('table-background-highlight');
+    }
 });
 
-
+// remove highlight on mouseleave
 document.getElementById('DebugMessage_Tab_Html_profile').addEventListener('mouseout', function(event) {
-    tooltip.style.visibility = 'hidden';
+    if (event.target.tagName.toLowerCase() === 'td') {
+        const row = event.target.closest('tr'); // Find the closest row
+
+        row.classList.remove('table-background-highlight');
+    }
 });
 
 generateEventTypeFilterOptions();
@@ -485,8 +464,8 @@ HTML;
                 $name = StringDataType::truncate($name, 40);
             }
 
-            /* Todo: 
-                Tooltip content (subject to string) and structure (multi-line tooltip) still need to be adapted.
+            /* 
+               Tooltip with additional details
             */
 
             $subj = $lap[self::LAP_SUBJECT];
