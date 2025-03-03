@@ -495,14 +495,13 @@ HTML;
             switch (true) {
                 case $type === 'Query':
                     $query = $lap[self::LAP_SUBJECT];
-                    $queryStr = StringDataType::truncate($query->toString(), 300, false, false, true, true);
+                    $queryStr = StringDataType::truncate($query->toString(), 500, false, false, true, true);
                     $tooltipData = <<<TEXT
 Query: {$queryStr}
 TEXT;
                     break;
                 case $type === 'Action':
                     $action = $lap[self::LAP_SUBJECT];
-                    $queryStr = StringDataType::truncate($query->toString(), 500);
                     $tooltipData = <<<TEXT
 Action name: {$action->getName()}
 TEXT;
