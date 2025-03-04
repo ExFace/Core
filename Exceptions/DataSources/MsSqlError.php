@@ -131,13 +131,13 @@ class MsSqlError extends RuntimeException implements DataConnectorExceptionInter
 ## Main Error
 
 - Message: **{$this->getMessage()}**
-- SQL Server error code: `{$this->getSqlErrorCode()}`
-- SQL state: `{$this->getSqlState()}`
+- SQL Server error code: `{$this->getSqlErrorCode()}` - [explanation](https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-{$this->getSqlErrorCode()}-database-engine-error#explanation)
+- ODBC error code (SQLSTATE): `{$this->getSqlState()}` - [explanation](https://learn.microsoft.com/en-us/sql/odbc/reference/appendixes/appendix-a-odbc-error-codes)
 
 Helpful links:
 
 - [Microsoft Learn Portal](https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-{$this->getSqlErrorCode()}-database-engine-error)
-- [Search Google](https://www.google.com/search?q=ms+sql+error+{$this->getSqlErrorCode()}+sqlstate+{$this->getSqlState()})
+- [Search Google](https://www.google.com/search?q=ms+sql+error+{$this->getSqlErrorCode()})
 
 ## Connection
 
@@ -188,9 +188,9 @@ MD;
         $arr = [];
         foreach (sqlsrv_errors($errorsOrWarnings) as $err) {
             $arr[] = [
-                'SQLSTATE' => $err['SQLSTATE'],
+                'message' => $err['message'],
                 'code' => $err['code'],
-                'message' => $err['message']
+                'SQLSTATE' => $err['SQLSTATE']
             ];
         }
         
