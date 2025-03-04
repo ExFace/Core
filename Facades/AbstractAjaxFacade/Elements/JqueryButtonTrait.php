@@ -309,7 +309,8 @@ JS;
     }
 
     /**
-     * Returns the body of the on-click function for the button.
+     * Returns an inline JS snippet (IIFE) yielding FALSE if the action cannot be
+     * performed or a promise, that will be resolved once the action has been performed
      * 
      * @return string
      */
@@ -392,8 +393,9 @@ JS;
             }
         }
 
+        // Make sure to start the JS without a blank line to make sure it can be
+        // used with assignments: e.g. `return {$this->buildJsClickFunction()}`
         $js = <<<JS
-
             (function(requestData){
                 var self = this;
                 var fnAction;
@@ -408,7 +410,7 @@ JS;
                 }
 
                 if (false === {$this->buildJsRequestDataCheckRows('requestData', $action)}) {
-                    return false;
+                    return Promise.resolve({});
                 }
                 
                 fnAction = (function() {
