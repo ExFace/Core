@@ -373,10 +373,10 @@ JS;
 
         $showConfirmationAndPerformActionJs = "fnAction();";
         if ($action) {
-            if ((null !== $cnfWidget = $action->getConfirmationForAction()) && ! $cnfWidget->isDisabled()) {
+            if ((null !== $cnfWidget = $action->getConfirmations()->getConfirmationForAction()) && ! $cnfWidget->isDisabled()) {
                 $showConfirmationAndPerformActionJs = $this->buildJsConfirmation($cnfWidget, 'requestData', 'fnAction()');
             }
-            if ((null !== $cnfWidget = $action->getConfirmationForUnsavedChanges()) && ! $cnfWidget->isDisabled()) {
+            if ((null !== $cnfWidget = $action->getConfirmations()->getConfirmationForUnsavedChanges()) && ! $cnfWidget->isDisabled()) {
                 $inputEl = $this->getInputElement();
                 $showConfirmationAndPerformActionJs = <<<JS
                 

@@ -537,22 +537,7 @@ interface ActionInterface extends
 
     /**
      * 
-     * @return ConfirmationWidgetInterface|null
+     * @return ActionConfirmationListInterface|\exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface[]
      */
-    public function getConfirmationForAction() : ?ConfirmationWidgetInterface;
-
-    public function hasConfirmationForAction() : bool;
-
-    /**
-     * 
-     * @return ConfirmationWidgetInterface|null
-     */
-    public function getConfirmationForUnsavedChanges() : ?ConfirmationWidgetInterface;
-
-    /**
-     * 
-     * @param bool|null $default
-     * @return bool|null
-     */
-    public function hasConfirmationForUnsavedChanges(?bool $default = false) : ?bool;
+    public function getConfirmations() : ActionConfirmationListInterface;
 }

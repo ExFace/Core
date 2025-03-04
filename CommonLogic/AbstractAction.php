@@ -1,14 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Actions\ShowLookupDialog;
+use exface\Core\CommonLogic\Actions\ActionConfirmationList;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Actions\iCallWidgetFunction;
-use exface\Core\Interfaces\Actions\iNavigate;
-use exface\Core\Interfaces\Actions\iRefreshInputWidget;
-use exface\Core\Interfaces\Actions\iResetWidgets;
-use exface\Core\Interfaces\Actions\iRunFacadeScript;
+use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -26,7 +21,6 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Factories\DataSheetMapperFactory;
-use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -162,9 +156,7 @@ abstract class AbstractAction implements ActionInterface
     
     private $offlineStrategy = null;
 
-    private $confirmationForAction = null;
-
-    private $confirmationForUnsavedData = null;
+    private $confirmations = null;
 
     /**
      *
@@ -180,6 +172,7 @@ abstract class AbstractAction implements ActionInterface
             $this->setWidgetDefinedIn($trigger_widget);
         }
         $this->input_checks = new ActionDataCheckList($this->getWorkbench(), $this);
+        $this->confirmations = new ActionConfirmationList($this->getWorkbench(), $this);
         $this->init();
     }
 
@@ -1910,7 +1903,7 @@ abstract class AbstractAction implements ActionInterface
     {
         switch (true) {
             case $uxonOrBoolOrString === false:
-                $this->confirmationForAction = false;
+                $this->getConfirmations()->setDisabled(true);
                 return $this;
             case $uxonOrBoolOrString === true:
                 $uxon = new UxonObject();
@@ -1926,39 +1919,8 @@ abstract class AbstractAction implements ActionInterface
             default:
                 throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_action in action');
         }
-        if ($this->isDefinedInWidget()) {
-            $parent = $this->getWidgetDefinedIn();
-            if (! $uxon->hasProperty('button_continue')) {
-                $uxon->setProperty('button_continue', new UxonObject([
-                    'caption' => $this->getName()
-                ]));
-            }
-            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-        } else {
-            // TODO what here?
-        }
+        $this->getConfirmations()->addFromUxon($uxon);
         return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getConfirmationForAction()
-     */
-    public function getConfirmationForAction() : ?ConfirmationWidgetInterface
-    {
-        if ($this->confirmationForAction === false) {
-            return null;
-        }
-        return $this->confirmationForAction;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasConfirmationForAction()
-     */
-    public function hasConfirmationForAction() : bool
-    {
-        return ($this->confirmationForAction instanceof UxonObject);
     }
 
     /**
@@ -1973,70 +1935,16 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function setConfirmationForUnsavedChanges($uxonOrBoolOrString) : ActionInterface
     {
-        switch (true) {
-            case $uxonOrBoolOrString === false:
-            case $uxonOrBoolOrString === true:
-                $this->confirmationForUnsavedData = $uxonOrBoolOrString;
-                return $this;
-            case $uxonOrBoolOrString instanceof UxonObject:
-                $uxon = $uxonOrBoolOrString;
-                break;
-            case is_string($uxonOrBoolOrString):
-                $uxon = new UxonObject([
-                    'text' => $uxonOrBoolOrString
-                ]);
-                break;
-            default:
-                throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_unsaved_changes in action');
-        }
-        if ($this->isDefinedInWidget()) {
-            $parent = $this->getWidgetDefinedIn();
-            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-        } else {
-            // TODO what here?
-        }
+        $this->getConfirmations()->setConfirmationForUnsavedChanges($uxonOrBoolOrString);
         return $this;
     }
 
     /**
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getConfirmationForUnsavedChanges()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getConfirmations()
      */
-    public function getConfirmationForUnsavedChanges() : ?ConfirmationWidgetInterface
+    public function getConfirmations() : ActionConfirmationListInterface
     {
-        if ($this->confirmationForUnsavedData === false) {
-            return null;
-        }
-        if (($this->confirmationForUnsavedData ?? true) === true && $this->hasConfirmationForUnsavedChanges()) {
-            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-            $this->confirmationForUnsavedData = WidgetFactory::createFromUxonInParent($this->getWidgetDefinedIn(), new UxonObject([
-                'widget_type' => 'ConfirmationMessage',
-                'caption' => $translator->translate('MESSAGE.DISCARD_CHANGES.TITLE'),
-                'text' => $translator->translate('MESSAGE.DISCARD_CHANGES.TEXT'),
-                'button_continue' => [
-                    'caption' => $translator->translate('MESSAGE.DISCARD_CHANGES.CONTINUE')
-                ],
-                'button_cancel' => [
-                    'caption' => $translator->translate('MESSAGE.DISCARD_CHANGES.CANCEL')
-                ]
-            ]));
-        }
-        return $this->confirmationForUnsavedData;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasConfirmationForUnsavedChanges()
-     */
-    public function hasConfirmationForUnsavedChanges(?bool $default = false) : ?bool
-    {
-        if ($this->confirmationForUnsavedData === false) {
-            return false;
-        }
-        if ($this->confirmationForUnsavedData !== null) {
-            return true;
-        }
-
-        return $default;
+        return $this->confirmations;
     }
 }
