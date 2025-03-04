@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Interfaces\Actions\iDeleteData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -32,8 +33,9 @@ class DeleteObject extends AbstractAction implements iDeleteData
         $this->setIcon(Icons::TRASH_O);
         
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        $this->setConfirmationForAction(new UxonObject([
+        $this->getConfirmations()->addFromUxon(new UxonObject([
             'widget_type' => 'ConfirmationMessage',
+            'type' => MessageTypeDataType::WARNING,
             'caption' => $translator->translate('ACTION.DELETEOBJECT.CONFIRMATION_TITLE'),
             'text' => $translator->translate('ACTION.DELETEOBJECT.CONFIRMATION_TEXT')
         ]));
