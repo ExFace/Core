@@ -132,8 +132,9 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                     
                     $categories = $attr->getCategories();
                     foreach ($components as $component) {
+                        $component = mb_trim($component, ' \n\r\t\v\0');
                         $invertResult = str_starts_with($component, '!');
-                        $component = mb_trim($component, ' \n\r\t\v\0!');
+                        $component = mb_trim($component, '!');
                         $result = ($invertResult XOR in_array($component,$categories,true));
                         if($result === false) {
                             return false;
