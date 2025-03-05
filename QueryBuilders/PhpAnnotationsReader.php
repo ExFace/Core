@@ -409,7 +409,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     protected function prepareCommentText($string)
     {
         // Remove spaces before pipes at the beginning of a line to fix markdown tables
-        $string = preg_replace('/^ \\|/m', '|', $string);
+        $string = preg_replace('/^ \\|/m', '|', $string ?? '');
         // Remove linebreaks if 
         // - NOT preceeded by another linebreak and
         // - NOT followed by 
