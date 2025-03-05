@@ -549,7 +549,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
 
     /**
      * @uxon-property attribute_group_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute_group
      * @uxon-template ~VISIBLE
      *
      * @param string|null $groupAlias
