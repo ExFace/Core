@@ -773,13 +773,13 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * (Optional) The id of the owner object determines, what object a custom attribute belongs to.
+     * (Optional) Relation to the meta object, that the attribute will be attached to.
      * 
      * You only need to set a value for this property, if you are storing custom attribute
      * definitions for more than one MetaObject in the same table.
      * 
      * @uxon-property attribute_owner_object_alias
-     * @uxon-type metamodel:attribute
+     * @uxon-type metamodel:relation
      * 
      * @param string|null $alias
      * @return $this
