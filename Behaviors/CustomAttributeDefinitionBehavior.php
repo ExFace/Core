@@ -45,9 +45,9 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * - **Hint**(`attribute_hint_alias`): The short description is used for tooltips and info panels, when working with an
  * attribute.
  * - **Required**(`attribute_required_alias`): Determines, whether a custom attribute will be required in editors.
- * - **Owner Alias**(`attribute_definition_owner_id_alias`): This property is optional. You only need to set it if you
+ * - **Owner Object**(`attribute_definition_owner_id_alias`): This property is optional. You only need to set it if you
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
- * case, the definition owner is used to identify what  MetaObject a custom attribute belongs to.
+ * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
  * ## Type Models
  * 
@@ -82,7 +82,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 1. Create a new table for your app, that has the following properties. It will be used to store the custom attribute definitions:
  * 
  *      - It must have all the default columns of your app.
- *      - It must have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),categories (varchar), hint (varchar), required (tinyint) and optionally owner_object_alias (varchar).
+ *      - It must have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),categories (varchar), hint (varchar), required (tinyint) and optionally owner_object_id (binary(16)).
  * 
  * 2. Create a new MetaObject with matching attributes.
  * 
@@ -773,8 +773,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * (Optional) The attribute alias of the definition object used to determine, which MetaObject a custom attribute
-     * belongs to.
+     * (Optional) The id of the owner object determines, what object a custom attribute belongs to.
      * 
      * You only need to set a value for this property, if you are storing custom attribute
      * definitions for more than one MetaObject in the same table.
