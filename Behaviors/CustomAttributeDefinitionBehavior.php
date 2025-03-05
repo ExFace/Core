@@ -10,6 +10,7 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
@@ -399,9 +400,40 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $attrs[] = $attr;
             $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
         }
+        //$this->registerWidgetModifications($attrs);
+        
         $logBook->addIndent(-1);
         
         return $attrs;
+    }
+
+    protected function registerWidgetModifications(array $attributes) : CustomAttributeDefinitionBehavior
+    {
+        // Only register behaviors once!
+        /*if ($this->behaviors !== null) {
+            return $this;
+        } else {
+            $this->behaviors = [];
+        }*/
+        
+        $columns = [];
+        foreach ($attributes as $attr) {
+            $colUxon = [
+                'attribute_alias' => $attr->getAlias(),
+            ];
+            $columns[] = $colUxon;
+        }
+
+        // Create a behavior configuration notify on updates changing the state attribute
+        $uxon = new UxonObject([
+            "add_columns" => $columns,
+        ]);
+
+        // Add the on-update behavior
+        $behaviorOnUpdate = BehaviorFactory::createFromUxon($this->getObject(), WidgetModifyingBehavior::class, $uxon, $this->getApp()->getSelector());
+        $this->getObject()->getBehaviors()->add($behaviorOnUpdate);
+
+        return $this;
     }
 
     /**
