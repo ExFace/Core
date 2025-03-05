@@ -15,12 +15,33 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 /**
  * A condition compares it's `value_left` with `value_right` using the `comparator`.
  * 
- * Widget property conditions are used in so-called conditional widget properties, where
- * the value is calculated live by evaluating the condition every time it's left or right
- * side changes.
+ * Widget property conditions are used in so-called conditional widget properties like
+ * `disabled_If`, where the property value is calculated live by evaluating the condition 
+ * every time it's left or right side changes.
  * 
- * Both sides of the condition can be either static values (i.e. numbers, strings or static
- * formulas) or widget links (starting with `=`).
+ * ## Available values and references
+ * 
+ * Each condition compares `value_right` and `value_left`. Each of them can either be a value (string or number), a
+ * static formula or a widget reference. 
+ * 
+ * A few examples:
+ * 
+ * - `1` - the scalar value "0"
+ * - `=User('USERNAME')` - resolves to the username of the current user
+ * - `=some_widget` - references the entire widget with id `some_widget`
+ * - `=some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
+ * 
+ * There are also a couple of "shortcut" references available instead of explicit page/widget ids:
+ * 
+ * - `~self` - references the widget the link is defined in
+ * - `~parent` - references the immediate parent of `~self`
+ * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets. 
+ * 
+ * For example:
+ * 
+ * - `=~self!mycol` - references the column `mycol` in the data of the current widget
+ * - `=~parent!mycol` - references the column `mycol` of the current widgets parent
+ * - `=~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
  * 
  * @see ConditionalProperty
  * 
