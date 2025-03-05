@@ -559,16 +559,23 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     {
         $this->attributeGroupAlias = $groupAlias;
         
-        $editors = [];
+        $widgets = [];
         $object = $this->getMetaObject();
+        $readOnly = $this->isReadonly();
         $attributeGroups = $object->getAttributeGroup($groupAlias);
         $attributeGroups->sortByDefaultDisplayOrder();
+        
         foreach ($attributeGroups as $attribute) {
-            $editor = WidgetFactory::createDefaultEditorForAttributeAlias($object, $attribute->getAlias(), $this);
-            $editors[] = $editor;
+            if($readOnly) {
+                $widget = WidgetFactory::createDefaultDisplayForAttributeAlias($object, $attribute->getAlias(), $this);
+            } else {
+                $widget = WidgetFactory::createDefaultEditorForAttributeAlias($object, $attribute->getAlias(), $this);
+            }
+            
+            $widgets[] = $widget;
         }
 
-        $this->addWidgets($editors);
+        $this->addWidgets($widgets);
         return $this;
     }
     

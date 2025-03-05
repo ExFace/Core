@@ -179,6 +179,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
 
         $filters = [];
         foreach ($attributeGroup as $attribute) {
+            if(!$attribute->isFilterable()) {
+                continue;
+            }
+            
             $filters[] = $this->createFilterForAttributeAlias($attribute->getAlias(), $uxon);
         }
         
