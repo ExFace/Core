@@ -45,7 +45,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * - **Hint**(`attribute_hint_alias`): The short description is used for tooltips and info panels, when working with an
  * attribute.
  * - **Required**(`attribute_required_alias`): Determines, whether a custom attribute will be required in editors.
- * - **Owner Object**(`attribute_definition_owner_id_alias`): This property is optional. You only need to set it if you
+ * - **Owner Object**(`attribute_owner_object_alias`): This property is optional. You only need to set it if you
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
  * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
@@ -167,7 +167,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      "attribute_required_alias": "required",
  *      "attribute_type_model_alias": "type_model",
  *      "attribute_storage_key_alias": "storage_key",
- *      "attribute_definition_owner_id_alias": "owner_alias",
+ *      "attribute_owner_object_alias": "owner_alias",
  *      "attribute_category_alias": "categories",
  *      "general_categories": [
  *          "Company A",
@@ -252,7 +252,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $attributeStorageKeyAlias = null;
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
-    private ?string $attributeDefinitionOwnerIdAlias = null;
+    private ?string $attributeOwnerObjectAlias = null;
     private bool $modelsInheritCategories = false;
     private array $generalCategories = [];
 
@@ -346,11 +346,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         ]);
         
         $targetObjectId = $targetObject->getId();
-        if($ownerIdAlias = $this->getAttributeDefinitionOwnerIdAlias()) {
+        if($ownerIdAlias = $this->getAttributeOwnerObjectAlias()) {
             $logBook->addLine('Loading only definitions that match "' . $targetObjectId . '" in "' . $ownerIdAlias . '" of "' . $this->getObject()->getAliasWithNamespace() . '".');
             $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerIdAlias, $targetObjectId);
         } else {
-            $logBook->addLine('No value was set for "attribute_definition_owner_id_alias". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $logBook->addLine('No value was set for "attribute_owner_object_alias". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
         
         $attributeDefinitionsSheet->dataRead();
@@ -767,9 +767,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string|null
      */
-    public function getAttributeDefinitionOwnerIdAlias() : ?string
+    public function getAttributeOwnerObjectAlias() : ?string
     {
-        return $this->attributeDefinitionOwnerIdAlias;
+        return $this->attributeOwnerObjectAlias;
     }
 
     /**
@@ -778,15 +778,15 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * You only need to set a value for this property, if you are storing custom attribute
      * definitions for more than one MetaObject in the same table.
      * 
-     * @uxon-property attribute_definition_owner_id_alias
+     * @uxon-property attribute_owner_object_alias
      * @uxon-type metamodel:attribute
      * 
      * @param string|null $alias
      * @return $this
      */
-    public function setAttributeDefinitionOwnerIdAlias(?string $alias) : static
+    public function setAttributeOwnerObjectAlias(?string $alias) : static
     {
-        $this->attributeDefinitionOwnerIdAlias = $alias;
+        $this->attributeOwnerObjectAlias = $alias;
         return $this;
     }
 
