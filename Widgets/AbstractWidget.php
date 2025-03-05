@@ -1087,7 +1087,7 @@ abstract class AbstractWidget implements WidgetInterface
      * - `=~self!mycol` - references the column `mycol` in the data of the current widget
      * - `=~parent!mycol` - references the column `mycol` of the current widgets parent
      * - `=~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
-     *
+     * 
      * ## Examples
      *
      * Hide an `Input` if a checkbox not checked:
@@ -1352,7 +1352,7 @@ abstract class AbstractWidget implements WidgetInterface
      * - `=~self!mycol` - references the column `mycol` in the data of the current widget
      * - `=~parent!mycol` - references the column `mycol` of the current widgets parent
      * - `=~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
-     *
+     * 
      * ## Examples
      * 
      * Disable an `Input` if checkbox not checked:
