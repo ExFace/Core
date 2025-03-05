@@ -30,46 +30,50 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * Whenever a custom attribute is being loaded, this behavior will configure it based on the following data:
  * 
  * - **Name**(`attribute_name_alias`): The display name of the custom attribute.
- * - **Storage Key**(`attribute_storage_key_alias`): The storage key is used to generate the data address and the technical alias 
- * of the custom attribute. Make sure it matches whatever storage scheme you are using. For example: JSON storage keys should 
- * be written in snake_case, have no hierarchies and may omit the root accessor. Both `$.some_alias` and `some_alias` will result
- * in the same technical alias and data address. 
- * - **Type Model**(`attribute_type_model_alias`): The type model the custom attribute is based on. Type models simplify
+ * - **Storage Key**(`attribute_storage_key_alias`): The storage key is used to generate the data address and the
+ * technical alias  of the custom attribute. Make sure it matches whatever storage scheme you are using. For example:
+ * JSON storage keys should  be written in snake_case, have no hierarchies and may omit the root accessor. Both
+ * `$.some_alias` and `some_alias` will result in the same technical alias and data address. 
+ * - **Type Model**(`attribute_type_model_alias`): The type model the custom attribute is based on. Type models
+ * simplify
  * the configuration of custom attributes, by assigning meaningful defaults to most attribute properties. They are
  * identified with a key, that must either match a default type model or a type model that you defined in `type_models`
  * (see "Type Models").
- * - **Category Alias**(`attribute_category_alias`): The categories the custom attribute belongs to. Categories give designers more
- * fine-grained control over which custom attributes will be included in automatically generated widgets (see "Categories").
- * - **Hint**(`attribute_hint_alias`): The short description is used for tooltips and info panels, when working with an attribute.
+ * - **Category Alias**(`attribute_category_alias`): The categories the custom attribute belongs to. Categories give
+ * designers more fine-grained control over which custom attributes will be included in automatically generated widgets
+ * (see "Categories").
+ * - **Hint**(`attribute_hint_alias`): The short description is used for tooltips and info panels, when working with an
+ * attribute.
  * - **Required**(`attribute_required_alias`): Determines, whether a custom attribute will be required in editors.
- * - **Owner Alias**(`attribute_definition_owner_alias`): This property is optional. You only need to set it if you
+ * - **Owner Object**(`attribute_owner_object_alias`): This property is optional. You only need to set it if you
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
- * case, the definition owner is used to identify what  MetaObject a custom attribute belongs to.
+ * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
  * ## Type Models
  * 
- * Type models are special templates that simplify the creation of new custom attributes. They automatically configure the
- * properties of a custom attribute, meaning users won't have to know any technical details. When creating 
- * a new custom attribute they simply assign a type model to it, which then takes care of everything else. 
- * They can choose from all type models configured in the `type_models` property, as well as some basic default 
- * type models, such as "Date", "Time", "Text" and "Number".
+ * Type models are special templates that simplify the creation of new custom attributes. They automatically configure
+ * the properties of a custom attribute, meaning users won't have to know any technical details. When creating  a new
+ * custom attribute they simply assign a type model to it, which then takes care of everything else.  They can choose
+ * from all type models configured in the `type_models` property, as well as some basic default  type models, such as
+ * "Date", "Time", "Text" and "Number".
  * 
  * You can extend these basic type models with your own. Simply add a new entry to the `type_models` property. 
- * Type models can inherit from any other type model. You can assign a parent by entering it in the `inherits` property. 
- * The type model will then use the property value of its parent, unless you defined a value for it.
- * If you do not specify a valid parent, your type model will inherit from a default configuration.
+ * Type models can inherit from any other type model. You can assign a parent by entering it in the `inherits`
+ * property.  The type model will then use the property value of its parent, unless you defined a value for it. If you
+ * do not specify a valid parent, your type model will inherit from a default configuration.
  * 
  * ## Categories
  * 
  * Since designers won't be able to know ahead of time what custom attributes will available at runtime, they will have
- * to rely on auto-generated widgets. To still give them some amount of control over what custom attributes will be included
- * in these auto-generated widgets, each custom attribute can be assigned to one or more categories.
+ * to rely on auto-generated widgets. To still give them some amount of control over what custom attributes will be
+ * included in these auto-generated widgets, each custom attribute can be assigned to one or more categories.
  * 
- * By default, each custom attribute is already assigned to its type model as a category (for example "Time"). Beyond that
- * you can configure additional categories in the type model, all of which will be applied to all custom attributes that use it.
- * The most useful way however, is to manually edit what categories a custom attribute belongs to, by changing the values stored
- * in `attribute_category_alias`. While creating or editing a custom attribute, all available categories will be displayed in a 
- * dropdown multi-select. You can extend the available selection, by adding more options to the property `general_categories`.
+ * By default, each custom attribute is already assigned to its type model as a category (for example "Time"). Beyond
+ * that you can configure additional categories in the type model, all of which will be applied to all custom
+ * attributes that use it. The most useful way however, is to manually edit what categories a custom attribute belongs
+ * to, by changing the values stored in `attribute_category_alias`. While creating or editing a custom attribute, all
+ * available categories will be displayed in a  dropdown multi-select. You can extend the available selection, by
+ * adding more options to the property `general_categories`.
  * 
  * ## Setup
  * 
@@ -78,36 +82,45 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 1. Create a new table for your app, that has the following properties. It will be used to store the custom attribute definitions:
  * 
  *      - It must have all the default columns of your app.
- *      - It must have a matching column for: name (varchar), storage_key (varchar), type_model (varchar), 
- * categories (varchar), hint (varchar), required (tinyint) and optionally owner_object_alias (varchar).
- * 2. Create a new MetaObject with matching attributes.
+ *      - It must have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),categories (varchar), hint (varchar), required (tinyint) and optionally owner_object_id (binary(16)).
+ * 
+ * 2. Create a new MetaObject with matching attributes. If you have a column for `owner_object`, make sure that its attribute has a relation to `exface.Core.OBJECT`!
+ * 
  * 3. Add a new `CustomAttributeDefinitionBehavior` and configure it to your needs.
+ * 
  * 4. Create a simple page that allows you to create and edit your custom attribute definitions.
+ * 
  * 5. For each object that want to have access to these definitions, add a CustomAttributeJsonBehavior and
  * configure it as needed. 
+ * 
  * 6. Each of those objects needs an attribute, where the actual JSON data will be stored and of course the underlying
  * data source needs a matching column as well (usually varchar(max)).
- * 7. You can now use any custom attributes, that you have created via the page mentioned in step 4 (see "Using Custom Attributes").
  * 
+ * 7. You can now use any custom attributes, that you have created via the page mentioned in step 4 (see "Using Custom
+ * Attributes").
  * 
- *  ## Using Custom Attributes
+ * ## Using Custom Attributes
  * 
- * Once a custom attribute has been created and all the behaviors are set up properly, designers can work with them as with any
- * regular attribute. However, this approach is not recommended. Designers would need to know ahead of time what custom attributes 
- * they're working with, nullifying any benefits from having flexible attributes.
+ * Once a custom attribute has been created and all the behaviors are set up properly, designers can work with them as
+ * with any regular attribute. However, this approach is not recommended. Designers would need to know ahead of time
+ * what custom attributes  they're working with, nullifying any benefits from having flexible attributes.
  * 
- * Instead, we recommend to make use of attribute groups, to auto-generate widgets with specific subsets of all available custom 
- * attributes. For widgets that support attribute groups (for example DataTable, Container and Filter), you can define one or
- * more attribute groups, which will be applied additively. You can mix and match them with regular attribute aliases. 
+ * Instead, we recommend to make use of attribute groups, to auto-generate widgets with specific subsets of all
+ * available custom  attributes. For widgets that support attribute groups (for example DataTable, Container and
+ * Filter), you can define one or more attribute groups, which will be applied additively. You can mix and match them
+ * with regular attribute aliases. 
  * 
- * Attribute groups work like filters for specific properties of an attribute. `~VISIBLE` for example selects all attributes that
- * are visible. You can chain multiple selectors with `~`, like `~VISIBLE~REQUIRED`, which would select all attributes that are both 
- * visible AND required. Lastly, you can negate a selector with `!`: `~!VISIBLE` would select all attributes that are not visible.
+ * Attribute groups work like filters for specific properties of an attribute. `~VISIBLE` for example selects all
+ * attributes that are visible. You can chain multiple selectors with `~`, like `~VISIBLE~REQUIRED`, which would select
+ * all attributes that are both  visible AND required. Lastly, you can negate a selector with `!`: `~!VISIBLE` would
+ * select all attributes that are not visible.
  * 
- * `~CUSTOM` is a special selector just for custom attributes, which gives you even more control. It allows you to define sub-selectors
- * that filter for the categories a custom attribute belongs to. Use `:` to start your list of categories and `,` to chain them. 
- * `~CUSTOM:Company A, Company B` would select all attributes that are custom AND belong to the categories "Company A" AND "Company B".
- * Category selectors can be negated as well: `~CUSTOM:!Company A` selects all attributes that are custom AND do not belong to the category
+ * `~CUSTOM` is a special selector just for custom attributes, which gives you even more control. It allows you to
+ * define sub-selectors that filter for the categories a custom attribute belongs to. Use `:` to start your list of
+ * categories and `,` to chain them. 
+ * `~CUSTOM:Company A, Company B` would select all attributes that are custom AND belong to the categories "Company A"
+ * AND "Company B". Category selectors can be negated as well: `~CUSTOM:!Company A` selects all attributes that are
+ * custom AND do not belong to the category
  * "Company A".
  * 
  * For example, the table definition below will generate:
@@ -154,7 +167,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      "attribute_required_alias": "required",
  *      "attribute_type_model_alias": "type_model",
  *      "attribute_storage_key_alias": "storage_key",
- *      "attribute_definition_owner_alias": "owner_alias",
+ *      "attribute_owner_object_alias": "owner_alias",
  *      "attribute_category_alias": "categories",
  *      "general_categories": [
  *          "Company A",
@@ -239,7 +252,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $attributeStorageKeyAlias = null;
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
-    private ?string $attributeDefinitionOwnerAlias = null;
+    private ?string $attributeOwnerObjectAlias = null;
     private bool $modelsInheritCategories = false;
     private array $generalCategories = [];
 
@@ -314,7 +327,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function addCustomAttributes(MetaObjectInterface $targetObject, CustomAttributeLoaderInterface $attributeLoader, BehaviorLogBook $logBook) : array
     {
         if(empty($this->getTypeModelsAll())) {
-            throw new BehaviorRuntimeError($this, 'Could not load custom attributes: Missing type models!', null, null, $logBook);
+            throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
         }
         
         $attrs = [];
@@ -331,13 +344,13 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $requiredAlias = $this->getAttributeRequiredAlias(),
             $categoryAlias = $this->getAttributeCategoryAlias()
         ]);
-
-        $targetAlias = $targetObject->getAliasWithNamespace();
-        if($ownerAlias = $this->getAttributeDefinitionOwnerAlias()) {
-            $logBook->addLine('Loading only definitions that match "' . $targetAlias . '" in "' . $ownerAlias . '" from "' . $this->getObject()->getAliasWithNamespace() . '".');
-            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerAlias, $targetAlias);
+        
+        $targetObjectId = $targetObject->getId();
+        if($ownerIdAlias = $this->getAttributeOwnerObjectAlias()) {
+            $logBook->addLine('Loading only definitions that match "' . $targetObjectId . '" in "' . $ownerIdAlias . '" of "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerIdAlias, $targetObjectId);
         } else {
-            $logBook->addLine('No value was set for "attribute_definition_owner_alias". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $logBook->addLine('No value was set for "attribute_owner_object_alias". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
         
         $attributeDefinitionsSheet->dataRead();
@@ -345,7 +358,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $logBook->addLine('Attribute definitions loaded successfully.');
         $logBook->addDataSheet('Attribute Definitions', $attributeDefinitionsSheet);
         $logBook->addIndent(-1);
-        $logBook->addLine('Adding custom attributes to "' . $targetAlias . '"...');
+        $logBook->addLine('Adding custom attributes to "' . $targetObjectId . '"...');
         $logBook->addIndent(1);
         
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
@@ -353,7 +366,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $name = $definitionRow[$nameAlias];
 
             if(! $typeModel = $this->getTypeModel($typeKey)) {
-                throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
+                throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
             }
             
             $storageKey = $definitionRow[$keyAlias];
@@ -580,7 +593,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function getAttributeTypeModelAlias() : string
     {
         if(! $this->attributeTypeModelAlias) {
-            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_type_model_alias"!');
+            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_type_model_alias"));
         }
         
         return $this->attributeTypeModelAlias;
@@ -589,7 +602,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * The attribute alias of the definition object that holds the type model key. 
      * 
-     * Type models simplify the configuration of custom attributes, by assigning meaningful defaults to most attribute properties.
+     * Type models simplify the configuration of custom attributes, by assigning meaningful defaults to most attribute
+     * properties.
      * 
      * @uxon-property attribute_type_model_alias
      * @uxon-type metamodel:attribute
@@ -628,7 +642,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function getAttributeCategoryAlias() : string
     {
         if(! $this->attributeCategoryAlias) {
-            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_category_alias"!');
+            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_category_alias"));
         }
 
         return $this->attributeCategoryAlias;
@@ -640,7 +654,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function getAttributeNameAlias() : string
     {
         if(! $this->attributeNameAlias) {
-            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_name_alias"!');
+            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_name_alias"));
         }
         
         return $this->attributeNameAlias;
@@ -668,7 +682,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function getAttributeStorageKeyAlias() : string
     {
         if(! $this->attributeStorageKeyAlias) {
-            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_storage_key_alias"!');
+            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_storage_key_alias"));
         }
 
         return $this->attributeStorageKeyAlias;
@@ -698,7 +712,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function getAttributeHintAlias() : string
     {
         if(! $this->attributeHintAlias) {
-            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_hint_alias"!');
+            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_hint_alias"));
         }
         
         return $this->attributeHintAlias;
@@ -728,7 +742,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     public function getAttributeRequiredAlias() : string
     {
         if(! $this->attributeRequiredAlias) {
-            throw new BehaviorConfigurationError($this, 'Missing value for property "attribute_required_alias"!');
+            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_required_alias"));
         }
         
         return $this->attributeRequiredAlias;
@@ -753,26 +767,26 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string|null
      */
-    public function getAttributeDefinitionOwnerAlias() : ?string
+    public function getAttributeOwnerObjectAlias() : ?string
     {
-        return $this->attributeDefinitionOwnerAlias;
+        return $this->attributeOwnerObjectAlias;
     }
 
     /**
-     * (Optional) The attribute alias of the definition object used to determine, which MetaObject a custom attribute belongs to.
+     * (Optional) The id of the owner object determines, what object a custom attribute belongs to.
      * 
      * You only need to set a value for this property, if you are storing custom attribute
      * definitions for more than one MetaObject in the same table.
      * 
-     * @uxon-property attribute_definition_owner_alias
+     * @uxon-property attribute_owner_object_alias
      * @uxon-type metamodel:attribute
      * 
      * @param string|null $alias
      * @return $this
      */
-    public function setAttributeDefinitionOwnerAlias(?string $alias) : static
+    public function setAttributeOwnerObjectAlias(?string $alias) : static
     {
-        $this->attributeDefinitionOwnerAlias = $alias;
+        $this->attributeOwnerObjectAlias = $alias;
         return $this;
     }
 
@@ -822,6 +836,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 self::KEY_DATA_TYPE => "exface.Core.Time",
             ],
         ];
+    }
+    
+    protected function getMissingPropertyMessage(string $propertyName) : string
+    {
+        return 'Missing value for property "' . $propertyName . '" in behavior on object "' .  $this->getObject()->getAliasWithNamespace() . '"!';
     }
 
     /**
