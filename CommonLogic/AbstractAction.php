@@ -1901,9 +1901,13 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function setConfirmationForAction($uxonOrBoolOrString) : ActionInterface
     {
+        if (! $this->getConfirmations()->isPossible()) {
+            // Cannot use confirmations on actions outside of widgets
+            return $this;
+        } 
         switch (true) {
             case $uxonOrBoolOrString === false:
-                $this->getConfirmations()->setDisabled(true);
+                $this->getConfirmations()->disableConfirmationsForAction(true);
                 return $this;
             case $uxonOrBoolOrString === true:
                 $uxon = new UxonObject();
@@ -1935,7 +1939,28 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function setConfirmationForUnsavedChanges($uxonOrBoolOrString) : ActionInterface
     {
-        $this->getConfirmations()->setConfirmationForUnsavedChanges($uxonOrBoolOrString);
+        if (! $this->getConfirmations()->isPossible()) {
+            // Cannot use confirmations on actions outside of widgets
+            return $this;
+        } 
+        switch (true) {
+            case $uxonOrBoolOrString === false:
+            case $uxonOrBoolOrString === true:
+                $this->getConfirmations()->disableConfirmationsForUnsavedChanges(! $uxonOrBoolOrString);
+                return $this;
+            case $uxonOrBoolOrString instanceof UxonObject:
+                $uxon = $uxonOrBoolOrString;
+                break;
+            case is_string($uxonOrBoolOrString):
+                $uxon = new UxonObject([
+                    'text' => $uxonOrBoolOrString
+                ]);
+                break;
+            default:
+                throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_unsaved_changes in action');
+        }
+
+        $this->getConfirmations()->prepend($this->confirmations->createConfirmationForUnsavedChanges($uxon));
         return $this;
     }
 
@@ -1946,5 +1971,27 @@ abstract class AbstractAction implements ActionInterface
     public function getConfirmations() : ActionConfirmationListInterface
     {
         return $this->confirmations;
+    }
+
+    /**
+     * Explicitly define confirmations to show before this action
+     * 
+     * @uxon-property confirmations
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage[]
+     * @uxon-template [{"widget_type": "ConfirmationMessage", "text": ""}]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $arrayOfConfirmations
+     * @return AbstractAction
+     */
+    protected function setConfirmations(UxonObject $arrayOfConfirmations) : ActionInterface
+    {
+        if (! $this->getConfirmations()->isPossible()) {
+            // Cannot use confirmations on actions outside of widgets
+            return $this;
+        } 
+        foreach ($arrayOfConfirmations as $uxon) {
+            $this->getConfirmations()->addFromUxon($uxon);
+        }
+        return $this;
     }
 }

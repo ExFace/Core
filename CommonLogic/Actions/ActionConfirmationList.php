@@ -1,14 +1,14 @@
 <?php
 namespace exface\Core\CommonLogic\Actions;
 
-use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataCheckInterface;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
 
 /**
@@ -22,11 +22,11 @@ use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
  */
 class ActionConfirmationList extends EntityList implements ActionConfirmationListInterface
 {
-    private $disabled = false;
+    private $disableAll = false;
 
-    private $confirmationForAction = null;
+    private $disableForUnsavedChanges = true;
 
-    private $confirmationForUnsavedData = null;
+    private $disableForAction = false;
     
     /**
      * 
@@ -43,20 +43,66 @@ class ActionConfirmationList extends EntityList implements ActionConfirmationLis
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::disableAll()
      */
-    public function setDisabled(bool $trueOrFalse): ActionConfirmationListInterface
+    public function disableAll(bool $trueOrFalse): ActionConfirmationListInterface
     {
-        $this->disabled = $trueOrFalse;
+        $this->disableAll = $trueOrFalse;
         return $this;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::isDisabled()
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::disableConfirmationsForUnsavedChanges()
+     */
+    public function disableConfirmationsForUnsavedChanges(bool $trueOrFalse): ActionConfirmationListInterface
+    {
+        $this->disableForUnsavedChanges = $trueOrFalse;
+        foreach ($this->getConfirmationsForUnsavedChanges() as $conf) {
+            $conf->setDisabled($trueOrFalse);
+        }
+        return $this;
+    }
+    
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::disableConfirmationsForAction()
+     */
+    public function disableConfirmationsForAction(bool $trueOrFalse): ActionConfirmationListInterface
+    {
+        $this->disableForAction = $trueOrFalse;
+        foreach ($this->getConfirmationsForAction() as $conf) {
+            $conf->setDisabled($trueOrFalse);
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
      */
     public function isDisabled() : bool
     {
-        return $this->disabled;
+        return $this->disableAll;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isDisabledForUnsavedChanges() : bool
+    {
+        return $this->disableForUnsavedChanges;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isDisabledForAction() : bool
+    {
+        return $this->disableForAction;
     }
 
     /**
@@ -66,130 +112,118 @@ class ActionConfirmationList extends EntityList implements ActionConfirmationLis
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
      * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
      * 
-     * @see \exface\Core\Interfaces\Actions\ActionConfirmationListInterface::addConfirmationFromUxon()
+     * @see \exface\Core\Interfaces\Actions\ActionConfirmationListInterface::addFromUxon()
      */
     public function addFromUxon(UxonObject $uxon) : ActionConfirmationListInterface
     {
-        if ($this->getAction()->isDefinedInWidget()) {
-            $parent = $this->getAction()->getWidgetDefinedIn();
-            if (! $uxon->hasProperty('button_continue')) {
-                $uxon->setProperty('button_continue', new UxonObject([
-                    'caption' => $this->getAction()->getName()
-                ]));
-            }
-            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-        } else {
-            // TODO what here?
-        }
+        $this->add($this->createConfirmation($uxon));
         return $this;
     }
 
     /**
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionConfirmationListInterface::getConfirmationForAction()
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::getConfirmationsForAction()
      */
-    public function getConfirmationForAction() : ?ConfirmationWidgetInterface
+    public function getConfirmationsForAction() : self
     {
-        if ($this->confirmationForAction === false) {
-            return null;
-        }
-        return $this->confirmationForAction;
+        return $this->filter(function(ConfirmationWidgetInterface $widget){
+            return $widget->getDisabledIfNoChanges() === false;
+        });
     }
 
     /**
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionConfirmationListInterface::hasConfirmationForAction()
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::getConfirmationsForUnsavedChanges()
      */
-    public function hasConfirmationForAction() : bool
+    public function getConfirmationsForUnsavedChanges() : self
     {
-        return ($this->confirmationForAction instanceof UxonObject);
+        $list = $this->filter(function(ConfirmationWidgetInterface $widget){
+            return $widget->getDisabledIfNoChanges() === true;
+        });
+        if ($this->isDisabledForUnsavedChanges() === false) {
+            $conf = $this->createConfirmationForUnsavedChanges();
+            $this->prepend($conf);
+            $list->add($conf);
+        }
+        return $list;
     }
 
     /**
-     * Make the action warn the user if it is to be performed when unsaved changes are still visible
      * 
-     * @uxon-property confirmation_for_unsaved_data
-     * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
-     * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
-     * 
-     * @param mixed $uxonOrBoolOrString
-     * @throws \exface\Core\Exceptions\Actions\ActionConfigurationError
-     * @return ActionConfirmationList
+     * @param \exface\Core\CommonLogic\UxonObject|null $uxon
+     * @return WidgetInterface
      */
-    public function setConfirmationForUnsavedChanges($uxonOrBoolOrString) : ActionConfirmationListInterface
+    public function createConfirmationForUnsavedChanges(UxonObject $uxon = null) : ConfirmationWidgetInterface
     {
-        switch (true) {
-            case $uxonOrBoolOrString === false:
-            case $uxonOrBoolOrString === true:
-                $this->confirmationForUnsavedData = $uxonOrBoolOrString;
-                return $this;
-            case $uxonOrBoolOrString instanceof UxonObject:
-                $uxon = $uxonOrBoolOrString;
-                break;
-            case is_string($uxonOrBoolOrString):
-                $uxon = new UxonObject([
-                    'text' => $uxonOrBoolOrString
-                ]);
-                break;
-            default:
-                throw new ActionConfigurationError($this->getAction(), 'Invalid value for confirmation_for_unsaved_changes in action');
-        }
-
-        if ($this->confirmationForUnsavedData instanceof ConfirmationWidgetInterface) {
-            $this->remove($this->confirmationForUnsavedData);
-            $this->confirmationForUnsavedData = null;
-        }
-
-        if ($this->getAction()->isDefinedInWidget()) {
-            $parent = $this->getAction()->getWidgetDefinedIn();
-            $this->confirmationForUnsavedData = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-            $this->add($this->confirmationForUnsavedData, 0);
-        } else {
-            // TODO what here?
-        }
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionConfirmationListInterface::getConfirmationForUnsavedChanges()
-     */
-    public function getConfirmationForUnsavedChanges() : ?ConfirmationWidgetInterface
-    {
-        if ($this->confirmationForUnsavedData === false) {
-            return null;
-        }
-        if (($this->confirmationForUnsavedData ?? true) === true && $this->hasConfirmationForUnsavedChanges()) {
-            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-            $this->setConfirmationForUnsavedChanges(new UxonObject([
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        if ($uxon === null || ! $uxon->hasProperty('widget_type')) {
+            $default = new UxonObject([
                 'widget_type' => 'ConfirmationMessage',
                 'caption' => $translator->translate('MESSAGE.DISCARD_CHANGES.TITLE'),
                 'text' => $translator->translate('MESSAGE.DISCARD_CHANGES.TEXT'),
-                'icon' => Icons::QUESTION_CIRCLE_O,
+                'type' => MessageTypeDataType::QUESTION,
+                'disabled_if_no_changes' => true,
                 'button_continue' => [
                     'caption' => $translator->translate('MESSAGE.DISCARD_CHANGES.CONTINUE')
                 ],
                 'button_cancel' => [
                     'caption' => $translator->translate('MESSAGE.DISCARD_CHANGES.CANCEL')
                 ]
+            ]);   
+            if ($uxon !== null) {
+                $uxon = $default->extend($uxon);
+            } else {
+                $uxon = $default;
+            }
+        }
+        return $this->createConfirmation($uxon);
+    }
+
+    /**
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return WidgetInterface
+     */
+    public function createConfirmation(UxonObject $uxon) : ConfirmationWidgetInterface
+    {
+        if (! $uxon->hasProperty('button_continue')) {
+            $uxon->setProperty('button_continue', new UxonObject([
+                'caption' => $this->getAction()->getName()
             ]));
         }
-        return $this->confirmationForUnsavedData;
+        return WidgetFactory::createFromUxonInParent($this->getAction()->getWidgetDefinedIn(), $uxon, 'ConfirmationMessage');
     }
 
     /**
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionConfirmationListInterface::hasConfirmationForUnsavedChanges()
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::isPossible()
      */
-    public function hasConfirmationForUnsavedChanges(?bool $default = false) : ?bool
+    public function isPossible() : bool
     {
-        if ($this->confirmationForUnsavedData === false) {
-            return false;
-        }
-        if ($this->confirmationForUnsavedData !== null) {
-            return true;
-        }
+        return $this->getAction()->isDefinedInWidget();
+    }
 
-        return $default;
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\EntityList::add()
+     */
+    public function add($entity, $key = null) 
+    {
+        parent::add($entity, $key);
+        if ($this->isDisabled()) {
+            $entity->setDisabled(true);
+        }
+        if ($this->isDisabledForAction() && ! $this->isForUnsavedChanges($entity)) {
+            $entity->setDisabled(true);
+        }
+        if ($this->isDisabledForUnsavedChanges() && $this->isForUnsavedChanges($entity)) {
+            $entity->setDisabled(true);
+        }
+        return $this;
+    }
+
+    protected function isForUnsavedChanges(ConfirmationWidgetInterface $confirmation) : bool
+    {
+        return $confirmation->getDisabledIfNoChanges() === true;
     }
 }

@@ -10,4 +10,6 @@ interface ConfirmationWidgetInterface extends WidgetInterface
     public function getButtonContinue() : iTriggerAction;
     
     public function getButtonCancel() : iTriggerAction;
+
+    public function getDisabledIfNoChanges() : bool;
 }

@@ -17,10 +17,13 @@ class ConfirmationMessage extends Message implements ConfirmationWidgetInterface
 
     private $buttonCancel = null;
 
+    private $disabledIfNoChanges = false;
+
     /**
      * Returns the text of the main question
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface::getQuestionText()
      */
     public function getQuestionText() : string
     {
@@ -30,7 +33,8 @@ class ConfirmationMessage extends Message implements ConfirmationWidgetInterface
     /**
      * Returns the primary button of the confirmation: accept, continue, OK, or similar.
      * 
-     * @return \exface\Core\Interfaces\WidgetInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface::getButtonContinue()
      */
     public function getButtonContinue() : iTriggerAction
     {
@@ -72,7 +76,8 @@ class ConfirmationMessage extends Message implements ConfirmationWidgetInterface
     /**
      * Returns the negative confirmation button - i.e. "cancel".
      * 
-     * @return \exface\Core\Interfaces\WidgetInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface::getButtonCancel()
      */
     public function getButtonCancel() : iTriggerAction
     {
@@ -112,4 +117,30 @@ class ConfirmationMessage extends Message implements ConfirmationWidgetInterface
         $this->buttonCancel = WidgetFactory::createFromUxonInParent($this, $uxon);
         return $this;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface::getDisabledIfNoChanges()
+     */
+    public function getDisabledIfNoChanges() : bool
+    {
+        return $this->disabledIfNoChanges;
+    }
+
+    /**
+     * Skip this confirmation if the input widget does not have any changes
+     * 
+     * @uxon-property disabled_if_no_changes
+     * @uxon-type bool
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return ConfirmationMessage
+     */
+    protected function setDisabledIfNoChanges(bool $trueOrFalse) : ConfirmationWidgetInterface
+    {
+        $this->disabledIfNoChanges = $trueOrFalse;
+        return $this;
+    }
+
 }
