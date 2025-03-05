@@ -84,7 +84,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      - It must have all the default columns of your app.
  *      - It must have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),categories (varchar), hint (varchar), required (tinyint) and optionally owner_object_id (binary(16)).
  * 
- * 2. Create a new MetaObject with matching attributes.
+ * 2. Create a new MetaObject with matching attributes. If you have a column for `owner_object`, make sure that its attribute has a relation to `exface.Core.OBJECT`!
  * 
  * 3. Add a new `CustomAttributeDefinitionBehavior` and configure it to your needs.
  * 
