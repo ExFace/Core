@@ -26,7 +26,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  * 
  * A few examples:
  * 
- * - `1` - the scalar value "0"
+ * - `1` - the scalar value "1"
  * - `=User('USERNAME')` - resolves to the username of the current user
  * - `=some_widget` - references the entire widget with id `some_widget`
  * - `=some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
