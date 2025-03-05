@@ -1063,14 +1063,38 @@ abstract class AbstractWidget implements WidgetInterface
     
     /**
      * Sets a condition to hide the widget.
+     * 
+     * ## Available values and references
+     * 
+     * Each condition compares `value_right` and `value_left`. Each of them can either be a value (string or number), a
+     * static formula or a widget reference. 
+     * 
+     * A few examples:
+     * 
+     * - `1` - the scalar value "0"
+     * - `=User('USERNAME')` - resolves to the username of the current user
+     * - `=some_widget` - references the entire widget with id `some_widget`
+     * - `=some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
+     * 
+     * There are also a couple of "shortcut" references available instead of explicit page/widget ids:
+     * 
+     * - `~self` - references the widget the link is defined in
+     * - `~parent` - references the immediate parent of `~self`
+     * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets. 
+     * 
+     * For example:
+     * 
+     * - `=~self!mycol` - references the column `mycol` in the data of the current widget
+     * - `=~parent!mycol` - references the column `mycol` of the current widgets parent
+     * - `=~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
      *
-     * Examples
+     * ## Examples
      *
      * Hide an `Input` if a checkbox not checked:
      *
      * ```json
      *  "widget_type": "Input"
-     *  "disabled_if": {
+     *  "hidden_if": {
      *      "value_left": "=id_of_checkbox",
      *      "comparator": "!=",
      *      "value_right": "1"
@@ -1082,7 +1106,7 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * ```json
      *  "widget_type": "Input"
-     *  "disabled_if": {
+     *  "hidden_if": {
      *      "value_left": "=self",
      *      "comparator": "==",
      *      "value_right": ""
@@ -1304,6 +1328,30 @@ abstract class AbstractWidget implements WidgetInterface
     
     /**
      * Sets a condition to disable the widget.
+     * 
+     * ## Available values and references
+     * 
+     * Each condition compares `value_right` and `value_left`. Each of them can either be a value (string or number), a
+     * static formula or a widget reference. 
+     * 
+     * A few examples:
+     * 
+     * - `1` - the scalar value "0"
+     * - `=User('USERNAME')` - resolves to the username of the current user
+     * - `=some_widget` - references the entire widget with id `some_widget`
+     * - `=some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
+     * 
+     * There are also a couple of "shortcut" references available instead of explicit page/widget ids:
+     * 
+     * - `~self` - references the widget the link is defined in
+     * - `~parent` - references the immediate parent of `~self`
+     * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets. 
+     * 
+     * For example:
+     * 
+     * - `=~self!mycol` - references the column `mycol` in the data of the current widget
+     * - `=~parent!mycol` - references the column `mycol` of the current widgets parent
+     * - `=~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
      *
      * ## Examples
      * 
@@ -1313,12 +1361,15 @@ abstract class AbstractWidget implements WidgetInterface
      *  {
      *      "widget_type": "Input",
      *      "disabled_if": {
-     *          "value_left": "=id_of_checkbox",
-     *          "comparator": "!=",
-     *          "value_right": "1"
+     *          "operator": "AND",
+     *          "conditions": [{
+     *              "value_left": "=id_of_checkbox",
+     *              "comparator": "!",
+     *              "value_right": "1"
+     *          }]
      *      }
      *  }
-     *
+     * 
      * ```
      * 
      * Disable a `Button` if selected table row does not have required data:
@@ -1328,12 +1379,15 @@ abstract class AbstractWidget implements WidgetInterface
      *      "widget_type": "Button",
      *      "caption": "Call",
      *      "disabled_if": {
-     *          "value_left": "=id_of_table!PHONE_NUMBER",
-     *          "comparator": "==",
-     *          "value_right": ""
+     *          "operator": "AND",
+     *          "conditions": [{
+     *              "value_left": "=~input!PHONE_NUMBER",
+     *              "comparator": "==",
+     *              "value_right": ""
+     *          }]
      *      }
      *  }
-     *
+     * 
      * ```
      * 
      * Disable a `Button` on a complex AND-condition
@@ -1355,7 +1409,7 @@ abstract class AbstractWidget implements WidgetInterface
      *          }
      *      ]
      *  }
-     *
+     * 
      * ```
      *
      * @uxon-property disabled_if
