@@ -12,9 +12,13 @@ interface ActionConfirmationListInterface
 {
     public function getAction() : ActionInterface;
     
-    public function setDisabled(bool $trueOrFalse): ActionConfirmationListInterface;
-    
-    public function isDisabled() : bool;
+    public function disableAll(bool $trueOrFalse) : ActionConfirmationListInterface;
+
+    public function disableConfirmationsForUnsavedChanges(bool $trueOrFalse) : ActionConfirmationListInterface;
+
+    public function disableConfirmationsForAction(bool $trueOrFalse) : ActionConfirmationListInterface;
+
+    public function isPossible() : bool;
 
     /**
      * Make the action ask for confirmation when its button is pressed
@@ -26,22 +30,13 @@ interface ActionConfirmationListInterface
 
     /**
      * 
-     * @return ConfirmationWidgetInterface|null
+     * @return ActionConfirmationListInterface
      */
-    public function getConfirmationForAction() : ?ConfirmationWidgetInterface;
-
-    public function hasConfirmationForAction() : bool;
+    public function getConfirmationsForAction() : self;
 
     /**
      * 
-     * @return ConfirmationWidgetInterface|null
+     * @return ActionConfirmationListInterface
      */
-    public function getConfirmationForUnsavedChanges() : ?ConfirmationWidgetInterface;
-
-    /**
-     * 
-     * @param bool|null $default
-     * @return bool|null
-     */
-    public function hasConfirmationForUnsavedChanges(?bool $default = false) : ?bool;
+    public function getConfirmationsForUnsavedChanges() : self;
 }

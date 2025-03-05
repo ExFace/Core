@@ -132,6 +132,18 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
         return $this;
     }
 
+    public function append($entity) : static
+    {
+        $this->content_array[] = $entity;
+        return $this;
+    }
+
+    public function prepend($entity) : static
+    {
+        array_unshift($this->content_array, $entity);
+        return $this;
+    }
+
     /**
      * Removes the given entity from the list
      *
@@ -350,7 +362,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\EntityListInterface::filter()
      */
-    public function filter(callable $callback) : EntityListInterface
+    public function filter(callable $callback) : self
     {
         $result = new static($this->getWorkbench(), $this->getParent());
         foreach ($this->getAll() as $key => $entity) {
