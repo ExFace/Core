@@ -328,7 +328,21 @@ class FileBuilder extends AbstractQueryBuilder
     protected function isFileContent(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
-        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_CONTENT || $addr === 'contents';
+        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_CONTENT 
+        || $addr === 'contents';
+    }
+
+    /**
+     * Returns TRUE if give query part references the folder path (absolute or relative) and FASE otherwise
+     *
+     * @param QueryPartAttribute $qpart
+     * @return bool
+     */
+    protected function isFolderPath(QueryPartAttribute $qpart) : bool
+    {
+        $addr = mb_strtolower(trim($qpart->getDataAddress()));
+        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FOLDER . FileBuilder::ATTR_ADDRESS_PATH_ABSOLUTE 
+        || $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FOLDER . FileBuilder::ATTR_ADDRESS_PATH_RELATIVE;
     }
     
     /**
@@ -716,6 +730,7 @@ class FileBuilder extends AbstractQueryBuilder
         $pathQpart = null;
         $filenameQpart = null;
         $contentQpart = null;
+        $folderQpart = null;
         foreach ($this->getValues() as $qpart) {
             switch (true) {
                 case $this->isFilePath($qpart) && $qpart->hasValues():
@@ -727,6 +742,9 @@ class FileBuilder extends AbstractQueryBuilder
                 case $this->isFileContent($qpart) && $qpart->hasUids():
                     $contentQpart = $qpart;
                     break;
+                case $this->isFolderPath($qpart) && $qpart->hasValues():
+                    $folderQpart = $qpart;
+                    break;
             }
         }
         
@@ -735,7 +753,12 @@ class FileBuilder extends AbstractQueryBuilder
                 return $contentQpart->getUids();
             case $pathQpart !== null:
                 return $pathQpart->getValues();
-            case $filenameQpart !== null:
+            case $folderQpart !== null && $filenameQpart !== null:
+                foreach ($folderQpart->getValues() as $i => $folder) {
+                    $paths[$i] = $folder . $this->getDirectorySeparator() . $filenameQpart->getValues()[$i];
+                }
+                return $paths;
+            case $filenameQpart !== null && ! FilePathDataType::isPattern($this->getPathForObject($this->getMainObject())):
                 $paths = [];
                 $sep = $this->getDirectorySeparator();
                 $addr = FilePathDataType::normalize($this->getPathForObject($this->getMainObject()) ?? '', $sep);
