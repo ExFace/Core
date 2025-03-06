@@ -16,14 +16,17 @@ trait JqueryHtmlTrait {
     {
         $output = '';
         $widget = $this->getWidget();
+        $style = '';
+        
         if ($widget->getCss()) {
             $output .= '<style>' . $widget->getCss() . '</style>';
         }
         if ($caption = $this->getCaption()) {
             $output .= '<label for="' . $this->getId() . '">' . $caption . '</label>';
+        } else {
+            $style .= 'width: 100%';
         }
         
-        $style = '';
         if ($widget->getMargins()) {
             $style .= 'margin: 10px;';
         }
