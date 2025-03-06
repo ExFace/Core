@@ -16,8 +16,8 @@ interface iUseInputWidget extends WidgetInterface
     /**
      * Sets the widget, that supplies the input data for the action
      *
-     * @param AbstractWidget $widget
-     * @return AbstractWidget
+     * @param WidgetInterface $widget
+     * @return iUseInputWidget
      */
     public function setInputWidget(WidgetInterface $widget) : iUseInputWidget;
 }
