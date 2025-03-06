@@ -5,6 +5,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Widgets\iCanEditData;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
@@ -181,17 +182,19 @@ class DataToolbar extends Toolbar
                 ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
                 ->setIcon(Icons::SEARCH)
                 ->setAlign(EXF_ALIGN_OPPOSITE);
-            
             $this->search_button_group->addButton($search_button);
             
             $reset_button = $this->search_button_group->createButton();
             $reset_button
                 ->setActionAlias('exface.Core.ResetWidget')
-                ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.RESETWIDGET.NAME'))
                 ->setIcon(Icons::UNDO)
                 ->setAlign(EXF_ALIGN_OPPOSITE);
-            
             $this->search_button_group->addButton($reset_button);
+
+            if (! ($this->getDataWidget() instanceof iCanEditData) || $this->getDataWidget()->isEditable() === false) {
+                $search_button->getAction()->getConfirmations()->disableConfirmationsForUnsavedChanges(true);
+                $reset_button->getAction()->getConfirmations()->disableConfirmationsForUnsavedChanges(true);
+            }
         }
         $this->included_buttons_initialized = true;
         return;
