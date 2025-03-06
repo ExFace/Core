@@ -44,11 +44,14 @@ class DataTransaction implements DataTransactionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::start()
      */
     public function start() : DataTransactionInterface
     {
+        // Do nothing if the transaction was started already
+        if ($this->is_started === true) {
+            return $this;
+        }
         $this->is_started = true;
         $this->getWorkbench()->eventManager()->dispatch(new OnTransactionStartEvent($this));
         return $this;
@@ -62,6 +65,11 @@ class DataTransaction implements DataTransactionInterface
      */
     public function commit() : DataTransactionInterface
     {
+        // Ignore commmit if the transaction did not affect any connections or has not even been started
+        if (! $this->isStarted() || $this->isEmpty()) {
+            return $this;
+        }
+        // If it is already rolled back, we cannot commit!
         if ($this->isRolledBack()) {
             throw new DataTransactionCommitError('Cannot commit a transaction, that has already been rolled back!', '6T5VIIA');
         }
@@ -88,6 +96,10 @@ class DataTransaction implements DataTransactionInterface
      */
     public function rollback() : DataTransactionInterface
     {
+        // Ignore rollback if the transaction did not affect any connections or has not even been started
+        if (! $this->isStarted() || $this->isEmpty()) {
+            return $this;
+        }
         if ($this->isCommitted()) {
             throw new DataTransactionRollbackError('Cannot roll back a transaction, that has already been committed!', '6T5VIT8');
         }
@@ -194,7 +206,6 @@ class DataTransaction implements DataTransactionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::getDataConnections()
      */
     public function getDataConnections() : array
@@ -205,11 +216,30 @@ class DataTransaction implements DataTransactionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
         return $this->getDataManager()->getWorkbench();
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return empty($this->connections);
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::getId()
+     */
+    public function getId() : string
+    {
+        return spl_object_id($this);
     }
 }
