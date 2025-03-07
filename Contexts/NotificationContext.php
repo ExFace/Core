@@ -598,7 +598,7 @@ class NotificationContext extends AbstractContext
                 'TITLE' => $title,
                 'ICON' => $notification->getIcon(),
                 'FOLDER' => $notification->getFolder(),
-                'SENT_BY' => $notification->getSenderName() ?? $notification->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUsername(),
+                'SENT_BY' => $notification->getSenderName() ?? $notification->getWorkbench()->getSecurity()->getAuthenticatedUser()->getAttribute('FULL_NAME'),
                 'SENT_ON' => $notification->getSendingTime() ?? DateTimeDataType::now(),
                 'REFERENCE' => $notification->getReference(),
                 'WIDGET_UXON' => $widgetUxon->toJson()

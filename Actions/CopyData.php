@@ -79,7 +79,7 @@ class CopyData extends SaveData implements iCreateData
         $inputSheet = $this->getInputDataSheet($task);
         
         $copiedSheets = $this->copyWithRelatedObjects($inputSheet, $this->getCopyRelations($inputSheet->getMetaObject()), $transaction);
-        
+
         $mainCopiedSheet = $copiedSheets[''];
         $copyCounter = $mainCopiedSheet->countRows();
         $dependencyCounter = 0;
@@ -194,6 +194,9 @@ class CopyData extends SaveData implements iCreateData
         if ($currentData->isFresh() === false && $currentData->hasUidColumn(true)) {
             $currentData->getFilters()->addConditionFromColumnValues($currentData->getUidColumn());
             $currentData->dataRead();
+            if ($currentData->countRows() < $inputSheet->countRows()) {
+                throw new ActionRuntimeError($this, 'Could not copy data: could not read original data for ' . ($inputSheet->countRows() - $currentData->countRows()) . ' rows');
+            }
         }
         
         // Now loop through the sheet with the current data and create copies for each row,

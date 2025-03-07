@@ -13,6 +13,7 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use Symfony\Component\Console\Command\Command;
 
 /**
  * A command loader for Symfony Console, that creates commands from actions implementing
@@ -39,7 +40,7 @@ class CommandLoader implements FacadeCommandLoaderInterface
         $this->facade = $facade;    
     }
     
-    public function get($name)
+    public function get(string $name): Command
     {        
         try {
             $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasFromCommandName($name));
@@ -74,7 +75,7 @@ class CommandLoader implements FacadeCommandLoaderInterface
         return $found;
     }
 
-    public function has($name)
+    public function has($name): bool
     {
         return true;
         try {
@@ -85,7 +86,7 @@ class CommandLoader implements FacadeCommandLoaderInterface
         }
     }
 
-    public function getNames()
+    public function getNames(): array
     {
         return array_keys($this->getCommandActionMap());
     }

@@ -2202,7 +2202,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                     
                 default:
-                    $values = explode($value_list_delimiter, $value);
+                    $values = explode($value_list_delimiter, $value ?? '');
                     $value = '';
                     $valueNullChecks = [];
                     

@@ -556,7 +556,7 @@ class DataColumn implements DataColumnInterface
             $result = array_keys($this->getValues(false), $cell_value);
         } else {
             foreach ($this->getValues(false) as $row_nr => $row_val) {
-                if (strcasecmp($cell_value, $row_val) === 0) {
+                if (strcasecmp($cell_value ?? '', $row_val ?? '') === 0) {
                     $result[] = $row_nr;
                 }
             }

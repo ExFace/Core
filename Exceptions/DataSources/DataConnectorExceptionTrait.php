@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
+use exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface;
 
 /**
  * This trait enables an exception to output data connectior specific debug information.
@@ -38,21 +39,18 @@ trait DataConnectorExceptionTrait {
      *
      * @see \exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface::getConnector()
      */
-    public function getConnector()
+    public function getConnector() : DataConnectionInterface
     {
         return $this->connector;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface::setConnector()
+     * 
+     * @param \exface\Core\Interfaces\DataSources\DataConnectionInterface $connector
      */
-    public function setConnector(DataConnectionInterface $connector)
+    protected function setConnector(DataConnectionInterface $connector) : DataConnectorExceptionInterface
     {
         $this->connector = $connector;
         return $this;
     }
 }
-?>

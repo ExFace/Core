@@ -52,7 +52,8 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  *      - It must have a matching column for each column defined in the `rows` property of `output_data_sheet`
  * (matching name and datatype).
  *      - It must have the default system columns of your respective app (e.g. `id`, `modified_by`, etc.).
- *      - It must have a column that matches your `affected_uid_alias`, both in name and datatype. 
+ *      - It must have a column that matches your `foreign_key_attribute_alias`, both in name and datatype. 
+ *      - You should configure this column as a foreign key.
  *      - You can find an example definition in the section `Examples`.
  * 
  * 2. Create a MetaObject for this table that **inherits from its BaseObject**. 
@@ -64,7 +65,10 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * 4. Then, attach a new `ChecklistingBehavior` to the MetaObject that you actually wish to modify (for example the
  * OrderPosition) and configure the behavior as needed.
  * 
- * 5. If properly configured, the behavior will now write its output to the table you have created whenever its
+ * 5. Make sure to define a relation from the object that represents the checklist to the object you wish to check (for example from 
+ * OrderPositionChecklist to OrderPosition).
+ * 
+ * 6. If properly configured, the behavior will now write its output to the table you have created whenever its
  * conditions are met. You can now read said data from the table to create useful effects, such as rendering
  * notifications.
  * 
@@ -96,7 +100,7 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  *      [MESSAGE] nvarchar(100) NOT NULL,
  *      [COLOR] nvarchar(20) NOT NULL,
  *      [ICON] nvarchar(100) NOT NULL,
- *      [AFFECTED_UID] int NOT NULL
+ *      [FOREIGN_KEY] int NOT NULL
  *  );
  * 
  * ```
@@ -106,7 +110,8 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * ```
  *  {
  *      "check_on_update": [{
- *          "affected_uid_alias": "AFFECTED_UID"
+ *          "foreign_key_attribute_alias": "FOREIGN_KEY"
+ *          "relation_from_checked_object_to_checklist": "my.APP.CHECKLIST"
  *          "output_data_sheet": {
  *              "object_alias": "my.APP.CHECKLIST",
  *              "rows": [{
@@ -287,7 +292,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      * 
      * @uxon-property check_on_create
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
-     * @uxon-template [{"affected_uid_alias":"AFFECTED_UID", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * @uxon-template [{"foreign_key_attribute_alias":"FOREIGN_KEY", "relation_from_checked_object_to_checklist": "my.APP.CHECKLIST", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
      * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
@@ -309,7 +314,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      * 
      * @uxon-property check_on_update
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
-     * @uxon-template [{"affected_uid_alias":"AFFECTED_UID", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * @uxon-template [{"foreign_key_attribute_alias":"FOREIGN_KEY", "relation_from_checked_object_to_checklist": "my.APP.CHECKLIST", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
      * 
      * 
      * @param UxonObject $uxon
@@ -331,7 +336,7 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      * 
      * @uxon-property check_always
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheckWithOutputData[]
-     * @uxon-template [{"affected_uid_alias":"AFFECTED_UID", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * @uxon-template [{"foreign_key_attribute_alias":"FOREIGN_KEY", "relation_from_checked_object_to_checklist": "my.APP.CHECKLIST", "output_data_sheet":{"object_alias": "", "rows": [{"CRITICALITY":"0", "LABELS":"", "MESSAGE":"", "COLOR":"", "ICON":"sap-icon://message-warning"}]}, "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
      * 
      * @param UxonObject $uxon
      * @return AbstractValidatingBehavior
