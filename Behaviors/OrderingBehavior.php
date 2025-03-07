@@ -734,6 +734,7 @@ class OrderingBehavior extends AbstractBehavior
     {
         // Prepare variables.
         $indexAlias = $this->getOrderNumberAttributeAlias();
+        $startIndex = $this->getOrderStartsWith();
         $uidAlias = $allSiblingsSheet->getUidColumnName();
         $priorityUIds = array_keys($priorityRows);
         $insertedElementsCount = count($priorityRows);
@@ -770,7 +771,7 @@ class OrderingBehavior extends AbstractBehavior
 
         // Priority pass.
         if(count($priorityUIds) > 0) {
-            $nextIndex = $this->getOrderStartsWith();
+            $nextIndex = $startIndex;
             foreach ($allSiblingsSheet->getRows() as $row) {
                 // In this pass, we only process elements that have been changed by the user.
                 // Their indices have priority over unchanged data to satisfy user expectations.
@@ -779,7 +780,7 @@ class OrderingBehavior extends AbstractBehavior
                     continue;
                 }
                 // Get current index of row.
-                $index = $row[$indexAlias];
+                $index = max($row[$indexAlias], $startIndex);
                 $this->validateIndex($index, $indexAlias, $logBook);
                 // Update index and commit row to pending.
                 $row[$indexAlias] = max($index, $nextIndex);
@@ -810,7 +811,7 @@ class OrderingBehavior extends AbstractBehavior
 
         // Regular pass.
         $closeGaps = $this->getCloseGaps();
-        $nextIndex = $this->getOrderStartsWith();
+        $nextIndex = $startIndex;
         foreach ($allSiblingsSheet->getRows() as $row) {
             // Check if current row had priority.
             $uid = $row[$uidAlias];
@@ -819,7 +820,7 @@ class OrderingBehavior extends AbstractBehavior
             }
             
             // Get current index of row.
-            $index = $row[$indexAlias];
+            $index = max($row[$indexAlias], $startIndex);
             $this->validateIndex($index, $indexAlias, $logBook);
 
             // Check indexingCache.
