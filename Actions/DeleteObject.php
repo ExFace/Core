@@ -32,13 +32,15 @@ class DeleteObject extends AbstractAction implements iDeleteData
         $this->setInputRowsMax(null);
         $this->setIcon(Icons::TRASH_O);
         
-        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        $this->getConfirmations()->addFromUxon(new UxonObject([
-            'widget_type' => 'ConfirmationMessage',
-            'type' => MessageTypeDataType::WARNING,
-            'caption' => $translator->translate('ACTION.DELETEOBJECT.CONFIRMATION_TITLE'),
-            'text' => $translator->translate('ACTION.DELETEOBJECT.CONFIRMATION_TEXT')
-        ]));
+        if ($this->getConfirmations()->isPossible()) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+            $this->getConfirmations()->addFromUxon(new UxonObject([
+                'widget_type' => 'ConfirmationMessage',
+                'type' => MessageTypeDataType::WARNING,
+                'caption' => $translator->translate('ACTION.DELETEOBJECT.CONFIRMATION_TITLE'),
+                'text' => $translator->translate('ACTION.DELETEOBJECT.CONFIRMATION_TEXT')
+            ]));
+        }
     }
 
     /**
