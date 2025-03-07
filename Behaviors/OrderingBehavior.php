@@ -195,7 +195,8 @@ class OrderingBehavior extends AbstractBehavior
             $this->eventCache[] = [
                 self::KEY_EVENT_SHEET => $eventSheet,
                 self::KEY_LOADED => $loadedData,
-                self::KEY_SHIFTED => []
+                self::KEY_SHIFTED => [],
+                self::KEY_GROUPS => $changedGroups
             ];
 
             $this->finishWork($event, $logbook);
