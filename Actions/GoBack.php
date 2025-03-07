@@ -15,6 +15,7 @@ class GoBack extends AbstractAction implements iNavigate
     protected function init()
     {
         $this->setIcon(Icons::ARROW_LEFT);
+        $this->setConfirmationForUnsavedChanges(true);
     }
 
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
@@ -22,4 +23,3 @@ class GoBack extends AbstractAction implements iNavigate
         return ResultFactory::createEmptyResult($task);
     }
 }
-?>

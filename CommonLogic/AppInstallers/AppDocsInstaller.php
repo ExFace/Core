@@ -12,14 +12,16 @@ use exface\Core\Interfaces\AppExporterInterface;
  * You can use placeholders in markdown files inside the `Docs` folder like this:
  * 
  * ```
- * <!-- BOF SubPageList -->
+ * <!-- BOF SubPageList:depth=2 -->
  * 
  * <!-- EOF SubPageList -->
  * 
  * ```
  * 
  * These placeholders are then replaced by generated content every time the app model is exported.
- * The generated content is placed insited the placeholder boundaries and updated with every export.
+ * The generated content is placed inside the placeholder boundaries and updated with every export.
+ * This way, the markdown files commmitted to git repos contain the (invisble) placeholder config
+ * and the (visible) text, that was last generated for the placeholder.
  * 
  * ## Available placeholders
  * 
@@ -68,6 +70,7 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
         foreach ($this->getMarkdownFiles($rootPath) as $file) {
             $fileRenderer = $baseRenderer->copy();
             $fileRenderer->addPlaceholder(new SubPageListResolver($file));
+            // TODO add other placeholder classes here
             $rendered = $fileRenderer->render($file);
             file_put_contents($file, $rendered);
             $fileCnt++;

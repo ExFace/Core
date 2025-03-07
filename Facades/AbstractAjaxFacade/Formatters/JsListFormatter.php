@@ -82,7 +82,7 @@ JS;
         $delim = $listType->getListDelimiter();
         $delimJs = json_encode($delim);
         return <<<JS
-    function(sList, sDelim) {console.log('list formatter', sList);
+    function(sList, sDelim) {
         var aRaw = [];
         if ((typeof sList) !== 'string' || sList.trim() === '') {
             return sList;

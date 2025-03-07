@@ -11,12 +11,15 @@
 	"ACTION.COPYDATA.RESULT": "Copied %number% object|Copied %number% objects",
 	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " including %number% dependency| including %number% dependencies",
 	"ACTION.COPYDATA.NAME": "Copy Data",
+	
 	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "New",
 	
 	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
 	
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
 	"ACTION.DELETEOBJECT.NAME": "Delete",
+	"ACTION.DELETEOBJECT.CONFIRMATION_TITLE": "Confirm deletion",
+	"ACTION.DELETEOBJECT.CONFIRMATION_TEXT": "Should the selected objects really be deleted?",
 	
 	"ACTION.SHOWLOGINDIALOG.NAME": "Login",
 	
@@ -287,13 +290,22 @@
     "LOCALIZATION.CALENDAR.WORKDAY_START_TIME": "8:00",
     "LOCALIZATION.CALENDAR.WORKDAY_END_TIME": "17:00",
     
-    
     "MESSAGE.TYPES.ERROR": "Error",
     "MESSAGE.TYPES.WARNING": "Warning",
     "MESSAGE.TYPES.INFO": "Info",
     "MESSAGE.TYPES.SUCCESS": "Success",
     "MESSAGE.TYPES.HINT": "Hint",
     "MESSAGE.TYPES.QUESTION": "Question",
+
+	"MESSAGE.CONFIRMATION.CONTINUE": "Continue",
+	"MESSAGE.CONFIRMATION.CONTINUE_HINT": "Perform action",
+	"MESSAGE.CONFIRMATION.CANCEL": "Cancel",
+	"MESSAGE.CONFIRMATION.CANCEL_HINT": "Stop here and do not perform the action",
+
+	"MESSAGE.DISCARD_CHANGES.TITLE": "Unsaved changes?",
+	"MESSAGE.DISCARD_CHANGES.TEXT": "There seem to be unsaved changes here. If you navigate away, they will be lost.",
+	"MESSAGE.DISCARD_CHANGES.CONTINUE": "Ignore changes",
+	"MESSAGE.DISCARD_CHANGES.CANCEL": "Cancel",
     
     "MESSAGE.SELECT_EXACTLY_X_ROWS": "Please select exactly %number% element!|Please select exactly %number% elements!",
 	"MESSAGE.SELECT_AT_MOST_X_ROWS": "Please select at most %number% element!|Please select at most %number% elements!",

@@ -66,6 +66,7 @@ class Login extends AbstractAction implements iModifyContext
         $this->setInputObjectAlias('exface.Core.LOGIN_DATA');
         $this->setInputRowsMax(1);
         $this->setInputRowsMin(1);
+        $this->setConfirmationForUnsavedChanges(false);
     }
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface

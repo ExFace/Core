@@ -788,8 +788,8 @@ HTML;
             $wb = $this->getWorkbench();
             $msg = $exception->getMessageModel($wb);
             $error['title'] = $forceHtmlEntities ? htmlspecialchars($msg->getTitle()) : $msg->getTitle();
-            $error['hint'] = $forceHtmlEntities ? htmlspecialchars($msg->getHint()) : $msg->getHint();
-            $error['description'] = $forceHtmlEntities ? htmlspecialchars($msg->getDescription()) : $msg->getDescription();
+            $error['hint'] = $forceHtmlEntities ? htmlspecialchars($msg->getHint() ?? '') : $msg->getHint();
+            $error['description'] = $forceHtmlEntities ? htmlspecialchars($msg->getDescription() ?? '') : $msg->getDescription();
             $error['type'] = $msg->getType(MessageTypeDataType::ERROR);
         } else {
             $error = [];

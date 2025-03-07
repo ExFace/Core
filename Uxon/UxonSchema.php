@@ -332,7 +332,7 @@ class UxonSchema implements UxonSchemaInterface
             }
         }
         
-        return explode('|', $type);
+        return explode('|', $type ?? '');
     }
     
     /**

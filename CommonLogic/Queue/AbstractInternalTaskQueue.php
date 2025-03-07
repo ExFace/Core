@@ -72,7 +72,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         if (! empty($readAttributeAliases)) {
             $dataSheet->getColumns()->addMultiple($readAttributeAliases);
         }
-        $dataSheet->getFilters()->addConditionFromString('UID', $queueItemUid);
+        $dataSheet->getFilters()->addConditionFromString('UID', $queueItemUid, ComparatorDataType::EQUALS);
         $dataSheet->dataRead();
         
         $currentStatus = $dataSheet->getCellValue('STATUS', 0);
