@@ -2177,7 +2177,13 @@ class DataSheet implements DataSheetInterface
         if (! $column) {
             throw new DataSheetColumnNotFoundError($this, 'Cannot find row by column value: invalid column name "' . $column_name . '"!');
         }
-        return $this->getRow($column->findRowByValue($value));
+        
+        $rowNr = $column->findRowByValue($value);
+        if($rowNr === false) {
+            return null;
+        }
+        
+        return $this->getRow($rowNr);
     }
 
     /**

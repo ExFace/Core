@@ -4,8 +4,7 @@ namespace exface\Core\Events\DataSheet;
 use exface\Core\Events\AbstractEvent;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Events\DataSheetEventInterface;
-use exface\Core\Interfaces\Events\DataTransactionEventInterface;
+use exface\Core\Interfaces\Events\DataSheetTransactionEventInterface;
 
 /**
  * 
@@ -13,7 +12,7 @@ use exface\Core\Interfaces\Events\DataTransactionEventInterface;
  * @author Andrej Kabachnik
  *        
  */
-abstract class AbstractDataSheetEvent extends AbstractEvent implements DataSheetEventInterface, DataTransactionEventInterface
+abstract class AbstractDataSheetEvent extends AbstractEvent implements DataSheetTransactionEventInterface
 {
     private $dataSheet = null;
     
