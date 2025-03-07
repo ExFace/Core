@@ -195,7 +195,8 @@ class OrderingBehavior extends AbstractBehavior
             $this->eventCache[] = [
                 self::KEY_EVENT_SHEET => $eventSheet,
                 self::KEY_LOADED => $loadedData,
-                self::KEY_SHIFTED => []
+                self::KEY_SHIFTED => [],
+                self::KEY_GROUPS => $changedGroups
             ];
 
             $this->finishWork($event, $logbook);
@@ -554,17 +555,13 @@ class OrderingBehavior extends AbstractBehavior
                 $pendingChanges[$changedRow[$uidAlias]] = $changedRow;
             }
         }
-        
+
+        // Add node to cache.
+        $cache->addElement($groupParents, $groupParents);
         // If the group is empty, we are done.
         if($allSiblingsSheet->countRows() === 0){
-            $cache->addElement($groupParents, $groupParents);
             $cache->setData($groupParents, []);
             return [];
-        }
-        
-        // Add new nodes to the cache.
-        foreach ($allSiblingsSheet->getRows() as $siblingRow) {
-            $cache->addElement($this->getParentsForRow($siblingRow), $groupParents);
         }
 
         // Fill missing indices.
@@ -734,6 +731,7 @@ class OrderingBehavior extends AbstractBehavior
     {
         // Prepare variables.
         $indexAlias = $this->getOrderNumberAttributeAlias();
+        $startIndex = $this->getOrderStartsWith();
         $uidAlias = $allSiblingsSheet->getUidColumnName();
         $priorityUIds = array_keys($priorityRows);
         $insertedElementsCount = count($priorityRows);
@@ -770,7 +768,7 @@ class OrderingBehavior extends AbstractBehavior
 
         // Priority pass.
         if(count($priorityUIds) > 0) {
-            $nextIndex = $this->getOrderStartsWith();
+            $nextIndex = $startIndex;
             foreach ($allSiblingsSheet->getRows() as $row) {
                 // In this pass, we only process elements that have been changed by the user.
                 // Their indices have priority over unchanged data to satisfy user expectations.
@@ -779,15 +777,16 @@ class OrderingBehavior extends AbstractBehavior
                     continue;
                 }
                 // Get current index of row.
-                $index = $row[$indexAlias];
+                $index = max($row[$indexAlias], $startIndex);
                 $this->validateIndex($index, $indexAlias, $logBook);
                 // Update index and commit row to pending.
-                $row[$indexAlias] = max($index, $nextIndex);
+                $index = max($index, $nextIndex);
+                $row[$indexAlias] = $index;
                 $allSiblingsSheet->addRow($row, true);
                 $pendingChanges[$uid] = $row;
 
                 // Update next index.
-                $nextIndex = $row[$indexAlias] + 1;
+                $nextIndex = $index + 1;
                 // Update indexing cache.
                 $indexingCache[$index] = $nextIndex;
             }
@@ -810,7 +809,7 @@ class OrderingBehavior extends AbstractBehavior
 
         // Regular pass.
         $closeGaps = $this->getCloseGaps();
-        $nextIndex = $this->getOrderStartsWith();
+        $nextIndex = $startIndex;
         foreach ($allSiblingsSheet->getRows() as $row) {
             // Check if current row had priority.
             $uid = $row[$uidAlias];
@@ -819,7 +818,7 @@ class OrderingBehavior extends AbstractBehavior
             }
             
             // Get current index of row.
-            $index = $row[$indexAlias];
+            $index = max($row[$indexAlias], $startIndex);
             $this->validateIndex($index, $indexAlias, $logBook);
 
             // Check indexingCache.
