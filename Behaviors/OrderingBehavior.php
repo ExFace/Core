@@ -554,17 +554,13 @@ class OrderingBehavior extends AbstractBehavior
                 $pendingChanges[$changedRow[$uidAlias]] = $changedRow;
             }
         }
-        
+
+        // Add node to cache.
+        $cache->addElement($groupParents, $groupParents);
         // If the group is empty, we are done.
         if($allSiblingsSheet->countRows() === 0){
-            $cache->addElement($groupParents, $groupParents);
             $cache->setData($groupParents, []);
             return [];
-        }
-        
-        // Add new nodes to the cache.
-        foreach ($allSiblingsSheet->getRows() as $siblingRow) {
-            $cache->addElement($this->getParentsForRow($siblingRow), $groupParents);
         }
 
         // Fill missing indices.
@@ -783,12 +779,13 @@ class OrderingBehavior extends AbstractBehavior
                 $index = max($row[$indexAlias], $startIndex);
                 $this->validateIndex($index, $indexAlias, $logBook);
                 // Update index and commit row to pending.
-                $row[$indexAlias] = max($index, $nextIndex);
+                $index = max($index, $nextIndex);
+                $row[$indexAlias] = $index;
                 $allSiblingsSheet->addRow($row, true);
                 $pendingChanges[$uid] = $row;
 
                 // Update next index.
-                $nextIndex = $row[$indexAlias] + 1;
+                $nextIndex = $index + 1;
                 // Update indexing cache.
                 $indexingCache[$index] = $nextIndex;
             }
