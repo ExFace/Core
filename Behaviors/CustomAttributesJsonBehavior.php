@@ -9,6 +9,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Factories\DataSheetFactory;
@@ -82,13 +83,18 @@ class CustomAttributesJsonBehavior
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logBook->addLine('Object loaded, checking for custom attributes...');
 
+        $definitionObjectAlias = $this->getDefinitionObjectAlias();
+        if ($definitionObjectAlias === null) {
+            throw new BehaviorConfigurationError($this, 'Missing required configuration "definition_object_alias"!');
+        } 
+
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
 
         $definitionObjectAlias = $this->getDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
         if($this->getObject()->isExactly($definitionObjectAlias)) {
             $this->loadAttributesFromData($logBook);
         } else {
-            $this->loadAttributesFromDefinition($logBook, $definitionObjectAlias);
+            $this->loadAttributesFromDefinition($definitionObjectAlias, $logBook);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
@@ -99,16 +105,15 @@ class CustomAttributesJsonBehavior
      *
      * NOTE: This is the default behavior, because it is flexible and fast.
      *
+     * @param string $definitionObjectAlias
      * @param BehaviorLogBook $logBook
-     * @param string          $definitionObjectAlias
-     * @return array
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface[]
      */
-    protected function loadAttributesFromDefinition(BehaviorLogBook $logBook, string $definitionObjectAlias) : array
+    protected function loadAttributesFromDefinition(string $definitionObjectAlias, BehaviorLogBook $logBook) : array
     {
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $definitionObjectAlias);
-        $definitionObject = $dataSheet->getMetaObject();
+        $definitionObject = MetaObjectFactory::createFromString($this->getWorkbench(), $definitionObjectAlias);
         
-        if($definitionObject->getBehaviors()->findBehavior(CustomAttributesJsonBehavior::class)) {
+        if($definitionObject->getBehaviors()->findBehavior(CustomAttributesJsonBehavior::class) !== null) {
             throw new BehaviorRuntimeError(
                 $this,
                 'Loading custom attributes from objects with custom attributes is not allowed!',
@@ -130,7 +135,8 @@ class CustomAttributesJsonBehavior
         return $definitionBehavior->addCustomAttributes(
             $this->getObject(), 
             $this, 
-            $logBook);
+            $logBook
+        );
     }
 
     /**
@@ -207,7 +213,7 @@ class CustomAttributesJsonBehavior
      * @param string|null $alias
      * @return CustomAttributesJsonBehavior
      */
-    public function setDefinitionObjectAlias(?string $alias) : CustomAttributesJsonBehavior
+    protected function setDefinitionObjectAlias(?string $alias) : CustomAttributesJsonBehavior
     {
         $this->jsonDefinitionObjectAlias = $alias;
         return $this;
@@ -216,7 +222,7 @@ class CustomAttributesJsonBehavior
     /**
      * @return string|null
      */
-    public function getDefinitionObjectAlias() : ?string
+    protected function getDefinitionObjectAlias() : ?string
     {
         return $this->jsonDefinitionObjectAlias;
     }
@@ -230,7 +236,7 @@ class CustomAttributesJsonBehavior
      * @param string $alias
      * @return $this
      */
-    public function setJsonAttributeAlias(string $alias) : CustomAttributesJsonBehavior
+    protected function setJsonAttributeAlias(string $alias) : CustomAttributesJsonBehavior
     {
         $this->jsonAttributeAlias = $alias;
         return $this;
@@ -239,12 +245,12 @@ class CustomAttributesJsonBehavior
     /**
      * @return string
      */
-    public function getJsonAttributeAlias() : string
+    protected function getJsonAttributeAlias() : string
     {
         return $this->jsonAttributeAlias;
     }
 
-    function getCustomAttributeDataAddressPrefix(): string
+    protected function getCustomAttributeDataAddressPrefix(): string
     {
         if(!$this->jsonDataAddress) {
             $jsonAttribute = $this->getObject()->getAttribute($this->getJsonAttributeAlias());
@@ -254,6 +260,10 @@ class CustomAttributesJsonBehavior
         return $this->jsonDataAddress . '::$.';
     }
 
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface::customAttributeStorageKeyToAlias()
+     */
     public function customAttributeStorageKeyToAlias(string $storageKey) : string
     {
         if($keyWithoutPrefix = StringDataType::substringAfter($storageKey, '.')){
@@ -263,6 +273,10 @@ class CustomAttributesJsonBehavior
         return StringDataType::convertCasePascalToUnderscore($storageKey);
     }
     
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface::getCustomAttributeDataAddress()
+     */
     public function getCustomAttributeDataAddress(string $storageKey) : string
     {
         if($keyWithoutPrefix = StringDataType::substringAfter($storageKey, '.')){
