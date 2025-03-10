@@ -172,24 +172,12 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $definitionObject = MetaObjectFactory::createFromString($this->getWorkbench(), $definitionObjectAlias);
         
         if($definitionObject->getBehaviors()->findBehavior(CustomAttributesJsonBehavior::class)) {
-            throw new BehaviorRuntimeError(
-                $this,
-                'Loading custom attributes from objects with custom attributes is not allowed!',
-                null,
-                null,
-                $logBook
-            );
+            throw new BehaviorRuntimeError($this, 'Loading custom attributes from objects with custom attributes is not allowed!', null, null, $logBook);
         }
 
         $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
         if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
-            throw new BehaviorRuntimeError(
-                $this,
-                'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!',
-                null,
-                null,
-                $logBook
-            );
+            throw new BehaviorRuntimeError($this, 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!', null, null, $logBook);
         }
         
         if (null !== $filtersUxon = $this->getDefinitionFiltersUxon()) {
@@ -338,7 +326,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
      * 
      * @uxon-property definition_filters
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
-     * @uxon-template {"base_object_alias": "", "operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     * @uxon-template {"object_alias": "", "operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributeDefinitionBehavior
