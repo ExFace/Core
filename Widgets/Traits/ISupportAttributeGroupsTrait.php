@@ -4,7 +4,9 @@ namespace exface\Core\Widgets\Traits;
 
 /**
  * This is a convenience trait that adds a new `attribute_group_alias` property to a widget. 
- * Make sure to override `setAttributeGroupAlias(string)` with whatever logic you need.
+ * 
+ * NOTE: Avoid overriding the setter directly, as that would override the auto-suggest configuration as well.
+ * If you want to perform logic whenever the group alias is set, override `onSetAttributeGroupAlias(string)` instead.
  */
 trait ISupportAttributeGroupsTrait
 {
@@ -30,8 +32,19 @@ trait ISupportAttributeGroupsTrait
      */
     public function setAttributeGroupAlias(?string $groupAlias) : static
     {
-        $this->attributeGroupAlias = $groupAlias;
+        $this->attributeGroupAlias = $this->onSetAttributeGroupAlias($groupAlias);
         return $this;
+    }
+
+    /**
+     * Override this function, if you want to decorate your setter with logic.
+     * 
+     * @param string|null $groupAlias
+     * @return string
+     */
+    protected function onSetAttributeGroupAlias(?string $groupAlias) : string
+    {
+        return $groupAlias;
     }
 
     /**
