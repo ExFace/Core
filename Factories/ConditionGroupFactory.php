@@ -166,7 +166,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     public static function createFromConditionalProperty(ConditionalPropertyConditionGroup $prop, MetaObjectInterface $baseObject, string $dataRef = '=~input!') : ConditionGroupInterface
     {
         $uxon = new UxonObject([
-            'base_object_alias' => $baseObject->getAliasWithNamespace()
+            'object_alias' => $baseObject->getAliasWithNamespace()
         ]);
         foreach ($prop->getConditions() as $cond) {
             /* @var $left \exface\Core\Interfaces\Model\ExpressionInterface */
