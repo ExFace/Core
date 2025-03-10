@@ -2,13 +2,13 @@
 namespace exface\Core\Uxon;
 
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
-use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -483,15 +483,18 @@ class UxonSchema implements UxonSchemaInterface
                 $options = $this->getMetamodelComparators($search);
                 break;
             case strcasecmp($type, 'metamodel:attribute') === 0 && $object !== null:
+                try {
+                    $options = $this->getMetamodelAttributeAliases($object, $search);
+                } catch (MetaObjectNotFoundError $e) {
+                }
+                break;
+            case strcasecmp($type, 'metamodel:attribute_group') === 0 && $object !== null:
+                $options = $this->getAttributeGroupsForObject($object);
+                break;
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
-                    if (strcasecmp($type, 'metamodel:attribute') === 0) {
-                        $options = $this->getMetamodelAttributeAliases($object, $search);
-                    } else {
-                        $options = $this->getMetamodelRelationAliases($object, $search);
-                    }
+                    $options = $this->getMetamodelRelationAliases($object, $search);
                 } catch (MetaObjectNotFoundError $e) {
-                    $options = [];
                 }
                 break;
             case strcasecmp($type, 'metamodel:expression') === 0:
@@ -642,6 +645,32 @@ class UxonSchema implements UxonSchemaInterface
         }
         
         return $values;
+    }
+
+    /**
+     * Collects all attribute groups available for a given meta-object.
+     * 
+     * TODO geb 2025-03-10: Currently returns default groups only.
+     * 
+     * @param MetaObjectInterface $object
+     * @return array
+     */
+    protected function getAttributeGroupsForObject(MetaObjectInterface $object) : array
+    {
+        $attributeGroups = MetaAttributeGroupInterface::DEFAULT_GROUPS;
+        // TODO geb 2025-03-10: Fetch subgroups from available Type-Models AND from global table.
+        /*foreach ($object->getAttributes() as $attribute) {
+            if(!$attribute instanceof IHaveCategoriesInterface) {
+                continue;
+            }
+            
+            $attributeGroups = array_merge($attributeGroups, $attribute->getCategories());
+        }
+        
+        $attributeGroups = array_unique($attributeGroups);*/
+        sort($attributeGroups);
+        
+        return $attributeGroups;
     }
     
     /**

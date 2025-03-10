@@ -16,6 +16,7 @@ use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Traits\ISupportAttributeGroupsTrait;
 
 /**
  * The Container is a basic widget, that contains other widgets.
@@ -42,13 +43,12 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 class Container extends AbstractWidget implements iContainOtherWidgets, iCanPreloadData
 {
     use iCanPreloadDataTrait;
+    use ISupportAttributeGroupsTrait;
     
     private $widgets = array();
     
     private $readonly = null;
     
-    private ?string $attributeGroupAlias = null;
-
     /**
      * 
      * {@inheritDoc}
@@ -548,17 +548,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     }
 
     /**
-     * @uxon-property attribute_group_alias
-     * @uxon-type metamodel:attribute_group
-     * @uxon-template ~VISIBLE
-     *
-     * @param string|null $groupAlias
-     * @return $this
+     * @inheritdoc 
+     * @see ISupportAttributeGroupsTrait::onSetAttributeGroupAlias()
      */
-    public function setAttributeGroupAlias(?string $groupAlias) : Container
+    public function onSetAttributeGroupAlias(?string $groupAlias) : string
     {
-        $this->attributeGroupAlias = $groupAlias;
-        
         $widgets = [];
         $object = $this->getMetaObject();
         $readOnly = $this->isReadonly();
@@ -576,11 +570,6 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
         }
 
         $this->addWidgets($widgets);
-        return $this;
-    }
-    
-    public function getAttributeGroupAlias() : ?string
-    {
-        return $this->attributeGroupAlias;
+        return $groupAlias;
     }
 }

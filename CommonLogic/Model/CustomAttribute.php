@@ -5,6 +5,7 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\Behaviors\CustomAttributeDefinitionBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
+use exface\Core\Interfaces\Model\IHaveCategoriesInterface;
 
 /**
  * Custom attributes can be added to objects using `CustomAttributeDefinitionBehavior` and some kind of `CustomAttributeLoader`.
@@ -13,13 +14,14 @@ use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
  * @see CustomAttributeDefinitionBehavior
  * @see CustomAttributeLoaderInterface
  */
-class CustomAttribute extends Attribute
+class CustomAttribute extends Attribute implements IHaveCategoriesInterface
 {
     private array $categories = [];
 
     /**
      * @param array $categories
      * @return void
+     * @see IHaveCategoriesInterface
      */
     public function addCategories(array $categories) : void
     {
@@ -38,6 +40,7 @@ class CustomAttribute extends Attribute
      * 
      * @param UxonObject $categories
      * @return $this
+     * @see IHaveCategoriesInterface
      */
     public function setCategories(UxonObject $categories) : CustomAttribute
     {
@@ -46,7 +49,8 @@ class CustomAttribute extends Attribute
     }
 
     /**
-     * @return array
+     * @inheritdoc
+     * @see IHaveCategoriesInterface
      */
     public function getCategories() : array
     {
