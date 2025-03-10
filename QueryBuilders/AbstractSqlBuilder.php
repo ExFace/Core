@@ -878,7 +878,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $output = [];
             foreach ($columns as $column) {
                 if(!empty($jsonsForRow) && key_exists($column, $jsonsForRow)) {
-                    $output[$column] = $this->buildSqlEncodeAsJsonFlat($jsonsForRow[$column]);
+                    $output[$column] = $this->buildSqlJsonEncodeAsFlat($jsonsForRow[$column]);
                 } else {
                     $output[$column] = $row[$column];
                 }
@@ -1092,13 +1092,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
         // Process JSON values for update by filter columns.
         foreach ($jsonColumnsByFilter as $columnName => $keyValuePairs) {
-            $updates_by_filter[] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs, $this->buildSqlInitialJson($columnName));
+            $updates_by_filter[] = $columnName . ' = ' . $this->buildSqlJsonEncodeAsFlat($keyValuePairs, $this->buildSqlJsonInitial($columnName));
         }
 
         // Process JSON values for update by UID columns.
         foreach ($jsonColumnsByUid as $uid => $columns) {
             foreach ($columns as $columnName => $keyValuePairs) {
-                $updates_by_uid[$uid][$columnName] = $columnName . ' = ' . $this->buildSqlEncodeAsJsonFlat($keyValuePairs, $this->buildSqlInitialJson($columnName));
+                $updates_by_uid[$uid][$columnName] = $columnName . ' = ' . $this->buildSqlJsonEncodeAsFlat($keyValuePairs, $this->buildSqlJsonInitial($columnName));
             }
         }
         
@@ -3273,7 +3273,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlJsonRead(string $address, string $jsonPath) : string
     {
-        return "JSON_VALUE({$this->buildSqlInitialJson($address)}, '{$jsonPath}')";
+        return "JSON_VALUE({$this->buildSqlJsonInitial($address)}, '{$jsonPath}')";
     }
 
     /**
@@ -3293,7 +3293,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $initialJson
      * @return string
      */
-    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'") : string
+    protected function buildSqlJsonEncodeAsFlat(array $keyValuePairs, string $initialJson = "'{}'") : string
     {
         $resultJson = $initialJson;
 
@@ -3313,7 +3313,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $columnName
      * @return string
      */
-    protected function buildSqlInitialJson(string $columnName) : string
+    protected function buildSqlJsonInitial(string $columnName) : string
     {
         return <<<SQL
 

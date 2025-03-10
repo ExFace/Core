@@ -442,7 +442,7 @@ class MySqlBuilder extends AbstractSqlBuilder
     /**
      * @inheritdoc 
      */
-    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
+    protected function buildSqlJsonEncodeAsFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
     {
         $resultJson = $initialJson;
 
@@ -456,7 +456,7 @@ class MySqlBuilder extends AbstractSqlBuilder
     /**
      * @inheritdoc
      */
-    protected function buildSqlInitialJson(string $columnName): string
+    protected function buildSqlJsonInitial(string $columnName): string
     {
         return <<<SQL
 
