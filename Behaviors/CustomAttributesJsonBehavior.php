@@ -38,9 +38,7 @@ use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
  * 
  * @author Georg Bieger
  */
-class CustomAttributesJsonBehavior 
-    extends AbstractBehavior
-    implements CustomAttributeLoaderInterface
+class CustomAttributesJsonBehavior extends AbstractBehavior
 {
     private bool $processed = false;
     private ?string $jsonDefinitionObjectAlias = null;
@@ -132,11 +130,16 @@ class CustomAttributesJsonBehavior
                 $logBook);
         }
         
-        return $definitionBehavior->addCustomAttributes(
+        $attrs = $definitionBehavior->addCustomAttributes(
             $this->getObject(), 
             $this, 
             $logBook
         );
+
+        foreach ($attrs as $attr) {
+            $attr->setDataAddress($this->getCustomAttributeDataAddress($attr->getDataAddress()));
+        }
+        return $attrs;
     }
 
     /**
