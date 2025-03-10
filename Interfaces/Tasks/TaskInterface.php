@@ -123,6 +123,16 @@ interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUx
      * @return MetaObjectInterface
      */
     public function getMetaObject() : MetaObjectInterface;
+
+    /**
+     * Returns the object selector if one was explicitly used in this task.
+     * 
+     * In contrast to getMetaObject(), this method returns NULL if the task has no
+     * explicit object, but data or a page, that indirectly specifies the object.
+     * 
+     * @return MetaObjectSelectorInterface|null
+     */
+    public function getMetaObjectSelector() : ?MetaObjectSelectorInterface;
     
     /**
      * 
