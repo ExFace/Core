@@ -128,6 +128,8 @@ class DataSheetPlaceholder
     use ImportUxonObjectTrait;
     
     private $placeholder = null;
+
+    private $dataPlaceholders = null;
     
     private $dataSheet = null;
     
