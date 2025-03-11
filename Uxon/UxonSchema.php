@@ -687,7 +687,7 @@ class UxonSchema implements UxonSchemaInterface
         $relSep = RelationPath::getRelationSeparator();
         foreach ($attrAliases as $alias) {
             if (true === StringDataType::endsWith($alias, $relSep)) {
-                $relAliases[] = StringDataType::substringBefore($alias, $relSep);  
+                $relAliases[] = StringDataType::substringBefore($alias, $relSep, $alias, false, true);  
             } 
         }
         return $relAliases;

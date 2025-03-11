@@ -148,7 +148,7 @@ trait EnumDynamicDataTypeTrait {
     public function parse($string)
     {
         // Do not cast the value to aviod type mismatches with array keys (e.g. do not normalize numbers!)
-        $value = trim($string);
+        $value = $string === null ? null : trim($string);
         
         $valueInArray = array_key_exists($value, $this->values);
         

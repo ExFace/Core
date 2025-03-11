@@ -17,8 +17,6 @@ use exface\Core\Exceptions\Queues\QueueMessageDuplicateError;
 use exface\Core\CommonLogic\Tasks\ScheduledTask;
 use exface\Core\Interfaces\TaskQueueInterface;
 use exface\Core\DataTypes\LogLevelDataType;
-use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 use exface\Core\Events\Queue\OnQueueRunEvent;
@@ -161,7 +159,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
      * @param string $channel
      * @return DataSheetInterface
      */
-    protected function enqueue(TaskInterface $task, array $topics = [], string $producer, string $messageId = null, string $channel = null) : DataSheetInterface
+    protected function enqueue(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null, string $channel = null) : DataSheetInterface
     {
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $dataSheet->getColumns()->addFromUidAttribute();
@@ -180,7 +178,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             }
         }
         
-        $dataSheet->addRow([
+        $row = [
             'TASK_UXON' => $task->exportUxonObject()->toJson(),
             'STATUS' => QueuedTaskStateDataType::STATUS_QUEUED,
             'OWNER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
@@ -191,7 +189,9 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             'CHANNEL' => $channel,
             'USER_AGENT' => $userAgent,
             'QUEUE' => $this->getUid()
-        ]);
+        ];
+        $row = array_merge($row, $this->extractRowTaskInfo($task));
+        $dataSheet->addRow($row);
         
         if ($task instanceof ScheduledTask) {
             $dataSheet->setCellValue('SCHEDULER', 0, $task->getSchedulerUid());
@@ -200,6 +200,33 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         $dataSheet->dataCreate();
         
         return $dataSheet;
+    }
+
+    protected function extractRowTaskInfo(TaskInterface $task) : array
+    {
+        $row = [];
+
+        try {
+            if ((null !== $sel = $task->getMetaObjectSelector()) && $sel->isAlias()) {
+                $row['OBJECT_ALIAS'] = $sel->toString();
+            } else {
+                $row['OBJECT_ALIAS'] = $task->getMetaObject()->getAliasWithNamespace();
+            }
+        } catch (\Throwable $e) {
+            // If anything goes wrong (i.e. object not found, save the task without this informaiton)
+        }
+
+        try {
+            if ((null !== $sel = $task->getActionSelector()) && $sel->isAlias()) {
+                $row['ACTION_ALIAS'] = $sel->toString();
+            } else {
+                $row['ACTION_ALIAS'] = $task->getAction()->getAliasWithNamespace();
+            }
+        } catch (\Throwable $e) {
+            // If anything goes wrong (i.e. action not found, save the task without this informaiton)
+        }
+
+        return $row;
     }
     
     /**

@@ -949,7 +949,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isSortable()
     {
-        return $this->sortable;
+        return $this->sortable ?? false;
     }
 
     /**
@@ -972,7 +972,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isFilterable()
     {
-        return $this->filterable;
+        return $this->filterable ?? false;
     }
 
     /**

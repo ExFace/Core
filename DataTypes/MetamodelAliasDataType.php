@@ -91,4 +91,30 @@ class MetamodelAliasDataType extends StringDataType
         $this->includesNamespace = $value;
         return $this;
     }
+
+    /**
+     * 
+     * @param string $string
+     * @param bool $case
+     * @param bool $camelCase
+     * @return string
+     */
+    public static function generateAlias(string $string, bool $case = null, bool $camelCase = false) : string
+    {
+        $alias = self::transliterate($string, ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: NFC;');
+        switch ($case) {
+            case CASE_LOWER:
+                $alias = mb_strtolower($alias);
+                break;
+            case CASE_UPPER:
+                $alias = mb_strtoupper($alias);
+                break;
+        }
+        if ($camelCase === true) {
+            $alias = self::convertCaseDelimiterToCamel($alias, ' ');
+        } else {
+            $alias = str_replace(' ', '_', $alias);
+        }
+        return self::cast($alias);
+    }
 }
