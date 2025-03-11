@@ -444,11 +444,10 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             if ($alias === null) {
                 $alias = $this->getAliasFromName($name);
             }
+            
+            $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageObject());
             $attr = MetaObjectFactory::addAttributeTemporary(
-                $targetObject, 
-                new CustomAttribute($targetObject, $definition->getStorageBehavior()),
-                $name, 
-                $alias, 
+                $attr,
                 $address, 
                 $typeModel[self::KEY_DATA_TYPE]);
             

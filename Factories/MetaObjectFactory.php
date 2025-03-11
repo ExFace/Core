@@ -140,29 +140,21 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     }
 
     /**
-     * Creates a virtual attribute (not stored in the meta model) to the given object.
+     * Creates a virtual attribute (not stored in the metamodel) to the given object.
      *
-     * @param MetaObjectInterface    $obj
      * @param MetaAttributeInterface $attr
-     * @param string                 $name
-     * @param string                 $alias
      * @param string                 $dataAddress
      * @param mixed|null             $dataTypeOrSelector
      * @return MetaAttributeInterface
      */
     public static function addAttributeTemporary(
-        MetaObjectInterface $obj,
         MetaAttributeInterface $attr,
-        string $name,
-        string $alias,
         string $dataAddress,
         mixed $dataTypeOrSelector = null,
     ) : MetaAttributeInterface
     {
-        $attr->setId(UUIDDataType::generateSqlOptimizedUuid());
-        $attr->setAlias($alias);
-        $attr->setName($name);
-        $attr->setDataAddress($dataAddress);
+        $obj = $attr->getObject();
+        
         switch (true) {
             case $dataTypeOrSelector instanceof DataTypeInterface:
                 $type = $dataTypeOrSelector;
@@ -179,9 +171,11 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
             default:
                 throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . get_class($dataTypeOrSelector));
         }
+
         $attr->setDataType($type);
-        
+        $attr->setDataAddress($dataAddress);
         $obj->getAttributes()->add($attr);
+        
         return $attr;
     }
 }

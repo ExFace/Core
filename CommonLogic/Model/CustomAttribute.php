@@ -19,10 +19,10 @@ class CustomAttribute extends Attribute implements IHaveCategoriesInterface
     private array $categories = [];
     private mixed $source = null;
 
-    public function __construct(MetaObjectInterface $object, mixed $source = null)
+    public function __construct(MetaObjectInterface $object, string $name, string $alias, mixed $source = null)
     {
         $this->source = $source;
-        parent::__construct($object);
+        parent::__construct($object, $name, $alias);
     }
 
 
