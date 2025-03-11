@@ -4,13 +4,12 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Behaviors\CustomAttributeDefinitionBehavior;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
 use exface\Core\Interfaces\Model\IHaveCategoriesInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Custom attributes can be added to objects using `CustomAttributeDefinitionBehavior` and some kind of
- * `CustomAttributeLoader`. Apart from some minor convenience features, they work the same as regular attributes.
+ * Custom attributes are meant to be added to objects at runtime.
+ * Apart from some minor convenience features, they work the same as regular attributes.
  * 
  * @see CustomAttributeDefinitionBehavior
  * @see CustomAttributeLoaderInterface
