@@ -204,6 +204,7 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
     public function exportUxonObject() : UxonObject
     {
         $uxon = new UxonObject([
+            'object_alias' => $this->getObject()->getAliasWithNamespace(),
             'relation_to_behavior_object' => $this->getRelationPathToBehaviorObject()->toString(),
             'values_attribute_alias_column' => $this->getValuesAttributeAliasColumnAlias(),
             'values_content_column' => $this->getValuesContentColumnAlias()

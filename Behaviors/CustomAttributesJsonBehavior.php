@@ -4,19 +4,19 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
-use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
 
 /**
  * Automatically adds custom attributes to the object, whenever it is loaded from into memory.
@@ -41,7 +41,9 @@ use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
 class CustomAttributesJsonBehavior extends AbstractBehavior
 {
     private bool $processed = false;
-    private ?string $jsonDefinitionObjectAlias = null;
+    
+    private ?CustomAttributesDefinition $attributeDefinition = null;
+
     private ?string $jsonAttributeAlias = null;
     private ?string $jsonDataAddress = null;
 
@@ -49,9 +51,9 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     {
         $this->getWorkbench()->eventManager()->addListener(
             OnMetaObjectLoadedEvent::getEventName(),
-            [$this,'onLoadedAddCustomAttributes'],
-            $this->getPriority())
-        ;
+            [$this,'onLoadedAddAttributesToObject'],
+            $this->getPriority()
+        );
 
         return $this;
     }
@@ -60,7 +62,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     {
         $this->getWorkbench()->eventManager()->removeListener(
             OnMetaObjectLoadedEvent::getEventName(),
-            [$this,'onLoadedAddCustomAttributes']
+            [$this,'onLoadedAddAttributesToObject']
         );
 
         return $this;
@@ -72,7 +74,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * @param OnMetaObjectLoadedEvent $event
      * @return void
      */
-    public function onLoadedAddCustomAttributes(OnMetaObjectLoadedEvent $event) : void
+    public function onLoadedAddAttributesToObject(OnMetaObjectLoadedEvent $event) : void
     {
         if($this->isDisabled() || $this->processed || !$event->getObject()->isExactly($this->getObject())) {
             return;
@@ -81,18 +83,13 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logBook->addLine('Object loaded, checking for custom attributes...');
 
-        $definitionObjectAlias = $this->getDefinitionObjectAlias();
-        if ($definitionObjectAlias === null) {
-            throw new BehaviorConfigurationError($this, 'Missing required configuration "definition_object_alias"!');
-        } 
-
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
 
-        $definitionObjectAlias = $this->getDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
-        if($this->getObject()->isExactly($definitionObjectAlias)) {
+        $definition = $this->getAttributesDefinition();
+        if($this->getObject()->isExactly($definition->getDefinitionsObject())) {
             $this->loadAttributesFromData($logBook);
         } else {
-            $this->loadAttributesFromDefinition($definitionObjectAlias, $logBook);
+            $this->loadAttributesFromDefinition($definition, $logBook);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
@@ -107,9 +104,9 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * @param BehaviorLogBook $logBook
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface[]
      */
-    protected function loadAttributesFromDefinition(string $definitionObjectAlias, BehaviorLogBook $logBook) : array
+    protected function loadAttributesFromDefinition(CustomAttributesDefinition $definition, BehaviorLogBook $logBook) : array
     {
-        $definitionObject = MetaObjectFactory::createFromString($this->getWorkbench(), $definitionObjectAlias);
+        $definitionObject = $definition->getDefinitionsObject();
         
         if($definitionObject->getBehaviors()->findBehavior(CustomAttributesJsonBehavior::class) !== null) {
             throw new BehaviorRuntimeError(
@@ -120,19 +117,11 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
                 $logBook);
         }
 
-        $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
-        if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
-            throw new BehaviorRuntimeError(
-                $this,
-                'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!',
-                null,
-                null,
-                $logBook);
-        }
+        $definitionBehavior = $definition->getDefinitionBehavior();
         
-        $attrs = $definitionBehavior->addCustomAttributes(
+        $attrs = $definitionBehavior->addAttributesToObject(
             $this->getObject(), 
-            $this, 
+            $definition, 
             $logBook
         );
 
@@ -206,28 +195,42 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     }
 
     /**
-     * Define from which object this behavior should try to load its custom attribute definitions.
+     * Where to find the corresponding CustomAttributeDefinitionBehavior
      * 
-     * The definition object MUST have a behavior of type `CustomAttributeDefinitionBehavior` attached to it!
+     * @uxon-property attributes_definition
+     * @uxon-type \exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition
+     * @uxon-required true
+     * @uxon-template {"object_alias": ""}
      * 
-     * @uxon-property definition_object_alias
-     * @uxon-type metamodel:object
-     * 
-     * @param string|null $alias
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributesJsonBehavior
      */
-    protected function setDefinitionObjectAlias(?string $alias) : CustomAttributesJsonBehavior
+    protected function setAttributesDefinition(UxonObject $uxon) : CustomAttributesJsonBehavior
     {
-        $this->jsonDefinitionObjectAlias = $alias;
+        $this->attributeDefinition = new CustomAttributesDefinition($this, $uxon);
         return $this;
     }
 
     /**
-     * @return string|null
+     * 
+     * @return CustomAttributesDefinition|null
      */
-    protected function getDefinitionObjectAlias() : ?string
+    protected function getAttributesDefinition() : CustomAttributesDefinition
     {
-        return $this->jsonDefinitionObjectAlias;
+        return $this->attributeDefinition;
+    }
+
+    /**
+     * @deprecated user `setAttributesDefinition()` instead
+     * 
+     * @param string $alias
+     * @return CustomAttributesJsonBehavior
+     */
+    protected function setDefinitionObjectAlias(string $alias) : CustomAttributesJsonBehavior
+    {
+        return $this->setAttributesDefinition(new UxonObject([
+            'object_alias' => $alias
+        ]));
     }
 
     /**

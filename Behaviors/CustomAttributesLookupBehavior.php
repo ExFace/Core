@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesLookup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
@@ -12,13 +13,10 @@ use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Factories\MetaObjectFactory;
-use exface\Core\Factories\RelationPathFactory;
-use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
+ * Adds read-only custom attributes to an object and fills them with values from a lookup data sheet.
  * 
  * ## Examples
  * 
@@ -33,10 +31,15 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
  *  
  * ```
  *  {
- *      "definition_object_alias": "my.App.LOCATION_TYPE",
- *      "relation_to_values_object": "REPORT_LOCATION__LOCATION",
- *      "values_content_column": "REPORT_LOCATION__REPORT",
- *      "values_attribute_alias_column": "LOCATION_TYPE__NAME",
+ *      "attributes_definition": {
+ *          "object_alias": "my.App.LOCATION_TYPE"
+ *      },
+ *      "values_lookup": {
+ *          "object_alias": "my.App.REPORT_LOCATION",
+ *          "relation_to_behavior_object": "REPORT_LOCATION__LOCATION",
+ *          "values_content_column": "REPORT_LOCATION__REPORT",
+ *          "values_attribute_alias_column": "LOCATION_TYPE__NAME"
+ *      }
  *  }
  * 
  * ```
@@ -45,20 +48,17 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
  */
 class CustomAttributesLookupBehavior extends AbstractBehavior
 {
-    private bool $processed = false;
-    private ?string $definitionObjectAlias = null;
+    private ?CustomAttributesDefinition $attributeDefinition = null;
 
-    private $valuesLookup = null;
+    private ?CustomAttributesLookup $valuesLookup = null;
 
-    private ?UxonObject $definitionFiltersUxon = null;
-
-    private $attributes = [];
+    private $attributes = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener(
             OnMetaObjectLoadedEvent::getEventName(),
-            [$this,'onLoadedAddCustomAttributes'],
+            [$this,'onLoadedAddAttributesToObject'],
             $this->getPriority()
         );
         $this->getWorkbench()->eventManager()->addListener(
@@ -74,7 +74,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     {
         $this->getWorkbench()->eventManager()->removeListener(
             OnMetaObjectLoadedEvent::getEventName(),
-            [$this,'onLoadedAddCustomAttributes']
+            [$this,'onLoadedAddAttributesToObject']
         );
         $this->getWorkbench()->eventManager()->removeListener(
             OnReadDataEvent::getEventName(),
@@ -90,61 +90,35 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
      * @param OnMetaObjectLoadedEvent $event
      * @return void
      */
-    public function onLoadedAddCustomAttributes(OnMetaObjectLoadedEvent $event) : void
+    public function onLoadedAddAttributesToObject(OnMetaObjectLoadedEvent $event) : void
     {
-        if($this->isDisabled() || $this->processed || !$event->getObject()->isExactly($this->getObject())) {
+        if($this->isDisabled() || ! empty($this->attributes) || !$event->getObject()->isExactly($this->getObject())) {
             return;
         }
-        $this->processed = true;
+
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logBook->addLine('Object loaded, checking for custom attributes...');
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
-
-        $definitionObjectAlias = $this->getDefinitionObjectAlias() ?? $this->getObject()->getAliasWithNamespace();
-        $this->loadAttributesFromDefinition($definitionObjectAlias, $logBook);
-
-        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
-    }
-
-    /**
-     * Loads custom attributes from an explicit definition as associative array `[AttributeAlias => DataAddress]`.
-     *
-     * NOTE: This is the default behavior, because it is flexible and fast.
-     *
-     * @param BehaviorLogBook $logBook
-     * @param string          $definitionObjectAlias
-     * @return array
-     */
-    protected function loadAttributesFromDefinition(string $definitionObjectAlias, LogBookInterface $logBook) : array
-    {
-        $definitionObject = MetaObjectFactory::createFromString($this->getWorkbench(), $definitionObjectAlias);
         
-        if($definitionObject->getBehaviors()->findBehavior(CustomAttributesJsonBehavior::class)) {
-            throw new BehaviorRuntimeError($this, 'Loading custom attributes from objects with custom attributes is not allowed!', null, null, $logBook);
-        }
-
-        $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
-        if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
-            throw new BehaviorRuntimeError($this, 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!', null, null, $logBook);
-        }
-        
-        if (null !== $filtersUxon = $this->getDefinitionFiltersUxon()) {
-            $definitionBehavior->setFilters($filtersUxon);
-        }
-
-        $this->attributes = $definitionBehavior->addCustomAttributes(
-            $this->getObject(), 
-            $logBook
-        );
+        $definition = $this->getAttributesDefinition();
+        $definitionBehavior = $definition->getDefinitionBehavior();
+        $this->attributes = $definitionBehavior->addAttributesToObject($this->getObject(), $definition, $logBook);
 
         foreach ($this->attributes as $attr) {
             $attr->setWritable(false);
         }
 
-        return $this->attributes;
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
     }
 
+    /**
+     * Joins custom attribute values from a lookup data sheet to the data sheet of the object this behavior is attached to
+     * 
+     * @param \exface\Core\Events\DataSheet\OnReadDataEvent $event
+     * @throws \exface\Core\Exceptions\Behaviors\BehaviorRuntimeError
+     * @return void
+     */
     public function onReadDataJoinAttributes(OnReadDataEvent $event) 
     {
         if($this->isDisabled()) {
@@ -188,6 +162,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $lookupAliasName = $lookupAliasCol->getName();
         $lookupSheet->dataRead();
         $logBook->addDataSheet('Custom attribute values', $lookupSheet);
+        
         foreach ($lookupSheet->getRows() as $row) {
             $key = $row[$lookupKeyCol->getName()];
             $eventRowIdx = $eventSheet->getUidColumn()->findRowByValue($key);
@@ -201,52 +176,29 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     }
 
     /**
-     * The object, that contains the definitions of the custom attributes and has a CustomAttributeDefinitionBehavior
+     * Where to find the corresponding CustomAttributeDefinitionBehavior
      * 
-     * @uxon-property definition_object_alias
-     * @uxon-type metamodel:object
+     * @uxon-property attributes_definition
+     * @uxon-type \exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition
      * @uxon-required true
-     * 
-     * @param string|null $alias
-     * @return CustomAttributesLookupBehavior
-     */
-    protected function setDefinitionObjectAlias(?string $alias) : CustomAttributesLookupBehavior
-    {
-        $this->definitionObjectAlias = $alias;
-        return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getDefinitionObjectAlias() : string
-    {
-        return $this->definitionObjectAlias;
-    }
-
-    /**
-     * Apply filters when reading custom attribute definitions.
-     * 
-     * @uxon-property definition_filters
-     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
-     * @uxon-template {"object_alias": "", "operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     * @uxon-template {"object_alias": ""}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
-     * @return CustomAttributeDefinitionBehavior
+     * @return CustomAttributesLookupBehavior
      */
-    protected function setDefinitionFilters(UxonObject $uxon) : CustomAttributesLookupBehavior
+    protected function setAttributesDefinition(UxonObject $uxon) : CustomAttributesLookupBehavior
     {
-        $this->definitionFiltersUxon = $uxon;
+        $this->attributeDefinition = new CustomAttributesDefinition($this, $uxon);
         return $this;
     }
 
     /**
      * 
-     * @return UxonObject|null
+     * @return CustomAttributesDefinition|null
      */
-    protected function getDefinitionFiltersUxon() : ?UxonObject
+    protected function getAttributesDefinition() : CustomAttributesDefinition
     {
-        return $this->definitionFiltersUxon;
+        return $this->attributeDefinition;
     }
 
     /**
