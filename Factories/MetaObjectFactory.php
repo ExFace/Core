@@ -142,30 +142,23 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     /**
      * Creates a virtual attribute (not stored in the meta model) to the given object.
      *
-     * @param MetaObjectInterface $obj
-     * @param string              $name
-     * @param string              $alias
-     * @param string              $dataAddress
-     * @param mixed|null          $dataTypeOrSelector
-     * @param string|null         $attributeClass
+     * @param MetaObjectInterface    $obj
+     * @param MetaAttributeInterface $attr
+     * @param string                 $name
+     * @param string                 $alias
+     * @param string                 $dataAddress
+     * @param mixed|null             $dataTypeOrSelector
      * @return MetaAttributeInterface
      */
     public static function addAttributeTemporary(
         MetaObjectInterface $obj,
+        MetaAttributeInterface $attr,
         string $name,
         string $alias,
         string $dataAddress,
         mixed $dataTypeOrSelector = null,
-        ?string $attributeClass = null
     ) : MetaAttributeInterface
     {
-        if(!empty($attributeClass) && 
-            is_subclass_of($attributeClass, MetaAttributeInterface::class)) {
-            $attr = new $attributeClass($obj);
-        } else {
-            $attr = new Attribute($obj);
-        }
-
         $attr->setId(UUIDDataType::generateSqlOptimizedUuid());
         $attr->setAlias($alias);
         $attr->setName($name);

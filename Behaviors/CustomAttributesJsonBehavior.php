@@ -180,11 +180,11 @@ class CustomAttributesJsonBehavior
             $logBook->addLine('Adding attribute "' . $alias . '" with data address "' . $address . '".');
             $attribute = MetaObjectFactory::addAttributeTemporary(
                 $targetObject,
+                new CustomAttribute($targetObject, $this),
                 $alias,
                 $alias,
                 $address,
-                $dataType,
-                CustomAttribute::class);
+                $dataType);
 
             $attribute->setFilterable(true);
             $attribute->setSortable(true);
