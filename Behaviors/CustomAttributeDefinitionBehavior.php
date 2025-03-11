@@ -270,6 +270,10 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
 
     private ?UxonObject $filtersUxon = null;
 
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     */
     protected function registerEventListeners(): BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener(
@@ -281,6 +285,10 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
     protected function unregisterEventListeners(): BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->removeListener(
@@ -291,6 +299,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return $this;
     }
 
+    /**
+     * 
+     * @param \exface\Core\Events\Model\OnMetaObjectLoadedEvent $event
+     * @return void
+     */
     public function onLoadedConfigureEnums(OnMetaObjectLoadedEvent $event) : void
     {
         $object = $event->getObject();
@@ -339,8 +352,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
 
     /**
      * Load and add custom attributes to the target object.
-     * getRelationPathToOwnerObject
-     * @return MetaAttributeInterface[]
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $targetObject
+     * @param \exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook $logBook
+     * @throws \exface\Core\Exceptions\Behaviors\BehaviorRuntimeError
+     * @return array<CustomAttribute|MetaAttributeInterface>
      */
     public function addCustomAttributes(MetaObjectInterface $targetObject, BehaviorLogBook $logBook) : array
     {
@@ -462,6 +478,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return $attrs;
     }
 
+    /**
+     * 
+     * @param MetaAttributeInterface[] $attributes
+     * @return CustomAttributeDefinitionBehavior
+     */
     protected function registerWidgetModifications(array $attributes) : CustomAttributeDefinitionBehavior
     {
         // Only register behaviors once!
@@ -503,7 +524,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @param UxonObject $generalCategories
      * @return $this
      */
-    public function setGeneralCategories(UxonObject $generalCategories) : CustomAttributeDefinitionBehavior
+    protected function setGeneralCategories(UxonObject $generalCategories) : CustomAttributeDefinitionBehavior
     {
         $this->generalCategories = $generalCategories->toArray();
         return $this;
@@ -514,7 +535,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @return array
      */
-    public function getGeneralCategories() : array
+    protected function getGeneralCategories() : array
     {
         return $this->generalCategories;
     }
@@ -560,7 +581,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @param UxonObject $uxon
      * @return $this
      */
-    public function setTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    protected function setTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
     {
         // Prepare type models.
         $this->typeModels = [];
