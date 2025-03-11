@@ -12,7 +12,27 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Defines, where the definitions of the custom attributes are stored
+ * Defines, where the definitions of the custom attributes are stored.
+ * 
+ * All the different custom attributes behaviors automatically create additional attributes
+ * for their objects. These behaviors also define how to read and write data of custom attributes,
+ * so they are often referred to as storage-behaviors. The available custom attributes themselves
+ * are defined in a separate object - i.e. how each attribute is called, what its type is, etc. 
+ * That definition-object MUST have the `CustomAttributeDefinitionBehavior` attached to it. 
+ * 
+ * This configuration here is used in storage-behaviors to connect them with their respective
+ * definition-object and its definition-behavior. 
+ * 
+ * In addition to the `meta_object` property pointing to the definition-object, you can also
+ * define `filters` and `sorters`, that will be applied by the CustomAttributesDefinitionBehavior
+ * when reading the attributes for this particular storage-behavior.
+ * 
+ * On definition-object may contain custom attributes for different target objects. In fact, there
+ * may be apps, that will have a centralized global custom attribute list, where there is an explicit
+ * relation to the target-object for each attribute. This will result in multiple storage-behaviors
+ * pointing to a single definition-object. See the `CustomAttributeDefinitionBehavior` for more details.
+ * 
+ * @see \exface\Core\Behaviors\CustomAttributeDefinitionBehavior
  * 
  * @author Andrej Kabachnik
  */
@@ -22,6 +42,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     private ?BehaviorInterface $behavior = null;
     private ?MetaObjectInterface $definitionObject = null;
     private ?UxonObject $definitionFiltersUxon = null;
+    private ?UxonObject $definitionSortersUxon = null;
 
     /**
      * 
@@ -35,6 +56,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     }
 
     /**
+     * Returns the instance of a CustomAttributes behavior attached the object, that will receive these attributes.
      * 
      * @return BehaviorInterface
      */
@@ -43,6 +65,13 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
         return $this->behavior;
     }
 
+    /**
+     * Returns the instance of the CustomAttributeDefinitionBehavior, that is responsible for
+     * instantiating custom attributes.
+     * 
+     * @throws \exface\Core\Exceptions\Behaviors\BehaviorConfigurationError
+     * @return CustomAttributeDefinitionBehavior
+     */
     public function getDefinitionBehavior() : CustomAttributeDefinitionBehavior
     {
         $definitionBehavior = $this->getDefinitionsObject()->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
@@ -56,6 +85,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     }
 
     /**
+     * Returns the meta object, that will receive the custom attributes
      * 
      * @return MetaObjectInterface
      */
@@ -107,7 +137,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
      * 
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
-     * @uxon-template {"object_alias": "", "operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     * @uxon-template {"operator":"AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributesDefinition
@@ -126,6 +156,31 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     {
         return $this->definitionFiltersUxon;
     }
+    
+    /**
+     * Array of sorters to apply when reading custom attribute definitions.
+     * 
+     * @uxon-property sorters
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
+     * @uxon-template [{"attribute_alias": "","direction": "ASC"}]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributesDefinition
+     */
+    protected function setSorters(UxonObject $uxon) : CustomAttributesDefinition
+    {
+        $this->definitionSortersUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return UxonObject|null
+     */
+    protected function getSortersUxon() : ?UxonObject
+    {
+        return $this->definitionSortersUxon;
+    }
 
     /**
      * 
@@ -139,6 +194,9 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
 
         if (null !== $val = $this->getFiltersUxon()) {
             $uxon->setProperty('filters', $val);
+        }
+        if (null !== $val = $this->getSortersUxon()) {
+            $uxon->setProperty('sorters', $val);
         }
 
         return $uxon;
