@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MetamodelAliasDataType;
@@ -229,7 +230,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      $msg = 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!'; throw new BehaviorRuntimeError( $this, $msg, null, null, $logBook);
  *  }
  * 
- *  $customAttributes = $definitionBehavior->addCustomAttributes(
+ *  $customAttributes = $definitionBehavior->addAttributesToObject(
  *      $this->getObject(),
  *      $this,
  *      $logBook);
@@ -358,7 +359,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @throws \exface\Core\Exceptions\Behaviors\BehaviorRuntimeError
      * @return array<CustomAttribute|MetaAttributeInterface>
      */
-    public function addCustomAttributes(MetaObjectInterface $targetObject, BehaviorLogBook $logBook) : array
+    public function addAttributesToObject(MetaObjectInterface $targetObject, CustomAttributesDefinition $definition, BehaviorLogBook $logBook) : array
     {
         if(empty($this->getTypeModelsAll())) {
             throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
@@ -369,7 +370,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $logBook->addLine('Loading attribute definitions...');
         $logBook->addIndent(1);
         
-        $attributeDefinitionsSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
+        if (null === $tplUxon = $definition->getDataSheetTemplateUxon()) {
+            $attributeDefinitionsSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
+        } else {
+            $attributeDefinitionsSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $tplUxon, $this->getObject());
+        }
+
         $attributeDefinitionsSheet->getColumns()->addMultiple([
             $nameAlias = $this->getNameAttributeAlias()
         ]);
@@ -1001,7 +1007,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributeDefinitionBehavior
      */
-    public function setFilters(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    protected function setFilters(UxonObject $uxon) : CustomAttributeDefinitionBehavior
     {
         $this->filtersUxon = $uxon;
         return $this;

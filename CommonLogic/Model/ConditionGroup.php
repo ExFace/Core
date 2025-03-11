@@ -760,7 +760,9 @@ class ConditionGroup implements ConditionGroupInterface
             throw new InvalidArgumentException('Cannot create conditional expression from "' . $expression_string .  '": cannot determine base meta object!');
         }
         
-        $value = trim($value);
+        if (is_string($value)) {
+            $value = trim($value);
+        }
         
         // A special feature for string condition is the possibility to specify a comma separated list of attributes in one element
         // of the filters array, wich means that at least one of the attributes should match the value
