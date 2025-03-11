@@ -6,10 +6,11 @@ use exface\Core\Behaviors\CustomAttributeDefinitionBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
 use exface\Core\Interfaces\Model\IHaveCategoriesInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Custom attributes can be added to objects using `CustomAttributeDefinitionBehavior` and some kind of `CustomAttributeLoader`.
- * Apart from some minor convenience features, they work the same as regular attributes.
+ * Custom attributes can be added to objects using `CustomAttributeDefinitionBehavior` and some kind of
+ * `CustomAttributeLoader`. Apart from some minor convenience features, they work the same as regular attributes.
  * 
  * @see CustomAttributeDefinitionBehavior
  * @see CustomAttributeLoaderInterface
@@ -17,6 +18,14 @@ use exface\Core\Interfaces\Model\IHaveCategoriesInterface;
 class CustomAttribute extends Attribute implements IHaveCategoriesInterface
 {
     private array $categories = [];
+    private mixed $source = null;
+
+    public function __construct(MetaObjectInterface $object, mixed $source = null)
+    {
+        $this->source = $source;
+        parent::__construct($object);
+    }
+
 
     /**
      * @param array $categories
@@ -55,5 +64,18 @@ class CustomAttribute extends Attribute implements IHaveCategoriesInterface
     public function getCategories() : array
     {
         return $this->categories;
+    }
+
+    /**
+     * Returns the source of this custom attribute. 
+     * 
+     * The source represents the caller that initiated the creation of this object.
+     * Bear in mind that it might be null.
+     * 
+     * @return mixed
+     */
+    public function getSource() : mixed
+    {
+        return $this->source;
     }
 }

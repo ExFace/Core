@@ -375,11 +375,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $address = $attributeLoader->getCustomAttributeDataAddress($storageKey);
             $attr = MetaObjectFactory::addAttributeTemporary(
                 $targetObject, 
+                new CustomAttribute($targetObject, $attributeLoader),
                 $name, 
                 $alias, 
                 $address, 
-                $typeModel[self::KEY_DATA_TYPE],
-                CustomAttribute::class);
+                $typeModel[self::KEY_DATA_TYPE]);
             
             // Remove properties from the template that should not be applied to the attribute.
             unset($typeModel[self::KEY_DATA_TYPE]);
