@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesLookup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
@@ -47,17 +48,11 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     private bool $processed = false;
     private ?string $definitionObjectAlias = null;
 
+    private $valuesLookup = null;
+
     private ?UxonObject $definitionFiltersUxon = null;
 
-    private ?MetaRelationPathInterface $relationPathToValues = null;
-
     private $attributes = [];
-
-    private $valueLookupUxon = null;
-
-    private $valueAttributeAliasColumnAlias = null;
-
-    private $valueContentColumnAlias = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -112,52 +107,6 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
     }
 
-    public function onReadDataJoinAttributes(OnReadDataEvent $event) 
-    {
-        if($this->isDisabled()) {
-            return;
-        }
-
-        $eventSheet = $event->getDataSheet();
-        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
-
-        if ($eventSheet->isEmpty()) {
-            return;
-        }
-
-        $requiredAttrs = [];
-        foreach ($eventSheet->getColumns() as $col) {
-            if ($col->isAttribute() && in_array($col->getAttribute(), $this->attributes)) {
-                $requiredAttrs[] = $col->getAttribute();
-            }
-        }
-        if (empty($requiredAttrs)) {
-            return;
-        }
-        $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
-
-        $lookupSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->getValuesDataUxon() ?? new UxonObject(), $this->getRelationPathToValuesObject()->getEndObject());
-        $lookupSheet->getFilters()->addConditionFromValueArray($this->getRelationPathToValuesObject()->reverse()->__toString(), $eventSheet->getUidColumn()->getValues());
-        $lookupKeyCol = $lookupSheet->getColumns()->addFromExpression($this->getRelationPathToValuesObject()->reverse()->__toString());
-        $lookupContentCol = $lookupSheet->getColumns()->addFromExpression($this->getValuesContentColumnAlias());
-        $lookupAliasCol = $lookupSheet->getColumns()->addFromExpression($this->getValuesAttributeAliasColumnAlias());
-        $lookupSheet->dataRead();
-        foreach ($lookupSheet->getRows() as $row) {
-            $key = $row[$lookupKeyCol->getName()];
-            $eventIdx = $eventSheet->getUidColumn()->findRowByValue($key);
-            if ($eventIdx === null) {
-                continue;
-            }
-            $eventSheet->setCellValue($row[$lookupAliasCol->getName()], $eventIdx, $row[$lookupContentCol->getName()]);
-        }
-
-        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
-    }
-
     /**
      * Loads custom attributes from an explicit definition as associative array `[AttributeAlias => DataAddress]`.
      *
@@ -196,6 +145,61 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         return $this->attributes;
     }
 
+    public function onReadDataJoinAttributes(OnReadDataEvent $event) 
+    {
+        if($this->isDisabled()) {
+            return;
+        }
+
+        $eventSheet = $event->getDataSheet();
+        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
+        if ($eventSheet->isEmpty()) {
+            return;
+        }
+
+        $requiredAttrs = [];
+        foreach ($eventSheet->getColumns() as $col) {
+            if ($col->isAttribute() && in_array($col->getAttribute(), $this->attributes)) {
+                $requiredAttrs[] = $col->getAttribute();
+            }
+        }
+        if (empty($requiredAttrs)) {
+            return;
+        }
+        $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
+        
+        $lookup = $this->getValuesLookup();
+        $lookupSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $lookup->getValuesDataSheetUxon() ?? new UxonObject(), $lookup->getObject());
+        $eventSheetKeyAttr = $lookup->getRelationPathToBehaviorObject()->getRelationLast()->getRightKeyAttribute();
+        $eventSheetKeyCol = $eventSheet->getColumns()->getByAttribute($eventSheetKeyAttr);
+        if (! $eventSheetKeyCol) {
+            throw new BehaviorRuntimeError($this, 'Cannot load custom attribute values: no key column ' . $eventSheetKeyAttr->__toString() . ' in event data!', null, null, $logBook);
+        }
+        $lookupSheet->getFilters()->addConditionFromValueArray($lookup->getRelationPathToBehaviorObject()->__toString(), $eventSheetKeyCol->getValues());
+        $lookupKeyCol = $lookupSheet->getColumns()->addFromExpression($lookup->getRelationPathToBehaviorObject()->__toString());
+        $lookupContentCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesContentColumnAlias());
+        $lookupContentName = $lookupContentCol->getName();
+        $lookupAliasCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesAttributeAliasColumnAlias());
+        $lookupAliasName = $lookupAliasCol->getName();
+        $lookupSheet->dataRead();
+        $logBook->addDataSheet('Custom attribute values', $lookupSheet);
+        foreach ($lookupSheet->getRows() as $row) {
+            $key = $row[$lookupKeyCol->getName()];
+            $eventRowIdx = $eventSheet->getUidColumn()->findRowByValue($key);
+            if ($eventRowIdx === null) {
+                continue;
+            }
+            $eventSheet->setCellValue($row[$lookupAliasName], $eventRowIdx, $row[$lookupContentName]);
+        }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
+    }
+
     /**
      * The object, that contains the definitions of the custom attributes and has a CustomAttributeDefinitionBehavior
      * 
@@ -221,107 +225,6 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     }
 
     /**
-     * Relation from this object to the object, that contains the values of the generic attributes
-     * 
-     * @uxon-property relation_to_values_object
-     * @uxon-type metamodel:relation
-     * 
-     * @param mixed $relPath
-     * @return CustomAttributesLookupBehavior
-     */
-    protected function setRelationToValuesObject(?string $relPath) : CustomAttributesLookupBehavior
-    {
-        $this->relationPathToValues = RelationPathFactory::createFromString($this->getObject(), $relPath);
-        return $this;
-    }
-
-    /**
-     * 
-     * @return MetaRelationPathInterface|null
-     */
-    protected function getRelationPathToValuesObject() : MetaRelationPathInterface
-    {
-        return $this->relationPathToValues;
-    }
-
-    /**
-     * Custom data sheet to lookup the values of the attributes
-     * 
-     * If not set, it will be generated automatically.
-     * 
-     * @uxon-property values_data
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
-     * @uxon-template {"object_alias": "", "filters": {"operator": "AND","conditions":[{"expression": "","comparator": "=","value": ""}]}}
-     * 
-     * @param \exface\Core\CommonLogic\UxonObject $uxon
-     * @return CustomAttributesLookupBehavior
-     */
-    protected function setValuesData(UxonObject $uxon) : CustomAttributesLookupBehavior
-    {
-        $this->valueLookupUxon = $uxon;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return UxonObject
-     */
-    protected function getValuesDataUxon() : ?UxonObject
-    {
-        return $this->valueLookupUxon;
-    }
-
-    /**
-     * Column of the lookup data sheet, that will contain the aliases of the custom attributes
-     * 
-     * @uxon-property values_attribute_alias_column
-     * @uxon-type string
-     * @uxon-required true
-     * 
-     * @param string $col
-     * @return CustomAttributesLookupBehavior
-     */
-    protected function setValuesAttributeAliasColumn(string $col) : CustomAttributesLookupBehavior
-    {
-        $this->valueAttributeAliasColumnAlias = $col;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return string
-     */
-    protected function getValuesAttributeAliasColumnAlias() : string
-    {
-        return $this->valueAttributeAliasColumnAlias;
-    }
-
-    /**
-     * Column of the lookup data sheet, that will contain the values of the custom attributes
-     * 
-     * @uxon-property values_content_column
-     * @uxon-type string
-     * @uxon-required true
-     * 
-     * @param string $col
-     * @return CustomAttributesLookupBehavior
-     */
-    protected function setValuesContentColumn(string $col) : CustomAttributesLookupBehavior
-    {
-        $this->valueContentColumnAlias = $col;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return string
-     */
-    protected function getValuesContentColumnAlias() : string
-    {
-        return $this->valueContentColumnAlias;
-    }
-
-    /**
      * Apply filters when reading custom attribute definitions.
      * 
      * @uxon-property definition_filters
@@ -344,5 +247,31 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     protected function getDefinitionFiltersUxon() : ?UxonObject
     {
         return $this->definitionFiltersUxon;
+    }
+
+    /**
+     * Where to find values for the custom attributes
+     * 
+     * @uxon-property values_lookup
+     * @uxon-type \exface\Core\CommonLogic\Model\Behaviors\CustomAttributesLookup
+     * @uxon-required true
+     * @uxon-template {"object_alias": "", "relation_to_behavior_object": "", "values_attribute_alias_column": "", "values_content_column": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributesLookupBehavior
+     */
+    protected function setValuesLookup(UxonObject $uxon) : CustomAttributesLookupBehavior
+    {
+        $this->valuesLookup = new CustomAttributesLookup($this, $uxon);
+        return $this;
+    }
+
+    /**
+     * 
+     * @return CustomAttributesLookup
+     */
+    public function getValuesLookup() : CustomAttributesLookup
+    {
+        return $this->valuesLookup;
     }
 }
