@@ -805,9 +805,48 @@ class MsSqlBuilder extends AbstractSqlBuilder
     }
 
     /**
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlJsonRead()
+     */
+    protected function buildSqlJsonRead(string $address, string $jsonPath) : string
+    {
+        /*
+        TODO MS SQL does not support $..path expressions. Instead, we can use a subselect with a CROSS APPLY
+        like this (assuming there we look for $..Kommentar in a JSON, where Kommentar is a key on different
+        levels):
+
+        WITH recJsonItems AS (
+            SELECT BerichtBasis.ID [ID],
+                [key],
+                [value],
+                [type],
+                0 AS [lvl]
+            FROM BerichtBasis
+                CROSS APPLY OPENJSON(BerichtBasis.FormularDaten, '$')
+            UNION ALL
+            SELECT cte.ID,
+                jsonChild.[key],
+                jsonChild.[value],
+                jsonChild.[type],
+                cte.[lvl] + 1
+            FROM recJsonItems cte
+            CROSS APPLY OPENJSON(cte.[value]) jsonChild
+            WHERE cte.[type] IN (4, 5) -- Binding nur zu Array oder Object
+        )
+        SELECT ID,
+            STRING_AGG([value], ', ') WITHIN GROUP (ORDER BY [lvl]) [Kommentare]
+        FROM recJsonItems
+        WHERE [key] = 'Kommentar'
+        GROUP BY [ID];
+
+        */
+        return parent::buildSqlJsonRead($address, $jsonPath);
+    }
+
+    /**
      * @inheritdoc 
      */
-    protected function buildSqlEncodeAsJsonFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
+    protected function buildSqlJsonEncodeAsFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
     {
         $resultJson = $initialJson;
 
@@ -821,7 +860,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     /**
      * @inheritdoc 
      */
-    protected function buildSqlInitialJson(string $columnName): string
+    protected function buildSqlJsonInitial(string $columnName): string
     {
         return <<<SQL
 

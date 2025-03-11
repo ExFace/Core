@@ -4,23 +4,31 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\MetamodelAliasDataType;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\BehaviorFactory;
+use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Handles custom attribute definitions and type models. 
+ * Identifies its object as master data for custom attribute definitions.
+ * 
+ * In addition to regular attributes of meta objects defined in the model, the workbench can create 
+ * so-called "custom attributes" from master data inside an app. The definitions of such attributes
+ * can be stored in a SQL table or any other data source. This behavior explains the workbench, how
+ * to load and "understand" these attributes.
  * 
  * Custom attribute definitions will be stored on the object of this behavior, 
  * while type models can be defined in the `type_models` property of this behavior (see "Type Models").
@@ -30,23 +38,23 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * Each custom attribute is based off of a unique definition, stored on the object of this behavior.
  * Whenever a custom attribute is being loaded, this behavior will configure it based on the following data:
  * 
- * - **Name**(`attribute_name_alias`): The display name of the custom attribute.
- * - **Storage Key**(`attribute_storage_key_alias`): The storage key is used to generate the data address and the
+ * - **Name**(`name_attribute`): The display name of the custom attribute.
+ * - **Storage Key**(`data_address_attribute`): The storage key is used to generate the data address and the
  * technical alias  of the custom attribute. Make sure it matches whatever storage scheme you are using. For example:
  * JSON storage keys should  be written in snake_case, have no hierarchies and may omit the root accessor. Both
  * `$.some_alias` and `some_alias` will result in the same technical alias and data address. 
- * - **Type Model**(`attribute_type_model_alias`): The type model the custom attribute is based on. Type models
+ * - **Type Model**(`type_attribute`): The type model the custom attribute is based on. Type models
  * simplify
  * the configuration of custom attributes, by assigning meaningful defaults to most attribute properties. They are
  * identified with a key, that must either match a default type model or a type model that you defined in `type_models`
  * (see "Type Models").
- * - **Category Alias**(`attribute_category_alias`): The categories the custom attribute belongs to. Categories give
+ * - **Category Alias**(`category_attribute`): The categories the custom attribute belongs to. Categories give
  * designers more fine-grained control over which custom attributes will be included in automatically generated widgets
  * (see "Categories").
- * - **Hint**(`attribute_hint_alias`): The short description is used for tooltips and info panels, when working with an
+ * - **Hint**(`hint_attribute`): The short description is used for tooltips and info panels, when working with an
  * attribute.
- * - **Required**(`attribute_required_alias`): Determines, whether a custom attribute will be required in editors.
- * - **Owner Object**(`attribute_owner_object_alias`): This property is optional. You only need to set it if you
+ * - **Required**(`required_attribute`): Determines, whether a custom attribute will be required in editors.
+ * - **Owner Object**(`relation_to_owner_object`): This property is optional. You only need to set it if you
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
  * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
@@ -72,7 +80,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * By default, each custom attribute is already assigned to its type model as a category (for example "Time"). Beyond
  * that you can configure additional categories in the type model, all of which will be applied to all custom
  * attributes that use it. The most useful way however, is to manually edit what categories a custom attribute belongs
- * to, by changing the values stored in `attribute_category_alias`. While creating or editing a custom attribute, all
+ * to, by changing the values stored in `category_attribute`. While creating or editing a custom attribute, all
  * available categories will be displayed in a  dropdown multi-select. You can extend the available selection, by
  * adding more options to the property `general_categories`.
  * 
@@ -132,25 +140,16 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * - A default filter for each attribute that is custom.
  * 
  * ```
- * 
  *  {
  *      "widget_type": "DataTable",
  *      "object_alias": "some.object.Alias",
- *      "columns": [
- *          {
- *               "attribute_group_alias": "~REQUIRED~!Custom"
- *          },
- *          {
- *               "attribute_alias": "Item"
- *          },
- *          {
- *               "attribute_group_alias": "~REQUIRED~CUSTOM:!Company B,Company C"
- *          }
- *      ],
  *      "filters": [
- *          {
- *              "attribute_group_alias": "~CUSTOM"
- *          }
+ *          {"attribute_group_alias": "~CUSTOM"
+ *      ],
+ *      "columns": [
+ *          {"attribute_group_alias": "~REQUIRED~!Custom"},
+ *          {"attribute_alias": "Item"},
+ *          {"attribute_group_alias": "~REQUIRED~CUSTOM:!Company B,Company C"}
  *      ]
  *  }
  * 
@@ -163,13 +162,13 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * ```
  * 
  *  {
- *      "attribute_hint_alias": "hint",
- *      "attribute_name_alias": "name",
- *      "attribute_required_alias": "required",
- *      "attribute_type_model_alias": "type_model",
- *      "attribute_storage_key_alias": "storage_key",
- *      "attribute_owner_object_alias": "owner_alias",
- *      "attribute_category_alias": "categories",
+ *      "relation_to_owner_object": "owner_alias",
+ *      "name_attribute": "name",
+ *      "hint_attribute": "hint",
+ *      "data_address_attribute": "storage_key",
+ *      "type_attribute": "type_model",
+ *      "required_attribute": "required",
+ *      "category_attribute": "categories",
  *      "general_categories": [
  *          "Company A",
  *          "Company B"
@@ -231,7 +230,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      $msg = 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!'; throw new BehaviorRuntimeError( $this, $msg, null, null, $logBook);
  *  }
  * 
- *  $customAttributes = $definitionBehavior->addCustomAttributes(
+ *  $customAttributes = $definitionBehavior->addAttributesToObject(
  *      $this->getObject(),
  *      $this,
  *      $logBook);
@@ -245,6 +244,14 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected const KEY_DATA_TYPE = "data_type";
     protected const KEY_INHERITS_FROM = "inherits";
     protected const KEY_CATEGORIES = "categories";
+
+    const ALIAS_GENERATOR_CAMEL = 'CamelCase';
+
+    const ALIAS_GENERATOR_UPPER_CASE = 'UPPER_CASE';
+
+    const ALIAS_GENERATOR_LOWER_CASE = 'lower_case';
+
+    const ALIAS_GENERATOR_UNDERSCORE = 'Under_Score';
     
     private array $typeModels = [];
     private ?string $attributeTypeModelAlias = null;
@@ -254,33 +261,57 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
     private ?string $attributeOwnerObjectAlias = null;
+
+    private ?string $attributeAliasAlias = null;
+
+    private ?string $aliasGeneratorType = null;
+
     private bool $modelsInheritCategories = false;
     private array $generalCategories = [];
 
+    private ?UxonObject $filtersUxon = null;
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     */
     protected function registerEventListeners(): BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener(
             OnMetaObjectLoadedEvent::getEventName(),
             [$this,'onLoadedConfigureEnums'],
-            $this->getPriority());
-
-        return $this;
-    }
-
-    protected function unregisterEventListeners(): BehaviorInterface
-    {
-        $this->getWorkbench()->eventManager()->removeListener(
-            OnMetaObjectLoadedEvent::getEventName(),
-            [$this,'onLoadedConfigureEnums'],
+            $this->getPriority()
         );
 
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners(): BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(
+            OnMetaObjectLoadedEvent::getEventName(),
+            [$this,'onLoadedConfigureEnums']
+        );
+
+        return $this;
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Events\Model\OnMetaObjectLoadedEvent $event
+     * @return void
+     */
     public function onLoadedConfigureEnums(OnMetaObjectLoadedEvent $event) : void
     {
         $object = $event->getObject();
         if(!$object->isExactly($this->getObject())) {
+            return;
+        }
+        if ($this->hasAttributeTypeModels() === false) {
             return;
         }
         
@@ -300,7 +331,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         ]);
 
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.GenericStringEnum");
-        $typeModelAttribute = $object->getAttribute($this->getAttributeTypeModelAlias());
+        $typeModelAttribute = $object->getAttribute($this->getTypeAttributeAlias());
         $typeModelAttribute->setDataType($dataType);
         $typeModelAttribute->setCustomDataTypeUxon($typeModelEditorUxon);
 
@@ -313,7 +344,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         ]);
 
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.String");
-        $categoryAttribute = $object->getAttribute($this->getAttributeCategoryAlias());
+        $categoryAttribute = $object->getAttribute($this->getCategoryAttributeAlias());
         $categoryAttribute->setDataType($dataType);
         $categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
 
@@ -323,9 +354,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * Load and add custom attributes to the target object.
      * 
-     * @return MetaAttributeInterface[]
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $targetObject
+     * @param \exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook $logBook
+     * @throws \exface\Core\Exceptions\Behaviors\BehaviorRuntimeError
+     * @return array<CustomAttribute|MetaAttributeInterface>
      */
-    public function addCustomAttributes(MetaObjectInterface $targetObject, CustomAttributeLoaderInterface $attributeLoader, BehaviorLogBook $logBook) : array
+    public function addAttributesToObject(MetaObjectInterface $targetObject, CustomAttributesDefinition $definition, BehaviorLogBook $logBook) : array
     {
         if(empty($this->getTypeModelsAll())) {
             throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
@@ -336,22 +370,44 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $logBook->addLine('Loading attribute definitions...');
         $logBook->addIndent(1);
         
-        $attributeDefinitionsSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
+        if (null === $tplUxon = $definition->getDataSheetTemplateUxon()) {
+            $attributeDefinitionsSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
+        } else {
+            $attributeDefinitionsSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $tplUxon, $this->getObject());
+        }
+
         $attributeDefinitionsSheet->getColumns()->addMultiple([
-            $modelAlias = $this->getAttributeTypeModelAlias(),
-            $nameAlias = $this->getAttributeNameAlias(),
-            $keyAlias = $this->getAttributeStorageKeyAlias(),
-            $hintAlias = $this->getAttributeHintAlias(),
-            $requiredAlias = $this->getAttributeRequiredAlias(),
-            $categoryAlias = $this->getAttributeCategoryAlias()
+            $nameAlias = $this->getNameAttributeAlias()
         ]);
+        if (null !== $aliasAlias = $this->getAliasAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($aliasAlias);
+        }
+        if (null !== $modelAlias = $this->getTypeAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($modelAlias);
+        }
+        if (null !== $storageKeyAlias = $this->getDataAddressAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($storageKeyAlias);
+        }
+        if (null !== $hintAlias = $this->getHintAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($hintAlias);
+        }
+        if (null !== $requiredAlias = $this->getRequiredAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($requiredAlias);
+        }
+        if (null !== $categoryAlias = $this->getCategoryAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($categoryAlias);
+        }
+
+        if (null !== $filtersUxon = $this->getFiltersUxon()) {
+            $attributeDefinitionsSheet->setFilters(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject()));
+        }
         
         $targetObjectId = $targetObject->getId();
-        if($ownerIdAlias = $this->getAttributeOwnerObjectAlias()) {
+        if($ownerIdAlias = $this->getRelationPathToOwnerObject()) {
             $logBook->addLine('Loading only definitions that match "' . $targetObjectId . '" in "' . $ownerIdAlias . '" of "' . $this->getObject()->getAliasWithNamespace() . '".');
             $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerIdAlias, $targetObjectId);
         } else {
-            $logBook->addLine('No value was set for "attribute_owner_object_alias". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $logBook->addLine('No value was set for "relation_to_owner_object". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
         
         $attributeDefinitionsSheet->dataRead();
@@ -363,16 +419,31 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $logBook->addIndent(1);
         
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
-            $typeKey = $definitionRow[$modelAlias];
             $name = $definitionRow[$nameAlias];
 
-            if(! $typeModel = $this->getTypeModel($typeKey)) {
-                throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
+            if ($this->hasAttributeTypeModels() === true) {
+                $typeKey = $definitionRow[$modelAlias];
+                if(! $typeModel = $this->getTypeModel($typeKey)) {
+                    throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
+                }
+            } else {
+                $typeModel = [self::KEY_DATA_TYPE => StringDataType::class];
             }
             
-            $storageKey = $definitionRow[$keyAlias];
-            $alias = $attributeLoader->customAttributeStorageKeyToAlias($storageKey);
-            $address = $attributeLoader->getCustomAttributeDataAddress($storageKey);
+            if ($aliasAlias !== null) {
+                $alias = $definitionRow[$aliasAlias];
+            } 
+            if ($storageKeyAlias !== null) {
+                $address = $definitionRow[$storageKeyAlias];
+                if ($alias === null) {
+                    $alias = $address;
+                }
+            } else {
+                $address = '';
+            }
+            if ($alias === null) {
+                $alias = $this->getAliasFromName($name);
+            }
             $attr = MetaObjectFactory::addAttributeTemporary(
                 $targetObject, 
                 new CustomAttribute($targetObject, $attributeLoader),
@@ -386,12 +457,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             unset($typeModel[self::KEY_INHERITS_FROM]);
             unset($typeModel[$nameAlias]);
             // Apply the template.
-            $attr->importUxonObject(new UxonObject($typeModel));
+            if (! empty($typeModel)) {
+                $attr->importUxonObject(new UxonObject($typeModel));
+            }
             // Set values that were not stored in the template.
-            $attr->setShortDescription($definitionRow[$hintAlias]);
-            $attr->setRequired($definitionRow[$requiredAlias]);
+            if ($hintAlias !== null) {
+                $attr->setShortDescription($definitionRow[$hintAlias]);
+            }
+            if ($requiredAlias !== null) {
+                $attr->setRequired($definitionRow[$requiredAlias]);
+            }
             
-            if($attr instanceof CustomAttribute) {
+            if($categoryAlias !== null && $attr instanceof CustomAttribute) {
                 $delimiter = $this->getObject()->getAttribute($categoryAlias)->getValueListDelimiter();
                 $categories = explode($delimiter, $definitionRow[$categoryAlias]);
                 $attr->addCategories($categories);
@@ -407,6 +484,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         return $attrs;
     }
 
+    /**
+     * 
+     * @param MetaAttributeInterface[] $attributes
+     * @return CustomAttributeDefinitionBehavior
+     */
     protected function registerWidgetModifications(array $attributes) : CustomAttributeDefinitionBehavior
     {
         // Only register behaviors once!
@@ -448,7 +530,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @param UxonObject $generalCategories
      * @return $this
      */
-    public function setGeneralCategories(UxonObject $generalCategories) : CustomAttributeDefinitionBehavior
+    protected function setGeneralCategories(UxonObject $generalCategories) : CustomAttributeDefinitionBehavior
     {
         $this->generalCategories = $generalCategories->toArray();
         return $this;
@@ -459,7 +541,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @return array
      */
-    public function getGeneralCategories() : array
+    protected function getGeneralCategories() : array
     {
         return $this->generalCategories;
     }
@@ -505,7 +587,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @param UxonObject $uxon
      * @return $this
      */
-    public function setTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    protected function setTypeModels(UxonObject $uxon) : CustomAttributeDefinitionBehavior
     {
         // Prepare type models.
         $this->typeModels = [];
@@ -622,13 +704,14 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string
      */
-    public function getAttributeTypeModelAlias() : string
-    {
-        if(! $this->attributeTypeModelAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_type_model_alias"));
-        }
-        
+    protected function getTypeAttributeAlias() : ?string
+    {        
         return $this->attributeTypeModelAlias;
+    }
+
+    protected function hasAttributeTypeModels() : bool
+    {
+        return $this->attributeTypeModelAlias !== null;
     }
 
     /**
@@ -637,14 +720,13 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * Type models simplify the configuration of custom attributes, by assigning meaningful defaults to most attribute
      * properties.
      * 
-     * @uxon-property attribute_type_model_alias
+     * @uxon-property type_attribute
      * @uxon-type metamodel:attribute
-     * @uxon-template type_model
      * 
      * @param string $alias
      * @return $this
      */
-    public function setAttributeTypeModelAlias(string $alias) : static
+    protected function setTypeAttribute(string $alias) : static
     {
         $this->attributeTypeModelAlias = $alias;
         return $this;
@@ -655,14 +737,13 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * Categories can be used to limit which custom attributes will be included in automatically generated widgets.
      * 
-     * @uxon-property attribute_category_alias
+     * @uxon-property category_attribute
      * @uxon-type metamodel:attribute
-     * @uxon-template attribute_category_alias
      * 
      * @param string $alias
      * @return $this
      */
-    public function setAttributeCategoryAlias(string $alias) : CustomAttributeDefinitionBehavior
+    protected function setCategoryAttribute(string $alias) : CustomAttributeDefinitionBehavior
     {
         $this->attributeCategoryAlias = $alias;
         return $this;
@@ -671,22 +752,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string
      */
-    public function getAttributeCategoryAlias() : string
+    protected function getCategoryAttributeAlias() : ?string
     {
-        if(! $this->attributeCategoryAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_category_alias"));
-        }
-
         return $this->attributeCategoryAlias;
     }
 
     /**
      * @return string
      */
-    public function getAttributeNameAlias() : string
+    protected function getNameAttributeAlias() : string
     {
         if(! $this->attributeNameAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_name_alias"));
+            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("name_attribute"));
         }
         
         return $this->attributeNameAlias;
@@ -695,29 +772,58 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * The attribute of the definition object that holds the name of a custom attribute.
      * 
-     * @uxon-property attribute_name_alias
+     * @uxon-property name_attribute
      * @uxon-type metamodel:attribute
-     * @uxon-template name
+     * @uxon-required true
      * 
      * @param string $alias
      * @return $this
      */
-    public function setAttributeNameAlias(string $alias) : static
+    protected function setNameAttribute(string $alias) : static
     {
         $this->attributeNameAlias = $alias;
         return $this;
     }
 
     /**
+     * 
+     * @return string|null
+     */
+    protected function getAliasAttributeAlias() : ?string
+    {
+        return $this->attributeAliasAlias;
+    }
+
+    /**
+     * The attributegetRequiredAttributeAliasthe custom attribute to be generated.
+     * 
+     * @uxon-property alias_attribute
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $attributeAlias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAliasAttribute(string $attributeAlias) : CustomAttributeDefinitionBehavior
+    {
+        $this->attributeAliasAlias = $attributeAlias;
+        return $this;
+    }
+
+    /**
      * @return string
      */
-    public function getAttributeStorageKeyAlias() : string
+    protected function getDataAddressAttributeAlias() : ?string
     {
-        if(! $this->attributeStorageKeyAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_storage_key_alias"));
-        }
-
         return $this->attributeStorageKeyAlias;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasDataAddresses() : bool
+    {
+        return $this->attributeStorageKeyAlias !== null;
     }
 
     /**
@@ -725,14 +831,13 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * The storage key is used to generate the data address and the technical alias of the custom attribute.
      *
-     * @uxon-property attribute_storage_key_alias
-     * @uxon-type metamodel:attribute
-     * @uxon-template storage_key
+     * @uxon-property data_address_attribute
+     * @uxon-type megetRelationPathToOwnerObject
      *
      * @param string $alias
      * @return $this
      */
-    public function setAttributeStorageKeyAlias(string $alias) : static
+    protected function setDataAddressAttribute(string $alias) : static
     {
         $this->attributeStorageKeyAlias = $alias;
         return $this;
@@ -741,12 +846,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string
      */
-    public function getAttributeHintAlias() : string
+    protected function getHintAttributeAlias() : ?string
     {
-        if(! $this->attributeHintAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_hint_alias"));
-        }
-        
         return $this->attributeHintAlias;
     }
 
@@ -755,14 +856,13 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * The short description is used for tooltips and info panels, when working with the custom attribute.
      * 
-     * @uxon-property attribute_hint_alias
+     * @uxon-property hint_attribute
      * @uxon-type metamodel:attribute
-     * @uxon-template hint
      * 
      * @param string $alias
      * @return $this
      */
-    public function setAttributeHintAlias(string $alias) : static
+    protected function setHintAttribute(string $alias) : static
     {
         $this->attributeHintAlias = $alias;
         return $this;
@@ -771,26 +871,21 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string
      */
-    public function getAttributeRequiredAlias() : string
+    protected function getRequiredAttributeAlias() : ?string
     {
-        if(! $this->attributeRequiredAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("attribute_required_alias"));
-        }
-        
         return $this->attributeRequiredAlias;
     }
 
     /**
      * The attribute of the definition object that determines whether a custom attribute is required.
      * 
-     * @uxon-property attribute_required_alias
+     * @uxon-property required_attribute
      * @uxon-type metamodel:attribute
-     * @uxon-template required
      * 
      * @param string $alias
      * @return $this
      */
-    public function setAttributeRequiredAlias(string $alias) : static
+    protected function setRequiredAttribute(string $alias) : static
     {
         $this->attributeRequiredAlias = $alias;
         return $this;
@@ -799,24 +894,24 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string|null
      */
-    public function getAttributeOwnerObjectAlias() : ?string
+    protected function getRelationPathToOwnerObject() : ?string
     {
         return $this->attributeOwnerObjectAlias;
     }
 
     /**
-     * (Optional) Relation to the meta object, that the attribute will be attached to.
+     * If attributes for different objects are stored in the same place, you will need a link to the target-object on each attribute.
      * 
      * You only need to set a value for this property, if you are storing custom attribute
      * definitions for more than one MetaObject in the same table.
      * 
-     * @uxon-property attribute_owner_object_alias
+     * @uxon-property relation_to_owner_object
      * @uxon-type metamodel:relation
      * 
      * @param string|null $alias
      * @return $this
      */
-    public function setAttributeOwnerObjectAlias(?string $alias) : static
+    protected function setRelationToOwnerObject(?string $alias) : static
     {
         $this->attributeOwnerObjectAlias = $alias;
         return $this;
@@ -832,7 +927,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @param bool $value
      * @return $this
      */
-    public function setModelsInheritCategories(bool $value) : CustomAttributeDefinitionBehavior
+    protected function setModelsInheritCategories(bool $value) : CustomAttributeDefinitionBehavior
     {
         $this->modelsInheritCategories = $value;
         return $this;
@@ -841,7 +936,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return bool
      */
-    public function getModelsInheritCategories() : bool
+    protected function getModelsInheritCategories() : bool
     {
         return $this->modelsInheritCategories;
     }
@@ -882,25 +977,161 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      */
     protected function getBaseTypeModel() : array
     {
+        // TODO make defaults depend on behaviors settings - e.g. readable if data address known
         return [
             // DATATYPE
             self::KEY_DATA_TYPE => "exface.Core.String",
             // BASIC FLAGS
-            "readable" => "true",
-            "writable" => "true",
-            "copyable" => "true",
-            "editable" => "true",
-            "required" => "false",
-            "hidden" => "false",
-            "sortable" => "true",
-            "filterable" => "true",
-            "aggregatable" => "true",
+            "readable" => true,
+            "writable" => true,
+            "copyable" => true,
+            "editable" => true,
+            "required" => false,
+            "hidden" => false,
+            "sortable" => true,
+            "filterable" => true,
+            "aggregatable" => true,
             // DEFAULTS
-            "default_aggregate_function" => "",
-            "default_sorter_dir" => "ASC",
-            "value_list_delimiter" => ",",
-            "default_display_order" => "",
+            "value_list_delimiter" => EXF_LIST_SEPARATOR,
             "categories" => []
         ];
+    }
+
+    /**
+     * Apply filters when reading custom attribute definitions - e.g. if an object only needs some of them.
+     * 
+     * @uxon-property filters
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setFilters(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    {
+        $this->filtersUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return UxonObject|null
+     */
+    protected function getFiltersUxon() : ?UxonObject
+    {
+        return $this->filtersUxon;
+    }
+
+    protected function getAliasFromName(string $name) : string
+    {
+        switch ($this->getAliasGeneratorType()) {
+            case self::ALIAS_GENERATOR_CAMEL:
+                return MetamodelAliasDataType::generateAlias($name, null, true);
+            case self::ALIAS_GENERATOR_UNDERSCORE:
+                return MetamodelAliasDataType::generateAlias($name, null, false);
+            case self::ALIAS_GENERATOR_UPPER_CASE:
+                return MetamodelAliasDataType::generateAlias($name, CASE_UPPER, false);
+            case self::ALIAS_GENERATOR_LOWER_CASE:
+                return MetamodelAliasDataType::generateAlias($name, CASE_LOWER, false);
+            default:
+                throw new BehaviorConfigurationError($this, 'Invalid alias generator type "' . $this->getAliasGeneratorType() . '"!');
+        }
+    }
+
+    /**
+     * 
+     * @return string
+     */
+    protected function getAliasGeneratorType() : string
+    {
+        return $this->aliasGeneratorType ?? self::ALIAS_GENERATOR_UNDERSCORE;
+    }
+
+    /**
+     * Generate aliases for the attributes automatically from their names.
+     * 
+     * @uxon-property alias_generator
+     * @uxon-type [CamelCase,UPPER_CASE,lower_case,Under_Score]
+     * @uxon-default Under_Score
+     * 
+     * @param string $aliasGeneratorType
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAliasGeneratorType(string $aliasGeneratorType) : CustomAttributeDefinitionBehavior
+    {
+        $this->aliasGeneratorType = $aliasGeneratorType;
+        return $this;
+    }
+
+    // Compatibility methods for legacy syntax - remove after 30.06.2025
+
+    /**
+     * @deprecated use `setCategoryAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeCategoryAlias(string $alias) : CustomAttributeDefinitionBehavior
+    {
+        return $this->setCategoryAttribute($alias);
+    }
+
+    /**
+     * @deprecated use `setNameAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeNameAlias(string $alias) : static
+    {
+        return $this->setNameAttribute($alias);
+    }
+
+    /**
+     * @deprecated use `setHintAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeHintAlias(string $alias) : static
+    {
+        return $this->setHintAttribute($alias);
+    }
+
+    /**
+     * @deprecated use `setRequiredAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeRequiredAlias(string $alias) : static
+    {
+        return $this->setRequiredAttribute($alias);
+    }
+
+    /**
+     * @deprecated use `setDataAddressAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeStorageKeyAlias(string $alias) : static
+    {
+        return $this->setDataAddressAttribute($alias);
+    }
+
+    /**
+     * @deprecated use `setTypeAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeTypeModelAlias(string $alias) : static
+    {
+        return $this->setTypeAttribute($alias);
+    }
+
+    /**
+     * @deprecated use `setRelationToOwnerObject()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeOwnerObjectAlias(?string $alias) : static
+    {
+        return $this->setRelationToOwnerObject($alias);
     }
 }
