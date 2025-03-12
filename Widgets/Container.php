@@ -16,7 +16,6 @@ use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Widgets\Traits\ISupportAttributeGroupsTrait;
 
 /**
  * The Container is a basic widget, that contains other widgets.
@@ -43,7 +42,6 @@ use exface\Core\Widgets\Traits\ISupportAttributeGroupsTrait;
 class Container extends AbstractWidget implements iContainOtherWidgets, iCanPreloadData
 {
     use iCanPreloadDataTrait;
-    use ISupportAttributeGroupsTrait;
     
     private $widgets = array();
     
@@ -289,7 +287,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      *
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"": ""}]
+     * @uxon-template [{"attribute_group_alias": "~VISIBLE"}]
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */
@@ -549,27 +547,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
 
     /**
      * @inheritdoc 
-     * @see ISupportAttributeGroupsTrait::onSetAttributeGroupAlias()
+     * @see AbstractWidget::importUxonObject()
      */
-    public function onSetAttributeGroupAlias(?string $groupAlias) : string
+    public function importUxonObject(UxonObject $uxon)
     {
-        $widgets = [];
-        $object = $this->getMetaObject();
-        $readOnly = $this->isReadonly();
-        $attributeGroups = $object->getAttributeGroup($groupAlias);
-        $attributeGroups->sortByDefaultDisplayOrder();
-        
-        foreach ($attributeGroups as $attribute) {
-            if($readOnly) {
-                $widget = WidgetFactory::createDefaultDisplayForAttributeAlias($object, $attribute->getAlias(), $this);
-            } else {
-                $widget = WidgetFactory::createDefaultEditorForAttributeAlias($object, $attribute->getAlias(), $this);
-            }
-            
-            $widgets[] = $widget;
-        }
-
-        $this->addWidgets($widgets);
-        return $groupAlias;
+        self::addAttributeGroupSnippet($uxon, $this);
+        return parent::importUxonObject($uxon);
     }
 }
