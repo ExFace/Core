@@ -47,8 +47,6 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     
     private $readonly = null;
     
-    private ?string $attributeGroupAlias = null;
-
     /**
      * 
      * {@inheritDoc}
@@ -289,7 +287,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      *
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"": ""}]
+     * @uxon-template [{"attribute_group_alias": "~VISIBLE"}]
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */
@@ -548,39 +546,12 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     }
 
     /**
-     * @uxon-property attribute_group_alias
-     * @uxon-type metamodel:attribute_group
-     * @uxon-template ~VISIBLE
-     *
-     * @param string|null $groupAlias
-     * @return $this
+     * @inheritdoc 
+     * @see AbstractWidget::importUxonObject()
      */
-    public function setAttributeGroupAlias(?string $groupAlias) : Container
+    public function importUxonObject(UxonObject $uxon)
     {
-        $this->attributeGroupAlias = $groupAlias;
-        
-        $widgets = [];
-        $object = $this->getMetaObject();
-        $readOnly = $this->isReadonly();
-        $attributeGroups = $object->getAttributeGroup($groupAlias);
-        $attributeGroups->sortByDefaultDisplayOrder();
-        
-        foreach ($attributeGroups as $attribute) {
-            if($readOnly) {
-                $widget = WidgetFactory::createDefaultDisplayForAttributeAlias($object, $attribute->getAlias(), $this);
-            } else {
-                $widget = WidgetFactory::createDefaultEditorForAttributeAlias($object, $attribute->getAlias(), $this);
-            }
-            
-            $widgets[] = $widget;
-        }
-
-        $this->addWidgets($widgets);
-        return $this;
-    }
-    
-    public function getAttributeGroupAlias() : ?string
-    {
-        return $this->attributeGroupAlias;
+        self::addAttributeGroupSnippet($uxon, $this);
+        return parent::importUxonObject($uxon);
     }
 }

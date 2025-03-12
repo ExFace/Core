@@ -568,13 +568,11 @@ class SqlModelLoader implements ModelLoaderInterface
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
         if (self::ATTRIBUTE_TYPE_COMPOUND === $row['attribute_type'] ?? null) {
-            $attr = new CompoundAttribute($object);
+            $attr = new CompoundAttribute($object, $row['attribute_name'], $row['attribute_alias']);
         } else {
-            $attr = new Attribute($object);
+            $attr = new Attribute($object, $row['attribute_name'], $row['attribute_alias']);
         }
         $attr->setId($row['oid']);
-        $attr->setAlias($row['attribute_alias']);
-        $attr->setName($row['attribute_name']);
         if (null !== $val = $row['data'] ?? null){
             $attr->setDataAddress($val);
         }

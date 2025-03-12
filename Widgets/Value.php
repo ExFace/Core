@@ -21,6 +21,7 @@ use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
 use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
@@ -46,9 +47,9 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators
 {
     use AttributeCaptionTrait;
-    
+    use iHaveAttributeGroupTrait;
     use PrefillValueTrait;
-    
+
     private $attribute_alias = null;
     
     private $data_type = null;
