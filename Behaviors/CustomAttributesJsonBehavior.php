@@ -176,13 +176,11 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), StringDataType::class);
         foreach ($customAttributes as $alias => $address) {
             $logBook->addLine('Adding attribute "' . $alias . '" with data address "' . $address . '".');
+            $attribute = new CustomAttribute($targetObject, $alias, $alias, $this);
             $attribute = MetaObjectFactory::addAttributeTemporary(
-                $targetObject,
-                $alias,
-                $alias,
+                $attribute,
                 $address,
-                $dataType,
-                CustomAttribute::class);
+                $dataType);
 
             $attribute->setFilterable(true);
             $attribute->setSortable(true);

@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -116,9 +117,12 @@ class Attribute implements MetaAttributeInterface
     /** @var Model */
     private $object;
 
-    public function __construct(MetaObjectInterface $object)
+    public function __construct(MetaObjectInterface $object, string $name, string $alias)
     {
         $this->object = $object;
+        $this->name = $name;
+        $this->alias = $alias;
+        $this->id = UUIDDataType::generateSqlOptimizedUuid();
     }
 
     /**
