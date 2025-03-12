@@ -28,6 +28,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\DataTypes\TextDataType;
+use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -160,6 +161,7 @@ use exface\Core\DataTypes\TextDataType;
  */
 class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
 {
+    use iHaveAttributeGroupTrait;
 
     private $inputWidget = null;
     
@@ -196,7 +198,6 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     private $useHiddenInput = false;
 
     private bool $appliesToAggregatedValues = true;
-    private ?string $attributeGroupAlias = null;
 
     /**
      * Returns TRUE if the input widget was already instantiated.
@@ -597,25 +598,6 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
             $this->getInputWidget()->setAttributeAlias($value);
         }
         return $this;
-    }
-
-    /**
-     * @uxon-property attribute_group_alias
-     * @uxon-type string
-     * @uxon-template ~VISIBLE
-     *
-     * @param string|null $groupAlias
-     * @return $this
-     */
-    public function setAttributeGroupAlias(?string $groupAlias) : Filter
-    {
-        $this->attributeGroupAlias = $groupAlias;
-        return $this;
-    }
-    
-    public function getAttributeGroupAlias() : ?string
-    {
-        return $this->attributeGroupAlias;
     }
 
     /**

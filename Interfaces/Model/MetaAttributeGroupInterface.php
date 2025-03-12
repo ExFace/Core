@@ -18,22 +18,26 @@ namespace exface\Core\Interfaces\Model;
 interface MetaAttributeGroupInterface extends MetaAttributeListInterface
 {
     const ALL = '~ALL';
-    
     const VISIBLE = '~VISIBLE';
-    
     const REQUIRED = '~REQUIRED';
-    
     const EDITABLE = '~EDITABLE';
-    
     const DEFAULT_DISPLAY = '~DEFAULT_DISPLAY';
-    
     const WRITABLE = '~WRITABLE';
-    
     const READABLE = '~READABLE';
-    
     const COPYABLE = '~COPYABLE';
-    
     const CUSTOM = '~CUSTOM';
+    
+    const DEFAULT_GROUPS = [
+        self::ALL,
+        self::VISIBLE,
+        self::REQUIRED,
+        self::EDITABLE,
+        self::DEFAULT_DISPLAY,
+        self::WRITABLE,
+        self::READABLE,
+        self::COPYABLE,
+        self::CUSTOM
+    ];
     
     public function getAlias();
     

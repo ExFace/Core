@@ -15,11 +15,10 @@ use exface\Core\Interfaces\Widgets\iCanEditData;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 
-
 /**
- * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
- * This duality makes it possible to define custom filters and even aggregators for each column group. If not done so, it will just be
- * a group of columns with it's own caption, etc.
+ * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data
+ * widget on the other. This duality makes it possible to define custom filters and even aggregators for each column
+ * group. If not done so, it will just be a group of columns with it's own caption, etc.
  * 
  * @method Data getParent()
  *
@@ -28,7 +27,6 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
  */
 class DataColumnGroup extends AbstractWidget implements iHaveColumns
 {
-
     // children widgets
     /** @var DataColumn[] */
     private $columns = array();
@@ -328,7 +326,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     }
 
     /**
-     * Defines the DataColumns within this group: an array of respecitve UXON objects.
+     * Defines the DataColumns within this group: an array of respective UXON objects.
      *
      * @uxon-property columns
      * @uxon-type \exface\Core\Widgets\DataColumn[]
@@ -485,25 +483,12 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     }
 
     /**
-     * {@inheritDoc}
-     * @see \exface
+     * @inheritdoc 
+     * @see AbstractWidget::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        // Inside a column group, we can have objects with attribute_group_alias, that are essentially
-        // snippets, that will produce multiple columns - one for every attribute in the group.
-        $uxon->addSnippet('attribute_group_alias', function(array $child){
-            $array = [];
-            $attrGrp = $this->getMetaObject()->getAttributeGroup($child['attribute_group_alias']);
-            // TODO why sort here????
-            $attrGrp->sortByDefaultDisplayOrder();
-            foreach ($attrGrp->getAttributes() as $attr) {
-                $child['attribute_alias'] = $attr->getAliasWithRelationPath();
-                $array[] = $child;
-            }
-            return $array;
-        });
-
-        return parent::importUxonObject($uxon);
+        self::addAttributeGroupSnippet($uxon, $this);
+        return parent::importUxonObject($uxon); 
     }
 }
