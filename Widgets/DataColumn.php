@@ -112,6 +112,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     private $mergeCells = false;
 
+    private $attributeGroupAlias = null;
+
     public function getAttributeAlias()
     {
         return $this->attribute_alias;
@@ -1116,11 +1118,17 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             
             // Dev-hint
             if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
-                $hint = ($hint ? StringDataType::endSentence($hint) : '') . $this->getHintDebug();
+                $hint = 
+                ($hint ? StringDataType::endSentence($hint) : '') 
+                . $this->getHintDebug();
             }
             return $hint;
         }
-        return $this->getCellWidget()->getHint($includeDebugInfo);
+        $addition = '';
+        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+            $addition .= "\n- Attribute group: `{$group}`";
+        } 
+        return $this->getCellWidget()->getHint($includeDebugInfo) . $addition;
     }
     
     /**
@@ -1171,5 +1179,30 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->mergeCells = $value;
         return $this;
+    }
+
+    /**
+     * Generate columns for every attribute in the group instead of a single column
+     * 
+     * @uxon-property attribute_group_alias
+     * @uxon-type metamodel:attribute_group
+     * @uxon-template ~VISIBLE
+     * 
+     * @param string $alias
+     * @return DataColumn
+     */
+    protected function setAttributeGroupAlias(string $alias) : DataColumn
+    {
+        $this->attributeGroupAlias = $alias;
+        return $this;
+    } 
+
+    /**
+     * 
+     * @return string
+     */
+    protected function getAttributeGroupAlias() : ?string
+    {
+        return $this->attributeGroupAlias;
     }
 }
