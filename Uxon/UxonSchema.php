@@ -661,7 +661,7 @@ class UxonSchema implements UxonSchemaInterface
         $aliases = [];
 
         try {
-            $refl = new ReflectionClass(AttributeGroup::class);
+            $refl = new ReflectionClass(MetaAttributeGroupInterface::class);
             $aliases = $refl->getConstants();
         } catch (Throwable $e) {
             // TODO
