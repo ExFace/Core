@@ -285,7 +285,7 @@ class UxonObject implements \IteratorAggregate
                 break;
             }
         }
-        if ($isAssoc === false && ! empty($arraySnippets)) {
+        if ($isAssoc === false) {
             foreach ($arraySnippets as $key => $snipArray) {
                 array_splice($val, $key, 1, $snipArray);
             }
@@ -344,6 +344,11 @@ class UxonObject implements \IteratorAggregate
     public function getPropertiesAll()
     {
         $array = [];
+        
+        if($this->isArray(true)) {
+            $this->array = $this->resolveSnippets($this->array);
+        }
+        
         foreach (array_keys($this->array) as $var){
             $array[$var] = $this->getProperty($var);
         }

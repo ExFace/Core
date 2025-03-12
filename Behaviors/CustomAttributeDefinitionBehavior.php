@@ -444,13 +444,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             if ($alias === null) {
                 $alias = $this->getAliasFromName($name);
             }
+            
+            $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageObject());
             $attr = MetaObjectFactory::addAttributeTemporary(
-                $targetObject, 
-                $name, 
-                $alias, 
+                $attr,
                 $address, 
-                $typeModel[self::KEY_DATA_TYPE],
-                CustomAttribute::class);
+                $typeModel[self::KEY_DATA_TYPE]);
             
             // Remove properties from the template that should not be applied to the attribute.
             unset($typeModel[self::KEY_DATA_TYPE]);
