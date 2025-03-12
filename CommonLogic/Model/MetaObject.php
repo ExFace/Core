@@ -1,7 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\Selectors\AttributeGroupSelector;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\AttributeListFactory;
@@ -15,6 +18,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
@@ -106,7 +110,9 @@ class MetaObject implements MetaObjectInterface
     
     private $default_editor_raw = null;
 
-    private $attribute_groups = array();
+    private $attribute_groups = [];
+
+    private $attribute_groups_in_model = null;
 
     private $behaviors = null;
 
@@ -1072,19 +1078,6 @@ class MetaObject implements MetaObjectInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
-     */
-    public function getAttributeGroup($alias)
-    {
-        if (! $this->attribute_groups[$alias]) {
-            $this->attribute_groups[$alias] = AttributeGroupFactory::createForObject($this, $alias);
-        }
-        return $this->attribute_groups[$alias];
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::is()
      */
     public function is($object_or_alias_or_id)
@@ -1252,5 +1245,57 @@ class MetaObject implements MetaObjectInterface
             }
         }
         return $result;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
+     */
+    public function getAttributeGroup($alias)
+    {
+        $grp = $this->attribute_groups[$alias] ?? null;
+        if (null === $grp) {
+            $selector = new AttributeGroupSelector($this->getWorkbench(), $alias);
+            if ($selector->isBuiltInGroup()) {
+                $this->attribute_groups[$alias] = AttributeGroupFactory::createForObject($this, $alias);
+            } elseif ($this->hasAttributeGroupsInModel()) {
+                $this->getWorkbench()->model()->getModelLoader()->loadAttributeGroups($this);
+                $this->setLoadAttributeGroupsFromModel(false);
+            }
+            $grp = $this->attribute_groups[$alias] ?? null;
+            if ($grp === null) {
+                throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $alias . '" not found for object ' . $this->__toString() . '!');
+            }
+        }
+        return $grp;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
+     */
+    public function setLoadAttributeGroupsFromModel(bool $trueOrFalse) : MetaObjectInterface
+    {
+        $this->attribute_groups_in_model = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasAttributeGroupsInModel() : bool
+    {
+        return $this->attribute_groups_in_model ?? false;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::addAttributeGroup()
+     */
+    public function addAttributeGroup(MetaAttributeGroupInterface $group) : MetaObjectInterface
+    {
+        $this->attribute_groups[$group->getAlias()] = $group;
+        return $this;
     }
 }

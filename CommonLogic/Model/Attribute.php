@@ -18,6 +18,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectModelError;
+use exface\Core\Interfaces\Selectors\AttributeGroupSelectorInterface;
 
 /**
  * 
@@ -106,6 +107,10 @@ class Attribute implements MetaAttributeInterface
 
     /** @var MetaRelationPathInterface|null */
     private $relation_path;
+
+    private $groupSelectors = [];
+
+    private $groups = [];
 
     // Properties NOT to be dublicated on copy()
     /** @var Model */
@@ -1254,5 +1259,16 @@ class Attribute implements MetaAttributeInterface
     public function __toString() : string
     {
         return '"' . $this->getName() . '" (alias "' . $this->getAliasWithRelationPath() . '")';
+    }
+
+    public function addGroupSelector(AttributeGroupSelectorInterface $selector) : MetaAttributeInterface
+    {
+        $this->groupSelectors[$selector->toString()] = $selector;
+        return $this;
+    }
+
+    public function getGroups() : array
+    {
+        
     }
 }

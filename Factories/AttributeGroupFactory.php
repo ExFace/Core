@@ -17,13 +17,13 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
      * @param string $alias            
      * @return AttributeGroup
      */
-    public static function createForObject(MetaObjectInterface $object, $alias = null)
+    public static function createForObject(MetaObjectInterface $object, $alias = null) : MetaAttributeGroupInterface
     {
         $exface = $object->getWorkbench();
         $group = new AttributeGroup($exface, $object);
         $group->setAlias($alias);
         
-        if (substr($alias, 0, 1) === '~') {
+        if (mb_substr($alias, 0, 1) === '~') {
             if (strcasecmp($alias, MetaAttributeGroupInterface::ALL) === 0) {
                 // The ~ALL group should list visible hidden attributes at the very end
                 $hidden_attrs = [];
