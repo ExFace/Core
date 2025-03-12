@@ -349,15 +349,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             }
         }
         foreach ($uxonArray as $colUxon) {
-            if ($colUxon->hasProperty('attribute_group_alias')) {
-                $attrGrp = $this->getMetaObject()->getAttributeGroup($colUxon->getProperty('attribute_group_alias'));
-                $attrGrp->sortByDefaultDisplayOrder();
-                foreach ($attrGrp->getAttributes() as $attr) {
-                    $this->addColumn($this->createColumnFromAttribute($attr));
-                }
-            } else {
-                $this->addColumn($this->createColumnFromUxon($colUxon));
-            }
+            $this->addColumn($this->createColumnFromUxon($colUxon));
         }
         return $this;
     }
@@ -490,5 +482,28 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             $this->getDataWidget()->setEditable(true);
         }
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        // Inside a column group, we can have objects with attribute_group_alias, that are essentially
+        // snippets, that will produce multiple columns - one for every attribute in the group.
+        $uxon->addSnippet('attribute_group_alias', function(array $child){
+            $array = [];
+            $attrGrp = $this->getMetaObject()->getAttributeGroup($child['attribute_group_alias']);
+            // TODO why sort here????
+            $attrGrp->sortByDefaultDisplayOrder();
+            foreach ($attrGrp->getAttributes() as $attr) {
+                $child['attribute_alias'] = $attr->getAliasWithRelationPath();
+                $array[] = $child;
+            }
+            return $array;
+        });
+
+        return parent::importUxonObject($uxon);
     }
 }

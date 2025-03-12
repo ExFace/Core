@@ -6,12 +6,103 @@ use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonSyntaxError;
-
+/**
+ * This is a container for any UXON configuration.
+ * 
+ * Since UXON is a special JSON format, this class is a wrapper around the array corresponding 
+ * to the JSON object. The array cannot be accessed directly, but only through methods of this
+ * class: `getProperty()`, `setProperty()`, `getPropertiesAll()`, etc.
+ * 
+ * ## Comments
+ * 
+ * In contrast to regular JSON, UXON supports comments. 
+ * 
+ * ## Snippets
+ * 
+ * UXON supports snippets - reusable parts of the configuration, that can be included almost
+ * anywhere. There are two main types of snippets:
+ * 
+ * - object snippets - will replace the object they are called in by their content
+ * - array snippets - will replace the object they are called in by multiple objects if that
+ * object is inside an array.
+ * 
+ * Snippets can have parameters.
+ * 
+ * ### Object snippet
+ * 
+ * Snippet for a custom filter widget
+ * 
+ * ```
+ * {
+ *      "widget": {
+ *          "widget_type": "Filter",
+ *          "attribute_alias": "CATEGORY",
+ *          "disabled": "[#disabled#]"
+ *      },
+ *      "parameters": [
+ *          {
+ *              "name": "disabled",
+ *              "description": "Disables the entire filter",
+ *              "default": false
+ *          }
+ *      ]
+ * }
+ * 
+ * ```
+ * 
+ * Usage: 
+ * 
+ * ```
+ *  {
+ *      "~snippet": "my.APP.CATEGORY_CUSTOM_FILTER",
+ *      "disabled": true
+ *  }
+ * 
+ * ```
+ * 
+ * ### Array snippets
+ * 
+ * For example, a snippet for a standard set of columns for a datatable
+ * 
+ * ```
+ *  {
+ *      "widgets": [
+ *          {
+ *              "widget_type": "DataColumn",
+ *              "attribute_alias": "NAME"
+ *          },
+ *          {
+ *              "widget_type": "DataColumn",
+ *              "attribute_alias": "CATEGORY"
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
+ * Usage:
+ * 
+ * ```
+ *  {
+ *      "widget_type": "DataTable",
+ *      "columns": [
+ *          {"~snippet": "my.APP.MY_SNIPPET_ALIAS"},
+ *          {"attribute_alias": "CATEGORY"}
+ *       ]
+ *  }
+ * 
+ * ```
+ * 
+ * ### Snippets with parameters
+ * 
+ */
 class UxonObject implements \IteratorAggregate
 {
     private $array = [];
     
     private $childUxons = [];
+
+    private $snippetsAdded = [];
     
     public function __construct(array $properties = [])
     {
@@ -151,9 +242,53 @@ class UxonObject implements \IteratorAggregate
         if (is_array($val) === true) {
             $child = $this->childUxons[$name] ?? null;
             if (null === $child) {
+                $val = $this->resolveSnippets($val);
                 $child = $this->childUxons[$name] = new self($val);
             } 
             return $child;
+        }
+        return $val;
+    }
+
+    /**
+     * 
+     * @param array $val
+     * @return array
+     */
+    protected function resolveSnippets(array $val) : array 
+    {
+        $isAssoc = false;
+        $arraySnippets = [];
+        // Object snippets
+        if (null !== $snipVal = $child['~snippet'] ?? null) {
+            $isAssoc = true;
+            // TODO resolve snippet here
+            // $val = ;
+        }
+        foreach ($val as $key => $innerVal) {
+            if (! is_numeric($key)) {
+                $isAssoc = true;
+                break;
+            }
+            if (is_array($innerVal)) {
+                if (null !== $snipVal = $innerVal['~snippet'] ?? null) {
+                    // TODO resolve snippet here
+                    $arraySnippets[$key] = $innerVal;
+                } elseif ($this->snippetsAdded !== null){
+                    foreach ($this->snippetsAdded as $snipKey => $snipFunc) {
+                        if (null !== $snipVal = $innerVal[$snipKey] ?? null) {
+                            $arraySnippets[$key] = $snipFunc($innerVal);
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+        if ($isAssoc === false && ! empty($arraySnippets)) {
+            foreach ($arraySnippets as $key => $snipArray) {
+                array_splice($val, $key, 1, $snipArray);
+            }
         }
         return $val;
     }
@@ -466,5 +601,11 @@ class UxonObject implements \IteratorAggregate
         }
         
         return new UxonObject($result);
+    }
+
+    public function addSnippet(string $pattern, callable $resolver)
+    {
+        $this->snippetsAdded[$pattern] = $resolver;
+        return $this;
     }
 }
