@@ -1298,4 +1298,13 @@ class MetaObject implements MetaObjectInterface
         $this->attribute_groups[$group->getAlias()] = $group;
         return $this;
     }
+
+    public function getAttributeGroups() : array
+    {
+        if ($this->hasAttributeGroupsInModel() === true) {
+            $this->getModel()->getModelLoader()->loadAttributeGroups($this);
+            $this->setLoadAttributeGroupsFromModel(false);
+        }
+        return $this->attribute_groups;
+    }
 }

@@ -33,6 +33,11 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
         return $this->alias;
     }
 
+    public function getAliasWithNamespace() : string
+    {
+        return $this->alias;
+    }
+
     /**
      * 
      * {@inheritDoc}
