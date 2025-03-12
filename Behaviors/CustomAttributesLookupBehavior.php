@@ -162,14 +162,17 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $lookupAliasName = $lookupAliasCol->getName();
         $lookupSheet->dataRead();
         $logBook->addDataSheet('Custom attribute values', $lookupSheet);
-        
+
+        $delim = $lookupAliasCol->getAttribute()->getValueListDelimiter();
         foreach ($lookupSheet->getRows() as $row) {
             $key = $row[$lookupKeyCol->getName()];
             $eventRowIdx = $eventSheet->getUidColumn()->findRowByValue($key);
             if ($eventRowIdx === null) {
                 continue;
             }
-            $eventSheet->setCellValue($row[$lookupAliasName], $eventRowIdx, $row[$lookupContentName]);
+            $val = $eventSheet->getCellValue($row[$lookupAliasName], $eventRowIdx);
+            $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
+            $eventSheet->setCellValue($row[$lookupAliasName], $eventRowIdx, $val);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
