@@ -573,10 +573,10 @@ class UxonSchema implements UxonSchemaInterface
             if (count($parts) > 1) {
                 $alias = $parts[2];
                 $namespace = $parts[0] . ($parts[1] !== null ? '.' . $parts[1] : '');
+                $ds->getFilters()->addConditionFromString('APP__ALIAS', $namespace);
             } else {
                 $alias = $parts[0];
             }
-            $ds->getFilters()->addConditionFromString('APP__ALIAS', $namespace);
             $ds->getFilters()->addConditionFromString('ALIAS', $alias);
         }
         $ds->dataRead();
