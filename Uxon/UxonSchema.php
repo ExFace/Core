@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
@@ -26,6 +27,8 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\WorkbenchCache;
 use exface\Core\DataTypes\TimeZoneDataType;
+use \ReflectionClass;
+use Throwable;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -650,27 +653,27 @@ class UxonSchema implements UxonSchemaInterface
     /**
      * Collects all attribute groups available for a given meta-object.
      * 
-     * TODO geb 2025-03-10: Currently returns default groups only.
-     * 
      * @param MetaObjectInterface $object
      * @return array
      */
     protected function getAttributeGroupsForObject(MetaObjectInterface $object) : array
     {
-        $attributeGroups = MetaAttributeGroupInterface::DEFAULT_GROUPS;
-        // TODO geb 2025-03-10: Fetch subgroups from available Type-Models AND from global table.
-        /*foreach ($object->getAttributes() as $attribute) {
-            if(!$attribute instanceof IHaveCategoriesInterface) {
-                continue;
-            }
-            
-            $attributeGroups = array_merge($attributeGroups, $attribute->getCategories());
+        $aliases = [];
+
+        try {
+            $refl = new ReflectionClass(AttributeGroup::class);
+            $aliases = $refl->getConstants();
+        } catch (Throwable $e) {
+            // TODO
+        } 
+
+        foreach ($object->getAttributeGroups() as $group) {
+            $aliases[] = $group->getAliasWithNamespace();
         }
+
+        sort($aliases);
         
-        $attributeGroups = array_unique($attributeGroups);*/
-        sort($attributeGroups);
-        
-        return $attributeGroups;
+        return $aliases;
     }
     
     /**
