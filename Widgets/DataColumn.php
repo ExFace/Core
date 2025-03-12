@@ -36,6 +36,7 @@ use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Contexts\DebugContext;
+use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -57,6 +58,8 @@ use exface\Core\Contexts\DebugContext;
  */
 class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText
 {
+    use iHaveAttributeGroupTrait;
+    
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
     }
@@ -111,8 +114,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $readOnly = false;
     
     private $mergeCells = false;
-
-    private $attributeGroupAlias = null;
 
     public function getAttributeAlias()
     {
@@ -1179,30 +1180,5 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->mergeCells = $value;
         return $this;
-    }
-
-    /**
-     * Generate columns for every attribute in the group instead of a single column
-     * 
-     * @uxon-property attribute_group_alias
-     * @uxon-type metamodel:attribute_group
-     * @uxon-template ~VISIBLE
-     * 
-     * @param string $alias
-     * @return DataColumn
-     */
-    protected function setAttributeGroupAlias(string $alias) : DataColumn
-    {
-        $this->attributeGroupAlias = $alias;
-        return $this;
-    } 
-
-    /**
-     * 
-     * @return string
-     */
-    protected function getAttributeGroupAlias() : ?string
-    {
-        return $this->attributeGroupAlias;
     }
 }

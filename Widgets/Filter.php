@@ -28,7 +28,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\DataTypes\TextDataType;
-use exface\Core\Widgets\Traits\ISupportAttributeGroupsTrait;
+use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -161,7 +161,7 @@ use exface\Core\Widgets\Traits\ISupportAttributeGroupsTrait;
  */
 class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
 {
-    use ISupportAttributeGroupsTrait;
+    use iHaveAttributeGroupTrait;
 
     private $inputWidget = null;
     

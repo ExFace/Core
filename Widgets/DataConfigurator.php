@@ -129,16 +129,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function setFilters(UxonObject $uxon_objects) : iHaveFilters
     {
+        self::addAttributeGroupSnippet($uxon_objects, $this);
+        
         try {
-            foreach ($uxon_objects as $uxon) {
-                if($groupAlias = $uxon->getProperty('attribute_group_alias')) {
-                    foreach ($this->createFiltersForAttributeGroupAlias($groupAlias, $uxon) as $filter) {
-                        $this->addFilter($filter);
-                    }
-                } else {
-                    $filter = $this->createFilterForAttributeAlias($uxon->getProperty('attribute_alias'), $uxon);
-                    $this->addFilter($filter);
-                }
+            foreach ($uxon_objects->getPropertiesAll() as $uxon) {
+                $filter = $this->createFilterForAttributeAlias($uxon->getProperty('attribute_alias'), $uxon);
+                $this->addFilter($filter);
             }
         } catch (\Throwable $e) {
             if ($uxon_objects->hasProperty('operator')) {
@@ -163,40 +159,13 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     }
 
     /**
-     * Creates filters based on the attribute group associated with the given alias.
-     * 
-     * Adding these filters will filter out any entries that do not match that attribute group.
-     * 
-     * @param string     $groupAlias
-     * @param UxonObject $uxon
-     * @return array
-     */
-    public function createFiltersForAttributeGroupAlias(string $groupAlias, UxonObject $uxon) : array
-    {
-        $object = $this->getMetaObject();
-        $attributeGroup = $object->getAttributeGroup($groupAlias);
-        $attributeGroup->sortByDefaultDisplayOrder();
-
-        $filters = [];
-        foreach ($attributeGroup as $attribute) {
-            if(!$attribute->isFilterable()) {
-                continue;
-            }
-            
-            $filters[] = $this->createFilterForAttributeAlias($attribute->getAlias(), $uxon);
-        }
-        
-        return $filters;
-    }
-    
-    /**
      * Creates a `Filter` widget from the given attribute alias an/or a UXON description of a `Filter` or `Input`
      * widget.
-     * 
+     *
      * NOTE: the filter is NOT added to the filters-tab automatically!!!
-     * 
-     * @param string $attribute_alias
-     * @param UxonObject $uxon_object
+     *
+     * @param string|null     $attribute_alias
+     * @param UxonObject|null $uxon_object
      * @return Filter
      */
     public function createFilterForAttributeAlias(string $attribute_alias = null, UxonObject $uxon_object = null) : Filter
@@ -540,4 +509,3 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         return $this->getWidgetConfigured();
     }
 }
-?>

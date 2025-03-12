@@ -344,7 +344,7 @@ trait iHaveColumnsAndColumnGroupsTrait
      * ```    
      *
      * @uxon-property columns
-     * @uxon-type \exface\Core\Widgets\DataColumnAutoSuggestExtension[]|\exface\Core\Widgets\DataColumnGroup[]
+     * @uxon-type \exface\Core\Widgets\DataColumn[]|\exface\Core\Widgets\DataColumnGroup[]
      * @uxon-template [{"attribute_alias": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()

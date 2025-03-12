@@ -1737,4 +1737,30 @@ MD;
         }
         return $debug_widget;
     }
+
+    /**
+     * Adds a snippet to a given UXON that resolves for 'attribute_group_alias'.
+     * 
+     * @param UxonObject      $uxon
+     * @param WidgetInterface $widget
+     * @return void
+     * 
+     * @see UxonObject::addSnippet()
+     */
+    public static function addAttributeGroupSnippet (UxonObject $uxon, WidgetInterface $widget) : void
+    {
+        $resolver = function(array $widgetUxon) use ($widget) {
+            $resultUxon = [];
+            
+            $attrGrp = $widget->getMetaObject()->getAttributeGroup($widgetUxon['attribute_group_alias']);
+            foreach ($attrGrp->getAttributes() as $attr) {
+                $widgetUxon['attribute_alias'] = $attr->getAliasWithRelationPath();
+                $resultUxon[] = $widgetUxon;
+            }
+            
+            return $resultUxon;
+        };
+        
+        $uxon->addSnippet('attribute_group_alias', $resolver);
+    }
 }
