@@ -462,6 +462,20 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return MetaAttributeGroupInterface
      */
     public function getAttributeGroup($alias);
+
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return void
+     */
+    public function setLoadAttributeGroupsFromModel(bool $trueOrFalse) : MetaObjectInterface;
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaAttributeGroupInterface $group
+     * @return void
+     */
+    public function addAttributeGroup(MetaAttributeGroupInterface $group) : MetaObjectInterface;
     
     /**
      * Returns TRUE if this object is exactly the one given or inherits from it and FALSE otherwise - similarly to the behavior of PHP instance_of.

@@ -2,6 +2,7 @@
 namespace exface\Core\ModelLoaders;
 
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
+use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -211,22 +212,25 @@ class SqlModelLoader implements ModelLoaderInterface
             $alias = MetamodelAliasDataType::cast($object->getAlias());
             $q_where = "a.app_alias = '{$namespace}' AND o.object_alias = '{$alias}'";
         }
-        $exists = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
-        $query = $this->getDataConnection()->runSql('
+        $existsBehavior = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
+        $existsAttributeGroup = $this->buildSqlExists('exf_attribute_group oag', 'oag.object_oid = o.oid', 'has_attribute_groups');
+        $query = $this->getDataConnection()->runSql(<<<SQL
                 /* Load object */
 				SELECT
                     o.*,
-					' . $this->buildSqlUuidSelector('o.oid') . ' as oid,
-					' . $this->buildSqlUuidSelector('o.app_oid') . ' as app_oid,
-					' . $this->buildSqlUuidSelector('o.data_source_oid') . ' as data_source_oid,
-					' . $this->buildSqlUuidSelector('o.parent_object_oid') . ' as parent_object_oid,
+                    {$this->buildSqlUuidSelector('o.oid')} as oid,
+					{$this->buildSqlUuidSelector('o.app_oid')} as app_oid,
+					{$this->buildSqlUuidSelector('o.data_source_oid')} as data_source_oid,
+					{$this->buildSqlUuidSelector('o.parent_object_oid')} as parent_object_oid,
 					a.app_alias,
-					' . $this->buildSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
-					' . $exists . '
+					{$this->buildSqlUuidSelector('ds.base_object_oid')} as base_object_oid,
+					{$existsBehavior},
+                    {$existsAttributeGroup}
 				FROM exf_object o 
 					LEFT JOIN exf_app a ON o.app_oid = a.oid 
 					LEFT JOIN exf_data_source ds ON o.data_source_oid = ds.oid
-				WHERE ' . $q_where);
+				WHERE {$q_where}
+SQL);
         if ($res = $query->getResultArray()) {
             $row = $res[0];
             
@@ -242,6 +246,7 @@ class SqlModelLoader implements ModelLoaderInterface
             
             $object->setName($row['object_name']);
             
+            $object->setLoadAttributeGroupsFromModel($row['has_attribute_groups'] == 1 ? true : false);
             if ($row['has_behaviors']) {
                 $load_behaviors = true;
             }
@@ -2203,5 +2208,36 @@ SQL;
         $this->auth_policies_loaded = null;
         $this->apps_loaded = null;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface
+     */
+    public function loadAttributeGroups(MetaObjectInterface $object) : MetaObjectInterface
+    {
+        $sql = <<<SQL
+SELECT 
+    ag.*,
+    app.app_alias,
+    {$this->buildSqlUuidSelector('ag.oid')} AS oid,
+    {$this->buildSqlUuidSelector('ag.app_oid')} AS app_oid,
+    (
+        {$this->buildSqlGroupConcat($this->buildSqlUuidSelector('attribute_oid'), 'exf_attribute_group_attributes aga', 'aga.attribute_group_oid = ag.oid')}
+    ) AS attribute_ids
+FROM exf_attribute_group ag
+    INNER JOIN exf_app app ON app.oid = ag.app_oid
+WHERE ag.object_oid = {$object->getId()}
+SQL;
+        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
+            $group = AttributeGroupFactory::createForObject($object, $row['app_alias'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['alias']);
+            $uidList = trim(str_replace(',,', ',', $row['attribute_ids']), ",");
+            foreach (explode(',', $uidList) as $attributeUid) {
+                $group->add($object->getAttributes()->getByAttributeId($attributeUid));
+            }
+            $object->addAttributeGroup($group);
+        }
+
+        return $object;
     }
 }

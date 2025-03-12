@@ -498,6 +498,15 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             // TODO why sort here????
             $attrGrp->sortByDefaultDisplayOrder();
             foreach ($attrGrp->getAttributes() as $attr) {
+                if ($attr->isRelation() === true) {
+                    $relatedObj = $this->getMetaObject()->getRelatedObject($attr->getAlias());
+                    if ($relatedObj->hasLabelAttribute() === true) {
+                        // It is important to append __LABEL to the relation path (and not the actual alias of the
+                        // label attribute) to make the column show the relation name as caption and not the attribute's
+                        // name. This is also what a human designer would typically do.
+                        $attr = $this->getMetaObject()->getAttribute(RelationPath::join($attr->getAlias(), MetaAttributeInterface::OBJECT_LABEL_ALIAS));
+                    }
+                }
                 $child['attribute_alias'] = $attr->getAliasWithRelationPath();
                 $array[] = $child;
             }

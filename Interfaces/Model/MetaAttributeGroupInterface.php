@@ -35,9 +35,9 @@ interface MetaAttributeGroupInterface extends MetaAttributeListInterface
     
     const CUSTOM = '~CUSTOM';
     
-    public function getAlias();
+    public function getAlias() : ?string;
     
-    public function setAlias($value);
+    public function setAlias(string $value) : MetaAttributeGroupInterface;
     
     /**
      * This is an alias for AttributeList->getAll()
