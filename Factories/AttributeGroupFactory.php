@@ -18,7 +18,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
      * @param callable|null       $sorter
      * @return AttributeGroup
      */
-    public static function createForObject(MetaObjectInterface $object, $alias = null, callable $sorter = null) : MetaAttributeGroupInterface
+    public static function createForObject(MetaObjectInterface $object, $alias = null) : MetaAttributeGroupInterface
     {
         $exface = $object->getWorkbench();
         $group = new AttributeGroup($exface, $object);
@@ -48,12 +48,6 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
             }
         } else {
             // TODO Load aliases from group models (as soon as attribute groups become available in the model)
-        }
-        
-        if($sorter !== null) {
-            $group->sort($sorter);
-        } else {
-            $group->sortByDefaultDisplayOrder();
         }
         
         return $group;
