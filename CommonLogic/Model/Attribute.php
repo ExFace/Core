@@ -1271,8 +1271,22 @@ class Attribute implements MetaAttributeInterface
         return $this;
     }
 
-    public function getGroups() : array
+    /**
+     * Place this attribute into one or more attribute groups
+     * 
+     * @uxon-property groups
+     * @uxon-type metamodel:attribute_group[]
+     * @uxon-template [""]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return Attribute
+     */
+    protected function setGroups(UxonObject $uxon) : MetaAttributeInterface
     {
-        
+        $obj = $this->getObject();
+        foreach ($uxon as $alias) {
+            $obj->getAttributeGroup($alias)->add($this);
+        }
+        return $this;
     }
 }

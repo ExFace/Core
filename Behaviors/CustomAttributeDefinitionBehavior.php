@@ -254,6 +254,23 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     const ALIAS_GENERATOR_UNDERSCORE = 'Under_Score';
     
     private array $typeModels = [];
+    private array $attributeDefaults = [
+        // DATATYPE
+        self::KEY_DATA_TYPE => "exface.Core.String",
+        // BASIC FLAGS
+        "readable" => true,
+        "writable" => true,
+        "copyable" => true,
+        "editable" => true,
+        "required" => false,
+        "hidden" => false,
+        "sortable" => true,
+        "filterable" => true,
+        "aggregatable" => true,
+        // DEFAULTS
+        "value_list_delimiter" => EXF_LIST_SEPARATOR,
+        "categories" => []
+    ];
     private ?string $attributeTypeModelAlias = null;
     private ?string $attributeCategoryAlias = null;
     private ?string $attributeNameAlias = null;
@@ -427,7 +444,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                     throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
                 }
             } else {
-                $typeModel = [self::KEY_DATA_TYPE => StringDataType::class];
+                $typeModel = $this->getAttributeDefaults();
             }
             
             if ($aliasAlias !== null) {
@@ -617,7 +634,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * Resolves the inheritance hierarchy of a given type model by applying naive recursion.
      * 
-     * Loops, and empty or invalid parent keys resolve to `array_merge($model, $this->getBaseTypeModel())`.
+     * Loops, and empty or invalid parent keys resolve to `array_merge($model, $this->getAttributeDefaults())`.
      * NOTE: Loops can only be detected if you provide an accurate value for `$resolvedModels`!
      * 
      * @param string $key The type model key for the model you want to resolve.
@@ -649,7 +666,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         // If the model has no explicit parent OR that parent is invalid, inherit from base.
         $parentKey = $model[self::KEY_INHERITS_FROM];
         if(!$parentKey || $parentKey === $key || !key_exists($parentKey, $allModels)) {
-            return [$key => $this->mergeTypeModels($this->getBaseTypeModel(), $model)];
+            return [$key => $this->mergeTypeModels($this->getAttributeDefaults(), $model)];
         }
 
         // If the model has an explicit parent that has already been resolved,
@@ -661,7 +678,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         // Otherwise, we have to resolve the parent model recursively.
         // We add ourselves to the resolved list to prevent loops. 
         // This is safe, because each type model has a single root.
-        $resolvedModels[$key] = $this->mergeTypeModels($this->getBaseTypeModel(), $model);
+        $resolvedModels[$key] = $this->mergeTypeModels($this->getAttributeDefaults(), $model);
         $result = $this->resolveInheritanceHierarchy(
             $parentKey,
             $allModels[$parentKey],
@@ -974,19 +991,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @return string[]
      */
-    protected function getBaseTypeModel() : array
+    protected function getAttributeDefaults() : array
     {
         // TODO make defaults depend on behaviors settings - e.g. readable if data address known
         return [
             // DATATYPE
-            self::KEY_DATA_TYPE => "exface.Core.String",
+            self::KEY_DATA_TYPE => StringDataType::class,
             // BASIC FLAGS
             "readable" => true,
             "writable" => true,
             "copyable" => true,
             "editable" => true,
             "required" => false,
-            "hidden" => false,
             "sortable" => true,
             "filterable" => true,
             "aggregatable" => true,
@@ -994,6 +1010,22 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             "value_list_delimiter" => EXF_LIST_SEPARATOR,
             "categories" => []
         ];
+    }
+
+    /**
+     * Change the default properties of attributes to be created
+     * 
+     * @uxon-property custom_attribute_defaults
+     * @uxon-type \exface\Core\CommoLogic\Model\Attribute
+     * @uxon-template {"editable": true, "value_list_delimiter": ",", "groups": [""]}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setCustomAttributeDefaults(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    {
+        $this->attributeDefaults = array_filter(array_merge($this->attributeDefaults, $uxon->toArray()));
+        return $this;
     }
 
     /**

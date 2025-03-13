@@ -620,7 +620,7 @@ class DataColumn implements DataColumnInterface
             if ($this->getDataType()) {
                 $thisVal = $this->getDataType()::cast($val);
             }
-            if (mb_strtolower($otherVal) !== mb_strtolower($thisVal)) {
+            if (mb_strtolower($otherVal ?? '') !== mb_strtolower($thisVal ?? '')) {
                 $result[$uid] = $val;
             }
         }
