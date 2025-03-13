@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\Selectors\AttributeGroupSelector;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\AttributeListFactory;
@@ -1251,7 +1250,7 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
      */
-    public function getAttributeGroup($alias)
+    public function getAttributeGroup(string $alias) : MetaAttributeGroupInterface
     {
         $grp = $this->attribute_groups[$alias] ?? null;
         if (null === $grp) {
@@ -1299,6 +1298,10 @@ class MetaObject implements MetaObjectInterface
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroups()
+     */
     public function getAttributeGroups() : array
     {
         if ($this->hasAttributeGroupsInModel() === true) {

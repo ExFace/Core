@@ -461,7 +461,13 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @param string $alias
      * @return MetaAttributeGroupInterface
      */
-    public function getAttributeGroup($alias);
+    public function getAttributeGroup(string $alias) : MetaAttributeGroupInterface;
+
+    /**
+     * 
+     * @return MetaAttributeGroupInterface[]
+     */
+    public function getAttributeGroups() : array;
 
     /**
      * 
