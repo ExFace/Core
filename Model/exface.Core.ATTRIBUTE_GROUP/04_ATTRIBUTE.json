@@ -7,6 +7,22 @@
             "attribute_alias": "LABEL"
         },
         {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "DATATYPE",
+            "attribute_alias": "DATATYPE"
+        },
+        {
             "name": "CREATED_ON",
             "attribute_alias": "CREATED_ON"
         },
@@ -79,10 +95,6 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "NAME",
-            "attribute_alias": "NAME"
-        },
-        {
             "name": "RELATION_CARDINALITY",
             "attribute_alias": "RELATION_CARDINALITY"
         },
@@ -95,20 +107,8 @@
             "attribute_alias": "COPYABLEFLAG"
         },
         {
-            "name": "ALIAS",
-            "attribute_alias": "ALIAS"
-        },
-        {
-            "name": "DATATYPE",
-            "attribute_alias": "DATATYPE"
-        },
-        {
             "name": "DATA_ADDRESS",
             "attribute_alias": "DATA_ADDRESS"
-        },
-        {
-            "name": "OBJECT",
-            "attribute_alias": "OBJECT"
         },
         {
             "name": "FORMATTER",
@@ -178,6 +178,10 @@
     "rows": [
         {
             "_EXPORT_SUMMARY": "Group name [NAME]",
+            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
+            "NAME": "Group name",
+            "ALIAS": "NAME",
+            "DATATYPE": "0x30000000000000000000000000000000",
             "CREATED_ON": "2025-03-10 12:29:45",
             "MODIFIED_ON": "2025-03-12 16:32:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -196,14 +200,10 @@
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Group name",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
-            "ALIAS": "NAME",
-            "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
-            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": 1,
             "LABELFLAG": 0,
@@ -225,6 +225,10 @@
         },
         {
             "_EXPORT_SUMMARY": "Is part of app [APP]",
+            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
+            "NAME": "Is part of app",
+            "ALIAS": "APP",
+            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "CREATED_ON": "2025-03-10 12:29:45",
             "MODIFIED_ON": "2025-03-12 16:32:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -243,14 +247,10 @@
             "DELETE_WITH_RELATED_OBJECT": 1,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Is part of app",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
-            "ALIAS": "APP",
-            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "app_oid",
-            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
             "LABELFLAG": 0,
@@ -272,6 +272,10 @@
         },
         {
             "_EXPORT_SUMMARY": "Group alias [ALIAS]",
+            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
+            "NAME": "Group alias",
+            "ALIAS": "ALIAS",
+            "DATATYPE": "0x30000000000000000000000000000000",
             "CREATED_ON": "2025-03-10 12:29:45",
             "MODIFIED_ON": "2025-03-12 16:32:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -290,14 +294,10 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": null,
-            "NAME": "Group alias",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
-            "ALIAS": "ALIAS",
-            "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "alias",
-            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
             "FORMATTER": null,
             "DISPLAYORDER": 2,
             "LABELFLAG": 0,
@@ -319,6 +319,10 @@
         },
         {
             "_EXPORT_SUMMARY": "Object [OBJECT]",
+            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
+            "NAME": "Object",
+            "ALIAS": "OBJECT",
+            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "CREATED_ON": "2025-03-10 12:29:45",
             "MODIFIED_ON": "2025-03-12 16:32:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -337,14 +341,10 @@
             "DELETE_WITH_RELATED_OBJECT": 1,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Object",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
-            "ALIAS": "OBJECT",
-            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "object_oid",
-            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": 3,
             "LABELFLAG": 0,
@@ -366,6 +366,10 @@
         },
         {
             "_EXPORT_SUMMARY": "Description [DESCRIPTION]",
+            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
+            "NAME": "Description",
+            "ALIAS": "DESCRIPTION",
+            "DATATYPE": "0x31310000000000000000000000000000",
             "CREATED_ON": "2025-03-10 12:29:45",
             "MODIFIED_ON": "2025-03-12 16:32:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -384,14 +388,10 @@
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Description",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
-            "ALIAS": "DESCRIPTION",
-            "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "description",
-            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
             "LABELFLAG": 0,
@@ -413,6 +413,10 @@
         },
         {
             "_EXPORT_SUMMARY": "Alias with namespace [ALIAS_WITH_NS]",
+            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
+            "NAME": "Alias with namespace",
+            "ALIAS": "ALIAS_WITH_NS",
+            "DATATYPE": "0x30000000000000000000000000000000",
             "CREATED_ON": "2025-03-10 12:36:16",
             "MODIFIED_ON": "2025-03-12 16:32:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -431,12 +435,9 @@
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Alias with namespace",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
-            "ALIAS": "ALIAS_WITH_NS",
-            "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "(CASE",
@@ -456,7 +457,6 @@
                 "END)",
                 ""
             ],
-            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
             "LABELFLAG": 0,
@@ -476,8 +476,12 @@
         },
         {
             "_EXPORT_SUMMARY": "Attribute group [LABEL]",
+            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
+            "NAME": "Attribute group",
+            "ALIAS": "LABEL",
+            "DATATYPE": "0x30000000000000000000000000000000",
             "CREATED_ON": "2025-03-12 16:31:45",
-            "MODIFIED_ON": "2025-03-12 16:32:59",
+            "MODIFIED_ON": "2025-03-13 09:24:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef90241b17ef9a9024025041000001",
@@ -487,28 +491,24 @@
             "DEFAULT_AGGREGATE_FUNCTION": "",
             "VALUE_LIST_DELIMITER": ",",
             "READABLEFLAG": 1,
-            "WRITABLEFLAG": 1,
+            "WRITABLEFLAG": 0,
             "SYSTEMFLAG": 0,
             "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Attribute group",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
-            "COPYABLEFLAG": 1,
-            "ALIAS": "LABEL",
-            "DATATYPE": "0x30000000000000000000000000000000",
+            "COPYABLEFLAG": 0,
             "DATA_ADDRESS": "CONCAT([#NAME#], '  [', [#ALIAS_WITH_NS#], ']')",
-            "OBJECT": "0x11efa02af7c78a6aa02a025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,
             "LABELFLAG": 1,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
-            "EDITABLEFLAG": 1,
-            "REQUIREDFLAG": 1,
+            "EDITABLEFLAG": 0,
+            "REQUIREDFLAG": 0,
             "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
