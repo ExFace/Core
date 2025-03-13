@@ -219,7 +219,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $existsBehavior = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         if ($this->compatibilityMode['no_attribute_groups'] !== true) {
-            $existsAttributeGroup = $this->buildSqlExists('exf_attribute_group oag', 'oag.object_oid = o.oid', 'has_attribute_groups');
+            $existsAttributeGroup = ', ' . $this->buildSqlExists('exf_attribute_group oag', 'oag.object_oid = o.oid', 'has_attribute_groups');
         }
         $sql = <<<SQL
                 /* Load object */
@@ -231,7 +231,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					{$this->buildSqlUuidSelector('o.parent_object_oid')} as parent_object_oid,
 					a.app_alias,
 					{$this->buildSqlUuidSelector('ds.base_object_oid')} as base_object_oid,
-					{$existsBehavior},
+					{$existsBehavior}
                     {$existsAttributeGroup}
 				FROM exf_object o 
 					LEFT JOIN exf_app a ON o.app_oid = a.oid 
