@@ -27,12 +27,18 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * be stored as columns of the report table, but rather in a mapping table like `REPORT_LOCATION`.
  * Each report would have multiple entries in this table, each with a different location type.
  * 
- * Now our goal is to generate custom report attributes for every location type.
+ * The following behavior config will generate custom report attributes for every location type. 
+ * For convenience we put them all into the attribute group `my.App.LOCATIONS`, that we have created 
+ * reviously for the report object. This group will allow us to quickly place all location in table
+ * `DataColumnGroup` or a `WidgetGroup`.
  *  
  * ```
  *  {
  *      "attributes_definition": {
  *          "object_alias": "my.App.LOCATION_TYPE"
+ *      },
+ *      "attribtues_defaults": {
+ *          "groups": "my.App.LOCATIONS"
  *      },
  *      "values_lookup": {
  *          "object_alias": "my.App.REPORT_LOCATION",
@@ -222,7 +228,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributesLookupBehavior
      */
-    public function setAttributesDefaults(UxonObject $uxon) : CustomAttributesLookupBehavior
+    protected function setAttributesDefaults(UxonObject $uxon) : CustomAttributesLookupBehavior
     {
         $this->definitionDefaults = $uxon;
         if ($this->attributeDefinition instanceof CustomAttributesDefinition) {
