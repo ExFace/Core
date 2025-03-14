@@ -42,17 +42,21 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
 
         $arrayOfJson = $jsonCol->getValues();
         $newRowsIdColName = $fromSheet->getUidColumn()->getName();
+        $newRows = []; 
+
         foreach ($arrayOfJson as $rowIdx => $jsonString) {
             if ($jsonString === null) {
                 continue;
             }
             $json = JsonDataType::decodeJson($jsonString);
-            $newRows = array_merge($newRows, $this->flatten($json));
+            $newRows = array_merge($newRows, $this->flatten($json)); 
+
             foreach ($newRows as $i => $newRow) {
                 $newRows[$i][$newRowsIdColName] = $fromSheet->getUidColumn()->getValue($rowIdx);
             }
         }
 
+        // TODO debug json sheet building 
         $jsonSheet = DataSheetFactory::createFromObject($fromSheet->getMetaObject());
         $jsonSheet->addRows($newRows);
         $toSheet->joinLeft($jsonSheet, $toSheet->getUidColumn()->getName(), $newRowsIdColName);
@@ -62,10 +66,48 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
 
     protected function flatten(array $json) : array
     {
-        $rows = [];
-
-        return $rows;
+        // per json object, add two rows:
+        //      1 header row with tiles
+        //      1 conent row with values
+        // TODO change to multiple rows
+    
+        $result = [];
+        $headers = [];
+        
+        // flatten the JSON
+        $flattenedData = $this->flattenRecursively($json);
+        
+        // collect all headers and add as first row
+        $headers = array_keys($flattenedData);
+        $result[] = $headers;
+        
+        // Add the flattened values 
+        $result[] = array_values($flattenedData);
+        
+        return $result;
     }
+
+    // Helper function to recursively flatten the nested JSON array
+    private function flattenRecursively($json, $prefix = '') {
+        $flattened = [];
+        
+        foreach ($json as $key => $value) {
+            // show structure for nested keys
+            $newKey = empty($prefix) ? $key : $prefix . '.' . $key;
+            //$newKey = $key;
+            
+            // If value is an array, flatten it, otherwise just add value
+            if (is_array($value)) {
+                $flattened = array_merge($flattened, $this->flattenRecursively($value, $newKey));
+            } else {
+                $flattened[$newKey] = $value;
+            }
+        }
+        
+        return $flattened;
+    }
+
+
 
     protected function getJsonColumn(DataSheetInterface $fromSheet) : DataColumnInterface
     {
