@@ -1,11 +1,13 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Tasks\ResultData;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use function Sabre\Event\Loop\instance;
 
 /**
  * 
@@ -36,10 +38,12 @@ class MassUpdateData extends UpdateData
     {
         $data_sheet = $this->getInputDataSheet($task);
         
+        $rowsFlattened = false;
         if ($data_sheet->countRows() > 1 && $this->getFlattenMultiRowInput() && $data_sheet->hasUidColumn(true)) {
+            $uidCol = $data_sheet->getUidColumn();
             // Check if all column have the same values in every row (except the UID column)
             foreach ($data_sheet->getColumns() as $col) {
-                if ($col === $data_sheet->getUidColumn()) {
+                if ($col === $uidCol) {
                     continue;
                 }
                 if (count(array_unique($col->getValues(false))) > 1) {
@@ -48,21 +52,45 @@ class MassUpdateData extends UpdateData
             }
             
             // Flatten to a single row with a list of UIDs in the UID column
-            $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-            $firstRow = $data_sheet->getRow(0);
-            $firstRow[$data_sheet->getUidColumn()->getName()] = implode($data_sheet->getUidColumn()->getAttribute()->getValueListDelimiter(), array_unique($data_sheet->getUidColumn()->getValues(false)));
-            $data_sheet->removeRows()->addRow($firstRow);
-            $task->setInputData($data_sheet);
+            $updateSheet = $data_sheet->copy();
+            $updateSheet->getFilters()->addConditionFromColumnValues($uidCol);
+            $rowsFlattened = true;
+            $firstRow = $updateSheet->getRow(0);
+            $firstRow[$uidCol->getName()] = implode($uidCol->getAttribute()->getValueListDelimiter(), array_unique($uidCol->getValues(false)));
+            $updateSheet->removeRows()->addRow($firstRow);
+            $task->setInputData($updateSheet);
         }
         
-        if (! $this->isUpdateByFilter($data_sheet)) {            
+        if (! $this->isUpdateByFilter($updateSheet ?? $data_sheet)) {            
             // Don't use context filters!!! We've got everything we need at this point.
             // Adding context filters will lead to unexplainable behavior.
             $this->setUseContextFilters(false);
         }
         
-        // Now the 
-        return parent::perform($task, $transaction);
+        // Now the let the regular update perform the action
+        $result = parent::perform($task, $transaction);
+
+        // If we flattened rows befor, we need to copy all values from the flattened result
+        // row back to each original input row - except for the UID, that we concatennated
+        // previously!
+        if ($rowsFlattened === true && $result instanceof ResultData) {
+            $resultData = $result->getData();
+            if ($resultData->countRows() === 1) {
+                $uidColName = $uidCol->getName();
+                $resultRow = $resultData->getRow(0);
+                foreach ($data_sheet->getRows() as $rowIdx => $row) {
+                    foreach ($resultRow as $fld => $val) {
+                        if ($fld === $uidColName) {
+                            continue;
+                        }
+                        $data_sheet->setCellValue($fld, $rowIdx, $val);
+                    }
+                }
+            }
+            $result->setData($data_sheet);
+        }
+
+        return $result;
     }
     
     /**
@@ -79,7 +107,7 @@ class MassUpdateData extends UpdateData
     /**
      * Set to FALSE to perform the update on raw input data instead of flattening it to a single row.
      * 
-     * @uxon-property reduce_multi_row_input
+     * @uxon-property flatten_multi_row_input
      * @uxon-type boolean
      * @uxon-default true
      * 
