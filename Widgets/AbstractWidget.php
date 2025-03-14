@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
@@ -38,6 +39,7 @@ use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Translation\TranslationsArray;
 use exface\Core\Interfaces\Widgets\iHaveValue;
+use function Sabre\Event\Loop\instance;
 
 /**
  * Base class for facade elements in AJAX facades using jQuery
@@ -986,6 +988,10 @@ abstract class AbstractWidget implements WidgetInterface
         if ($this instanceof iShowSingleAttribute) {
             if ($this->isBoundToAttribute()) {
                 $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
+                $attr = $this->getAttribute();
+                if ($attr instanceof CustomAttribute) {
+                    $hint .= "\n- Custom attribute from " . $attr->getSourceHint();
+                }
             }
             if ($this instanceof iHaveValue) {
                 $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";

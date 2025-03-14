@@ -97,6 +97,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
 use exface\Core\DataTypes\MessageCodeDataType;
+use Throwable;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -134,6 +135,10 @@ class SqlModelLoader implements ModelLoaderInterface
     private $auth_policies_loaded = null;
     
     private $apps_loaded = null;
+
+    private $compatibilityMode = [
+        'no_attribute_groups' => false
+    ];
     
     
     /**
@@ -213,8 +218,10 @@ class SqlModelLoader implements ModelLoaderInterface
             $q_where = "a.app_alias = '{$namespace}' AND o.object_alias = '{$alias}'";
         }
         $existsBehavior = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
-        $existsAttributeGroup = $this->buildSqlExists('exf_attribute_group oag', 'oag.object_oid = o.oid', 'has_attribute_groups');
-        $query = $this->getDataConnection()->runSql(<<<SQL
+        if ($this->compatibilityMode['no_attribute_groups'] !== true) {
+            $existsAttributeGroup = ', ' . $this->buildSqlExists('exf_attribute_group oag', 'oag.object_oid = o.oid', 'has_attribute_groups');
+        }
+        $sql = <<<SQL
                 /* Load object */
 				SELECT
                     o.*,
@@ -224,13 +231,23 @@ class SqlModelLoader implements ModelLoaderInterface
 					{$this->buildSqlUuidSelector('o.parent_object_oid')} as parent_object_oid,
 					a.app_alias,
 					{$this->buildSqlUuidSelector('ds.base_object_oid')} as base_object_oid,
-					{$existsBehavior},
+					{$existsBehavior}
                     {$existsAttributeGroup}
 				FROM exf_object o 
 					LEFT JOIN exf_app a ON o.app_oid = a.oid 
 					LEFT JOIN exf_data_source ds ON o.data_source_oid = ds.oid
 				WHERE {$q_where}
-SQL);
+SQL;
+        try {
+            $query = $this->getDataConnection()->runSql($sql);
+        } catch (Throwable $e) {
+            // If compatibility mode available, retry
+            if ($this->useCompatibilityMode($e) === true) {
+                return $this->loadObject($object);
+            } else {
+                throw $e;
+            }
+        }
         if ($res = $query->getResultArray()) {
             $row = $res[0];
             
@@ -2214,6 +2231,10 @@ SQL;
      */
     public function loadAttributeGroups(MetaObjectInterface $object) : MetaObjectInterface
     {
+        if ($this->compatibilityMode['no_attribute_groups'] === true) {
+            return $object;
+        }
+
         $sql = <<<SQL
 SELECT 
     ag.*,
@@ -2227,15 +2248,53 @@ FROM exf_attribute_group ag
     INNER JOIN exf_app app ON app.oid = ag.app_oid
 WHERE ag.object_oid = {$object->getId()}
 SQL;
-        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
+
+        try {
+            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+        } catch (Throwable $e) {
+            // If compatibility mode available, retry
+            if ($this->useCompatibilityMode($e) === true) {
+                return $this->loadAttributeGroups($object);
+            } else {
+                throw $e;
+            }
+        }
+        
+        foreach ($rows as $row) {
             $group = AttributeGroupFactory::createForObject($object, $row['app_alias'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['alias']);
-            $uidList = trim(str_replace(',,', ',', $row['attribute_ids']), ",");
-            foreach (explode(',', $uidList) as $attributeUid) {
-                $group->add($object->getAttributes()->getByAttributeId($attributeUid));
+            if ($row['attribute_ids'] !== null) {
+                $uidList = explode(',', $row['attribute_ids']);
+                // For some reason, the list of attributes UIDs has double commas ("0x123,,0x5454,"), which 
+                // leads to empty array elements. This is why we need to array_filter below.
+                $uidList = array_filter($uidList);
+                foreach ($uidList as $attributeUid) {
+                    $group->add($object->getAttributes()->getByAttributeId($attributeUid));
+                }
             }
             $object->addAttributeGroup($group);
         }
 
         return $object;
+    }
+
+    /**
+     * Setup model loader compatibility mode if applicable fo given error - returns true if compatibility mode is set up or false if not applicable
+     * 
+     * @param \Throwable $exception
+     * @return bool
+     */
+    protected function useCompatibilityMode(Throwable $exception) : bool
+    {
+        $useCompatibility = false;
+        switch (true) {
+            case $this->compatibilityMode['no_attribute_groups'] !== true && mb_stripos($exception->getMessage(), 'exf_attribute_group'):
+                $this->compatibilityMode['no_attribute_groups'] = true;
+                $useCompatibility = true;
+                break;
+        }
+        if ($useCompatibility === true) {
+            $this->getWorkbench()->getLogger()->logException($exception);
+        }
+        return $useCompatibility;
     }
 }

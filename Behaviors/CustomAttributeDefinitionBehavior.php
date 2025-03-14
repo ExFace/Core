@@ -439,12 +439,13 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $name = $definitionRow[$nameAlias];
 
             if ($this->hasAttributeTypeModels() === true) {
+                // TODO how to use the definition defaults in case of predefined type models?
                 $typeKey = $definitionRow[$modelAlias];
                 if(! $typeModel = $this->getTypeModel($typeKey)) {
                     throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
                 }
             } else {
-                $typeModel = $this->getAttributeDefaults();
+                $typeModel = $this->getAttributeDefaults($definition);
             }
             
             if ($aliasAlias !== null) {
@@ -462,7 +463,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $alias = $this->getAliasFromName($name);
             }
             
-            $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageObject());
+            $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageBehavior());
             $attr = MetaObjectFactory::addAttributeTemporary(
                 $attr,
                 $address, 
@@ -991,25 +992,21 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @return string[]
      */
-    protected function getAttributeDefaults() : array
+    protected function getAttributeDefaults(CustomAttributesDefinition $definition = null) : array
     {
         // TODO make defaults depend on behaviors settings - e.g. readable if data address known
-        return [
+        $globalDefaults = [
             // DATATYPE
             self::KEY_DATA_TYPE => StringDataType::class,
-            // BASIC FLAGS
-            "readable" => true,
-            "writable" => true,
-            "copyable" => true,
-            "editable" => true,
-            "required" => false,
-            "sortable" => true,
-            "filterable" => true,
-            "aggregatable" => true,
-            // DEFAULTS
-            "value_list_delimiter" => EXF_LIST_SEPARATOR,
             "categories" => []
         ];
+        
+        if ($definition !== null) {
+            $defaults = array_merge($globalDefaults, $definition->getAttributeDefaults()->toArray());
+        } else {
+            $defaults = $globalDefaults;
+        }
+        return $defaults;
     }
 
     /**

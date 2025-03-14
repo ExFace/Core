@@ -265,19 +265,19 @@ class UxonObject implements \IteratorAggregate
             // TODO resolve snippet here
             // $val = ;
         }
-        foreach ($val as $key => $innerVal) {
-            if (! is_numeric($key)) {
+        foreach ($val as $valKey => $valInner) {
+            if (! is_numeric($valKey)) {
                 $isAssoc = true;
                 break;
             }
-            if (is_array($innerVal)) {
-                if (null !== $snipVal = $innerVal['~snippet'] ?? null) {
+            if (is_array($valInner)) {
+                if (null !== $snipVal = $valInner['~snippet'] ?? null) {
                     // TODO resolve snippet here
-                    $arraySnippets[$key] = $innerVal;
+                    $arraySnippets[$valKey] = $valInner;
                 } elseif ($this->snippetsAdded !== null){
                     foreach ($this->snippetsAdded as $snipKey => $snipFunc) {
-                        if (null !== $snipVal = $innerVal[$snipKey] ?? null) {
-                            $arraySnippets[$key] = $snipFunc($innerVal);
+                        if (null !== $snipVal = $valInner[$snipKey] ?? null) {
+                            $arraySnippets[$valKey] = $snipFunc($valInner);
                         }
                     }
                 }
@@ -285,9 +285,14 @@ class UxonObject implements \IteratorAggregate
                 break;
             }
         }
-        if ($isAssoc === false) {
-            foreach ($arraySnippets as $key => $snipArray) {
-                array_splice($val, $key, 1, $snipArray);
+        if ($isAssoc === false && ! empty($arraySnippets)) {
+            // $arraySnippets will have the structure of [valKey => `replacement`] where replacement
+            // will typically be an array, so we will replace a single item with multiple
+            // items making the original array longer.
+            // IMPORTANT: each replacement will change the keys of the original val array, so we
+            // need to apply the replacements in reverse key order!
+            foreach (array_reverse($arraySnippets, true) as $valKey => $snipArray) {
+                array_splice($val, $valKey, 1, $snipArray);
             }
         }
         return $val;
