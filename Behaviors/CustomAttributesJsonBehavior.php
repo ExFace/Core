@@ -304,7 +304,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributesJsonBehavior
      */
-    public function setAttributesDefaults(UxonObject $uxon) : CustomAttributesJsonBehavior
+    protected function setAttributesDefaults(UxonObject $uxon) : CustomAttributesJsonBehavior
     {
         $this->definitionDefaults = $uxon;
         if ($this->attributeDefinition instanceof CustomAttributesDefinition) {
