@@ -43,6 +43,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     private ?MetaObjectInterface $definitionObject = null;
     private ?UxonObject $definitionFiltersUxon = null;
     private ?UxonObject $definitionSortersUxon = null;
+    private ?UxonObject $definitionDefaults = null;
 
     /**
      * 
@@ -200,5 +201,31 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
         }
 
         return $uxon;
+    }
+
+    /**
+     * Allows to set default values for attribtues programmatically
+     * 
+     * Note: this is intentionally NOT a UXON property. The attribtue defaults should instead be UXON
+     * properties of the respective storage-behaviors directly. This way, each storage-behavior can have
+     * its own defaults and UXON autosuggests also assume, that the object (e.g. of the attribute groups)
+     * is the storage-object and not the definition-object, that is the abse of this prototype class.
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributesDefinition
+     */
+    public function setAttributeDefaults(UxonObject $uxon) : CustomAttributesDefinition
+    {
+        $this->definitionDefaults = $uxon;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return UxonObject|null
+     */
+    public function getAttributeDefaults() : ?UxonObject
+    {
+        return $this->definitionDefaults;
     }
 }

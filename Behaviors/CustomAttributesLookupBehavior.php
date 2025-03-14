@@ -53,6 +53,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     private ?CustomAttributesLookup $valuesLookup = null;
 
     private $attributes = null;
+    private ?UxonObject $definitionDefaults = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -106,7 +107,11 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $this->attributes = $definitionBehavior->addAttributesToObject($this->getObject(), $definition, $logBook);
 
         foreach ($this->attributes as $attr) {
+            // This behavior definitely cannot produce attributes, that are writable, sortable or aggregatable,
+            // so set the properties to false here regardless of attribute models or attribute defaults.
             $attr->setWritable(false);
+            $attr->setSortable(false);
+            $attr->setAggregatable(false);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
@@ -192,6 +197,9 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     protected function setAttributesDefinition(UxonObject $uxon) : CustomAttributesLookupBehavior
     {
         $this->attributeDefinition = new CustomAttributesDefinition($this, $uxon);
+        if (null !== $defs = $this->getAttributesDefaults()) {
+            $this->attributeDefinition->setAttributeDefaults($defs);
+        }
         return $this;
     }
 
@@ -202,6 +210,38 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     protected function getAttributesDefinition() : CustomAttributesDefinition
     {
         return $this->attributeDefinition;
+    }
+
+    /**
+     * Change the default properties of attributes to be created
+     * 
+     * @uxon-property attributes_defaults
+     * @uxon-type \exface\Core\CommonLogic\Model\Attribute
+     * @uxon-template {"groups": [""], "value_list_delimiter": ","}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributesLookupBehavior
+     */
+    public function setAttributesDefaults(UxonObject $uxon) : CustomAttributesLookupBehavior
+    {
+        $this->definitionDefaults = $uxon;
+        if ($this->attributeDefinition instanceof CustomAttributesDefinition) {
+            $this->attributeDefinition->setAttributeDefaults($uxon);
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @return UxonObject|null
+     */
+    protected function getAttributesDefaults() : UxonObject
+    {
+        return $this->definitionDefaults ?? new UxonObject([
+            // TODO allow filtering for custom lookup attribtues somehow. For now, filterable is false by default.
+            'filterable' => false,
+            'value_list_delimiter' => EXF_LIST_SEPARATOR
+        ]);
     }
 
     /**
