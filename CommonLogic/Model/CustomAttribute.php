@@ -2,7 +2,6 @@
 
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Behaviors\CustomAttributeDefinitionBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -13,8 +12,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * Custom attributes are meant to be added to objects at runtime.
  * Apart from some minor convenience features, they work the same as regular attributes.
  * 
- * @see CustomAttributeDefinitionBehavior
- * @see CustomAttributeLoaderInterface
+ * @see \exface\Core\Behaviors\CustomAttributeDefinitionBehavior
  */
 class CustomAttribute extends Attribute implements IHaveCategoriesInterface
 {

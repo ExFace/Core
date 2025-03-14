@@ -46,6 +46,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
 
     private ?string $jsonAttributeAlias = null;
     private ?string $jsonDataAddress = null;
+    private ?UxonObject $definitionDefaults = null;
 
     protected function registerEventListeners(): BehaviorInterface
     {
@@ -206,6 +207,9 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     protected function setAttributesDefinition(UxonObject $uxon) : CustomAttributesJsonBehavior
     {
         $this->attributeDefinition = new CustomAttributesDefinition($this, $uxon);
+        if (null !== $defs = $this->getAttributesDefaults()) {
+            $this->attributeDefinition->setAttributeDefaults($defs);
+        }
         return $this;
     }
 
@@ -288,5 +292,44 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         }
         
         return $this->getCustomAttributeDataAddressPrefix() . $storageKey;
+    }
+
+    /**
+     * Change the default properties of attributes to be created
+     * 
+     * @uxon-property attributes_defaults
+     * @uxon-type \exface\Core\CommonLogic\Model\Attribute
+     * @uxon-template {"groups": [""], "writable": true, "copyable": true, "editable": true, "required": true, "filterable": true, "sortable": true, "aggregatable": false, "value_list_delimiter": ","}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributesJsonBehavior
+     */
+    public function setAttributesDefaults(UxonObject $uxon) : CustomAttributesJsonBehavior
+    {
+        $this->definitionDefaults = $uxon;
+        if ($this->attributeDefinition instanceof CustomAttributesDefinition) {
+            $this->attributeDefinition->setAttributeDefaults($uxon);
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @return UxonObject|null
+     */
+    protected function getAttributesDefaults() : UxonObject
+    {
+        return $this->definitionDefaults ?? new UxonObject([
+            // BASIC FLAGS
+            "writable" => true,
+            "copyable" => true,
+            "editable" => true,
+            "required" => false,
+            "filterable" => true,
+            "sortable" => true,
+            "aggregatable" => false,
+            // DEFAULTS
+            "value_list_delimiter" => EXF_LIST_SEPARATOR,
+        ]);
     }
 }
