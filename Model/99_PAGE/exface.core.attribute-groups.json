@@ -1,0 +1,122 @@
+{
+    "uid": "0x11f0a74863289c66a748025041000001",
+    "alias_with_namespace": "exface.core.attribute-groups",
+    "menu_parent_page_selector": "0xe6ea2a1a949e11e78de5028037ec0200",
+    "menu_index": 2,
+    "menu_visible": true,
+    "name": "Attribute groups",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2025-03-14 11:37:54",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2025-03-14 11:40:08",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.ATTRIBUTE_GROUP",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "OBJECT"
+            },
+            {
+                "attribute_alias": "ATTRIBUTE_GROUP_ATTRIBUTES__ATTRIBUTE"
+            },
+            {
+                "attribute_alias": "DESCRIPTION"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "OBJECT__LABEL"
+            },
+            {
+                "attribute_alias": "ATTRIBUTE_GROUP_ATTRIBUTES__UID:COUNT",
+                "caption": "Attributes"
+            },
+            {
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "ATTRIBUTE_GROUP_ATTRIBUTES__ATTRIBUTE__NAME:LIST_DISTINCT",
+                "caption": "Content"
+            },
+            {
+                "attribute_alias": "DESCRIPTION"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "caption": "Open object",
+                "action": {
+                    "alias": "exface.Core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.OBJECT",
+                    "input_mapper": {
+                        "from_object_alias": "exface.Core.ATTRIBUTE_GROUP",
+                        "to_object_alias": "exface.Core.OBJECT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "caption": "Open object attribute groups",
+                "action": {
+                    "alias": "exface.Core.ObjectAttributeGroupsDialog",
+                    "input_mapper": {
+                        "from_object_alias": "exface.Core.ATTRIBUTE_GROUP",
+                        "to_object_alias": "exface.Core.OBJECT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            }
+        ]
+    }
+}
