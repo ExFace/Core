@@ -2,11 +2,13 @@
 
 namespace exface\Core\Behaviors;
 
+use \exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
@@ -361,11 +363,36 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         ]);
 
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.String");
-        $categoryAttribute = $object->getAttribute($this->getCategoryAttributeAlias());
-        $categoryAttribute->setDataType($dataType);
-        $categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
+        if (null !== $categoryAlias = $this->getCategoryAttributeAlias()) {
+	        $categoryAttribute = $object->getAttribute($categoryAlias);
+	        $categoryAttribute->setDataType($dataType);
+	        $categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
+        }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
+    }
+
+    /**
+     * 
+     * @return MetaObjectInterface[]
+     */
+    protected function findOwnerObjects() : array
+    {
+        $behaviorsObj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.OBJECT_BEHAVIORS');
+        $definitionAttribute = new Attribute($behaviorsObj, 'Definition object alias', 'DEFINITION_OBJECT_ALIAS');
+        $definitionAttribute->setFilterable(true);
+        MetaObjectFactory::addAttributeTemporary($definitionAttribute, 'CONFIG_UXON::$.attributes_definition.object_alias');
+        $ds = DataSheetFactory::createFromObject($behaviorsObj);
+        $objectUidCol = $ds->getColumns()->addFromExpression('OBJECT');
+        $ds->getFilters()->addConditionFromAttribute($definitionAttribute, $this->getObject()->getAliasWithNamespace(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('BEHAVIOR', 'CustomAttribute', ComparatorDataType::IS);
+        $ds->dataRead();
+
+        $objects = [];
+        foreach ($objectUidCol->getValues() as $uid) {
+            $objects[] = MetaObjectFactory::createFromUid($this->getWorkbench(), $uid);
+        }
+        return $objects;
     }
 
     /**
