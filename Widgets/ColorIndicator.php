@@ -46,7 +46,9 @@ use exface\Core\Widgets\Parts\WidgetPropertyScale;
  * {
  *  "widget_type": "ColorIndicator",
  *  "attribute_alias": "name",
- *  "color_attribute_alias": "percentage",
+ *  "color": {
+ *      "attribute_alias": "percentage"
+ *  },
  *  "color_scale": {
  *      "0": "red",
  *      "50": "yellow",
@@ -64,7 +66,9 @@ use exface\Core\Widgets\Parts\WidgetPropertyScale;
  * {
  *  "widget_type": "ColorIndicator",
  *  "calculation": "=Concatenate(TASKS_DONE, ' of ', TASKS_TOTAL)",
- *  "color": "=Percentage(TASKS_DONE, TASKS_TOTAL, 0)",
+ *  "color": {
+ *      "calculation": "=Percentage(TASKS_DONE, TASKS_TOTAL, 0)"
+ *  },
  *  "color_scale": {
  *      "0": "red",
  *      "50": "yellow",
@@ -175,17 +179,20 @@ class ColorIndicator extends Display implements iHaveColor, iHaveHintScale
     }
     
     /**
-     * A fixed color value or a formula to calculate the color/scale value
+     * Bind the color value to a different attribute, a formula, a data column or even a fixed value
      * 
      * Examples:
      * 
-     * - `red` - the indicator will always be red
-     * - `=Calc(ERROR_FLAG ? 'red', 'green')` - the color will be red if the attribute `ERROR_FLAG` is set and green otherwise
-     * - `=Calc(...)` + `color_scale` - if used in combination with the `color_scale` property, the result of the calculation
+     * - `{"value": "red"}` - the indicator will always be red
+     * - `{"attribute_alias": "CATEGOTRY__COLOR"}` - get the color stored in an attribute of a related object
+     * - `{"calculation": "=Calc(ERROR_FLAG ? 'red', 'green')"}` - the color will be red if the attribute `ERROR_FLAG` is set and green otherwise
+     * - `{"calculation": "=Calc(...)"}` + `color_scale` - if used in combination with the `color_scale` property, the result of the calculation
      * will be concidered to be a value from the color scale.
+     * - `{"data_column_name": "_MY_SPECIAL_COL"}` - get the color from a custom column (e.g. calculated by a mapper)
      * 
      * @uxon-property color
-     * @uxon-type color
+     * @uxon-type \exface\Core\Widgets\Parts\WidgetPropertyBinding
+     * @uxon-template {"attribute_alias": ""}
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
      */
