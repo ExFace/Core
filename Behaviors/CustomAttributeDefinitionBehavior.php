@@ -246,12 +246,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected const KEY_CATEGORIES = "categories";
 
     const ALIAS_GENERATOR_CAMEL = 'CamelCase';
-
     const ALIAS_GENERATOR_UPPER_CASE = 'UPPER_CASE';
-
     const ALIAS_GENERATOR_LOWER_CASE = 'lower_case';
-
     const ALIAS_GENERATOR_UNDERSCORE = 'Under_Score';
+
+    const PLACEHOLDER_ALIAS = '~custom_attribute_alias';
+    const PLACEHOLDER_NAME = '~custom_attribute_name';
     
     private array $typeModels = [];
     private array $attributeDefaults = [
@@ -435,6 +435,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $logBook->addLine('Adding custom attributes to "' . $targetObjectId . '"...');
         $logBook->addIndent(1);
         
+        $attrDefaults = $this->getAttributeDefaults($definition);
+        $typePlaceholderFlags = [];
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
             $name = $definitionRow[$nameAlias];
 
@@ -445,7 +447,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                     throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
                 }
             } else {
-                $typeModel = $this->getAttributeDefaults($definition);
+                $typeKey = null;
+                $typeModel = $attrDefaults;
             }
             
             if ($aliasAlias !== null) {
@@ -475,7 +478,21 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             unset($typeModel[$nameAlias]);
             // Apply the template.
             if (! empty($typeModel)) {
-                $attr->importUxonObject(new UxonObject($typeModel));
+                $typeModelUxon = new UxonObject($typeModel);
+                // See if there are any placeholders and replace them. Need to replace them
+                // every time because the replacement values are different for every attribute
+                if (false !== ($typePlaceholderFlags[$typeKey] ?? true)) {
+                    $typeModelJson = $typeModelUxon->toJson();
+                    $typeModelJsonReplaced = StringDataType::replacePlaceholders($typeModelJson, [
+                        self::PLACEHOLDER_ALIAS => $attr->getAlias(),
+                        self::PLACEHOLDER_NAME => $attr->getName()
+                    ]);
+                    $typeModelUxon = UxonObject::fromJson($typeModelJsonReplaced);
+                    // Check, if there was anything replaced and remember this for every type key.
+                    // If there was nothing to replace, we don't need to parse the string anymore!
+                    $typePlaceholderFlags[$typeKey] = ($typeModelJson !== $typeModelJsonReplaced);
+                }
+                $attr->importUxonObject($typeModelUxon);
             }
             // Set values that were not stored in the template.
             if ($hintAlias !== null) {
