@@ -7,10 +7,12 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesLookup;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -171,6 +173,12 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $lookupContentName = $lookupContentCol->getName();
         $lookupAliasCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesAttributeAliasColumnAlias());
         $lookupAliasName = $lookupAliasCol->getName();
+
+        $additionalCols = [];
+        foreach ($lookup->getAdditionalColumns() as $lookupCol) {
+            $additionalCols[] = $lookupSheet->getColumns()->addFromExpression($lookupCol->getLookupExpression(), null, true);
+        }
+
         $lookupSheet->dataRead();
         $logBook->addDataSheet('Custom attribute values', $lookupSheet);
 
@@ -184,6 +192,14 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
             $val = $eventSheet->getCellValue($row[$lookupAliasName], $eventRowIdx);
             $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
             $eventSheet->setCellValue($row[$lookupAliasName], $eventRowIdx, $val);
+
+            foreach ($additionalCols as $i => $additionalCol) {
+                $lookupCol = $lookup->getAdditionalColumns()[$i];
+                $addtionalColName = $lookupCol->getColumnName([
+                    CustomAttributeDefinitionBehavior::PLACEHOLDER_ALIAS => $row[$lookupAliasName]
+                ]);
+                $eventSheet->setCellValue($addtionalColName, $eventRowIdx, $row[$additionalCol->getName()]);
+            }
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logBook));
@@ -202,6 +218,11 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
      */
     protected function setAttributesDefinition(UxonObject $uxon) : CustomAttributesLookupBehavior
     {
+        if (null !== $objAlias = $uxon->getProperty('object_alias')) {
+            if ($this->getObject()->isExactly($objAlias)) {
+                throw new BehaviorConfigurationError($this, 'Cannot define CustomAttributesLookupBehavior for object ' . $this->getObject()->__toString() . ': the attributes_definition points to the same object - this will not work!');
+            }
+        }
         $this->attributeDefinition = new CustomAttributesDefinition($this, $uxon);
         if (null !== $defs = $this->getAttributesDefaults()) {
             $this->attributeDefinition->setAttributeDefaults($defs);

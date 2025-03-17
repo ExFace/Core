@@ -34,6 +34,10 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
 
     private $valueContentColumnAlias = null;
 
+    private $additionalColumns = null;
+
+    private $additionalColumnsUxon = null;
+
     /**
      * 
      * @param \exface\Core\Interfaces\Model\BehaviorInterface $behavior
@@ -196,6 +200,82 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
     {
         return $this->valueContentColumnAlias;
     }
+
+    /**
+     * Summary of getAdditionalColumns
+     * @return CustomAttributesLookupColumn[]
+     */
+    public function getAdditionalColumns() : array
+    {
+        if ($this->additionalColumns === null) {
+            $this->additionalColumns = [];
+            if ($this->additionalColumnsUxon instanceof UxonObject) {
+                foreach ($this->additionalColumnsUxon as $colUxon) {
+                    $this->additionalColumns[] = new CustomAttributesLookupColumn($this, $colUxon);
+                }
+            }
+        }
+        return $this->additionalColumns;
+    }
+
+    /**
+     * Additional columns to read with the values - e.g. a color column for ColoIndicator widgets.
+     * 
+     * For example, if you have a set of custom attributes, that should have a ColorIndicator 
+     * as default display widget and that ColorIndicator uses a color from a specific data
+     * column, you will need that column every time you want to display any of the custom
+     * attributes. However, the color data column will likely depend on the data of the 
+     * custom attribute, so it needs to be loaded with the data and transposed.
+     * 
+     * For example, lets assume we have a generic KPI system for clients. There is an object
+     * `CLIENT_KPI`, that contains `VALUE` and `COLOR` for every KPI of a specific client. There
+     * is also a `KPI_DEFINITION` object with a `CustomAttributesDefinitionBehavior`, that holds
+     * information about every possible KPI. Now we need every KPI to be displayed as a 
+     * ColorIndicator with the correct color:
+     * 
+     * ```
+     * {
+     *   "attributes_definition": {
+     *     "object_alias": "my.APP.KPI_DEFINITION",
+     *   },
+     *   "attributes_defaults": {
+     *     "default_display_widget": {
+     *       "widget_type": "ColorIndicator",
+     *       "color": {
+     *         "data_column_name": "_[#~custom_attribute_alias#]_COLOR"
+     *       }
+     *     }
+     *   },
+     *   "values_lookup": {
+     *     "object_alias": "my.APP.CLIENT_KPIS",
+     *     "relation_to_behavior_object": "CLIENT",
+     *     "values_attribute_alias_column": "KPI_DEFINITION__ALIAS",
+     *     "values_content_column": "VALUE",
+     *     "additional_columns": [
+     *       {
+     *         "attribute_alias": "COLOR",
+     *         "column_name": "_[#~custom_attribute_alias#]_COLOR"
+     *       }
+     *     ]
+     *   }
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property additional_columns
+     * @uxon-type \exface\Core\CommonLogic\Model\Behaviors\CustomAttributesLookupColumn[]
+     * @uxon-template [{"attribute_alias": "", "column_name": ""}]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributesLookup
+     */
+    protected function setAdditionalColumns(UxonObject $uxon) : CustomAttributesLookup
+    {
+        $this->additionalColumnsUxon = $uxon;
+        $this->additionalColumns = null;
+        return $this;
+    }
+
 
     /**
      * 
