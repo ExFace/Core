@@ -178,15 +178,13 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         foreach ($customAttributes as $alias => $address) {
             $logBook->addLine('Adding attribute "' . $alias . '" with data address "' . $address . '".');
             $attribute = new CustomAttribute($targetObject, $alias, $alias, $this);
-            $attribute = MetaObjectFactory::addAttributeTemporary(
-                $attribute,
-                $address,
-                $dataType);
-
+            $attribute->setDataAddress($address);
+            $attribute->setDataType($dataType);
             $attribute->setFilterable(true);
             $attribute->setSortable(true);
             $attribute->setEditable(true);
             $attribute->setWritable(true);
+            $targetObject->getAttributes()->add($attribute);
         }
         $logBook->addIndent(-1);
 

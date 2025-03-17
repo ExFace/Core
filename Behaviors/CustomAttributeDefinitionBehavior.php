@@ -379,9 +379,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function findOwnerObjects() : array
     {
         $behaviorsObj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.OBJECT_BEHAVIORS');
-        $definitionAttribute = new Attribute($behaviorsObj, 'Definition object alias', 'DEFINITION_OBJECT_ALIAS');
+        $definitionAttribute = MetaObjectFactory::addAttributeTemporary($behaviorsObj, 'DEFINITION_OBJECT_ALIAS', 'Definition object alias', 'CONFIG_UXON::$.attributes_definition.object_alias');
         $definitionAttribute->setFilterable(true);
-        MetaObjectFactory::addAttributeTemporary($definitionAttribute, 'CONFIG_UXON::$.attributes_definition.object_alias');
         $ds = DataSheetFactory::createFromObject($behaviorsObj);
         $objectUidCol = $ds->getColumns()->addFromExpression('OBJECT');
         $ds->getFilters()->addConditionFromAttribute($definitionAttribute, $this->getObject()->getAliasWithNamespace(), ComparatorDataType::EQUALS);
@@ -466,6 +465,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $typePlaceholderFlags = [];
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
             $name = $definitionRow[$nameAlias];
+            $alias = null;
 
             if ($this->hasAttributeTypeModels() === true) {
                 // TODO how to use the definition defaults in case of predefined type models?
@@ -494,10 +494,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
             
             $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageBehavior());
-            $attr = MetaObjectFactory::addAttributeTemporary(
-                $attr,
-                $address, 
-                $typeModel[self::KEY_DATA_TYPE]);
+            $attr->setDataAddress($address);
+            $attr->setDataType($typeModel[self::KEY_DATA_TYPE]);
             
             // Remove properties from the template that should not be applied to the attribute.
             unset($typeModel[self::KEY_DATA_TYPE]);
@@ -535,6 +533,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $attr->addCategories($categories);
             }
             
+            $targetObject->getAttributes()->add($attr);
             $attrs[] = $attr;
             $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
         }
