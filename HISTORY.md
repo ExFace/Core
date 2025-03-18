@@ -1,13 +1,58 @@
 # Release history
 
-## 1.24 - in development
+## 1.27 - in development
+
+- Automated testing via [axenox.BDT](https://github.com/axenox/BDT/) app
+
+## 1.26 - 18.03.2025
 
 New features:
 
-- AI agents
-- Action confirmations
+- Custom attributes: using a set of behaviors, you can new dynamically add attributes to meta object from a flexible configuration in the master data of a payload app. See `CustomAttributeDefinitionBehavior`, `CustomAttributesJsonBehavior` and `CustomAttributesLookupBehavior` for details.
+- Attribute groups: you can now group attributes in the model of an object and use them in container widgets via `attribute_group_alias`.
+- Confirmation popups for actions. Every action can now trigger a confirmation when its button is pressed. The contents is configurable.
+
+Improvements:
+
+- Greatly improved ER diagram in built-in SQL admin (see [axenox.IDE](https://github.com/axenox/IDE/) app)
+- Tracer performance summary now includes search & filter controls
+- Improved debug output for MS SQL errors
+- Improved OrderingBehavior
+
+## 1.25 - 14.02.2025
+
+New features:
+
+- API list in the Administration section to keep track of all web endpoints, their settings and possible connections
+- SQL query builders can now use JOINs across multiple data connections if they point to the same DB server
+- JSONpath data addresses in SQL query builders
+- Added formulas `=If()`, `=IsTrue()`
+- Support for SSL connections to MySQL Azure DBs
+
+Improvements:
+
+- Improved action debug output to show all behaviors and sub-action triggered by while the action is performed
+- Dashboard filters configuration can now be `disabled_for_widget_ids`
+
+## 1.24 - 22.01.2025
+
+New features:
+
+- AI agents - see app [axenox.GenAI](https://github.com/axenox/GenAI/)
 - ChildObjectBehavior
 - ChecklistingBehavior
+- Hierarchical DataFlow steps
+- Behavior configuration can now be translated
+- Added formulas `=Filename()`, `=Transliterate()`
+- Console widget function `run_command` to trigger commands via button
+
+Improvements:
+
+- Greatly improved model export structure to simplify tracking changes
+- Values aggregated to lists (e.g. `DATE:LIST_DISTINCT`) are now properly formatted
+- Users can be disabled at a specific date
+- `selectable_options` in InputSelect now translatable
+- `CallActionBehavior` now allows multiple events
 
 ## 1.23 - 26.11.2024
 
@@ -57,19 +102,11 @@ Improvements:
 
 ## 1.18 - 10.07.2024
 
-- TODO
-
 ## 1.17 - 26.04.2024
-
-- TODO
 
 ## 1.16 - 20.03.2024
 
-- TODO
-
 ## 1.14 - 12.01.2023
-
-- TODO
 
 ## 1.13 - 18.12.2023
 
