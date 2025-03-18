@@ -14,6 +14,9 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * 
  * @author Andrej Kabachnik
  *
+ * 
+ * 
+ * 
  */
 class JsonToRowsMapping extends AbstractDataSheetMapping 
 {
@@ -29,6 +32,8 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
 
     private $jsonColAlias = null;
 
+    private $nestedDataMarker = 'X';
+
     private $jsonColExpression = null;
     
     /**
@@ -39,6 +44,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
     public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $jsonCol = $this->getJsonColumn($fromSheet);
+        $nestedMarker = $this->getNestedDataMarker($fromSheet);
 
         $arrayOfJson = $jsonCol->getValues();
         $newRowsIdColName = $fromSheet->getUidColumn()->getName();
@@ -49,7 +55,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
                 continue;
             }
             $json = JsonDataType::decodeJson($jsonString);
-            $newRows = array_merge($newRows, $this->flatten($json)); 
+            $newRows = array_merge($newRows, $this->flatten($json, $nestedMarker)); 
 
             foreach ($newRows as $i => $newRow) {
                 $newRows[$i][$newRowsIdColName] = $fromSheet->getUidColumn()->getValue($rowIdx);
@@ -70,7 +76,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
      * @param array $json
      * @return array<array>
      */
-    protected function flatten(array $json) : array
+    protected function flatten(array $json, string $nestedMarker) : array
     {
         /*
             TODO:
@@ -78,13 +84,13 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
         */
 
         $result = [];
-        $result[] = ["--- NEW JSON ENTRY ---"];
+        //$result[] = ["--- NEW JSON ENTRY ---"];
 
         $parentKeys = $this->getParentKeys($json);
         $uniqueKeys = $this->getUniqueKeys($json);
 
         // go to innermost arrays and extract their data and parent data
-        $rows = $this->extractJsonData($json, [], $uniqueKeys, $parentKeys);
+        $rows = $this->extractJsonData($json, [], $uniqueKeys, $parentKeys, $nestedMarker);
 
         // re-order rows and fill missing keys with empty strings
         foreach ($rows as $row) {
@@ -115,11 +121,19 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
      * @param array $parentKeys
      * @return array<array>
      */
-    protected function extractJsonData(array $data, array $parentData = [], array $uniqueKeys, array $parentKeys): array {
+    protected function extractJsonData(array $data, array $parentData = [], array $uniqueKeys, array $parentKeys, string $nestedMarker): array {
         $result = [];
     
         // Loop through each element in the json object
         foreach ($data as $key => $value) {
+
+            // if innermost array/object is reached, merge all collected data and append to result array
+            if (is_array($value) && !empty($value) && !array_filter($value, 'is_array')) {
+                
+                // merge data (innermost array + parent data) and append to result
+                $mergedData = array_merge((array) $parentData, (array) $value);
+                $result[] = $mergedData;
+            }
 
             // Check if current node is array or simple value
             //     for arrays: mark parent key with X and recurse deeper
@@ -127,26 +141,18 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
             
             if (is_array($value)) {
                 
-                // mark encountered parent keys with "X" 
+                // mark encountered parent keys with set nested marker
                 $currentParentData = $parentData;
                 if (in_array($key, $parentKeys)) {
-                    $currentParentData[$key] = 'X';
+                    $currentParentData[$key] = $nestedMarker;
                 }
     
                 // Recursively call the function, passing the current parent data along
-                $result = array_merge($result, $this->extractJsonData($value, $currentParentData, $uniqueKeys, $parentKeys));
+                $result = array_merge($result, $this->extractJsonData($value, $currentParentData, $uniqueKeys, $parentKeys, $nestedMarker));
             } 
             else {
                 // If value is not an array, append value to parent data
                 $parentData[$key] = $value;
-            }
-    
-            // if innermost array/object is reached, merge all collected data and append to result array
-            if (is_array($value) && !empty($value) && !array_filter($value, 'is_array')) {
-                
-                // merge data (innermost array + parent data) and append to result
-                $mergedData = array_merge((array) $parentData, (array) $value);
-                $result[] = $mergedData;
             }
         }
     
@@ -186,8 +192,8 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
     /**
      * Returns a list of uniqe parent keys (keys to an array) within a given json object
      * 
-     * Example: ["Messwerte Förderwasser": [{keys: values},{keys: values}, ...]]
-     * -> parent key = "Messwerte Förderwasser"
+     * Example: ["key_123": [{keys: values},{keys: values}, ...]]
+     * -> parent key = "key_123"
      * 
      * @param array $entry
      * @return array
@@ -215,11 +221,40 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
     }
 
 
+
+    protected function getNestedDataMarker(DataSheetInterface $fromSheet) : string
+    {
+        return $this->nestedDataMarker;
+    }
+
+    /**
+     * Defines how keys of nested JSON ojects should be marked in the resulting table
+
+     *      Example:  [parentKey: [nestedKey: {key1: val1, key2: val2}, otherNestedKey: {key3: val3, key4: val4}, ...]], and nested data marker set to 'X' (default)
+     * 
+     *      Result: [parentKey: 'X', nestedKey: 'X', key1: val1, key2:val2]
+     *              [parentKey: 'X', otherNestedKey: 'X', key3: val3, key4:val4]
+     * 
+     * @uxon-property nested_data_marker
+     * @uxon-type metamodel:string
+     * @uxon-default X
+     * 
+     * @param string $alias
+     * @return JsonToRowsMapping
+     */
+    protected function setNestedDataMarker(string $alias) : JsonToRowsMapping
+    {
+        $this->nestedDataMarker = $alias;
+        $this->jsonColExpression = ExpressionFactory::createForObject($this->getMapper()->getFromMetaObject(), $alias);
+        return $this;
+    }
+
+    
     protected function getJsonColumn(DataSheetInterface $fromSheet) : DataColumnInterface
     {
         return $fromSheet->getColumns()->getByExpression($this->jsonColAlias);
     }
-
+    
     /**
      * Attribute alias or expression to fetch the JSON from the input data
      * 
