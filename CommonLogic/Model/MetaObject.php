@@ -1258,7 +1258,7 @@ class MetaObject implements MetaObjectInterface
             if ($selector->isBuiltInGroup()) {
                 $this->attribute_groups[$alias] = AttributeGroupFactory::createForObject($this, $alias);
             } elseif ($this->hasAttributeGroupsInModel()) {
-                $this->getWorkbench()->model()->getModelLoader()->loadAttributeGroups($this);
+                $this->getModel()->getModelLoader()->loadAttributeGroups($this);
                 $this->setLoadAttributeGroupsFromModel(false);
             }
             $grp = $this->attribute_groups[$alias] ?? null;

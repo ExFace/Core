@@ -2262,9 +2262,14 @@ SQL;
         
         foreach ($rows as $row) {
             $group = AttributeGroupFactory::createForObject($object, $row['app_alias'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['alias']);
-            $uidList = trim(str_replace(',,', ',', $row['attribute_ids']), ",");
-            foreach (explode(',', $uidList) as $attributeUid) {
-                $group->add($object->getAttributes()->getByAttributeId($attributeUid));
+            if ($row['attribute_ids'] !== null) {
+                $uidList = explode(',', $row['attribute_ids']);
+                // For some reason, the list of attributes UIDs has double commas ("0x123,,0x5454,"), which 
+                // leads to empty array elements. This is why we need to array_filter below.
+                $uidList = array_filter($uidList);
+                foreach ($uidList as $attributeUid) {
+                    $group->add($object->getAttributes()->getByAttributeId($attributeUid));
+                }
             }
             $object->addAttributeGroup($group);
         }
