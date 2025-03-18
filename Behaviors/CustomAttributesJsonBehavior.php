@@ -15,7 +15,6 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
@@ -297,7 +296,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * 
      * @uxon-property attributes_defaults
      * @uxon-type \exface\Core\CommonLogic\Model\Attribute
-     * @uxon-template {"groups": [""], "writable": true, "copyable": true, "editable": true, "required": true, "filterable": true, "sortable": true, "aggregatable": false, "value_list_delimiter": ","}
+     * @uxon-template {"groups": [""], "writable": true, "copyable": true, "editable": true, "required": false, "filterable": true, "sortable": true, "aggregatable": false, "value_list_delimiter": ","}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributesJsonBehavior

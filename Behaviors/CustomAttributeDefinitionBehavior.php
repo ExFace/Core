@@ -8,9 +8,15 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
+use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
@@ -65,13 +71,42 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * Type models are special templates that simplify the creation of new custom attributes. They automatically configure
  * the properties of a custom attribute, meaning users won't have to know any technical details. When creating  a new
  * custom attribute they simply assign a type model to it, which then takes care of everything else.  They can choose
- * from all type models configured in the `type_models` property, as well as some basic default  type models, such as
+ * from all type models configured in the `type_models` property, as well as some basic default type models, such as
  * "Date", "Time", "Text" and "Number".
  * 
  * You can extend these basic type models with your own. Simply add a new entry to the `type_models` property. 
  * Type models can inherit from any other type model. You can assign a parent by entering it in the `inherits`
  * property.  The type model will then use the property value of its parent, unless you defined a value for it. If you
  * do not specify a valid parent, your type model will inherit from a default configuration.
+ * 
+ * ### Default settings
+ * 
+ * If you do not define any custom, there will be some default types available automatically:
+ * 
+ * If you have no type selector in your definition object at all, all attributes will have the same default type. That
+ * default attribute model is mostly provided by the specific custom attributes behavior, that you use. E.g. the
+ * `CustomAttributesJsonBehavior` will have writable attributes while `CustomAttribtuesLookupBehavior` will have
+ * non-writable ones. However, you can still customize the default settings: 
+ * 
+ * ```
+ * {
+ *  "attribute_defaults" : {
+ *      "data_type": "exface.Core.String",
+ *      "readable": true,
+ *      "writable": false,
+ *      "copyable": false,
+ *      "editable": false,
+ *      "required": false,
+ *      "hidden": false,
+ *      "sortable": true,
+ *      "filterable": true,
+ *      "aggregatable": true,
+ *      "default_aggregate_function": "",
+ *      "default_sorter_dir": "ASC",
+ *      "value_list_delimiter": ",",
+ *      "default_display_order": ""
+ *  } 
+ * }
  * 
  * ## Categories
  * 
@@ -194,33 +229,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * ```
  * 
- * ### Default Type Model
- * 
- * The default type model is defined in code and is shown here for demonstrative purposes only. 
- * You don't have to add it manually. Any type model without a valid parent will inherit from this model.
- * 
- * ```
- * 
- *  "DEFAULT" : {
- *      "inherits": "",
- *      "data_type": "exface.Core.String",
- *      "readable": true,
- *      "writable": true,
- *      "copyable": true,
- *      "editable": true,
- *      "required": false,
- *      "hidden": false,
- *      "sortable": true,
- *      "filterable": true,
- *      "aggregatable": true,
- *      "default_aggregate_function": "",
- *      "default_sorter_dir": "ASC",
- *      "value_list_delimiter": ",",
- *      "default_display_order": ""
- *  } 
- * 
- * ```
- * 
  * ## Code Usage
  * 
  * See `CustomAttributeJsonBehavior`:
@@ -256,23 +264,6 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     const PLACEHOLDER_NAME = '~custom_attribute_name';
     
     private array $typeModels = [];
-    private array $attributeDefaults = [
-        // DATATYPE
-        self::KEY_DATA_TYPE => "exface.Core.String",
-        // BASIC FLAGS
-        "readable" => true,
-        "writable" => true,
-        "copyable" => true,
-        "editable" => true,
-        "required" => false,
-        "hidden" => false,
-        "sortable" => true,
-        "filterable" => true,
-        "aggregatable" => true,
-        // DEFAULTS
-        "value_list_delimiter" => EXF_LIST_SEPARATOR,
-        "categories" => []
-    ];
     private ?string $attributeTypeModelAlias = null;
     private ?string $attributeCategoryAlias = null;
     private ?string $attributeNameAlias = null;
@@ -280,15 +271,16 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $attributeHintAlias = null;
     private ?string $attributeRequiredAlias = null;
     private ?string $attributeOwnerObjectAlias = null;
-
     private ?string $attributeAliasAlias = null;
-
     private ?string $aliasGeneratorType = null;
-
     private bool $modelsInheritCategories = false;
     private array $generalCategories = [];
-
     private ?UxonObject $filtersUxon = null;
+    
+    private array $attributeDefaults = [
+        // DATATYPE
+        self::KEY_DATA_TYPE => "exface.Core.String"
+    ];
 
     /**
      * {@inheritDoc}
@@ -473,6 +465,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 if(! $typeModel = $this->getTypeModel($typeKey)) {
                     throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
                 }
+                $typeModel = array_merge($attrDefaults, $typeModel);
             } else {
                 $typeKey = null;
                 $typeModel = $attrDefaults;
@@ -1009,19 +1002,29 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function getDefaultTypeModels() : array
     {
         return [
-            'Date' => [
-                self::KEY_DATA_TYPE => "exface.Core.DateTime",
-                "default_editor_uxon" => ["widget_type" => "InputDateTime"]
-            ],
             'Text' => [
-                self::KEY_DATA_TYPE => "exface.Core.String",
+                self::KEY_DATA_TYPE => StringDataType::class,
             ],
             'Number' => [
-                self::KEY_DATA_TYPE => "exface.Core.Number",
+                self::KEY_DATA_TYPE => NumberDataType::class,
+            ],
+            'Integer' => [
+                self::KEY_DATA_TYPE => IntegerDataType::class,
+            ],
+            'Boolean' => [
+                self::KEY_DATA_TYPE => BooleanDataType::class,
+            ],
+            'Date' => [
+                self::KEY_DATA_TYPE => DateDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputDate"]
+            ],
+            'DateTime' => [
+                self::KEY_DATA_TYPE => DateTimeDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputDateTime"]
             ],
             'Time' => [
-                self::KEY_DATA_TYPE => "exface.Core.Time",
-            ],
+                self::KEY_DATA_TYPE => TimeDataType::class,
+            ]
         ];
     }
     
@@ -1038,11 +1041,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function getAttributeDefaults(CustomAttributesDefinition $definition = null) : array
     {
         // TODO make defaults depend on behaviors settings - e.g. readable if data address known
-        $globalDefaults = [
-            // DATATYPE
-            self::KEY_DATA_TYPE => StringDataType::class,
-            "categories" => []
-        ];
+        $globalDefaults = $this->attributeDefaults;
         
         if ($definition !== null) {
             $defaults = array_merge($globalDefaults, $definition->getAttributeDefaults()->toArray());
@@ -1055,16 +1054,16 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * Change the default properties of attributes to be created
      * 
-     * @uxon-property custom_attribute_defaults
+     * @uxon-property attribute_defaults
      * @uxon-type \exface\Core\CommoLogic\Model\Attribute
-     * @uxon-template {"editable": true, "value_list_delimiter": ",", "groups": [""]}
+     * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable": false, "value_list_delimiter": ","}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributeDefinitionBehavior
      */
-    protected function setCustomAttributeDefaults(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    protected function setAttributeDefaults(UxonObject $uxon) : CustomAttributeDefinitionBehavior
     {
-        $this->attributeDefaults = array_filter(array_merge($this->attributeDefaults, $uxon->toArray()));
+        $this->attributeDefaults = $uxon->toArray();
         return $this;
     }
 
