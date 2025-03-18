@@ -75,7 +75,7 @@ trait JqueryContainerTrait {
             // of the container itself at the end! Otherwise the object id of the last widget in the container would win!
             return "$.extend(true, {},\n" . implode(",\n", $data_getters) . ",\n{oId: '" . $widget->getMetaObject()->getId() . "'}\n)";
         } else {
-            return '{}';
+            return "{oId: '{$widget->getMetaObject()->getId()}', rows: []}";
         }
     }
     

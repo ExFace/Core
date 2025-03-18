@@ -1169,6 +1169,21 @@ class Attribute implements MetaAttributeInterface
         }
         return $this;
     }
+
+    /**
+     * Default editor widget to use for this attribute
+     * 
+     * @uxon-property default_editor_widget
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-template {"widget_type": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return MetaAttributeInterface
+     */
+    protected function setDefaultEditorWidget(UxonObject $uxon) : MetaAttributeInterface
+    {
+        return $this->setDefaultEditorUxon($uxon);
+    }
     
     /**
      * 
@@ -1220,7 +1235,21 @@ class Attribute implements MetaAttributeInterface
         }
         return $this;
     }
-    
+
+    /**
+     * Default display widget to use for this attribute
+     * 
+     * @uxon-property default_display_widget
+     * @uxon-type \exface\Core\Widgets\Value
+     * @uxon-template {"widget_type": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return MetaAttributeInterface
+     */
+    protected function setDefaultDisplayWidget(UxonObject $uxon) : MetaAttributeInterface
+    {
+        return $this->setDefaultDisplayUxon($uxon);
+    }
     
     /**
      * 

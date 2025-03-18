@@ -318,7 +318,7 @@ JS;
     {
         $action = $action ?? $this->getWidget()->getAction();
         
-        $collectInputDataJs = '{}';
+        $collectInputDataJs = '{rows: []}';
         if ($jsRequestData === null && $action !== null) {
             $collectInputDataJs = "\n" . $this->buildJsRequestDataCollector($action, $this->getInputElement(), 'requestData');
         } 
