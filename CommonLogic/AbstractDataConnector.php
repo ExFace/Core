@@ -281,7 +281,10 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             $this->connect();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeQueryEvent($this, $query));        
+        $event = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeQueryEvent($this, $query));        
+        if ($event->isDefaultPrevented()) {
+            return $query;
+        }
         
         if ((null !== $tz = $this->getTimeZone()) && $query->getTimeZone() === null) {
             $query->setTimeZone($tz);

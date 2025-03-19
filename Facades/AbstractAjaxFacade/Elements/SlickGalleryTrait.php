@@ -335,7 +335,7 @@ JS
                         aRows.forEach(function(oRow) {
                             var sUrl = {$this->buildJsUrlForImage('oRow')};
                             var a;
-console.log(sUrl);
+
                             if (! sUrl) {
                                 {$this->buildJsShowMessageError($this->escapeString($this->translate('WIDGET.IMAGEGALLERY.CANNOT_DOWNLOAD_WITHOUT_URL')))}
                             }
@@ -533,9 +533,7 @@ JS;
                         if (mUid === null) {
                             mUid = '';
                         } else if ((typeof mUid === 'string' || mUid instanceof String) && mUid.includes('/')){
-                            console.log(mUid);
                             mUid = 'base64URL,' + btoa(encodeURIComponent(mUid)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-                            console.log(mUid);
                         }
                         return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(mUid));
                     }()

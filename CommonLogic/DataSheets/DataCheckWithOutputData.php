@@ -5,6 +5,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -141,9 +142,8 @@ class DataCheckWithOutputData extends DataCheck
     /**
      * The relation that points from the object being checked to the object where the output sheet is stored (i.e. the checklist).
      * 
-     * For example: If the behavior checks DELIVERY_POS items and stores the results in ALERT items, then ALERT must
-     * have a relation to DELIVERY_POS (if it doesn't, add one). In that case, simply enter `ALERT` as relation path.
-     * (properly defined relations should appear as auto-complete options).
+     * For example: If the behavior checks items of DELIVERY_POS  and stores the results as items ALERT, you enter `ALERT`
+     * in this property. Of course the two objects must have a relation defined between them. 
      * 
      * @uxon-property relation_from_checked_object_to_checklist
      * @uxon-type metamodel:relation
@@ -206,7 +206,7 @@ class DataCheckWithOutputData extends DataCheck
     }
 
     /**
-     * @deprecated Use `getOutputKeyAttributeAlias(MetaObjectInterface)` instead.
+     * @deprecated Use `getForeignKeyAttributeAlias(MetaObjectInterface)` instead.
      * @param MetaObjectInterface $checkedObject
      * @return string
      */
@@ -220,7 +220,7 @@ class DataCheckWithOutputData extends DataCheck
      * @param string $alias
      * @return $this
      */
-    protected function setAffectedUidAlias(string $alias) : static
+    protected function setOutputKeyAttributeAlias(string $alias) : static
     {
         return $this->setForeignKeyAttributeAlias($alias);
     }
@@ -233,6 +233,10 @@ class DataCheckWithOutputData extends DataCheck
      */
     public function getRelationPathFromCheckedObject(MetaObjectInterface $checkedObject) : MetaRelationPathInterface
     {
+        if(empty($this->relationStringFromCheckedObject)) {
+            throw new InvalidArgumentException('Invalid value for property "relation_from_checked_object_to_checklist"! Property must contain a valid relation path.');
+        }
+        
         return RelationPathFactory::createFromString($checkedObject, $this->relationStringFromCheckedObject);
     }
 }

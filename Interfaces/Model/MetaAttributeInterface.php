@@ -12,7 +12,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
 {
     const OBJECT_LABEL_ALIAS = 'LABEL';
     
-    public function __construct(MetaObjectInterface $object);
+    public function __construct(MetaObjectInterface $object, string $name, string $alias);
     
     /**
      * Marks this attribute as a relation

@@ -9,9 +9,11 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Actions\iExportData;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -101,6 +103,8 @@ class ExportJSON extends ReadData implements iExportData
     private $firstRowWritten = false;
     
     private $lazyExport = null;
+
+    private $exportMapper = null;
     
     /**
      * 
@@ -271,6 +275,7 @@ class ExportJSON extends ReadData implements iExportData
         $rowOffset = 0;
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
+        $exportMapper = $this->getExportMapper();
         do {
             $dataSheet = $dataSheetMaster->copy();
             $dataSheet->setRowsLimit($rowsOnPage);
@@ -288,12 +293,18 @@ class ExportJSON extends ReadData implements iExportData
                     $col->setValues($newValues);
                 }
             }
+
+            if ($exportMapper !== null) {
+                $exportSheet = $exportMapper->map($dataSheet);
+            } else {
+                $exportSheet = $dataSheet;
+            }
             
             if ($lazyExport) {
-                $this->writeRows($dataSheet, $columnNames);
+                $this->writeRows($exportSheet, $columnNames);
             } else {
                 // Don't add any columns to the master sheet if reading produced hidden/system columns
-                $dataSheetMaster->addRows($dataSheet->getRows(), false, false);
+                $dataSheetMaster->addRows($exportSheet->getRows(), false, false);
             }
             
             $rowOffset += $rowsOnPage;
@@ -697,6 +708,16 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
+     * Set to FALSE to force reading all data before starting to write the file.
+     * 
+     * If not set explicitly, the system will attempt to write every time data is read to save memory: so when exporting
+     * large data sets, it will read X rows at a time, write them to the file and continue reading. This might
+     * break the output though in some cases: for example, if every new row being read might influence the columns
+     * to display.
+     * 
+     * @uxon-property lazy_export
+     * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool $value
      * @return ExportJSON
@@ -704,6 +725,45 @@ class ExportJSON extends ReadData implements iExportData
     public function setLazyExport(bool $value) : ExportJSON
     {
         $this->lazyExport = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return DataSheetMapperInterface|null
+     */
+    public function getExportMapper() : ?DataSheetMapperInterface
+    {
+        return $this->exportMapper;
+    }
+
+    /**
+     * This mapper is applied right after reading data and allows to modify it before it gets exported.
+     * 
+     * ```
+     * {
+     *  "export_mapper": {
+     *      "json_to_rows_mapping": [
+     *          {
+     *              "json_column": "FORM_DATA"
+     *          }
+     *      ]
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property export_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * @uxon-template {"json_to_rows_mappings": [{"json_column": ""}]}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return ExportJSON
+     */
+    protected function setExportMapper(UxonObject $uxon) : ExportJSON
+    {
+        $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getMetaObject(), $this->getMetaObject());
+        $this->exportMapper = $mapper;
         return $this;
     }
 }

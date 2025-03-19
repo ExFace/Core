@@ -68,6 +68,7 @@ class ShowLookupDialog extends ShowDialog
         parent::init();
         $this->setPrefillWithInputData(false);
         $this->setIcon(Icons::SEARCH);
+        $this->setConfirmationForUnsavedChanges(false);
         
         if ($this->isDefinedInWidget() === true && $this->getWidgetDefinedIn()->is('DialogButton')) {
             $this->getWidgetDefinedIn()->setCloseDialogAfterActionSucceeds(false);

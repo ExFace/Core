@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2024-02-20 13:07:45",
+            "MODIFIED_ON": "2025-03-12 11:52:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -327,10 +327,15 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "disable_condition": {
-                                                    "widget_link": "object_uid",
-                                                    "comparator": "==",
-                                                    "value": ""
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "object_uid",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
                                                 }
                                             },
                                             {
@@ -350,6 +355,20 @@
                                                     "alias": "exface.Core.QuickEditAttributes",
                                                     "prefill_with_data_from_widget_link": "object_uid",
                                                     "prefill_with_input_data": false
+                                                }
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.ObjectAttributeGroupsDialog",
+                                                "input_widget_id": "object_uid",
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "object_uid",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
                                                 }
                                             }
                                         ]

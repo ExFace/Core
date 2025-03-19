@@ -1,14 +1,15 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
-use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -26,6 +27,8 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\WorkbenchCache;
 use exface\Core\DataTypes\TimeZoneDataType;
+use \ReflectionClass;
+use Throwable;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -332,7 +335,7 @@ class UxonSchema implements UxonSchemaInterface
             }
         }
         
-        return explode('|', $type);
+        return explode('|', $type ?? '');
     }
     
     /**
@@ -483,15 +486,18 @@ class UxonSchema implements UxonSchemaInterface
                 $options = $this->getMetamodelComparators($search);
                 break;
             case strcasecmp($type, 'metamodel:attribute') === 0 && $object !== null:
+                try {
+                    $options = $this->getMetamodelAttributeAliases($object, $search);
+                } catch (MetaObjectNotFoundError $e) {
+                }
+                break;
+            case strcasecmp($type, 'metamodel:attribute_group') === 0 && $object !== null:
+                $options = $this->getAttributeGroupsForObject($object);
+                break;
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
-                    if (strcasecmp($type, 'metamodel:attribute') === 0) {
-                        $options = $this->getMetamodelAttributeAliases($object, $search);
-                    } else {
-                        $options = $this->getMetamodelRelationAliases($object, $search);
-                    }
+                    $options = $this->getMetamodelRelationAliases($object, $search);
                 } catch (MetaObjectNotFoundError $e) {
-                    $options = [];
                 }
                 break;
             case strcasecmp($type, 'metamodel:expression') === 0:
@@ -573,10 +579,10 @@ class UxonSchema implements UxonSchemaInterface
             if (count($parts) > 1) {
                 $alias = $parts[2];
                 $namespace = $parts[0] . ($parts[1] !== null ? '.' . $parts[1] : '');
+                $ds->getFilters()->addConditionFromString('APP__ALIAS', $namespace);
             } else {
                 $alias = $parts[0];
             }
-            $ds->getFilters()->addConditionFromString('APP__ALIAS', $namespace);
             $ds->getFilters()->addConditionFromString('ALIAS', $alias);
         }
         $ds->dataRead();
@@ -643,6 +649,32 @@ class UxonSchema implements UxonSchemaInterface
         
         return $values;
     }
+
+    /**
+     * Collects all attribute groups available for a given meta-object.
+     * 
+     * @param MetaObjectInterface $object
+     * @return array
+     */
+    protected function getAttributeGroupsForObject(MetaObjectInterface $object) : array
+    {
+        $aliases = [];
+
+        try {
+            $refl = new ReflectionClass(MetaAttributeGroupInterface::class);
+            $aliases = $refl->getConstants();
+        } catch (Throwable $e) {
+            // TODO
+        } 
+
+        foreach ($object->getAttributeGroups() as $group) {
+            $aliases[] = $group->getAliasWithNamespace();
+        }
+
+        sort($aliases);
+        
+        return $aliases;
+    }
     
     /**
      * Returning metamodel relation aliases
@@ -658,7 +690,7 @@ class UxonSchema implements UxonSchemaInterface
         $relSep = RelationPath::getRelationSeparator();
         foreach ($attrAliases as $alias) {
             if (true === StringDataType::endsWith($alias, $relSep)) {
-                $relAliases[] = StringDataType::substringBefore($alias, $relSep);  
+                $relAliases[] = StringDataType::substringBefore($alias, $relSep, $alias, false, true);  
             } 
         }
         return $relAliases;

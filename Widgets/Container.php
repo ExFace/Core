@@ -20,15 +20,15 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 /**
  * The Container is a basic widget, that contains other widgets.
  * 
- * The `Conainer` itself is mostly invisible - it is just a technical grouping element. 
+ * The `Container` itself is mostly invisible - it is just a technical grouping element. 
  * Use it, if you just need to place multiple widgets somewhere, where only one widget 
- * is expected. The
+ * is expected. 
  * 
- * The `Container` is also a common base for many other wigdets: the `Panel` (a visible UI area, 
+ * The `Container` is also a common base for many other widgets: the `Panel` (a visible UI area, 
  * that contains other widgets), the `Form`, `Tabs` and `Split`s, etc.
  *
  * In HTML-facades the container will either be a simple (invisible) <div> or completely 
- * invisible - thus, just a list of it's contents without any wrapper.
+ * invisible - thus, just a list of its contents without any wrapper.
  * 
  * ## Widget functions
  * 
@@ -46,7 +46,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     private $widgets = array();
     
     private $readonly = null;
-
+    
     /**
      * 
      * {@inheritDoc}
@@ -282,11 +282,12 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     /**
      * Array of widgets in the container: each one is defined as a regular widget object.
      *
-     * Widgets will be displayed in the order of definition. By default all widgets will inherit the container's meta object.
+     * Widgets will be displayed in the order of definition. By default all widgets will inherit the container's meta
+     * object.
      *
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"": ""}]
+     * @uxon-template [{"attribute_group_alias": "~VISIBLE"}]
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */
@@ -542,5 +543,15 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
             }
         }
         return false;
+    }
+
+    /**
+     * @inheritdoc 
+     * @see AbstractWidget::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        self::addAttributeGroupSnippet($uxon, $this);
+        return parent::importUxonObject($uxon);
     }
 }

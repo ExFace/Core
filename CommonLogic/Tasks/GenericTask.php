@@ -356,6 +356,15 @@ class GenericTask implements TaskInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getMetaObjectSelector()
+     */
+    public function getMetaObjectSelector() : ?MetaObjectSelectorInterface
+    {
+        return $this->objectSelector;
+    }
+
+    /**
      * UID or namespaced alias of the base meta object of this task
      * 
      * @uxon-property object_alias
