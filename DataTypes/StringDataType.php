@@ -689,7 +689,7 @@ class StringDataType extends AbstractDataType
      * - `transliterate('Änderung')` -> Anderung
      * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
      * - `transliterate('ä/B', ':: Any-Latin; [:Punctuation:] Remove;')` -> a b
-     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;)` -> aufgaben im uberblick
+     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;')` -> aufgaben im uberblick
      * 
      * @link https://unicode-org.github.io/icu/userguide/transforms/general/
      * 

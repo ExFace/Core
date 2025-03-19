@@ -9,7 +9,6 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
 use exface\Core\Interfaces\Actions\iModifyContext;
-use exface\Core\Factories\SelectorFactory;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
@@ -24,6 +23,7 @@ class Logout extends AbstractAction implements iModifyContext
     {
         parent::init();
         $this->setIcon(Icons::SIGN_OUT);
+        $this->setConfirmationForUnsavedChanges(false);
     }
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface

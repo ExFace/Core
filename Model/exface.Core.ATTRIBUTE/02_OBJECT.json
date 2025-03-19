@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Attribute [exface.Core.ATTRIBUTE]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2023-11-07 02:46:31",
+            "MODIFIED_ON": "2025-03-12 13:02:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -383,6 +383,104 @@
                                 ]
                             },
                             {
+                                "caption": "Groups",
+                                "widgets": [
+                                    {
+                                        "widget_type": "DataTable",
+                                        "object_alias": "exface.Core.ATTRIBUTE_GROUP_ATTRIBUTES",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "ATTRIBUTE",
+                                                "required": true,
+                                                "hidden": true
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "ATTRIBUTE_GROUP__NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "ATTRIBUTE_GROUP__ATTRIBUTE_GROUP_ATTRIBUTES__UID:COUNT",
+                                                "caption": "Attributes"
+                                            },
+                                            {
+                                                "attribute_alias": "ATTRIBUTE_GROUP__DESCRIPTION"
+                                            },
+                                            {
+                                                "attribute_alias": "ATTRIBUTE_GROUP__APP__ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "ATTRIBUTE_GROUP__ALIAS"
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "ATTRIBUTE_GROUP__NAME",
+                                                "direction": "asc"
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "caption": "Create group",
+                                                "input_widget_id": "object_selector",
+                                                "action": {
+                                                    "alias": "exface.Core.ShowObjectCreateDialog",
+                                                    "object_alias": "exface.Core.ATTRIBUTE_GROUP",
+                                                    "prefill_with_input_data": true,
+                                                    "input_mapper": {
+                                                        "from_object_alias": "exface.Core.ATTRIBUTE",
+                                                        "to_object_alias": "exface.Core.ATTRIBUTE_GROUP",
+                                                        "column_to_column_mappings": [
+                                                            {
+                                                                "from": "OBJECT",
+                                                                "to": "OBJECT"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=uid_field",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "caption": "Edit group",
+                                                "bind_to_double_click": true,
+                                                "action": {
+                                                    "alias": "exface.Core.ShowObjectEditDialog",
+                                                    "object_alias": "exface.Core.ATTRIBUTE_GROUP",
+                                                    "input_mapper": {
+                                                        "from_object_alias": "exface.Core.ATTRIBUTE_GROUP_ATTRIBUTES",
+                                                        "to_object_alias": "exface.Core.ATTRIBUTE_GROUP",
+                                                        "column_to_column_mappings": [
+                                                            {
+                                                                "from": "ATTRIBUTE_GROUP",
+                                                                "to": "UID"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DeleteObject",
+                                                "caption": "Remove from group"
+                                            },
+                                            {
+                                                "caption": "Show all groups",
+                                                "action_alias": "exface.Core.ObjectAttributeGroupsDialog",
+                                                "input_widget_id": "object_selector"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
                                 "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND')",
                                 "widgets": [
                                     {
@@ -392,9 +490,7 @@
                                             {
                                                 "attribute_alias": "COMPOUND_ATTRIBUTE",
                                                 "required": true,
-                                                "input_widget": {
-                                                    "widget_type": "InputHidden"
-                                                }
+                                                "hidden": true
                                             }
                                         ],
                                         "columns": [

@@ -93,7 +93,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      * @param DataConnectionInterface|string|\exface\Core\CommonLogic\Selectors\DataConnectionSelector $dataConnectionOrAlias
      * @param bool $readable
      * @param bool $writable
-     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     * @return MetaObjectInterface
      */
     public static function createTemporary(
         WorkbenchInterface $workbench, 
@@ -140,29 +140,26 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     }
 
     /**
-     * Adds a virtual attribute (not stored in the meta model) to the given object.
+     * Creates a virtual attribute (not stored in the metamodel) to the given object.
      * 
      * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj
-     * @param string $name
      * @param string $alias
+     * @param string $name
      * @param string $dataAddress
-     * @param mixed $dataTypeOrSelector
+     * @param DataTypeInterface|string $dataTypeOrSelector
      * @throws \exface\Core\Exceptions\InvalidArgumentException
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     * @return Attribute
      */
     public static function addAttributeTemporary(
-        MetaObjectInterface $obj, 
-        string $name, 
-        string $alias, 
+        MetaObjectInterface $obj,
+        string $alias,
+        string $name,
         string $dataAddress,
-        $dataTypeOrSelector = null
+        mixed $dataTypeOrSelector = null,
     ) : MetaAttributeInterface
     {
-        $attr = new Attribute($obj);
-        $attr->setId(UUIDDataType::generateSqlOptimizedUuid());
-        $attr->setAlias($alias);
-        $attr->setName($name);
-        $attr->setDataAddress($dataAddress);
+        $attr = new Attribute($obj, $name, $alias);
+        
         switch (true) {
             case $dataTypeOrSelector instanceof DataTypeInterface:
                 $type = $dataTypeOrSelector;
@@ -179,8 +176,11 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
             default:
                 throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . get_class($dataTypeOrSelector));
         }
+
         $attr->setDataType($type);
+        $attr->setDataAddress($dataAddress);
         $obj->getAttributes()->add($attr);
+        
         return $attr;
     }
 }

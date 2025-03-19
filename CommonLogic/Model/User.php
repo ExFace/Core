@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;

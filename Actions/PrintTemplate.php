@@ -126,6 +126,7 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
         parent::init();
         $this->setIcon(Icons::PRINT_);
         $this->setInputRowsMin(1);
+        $this->setConfirmationForUnsavedChanges(true);
     }
 
     /**
@@ -312,7 +313,6 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     public function setFilename(string $filename) : PrintTemplate
     {
         $this->filename = $filename;
-        $this->pathname = null;
         return $this;
     }
     

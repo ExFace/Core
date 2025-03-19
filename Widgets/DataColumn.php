@@ -36,6 +36,7 @@ use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Contexts\DebugContext;
+use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -57,6 +58,8 @@ use exface\Core\Contexts\DebugContext;
  */
 class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText
 {
+    use iHaveAttributeGroupTrait;
+    
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
     }
@@ -1116,11 +1119,17 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             
             // Dev-hint
             if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
-                $hint = ($hint ? StringDataType::endSentence($hint) : '') . $this->getHintDebug();
+                $hint = 
+                ($hint ? StringDataType::endSentence($hint) : '') 
+                . $this->getHintDebug();
             }
             return $hint;
         }
-        return $this->getCellWidget()->getHint($includeDebugInfo);
+        $addition = '';
+        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+            $addition .= "\n- Attribute group: `{$group}`";
+        } 
+        return $this->getCellWidget()->getHint($includeDebugInfo) . $addition;
     }
     
     /**

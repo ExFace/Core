@@ -39,7 +39,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
  *  
  * ```
  * 
- * You can give the condition group a `base_object_alias` or `ignore_empty_values` as default values
+ * You can give the condition group an `object_alias` or `ignore_empty_values` as default values
  * for the respective properties of its conditions.
  * 
  * @see ConditionGroupInterface
@@ -466,6 +466,9 @@ class ConditionGroup implements ConditionGroupInterface
             if ($uxon->hasProperty('base_object_alias')) {
                 $this->setBaseObjectAlias($uxon->getProperty('base_object_alias'));
             }
+            if ($uxon->hasProperty('object_alias')) {
+                $this->setBaseObjectAlias($uxon->getProperty('object_alias'));
+            }
             if ($uxon->hasProperty('conditions')) {
                 foreach ($uxon->getProperty('conditions') as $prop) {
                     if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
@@ -483,6 +486,9 @@ class ConditionGroup implements ConditionGroupInterface
                     // factory to avoid loading the object if it was not loaded yet.
                     if ($prop->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
                         $prop->setProperty('base_object_alias', $this->getBaseObjectSelector());
+                    }
+                    if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
+                        $prop->setProperty('object_alias', $this->getBaseObjectSelector());
                     }
                     if ($prop->hasProperty('ignore_empty_values') === false) {
                         $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
@@ -668,9 +674,6 @@ class ConditionGroup implements ConditionGroupInterface
     /**
      * All expressions within this condition group will be resolved based on this object.
      * 
-     * @uxon-property base_object_alias
-     * @uxon-type metamodel:object
-     * 
      * @param string $value
      * @return ConditionGroup
      */
@@ -679,6 +682,20 @@ class ConditionGroup implements ConditionGroupInterface
         $this->baseObjectSelector = $aliasWithNamespaceOrUid;
         $this->baseObject = null;
         return $this;
+    }
+
+    /**
+     * All expressions within this condition group will be resolved based on this object.
+     * 
+     * @uxon-property object_alias
+     * @uxon-type metamodel:object
+     * 
+     * @param string $aliasWithNamespaceOrUid
+     * @return ConditionGroup
+     */
+    protected function setObjectAlias(string $aliasWithNamespaceOrUid) : ConditionGroup
+    {
+        return $this->setBaseObjectAlias($aliasWithNamespaceOrUid);
     }
     
     /**
@@ -743,7 +760,9 @@ class ConditionGroup implements ConditionGroupInterface
             throw new InvalidArgumentException('Cannot create conditional expression from "' . $expression_string .  '": cannot determine base meta object!');
         }
         
-        $value = trim($value);
+        if (is_string($value)) {
+            $value = trim($value);
+        }
         
         // A special feature for string condition is the possibility to specify a comma separated list of attributes in one element
         // of the filters array, wich means that at least one of the attributes should match the value

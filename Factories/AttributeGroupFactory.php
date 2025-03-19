@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
@@ -12,17 +13,18 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
 
     /**
      *
-     * @param MetaObjectInterface $object            
-     * @param string $alias            
+     * @param MetaObjectInterface $object
+     * @param null                $alias
+     * @param callable|null       $sorter
      * @return AttributeGroup
      */
-    public static function createForObject(MetaObjectInterface $object, $alias = null)
+    public static function createForObject(MetaObjectInterface $object, $alias = null) : MetaAttributeGroupInterface
     {
         $exface = $object->getWorkbench();
         $group = new AttributeGroup($exface, $object);
         $group->setAlias($alias);
         
-        if (substr($alias, 0, 1) === '~') {
+        if (mb_substr($alias, 0, 1) === '~') {
             if (strcasecmp($alias, MetaAttributeGroupInterface::ALL) === 0) {
                 // The ~ALL group should list visible hidden attributes at the very end
                 $hidden_attrs = [];
@@ -45,8 +47,9 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                 }
             }
         } else {
-            // TODO Load alises from group models (as soon as attribute groups become available in the model)
+            // TODO Load aliases from group models (as soon as attribute groups become available in the model)
         }
+        
         return $group;
     }
     
@@ -62,8 +65,14 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
             return $attributeList;
         }
         
-        $spell = array_shift($spells);
-        if (substr($spell, 0, 1) === '!') {
+        $fullSpell = array_shift($spells);
+        $fullSpell = explode(':', $fullSpell);
+        $spell = mb_trim($fullSpell[0]);
+        
+        $components = count($fullSpell) ? $fullSpell[1] : "";
+        $components = empty($components) ? [] : explode(',', $components);
+        
+        if (str_starts_with($spell, '!')) {
             $invert = true;
             $alias = '~' . substr($spell, 1);
         } else {
@@ -113,9 +122,32 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                     return $invert XOR $attr->isCopyable();
                 });
                 break;
+            case MetaAttributeGroupInterface::CUSTOM:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert, $components) {
+                    if(!$attr instanceof CustomAttribute) {
+                        return $invert;
+                    }
+
+                    if($invert) {
+                        return false;
+                    }
+                    
+                    $categories = $attr->getCategories();
+                    foreach ($components as $component) {
+                        $component = mb_trim($component, ' \n\r\t\v\0');
+                        $invertResult = str_starts_with($component, '!');
+                        $component = mb_trim($component, '!');
+                        $result = ($invertResult XOR in_array($component,$categories,true));
+                        if($result === false) {
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                });
+                break;
         }
         
         return static::getAttributesByMagic($attributeList, $spells);
     }
 }
-?>
