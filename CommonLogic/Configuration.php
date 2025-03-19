@@ -1,11 +1,13 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Exceptions\FileNotWritableError;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Exceptions\OutOfBoundsException;
 use exface\Core\Exceptions\FileNotReadableError;
 use exface\Core\Interfaces\WorkbenchInterface;
+use Throwable;
 
 class Configuration implements ConfigurationInterface
 {
@@ -146,7 +148,11 @@ class Configuration implements ConfigurationInterface
             // Overwrite the option
             $config->setOption($key, $value_or_object_or_string);
             // Save the file or create one if there was no installation specific config before
-            file_put_contents($this->getConfigFilePath($configScope), $config->exportUxonObject()->toJson(true));
+            try {
+                $this->getWorkbench()->filemanager()->dumpFile($this->getConfigFilePath($configScope), $config->exportUxonObject()->toJson(true));
+            } catch (Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException(new FileNotWritableError('Cannot write to configuration file "' . $configScope . '"! ' . $e->getMessage(), null, $e));
+            }
         }
         
         return $this;
