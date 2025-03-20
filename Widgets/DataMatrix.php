@@ -9,15 +9,15 @@ use exface\Core\CommonLogic\DataSheets\PivotSheet;
  * 
  * The matrix is created by transposing certain colums of the underlying table. This means, the values of
  * the transposed column are distributed over multiple columns automatically created from values of another
- * column. For example,
+ * column. Thus, the matrix has less rows and mor columns, than the original table. For example,
  * 
- * | product_no | color | stock | size |
- * |------------|-------|-------|------|
- * | P1         | white |   1   |   S  |
- * | P1         | white |   2   |   M  |
- * | P1         | white |   3   |   L  |
- * | P1         | black |   4   |   S  |
- * | P1         | black |   5   |   M  |
+ * | id (hidden) | product_no | color | stock | size |
+ * |-------------|------------|-------|-------|------|
+ * | 1001        | P1         | white |   1   |   S  |
+ * | 1002        | P1         | white |   2   |   M  |
+ * | 1003        | P1         | white |   3   |   L  |
+ * | 1004        | P1         | black |   4   |   S  |
+ * | 1005        | P1         | black |   5   |   M  |
  * 
  * ... will become ...
  * 
@@ -26,20 +26,34 @@ use exface\Core\CommonLogic\DataSheets\PivotSheet;
  * | P1         | white | 1 | 2 | 3 |
  * | P1         | black | 4 | 5 |   |
  * 
- * ... if the `stock` column is transposed used the `size` column as `label_attribute_alias`.
+ * ... if the `stock` column is transposed using the `size` column as `label_attribute_alias`.
  * 
- * Note: the columns created for the transposed values replace the column with their label. You can 
+ * **Note:** the columns created for the transposed values replace the column with their label. You can 
  * transpose multipe columns - either specifying the same `label_attribute_alias` to get the transposed 
  * rows one-below-another or a different `label_attribute_alias` to have multiple transposed blocks
  * side-by-side (each replacing it's own label-column).
+ * 
+ * ## Side effects on hidden columns and actions
+ * 
+ * **IMPORTANT**: Values from the transposed column will be put in a single new row as long values
+ * of the other (non-transposed) **visible** columns are the same. In the example above, the matrix 
+ * has two rows because the color is different. The `id` is different too, but it is ignored because
+ * it is hidden. It would otherwise prevent transposing completely and it would look like an error
+ * to a user, who never sees the `id` column. 
+ * 
+ * Keep this in mind, when working with DataMatrix - the "meaning" of a row actually changes when columns 
+ * are transposed. This may break buttons and action input mappers because they might rely on hidden 
+ * columns and will not know, that these column are ignored by the matrix.
+ * 
+ * ## Transforming a DataTable into a DataMatrix
  * 
  * Any `DataTable` can be easily transformed into a `DataMatrix` simply by specifying the 
  * `DataColumnTransposed` as `widget_type` of the column to be transposed and giving it a
  * `label_attribute_alias`. On the other hand, any `DataMatrix` can be turned back into a table just
  * by changing it's `widget_type`.
- *
+ * 
  * ## Examples
- *
+ * 
  * Here is the configuration for the above color/size matrix with product stock levels. It is created
  * from a table listing the current `stock_available` property for each product-color-size-combination 
  * individually:

@@ -207,7 +207,7 @@ class PWAapiFacade extends HttpTaskFacade
         ]);
         $ds->getFilters()->addConditionFromValueArray('STATUS', [20,70]);
         $ds->getFilters()->addConditionFromString('PRODUCER', $deviceId, ComparatorDataType::EQUALS);
-        $ds->getFilters()->addConditionFromString('OWNER', $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid());
+        $ds->getFilters()->addConditionFromString('OWNER', $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(), ComparatorDataType::EQUALS);
         $ds->getSorters()->addFromString("TASK_ASSIGNED_ON", SortingDirectionsDataType::ASC);
         $ds->dataRead();
         return $ds;

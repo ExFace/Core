@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\EntityList;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -119,5 +120,22 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
             $behavior->setObject($object);
         }
         return $result;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function findBehavior(string $class, bool $allowMultiple = false): ?BehaviorInterface
+    {
+        $hits = $this->getByPrototypeClass($class);
+        if ($hits->isEmpty()) {
+            return null;
+        }
+
+        if (!$allowMultiple && $hits->count() > 1) {
+            throw new RuntimeException('Only one behavior of type "' . $class . '" allowed!');
+        }
+
+        return $hits->getFirst();
     }
 }

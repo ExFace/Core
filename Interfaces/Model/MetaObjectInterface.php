@@ -6,7 +6,6 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -462,7 +461,27 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @param string $alias
      * @return MetaAttributeGroupInterface
      */
-    public function getAttributeGroup($alias);
+    public function getAttributeGroup(string $alias) : MetaAttributeGroupInterface;
+
+    /**
+     * 
+     * @return MetaAttributeGroupInterface[]
+     */
+    public function getAttributeGroups() : array;
+
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return void
+     */
+    public function setLoadAttributeGroupsFromModel(bool $trueOrFalse) : MetaObjectInterface;
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaAttributeGroupInterface $group
+     * @return void
+     */
+    public function addAttributeGroup(MetaAttributeGroupInterface $group) : MetaObjectInterface;
     
     /**
      * Returns TRUE if this object is exactly the one given or inherits from it and FALSE otherwise - similarly to the behavior of PHP instance_of.
@@ -505,7 +524,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return BehaviorListInterface|BehaviorInterface[]
      */
     public function getBehaviors() : BehaviorListInterface;
-    
+
     /**
      *
      * @return MetaObjectActionListInterface|ActionInterface[]

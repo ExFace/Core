@@ -266,7 +266,7 @@ class Tracer extends Profiler
                 $name = 'Communication message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
                 break;
             case $event instanceof BehaviorEventInterface:
-                $name = 'Behavior ' . PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior() . ' of "' . $event->getBehavior()->getObject()->getAliasWithNamespace()) . '"';
+                $name = PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior()) . ' "' . $event->getBehavior()->getName() . '" of "' . $event->getBehavior()->getObject()->getAliasWithNamespace() . '"';
                 break;
             default:
                 $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
@@ -484,7 +484,7 @@ class Tracer extends Profiler
      * @return void
      */
     public function stopWorkbench(OnBeforeStopEvent $event = null) {
-        $this->getWorkbench()->getLogger()->info('Performance summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
+        $this->getWorkbench()->getLogger()->notice('Request summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
         $this->logHandler->flush();
     }
     

@@ -38,6 +38,22 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
     public function add($entity, $key = null);
 
     /**
+     * Appends the given entity to the end of the list.
+     *
+     * @param mixed $entity
+     * @return EntityListInterface
+     */
+    public function append($entity) : static;
+
+    /**
+     * Prepends the given entity to the beginning of the list.
+     * 
+     * @param mixed $entity
+     * @return EntityListInterface
+     */
+    public function prepend($entity) : static;
+
+    /**
      * Removes the given entity from the list
      *
      * @param mixed $entity            
@@ -137,7 +153,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
      * @param callable $callback
      * @return EntityListInterface
      */
-    public function filter(callable $callback) : EntityListInterface;
+    public function filter(callable $callback) : self;
     
     /**
      * Sorts this entity list via usort() - i.e. keeping key-entity-assotiations.

@@ -438,4 +438,33 @@ class MySqlBuilder extends AbstractSqlBuilder
         
         return new DataQueryResultData([], $cnt);
     }
+
+    /**
+     * @inheritdoc 
+     */
+    protected function buildSqlJsonEncodeAsFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
+    {
+        $resultJson = $initialJson;
+
+        foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+        }
+
+        return $resultJson;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function buildSqlJsonInitial(string $columnName): string
+    {
+        return <<<SQL
+
+CASE 
+    WHEN {$columnName} IS NOT NULL AND JSON_VALID({$columnName})
+    THEN {$columnName}
+    ELSE '{}'
+END 
+SQL;
+    }
 }

@@ -15,11 +15,10 @@ use exface\Core\Interfaces\Widgets\iCanEditData;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 
-
 /**
- * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
- * This duality makes it possible to define custom filters and even aggregators for each column group. If not done so, it will just be
- * a group of columns with it's own caption, etc.
+ * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data
+ * widget on the other. This duality makes it possible to define custom filters and even aggregators for each column
+ * group. If not done so, it will just be a group of columns with it's own caption, etc.
  * 
  * @method Data getParent()
  *
@@ -28,7 +27,6 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
  */
 class DataColumnGroup extends AbstractWidget implements iHaveColumns
 {
-
     // children widgets
     /** @var DataColumn[] */
     private $columns = array();
@@ -328,7 +326,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     }
 
     /**
-     * Defines the DataColumns within this group: an array of respecitve UXON objects.
+     * Defines the DataColumns within this group: an array of respective UXON objects.
      *
      * @uxon-property columns
      * @uxon-type \exface\Core\Widgets\DataColumn[]
@@ -349,15 +347,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             }
         }
         foreach ($uxonArray as $colUxon) {
-            if ($colUxon->hasProperty('attribute_group_alias')) {
-                $attrGrp = $this->getMetaObject()->getAttributeGroup($colUxon->getProperty('attribute_group_alias'));
-                $attrGrp->sortByDefaultDisplayOrder();
-                foreach ($attrGrp->getAttributes() as $attr) {
-                    $this->addColumn($this->createColumnFromAttribute($attr));
-                }
-            } else {
-                $this->addColumn($this->createColumnFromUxon($colUxon));
-            }
+            $this->addColumn($this->createColumnFromUxon($colUxon));
         }
         return $this;
     }
@@ -490,5 +480,37 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             $this->getDataWidget()->setEditable(true);
         }
         return $this;
+    }
+
+    /**
+     * @inheritdoc 
+     * @see AbstractWidget::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        // Inside a column group, we can have objects with attribute_group_alias, that are essentially
+        // snippets, that will produce multiple columns - one for every attribute in the group.
+        $uxon->addSnippet('attribute_group_alias', function(array $child){
+            $array = [];
+            $attrGrp = $this->getMetaObject()->getAttributeGroup($child['attribute_group_alias']);
+            // TODO why sort here????
+            $attrGrp->sortByDefaultDisplayOrder();
+            foreach ($attrGrp->getAttributes() as $attr) {
+                if ($attr->isRelation() === true) {
+                    $relatedObj = $this->getMetaObject()->getRelatedObject($attr->getAlias());
+                    if ($relatedObj->hasLabelAttribute() === true) {
+                        // It is important to append __LABEL to the relation path (and not the actual alias of the
+                        // label attribute) to make the column show the relation name as caption and not the attribute's
+                        // name. This is also what a human designer would typically do.
+                        $attr = $this->getMetaObject()->getAttribute(RelationPath::join($attr->getAlias(), MetaAttributeInterface::OBJECT_LABEL_ALIAS));
+                    }
+                }
+                $child['attribute_alias'] = $attr->getAliasWithRelationPath();
+                $array[] = $child;
+            }
+            return $array;
+        });
+
+        return parent::importUxonObject($uxon);
     }
 }

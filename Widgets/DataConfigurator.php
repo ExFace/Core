@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
@@ -128,8 +129,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function setFilters(UxonObject $uxon_objects) : iHaveFilters
     {
+        self::addAttributeGroupSnippet($uxon_objects, $this);
+        
         try {
-            foreach ($uxon_objects as $uxon) {
+            foreach ($uxon_objects->getPropertiesAll() as $uxon) {
                 $filter = $this->createFilterForAttributeAlias($uxon->getProperty('attribute_alias'), $uxon);
                 $this->addFilter($filter);
             }
@@ -154,14 +157,15 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     {
         return WidgetFactory::createFromUxonInParent($this->getFilterTab(), $uxon, 'Filter');
     }
-    
+
     /**
-     * Creates a `Filter` widget from the given attribute alias an/or a UXON description of a `Filter` or `Input` widget.
-     * 
+     * Creates a `Filter` widget from the given attribute alias an/or a UXON description of a `Filter` or `Input`
+     * widget.
+     *
      * NOTE: the filter is NOT added to the filters-tab automatically!!!
-     * 
-     * @param string $attribute_alias
-     * @param UxonObject $uxon_object
+     *
+     * @param string|null     $attribute_alias
+     * @param UxonObject|null $uxon_object
      * @return Filter
      */
     public function createFilterForAttributeAlias(string $attribute_alias = null, UxonObject $uxon_object = null) : Filter
@@ -235,8 +239,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     
     /**
      * Adds a widget as a filter.
-     * Any widget, that can be used to input a value, can be used for filtering. It will automatically be wrapped in a filter
-     * widget. The second parameter (if set to TRUE) will make the filter automatically get used in quick search queries.
+     * Any widget, that can be used to input a value, can be used for filtering. It will automatically be wrapped in a
+     * filter widget. The second parameter (if set to TRUE) will make the filter automatically get used in quick search
+     * queries.
      *
      * @param AbstractWidget $filter_widget
      * @see \exface\Core\Interfaces\Widgets\iHaveFilters::addFilter()
@@ -504,4 +509,3 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         return $this->getWidgetConfigured();
     }
 }
-?>

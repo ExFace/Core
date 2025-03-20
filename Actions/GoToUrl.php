@@ -75,6 +75,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(1);
         $this->setIcon(Icons::EXTERNAL_LINK);
+        $this->setConfirmationForUnsavedChanges(true);
         return $this;
     }
 

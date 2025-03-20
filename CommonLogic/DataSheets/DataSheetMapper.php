@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\Mappings\JsonToRowsMapping;
 use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -1296,6 +1297,24 @@ class DataSheetMapper implements DataSheetMapperInterface
         $this->addMapping(new DataCheckMapping($this, new UxonObject([
             'from_data_invalid_if' => $arrayOfDataChecks
         ])));
+        return $this;
+    }
+    
+    /**
+     * Stores values from a column of the from-sheet in a context variable
+     *
+     * @uxon-property json_to_rows_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\JsonToRowsMapping[]
+     * @uxon-template [{"json_column": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setJsonToRowsMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new JsonToRowsMapping($this, $prop));
+        }
         return $this;
     }
     

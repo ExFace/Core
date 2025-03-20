@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\Actions\ActionConfirmationList;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -55,13 +57,13 @@ use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
-use exface\Core\Widgets\ConfirmationMessage;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use function Sabre\Event\Loop\instance;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -154,9 +156,7 @@ abstract class AbstractAction implements ActionInterface
     
     private $offlineStrategy = null;
 
-    private $confirmationForAction = null;
-
-    private $confirmationForUnsavedData = null;
+    private $confirmations = null;
 
     /**
      *
@@ -172,6 +172,7 @@ abstract class AbstractAction implements ActionInterface
             $this->setWidgetDefinedIn($trigger_widget);
         }
         $this->input_checks = new ActionDataCheckList($this->getWorkbench(), $this);
+        $this->confirmations = new ActionConfirmationList($this->getWorkbench(), $this);
         $this->init();
     }
 
@@ -310,6 +311,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {        
+        $logbook = $this->getLogBook($task);
+        $logbook->startLogginEvents();
+
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -326,11 +330,11 @@ abstract class AbstractAction implements ActionInterface
             $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction, function() use ($task) {
                 return $this->getInputDataSheet($task);
             }));
+            $logbook->stopLoggingEvents();
             $this->getWorkbench()->getLogger()->warning('Action "' . $this->getAliasWithNamespace() . '" failed', [], $this->getLogBook($task));
             throw $e;
         }
         
-        $logbook = $this->getLogBook($task);
         $logbook->addSection('Output data');
         $logbook->setIndentActive(1);
         if ($result instanceof ResultData) {
@@ -351,6 +355,7 @@ abstract class AbstractAction implements ActionInterface
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
         $this->performAfter($result, $transaction);
         
+        $logbook->stopLoggingEvents();
         return $result;
     }
 
@@ -1862,7 +1867,7 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
-     *
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getOfflineStrategy()
      */
     public function getOfflineStrategy() : ?string
@@ -1888,74 +1893,105 @@ abstract class AbstractAction implements ActionInterface
      * Make the action ask for confirmation when its button is pressed
      * 
      * @uxon-property confirmation_for_action
-     * @uxon-type \exface\Core\Widgets\ConfirmationMessage
-     * @uxon-template {"text": ""}
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
+     * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
      * 
-     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @param \exface\Core\CommonLogic\UxonObject|bool|string $uxon
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public function setConfirmationForAction(UxonObject $uxon) : ActionInterface
+    protected function setConfirmationForAction($uxonOrBoolOrString) : ActionInterface
     {
-        if ($this->isDefinedInWidget()) {
-            $parent = $this->getWidgetDefinedIn();
-            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-        } else {
-            // TODO what here?
+        if (! $this->getConfirmations()->isPossible()) {
+            // Cannot use confirmations on actions outside of widgets
+            return $this;
+        } 
+        switch (true) {
+            case $uxonOrBoolOrString === false:
+                $this->getConfirmations()->disableConfirmationsForAction(true);
+                return $this;
+            case $uxonOrBoolOrString === true:
+                $uxon = new UxonObject();
+                break;
+            case $uxonOrBoolOrString instanceof UxonObject:
+                $uxon = $uxonOrBoolOrString;
+                break;
+            case is_string($uxonOrBoolOrString):
+                $uxon = new UxonObject([
+                    'text' => $uxonOrBoolOrString
+                ]);
+                break;
+            default:
+                throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_action in action');
         }
+        $this->getConfirmations()->addFromUxon($uxon);
         return $this;
-    }
-
-    /**
-     * 
-     * @return WidgetInterface
-     */
-    public function getConfirmationForAction() : ?ConfirmationMessage
-    {
-        return $this->confirmationForAction;
-    }
-
-    public function hasConfirmationForAction() : bool
-    {
-        return $this->confirmationForAction !== null && $this->confirmationForAction->isDisabled() === false;
     }
 
     /**
      * Make the action warn the user if it is to be performed when unsaved changes are still visible
      * 
      * @uxon-property confirmation_for_unsaved_data
-     * @uxon-type \exface\Core\Widgets\ConfirmationMessage
-     * @uxon-template {"text": ""}
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
+     * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
      * 
-     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @param \exface\Core\CommonLogic\UxonObject|bool|string $uxon
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public function setConfirmationForUnsavedData(UxonObject $uxon) : ActionInterface
+    protected function setConfirmationForUnsavedChanges($uxonOrBoolOrString) : ActionInterface
     {
-        if ($this->isDefinedInWidget()) {
-            $parent = $this->getWidgetDefinedIn();
-            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-        } else {
-            // TODO what here?
+        if (! $this->getConfirmations()->isPossible()) {
+            // Cannot use confirmations on actions outside of widgets
+            return $this;
+        } 
+        switch (true) {
+            case $uxonOrBoolOrString === false:
+            case $uxonOrBoolOrString === true:
+                $this->getConfirmations()->disableConfirmationsForUnsavedChanges(! $uxonOrBoolOrString);
+                return $this;
+            case $uxonOrBoolOrString instanceof UxonObject:
+                $uxon = $uxonOrBoolOrString;
+                break;
+            case is_string($uxonOrBoolOrString):
+                $uxon = new UxonObject([
+                    'text' => $uxonOrBoolOrString
+                ]);
+                break;
+            default:
+                throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_unsaved_changes in action');
         }
+
+        $this->getConfirmations()->prepend($this->confirmations->createConfirmationForUnsavedChanges($uxon));
         return $this;
     }
 
     /**
-     * 
-     * @return mixed
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getConfirmations()
      */
-    public function getConfirmationForUnsavedData() : ?ConfirmationMessage
+    public function getConfirmations() : ActionConfirmationListInterface
     {
-        return $this->confirmationForUnsavedData;
+        return $this->confirmations;
     }
 
     /**
+     * Explicitly define confirmations to show before this action
      * 
-     * @return bool
+     * @uxon-property confirmations
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage[]
+     * @uxon-template [{"widget_type": "ConfirmationMessage", "text": ""}]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $arrayOfConfirmations
+     * @return AbstractAction
      */
-    public function hasConfirmationForUnsavedData() : bool
+    protected function setConfirmations(UxonObject $arrayOfConfirmations) : ActionInterface
     {
-        // TODO move logic from JqueryButtonTrait::isCheckForUnsavedChangesRequired() here
-        return $this->confirmationForUnsavedData !== null && $this->confirmationForUnsavedData->isDisabled() === false;
+        if (! $this->getConfirmations()->isPossible()) {
+            // Cannot use confirmations on actions outside of widgets
+            return $this;
+        } 
+        foreach ($arrayOfConfirmations as $uxon) {
+            $this->getConfirmations()->addFromUxon($uxon);
+        }
+        return $this;
     }
 }

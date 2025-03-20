@@ -1073,7 +1073,7 @@ class DataSheet implements DataSheetInterface
             $columnAttr = $col->getAttribute();
             switch (true) {
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
-                case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
+                case $col->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
                     continue 2;
                 // Update nested sheets - i.e. replace all rows in the data source, that are related to
                 // the each row of the main sheet with the nested rows here.
@@ -1622,7 +1622,7 @@ class DataSheet implements DataSheetInterface
             } 
             
             // Skip columns with read-only attributes
-            if (! $columnAttr->isWritable()) {
+            if (! $column->isWritable()) {
                 continue;
             }
             
@@ -2135,6 +2135,22 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsByIndex()
+     */
+    public function getRowsByIndex(array $indexes) : array
+    {
+        $result = [];
+        foreach ($this->getRows() as $i => $row) {
+            if (in_array($i, $indexes, true)) {
+                $result[$i] = $row;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Returns the specified row as an associative array (e.g.
      * [col1 => val1, col2 => val2, ...])
      *
@@ -2161,7 +2177,13 @@ class DataSheet implements DataSheetInterface
         if (! $column) {
             throw new DataSheetColumnNotFoundError($this, 'Cannot find row by column value: invalid column name "' . $column_name . '"!');
         }
-        return $this->getRow($column->findRowByValue($value));
+        
+        $rowNr = $column->findRowByValue($value);
+        if($rowNr === false) {
+            return null;
+        }
+        
+        return $this->getRow($rowNr);
     }
 
     /**
@@ -2527,7 +2549,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRows()
      */
     public function removeRows(array $rowIndexes = null)
@@ -2547,7 +2568,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRow()
      */
     public function removeRow(int $row_number) : DataSheetInterface
@@ -2560,7 +2580,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRowsByUid()
      */
     public function removeRowsByUid($uid)
@@ -2587,7 +2606,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isEmpty()
      */
     public function isEmpty(bool $checkValues = false) : bool

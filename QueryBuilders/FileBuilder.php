@@ -328,7 +328,21 @@ class FileBuilder extends AbstractQueryBuilder
     protected function isFileContent(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
-        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_CONTENT || $addr === 'contents';
+        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_CONTENT 
+        || $addr === 'contents';
+    }
+
+    /**
+     * Returns TRUE if give query part references the folder path (absolute or relative) and FASE otherwise
+     *
+     * @param QueryPartAttribute $qpart
+     * @return bool
+     */
+    protected function isFolderPath(QueryPartAttribute $qpart) : bool
+    {
+        $addr = mb_strtolower(trim($qpart->getDataAddress()));
+        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FOLDER . FileBuilder::ATTR_ADDRESS_PATH_ABSOLUTE 
+        || $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FOLDER . FileBuilder::ATTR_ADDRESS_PATH_RELATIVE;
     }
     
     /**
@@ -464,8 +478,25 @@ class FileBuilder extends AbstractQueryBuilder
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $addrPhsValues = [];
             $uidPaths = [];
-            $isPathNameFilter = $this->isFilePathAddress($qpart->getDataAddress());
-            $isFolderFilter = $this->isFolderPathAddress($qpart->getDataAddress());
+            $filterAddr = $qpart->getDataAddress();
+            $filterVal = $qpart->getCompareValue();
+            $filterComp = $qpart->getComparator();
+            $isPathNameFilter = $this->isFilePathAddress($filterAddr);
+            $isFolderFilter = $this->isFolderPathAddress($filterAddr);
+
+            // Calculate folder and filename patters from some other data addresses too
+            switch (true) {
+                // `~folder:name ==` or `~folder:name =` 
+                case $addr === '' && $filterAddr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_NAME:
+                    $isFolderFilter = true;
+                    if ($filterComp === ComparatorDataType::EQUALS) {
+                        $filterVal = "*/{$filterVal}";
+                    } elseif ($filterComp === ComparatorDataType::IS) {
+                        $filterVal = "*/*{$filterVal}*";
+                    }
+                    break;
+            }
+
             if ($isPathNameFilter || $isFolderFilter || in_array($qpart->getAlias(), $addrPhs)) {
                 // Path filters need to be applied after reading too as there may be trouble with 
                 // files with the same name in different (sub-)folders mathing the folder pattern
@@ -478,26 +509,26 @@ class FileBuilder extends AbstractQueryBuilder
                         $pathPatterns[] = $addr;
                     }
                 }
-                switch ($qpart->getComparator()) {
+                switch ($filterComp) {
                     case ComparatorDataType::IS:
                     case ComparatorDataType::EQUALS:
                         //if attribute alias is a placeholder in the path patterns, replace it with the value
                         if (in_array($qpart->getAlias(), $addrPhs)) {                            
-                            $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
+                            $addrPhsValues[$qpart->getAlias()] = $filterVal;
                             foreach ($pathPatterns as $i => $pattern) {
                                 $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                             }
                         } else {
                             if ($isPathNameFilter) {
-                                $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                                $uidPaths[] = Filemanager::pathNormalize($filterVal);
                             }
                             if ($isFolderFilter) {
-                                $pathPatterns[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                                $pathPatterns[] = Filemanager::pathNormalize($filterVal);
                             }
                         }
                         break;
                     case ComparatorDataType::IN:
-                        $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
+                        $values = explode($qpart->getValueListDelimiter(), $filterVal);
                         //if attribute alias is a placeholder in the path patterns, replace it with the values (therefore creating more pattern entries)
                         if (in_array($qpart->getAlias(), $addrPhs)) {
                             foreach ($values as $val) {
@@ -699,6 +730,7 @@ class FileBuilder extends AbstractQueryBuilder
         $pathQpart = null;
         $filenameQpart = null;
         $contentQpart = null;
+        $folderQpart = null;
         foreach ($this->getValues() as $qpart) {
             switch (true) {
                 case $this->isFilePath($qpart) && $qpart->hasValues():
@@ -710,6 +742,9 @@ class FileBuilder extends AbstractQueryBuilder
                 case $this->isFileContent($qpart) && $qpart->hasUids():
                     $contentQpart = $qpart;
                     break;
+                case $this->isFolderPath($qpart) && $qpart->hasValues():
+                    $folderQpart = $qpart;
+                    break;
             }
         }
         
@@ -718,7 +753,12 @@ class FileBuilder extends AbstractQueryBuilder
                 return $contentQpart->getUids();
             case $pathQpart !== null:
                 return $pathQpart->getValues();
-            case $filenameQpart !== null:
+            case $folderQpart !== null && $filenameQpart !== null:
+                foreach ($folderQpart->getValues() as $i => $folder) {
+                    $paths[$i] = $folder . $this->getDirectorySeparator() . $filenameQpart->getValues()[$i];
+                }
+                return $paths;
+            case $filenameQpart !== null && ! FilePathDataType::isPattern($this->getPathForObject($this->getMainObject())):
                 $paths = [];
                 $sep = $this->getDirectorySeparator();
                 $addr = FilePathDataType::normalize($this->getPathForObject($this->getMainObject()) ?? '', $sep);

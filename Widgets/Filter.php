@@ -28,6 +28,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\DataTypes\TextDataType;
+use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -160,6 +161,7 @@ use exface\Core\DataTypes\TextDataType;
  */
 class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
 {
+    use iHaveAttributeGroupTrait;
 
     private $inputWidget = null;
     
@@ -196,7 +198,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     private $useHiddenInput = false;
 
     private bool $appliesToAggregatedValues = true;
-    
+
     /**
      * Returns TRUE if the input widget was already instantiated.
      * 
@@ -1084,7 +1086,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     }
 
     /**
-     * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by default.
+     * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by
+     * default.
      * 
      * The following states of input widgets are available:
      * - display_only = true - active (user can interact with the widget), but not considered as input for actions

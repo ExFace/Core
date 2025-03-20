@@ -56,7 +56,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
             try {
                 $widget = new $widget_class($page, $parent_widget);
             } catch (\Throwable $e) {
-                throw new WidgetNotFoundError('Cannot load widget "' . $widget_type . '": ' . $e->getMessage());
+                throw new WidgetNotFoundError('Cannot load widget "' . $widget_type . '": ' . $e->getMessage(), null, $e);
             }
         }
         

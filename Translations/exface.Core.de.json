@@ -17,6 +17,8 @@
 
 	"ACTION.DELETEOBJECT.RESULT": "%number% Objekt gelöscht.|%number% Objekte gelöscht.",
 	"ACTION.DELETEOBJECT.NAME": "Löschen",
+	"ACTION.DELETEOBJECT.CONFIRMATION_TITLE": "Wirklich löschen?",
+	"ACTION.DELETEOBJECT.CONFIRMATION_TEXT": "Sollen die ausgewählten Objekte wirklich gelöscht werden?",
 
 	"ACTION.SHOWLOGINDIALOG.NAME": "Anmelden",
 	
@@ -282,6 +284,16 @@
     "MESSAGE.TYPES.SUCCESS": "Erfolg",
     "MESSAGE.TYPES.HINT": "Tip",
     "MESSAGE.TYPES.QUESTION": "Frage",
+
+	"MESSAGE.CONFIRMATION.CONTINUE": "Fortfahren",
+	"MESSAGE.CONFIRMATION.CONTINUE_HINT": "Aktion ausführen",
+	"MESSAGE.CONFIRMATION.CANCEL": "Abbrechen",
+	"MESSAGE.CONFIRMATION.CANCEL_HINT": "Aktion nicht ausführen und weitermachen",
+
+	"MESSAGE.DISCARD_CHANGES.TITLE": "Änderungen verwerfen?",
+	"MESSAGE.DISCARD_CHANGES.TEXT": "Wenn Sie diese Ansicht verlassen, gehen ggf. vorhandene ungespeicherten Änderungen verloren!",
+	"MESSAGE.DISCARD_CHANGES.CONTINUE": "Verlassen",
+	"MESSAGE.DISCARD_CHANGES.CANCEL": "Cancel",
     
     "MESSAGE.SELECT_EXACTLY_X_ROWS": "Bitte genau %number% Datensatz auswählen!|Bitte genau %number% Datensätze auswählen!",
 	"MESSAGE.SELECT_AT_MOST_X_ROWS": "Bitte maximal %number% Datensatz auswählen!|Bitte maximal %number% Datensätze auswählen!",

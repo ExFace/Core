@@ -256,6 +256,20 @@ class FilePathDataType extends StringDataType
      * Technically this methods works the same as the built-in PHP `fnmatch()`, but
      * it also works on non-POSIX systems, whereas `fnmatch()` does not.
      * 
+     * Wildcards:
+     * 
+     * - `?` - Question mark will match any single character. For example, pattern `file?.txt` 
+     * will match `file1.txt` and `fileA.txt`, but will not match `file10.txt`.
+     * - `*` - Asterisk will match zero or more characters. For example, pattern `foo*.xml` will 
+     * match `foo.xml` and `foobar.xml`.
+     * `[ ]` - Square brackets are used to create ranges of ASCII codepoints or sets of characters. 
+     * For example, pattern `index.php[45]` will match `index.php4` and `index.php5`, but will not 
+     * match `index.phpt`. Well known ranges are [0-9], [a-z], and [A-Z]. Multiple sets and ranges 
+     * can be used at the same time, for example [0-9a-zABC].
+     * `!` - Exclamation mark is used to negate characters within square brackets. For example, 
+     * `[!A-Z]*.html` will match `demo.html`, but will not match `Demo.html`.
+     * `\` - Backslash is used to escape special characters. For example, `Name\?` will match `Name?`, but will not match `Names`.
+     * 
      * Examples:
      * 
      * - `matchesPattern('folder/*.*', 'folder/asdf.jpg')` => true 
