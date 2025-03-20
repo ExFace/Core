@@ -129,6 +129,8 @@ class Chart extends AbstractWidget implements
      * @var string
      */
     private $legendPosition = null;
+
+    private $legendHidden = null;
     
     /**
      * @var bool
