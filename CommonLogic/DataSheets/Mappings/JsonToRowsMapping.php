@@ -1,8 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\DataTypes\JsonDataType;
-use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -10,13 +11,11 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
+ * Transforms a JSON stored in a column into flat rows
  * 
+ * This allows to use nested JSON data in flat tables like CSV or Excel exports and printing
  * 
  * @author Andrej Kabachnik
- *
- * 
- * 
- * 
  */
 class JsonToRowsMapping extends AbstractDataSheetMapping 
 {
@@ -47,23 +46,34 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
         $nestedMarker = $this->getNestedDataMarker($fromSheet);
 
         $arrayOfJson = $jsonCol->getValues();
-        $newRowsIdColName = $fromSheet->getUidColumn()->getName();
+        $uidCol = $fromSheet->getUidColumn();
+        $newRowsIdColName = $uidCol->getName();
         $newRows = []; 
+        $colKeys = [];
 
         foreach ($arrayOfJson as $rowIdx => $jsonString) {
             if ($jsonString === null) {
                 continue;
             }
             $json = JsonDataType::decodeJson($jsonString);
-            $newRows = array_merge($newRows, $this->flatten($json, $nestedMarker)); 
-
-            foreach ($newRows as $i => $newRow) {
-                $newRows[$i][$newRowsIdColName] = $fromSheet->getUidColumn()->getValue($rowIdx);
+            $jsonRows = $this->flatten($json, $nestedMarker);
+            foreach($jsonRows as $jsonRow) {
+                $newRow = [];
+                foreach ($jsonRow as $jsonKey => $val) {
+                    if (null === $colKeys[$jsonKey] ?? null) {
+                        $colKeys[$jsonKey] = DataColumn::sanitizeColumnName($jsonKey);
+                    }
+                    $newRow[$colKeys[$jsonKey]] = $val;
+                }
+                $newRow[$newRowsIdColName] = $uidCol->getValue($rowIdx);
+                $newRows[] = $newRow;
             }
         }
 
-
         $jsonSheet = DataSheetFactory::createFromObject($fromSheet->getMetaObject());
+        foreach ($colKeys as $jsonKey => $colName) {
+            $jsonSheet->getColumns()->addFromExpression($jsonKey, $colName);
+        }
         $jsonSheet->addRows($newRows);
         $toSheet->joinLeft($jsonSheet, $toSheet->getUidColumn()->getName(), $newRowsIdColName);
 
@@ -229,11 +239,35 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
 
     /**
      * Defines how keys of nested JSON ojects should be marked in the resulting table
-
-     *      Example:  [parentKey: [nestedKey: {key1: val1, key2: val2}, otherNestedKey: {key3: val3, key4: val4}, ...]], and nested data marker set to 'X' (default)
      * 
-     *      Result: [parentKey: 'X', nestedKey: 'X', key1: val1, key2:val2]
-     *              [parentKey: 'X', otherNestedKey: 'X', key3: val3, key4:val4]
+     * Example:
+     * 
+     * ```
+     *  [
+     *      parentKey: [
+     *          nestedKey: {key1: val1, key2: val2}, 
+     *          otherNestedKey: {key3: val3, key4: val4}
+     *      ]
+     *  ]
+     * 
+     * ```
+     * 
+     * If nested data marker set to 'X' (default), then the result will be
+     * 
+     * ```
+     *  [{
+     *      parentKey: 'X', 
+     *      nestedKey: 'X', 
+     *      key1: val1, 
+     *      key2:val2
+     *  }, {
+     *      parentKey: 'X', 
+     *      otherNestedKey: 'X', 
+     *      key3: val3, 
+     *      key4:val4
+     *  }]
+     * 
+     * ```
      * 
      * @uxon-property nested_data_marker
      * @uxon-type metamodel:string
@@ -245,14 +279,21 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
     protected function setNestedDataMarker(string $alias) : JsonToRowsMapping
     {
         $this->nestedDataMarker = $alias;
-        $this->jsonColExpression = ExpressionFactory::createForObject($this->getMapper()->getFromMetaObject(), $alias);
         return $this;
     }
 
-    
+    /**
+     * 
+     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $fromSheet
+     * @return bool|DataColumnInterface
+     */
     protected function getJsonColumn(DataSheetInterface $fromSheet) : DataColumnInterface
     {
-        return $fromSheet->getColumns()->getByExpression($this->jsonColAlias);
+        $col = $fromSheet->getColumns()->getByExpression($this->jsonColAlias);
+        if (! $col) {
+            throw new DataSheetColumnNotFoundError($fromSheet, 'Column "' . $this->jsonColAlias . '" not found in input data for json_to_rows mapping!');
+        }
+        return $col;
     }
     
     /**
