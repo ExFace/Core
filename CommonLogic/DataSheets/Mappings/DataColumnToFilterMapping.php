@@ -6,7 +6,6 @@ use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
-use exface\Core\Factories\ConditionFactory;
 
 /**
  * Maps on data sheet column to a filter expression in another data sheet.
