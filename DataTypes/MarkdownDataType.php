@@ -34,6 +34,7 @@ class MarkdownDataType
             '_', 
             '{', 
             '}', 
+            '|'
         ], [
             '\\\\', 
             '\-', 
@@ -53,6 +54,7 @@ class MarkdownDataType
             '\_', 
             '\{', 
             '\}',
+            '\|'
         ], $text);
     }
     
@@ -77,6 +79,35 @@ class MarkdownDataType
                 $md .= PHP_EOL . "{$indent}- {$str}";
             }
         }
+        return $md;
+    }
+
+    /**
+     * Summary of buildMarkdownTableFromArray
+     * 
+     * @param string[][] $rows
+     * @param string[]|null $headings
+     * 
+     * @return string
+     */
+    public static function buildMarkdownTableFromArray(array $rows, array $headings = null) : string
+    {
+        $headings = $headings ?? array_keys($rows[0] ?? []);
+        $md = '|';
+        foreach ($headings as $heding) {
+            $md .= ' ' . static::escapeString($heding) . ' |';
+        }
+        $md .= PHP_EOL . '|';
+        foreach ($headings as $heding) {
+            $md .= ' ' . str_pad('', strlen($heding), '-') . ' |';
+        }
+        foreach ($rows as $row) {
+            $md .= PHP_EOL . '|';
+            foreach ($row as $cell) {
+                $md .= ' ' . static::escapeString($cell) . ' |';
+            }
+        }
+
         return $md;
     }
     

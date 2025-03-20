@@ -1089,4 +1089,27 @@ JS;
     {
         return "($('#{$this->getId()}').length !== 0)";
     }
+    
+    /**
+     * Returns a JS snippet that resolves to an array of JSON objects with depicting changed values within this element
+     * 
+     * Structure:
+     * 
+     * ```
+     *  [
+     *      {
+     *          elementId: <id of template element>,
+     *          caption:
+     *          valueOld:
+     *          valueNew:
+     *      }
+     *  ]
+     * ```
+     * 
+     * @return string
+     */
+    public function buildJsChangesGetter(bool $onlyVisible = false) : string
+    {
+        return '[]';
+    }
 }

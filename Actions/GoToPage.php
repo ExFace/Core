@@ -41,6 +41,7 @@ class GoToPage extends ShowWidget
     {
         parent::init();
         $this->setPrefillWithInputData(true);
+        $this->setConfirmationForUnsavedChanges(true);
     }
 
     /**

@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -17,6 +19,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectModelError;
+use exface\Core\Interfaces\Selectors\AttributeGroupSelectorInterface;
 
 /**
  * 
@@ -25,7 +28,8 @@ use exface\Core\Exceptions\Model\MetaObjectModelError;
  */
 class Attribute implements MetaAttributeInterface
 {
-
+    use ImportUxonObjectTrait;
+    
     // Properties to be dublicated on copy()
     private $id;
 
@@ -105,13 +109,20 @@ class Attribute implements MetaAttributeInterface
     /** @var MetaRelationPathInterface|null */
     private $relation_path;
 
+    private $groupSelectors = [];
+
+    private $groups = [];
+
     // Properties NOT to be dublicated on copy()
     /** @var Model */
     private $object;
 
-    public function __construct(MetaObjectInterface $object)
+    public function __construct(MetaObjectInterface $object, string $name, string $alias)
     {
         $this->object = $object;
+        $this->name = $name;
+        $this->alias = $alias;
+        $this->id = UUIDDataType::generateSqlOptimizedUuid();
     }
 
     /**
@@ -245,6 +256,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property default_display_order
+     * @uxon-type integer
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultDisplayOrder()
@@ -265,6 +278,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property editable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setEditable()
@@ -318,6 +333,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property hidden
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setHidden()
@@ -358,6 +375,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property readable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setReadable()
@@ -379,6 +398,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property writable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setWritable()
@@ -400,6 +421,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property required
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setRequired()
@@ -420,6 +443,9 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * 
+     * @uxon-property data_type
+     * @uxon-type metamodel:datatype
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddress()
@@ -639,6 +665,9 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property default_sorter_dir
+     * @uxon-type string
+     * @uxon-template "ASC"
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()
@@ -907,6 +936,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property default_aggregate_function
+     * @uxon-type string
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultAggregateFunction()
@@ -927,10 +958,12 @@ class Attribute implements MetaAttributeInterface
      */
     public function isSortable()
     {
-        return $this->sortable;
+        return $this->sortable ?? false;
     }
 
     /**
+     * @uxon-property sortable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setSortable()
@@ -948,10 +981,12 @@ class Attribute implements MetaAttributeInterface
      */
     public function isFilterable()
     {
-        return $this->filterable;
+        return $this->filterable ?? false;
     }
 
     /**
+     * @uxon-property filterable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFilterable()
@@ -973,6 +1008,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property aggregatable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setAggregatable()
@@ -994,6 +1031,9 @@ class Attribute implements MetaAttributeInterface
     }
     
     /**
+     * @uxon-property value_list_delimiter
+     * @uxon-type string
+     * @uxon-template ","
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setValueListDelimiter()
@@ -1129,6 +1169,21 @@ class Attribute implements MetaAttributeInterface
         }
         return $this;
     }
+
+    /**
+     * Default editor widget to use for this attribute
+     * 
+     * @uxon-property default_editor_widget
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-template {"widget_type": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return MetaAttributeInterface
+     */
+    protected function setDefaultEditorWidget(UxonObject $uxon) : MetaAttributeInterface
+    {
+        return $this->setDefaultEditorUxon($uxon);
+    }
     
     /**
      * 
@@ -1180,7 +1235,21 @@ class Attribute implements MetaAttributeInterface
         }
         return $this;
     }
-    
+
+    /**
+     * Default display widget to use for this attribute
+     * 
+     * @uxon-property default_display_widget
+     * @uxon-type \exface\Core\Widgets\Value
+     * @uxon-template {"widget_type": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return MetaAttributeInterface
+     */
+    protected function setDefaultDisplayWidget(UxonObject $uxon) : MetaAttributeInterface
+    {
+        return $this->setDefaultDisplayUxon($uxon);
+    }
     
     /**
      * 
@@ -1203,6 +1272,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * @uxon-property copyable
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCopyable()
@@ -1221,5 +1292,30 @@ class Attribute implements MetaAttributeInterface
     public function __toString() : string
     {
         return '"' . $this->getName() . '" (alias "' . $this->getAliasWithRelationPath() . '")';
+    }
+
+    public function addGroupSelector(AttributeGroupSelectorInterface $selector) : MetaAttributeInterface
+    {
+        $this->groupSelectors[$selector->toString()] = $selector;
+        return $this;
+    }
+
+    /**
+     * Place this attribute into one or more attribute groups
+     * 
+     * @uxon-property groups
+     * @uxon-type metamodel:attribute_group[]
+     * @uxon-template [""]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return Attribute
+     */
+    protected function setGroups(UxonObject $uxon) : MetaAttributeInterface
+    {
+        $obj = $this->getObject();
+        foreach ($uxon as $alias) {
+            $obj->getAttributeGroup($alias)->add($this);
+        }
+        return $this;
     }
 }

@@ -28,7 +28,12 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeGroupInterface::getAlias()
      */
-    public function getAlias()
+    public function getAlias() : ?string
+    {
+        return $this->alias;
+    }
+
+    public function getAliasWithNamespace() : string
     {
         return $this->alias;
     }
@@ -38,7 +43,7 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeGroupInterface::setAlias()
      */
-    public function setAlias($value)
+    public function setAlias(string $value) : MetaAttributeGroupInterface
     {
         $this->alias = $value;
         return $this;

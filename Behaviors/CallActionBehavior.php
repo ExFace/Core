@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -318,6 +320,7 @@ class CallActionBehavior extends AbstractBehavior
             // Now perform the action
             if ($action = $this->getAction()) {
                 $logbook->addSection('Running action ' . $action->getAliasWithNamespace());
+                $logbook->addIndent(1);
 
                 // Get the task from the event or create one
                 if ($event instanceof TaskEventInterface) {
@@ -327,14 +330,14 @@ class CallActionBehavior extends AbstractBehavior
                 } else {
                     // We never have an input widget here, so tell the action it won't get one
                     // and let it deal with it.
-                    $logbook->addLine('Creating a new task because the event has no task attached');
+                    $logbook->addLine('Creating a new task because the original event had no task attached');
                     $action->setInputTriggerWidgetRequired(false);
                     $task = TaskFactory::createFromDataSheet($inputSheet);
                 }
                 
                 // Handle the task
                 if ($event instanceof DataTransactionEventInterface) {
-                    $logbook->addLine('Getting the transaction from the event');
+                    $logbook->addLine('Getting the transaction from the original event');
                     $this->isHandling = true;
                     // Commit the transaction if explicitly requested in the behavior config.
                     // This might be the case if the action calls a external system, which 
@@ -346,11 +349,12 @@ class CallActionBehavior extends AbstractBehavior
                         // the same transaction
                         $action->setAutocommit(false);
                     }
+                    $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
                     $result = $action->handle($task, $event->getTransaction());
                     $this->isHandling = false;
                 } else {
                     $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
-                    $logbook->addLine('**Performing action**');
+                    $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
                     $this->isHandling = true;
                     $result = $action->handle($task);
                     $this->isHandling = false;
@@ -358,6 +362,7 @@ class CallActionBehavior extends AbstractBehavior
 
                 // Apply data changes if it is the same object
                 if ($result instanceof ResultDataInterface) {
+                    $logbook->addLine('Action produced result data ' . DataLogBook::buildTitleForData($result->getData()));
                     if ($result->isDataModified()) {
                         if ($result->getData()->getMetaObject()->isExactly($eventSheet->getMetaObject())) {
                             $logbook->addLine('Updating event data with values from the action because it modified the same object');
@@ -369,6 +374,7 @@ class CallActionBehavior extends AbstractBehavior
                         $logbook->addLine('No update of event data required because action did not modify data');
                     }
                 } else {
+                    $logbook->addLine('Action produced non-data result of type ' . PhpClassDataType::findClassNameWithoutNamespace($result));
                     $logbook->addLine('No update of event data required because action result does not contain data');
                 }
 
@@ -377,9 +383,11 @@ class CallActionBehavior extends AbstractBehavior
                     $logbook->addLine('Event default logic will be prevented');
                     $event->preventDefault();
                 }
+                $logbook->addIndent(-1);
                 $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             } else {
                 $logbook->addLine('No action to perform');
+                $logbook->addIndent(-1);
                 $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             }
         } catch (\Throwable $e) {

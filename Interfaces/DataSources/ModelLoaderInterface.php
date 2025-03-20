@@ -36,7 +36,6 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
-use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
 use exface\Core\Interfaces\Communication\CommunicationTemplateInterface;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 
@@ -272,4 +271,11 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return ModelLoaderInterface
      */
     public function clearCache() : ModelLoaderInterface;
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
+     * @return MetaObjectInterface
+     */
+    public function loadAttributeGroups(MetaObjectInterface $object) : MetaObjectInterface;
 }

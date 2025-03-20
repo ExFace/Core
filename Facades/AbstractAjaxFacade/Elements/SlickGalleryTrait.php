@@ -255,13 +255,10 @@ JS;
             $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-process.js"></script>';
             // The File Upload image preview & resize plugin -->
             $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-image.js"></script>';
-            /*
-            // The File Upload audio preview plugin -->
-            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-audio.js"></script>';
-            // The File Upload video preview plugin -->
-            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-video.js"></script>';
-            // The File Upload validation plugin -->
-            */
+            if ($this->getUploader()->hasImageResize()) {
+                $includes[] = '<script src="vendor/bower-asset/blueimp-canvas-to-blob/js/canvas-to-blob.min.js"></script>';
+            }
+            
             $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-validate.js"></script>';
             $includes[] = '<script src="vendor/bower-asset/paste.js/paste.js"></script>';
             $includes = array_merge($includes, $this->getDateFormatter()->buildHtmlHeadIncludes($this->getFacade()), $this->getDateFormatter()->buildHtmlBodyIncludes($this->getFacade()));
@@ -338,7 +335,7 @@ JS
                         aRows.forEach(function(oRow) {
                             var sUrl = {$this->buildJsUrlForImage('oRow')};
                             var a;
-console.log(sUrl);
+
                             if (! sUrl) {
                                 {$this->buildJsShowMessageError($this->escapeString($this->translate('WIDGET.IMAGEGALLERY.CANNOT_DOWNLOAD_WITHOUT_URL')))}
                             }
@@ -536,9 +533,7 @@ JS;
                         if (mUid === null) {
                             mUid = '';
                         } else if ((typeof mUid === 'string' || mUid instanceof String) && mUid.includes('/')){
-                            console.log(mUid);
                             mUid = 'base64URL,' + btoa(encodeURIComponent(mUid)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-                            console.log(mUid);
                         }
                         return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(mUid));
                     }()
@@ -784,6 +779,17 @@ JS;
         if ($uploader->hasFileMimeTypeAttribute()) {
             $fileColumnsJs .= DataColumn::sanitizeColumnName($uploader->getFileMimeTypeAttribute()->getAliasWithRelationPath()) . ": file.type,";
         }
+
+        if ($uploader->hasImageResize()) {
+            $quality = $uploader->getImageResizeQuality() / 100;
+            $imageResizeOptions = <<<JS
+
+        disableImageResize: false,
+        imageMaxWidth: {$uploader->getImageResizeToMaxSide()},
+        imageMaxHeight: {$uploader->getImageResizeToMaxSide()},
+        imageQuality: {$quality},
+JS;
+        }
             
         // TODO Use built-in file uploading instead of a custom $.ajax request to
         // be able to take advantage of callbacks like fileuploadfail, fileuploadprogressall
@@ -834,6 +840,7 @@ JS;
         url: '{$this->getAjaxUrl()}',
         dataType: 'json',
         autoUpload: true,
+        {$imageResizeOptions}
         previewMaxHeight: ($('#{$this->getIdOfSlick()}').height() - 20),
         previewMaxWidth: $('#{$this->getIdOfSlick()}').width(),
         previewCrop: false,
@@ -863,7 +870,7 @@ JS;
             }
 
             $('#{$this->getIdOfSlick()}-nodata').hide();
-            if (file.type.startsWith('image')){
+            if (file.type.toLowerCase().startsWith('image')){
                 // If upload preview is available, use it - otherwise use an <img> with src set to the object URL
                 if (file.preview && file.preview.toDataURL().length > 1614) {
                     $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', 'imagecarousel-pending', 'file.name', $uploader->hasUploadEditPopup())}).append(file.preview)[0]);
@@ -878,25 +885,25 @@ JS;
 
                 {$this->buildJsBusyIconShow()};
 
-                oParams.data = {
-                    oId: '{$this->getMetaObject()->getId()}',
-                    rows: [{
-                        {$filenameColName}: (file.name || 'Upload_' + {$this->getDateFormatter()->buildJsFormatDateObject('(new Date())', 'yyyyMMdd_HHmmss')} + '.png'),
-                        {$fileColumnsJs}
-                        {$contentColName}: sContent,
-                    }]
+                    oParams.data = {
+                        oId: '{$this->getMetaObject()->getId()}',
+                        rows: [{
+                            {$filenameColName}: file.name,
+                            {$fileColumnsJs}
+                            {$contentColName}: sContent,
+                        }]
+                    };
+                    {$this->buildJsBusyIconShow()}
+                    {$uploadJs}
                 };
-                {$this->buildJsBusyIconShow()}
-                {$uploadJs}
-            };
             fileReader.readAsBinaryString(file);
         });
-        return false;
+            return false;
     });
 JS;
-                
-                return $output;
-    }
+                    
+            return $output;
+        }
     
     /**
      *
