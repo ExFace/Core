@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Uxon;
 
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -41,7 +41,7 @@ class QueryBuilderSchema extends UxonSchema
      */
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::QUERYBUILDER;
+        return UxonSchemaDataType::QUERYBUILDER;
     }
     
     /**

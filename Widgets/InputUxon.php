@@ -5,7 +5,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 
 /**
  * A UXON editor with autosuggest, facades and validation.
@@ -54,7 +54,7 @@ class InputUxon extends InputJson
      */
     public function getSchema() : ?string
     {
-        return parent::getSchema() ?? UxonSchemaNameDataType::GENERIC;
+        return parent::getSchema() ?? UxonSchemaDataType::GENERIC;
     }
     
     /**

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Uxon;
 
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 
 /**
@@ -17,7 +17,7 @@ class ConnectionSchema extends UxonSchema
 
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::CONNECTION;
+        return UxonSchemaDataType::CONNECTION;
     }
     
     protected function getDefaultPrototypeClass() : string
