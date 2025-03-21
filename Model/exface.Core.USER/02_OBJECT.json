@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "User [exface.Core.USER]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-01-15 18:19:53",
+            "MODIFIED_ON": "2025-03-18 14:23:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11efb9a9e2f873d6b9a9025041000001",
             "UID": "0x31343400000000000000000000000000",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -156,6 +156,9 @@
                                             },
                                             {
                                                 "attribute_alias": "POSITION"
+                                            },
+                                            {
+                                                "attribute_alias": "EMPLOYEE_ID"
                                             }
                                         ]
                                     },
