@@ -6,6 +6,8 @@ use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonSyntaxError;
+use exface\Core\Factories\UxonSnippetFactory;
+use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 /**
  * This is a container for any UXON configuration.
  * 
@@ -98,11 +100,15 @@ use exface\Core\Exceptions\UxonSyntaxError;
  */
 class UxonObject implements \IteratorAggregate
 {
+    const PROPERTY_SNIPPET = '~snippet';
+
     private $array = [];
     
     private $childUxons = [];
 
     private $snippetsAdded = [];
+
+    private $snippetResolver = null;
     
     public function __construct(array $properties = [])
     {
@@ -240,12 +246,12 @@ class UxonObject implements \IteratorAggregate
     {
         $val = $this->array[$name] ?? null;
         if (is_array($val) === true) {
-            $child = $this->childUxons[$name] ?? null;
-            if (null === $child) {
-                $val = $this->resolveSnippets($val);
-                $child = $this->childUxons[$name] = new self($val);
+            $cache = $this->childUxons[$name] ?? null;
+            if (null === $cache) {
+                $val = $this->resolveSnippetsInArray($val);
+                $cache = $this->childUxons[$name] = new self($val);
             } 
-            return $child;
+            return $cache;
         }
         return $val;
     }
@@ -255,15 +261,17 @@ class UxonObject implements \IteratorAggregate
      * @param array $val
      * @return array
      */
-    protected function resolveSnippets(array $val) : array 
+    protected function resolveSnippetsInArray(array $val) : array 
     {
         $isAssoc = false;
         $arraySnippets = [];
+        $snippetResolver = $this->snippetResolver;
         // Object snippets
-        if (null !== $snipVal = $child['~snippet'] ?? null) {
+        if (null !== ($val[self::PROPERTY_SNIPPET] ?? null)) {
             $isAssoc = true;
-            // TODO resolve snippet here
-            // $val = ;
+            if ($snippetResolver !== null) {
+                $val = $snippetResolver($val);
+            } 
         }
         foreach ($val as $valKey => $valInner) {
             if (! is_numeric($valKey)) {
@@ -271,12 +279,13 @@ class UxonObject implements \IteratorAggregate
                 break;
             }
             if (is_array($valInner)) {
-                if (null !== $snipVal = $valInner['~snippet'] ?? null) {
-                    // TODO resolve snippet here
-                    $arraySnippets[$valKey] = $valInner;
+                if (null !== ($valInner[self::PROPERTY_SNIPPET] ?? null)) {
+                    if ($snippetResolver !== null) {
+                        $arraySnippets[$valKey] = $snippetResolver($valInner)->toArray();
+                    }
                 } elseif ($this->snippetsAdded !== null){
                     foreach ($this->snippetsAdded as $snipKey => $snipFunc) {
-                        if (null !== $snipVal = $valInner[$snipKey] ?? null) {
+                        if (null !== ($valInner[$snipKey] ?? null)) {
                             $arraySnippets[$valKey] = $snipFunc($valInner);
                         }
                     }
@@ -350,8 +359,10 @@ class UxonObject implements \IteratorAggregate
     {
         $array = [];
         
-        if($this->isArray(true)) {
-            $this->array = $this->resolveSnippets($this->array);
+        // FIXME why is this explicit rendering call here? Calling getProperty() in
+        // the subsequent loop should be enough!
+        if ($this->isArray(true)) {
+            $this->array = $this->resolveSnippetsInArray($this->array);
         }
         
         foreach (array_keys($this->array) as $var){
@@ -613,9 +624,15 @@ class UxonObject implements \IteratorAggregate
         return new UxonObject($result);
     }
 
-    public function addSnippet(string $pattern, callable $resolver)
+    public function addSnippet(string $pattern, callable $resolver) : UxonObject
     {
         $this->snippetsAdded[$pattern] = $resolver;
+        return $this;
+    }
+
+    public function setSnippetResolver(callable $callback) : UxonObject
+    {
+        $this->snippetResolver = $callback;
         return $this;
     }
 }

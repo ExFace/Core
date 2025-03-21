@@ -3,10 +3,12 @@ namespace exface\Core\Uxon;
 
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
+use exface\Core\CommonLogic\Uxon\UxonSnippetCall;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Factories\UxonSnippetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
@@ -22,7 +24,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\WorkbenchCache;
@@ -67,6 +69,7 @@ use Throwable;
  * - metamodel:role
  * - metamodel:username
  * - metamodel:communication_channel
+ * - metamodel:snippet
  * - metamodel:widget_function (TODO)
  * - metamodel:facade (TODO)
  * - metamodel:<object_alias>:<attribute_alias> - values of the meta attribute
@@ -86,15 +89,6 @@ use Throwable;
  */
 class UxonSchema implements UxonSchemaInterface
 {    
-    const SCHEMA_WIDGET = 'widget';
-    const SCHEMA_ACTION = 'action';
-    const SCHEMA_BEHAVIOR = 'behavior';
-    const SCHEMA_DATATYPE = 'datatype';
-    const SCHEMA_CONNECTION = 'connection';
-    const SCHEMA_QUERYBUILDER = 'querybuilder';
-    const SCHEMA_QUERYBUILDER_ATTRIBUTE = 'querybuilder_attribute';
-    const SCHEMA_QUERYBUILDER_OBJECT = 'querybuilder_object';
-    
     private $prototypePropCache = [];
     
     private $schemaCache = [];
@@ -121,6 +115,12 @@ class UxonSchema implements UxonSchemaInterface
     public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string
     {
         $rootPrototypeClass = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
+
+        foreach ($uxon as $key => $value) {
+            if (strcasecmp($key, UxonObject::PROPERTY_SNIPPET) === 0) {
+                $rootPrototypeClass = '\\' . UxonSnippetCall::class;
+            }
+        }
         
         if ($rootPrototypeClass === '') {
             return $rootPrototypeClass;
@@ -131,7 +131,7 @@ class UxonSchema implements UxonSchemaInterface
             
             if (is_numeric($prop) === false) {
                 $propType = $this->getPropertyTypes($rootPrototypeClass, $prop)[0];
-                if (substr($propType, 0, 1) === '\\') {
+                if (mb_substr($propType, 0, 1) === '\\') {
                     $class = $propType;
                     $class = str_replace('[]', '', $class);
                 } else {
@@ -142,8 +142,13 @@ class UxonSchema implements UxonSchemaInterface
             }
             
             $schema = $class === $rootPrototypeClass ? $this : $this->getSchemaForClass($class);
-            
-            return $schema->getPrototypeClass($uxon->getProperty($prop), $path, $class);
+            $propVal = $uxon->getProperty($prop);
+            if ($propVal instanceof UxonObject) {
+                if (null !== $value = $propVal->getProperty(UxonObject::PROPERTY_SNIPPET)) {
+                    $class = '\\' . UxonSnippetCall::class;
+                }
+            }
+            return $schema->getPrototypeClass($propVal, $path, $class);
         }
         
         return $rootPrototypeClass;
@@ -233,10 +238,15 @@ class UxonSchema implements UxonSchemaInterface
     public function getProperties(string $prototypeClass) : array
     {
         if ($col = $this->getPropertiesSheet($prototypeClass)->getColumns()->get('PROPERTY')) {
-            return $col->getValues(false);
+            $props = $col->getValues(false);
+        } else {
+            $props = [];
         }
+
+        // Always allow the ~snippet property
+        $props[] = UxonObject::PROPERTY_SNIPPET;
             
-        return [];
+        return $props;
     }
     
     /**
@@ -328,6 +338,9 @@ class UxonSchema implements UxonSchemaInterface
      */
     public function getPropertyTypes(string $prototypeClass, string $property) : array
     {
+        if ($property === UxonObject::PROPERTY_SNIPPET) {
+            return ['metamodel:snippet'];
+        }
         foreach ($this->getPropertiesSheet($prototypeClass)->getRows() as $row) {
             if (strcasecmp($row['PROPERTY'], $property) === 0) {
                 $type = $row['TYPE'];
@@ -463,6 +476,9 @@ class UxonSchema implements UxonSchemaInterface
                 break;
             case strcasecmp($type, 'metamodel:data_source') === 0:
                 $options = $this->getMetamodelDataSourceAliases($search);
+                break;
+            case strcasecmp($type, 'metamodel:snippet') === 0:
+                $options = $this->getMetamodelSnippetAliases();
                 break;
             case strcasecmp($type, 'metamodel:connection') === 0:
                 $options = $this->getMetamodelConnectionAliases($search);
@@ -910,6 +926,19 @@ class UxonSchema implements UxonSchemaInterface
         $ds->dataRead();
         return $ds->getColumns()->get('ALIAS_WITH_NS')->getValues(false);
     }
+   
+    /**
+     * Returning UXON snippet aliases read from the meta model
+     *
+     * @return string[]
+     */
+    protected function getMetamodelSnippetAliases() : array
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_SNIPPET');
+        $ds->getColumns()->addFromExpression('ALIAS_WITH_NS');
+        $ds->dataRead();
+        return $ds->getColumns()->get('ALIAS_WITH_NS')->getValues(false);
+    }
     
     /**
      *
@@ -1030,7 +1059,7 @@ class UxonSchema implements UxonSchemaInterface
         $thisClass = get_called_class();
         $genericClass = UxonSchema::class;
         if ($thisClass === $genericClass) {
-            return UxonSchemaNameDataType::GENERIC;
+            return UxonSchemaDataType::GENERIC;
         } else {
             return '\\' . $thisClass;
         }

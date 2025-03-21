@@ -2,6 +2,7 @@
 namespace exface\Core\Uxon;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Uxon\AbstractUxonSnippet;
 use exface\Core\DataTypes\UxonSchemaDataType;
 
 /**
@@ -12,11 +13,11 @@ use exface\Core\DataTypes\UxonSchemaDataType;
  * @author Andrej Kabachnik
  *
  */
-class BehaviorSchema extends UxonSchema
+class SnippetSchema extends UxonSchema
 {
     public static function getSchemaName() : string
     {
-        return UxonSchemaDataType::BEHAVIOR;
+        return UxonSchemaDataType::SNIPPET;
     }
     
     /**
@@ -26,6 +27,6 @@ class BehaviorSchema extends UxonSchema
      */
     protected function getDefaultPrototypeClass() : string
     {
-        return '\\' . AbstractBehavior::class;
+        return '\\' . AbstractUxonSnippet::class;
     }
 }
