@@ -3,6 +3,7 @@ namespace exface\Core\ModelLoaders;
 
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
+use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\UxonSnippetFactory;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
@@ -2316,6 +2317,10 @@ SQL;
             $uxon = UxonObject::fromJson($row['uxon']);
             $uxon->setProperty('name', $row['name']);
             $snippet = UxonSnippetFactory::createFromPrototype($this->getWorkbench(), $row['prototype'], $row['alias'], $row['app_alias'], $uxon);
+        }
+
+        if ($snippet === null) {
+            throw new UxonSnippetNotFoundError('UXON snippet "' . $selector->toString() . '" not found in model!');
         }
 
         return $snippet;
