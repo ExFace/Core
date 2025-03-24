@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Uxon;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Uxon\UxonSnippetMissingParameterError;
 use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 use exface\Core\Interfaces\Uxon\UxonSnippetParameterInterface;
 
@@ -106,6 +107,11 @@ class UxonSnippetParameter implements UxonSnippetParameterInterface
 
     public function parseValue($val) : string
     {
+        if ($this->isRequired()) {
+            if ($val === null || $val === ''){
+                throw new UxonSnippetMissingParameterError('Missing required parameter "' . $this->getName() . '" for snippet "' . $this->getSnippet()->getAliasWithNamespace() . '"');
+            }
+        }
         return $val;
     }
 }

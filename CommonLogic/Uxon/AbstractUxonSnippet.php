@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Uxon\UxonSnippetRenderingError;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -12,6 +13,7 @@ use exface\Core\Interfaces\Uxon\UxonSnippetCallInterface;
 use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Uxon\SnippetSchema;
+use Throwable;
 
 abstract class AbstractUxonSnippet implements UxonSnippetInterface
 {
@@ -29,6 +31,7 @@ abstract class AbstractUxonSnippet implements UxonSnippetInterface
     private $forUseInSchema = null;
     private $snippetUxon = null;
     private $snippetString = null;
+    private $parameters = null;
 
     public function __construct(WorkbenchInterface $workbench, string $alias, string $appSelector, UxonObject $uxon)
     {
@@ -80,7 +83,7 @@ abstract class AbstractUxonSnippet implements UxonSnippetInterface
 
     protected function getSnippetString() : string
     {
-        if ($snippetString === null) {
+        if ($this->snippetString === null) {
             if ($this->snippetUxon === null) {
                 throw new InvalidArgumentException('Snippet not set!');
             }
@@ -164,8 +167,8 @@ abstract class AbstractUxonSnippet implements UxonSnippetInterface
     }
 
     /**
-     * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Uxon\UxonSnippetInterface::getName()
      */
     public function getName() : string
     {
@@ -181,10 +184,65 @@ abstract class AbstractUxonSnippet implements UxonSnippetInterface
         return SnippetSchema::class;
     }
     
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Uxon\UxonSnippetInterface::render()
+     */
     public function render(UxonSnippetCallInterface $call) : UxonObject
     {
-        $json = StringDataType::replacePlaceholders($this->getSnippetString(), $call->getParameters(), false);
+        $callParams = $call->getParameters();
+        foreach ($this->getParameters() as $param){
+            $paramVal = $callParams[$param->getName()] ?? null;
+            try {
+                $paramVal = $param->parseValue($paramVal);
+            } catch (Throwable $e) {
+                throw new UxonSnippetRenderingError($this->exportUxonObject(), 'Cannot render UXON snippet. ' . $e->getMessage(), null, $e);
+            }
+            if ($paramVal !== null && $paramVal !== ''){
+                $callParams[$param->getName()] = $param->parseValue($paramVal);
+            }
+        }
+        $json = StringDataType::replacePlaceholders($this->getSnippetString(), $callParams, false);
         $rendered = UxonObject::fromJson($json);
         return $rendered;
+    }
+
+    /**
+     * 
+     * @uxon-property parameters
+     * @uxon-type \exface\Core\CommonLogic\Uxon\UxonSnippetParameter[]
+     * @uxon-template [{"name": "", "description": "", "type": "", "required": false}]
+     * 
+     * @return UxonSnippetInterface
+     */
+    protected function setParameters(UxonObject $arrayOfParams) : UxonSnippetInterface
+    {
+        $this->parameters = $arrayOfParams;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Uxon\UxonSnippetInterface::getParameters()
+     */
+    public function getParameters() : array
+    {
+        if ($this->parameters instanceof UxonObject) {
+            $params = [];
+            foreach ($this->parameters->getPropertiesAll() as $uxon){
+                $params[] = new UxonSnippetParameter($this, $uxon); 
+            }
+            $this->parameters = $params;
+        }
+        return $this->parameters ?? [];
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Uxon\UxonSnippetInterface::hasParameters()
+     */
+    public function hasParameters() : bool
+    {
+        return empty($this->parameters === null) || (($this->parameters instanceof UxonObject) && $this->parameters->isEmpty());
     }
 }
