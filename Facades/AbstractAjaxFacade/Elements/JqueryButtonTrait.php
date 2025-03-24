@@ -471,10 +471,11 @@ JS;
         if ($action->getOfflineStrategy() === OfflineStrategyDataType::SKIP) {
             $regularJs = <<<JS
             (function(){
+                console.log('Offline Wrapper');
                 if(navigator.onLine !== false) {
-                    return $regularJs;
+                    return (function() { $regularJs })();
                 } else {
-                    return $ifNotExecutedJs;
+                    return (function() { $ifNotExecutedJs })();
                 }
             })()
 JS;
