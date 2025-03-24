@@ -183,13 +183,8 @@ abstract class AbstractUxonSnippet implements UxonSnippetInterface
     
     public function render(UxonSnippetCallInterface $call) : UxonObject
     {
-        $params = $call->getParameters();
-        if (! empty($params)) {
-            $json = StringDataType::replacePlaceholders($this->getSnippetString(), $params);
-            $rendered = UxonObject::fromJson($json);
-        } else {
-            $rendered = $this->getSnippetUxon();
-        }
+        $json = StringDataType::replacePlaceholders($this->getSnippetString(), $call->getParameters(), false);
+        $rendered = UxonObject::fromJson($json);
         return $rendered;
     }
 }

@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Uxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Uxon\UxonSnippetCallInterface;
+use exface\Core\Uxon\SnippetSchema;
 
 class UxonSnippetCall implements UxonSnippetCallInterface
 {
@@ -28,7 +29,7 @@ class UxonSnippetCall implements UxonSnippetCallInterface
     public function getParameters() : array
     {
         $paramsUxon = $this->uxon->getProperty('parameters');
-        return $paramsUxon === null ? [] : $paramsUxon->exportArray();
+        return $paramsUxon === null ? [] : $paramsUxon->toArray();
     }
 
     /**
@@ -48,5 +49,14 @@ class UxonSnippetCall implements UxonSnippetCallInterface
     public function exportUxonObject()
     {
         return $this->uxon;
+    }    
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return SnippetSchema::class;
     }
 }

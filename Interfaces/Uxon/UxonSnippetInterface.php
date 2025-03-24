@@ -9,13 +9,30 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 interface UxonSnippetInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
 {
-    public function getMetaObject() : ?MetaObjectInterface;
-
     /**
      * 
      * @return string
      */
     public function getName() : string;
+
+    /**
+     * 
+     * @return MetaObjectInterface|null
+     */
+    public function getMetaObject() : ?MetaObjectInterface;
+
+    /**
+     * Returns all parameters supported by this snippet
+     * 
+     * @return UxonSnippetParameterInterface[]
+     */
+    public function getParameters() : array;
+
+    /**
+     * Returns TRUE if this snippet expectes parameters and FALSE otherwise
+     * @return bool
+     */
+    public function hasParameters() : bool;
 
     /**
      * 
