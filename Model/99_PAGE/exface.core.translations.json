@@ -2,7 +2,7 @@
     "uid": "0x9d1ad1d03bda11e8934200a0c6000012",
     "alias_with_namespace": "exface.core.translations",
     "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
-    "menu_index": 7,
+    "menu_index": 8,
     "menu_visible": true,
     "name": "Translations",
     "description": "View translations, search for i18n-keys",
@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-04-09 11:44:35",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2023-03-14 10:14:33",
+    "modified_on": "2025-03-25 08:44:03",
     "contents": {
         "object_alias": "exface.core.TRANSLATIONS",
         "widget_type": "DataTable",

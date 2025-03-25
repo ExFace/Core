@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2013-06-24 11:43:50",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-01-22 15:54:41",
+    "modified_on": "2025-03-06 12:43:11",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.DATASRC",
@@ -78,7 +78,23 @@
                 "action_alias": "exface.Core.ShowObjectCreateDialog"
             },
             {
-                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                "action": {
+                    "alias": "exface.Core.ShowObjectCopyDialog",
+                    "confirmation_for_action": {
+                        "widget_type": "ConfirmationMessage",
+                        "text": "Test confirmation",
+                        "disabled_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=~input!ALIAS",
+                                    "comparator": "==",
+                                    "value_right": "project_sizer_db"
+                                }
+                            ]
+                        }
+                    }
+                }
             },
             {
                 "action_alias": "exface.Core.ShowObjectEditDialog",
