@@ -424,20 +424,24 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      */
     protected function enhanceInputWidget(WidgetInterface $input) : WidgetInterface
     {
-        // Some widgets need to be transformed to be a meaningfull filter
-        if ($input->is('InputCheckBox')) {
-            $input = $input->transformIntoSelect();
-        }
-        
-        // Allow multi-select for most widgets if not explicitly turned off
-        if ($input->getWidgetType() === 'Input' || $input->getWidgetType() === 'InputHidden') {
-            $input->setMultipleValuesAllowed(true);
-        }
-        if ($input instanceof iSupportMultiSelect) {
-            if ($this->getInputWidgetUxon() === null || ! $this->getInputWidgetUxon()->hasProperty('multi_select')) {
-                $input->setMultiSelect($this->getInputWidgetDefaultForMultiSelect());
-            }
-        }
+        // Do some widget-specific manipulations
+        switch (true) {
+            // Some widgets need to be transformed to be a meaningfull filter
+            case $input->is('InputCheckBox'):
+                $input = $input->transformIntoSelect();
+                break;
+            // Allow multiple value for simple inputs
+            case $input->getWidgetType() === 'Input':
+            case $input->getWidgetType() === 'InputHidden':
+                $input->setMultipleValuesAllowed(true);
+                break;
+            // Allow multi-select for most widgets if not explicitly turned off
+            case $input instanceof iSupportMultiSelect:
+                if ($this->getInputWidgetUxon() === null || ! $this->getInputWidgetUxon()->hasProperty('multi_select')) {
+                    $input->setMultiSelect($this->getInputWidgetDefaultForMultiSelect());
+                }
+                break;            
+        } 
         
         // Set a default comparator
         $defaultComparator = $this->getDefaultComparator($input);
