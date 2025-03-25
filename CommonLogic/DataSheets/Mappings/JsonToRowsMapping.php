@@ -11,24 +11,97 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
- * Transforms a JSON stored in a column into flat rows
+ * This mapper transforms JSON objects that are stored in a column (`json_column`) into flattened rows. This allows to use nested JSON data in flat tables like CSV or Excel exports and printing. 
  * 
- * This allows to use nested JSON data in flat tables like CSV or Excel exports and printing
+ * ## How will the data be mapped?
+ * 
+ * The mapper will create a separate row from each of the JSON objects innermost child-entries 
+ * and append them together with their parent data into new rows. If the innermost child object is nested within one or more
+ * parent arrays (`"parent-key": [nested child]`), this relationship will be displayed with a marker in the 
+ * corresponding column. This marker (`nested_data_marker`) can be customized, and the default is set to 'X'.
+ * Empty or non-existing values in the entries will be shown as blank. 
+ * 
+ * ## Example
+ * 
+ * This example will map the following JSON Object. The mapper will append one result row per innermost nested object, so the result will have 3 rows in this case. 
+ * 
+ * 
+ * ```
+ * 
+ * {
+ *   "ParentObject": [
+ *       {
+ *           "ParentKey": "ParentVal1",
+ *           "NestedObject1": [
+ *               {
+ *                   "key1": "val1",
+ *                   "key2": "val2",
+ *               }
+ *           ],
+ *           "NestedObject2": [
+ *               {
+ *                   "key1": "val3",
+ *               }
+ *           ]
+ *       },
+ *       {
+ *           "ParentKey": "ParentVal2",
+ *           "NestedObject1": [
+ *               {
+ *                   "key1": "val4",
+ *                   "key2": "val5",
+ *               }
+ *           ]
+ *       }
+ *   ]
+ * }
+ * 
+ * ```
+ * 
+ * The mapper will then transform this JSON object stored in a single column into the following flattened table structure:
+ * 
+ * 
+ * 
+ * | ParentObject | ParentKey | NestedObject1 | NestedObject2 | key1 | key2 |
+ * |----------|----------|----------|----------|----------|----------|
+ * | X | ParentVal1 | X |   | val1 | val2 |
+ * | X | ParentVal1 |   | X | val3 |      |
+ * | X | ParentVal2 | X |   | val4 | val5 |
+ * 
+ * 
+ * 
+ * ## How can the mapper be used or configured?
+ * 
+ * An example of how the mapper can be used to export a json column to an excel sheet can be seen below. The property `json_column` specifies which column in the datasheet contains the needed data. 
+ * The `nested_data_marker` can be used to customize how the parent keys are shown in the final table
+ * 
+ * ```
+ * 
+ *  "buttons": [
+ *   {
+ *     "caption": "Custom Export",
+ *     "action": {
+ *       "alias": "exface.Core.ExportXLSX",
+ *       "export_mapper": {
+ *         "json_to_rows_mappings": [
+ *           {
+ *             "json_column": "JSONDataColumn",
+ *             "nested_data_marker": "Yes" 
+ *           }
+ *         ]
+ *       }
+ *     }
+ *   }
+ *   ]
+ *
+ * ```
+ * 
  * 
  * @author Andrej Kabachnik
  */
+
 class JsonToRowsMapping extends AbstractDataSheetMapping 
 {
-    const JOIN_TYPE_LEFT = 'left';
-    
-    const JOIN_TYPE_RIGHT = 'right';
-    
-    private $joinType = self::JOIN_TYPE_LEFT;
-    
-    private $joinSheet = null;
-    
-    private $inputSheetKey = null;
-
     private $jsonColAlias = null;
 
     private $nestedDataMarker = 'X';
@@ -88,13 +161,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
      */
     protected function flatten(array $json, string $nestedMarker) : array
     {
-        /*
-            TODO:
-                - fix export, join not working as expected??
-        */
-
         $result = [];
-        //$result[] = ["--- NEW JSON ENTRY ---"];
 
         $parentKeys = $this->getParentKeys($json);
         $uniqueKeys = $this->getUniqueKeys($json);
@@ -146,17 +213,22 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
             }
 
             // Check if current node is array or simple value
-            //     for arrays: mark parent key with X and recurse deeper
+            //     for arrays: mark parent key with X, add all key value pairs from current recursion level and recurse deeper
             //     for simple values: append value to parent data
             
             if (is_array($value)) {
+
+                // add all data from current level except sub-arrays
+                $levelData = array_filter($value, function($item) {
+                    return !is_array($item);
+                });
+                $currentParentData = array_merge((array) $parentData, (array) $levelData);
                 
                 // mark encountered parent keys with set nested marker
-                $currentParentData = $parentData;
                 if (in_array($key, $parentKeys)) {
                     $currentParentData[$key] = $nestedMarker;
                 }
-    
+
                 // Recursively call the function, passing the current parent data along
                 $result = array_merge($result, $this->extractJsonData($value, $currentParentData, $uniqueKeys, $parentKeys, $nestedMarker));
             } 
