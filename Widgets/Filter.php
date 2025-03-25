@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -199,6 +200,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
 
     private bool $appliesToAggregatedValues = true;
 
+    private $multiSelect = null;
+
     /**
      * Returns TRUE if the input widget was already instantiated.
      * 
@@ -289,6 +292,14 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      */
     protected function createInputWidget(UxonObject $uxon) : WidgetInterface
     {
+        // Remove the default value for multi_select from the UXON in case it was set. This
+        // helps avoiding conflicts with input widgets that do not support multi-select.
+        $multiSelectDefault = null;
+        if ($uxon->hasProperty('multi_select')) {
+            $multiSelectDefault = $uxon->getProperty('multi_select');
+            $uxon->unsetProperty('multi_select');
+        }
+
         // Look for the best configuration for the input_widget
         switch (true) {
             // If not UXON defined by user and the filter is explicitly hidden - use a simple `InputHidden`.
@@ -365,6 +376,12 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
             }
             $inputWidget = WidgetFactory::createFromUxonInParent($this, $uxon, 'Input');
         }
+
+        // If multi_select property was set in the UXON of this filters, apply it now - but only
+        // if the generated input widget supports it.
+        if ($multiSelectDefault !== null && $inputWidget instanceof iSupportMultiSelect) {
+            $inputWidget->setMultiSelect($multiSelectDefault);
+        }
         
         return $inputWidget;
     }
@@ -389,7 +406,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
             if ($widget_or_uxon_object instanceof iTakeInput || $widget_or_uxon_object instanceof iContainOtherWidgets) {
                 $input = $widget_or_uxon_object;
             } else {
-                throw new WidgetConfigurationError('Cannot use widget "' . $widget_or_uxon_object->getWidgetType() . '" as input widget for a filter: only input widgets and containers supported!');
+                throw new WidgetConfigurationError($this, 'Cannot use widget "' . $widget_or_uxon_object->getWidgetType() . '" as input widget for a filter: only input widgets and containers supported!');
             }
         } else {
             throw new UnexpectedValueException('Invalid input_widget for a filter: expecting a UXON description or an instantiated widget, received "' . gettype($widget_or_uxon_object) . '" instead!');
@@ -412,8 +429,14 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
             $input = $input->transformIntoSelect();
         }
         
+        // Allow multi-select for most widgets if not explicitly turned off
         if ($input->getWidgetType() === 'Input' || $input->getWidgetType() === 'InputHidden') {
             $input->setMultipleValuesAllowed(true);
+        }
+        if ($input instanceof iSupportMultiSelect) {
+            if ($this->getInputWidgetUxon() === null || ! $this->getInputWidgetUxon()->hasProperty('multi_select')) {
+                $input->setMultiSelect($this->getInputWidgetDefaultForMultiSelect());
+            }
         }
         
         // Set a default comparator
@@ -1493,5 +1516,26 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
             return $this->getInputWidget()->hasFunction($functionName);
         }
         return false;
+    }
+
+    /**
+     * Turn off multi-select for the input widget by default
+     * 
+     * @uxon-property multi_select
+     * @uxon-type bool
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return Filter
+     */
+    protected function setMultiSelect(bool $trueOrFalse) : Filter
+    {
+        $this->multiSelect = $trueOrFalse;
+        return $this;
+    }
+
+    protected function getInputWidgetDefaultForMultiSelect() : bool
+    {
+        return $this->multiSelect ?? true;
     }
 }
