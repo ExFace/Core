@@ -124,26 +124,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                 break;
             case MetaAttributeGroupInterface::CUSTOM:
                 $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert, $components) {
-                    if(!$attr instanceof CustomAttribute) {
-                        return $invert;
-                    }
-
-                    if($invert) {
-                        return false;
-                    }
-                    
-                    $categories = $attr->getCategories();
-                    foreach ($components as $component) {
-                        $component = mb_trim($component, ' \n\r\t\v\0');
-                        $invertResult = str_starts_with($component, '!');
-                        $component = mb_trim($component, '!');
-                        $result = ($invertResult XOR in_array($component,$categories,true));
-                        if($result === false) {
-                            return false;
-                        }
-                    }
-                    
-                    return true;
+                    return $invert XOR ($attr instanceof CustomAttribute);
                 });
                 break;
         }

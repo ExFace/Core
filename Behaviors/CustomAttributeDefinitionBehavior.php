@@ -2,7 +2,6 @@
 
 namespace exface\Core\Behaviors;
 
-use \exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
@@ -21,6 +20,7 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
@@ -43,30 +43,35 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * ## Custom Attribute Definitions
  * 
- * Each custom attribute is based off of a unique definition, stored on the object of this behavior.
- * Whenever a custom attribute is being loaded, this behavior will configure it based on the following data:
+ * Each custom attribute is defined by exactly one data item of the object of this behavior. The data of this
+ * object will contain all the configuraton for the attribute: its name, alias, data address and a lot more.
+ * Each of these properties can be either loaded from the data source (i.e. they being the value of an attribute)
+ * or configured in one of the so-called attribute type models. 
  * 
- * - **Name**(`name_attribute`): The display name of the custom attribute.
- * - **Storage Key**(`data_address_attribute`): The storage key is used to generate the data address and the
- * technical alias  of the custom attribute. Make sure it matches whatever storage scheme you are using. For example:
- * JSON storage keys should  be written in snake_case, have no hierarchies and may omit the root accessor. Both
- * `$.some_alias` and `some_alias` will result in the same technical alias and data address. 
- * - **Type Model**(`type_attribute`): The type model the custom attribute is based on. Type models
- * simplify
- * the configuration of custom attributes, by assigning meaningful defaults to most attribute properties. They are
- * identified with a key, that must either match a default type model or a type model that you defined in `type_models`
- * (see "Type Models").
- * - **Category Alias**(`category_attribute`): The categories the custom attribute belongs to. Categories give
+ * Here is a list of what you can store in your data source and load by configuring the corresponding attribute 
+ * in this beahvior:
+ * 
+ * - **Name** (`name_attribute`): The display name of the custom attribute.
+ * - **Alias** (`alias_attribute`): The attribute alias for the custom attribute.
+ * - **Data address** (`data_address_attribute`): The data address is used to generate the data address and the
+ * technical alias  of the custom attribute. Make sure it matches whatever storage behavior you are using. For example
+ * if the data of the attributes is to be loaded from JSON via `CustomAttributesJsonBehavior`, the data address should 
+ * be a valid JSON path. 
+ * - **Type** of the attribute (`type_attribute`): This is more than just a data type - it is a preconfigured model
+ * of the attribute, that could even include relations, data address properties and other things. You can provide a
+ * set of valid type model in this behavior via `type_models`. 
+ * - **Attribute groups** (`groups_attribute`): One of the attributes of this object can be used to store a delimited
+ * list of attribute groups, that should be assigned to the generated custom attribute belongs to. Attribute groups give
  * designers more fine-grained control over which custom attributes will be included in automatically generated widgets
- * (see "Categories").
- * - **Hint**(`hint_attribute`): The short description is used for tooltips and info panels, when working with an
- * attribute.
- * - **Required**(`required_attribute`): Determines, whether a custom attribute will be required in editors.
- * - **Owner Object**(`relation_to_owner_object`): This property is optional. You only need to set it if you
+ * (see "Attribute groups").
+ * - **Hint** (`hint_attribute`): The short description stored in this attribute is used for tooltips and info panels, 
+ * when working with an attribute.
+ * - **Required** (`required_attribute`): Determines, whether a custom attribute will be required in editors.
+ * - **Owner Object** (`relation_to_owner_object`): This property is optional. You only need to set it if you
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
  * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
- * ## Type Models
+ * ## Attribute types and type models
  * 
  * Type models are special templates that simplify the creation of new custom attributes. They automatically configure
  * the properties of a custom attribute, meaning users won't have to know any technical details. When creating  a new
@@ -108,18 +113,17 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *  } 
  * }
  * 
- * ## Categories
+ * ## Attribute groups
  * 
  * Since designers won't be able to know ahead of time what custom attributes will available at runtime, they will have
  * to rely on auto-generated widgets. To still give them some amount of control over what custom attributes will be
- * included in these auto-generated widgets, each custom attribute can be assigned to one or more categories.
+ * included in these auto-generated widgets, each custom attribute can be assigned to one or more groups.
  * 
- * By default, each custom attribute is already assigned to its type model as a category (for example "Time"). Beyond
- * that you can configure additional categories in the type model, all of which will be applied to all custom
- * attributes that use it. The most useful way however, is to manually edit what categories a custom attribute belongs
- * to, by changing the values stored in `category_attribute`. While creating or editing a custom attribute, all
- * available categories will be displayed in a  dropdown multi-select. You can extend the available selection, by
- * adding more options to the property `general_categories`.
+ * By default, each custom attribute is already assigned to its type model as a group (for example "Time"). Beyond
+ * that you can configure additional groups in the type model, all of which will be applied to all custom
+ * attributes that use it. The most useful way however, is to manually edit what groups a custom attribute belongs
+ * to, by changing the values stored in `groups_attribute`. While creating or editing a custom attribute, all
+ * available groups will be displayed in a  dropdown multi-select.
  * 
  * ## Setup
  * 
@@ -128,7 +132,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 1. Create a new table for your app, that has the following properties. It will be used to store the custom attribute definitions:
  * 
  *      - It must have all the default columns of your app.
- *      - It must have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),categories (varchar), hint (varchar), required (tinyint) and optionally owner_object_id (binary(16)).
+ *      - It should have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),groups (varchar), hint (varchar), required (tinyint) and optionally owner_object_id (binary(16)).
  * 
  * 2. Create a new MetaObject with matching attributes. If you have a column for `owner_object`, make sure that its attribute has a relation to `exface.Core.OBJECT`!
  * 
@@ -162,18 +166,18 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * select all attributes that are not visible.
  * 
  * `~CUSTOM` is a special selector just for custom attributes, which gives you even more control. It allows you to
- * define sub-selectors that filter for the categories a custom attribute belongs to. Use `:` to start your list of
- * categories and `,` to chain them. 
- * `~CUSTOM:Company A, Company B` would select all attributes that are custom AND belong to the categories "Company A"
- * AND "Company B". Category selectors can be negated as well: `~CUSTOM:!Company A` selects all attributes that are
- * custom AND do not belong to the category
+ * define sub-selectors that filter for the groups a custom attribute belongs to. Use `:` to start your list of
+ * groups and `,` to chain them. 
+ * `~CUSTOM:Company A, Company B` would select all attributes that are custom AND belong to the groups "Company A"
+ * AND "Company B". Group selectors can be negated as well: `~CUSTOM:!Company A` selects all attributes that are
+ * custom AND do not belong to the group
  * "Company A".
  * 
  * For example, the table definition below will generate:
  * - The column "Item".
  * - A column for each attribute that is required AND not custom.
- * - A column for each attribute that is required AND custom AND not in the category "Company B" AND is 
- * in the category "Company C".
+ * - A column for each attribute that is required AND custom AND not in the group "Company B" AND is 
+ * in the group "Company C".
  * - A default filter for each attribute that is custom.
  * 
  * ```
@@ -205,11 +209,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      "data_address_attribute": "storage_key",
  *      "type_attribute": "type_model",
  *      "required_attribute": "required",
- *      "category_attribute": "categories",
- *      "general_categories": [
- *          "Company A",
- *          "Company B"
- *      ],
+ *      "groups_attribute": "groups",
  *      "type_models": {
  *          "INHERITS_DEFAULT": {
  *              "inherits": "",
@@ -253,7 +253,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
     protected const KEY_DATA_TYPE = "data_type";
     protected const KEY_INHERITS_FROM = "inherits";
-    protected const KEY_CATEGORIES = "categories";
+    protected const KEY_GROUPS = "groups";
 
     const ALIAS_GENERATOR_CAMEL = 'CamelCase';
     const ALIAS_GENERATOR_UPPER_CASE = 'UPPER_CASE';
@@ -265,7 +265,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     
     private array $typeModels = [];
     private ?string $attributeTypeModelAlias = null;
-    private ?string $attributeCategoryAlias = null;
+    private ?string $attributeGroupsAlias = null;
     private ?string $attributeNameAlias = null;
     private ?string $attributeStorageKeyAlias = null;
     private ?string $attributeHintAlias = null;
@@ -273,8 +273,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $attributeOwnerObjectAlias = null;
     private ?string $attributeAliasAlias = null;
     private ?string $aliasGeneratorType = null;
-    private bool $modelsInheritCategories = false;
-    private array $generalCategories = [];
+    private bool $modelsInheritGroups = false;
     private ?UxonObject $filtersUxon = null;
     
     private array $attributeDefaults = [
@@ -346,19 +345,19 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $typeModelAttribute->setDataType($dataType);
         $typeModelAttribute->setCustomDataTypeUxon($typeModelEditorUxon);
 
-        // Category selector
-        $allCategories = $this->getGeneralCategories();
-        $categorySelectorUxon = new UxonObject([
+        // AttributeGroupSelector
+        $allGroups = $this->getAttributeGroups();
+        $groupSelectorUxon = new UxonObject([
             "widget_type" => "InputSelect",
             "multi_select" => true,
-            "selectable_options" => $allCategories
+            "selectable_options" => $allGroups
         ]);
 
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.String");
-        if (null !== $categoryAlias = $this->getCategoryAttributeAlias()) {
-	        $categoryAttribute = $object->getAttribute($categoryAlias);
-	        $categoryAttribute->setDataType($dataType);
-	        $categoryAttribute->setDefaultEditorUxon($categorySelectorUxon);
+        if (null !== $groupsAlias = $this->getAttributeGroupsAttributeAlias()) {
+	        $groupsAttribute = $object->getAttribute($groupsAlias);
+	        $groupsAttribute->setDataType($dataType);
+	        $groupsAttribute->setDefaultEditorUxon($groupSelectorUxon);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
@@ -429,8 +428,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         if (null !== $requiredAlias = $this->getRequiredAttributeAlias()) {
             $attributeDefinitionsSheet->getColumns()->addFromExpression($requiredAlias);
         }
-        if (null !== $categoryAlias = $this->getCategoryAttributeAlias()) {
-            $attributeDefinitionsSheet->getColumns()->addFromExpression($categoryAlias);
+        if (null !== $groupsAlias = $this->getAttributeGroupsAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($groupsAlias);
         }
 
         if (null !== $filtersUxon = $this->getFiltersUxon()) {
@@ -520,10 +519,16 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $attr->setRequired($definitionRow[$requiredAlias]);
             }
             
-            if($categoryAlias !== null && $attr instanceof CustomAttribute) {
-                $delimiter = $this->getObject()->getAttribute($categoryAlias)->getValueListDelimiter();
-                $categories = explode($delimiter, $definitionRow[$categoryAlias]);
-                $attr->addCategories($categories);
+            if($groupsAlias !== null) {
+                $delimiter = $this->getObject()->getAttribute($groupsAlias)->getValueListDelimiter();
+                $groups = explode($delimiter, $definitionRow[$groupsAlias]);
+                foreach ($groups as $groupAlias) {
+                    try {
+                        $targetObject->getAttributeGroup($groupAlias)->add($attr);
+                    } catch (MetaAttributeGroupNotFoundError $e) {
+                        // Ignore missing attribute groups
+                    }
+                }
             }
             
             $targetObject->getAttributes()->add($attr);
@@ -572,31 +577,19 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * Define what categories a custom attribute can be assigned to.
-     *
-     * This list will be extended with all categories found in the `type_models` property.
-     *
-     * @uxon-property general_categories
-     * @uxon-type array
-     * @uxon-template [""]
-     *
-     * @param UxonObject $generalCategories
-     * @return $this
-     */
-    protected function setGeneralCategories(UxonObject $generalCategories) : CustomAttributeDefinitionBehavior
-    {
-        $this->generalCategories = $generalCategories->toArray();
-        return $this;
-    }
-    
-    /**
-     * Get a list of all categories defined for this behavior.
      * 
-     * @return array
+     * @return string[]
      */
-    protected function getGeneralCategories() : array
+    protected function getAttributeGroups() : array
     {
-        return $this->generalCategories;
+        $aliases = [];
+        foreach ($this->findOwnerObjects() as $object) {
+            foreach ($object->getAttributeGroups() as $grp) {
+                $aliases[] = $grp->getAliasWithNamespace();
+            }
+        }
+        $aliases = array_unique($aliases);
+        return $aliases;
     }
     
     /**
@@ -695,9 +688,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             return $resolvedModels[$key];
         }
         
-        // Add the type model key to the list of categories that attributes derived from this type model belong to.
-        if(empty($model[self::KEY_CATEGORIES]) || !in_array($key, $model[self::KEY_CATEGORIES],true)) {
-            $model[self::KEY_CATEGORIES][] = $key;
+        // Add the type model key to the list of attribute groups that attributes derived from this type model belong to.
+        if(empty($model[self::KEY_GROUPS]) || !in_array($key, $model[self::KEY_GROUPS],true)) {
+            $model[self::KEY_GROUPS][] = $key;
         }
         
         // If the model has no explicit parent OR that parent is invalid, inherit from base.
@@ -737,16 +730,16 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      */
     protected function mergeTypeModels(array $left, array $right) : array
     {
-        // Merge categories.
-        if($this->getModelsInheritCategories()) {
-            $categoriesLeft = $left[self::KEY_CATEGORIES];
-            $categoriesRight = $right[self::KEY_CATEGORIES];
+        // Merge attribute groups.
+        if($this->getModelsInheritGroups()) {
+            $groupsLeft = $left[self::KEY_GROUPS];
+            $groupsRight = $right[self::KEY_GROUPS];
             
-            if (empty($categoriesRight)) {
-                $right[self::KEY_CATEGORIES] = $categoriesLeft;
-            } else if (!empty($categoriesLeft)) {
-                $right[self::KEY_CATEGORIES] = array_unique(array_merge(
-                    $categoriesLeft, $categoriesRight
+            if (empty($groupsRight)) {
+                $right[self::KEY_GROUPS] = $groupsLeft;
+            } else if (!empty($groupsLeft)) {
+                $right[self::KEY_GROUPS] = array_unique(array_merge(
+                    $groupsLeft, $groupsRight
                 ));
             }
         } 
@@ -772,7 +765,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * Type models simplify the configuration of custom attributes, by assigning meaningful defaults to most attribute
      * properties.
-     * 
+     *
      * @uxon-property type_attribute
      * @uxon-type metamodel:attribute
      * 
@@ -786,28 +779,26 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * The attribute alias of the definition object that holds the categories of a custom attribute.
+     * Alias of an attribute, that will store assignments to attribute groups for every custom attribute
      * 
-     * Categories can be used to limit which custom attributes will be included in automatically generated widgets.
-     * 
-     * @uxon-property category_attribute
+     * @uxon-property groups_attribute
      * @uxon-type metamodel:attribute
      * 
      * @param string $alias
      * @return $this
      */
-    protected function setCategoryAttribute(string $alias) : CustomAttributeDefinitionBehavior
+    protected function setGroupsAttribute(string $alias) : CustomAttributeDefinitionBehavior
     {
-        $this->attributeCategoryAlias = $alias;
+        $this->attributeGroupsAlias = $alias;
         return $this;
     }
 
     /**
      * @return string
      */
-    protected function getCategoryAttributeAlias() : ?string
+    protected function getAttributeGroupsAttributeAlias() : ?string
     {
-        return $this->attributeCategoryAlias;
+        return $this->attributeGroupsAlias;
     }
 
     /**
@@ -880,9 +871,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * The attribute alias of the definition object that holds the storage key of a custom attribute. 
+     * The attribute alias of the definition object that holds the data address of a custom attribute. 
      * 
-     * The storage key is used to generate the data address and the technical alias of the custom attribute.
+     * The data address is used to generate the data address and the technical alias of the custom attribute.
      *
      * @uxon-property data_address_attribute
      * @uxon-type megetRelationPathToOwnerObject
@@ -971,27 +962,27 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * If TRUE, type models will inherit categories from their parents (default is FALSE).
+     * If TRUE, type models will inherit attribute groups from their parents (default is FALSE).
      * 
-     * @uxon-property models_inherit_categories
+     * @uxon-property models_inherit_groups
      * @uxon-type boolean
      * @uxon-template false
      * 
      * @param bool $value
      * @return $this
      */
-    protected function setModelsInheritCategories(bool $value) : CustomAttributeDefinitionBehavior
+    protected function setModelsInheritGroups(bool $value) : CustomAttributeDefinitionBehavior
     {
-        $this->modelsInheritCategories = $value;
+        $this->modelsInheritGroups = $value;
         return $this;
     }
 
     /**
      * @return bool
      */
-    protected function getModelsInheritCategories() : bool
+    protected function getModelsInheritGroups() : bool
     {
-        return $this->modelsInheritCategories;
+        return $this->modelsInheritGroups;
     }
 
     /**
@@ -1136,16 +1127,6 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     // Compatibility methods for legacy syntax - remove after 30.06.2025
 
     /**
-     * @deprecated use `setCategoryAttribute()` instead
-     * @param string $alias
-     * @return CustomAttributeDefinitionBehavior
-     */
-    protected function setAttributeCategoryAlias(string $alias) : CustomAttributeDefinitionBehavior
-    {
-        return $this->setCategoryAttribute($alias);
-    }
-
-    /**
      * @deprecated use `setNameAttribute()` instead
      * @param string $alias
      * @return CustomAttributeDefinitionBehavior
@@ -1203,5 +1184,37 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function setAttributeOwnerObjectAlias(?string $alias) : static
     {
         return $this->setRelationToOwnerObject($alias);
+    }
+
+    /**
+     * @deprecated use `setCategoryAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setAttributeCategoryAlias(string $alias) : CustomAttributeDefinitionBehavior
+    {
+        return $this->setGroupsAttribute($alias);
+    }
+
+    /**
+     * @deprecated use `setGroupAttribute()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setCategoryAttribute(string $alias) : CustomAttributeDefinitionBehavior
+    {
+        $this->setGroupsAttribute($alias);
+        return $this;
+    }
+
+    /**
+     * @deprecated use `setModelsInheritGroups()` instead
+     * @param string $alias
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setModelsInheritCategories(bool $value) : CustomAttributeDefinitionBehavior
+    {
+        $this->modelsInheritGroups = $value;
+        return $this;
     }
 }
