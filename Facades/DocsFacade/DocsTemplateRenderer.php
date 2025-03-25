@@ -18,11 +18,11 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         
         foreach ($phs as $ph => $phData) {
             $val = $phData['comment'] . PHP_EOL . $vals[$ph] . PHP_EOL . '<!-- EIF ' . $phData['name'] . ' -->';
-            $regex = '/' . preg_quote($phData['comment'], '/') . '[\r\n.]*<!-- EOF ' . $phData['name'] . ' -->/';
+            $regex = '/' . preg_quote($phData['comment'] ?? '', '/') . '[\r\n.]*<!-- EOF ' . $phData['name'] . ' -->/';
             $matches = [];
             preg_match_all($regex, $markdown, $matches);
             foreach ($matches as $match) {
-                $markdown = str_replace($match[0], $val, $markdown);
+                $markdown = str_replace($match[0] ?? '', $val, $markdown);
             }
         }
 
