@@ -2,10 +2,8 @@
 
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Interfaces\Model\IHaveCategoriesInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
@@ -14,9 +12,8 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * @see \exface\Core\Behaviors\CustomAttributeDefinitionBehavior
  */
-class CustomAttribute extends Attribute implements IHaveCategoriesInterface
+class CustomAttribute extends Attribute
 {
-    private array $categories = [];
     private mixed $source = null;
 
     /**
@@ -30,46 +27,6 @@ class CustomAttribute extends Attribute implements IHaveCategoriesInterface
     {
         $this->source = $source;
         parent::__construct($object, $name, $alias);
-    }
-
-
-    /**
-     * @param array $categories
-     * @return void
-     * @see IHaveCategoriesInterface
-     */
-    public function addCategories(array $categories) : void
-    {
-        if(empty($this->categories)) {
-            $this->categories = $categories;
-        } else {
-            $this->categories = array_merge($this->categories, $categories);
-        }
-    }
-    
-    /**
-     * 
-     * @uxon-property categories
-     * @uxon-type array
-     * @uxon-template [""]
-     * 
-     * @param UxonObject $categories
-     * @return $this
-     * @see IHaveCategoriesInterface
-     */
-    public function setCategories(UxonObject $categories) : CustomAttribute
-    {
-        $this->categories = $categories->toArray();
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     * @see IHaveCategoriesInterface
-     */
-    public function getCategories() : array
-    {
-        return $this->categories;
     }
 
     /**
