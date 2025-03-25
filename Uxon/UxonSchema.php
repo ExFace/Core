@@ -235,8 +235,12 @@ class UxonSchema implements UxonSchemaInterface
      * {@inheritdoc}
      * @see UxonSchemaInterface::getProperties()
      */
-    public function getProperties(string $prototypeClass) : array
+    public function getProperties(string $prototypeClass, UxonObject $uxon, array $path) : array
     {
+        $schema = $this->getSchemaForClass($prototypeClass);
+        if ($schema !== $this) {
+            return $schema->getProperties($prototypeClass, $uxon, $path);
+        }
         if ($col = $this->getPropertiesSheet($prototypeClass)->getColumns()->get('PROPERTY')) {
             $props = $col->getValues(false);
         } else {
@@ -254,9 +258,13 @@ class UxonSchema implements UxonSchemaInterface
      * {@inheritdoc}
      * @see UxonSchemaInterface::getPropertiesTemplates()
      */
-    public function getPropertiesTemplates(string $prototypeClass) : array
+    public function getPropertiesTemplates(string $prototypeClass, UxonObject $uxon, array $path) : array
     {
         $tpls = [];
+        $schema = $this->getSchemaForClass($prototypeClass);
+        if ($schema !== $this) {
+            return $schema->getPropertiesTemplates($prototypeClass, $uxon, $path);
+        }
         $ds = $this->getPropertiesSheet($prototypeClass);
         if ($col = $ds->getColumns()->get('TEMPLATE')) {
             $propertyCol = $ds->getColumns()->get('PROPERTY');
