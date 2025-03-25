@@ -9,5 +9,5 @@ interface UxonSnippetParameterInterface extends iCanBeConvertedToUxon
 
     public function isRequired() : bool;
 
-    public function parseValue($val) : string;
+    public function parseValue($val) : ?string;
 }
