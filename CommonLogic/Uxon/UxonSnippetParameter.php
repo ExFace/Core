@@ -105,7 +105,7 @@ class UxonSnippetParameter implements UxonSnippetParameterInterface
         return $this->uxon;
     }
 
-    public function parseValue($val) : string
+    public function parseValue($val) : ?string
     {
         if ($this->isRequired()) {
             if ($val === null || $val === ''){
