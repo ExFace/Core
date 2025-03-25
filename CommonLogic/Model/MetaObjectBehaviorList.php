@@ -17,6 +17,8 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
 {
     private $autoregisterBehaviors = false;
 
+    private $disabledStates = [];
+
     public function __construct(WorkbenchInterface $exface, $parent_object, $autoregisterBehaviors = false)
     {
         parent::__construct($exface, $parent_object);
@@ -137,5 +139,34 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
         }
 
         return $hits->getFirst();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\BehaviorListInterface::disableTemporarily()
+     */
+    public function disableTemporarily(bool $trueOrFalse) : BehaviorListInterface
+    {
+        if ($trueOrFalse === true) {
+            foreach ($this->getAll() as $behavior) {
+                $this->disabledStates[] = [
+                    'behavior' => $behavior, 
+                    'state' => $behavior->isDisabled()
+                ];
+                if ($behavior->isDisabled() === false) {
+                    $behavior->setDisabled(true);
+                }
+            }
+        } else {
+            if (empty($this->disabledStates) && ! $this->isEmpty()) {
+                return $this;
+            }
+            foreach ($this->disabledStates as $array) {
+                $array['behavior']->setDisabled($array['state']);
+            }
+            $this->disabledStates = [];
+        }
+        return $this;
     }
 }
