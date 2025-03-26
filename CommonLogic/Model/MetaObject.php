@@ -1262,6 +1262,22 @@ class MetaObject implements MetaObjectInterface
                 $this->setLoadAttributeGroupsFromModel(false);
             }
             $grp = $this->attribute_groups[$alias] ?? null;
+            // If there is no direct match, see if the given alias simply lacks the namespace and try
+            // without the namespace
+            if ($grp === null && stripos($alias, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
+                $foundByAlias = null;
+                foreach ($this->attribute_groups as $g) {
+                    if (StringDataType::endsWith($g->getAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias, false)) {
+                        if ($foundByAlias !== null) {
+                            throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguos! Found multiple groups for selector "' . $alias . '": ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
+                        }
+                        $foundByAlias = $g;
+                    }
+                }
+                if ($foundByAlias !== null) {
+                    $grp = $foundByAlias;
+                }
+            }
             if ($grp === null) {
                 throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $alias . '" not found for object ' . $this->__toString() . '!');
             }

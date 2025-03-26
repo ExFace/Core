@@ -15,9 +15,11 @@ use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\StringEnumDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
@@ -275,6 +277,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $aliasGeneratorType = null;
     private bool $modelsInheritGroups = false;
     private ?UxonObject $filtersUxon = null;
+    private ?array $ownerObjects = null;
     
     private array $attributeDefaults = [
         // DATATYPE
@@ -288,8 +291,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function registerEventListeners(): BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener(
-            OnMetaObjectLoadedEvent::getEventName(),
-            [$this,'onLoadedConfigureEnums'],
+            OnUiActionWidgetInitEvent::getEventName(),
+            [$this,'onEditorRenderedConfigureEnums'],
             $this->getPriority()
         );
 
@@ -304,7 +307,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         $this->getWorkbench()->eventManager()->removeListener(
             OnMetaObjectLoadedEvent::getEventName(),
-            [$this,'onLoadedConfigureEnums']
+            [$this,'onEditorRenderedConfigureEnums']
         );
 
         return $this;
@@ -315,49 +318,50 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @param \exface\Core\Events\Model\OnMetaObjectLoadedEvent $event
      * @return void
      */
-    public function onLoadedConfigureEnums(OnMetaObjectLoadedEvent $event) : void
+    public function onEditorRenderedConfigureEnums(OnUiActionWidgetInitEvent $event) : void
     {
         $object = $event->getObject();
-        if(!$object->isExactly($this->getObject())) {
-            return;
-        }
-        if ($this->hasAttributeTypeModels() === false) {
+        if(! $object->isExactly($this->getObject())) {
             return;
         }
         
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
 
-
         // TypeModel editor
-        $keyValuePairs = [];
-        foreach (array_keys($this->getTypeModelsAll()) as $modelKey) {
-            $keyValuePairs[$modelKey] = $modelKey;
+        if (null !== $typeAlias = $this->getTypeAttributeAlias()) {
+            $keyValuePairs = [];
+            foreach (array_keys($this->getTypeModelsAll()) as $modelKey) {
+                $keyValuePairs[$modelKey] = $modelKey;
+            }
+
+            $typeModelEditorUxon = new UxonObject([
+                "show_values" => false,
+                "values" => $keyValuePairs
+            ]);
+
+            $dataType = DataTypeFactory::createFromString($this->getWorkbench(), StringEnumDataType::class);
+            $typeModelAttribute = $object->getAttribute($typeAlias);
+            $typeModelAttribute->setDataType($dataType);
+            $typeModelAttribute->setCustomDataTypeUxon($typeModelEditorUxon);
+            $typeModelAttribute->setDefaultEditorUxon(new UxonObject([
+                'widget_type' => 'InputSelect'
+            ]));
         }
 
-        $typeModelEditorUxon = new UxonObject([
-            "show_values" => false,
-            "values" => $keyValuePairs
-        ]);
-
-        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.GenericStringEnum");
-        $typeModelAttribute = $object->getAttribute($this->getTypeAttributeAlias());
-        $typeModelAttribute->setDataType($dataType);
-        $typeModelAttribute->setCustomDataTypeUxon($typeModelEditorUxon);
-
         // AttributeGroupSelector
-        $allGroups = $this->getAttributeGroups();
-        $groupSelectorUxon = new UxonObject([
-            "widget_type" => "InputSelect",
-            "multi_select" => true,
-            "selectable_options" => $allGroups
-        ]);
-
-        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), "exface.Core.String");
         if (null !== $groupsAlias = $this->getAttributeGroupsAttributeAlias()) {
-	        $groupsAttribute = $object->getAttribute($groupsAlias);
-	        $groupsAttribute->setDataType($dataType);
-	        $groupsAttribute->setDefaultEditorUxon($groupSelectorUxon);
+            $allGroups = $this->getAttributeGroups();
+            $groupSelectorUxon = new UxonObject([
+                "widget_type" => "InputSelect",
+                "multi_select" => true,
+                "selectable_options" => $allGroups
+            ]);
+
+            $dataType = DataTypeFactory::createFromString($this->getWorkbench(), StringDataType::class);
+            $groupsAttribute = $object->getAttribute($groupsAlias);
+            $groupsAttribute->setDataType($dataType);
+            $groupsAttribute->setDefaultEditorUxon($groupSelectorUxon);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
@@ -369,20 +373,23 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      */
     protected function findOwnerObjects() : array
     {
-        $behaviorsObj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.OBJECT_BEHAVIORS');
-        $definitionAttribute = MetaObjectFactory::addAttributeTemporary($behaviorsObj, 'DEFINITION_OBJECT_ALIAS', 'Definition object alias', 'CONFIG_UXON::$.attributes_definition.object_alias');
-        $definitionAttribute->setFilterable(true);
-        $ds = DataSheetFactory::createFromObject($behaviorsObj);
-        $objectUidCol = $ds->getColumns()->addFromExpression('OBJECT');
-        $ds->getFilters()->addConditionFromAttribute($definitionAttribute, $this->getObject()->getAliasWithNamespace(), ComparatorDataType::EQUALS);
-        $ds->getFilters()->addConditionFromString('BEHAVIOR', 'CustomAttribute', ComparatorDataType::IS);
-        $ds->dataRead();
-
-        $objects = [];
-        foreach ($objectUidCol->getValues() as $uid) {
-            $objects[] = MetaObjectFactory::createFromUid($this->getWorkbench(), $uid);
+        if ($this->ownerObjects === null) {
+            $behaviorsObj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.OBJECT_BEHAVIORS');
+            $definitionAttribute = MetaObjectFactory::addAttributeTemporary($behaviorsObj, 'DEFINITION_OBJECT_ALIAS', 'Definition object alias', 'CONFIG_UXON::$.attributes_definition.object_alias');
+            $definitionAttribute->setFilterable(true);
+            $ds = DataSheetFactory::createFromObject($behaviorsObj);
+            $objectUidCol = $ds->getColumns()->addFromExpression('OBJECT');
+            $ds->getFilters()->addConditionFromAttribute($definitionAttribute, $this->getObject()->getAliasWithNamespace(), ComparatorDataType::EQUALS);
+            $ds->getFilters()->addConditionFromString('BEHAVIOR', 'CustomAttribute', ComparatorDataType::IS);
+            $ds->dataRead();
+            
+            $objects = [];
+            foreach ($objectUidCol->getValues() as $uid) {
+                $objects[] = MetaObjectFactory::createFromUid($this->getWorkbench(), $uid);
+            }
+            $this->ownerObjects = $objects;
         }
-        return $objects;
+        return $this->ownerObjects;
     }
 
     /**
@@ -394,11 +401,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * @return array<CustomAttribute|MetaAttributeInterface>
      */
     public function addAttributesToObject(MetaObjectInterface $targetObject, CustomAttributesDefinition $definition, BehaviorLogBook $logBook) : array
-    {
-        if(empty($this->getTypeModelsAll())) {
-            throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
-        }
-        
+    {        
         $attrs = [];
         
         $logBook->addLine('Loading attribute definitions...');
@@ -416,8 +419,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         if (null !== $aliasAlias = $this->getAliasAttributeAlias()) {
             $attributeDefinitionsSheet->getColumns()->addFromExpression($aliasAlias);
         }
-        if (null !== $modelAlias = $this->getTypeAttributeAlias()) {
-            $attributeDefinitionsSheet->getColumns()->addFromExpression($modelAlias);
+        if (null !== $typeAlias = $this->getTypeAttributeAlias()) {
+            $attributeDefinitionsSheet->getColumns()->addFromExpression($typeAlias);
         }
         if (null !== $storageKeyAlias = $this->getDataAddressAttributeAlias()) {
             $attributeDefinitionsSheet->getColumns()->addFromExpression($storageKeyAlias);
@@ -431,9 +434,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         if (null !== $groupsAlias = $this->getAttributeGroupsAttributeAlias()) {
             $attributeDefinitionsSheet->getColumns()->addFromExpression($groupsAlias);
         }
-
         if (null !== $filtersUxon = $this->getFiltersUxon()) {
             $attributeDefinitionsSheet->setFilters(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject()));
+        }
+
+        if($typeAlias !== null && empty($this->getTypeModelsAll())) {
+            throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
         }
         
         $targetObjectId = $targetObject->getId();
@@ -460,7 +466,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
 
             if ($this->hasAttributeTypeModels() === true) {
                 // TODO how to use the definition defaults in case of predefined type models?
-                $typeKey = $definitionRow[$modelAlias];
+                $typeKey = $definitionRow[$typeAlias];
                 if(! $typeModel = $this->getTypeModel($typeKey)) {
                     throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
                 }
@@ -538,7 +544,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         //$this->registerWidgetModifications($attrs);
         
         $logBook->addIndent(-1);
-        
+
         return $attrs;
     }
 
