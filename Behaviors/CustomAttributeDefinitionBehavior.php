@@ -277,6 +277,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     private ?string $aliasGeneratorType = null;
     private bool $modelsInheritGroups = false;
     private ?UxonObject $filtersUxon = null;
+    private ?UxonObject $sortersUxon = null;
     private ?array $ownerObjects = null;
     
     private array $attributeDefaults = [
@@ -314,7 +315,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * 
+     * TODO Modifying widgets OnUiActionWidgetInitEvent has a serious drawback: 
      * @param \exface\Core\Events\Model\OnMetaObjectLoadedEvent $event
      * @return void
      */
@@ -437,6 +438,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         if (null !== $filtersUxon = $this->getFiltersUxon()) {
             $attributeDefinitionsSheet->setFilters(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject()));
         }
+        if (null !== $sortersUxon = $this->getSortersUxon()) {
+            $attributeDefinitionsSheet->getSorters()->importUxonObject($sortersUxon);
+        }
 
         if($typeAlias !== null && empty($this->getTypeModelsAll())) {
             throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
@@ -527,7 +531,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             
             if($groupsAlias !== null) {
                 $delimiter = $this->getObject()->getAttribute($groupsAlias)->getValueListDelimiter();
-                $groups = explode($delimiter, $definitionRow[$groupsAlias]);
+                $groups = explode($delimiter, $definitionRow[$groupsAlias] ?? '');
                 foreach ($groups as $groupAlias) {
                     try {
                         $targetObject->getAttributeGroup($groupAlias)->add($attr);
@@ -1082,6 +1086,31 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function getFiltersUxon() : ?UxonObject
     {
         return $this->filtersUxon;
+    }
+
+    /**
+     * Apply sorting when reading custom attribute definitions - e.g. if there is a special sequence column.
+     * 
+     * @uxon-property sorters
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
+     * @uxon-template [{"attribute_alias": "","direction": "ASC"}]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return CustomAttributeDefinitionBehavior
+     */
+    protected function setSorters(UxonObject $uxon) : CustomAttributeDefinitionBehavior
+    {
+        $this->sortersUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return UxonObject|null
+     */
+    protected function getSortersUxon() : ?UxonObject
+    {
+        return $this->sortersUxon;
     }
 
     protected function getAliasFromName(string $name) : string
