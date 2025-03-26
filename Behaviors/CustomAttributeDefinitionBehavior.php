@@ -694,11 +694,6 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             return $resolvedModels[$key];
         }
         
-        // Add the type model key to the list of attribute groups that attributes derived from this type model belong to.
-        if(empty($model[self::KEY_GROUPS]) || !in_array($key, $model[self::KEY_GROUPS],true)) {
-            $model[self::KEY_GROUPS][] = $key;
-        }
-        
         // If the model has no explicit parent OR that parent is invalid, inherit from base.
         $parentKey = $model[self::KEY_INHERITS_FROM];
         if(!$parentKey || $parentKey === $key || !key_exists($parentKey, $allModels)) {
@@ -882,7 +877,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * The data address is used to generate the data address and the technical alias of the custom attribute.
      *
      * @uxon-property data_address_attribute
-     * @uxon-type megetRelationPathToOwnerObject
+     * @uxon-type metamodel:attribute
      *
      * @param string $alias
      * @return $this
