@@ -143,6 +143,8 @@
 	
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR": "%object% %row% darf nicht gelöscht werden!",
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR": "%object% auf Zeile %row% darf nicht gelöscht werden!",
+	"BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR": "%object% %row% darf nicht bearbeitet werden!",
+	"BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR": "%object% auf Zeile %row% darf nicht bearbeitet werden!",
 	
 	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Daten in Zeile(n) %row% von Objekt %object% sind Duplikate!",
 
