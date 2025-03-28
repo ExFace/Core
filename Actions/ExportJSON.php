@@ -400,7 +400,7 @@ class ExportJSON extends ReadData implements iExportData
      * @param \exface\Core\Interfaces\DataSheets\DataColumnInterface[] $additionalColumns
      * @return WidgetInterface[]
      */
-    protected function getExportColumnWidgets(WidgetInterface $exportedWidget, DataSheetInterface $exportedSheet, array $additionalColumns) : array
+    protected function getExportColumnWidgets(WidgetInterface $exportedWidget, DataSheetInterface $exportedSheet, array $additionalColumns = []) : array
     {
         switch (true) {
             case $exportedWidget instanceof iUseData:
