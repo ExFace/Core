@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\JsonToRowsMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\LookupMapping;
 use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -1333,6 +1334,24 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         foreach ($uxon as $prop){
             $this->addMapping(new DataColumnToJsonMapping($this, $prop));
+        }
+        return $this;
+    }
+
+    /**
+     * Looks up a value in a separate data sheet and places it in the to-column
+     *
+     * @uxon-property lookup_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping[]
+     * @uxon-template [{"to": "", "lookup_object_alias": "", "lookup_column": "", "match": [{"from": "", "lookup":""}]}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setLookupMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new LookupMapping($this, $prop));
         }
         return $this;
     }
