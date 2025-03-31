@@ -94,10 +94,6 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     private $value_text = '';
 
-    private $multi_select = false;
-
-    private $multi_select_value_delimiter = null;
-
     private $multi_select_text_delimiter = null;
 
     private $selectable_options = array();
@@ -308,7 +304,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         
         //Translate options
         foreach ($options as $key => $value) {
-            $options[$key] = $this->evaluatePropertyExpression($value);
+            $options[$key] = $value === null ? null : $this->evaluatePropertyExpression($value);
         }
         
         $this->selectable_options = $options;

@@ -1,0 +1,114 @@
+{
+    "uid": "0x11f0af07c308139aaf07025041000001",
+    "alias_with_namespace": "exface.core.uxon-snippets",
+    "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": 5,
+    "menu_visible": true,
+    "name": "Model Snippets",
+    "description": "Reusable bits of UXON for widgets, actions, etc.",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2025-03-21 09:01:57",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2025-03-25 08:45:11",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.UXON_SNIPPET",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "OBJECT"
+            },
+            {
+                "attribute_alias": "UXON"
+            },
+            {
+                "attribute_alias": "PROTOTYPE"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "PROTOTYPE__LABEL"
+            },
+            {
+                "attribute_alias": "OBJECT__LABEL"
+            },
+            {
+                "attribute_alias": "UXON_SCHEMA"
+            },
+            {
+                "calculation": "=Left(DESCRIPTION, 80)"
+            },
+            {
+                "attribute_alias": "OBJECT",
+                "hidden": true
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "caption": "Open object",
+                "disabled_if": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "value_left": "=~input!OBJECT",
+                            "comparator": "==",
+                            "value_right": ""
+                        }
+                    ]
+                },
+                "action": {
+                    "alias": "exface.Core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.OBJECT",
+                    "input_mapper": {
+                        "from_object_alias": "exface.Core.UXON_SNIPPET",
+                        "to_object_alias": "exface.Core.OBJECT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+}

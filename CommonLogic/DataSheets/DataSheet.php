@@ -639,8 +639,18 @@ class DataSheet implements DataSheetInterface
         
         // set sorting
         $sorters = $this->getSorters();
+        // If no sorters set, add default sorters from the object, UNLESS explicitly disallowed or
+        // aggregated to a single line.
         if ($sorters->isEmpty() && $this->getAutoSort() === true && $this->hasAggregateAll() === false) {
-            $sorters = $this->getMetaObject()->getDefaultSorters();
+            // Also do not add default sorters when aggregating over something
+            // IDEA actually it is not quite clear if and how default sorters should work with aggregators.
+            // Some SQL engines (like MS SQL) require sorted column to be in the SELECT or GROUP BY,
+            // others sorte before doint the aggregation. For now, we just don't apply default sorters when
+            // aggregating, but in future we might check if the sorted columns are being read and apply the
+            // sorters then. 
+            if ($this->hasAggregations() === false) {
+                $sorters = $this->getMetaObject()->getDefaultSorters();
+            }
         }
         $postprocessorSorters = new DataSorterList($this->getWorkbench(), $this);
         foreach ($sorters as $sorter) {

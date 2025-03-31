@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\JsonToRowsMapping;
 use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\CommonLogic\UxonObject;
@@ -1314,6 +1315,24 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         foreach ($uxon as $prop){
             $this->addMapping(new JsonToRowsMapping($this, $prop));
+        }
+        return $this;
+    }
+    
+    /**
+     * Puts values of one or more columns in the from-sheet into a JSON inside a column of the to-sheet.
+     *
+     * @uxon-property column_to_json_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping[]
+     * @uxon-template [{"from": "", "to": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setColumnToJsonMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataColumnToJsonMapping($this, $prop));
         }
         return $this;
     }

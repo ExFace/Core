@@ -827,10 +827,15 @@ class Data
      */
     public function setAggregateByAttributeAlias($value)
     {
-        if ($value instanceof UxonObject) {
-            $this->aggregate_by_attribute_alias = implode(',', $value->toArray());
-        } else {
-            $this->aggregate_by_attribute_alias = str_replace(', ', ',', $value);
+        switch (true) {
+            case $value instanceof UxonObject:
+                $this->aggregate_by_attribute_alias = implode(',', $value->toArray());
+                break;
+            case is_string($value):
+                $this->aggregate_by_attribute_alias = str_replace(', ', ',', $value ?? '');
+                break;
+            default:
+                $this->aggregate_by_attribute_alias = $value;
         }
         return $this;
     }

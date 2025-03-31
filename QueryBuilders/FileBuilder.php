@@ -510,7 +510,11 @@ class FileBuilder extends AbstractQueryBuilder
                     }
                 }
                 switch ($filterComp) {
-                    case ComparatorDataType::IS:
+                    // If we are searching for the exact value of a path or filename, we can use the value
+                    // in our paths in most cases.
+                    // NOTE: this only works for EQUALS comparators. IS does not work, because it would produce
+                    // a pattern and that pattern would conflict with possible patterns in the data address of
+                    // the object.
                     case ComparatorDataType::EQUALS:
                         //if attribute alias is a placeholder in the path patterns, replace it with the value
                         if (in_array($qpart->getAlias(), $addrPhs)) {                            
@@ -519,11 +523,12 @@ class FileBuilder extends AbstractQueryBuilder
                                 $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                             }
                         } else {
+                            $filterVal = Filemanager::pathNormalize($filterVal);
                             if ($isPathNameFilter) {
-                                $uidPaths[] = Filemanager::pathNormalize($filterVal);
+                                $uidPaths[] = $filterVal;
                             }
                             if ($isFolderFilter) {
-                                $pathPatterns[] = Filemanager::pathNormalize($filterVal);
+                                $pathPatterns[] = $filterVal;
                             }
                         }
                         break;

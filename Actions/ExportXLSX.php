@@ -110,6 +110,8 @@ class ExportXLSX extends ExportJSON
     
     private $freezeHeaderRow = true;
 
+    private $writer = null;
+
     /**
      * 
      * {@inheritDoc}
@@ -128,9 +130,9 @@ class ExportXLSX extends ExportJSON
      */
     protected function writeHeader(array $exportedColumns) : array
     {
-        $headerTypes = [];
+        $headersAndTypes = [];
         $columnOptions = [];
-        $output = [];
+        $colNames = [];
         $indexes = [];
         foreach ($exportedColumns as $widget) {
             if ($widget instanceof iShowDataColumn && $widget->isExportable(true) === false) {
@@ -139,18 +141,22 @@ class ExportXLSX extends ExportJSON
             $colOptions = [];
             // Name der Spalte
             if ($this->getUseAttributeAliasAsHeader() === true && ($widget instanceof iShowDataColumn) && $widget->isBoundToDataColumn()) {
-                $colName = $widget->getAttributeAlias();
+                $colHeader = $widget->getAttributeAlias();
             } else {
-                $colName = $widget->getCaption();
+                $colHeader = $widget->getCaption();
             }
             $colId = $widget->getDataColumnName();
+
+            if ($colHeader === '' || $colHeader === null) {
+                $colHeader = $colId;
+            }
             
             // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
             // geschrieben.
-            $idx = $indexes[$colId] ?? 0;
-            $indexes[$colId] = $idx + 1;
+            $idx = ($indexes[$colHeader] ?? 0) + 1;
+            $indexes[$colHeader] = $idx;
             if ($idx > 1) {
-                $colName = $idx;
+                $colHeader .= ' (' . $idx . ')';
             }
             
             // Datentyp der Spalte
@@ -168,7 +174,7 @@ class ExportXLSX extends ExportJSON
                     $dataType = DataTypeFactory::createBaseDataType($this->getWorkbench());
                     break;
             }
-            $headerTypes[$colName] = $this->getExcelDataType($dataType);
+            $headersAndTypes[$colHeader] = $this->getExcelDataType($dataType);
             
             // Width
             if ($dataType instanceof TimestampDataType || $dataType instanceof DateTimeDataType) {
@@ -185,7 +191,7 @@ class ExportXLSX extends ExportJSON
             
             $columnOptions[] = $colOptions;
             
-            $output[] = $colId;
+            $colNames[] = $colId;
         }
         
         $options =  [
@@ -197,8 +203,8 @@ class ExportXLSX extends ExportJSON
             $options['freeze_rows'] = 1;
         }
         
-        $this->getWriter()->writeSheetHeader($this->getExcelDataSheetName(), $headerTypes, $options, $columnOptions);
-        return $output;
+        $this->getWriter()->writeSheetHeader($this->getExcelDataSheetName(), $headersAndTypes, $options, $columnOptions);
+        return $colNames;
     }
 
     /**

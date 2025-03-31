@@ -71,4 +71,3 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
         return $debug_widget;
     }
 }
-?>
