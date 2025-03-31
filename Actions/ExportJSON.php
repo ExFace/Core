@@ -284,13 +284,15 @@ class ExportJSON extends ReadData implements iExportData
                 $pageSheet = $dataSheetMaster->copy();
                 // Add required columns for export mapper to $pageSheet only, not to
                 // the master sheet.
-                foreach ($exportMapper->getMappings() as $map) {
-                    foreach ($map->getRequiredExpressions($pageSheet) as $req) {
-                        if (! $pageSheet->getColumns()->getByExpression($req)) {
-                            $pageSheet->getColumns()->addFromExpression($req);
+                if ($exportMapper !== null) {
+                    foreach ($exportMapper->getMappings() as $map) {
+                        foreach ($map->getRequiredExpressions($pageSheet) as $req) {
+                            if (! $pageSheet->getColumns()->getByExpression($req)) {
+                                $pageSheet->getColumns()->addFromExpression($req);
+                            }
                         }
-                    }
-                }
+                    }                    
+                }                
             } else {
                 $pageSheet->removeRows();
             }
