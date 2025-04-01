@@ -173,6 +173,7 @@ class LookupMapping extends AbstractDataSheetMapping
 
         $lookupColName = $lookupCol->getName();
         $toColVals = [];
+        $toValDelim = $toExpr->getAttribute()->getValueListDelimiter();
         // For every row in the from-sheet we will create a row in the to-sheet
         foreach ($fromSheet->getRows() as $i => $fromRow) {
             $toColVals[$i] = null;
@@ -199,7 +200,9 @@ class LookupMapping extends AbstractDataSheetMapping
                         ];
                     }
                     if ($lookupVal !== null && $lookupVal !== '') {
-                        $toColVals[$i]['rows'][] = [$toExpr->getAttribute()->getAlias() => $lookupVal];
+                        foreach (explode($toValDelim, $lookupVal) as $val) {
+                            $toColVals[$i]['rows'][] = [$toExpr->getAttribute()->getAlias() => $val];
+                        }
                     }
                 } else {
                     if ($prevVal === null) {
