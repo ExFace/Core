@@ -2,11 +2,11 @@
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
-use exface\Core\Interfaces\DataSheets\LookupMappingInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
@@ -36,7 +36,7 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * @author Andrej Kabachnik
  *
  */
-class LookupMapping extends AbstractDataSheetMapping implements LookupMappingInterface
+class LookupMapping extends AbstractDataSheetMapping
 {
     private $lookupExpression = null;
     
@@ -131,20 +131,42 @@ class LookupMapping extends AbstractDataSheetMapping implements LookupMappingInt
      */
     public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
-        $fromExpr = $this->getLookupExpression();
+        $lookupExpr = $this->getLookupExpression();
         $toExpr = $this->getToExpression();
         
-        $log = "Lookup `{$fromExpr->__toString()}` -> `{$toExpr->__toString()}`.";
+        $log = "Lookup `{$lookupExpr->__toString()}` -> `{$toExpr->__toString()}`.";
 
+        $matches = $this->getMatches();
         $lookupSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getLookupObjectAlias());
-        $lookupSheet->getColumns()->addFromExpression($fromExpr);
-        $lookupSheet->getFilters()->addConditionFromString(/* TODO */);
+        $lookupCol = $lookupSheet->getColumns()->addFromExpression($lookupExpr);
+        foreach ($matches as $match) {
+            $lookupSheet->getColumns()->addFromExpression($matches['lookup']);
+        }
+        foreach($matches as $match) {
+            $fromExpr = ExpressionFactory::createForObject($fromSheet->getMetaObject(), $match['from']);
+            if (! $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)) {
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Missing column "' . $match['from'] . '" in from-data for a lookup mapping!');
+            }
+            $lookupSheet->getFilters()->addConditionFromValueArray($match['from'], $fromCol->getValues());
+        }
         $lookupSheet->dataRead();
+
+        if (! $toCol = $toSheet->getColumns()->getByExpression($toExpr)) {
+            $toCol = $toSheet->getColumns()->addFromExpression($toExpr);
+        }
+
+        $lookupColName = $lookupCol->getName();
         foreach ($lookupSheet->getRows() as $lookupRow) {
-            /*
-            Find matching row in to-sheet and add the looked up value into that row
-            How to find the row??? 
-            */
+            foreach ($fromSheet->getRows() as $i => $fromRow) {
+                foreach ($matches as $match) {
+                    $matchVal = $lookupRow[$match['lookup']];
+                    $fromVal = $fromRow[$match['from']];
+                    if ($matchVal !== $fromVal) {
+                        continue 2;
+                    }
+                }
+                $toCol->setValue($i, $lookupRow[$lookupColName]);
+            }
         }
         
         if ($logbook !== null) $logbook->addLine($log);
@@ -183,7 +205,7 @@ class LookupMapping extends AbstractDataSheetMapping implements LookupMappingInt
 
     protected function setMatches(UxonObject $uxon) : LookupMapping
     {
-        $this->matchesUxon = $uxon;
+        $this->matchesUxon = $uxon->toArray();
         return $this;
     }
 
@@ -193,7 +215,10 @@ class LookupMapping extends AbstractDataSheetMapping implements LookupMappingInt
      */
     protected function getMatches() : array
     {
-
+        if ($this->matchesUxon === null) {
+            return [];
+        }
+        return $this->matchesUxon->toArray();
     }
     
     /**
@@ -205,7 +230,7 @@ class LookupMapping extends AbstractDataSheetMapping implements LookupMappingInt
     {
         $expressions = [];
         foreach ($this->getMatches() as $match) {
-            $expressions[] = $match->getFromExpression();
+            $expressions[] = ExpressionFactory::createForObject($this->getMapper()->getFromMetaObject(), $match['from']);;
         }
         return $expressions;
     }
