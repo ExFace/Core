@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
@@ -245,9 +246,12 @@ class ExportJSON extends ReadData implements iExportData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
+        $exportMapper = $this->getExportMapper();
+
         // Prepare DataSheet.
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
+
         // Initialize FilePath.
         $this->initializeFilePathAbsolute($dataSheetMaster);
 
@@ -275,14 +279,28 @@ class ExportJSON extends ReadData implements iExportData
         $rowOffset = 0;
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
-        $exportMapper = $this->getExportMapper();
         do {
-            $dataSheet = $dataSheetMaster->copy();
-            $dataSheet->setRowsLimit($rowsOnPage);
-            $dataSheet->setRowsOffset($rowOffset);
-            $dataSheet->dataRead();
+            if ($pageSheet === null) {
+                $pageSheet = $dataSheetMaster->copy();
+                // Add required columns for export mapper to $pageSheet only, not to
+                // the master sheet.
+                if ($exportMapper !== null) {
+                    foreach ($exportMapper->getMappings() as $map) {
+                        foreach ($map->getRequiredExpressions($pageSheet) as $req) {
+                            if (! $pageSheet->getColumns()->getByExpression($req)) {
+                                $pageSheet->getColumns()->addFromExpression($req);
+                            }
+                        }
+                    }                    
+                }                
+            } else {
+                $pageSheet->removeRows();
+            }
+            $pageSheet->setRowsLimit($rowsOnPage);
+            $pageSheet->setRowsOffset($rowOffset);
+            $pageSheet->dataRead();
             
-            foreach ($dataSheet->getColumns() as $col) {
+            foreach ($pageSheet->getColumns() as $col) {
                 $type = $col->getDataType();
                 if ($type instanceof EnumDataTypeInterface) {
                     $values = $col->getValues();
@@ -295,15 +313,32 @@ class ExportJSON extends ReadData implements iExportData
             }
 
             if ($exportMapper !== null) {
-                $exportSheet = $exportMapper->map($dataSheet);
+                $exportMapper->setInheritColumns(DataSheetMapper::INHERIT_ALL);
+                $exportSheet = $exportMapper->map($pageSheet);
             } else {
-                $exportSheet = $dataSheet;
+                $exportSheet = $pageSheet;
             }
             
             if ($lazyExport) {
                 $this->writeRows($exportSheet, $columnNames);
             } else {
+                $mapperAddedCols = [];
                 // Don't add any columns to the master sheet if reading produced hidden/system columns
+                // However, if we have mappings, they might have produced additional columns that are
+                // actually needed, so we need to detect this and add the columns here. Mappings like
+                // JsonToRowsMapping will add columns from the read values, so we need to check columns
+                // for every page separately.
+                if ($exportMapper !== null && $pageSheet->getColumns()->count() !== $exportSheet->getColumns()->count()) {
+                    foreach ($exportSheet->getColumns() as $exportCol) {
+                        $exportColExpr = $exportCol->getExpressionObj();
+                        $exportColInPageSheet = $pageSheet->getColumns()->getByExpression($exportColExpr);
+                        $exportColInMaster = $dataSheetMaster->getColumns()->getByExpression($exportColExpr);
+                        if (! $exportCol->getHidden() && ! $exportColInPageSheet && ! $exportColInMaster) {
+                            $mapperAddedCols[] = $exportCol;
+                            $dataSheetMaster->getColumns()->addFromExpression($exportColExpr, $exportCol->getName());
+                        }
+                    }
+                }
                 $dataSheetMaster->addRows($exportSheet->getRows(), false, false);
             }
             
@@ -312,13 +347,13 @@ class ExportJSON extends ReadData implements iExportData
             // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
             // zu einem fatal error: maximum execution time exceeded.
             set_time_limit($this->getLimitTimePerRequest());
-        } while ($dataSheet->countRows() === $rowsOnPage);
+        } while ($pageSheet->countRows() === $rowsOnPage);
         
         // Speicher frei machen
-        $dataSheet = null;
+        $pageSheet = null;
         
         if (! $lazyExport) {
-            $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
+            $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster, $mapperAddedCols));
             $this->writeRows($dataSheetMaster instanceof PivotSheetInterface ? $dataSheetMaster->getPivotResultDataSheet() : $dataSheetMaster, $columnNames);
         }
         
@@ -362,10 +397,12 @@ class ExportJSON extends ReadData implements iExportData
     
     /**
      * 
-     * @param WidgetInterface $exportedWidget
-     * @return array
+     * @param \exface\Core\Interfaces\WidgetInterface $exportedWidget
+     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $exportedSheet
+     * @param \exface\Core\Interfaces\DataSheets\DataColumnInterface[] $additionalColumns
+     * @return WidgetInterface[]
      */
-    protected function getExportColumnWidgets(WidgetInterface $exportedWidget, DataSheetInterface $exportedSheet) : array
+    protected function getExportColumnWidgets(WidgetInterface $exportedWidget, DataSheetInterface $exportedSheet, array $additionalColumns = []) : array
     {
         switch (true) {
             case $exportedWidget instanceof iUseData:
@@ -379,6 +416,14 @@ class ExportJSON extends ReadData implements iExportData
                 break;
             default:
                 $widgets = [];
+        }
+
+        foreach ($additionalColumns as $sheetCol) {
+            $widgets[] = WidgetFactory::createFromUxonInParent($exportedWidget, new UxonObject([
+                'widget_type' => 'DataColumn',
+                'caption' => $sheetCol->getExpressionObj()->__toString(),
+                'data_column_name' => $sheetCol->getName()
+            ]));
         }
         
         // If the exported data is a pivot-sheet, the columns we get from the widget will not be enough.
@@ -702,6 +747,9 @@ class ExportJSON extends ReadData implements iExportData
     protected function isLazyExport(DataSheetInterface $exporetedData) : bool
     {
         if ($this->lazyExport === null && $exporetedData instanceof PivotSheetInterface) {
+            return false;
+        }
+        if ($this->getExportMapper() !== null) {
             return false;
         }
         return $this->lazyExport ?? true;
