@@ -277,7 +277,7 @@ class LookupMapping extends AbstractDataSheetMapping
         return $this;
     }
 
-    protected function setMatches(UxonObject $uxon) : LookupMapping
+    protected function setMatch(UxonObject $uxon) : LookupMapping
     {
         $this->requiredMatchesUxon = $uxon;
         return $this;
