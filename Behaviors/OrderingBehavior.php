@@ -19,6 +19,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Events\DataSheetTransactionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -102,6 +103,7 @@ class OrderingBehavior extends AbstractBehavior
     protected function registerEventListeners(): BehaviorInterface
     {
         $priority = $this->getPriority();
+        $priority = is_numeric($priority) ? $priority : EventManagerInterface::PRIORITY_MIN;
 
         $onBeforeHandle = array($this, 'handleOnBefore');
         $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $onBeforeHandle, $priority);
