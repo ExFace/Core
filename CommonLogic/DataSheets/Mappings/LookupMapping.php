@@ -2,8 +2,6 @@
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
-use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
