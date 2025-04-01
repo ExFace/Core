@@ -419,7 +419,7 @@ JS;
 
                 {$showConfirmationAndPerformActionJs}
 
-            })({$jsRequestData});
+            })({$jsRequestData})
 JS;
         
         // In any case, wrap some offline-logic around the action
@@ -466,16 +466,17 @@ JS;
      * @param string $ifNotExecutedJs
      * @return string
      */
-    protected function buildJsClickOfflineWrapper(ActionInterface $action, string $regularJs, string $ifNotExecutedJs = '') : string
+    protected function buildJsClickOfflineWrapper(ActionInterface $action, string $regularJs, string $ifNotExecutedJs = 'null') : string
     {
         if ($action->getOfflineStrategy() === OfflineStrategyDataType::SKIP) {
             $regularJs = <<<JS
-            
-            if(navigator.onLine !== false) {
-                $regularJs
-            } else {
-                $ifNotExecutedJs
-            }
+            (function(){
+                if(navigator.onLine !== false) {
+                    return $regularJs;
+                } else {
+                    return $ifNotExecutedJs;
+                }
+            })()
 JS;
         }
         return $regularJs;
