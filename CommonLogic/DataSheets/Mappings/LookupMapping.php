@@ -2,6 +2,8 @@
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
@@ -64,25 +66,59 @@ class LookupMapping extends AbstractDataSheetMapping
         $log = "Lookup `{$lookupExpr->__toString()}` -> `{$toExpr->__toString()}`.";
 
         $lookupSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getLookupObject());
-        $lookupSheet->getColumns()->addFromExpression($lookupExpr);
+        $lookupColumns = $lookupSheet->getColumns();
+        $lookupColumns->addFromExpression($lookupExpr);
+        $requiredMatches = $this->getRequiredMatches();
 
-        $fromColumns = $fromSheet->getColumns();
-        $lookupFilters = $lookupSheet->getFilters();
-        
-        foreach ($this->getRequiredMatches() as $match) {
-            $fromColumns->addFromExpression($match['lookup']);
+        foreach ($requiredMatches as $match) {
+            $lookupColumns->addFromExpression($match['lookup']);
             // TODO pre-filter to improve performance?
         }
-        
+
         $lookupSheet->dataRead();
-        
-        foreach ($lookupSheet->getRows() as $lookupRow) {
+        $rowsToMatch = $lookupSheet->getRows();
+
+        foreach ($toSheet->getRows() as $rowNr => $toRow) {
+            $matchData = [];
+            foreach ($requiredMatches as $matchAliases) {
+                $matchData[$matchAliases['lookup']] = $toRow[$matchAliases['to']];
+            }
             
+            $matchingRows = $this->findMatchingRows($matchData, $rowsToMatch);
+            if(count($matchingRows) === 1) {
+                // TODO This is probably not how expressions are used...
+                $toSheet->setCellValue($toExpr->getAttribute()->getAlias(), $rowNr, $matchingRows[0][$lookupExpr->getAttribute()->getAlias()]);
+            } else {
+                // TODO Multiple matches
+            }
         }
 
         $logbook?->addLine($log);
         
         return $toSheet;
+    }
+    
+    protected function findMatchingRows(array $matchData, array $rowsToCheck) : array
+    {
+        $result = [];
+        
+        foreach ($rowsToCheck as $rowToCheck) {
+            $valid = true;
+            
+            foreach ($matchData as $alias => $value) {
+                if( !key_exists($alias, $rowToCheck) ||
+                    $value !== $rowToCheck[$alias]) {
+                    $valid = false;
+                    break;
+                }
+            }
+            
+            if($valid) {
+                $result[] = $rowToCheck;
+            }
+        }
+        
+        return $result;
     }
 
     /**
@@ -103,12 +139,14 @@ class LookupMapping extends AbstractDataSheetMapping
         $result = [];
         $fromObject = $this->getMapper()->getFromMetaObject();
         $lookupObject = $this->getLookupObject();
+        $toObject = $this->getMapper()->getToMetaObject();
         $workBench = $this->getWorkbench();
         
         foreach ($this->requiredMatchesUxon as $match) {
             $result[] = [
                 'from' => ExpressionFactory::createFromString($workBench, ($match['from']), $fromObject),
-                'lookup' => ExpressionFactory::createFromString($workBench, $match['lookup'], $lookupObject)
+                'lookup' => ExpressionFactory::createFromString($workBench, $match['lookup'], $lookupObject),
+                'to' => ExpressionFactory::createFromString($workBench, $match['to'], $toObject),
             ];
         }
         
@@ -159,7 +197,11 @@ class LookupMapping extends AbstractDataSheetMapping
     
     public function getLookupObject() : MetaObjectInterface|null
     {
-        return $this->lookupObject ?? $this->getMapper()->getFromMetaObject();
+        if(empty($this->lookupObject)) {
+            throw new DataMappingConfigurationError($this, 'Missing value for "lookup_object_alias"!');
+        }
+        
+        return $this->lookupObject;
     }
 
     /**
