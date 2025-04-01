@@ -901,9 +901,9 @@ class DataSheetMapper implements DataSheetMapperInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::addMapping()
      */
-    public function addMapping(DataMappingInterface $mapping) : DataSheetMapperInterface
+    public function addMapping(DataMappingInterface $map) : DataSheetMapperInterface
     {
-        $this->mappings[] = $mapping;
+        $this->mappings[] = $map;
         return $this;
     }
     
@@ -1342,8 +1342,8 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Looks up a value in a separate data sheet and places it in the to-column
      *
      * @uxon-property lookup_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping[]
-     * @uxon-template [{"to": "", "lookup_object_alias": "", "lookup_column": "", "match": [{"from": "", "lookup":""}]}]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\LookupMapping[]
+     * @uxon-template [{"lookup_object_alias": "", "lookup_column": "", "to": "", "match": [{"from": "", "lookup":""}]}]
      *
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface
