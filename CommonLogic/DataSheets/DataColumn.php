@@ -100,7 +100,9 @@ class DataColumn implements DataColumnInterface
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
             $expression = $expression_or_string;
-            $exprObj = $expression->getMetaObject();
+            // FIXME this check below was long time broken due to a typo. However, once fixed it caused
+            // many errors - e.g. in Administration > Metamodel > Apps when reading the app list.
+            // $exprObj = $expression->getMetaObject();
             $thisObj = $this->getMetaObject();
             if ($exprObj === null) {
                 $expression->setMetaObject($thisObj);
