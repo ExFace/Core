@@ -833,8 +833,10 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 return null;
             }
             if (! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
-                $col = $dataWidget->createColumnFromAttribute($cond->getExpression()->getAttribute());
-                $col->setHidden(true);
+                $col = $dataWidget->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $cond->getAttributeAlias(),
+                    'hidden' => true
+                ]));
                 $dataWidget->addColumn($col);
             }
             $comp = $cond->getComparator();
