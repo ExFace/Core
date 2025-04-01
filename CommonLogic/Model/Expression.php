@@ -7,6 +7,7 @@ use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -591,10 +592,38 @@ class Expression implements ExpressionInterface
     public function getAttribute()
     {
         if ($this->isMetaAttribute() && $this->getMetaObject()) {
-            return $this->getMetaObject()->getAttribute($this->toString());
+            return $this->getMetaObject()->getAttribute($this->__toString());
         } else {
             return false;
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getAttributeAlias()
+     */
+    public function getAttributeAlias() : ?string
+    {
+        return ! $this->isMetaAttribute() ? null : $this->__toString();
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getAttributeAggregator()
+     */
+    public function getAttributeAggregator() : ?AggregatorInterface
+    {
+        $aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->__toString());
+        return $aggr === false ? false : $aggr;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isMetaAttributeAggregated()
+     */
+    public function isMetaAttributeAggregated() : bool
+    {
+        return $this->isMetaAttribute() && $this->getAttributeAggregator() !== null;
     }
     
     /**
