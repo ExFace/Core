@@ -3005,6 +3005,21 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": "exface/Core/Docs/creating_metamodels/data_sources/SQL/Troubleshooting_MS_SQL.md"
+        },
+        {
+            "_EXPORT_SUMMARY": "809F0AU Not allowed to edit!",
+            "CREATED_ON": "2025-03-26 17:45:46",
+            "MODIFIED_ON": "2025-03-26 17:45:46",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f09275c3dcffa29275025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "809F0AU",
+            "TITLE": "Not allowed to edit!",
+            "DESCRIPTION": "",
+            "HINT": "Editing some of the selected items is prohibited by the app logic!",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -52,6 +53,8 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     private $dataBindingType = null;
     
     private $attributeAlias = null;
+
+    private $attribtueRelationPathString = null;
     
     private $dataColumnName = null;
     
@@ -98,8 +101,38 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     protected function setAttributeAlias(string $alias) : WidgetPropertyBindingInterface
     {
-        $this->attributeAlias = $alias;
+        if ($this->attribtueRelationPathString !== null && ! StringDataType::startsWith($this->attributeAlias, $this->attribtueRelationPathString)) {
+            $this->attributeAlias = $this->attribtueRelationPathString . RelationPath::getRelationSeparator() . $alias;
+        } else {
+            $this->attributeAlias = $alias;
+        }
         $this->dataBindingType = null;
+        return $this;
+    }
+
+    /**
+     * Force all attribute references in this binding to use a common relation path
+     * 
+     * This is helpful if you have multiple widget properties bound to different attributes of a single
+     * related object. 
+     * 
+     * **WARNING:** This will make the binding resolve ALL attributes relatively to the object at the
+     * end of this relation path! Use with care!
+     * 
+     * @uxon-property attribute_relation_path
+     * @uxon-type metamodel:relation
+     * 
+     * @param string $path
+     * @return WidgetPropertyBindingInterface
+     */
+    protected function setAttributeRelationPath(string $path) : WidgetPropertyBindingInterface
+    {
+        $relPathPrefix = $path. RelationPath::RELATION_SEPARATOR;
+        if ($this->attributeAlias !== null) {
+            if (! StringDataType::startsWith($this->attributeAlias, $relPathPrefix)) {
+                $this->getAttributeAlias = $relPathPrefix . $this->attributeAlias;
+            }
+        }
         return $this;
     }
     

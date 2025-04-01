@@ -3273,7 +3273,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlJsonRead(string $address, string $jsonPath) : string
     {
-        return "JSON_VALUE({$this->buildSqlJsonInitial($address)}, '{$jsonPath}')";
+        
+        if ($this->isAggregated()) {
+            // If aggregating, we cannot do any prechecks because they do not contain any aggregator,
+            // so we really need to use the data address as-is here.
+            $jsonAddress = $address;
+        } else {
+            // TODO when exactly do we need to distinguish between NULL and {} when reading?
+            $jsonAddress = $this->buildSqlJsonInitial($address);
+        }
+        return "JSON_VALUE({$jsonAddress}, '{$jsonPath}')";
     }
 
     /**

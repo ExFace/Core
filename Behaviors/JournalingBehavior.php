@@ -71,6 +71,7 @@ class JournalingBehavior extends AbstractBehavior
                 'to' => $journalKeyAlias
             ]));
             $uxon = new UxonObject([
+                "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                 "event_alias" => OnUpdateDataEvent::getEventName(),
                 "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
                 "action" => [
@@ -99,6 +100,7 @@ class JournalingBehavior extends AbstractBehavior
                     'to' => $journalKeyAlias
                 ]));
                 $uxon = new UxonObject([
+                    "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                     "event_alias" => OnCreateDataEvent::getEventName(),
                     "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
                     "action" => [

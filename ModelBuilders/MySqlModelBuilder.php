@@ -92,7 +92,11 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         if ($type !== $data_type) {
             $details = explode(',', substr($data_type, (strlen($type)+1), -1));
             $length = $length ?? trim($details[0]);
-            $number_scale = $number_scale ?? trim($details[1]);
+            if ($number_scale === null && null !== ($number_scale = $details[1] ?? null)) {
+                if (is_string($number_scale)) {
+                    $number_scale = trim($number_scale);
+                }
+            }
         }
         
         return parent::guessDataType($object, $type, $length, $number_scale);
