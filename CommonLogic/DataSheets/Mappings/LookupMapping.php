@@ -135,14 +135,13 @@ class LookupMapping extends AbstractDataSheetMapping
         }
 
         $result = [];
-        $fromObject = $this->getMapper()->getFromMetaObject();
+
         $lookupObject = $this->getLookupObject();
         $toObject = $this->getMapper()->getToMetaObject();
         $workBench = $this->getWorkbench();
-        
+
         foreach ($this->requiredMatchesUxon as $match) {
             $result[] = [
-                'from' => ExpressionFactory::createFromString($workBench, ($match['from']), $fromObject),
                 'lookup' => ExpressionFactory::createFromString($workBench, $match['lookup'], $lookupObject),
                 'to' => ExpressionFactory::createFromString($workBench, $match['to'], $toObject),
             ];
@@ -161,7 +160,7 @@ class LookupMapping extends AbstractDataSheetMapping
     {
         $expressions = [];
         foreach ($this->getRequiredMatches() as $match) {
-            $expressions[] = $match['from'];
+            $expressions[] = $match['to'];
         }
         return $expressions;
     }
@@ -183,10 +182,10 @@ class LookupMapping extends AbstractDataSheetMapping
     /**
      * The attribute (or formula) to look up in the lookup-object and place into the to-column
      *
-     * @uxon-property lookup
+     * @uxon-property lookup_output
      * @uxon-type metamodel:expression
      */
-    public function setLookupColumn($string) : LookupMapping
+    public function setLookupOutput($string) : LookupMapping
     {
         $expr = ExpressionFactory::createFromString($this->getWorkbench(), $string, $this->getLookupObject());
         $this->setLookupExpression($expr);
