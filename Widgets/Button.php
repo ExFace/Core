@@ -798,14 +798,17 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             $condGrp = $check->getConditionGroup($inputWidgetObject);
             switch (true) {
                 case $inputWidget instanceof iShowData:
-                    $uxons[] = $this->getConditionalPropertyForData($inputWidget, $condGrp);
+                    $propUxon = $this->getConditionalPropertyForData($inputWidget, $condGrp);
                     break;
                 case $inputWidget instanceof iUseData:
-                    $uxons[] = $this->getConditionalPropertyForData($inputWidget->getData(), $condGrp);
+                    $propUxon = $this->getConditionalPropertyForData($inputWidget->getData(), $condGrp);
                     break;
                 case $inputWidget instanceof iContainOtherWidgets:
-                    $uxons[] = $this->getConditionalPropertyForContainer($inputWidget, $condGrp);
+                    $propUxon = $this->getConditionalPropertyForContainer($inputWidget, $condGrp);
                     break;
+            }
+            if ($propUxon !== null) {
+                $uxons[] = $propUxon;
             }
         }
         
@@ -818,8 +821,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             $uxon = new UxonObject([
                 'operator' => 'OR'
             ]);
-            foreach ($uxons as $checkUxon) {
-                $uxon->appendToProperty('condition_groups', $checkUxon);
+            foreach ($uxons as $propUxon) {
+                $uxon->appendToProperty('condition_groups', $propUxon);
             }
             return $uxon;
         }
