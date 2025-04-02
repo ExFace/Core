@@ -137,16 +137,18 @@ class LookupMapping extends AbstractDataSheetMapping
         $result = [];
 
         $lookupObject = $this->getLookupObject();
+        $fromObject = $this->getMapper()->getFromMetaObject();
         $toObject = $this->getMapper()->getToMetaObject();
         $workBench = $this->getWorkbench();
 
         foreach ($this->requiredMatchesUxon as $match) {
             $result[] = [
-                'lookup' => ExpressionFactory::createFromString($workBench, $match['lookup'], $lookupObject),
-                'to' => ExpressionFactory::createFromString($workBench, $match['to'], $toObject),
+                'lookup' => ExpressionFactory::createFromString($workBench, $match->getProperty('lookup'), $lookupObject),
+                'from' => ExpressionFactory::CreateFromString($workBench, $match->getProperty('fromAndTo'), $fromObject),
+                'to' => ExpressionFactory::createFromString($workBench, $match->getProperty('fromAndTo'), $toObject),
             ];
         }
-        
+
         $this->requiredMatchesCached = $result;
         return $result;
     }
@@ -160,7 +162,7 @@ class LookupMapping extends AbstractDataSheetMapping
     {
         $expressions = [];
         foreach ($this->getRequiredMatches() as $match) {
-            $expressions[] = $match['to'];
+            $expressions[] = $match['from'];
         }
         return $expressions;
     }
