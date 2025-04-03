@@ -516,7 +516,7 @@ class UxonSchema implements UxonSchemaInterface
                 }
                 break;
             case strcasecmp($type, 'metamodel:attribute_group') === 0 && $object !== null:
-                $options = $this->getAttributeGroupsForObject($object);
+                $options = $this->getAttributeGroupsForObject($object, $search);
                 break;
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
@@ -675,29 +675,56 @@ class UxonSchema implements UxonSchemaInterface
     }
 
     /**
-     * Collects all attribute groups available for a given meta-object.
+     * Collects all attribute groups available for a given meta-object with respect to the provided relaiton path (search).
+     * 
+     * Works similarly to getAttributeAliases()
      * 
      * @param MetaObjectInterface $object
-     * @return array
+     * @param string|null $search
+     * @return string[]
      */
-    protected function getAttributeGroupsForObject(MetaObjectInterface $object) : array
+    protected function getAttributeGroupsForObject(MetaObjectInterface $object, string $search = null) : array
     {
-        $aliases = [];
+        // See if $search contains an relation path
+        $rels = $search !== null ? (RelationPath::relationPathParse($search) ?? []) : [];
+        $search = array_pop($rels) ?? '';
+        $relPath = null;
+        if (! empty($rels)) {
+            $relPath = implode(RelationPath::RELATION_SEPARATOR, $rels);
+            $object = $object->getRelatedObject($relPath);
+        }
+        
+        // Find forward relations of the focused object
+        $relations = [];
+        foreach ($object->getAttributes() as $attr) {
+            $alias = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
+            if ($attr->isRelation() === true) {
+                // Remember forward-relations to append them later (after alphabetical sorting)
+                $relations[] = $alias . RelationPath::RELATION_SEPARATOR;
+            }
+        }
 
+        // Get the built-in groups
         try {
             $refl = new ReflectionClass(MetaAttributeGroupInterface::class);
-            $aliases = $refl->getConstants();
+            $aliases = array_values($refl->getConstants());
         } catch (Throwable $e) {
             // TODO
         } 
-
+        // Get explicitly defined groups
         foreach ($object->getAttributeGroups() as $group) {
             $aliases[] = $group->getAliasWithNamespace();
         }
 
-        sort($aliases);
-        
-        return $aliases;
+        // Prefix all the groups with the relaiton path if needed
+        $values = [];
+        foreach ($aliases as $alias) {
+            $values[] = ($relPath === null ? '' : $relPath . RelationPath::getRelationSeparator()) . $alias;
+        }
+
+        // Add all possible forward relations of the current object
+        $values = array_merge($values, $relations);
+        return $values;
     }
     
     /**
