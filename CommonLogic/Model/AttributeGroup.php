@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * An attribute group contains groups any number of attributes of a single object (including inherited attributes!).
@@ -22,6 +24,13 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
 {
 
     private $alias = NULL;
+    private $relationPath = null;
+
+    public function __construct(WorkbenchInterface $exface, $parent_object, MetaRelationPathInterface $relationPath = null)
+    {
+        parent::__construct($exface, $parent_object);
+        $this->relationPath = $relationPath;
+    }
 
     /**
      * 
@@ -74,5 +83,23 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
             }
         }
         return $group;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isRelated() : bool
+    {
+        return $this->relationPath !== null && ! $this->relationPath->isEmpty();
+    }
+
+    /**
+     * 
+     * @return MetaRelationPathInterface
+     */
+    public function getRelationPath() : ?MetaRelationPathInterface
+    {
+        return $this->relationPath;
     }
 }

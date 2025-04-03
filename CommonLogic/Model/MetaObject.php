@@ -1252,37 +1252,59 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
      */
-    public function getAttributeGroup(string $alias) : MetaAttributeGroupInterface
+    public function getAttributeGroup(string $aliasWithRelationPath) : MetaAttributeGroupInterface
     {
+        $grp = $this->attribute_groups[$aliasWithRelationPath] ?? null;
+        if (null !== $grp) {
+            return $grp;
+        }
+
+        // See if the alias has a relation path
+        if (null !== $relParts = RelationPath::slice($aliasWithRelationPath, -1)) {
+            list($relStr, $alias) = $relParts;
+            $relPath = RelationPathFactory::createFromString($this, $relStr);
+                try {
+                $relObj = $relPath->getEndObject();
+            } catch (Throwable $e) {
+                throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $aliasWithRelationPath . '" not found for object ' . $this->__toString() . ': invalid relation path!');
+            }
+            $grp = new AttributeGroup($this->getWorkbench(), $this, $relPath);
+            $grp->setAlias($aliasWithRelationPath);
+            $relGrp = $relObj->getAttributeGroup($alias);
+            foreach ($relGrp->getAttributes() as $attr) {
+                $grp->add($this->getAttribute(RelationPath::join($relStr, $attr->getAliasWithRelationPath())));
+            }
+            return $grp;
+        }
+
+        // If it is a local alias, try to get it via model loader
+        $alias = $aliasWithRelationPath;
+        $selector = new AttributeGroupSelector($this->getWorkbench(), $alias);
+        if ($selector->isBuiltInGroup()) {
+            $this->attribute_groups[$alias] = AttributeGroupFactory::createForObject($this, $alias);
+        } elseif ($this->hasAttributeGroupsInModel()) {
+            $this->getModel()->getModelLoader()->loadAttributeGroups($this);
+            $this->setLoadAttributeGroupsFromModel(false);
+        }
         $grp = $this->attribute_groups[$alias] ?? null;
-        if (null === $grp) {
-            $selector = new AttributeGroupSelector($this->getWorkbench(), $alias);
-            if ($selector->isBuiltInGroup()) {
-                $this->attribute_groups[$alias] = AttributeGroupFactory::createForObject($this, $alias);
-            } elseif ($this->hasAttributeGroupsInModel()) {
-                $this->getModel()->getModelLoader()->loadAttributeGroups($this);
-                $this->setLoadAttributeGroupsFromModel(false);
-            }
-            $grp = $this->attribute_groups[$alias] ?? null;
-            // If there is no direct match, see if the given alias simply lacks the namespace and try
-            // without the namespace
-            if ($grp === null && stripos($alias, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
-                $foundByAlias = null;
-                foreach ($this->attribute_groups as $g) {
-                    if (StringDataType::endsWith($g->getAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias, false)) {
-                        if ($foundByAlias !== null) {
-                            throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguos! Found multiple groups for selector "' . $alias . '": ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
-                        }
-                        $foundByAlias = $g;
+        // If there is no direct match, see if the given alias simply lacks the namespace and try
+        // without the namespace
+        if ($grp === null && stripos($alias, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
+            $foundByAlias = null;
+            foreach ($this->attribute_groups as $g) {
+                if (StringDataType::endsWith($g->getAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias, false)) {
+                    if ($foundByAlias !== null) {
+                        throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguos! Found multiple groups for selector "' . $alias . '": ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
                     }
-                }
-                if ($foundByAlias !== null) {
-                    $grp = $foundByAlias;
+                    $foundByAlias = $g;
                 }
             }
-            if ($grp === null) {
-                throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $alias . '" not found for object ' . $this->__toString() . '!');
+            if ($foundByAlias !== null) {
+                $grp = $foundByAlias;
             }
+        }
+        if ($grp === null) {
+            throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $alias . '" not found for object ' . $this->__toString() . '!');
         }
         return $grp;
     }
