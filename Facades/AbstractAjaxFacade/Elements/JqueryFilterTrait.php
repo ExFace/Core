@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  *
@@ -12,7 +13,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 trait JqueryFilterTrait {
 
-    public function buildJsConditionGetter($valueJs = null)
+    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null)
     {
         $widget = $this->getWidget();
         if ($widget->hasCustomConditionGroup() === true) {
@@ -26,14 +27,18 @@ trait JqueryFilterTrait {
             throw new WidgetConfigurationError($widget, 'Invalid filter configuration for filter "' . $widget->getCaption() . '": missing expression (e.g. attribute_alias)!');
         }
 
-        $appliesToAggregates = $widget->appliesToAggregatedValues() ? 'true' : 'false';
+        if ($baseObject === null || ! $baseObject->isExactly($widget->getMetaObject())) {
+            $metaObjectAliasJs = "\"object_alias\" : \"{$widget->getMetaObject()->getAliasWithNamespace()}\",";
+        } else {
+            $metaObjectAliasJs = '';
+        }
         return <<<JSON
 {
   "expression" : "{$widget->getAttributeAlias()}",
   "comparator" : {$this->buildJsComparatorGetter()},
   "value" : $value,
-  "object_alias" : "{$widget->getMetaObject()->getAliasWithNamespace()}",
-  "apply_to_aggregates" : "{$appliesToAggregates}"
+  "apply_to_aggregates" : {$this->escapeBool($widget->appliesToAggregatedValues())},
+  {$metaObjectAliasJs}
 }
 JSON;
     }
