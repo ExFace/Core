@@ -90,7 +90,7 @@ trait JqueryDataConfiguratorTrait
         // Remove empty values
         $filters = array_filter($filters);
         $conditionsJs = '[' . implode(",\n", $filters) . ']';
-        $conditionsJs .= ".filter(function(oCond){return oCond.value !== null && oCond.value !== undefined && oCond.value !== '';})";
+        //$conditionsJs .= ".filter(function(oCond){return oCond.value !== null && oCond.value !== undefined && oCond.value !== '';})";
         if (empty($filters) === false  || empty($nestedGroups) === false) {
             $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: ' . $conditionsJs . ', nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
         } else {
