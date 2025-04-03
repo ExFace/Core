@@ -5,11 +5,14 @@ use exface\Core\CommonLogic\DataSource;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\CommonLogic\Selectors\DataSourceSelector;
+use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\QueryBuilderSelector;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -28,14 +31,61 @@ use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
  */
 abstract class MetaObjectFactory extends AbstractStaticFactory
 {
+    private static $cacheByAlias = [];
+
+    private static $cacheByUid = [];
+
+    private static $tempObjects = [];
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\WorkbenchInterface $workbench
+     * @param MetaObjectSelectorInterface|string $selectorOrString
+     * @throws \exface\Core\Exceptions\InvalidArgumentException
+     * @return MetaObjectInterface
+     */
+    public static function create(WorkbenchInterface $workbench, $selectorOrString) : MetaObjectInterface
+    {
+        switch (true) {
+            case is_string($selectorOrString):
+                $selectorString = $selectorOrString;
+                $selector = null;
+                break;
+            case $selectorOrString instanceof MetaObjectSelectorInterface:
+                $selectorString = $selectorOrString->toString();
+                $selector = $selectorOrString;
+                break;
+            default:
+                throw new InvalidArgumentException('Invalid meta object selector provided: expecting string or instantiated MetaObjectSelector, received ' . gettype($selectorOrString));
+        }
+
+        if (null !== $cache = static::getCache($selectorString)) {
+            return $cache;
+        }
+
+        if ($selector === null) {
+            $selector = new MetaObjectSelector($workbench, $selectorString);
+        }
+        
+        return static::createFromSelector($selector);
+    }
+
     /**
      *
      * @param MetaObjectSelectorInterface $selector
      * @return MetaObjectInterface
      */
-    public static function create(MetaObjectSelectorInterface $selector) : MetaObjectInterface
+    public static function createFromSelector(MetaObjectSelectorInterface $selector) : MetaObjectInterface
     {
-        return $selector->getWorkbench()->model()->getObject($selector);
+        
+        if ($selector->isUid()) {
+            $object = self::createFromUid($selector->getWorkbench(), $selector->__toString());
+        } else {
+            $namespace = $selector->getAppAlias();
+            $alias = mb_substr($selector->__toString(), mb_strlen($namespace) + 1);
+            $object = self::createFromAliasAndNamespace($selector->getWorkbench(), $alias, $namespace);
+        }
+        return $object;
     }
     
     /**
@@ -46,6 +96,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      */
     public static function createFromString(WorkbenchInterface $workbench, string $uidOrAlias) : MetaObjectInterface
     {
+
         return $workbench->model()->getObject($uidOrAlias);
     }
     
@@ -58,7 +109,17 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      */
     public static function createFromAliasAndNamespace(WorkbenchInterface $workbench, string $alias, string $namespace) : MetaObjectInterface
     {
-        return $workbench->model()->getObjectByAlias($alias, $namespace);
+        $fullAlias = $namespace . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias;
+        if (null !== $cache = static::getCache($fullAlias)) {
+            return $cache;
+        }
+        try {
+            $obj = $workbench->model()->getModelLoader()->loadObjectByAlias($workbench->getApp($namespace), $alias);
+        } catch (AppNotFoundError $e) {
+            throw new MetaObjectNotFoundError('Meta object "' . $fullAlias . '" not found! Invalid app namespace "' . $namespace . '"!');
+        }
+        static::setCache($obj);
+        return $obj;
     }
     
     /**
@@ -69,7 +130,11 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      */
     public static function createFromApp(AppInterface $app, string $alias) : MetaObjectInterface
     {
-        return $app->getWorkbench()->model()->getObjectByAlias($alias, $app->getAliasWithNamespace());
+        $fullAlias = $app->getAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias;
+        if (null !== $cache = static::getCache($fullAlias)) {
+            return $cache;
+        }
+        return $app->getWorkbench()->model()->getModelLoader()->loadObjectByAlias($app, $alias);
     }
     
     /**
@@ -80,7 +145,12 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      */
     public static function createFromUid(WorkbenchInterface $workbench, string $uid) : MetaObjectInterface
     {
-        return $workbench->model()->getObjectById($uid);
+        if (null !== $cache = static::getCache($uid)) {
+            return $cache;
+        }
+        $obj = $workbench->model()->getModelLoader()->loadObjectById($workbench->model(), $uid);
+        static::setCache($obj);
+        return $obj;
     }
 
     /**
@@ -106,7 +176,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     ) : MetaObjectInterface
     {
         // Create a data source
-        $tmpAlias = 'tmp_' . uniqid("", true);
+        $tmpAlias = 'tmp_' . str_replace('.', '', uniqid("", true));
         $qbSelector = new QueryBuilderSelector($workbench, $queryBuilderSelector);
         switch (true) {
             case $qbSelector->isAlias():
@@ -129,12 +199,15 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
         $obj = new MetaObject($workbench->model());
         $obj->setAlias($tmpAlias);
         $obj->setName($name);
-        $obj->setAppId('0x31000000000000000000000000000000'); // exface.Core
+        $obj->setNamespace('exface.Core');
         $obj->setId(UUIDDataType::generateSqlOptimizedUuid());
         $obj->setDataSource($ds);
         $obj->setDataAddress($dataAddress);
         $obj->setReadable($readable);
         $obj->setWritable($writable);
+
+        self::setCache($obj);
+        self::$tempObjects[] = $obj;
 
         return $obj;
     }
@@ -180,7 +253,58 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
         $attr->setDataType($type);
         $attr->setDataAddress($dataAddress);
         $obj->getAttributes()->add($attr);
+
+        static::setCache($obj);
         
         return $attr;
+    }
+
+    public static function reload(MetaObjectInterface $object) : MetaObjectInterface
+    {
+        // Cannot reload temporary objects!
+        if (in_array($object, self::$tempObjects)) {
+            return $object;
+        }
+
+        $oId = $object->getId();
+        $model = $object->getModel();
+        static::clearCache($object);
+        unset($object);
+        $object = $model->getModelLoader()->loadObjectById($model, $oId);
+        static::setCache($object);
+        return $object;
+    }
+
+    private static function getCache(string $uidOrAlias) : ?MetaObjectInterface
+    {
+        // Check cache
+        if (null !== $cache = static::$cacheByUid[$uidOrAlias] ?? null) {
+            return $cache;
+        }
+        if (null !== $cache = static::$cacheByAlias[$uidOrAlias] ?? null) {
+            return $cache;
+        }
+        return null;
+    }
+
+    private static function setCache(MetaObjectInterface $obj) : void
+    {
+        static::$cacheByAlias[$obj->getAliasWithNamespace()] = $obj;
+        static::$cacheByUid[$obj->getId()] = $obj;
+        return;
+    }
+
+    public static function clearCache(MetaObjectInterface $obj = null) : void
+    {
+        if ($obj === null) {
+            foreach (static::$cacheByAlias as $obj) {
+                static::clearCache($obj);
+                unset($obj);
+            }
+        } else {
+            unset(static::$cacheByAlias[$obj->getAliasWithNamespace()]);
+            unset(static::$cacheByUid[$obj->getId()]);
+        }
+        return;
     }
 }

@@ -18,6 +18,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\DataTypes\PhpClassDataType;
+use Throwable;
 
 /**
  *
@@ -80,6 +81,18 @@ abstract class AbstractBehavior implements BehaviorInterface
         $this->object = $object;
         $this->selector = $selector;
         $this->appSelectorOrString = $appSelectorOrString;
+    }
+
+    /**
+     * When destorying a behavior, make sure to unregister all event listeners first
+     */
+    public function __destruct()
+    {
+        try {
+            $this->disable();
+        } catch (Throwable $e) {
+            // Ignore errors
+        }
     }
 
     /**

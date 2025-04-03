@@ -37,6 +37,7 @@ use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
+use Throwable;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -99,8 +100,6 @@ class MetaObject implements MetaObjectInterface
 
     private $model;
 
-    private $app_id;
-
     private $namespace;
 
     private $short_description = '';
@@ -128,6 +127,20 @@ class MetaObject implements MetaObjectInterface
         $this->attributes = AttributeListFactory::createForObject($this);
         $this->default_sorters = EntityListFactory::createEmpty($exface, $this);
         $this->behaviors = new MetaObjectBehaviorList($exface, $this, true);
+    }
+
+    /**
+     * When destorying an object, make sure to unregister all behaviors
+     */
+    public function __destruct()
+    {
+        try {
+            foreach ($this->getBehaviors()->getAll() as $beh) {
+                $beh->disable();
+            }
+        } catch (Throwable $e) {
+            // ignore errors
+        }
     }
 
     /**
@@ -959,16 +972,6 @@ class MetaObject implements MetaObjectInterface
         return $this->model;
     }
 
-    public function getAppId()
-    {
-        return $this->app_id;
-    }
-
-    public function setAppId($value)
-    {
-        $this->app_id = $value;
-    }
-
     public function getShortDescription()
     {
         return $this->short_description;
@@ -982,7 +985,6 @@ class MetaObject implements MetaObjectInterface
     public function getAliasWithNamespace()
     {
         return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
-        ;
     }
 
     public function getNamespace()
