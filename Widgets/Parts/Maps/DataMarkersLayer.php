@@ -36,6 +36,8 @@ class DataMarkersLayer extends AbstractDataLayer
     use ColoredLayerTrait;
     
     use ValueLabeledLayerTrait;
+
+    private $clustering = null;
     
     /**
      * 
