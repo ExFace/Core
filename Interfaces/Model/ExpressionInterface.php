@@ -52,6 +52,13 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function isString() : bool;
     
     public function isNumber() : bool;
+
+    /**
+     * Returns true if the type of this expression could not be determined
+     * 
+     * @return bool
+     */
+    public function isUnknownType() : bool;
     
     /**
      * Returns TRUE if the expression can be evaluated without a data context and FALSE otherwise: 
