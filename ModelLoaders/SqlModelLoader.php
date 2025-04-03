@@ -263,7 +263,6 @@ SQL;
             $object->setId($row['oid']);
             $object->setAlias($row['object_alias']);
             $object->setDataSourceId($row['data_source_oid']);
-            $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
             
             $object->setName($row['object_name']);

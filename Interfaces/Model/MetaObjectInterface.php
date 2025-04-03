@@ -403,10 +403,6 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     
     public function getModel() : ModelInterface;
     
-    public function getAppId();
-    
-    public function setAppId($value);
-    
     public function getShortDescription();
     
     public function setShortDescription($value);
