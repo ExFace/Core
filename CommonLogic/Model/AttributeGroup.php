@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
@@ -39,6 +40,7 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
      */
     public function getAlias() : ?string
     {
+        
         return $this->alias;
     }
 
@@ -101,5 +103,20 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
     public function getRelationPath() : ?MetaRelationPathInterface
     {
         return $this->relationPath;
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $newObject
+     * @return AttributeGroup
+     */
+    public function withExptendedObject(MetaObjectInterface $newObject) : MetaAttributeGroupInterface
+    {
+        $newGrp = new AttributeGroup($this->getWorkbench(), $newObject);
+        $newGrp->setAlias($this->getAliasWithNamespace());
+        foreach ($this->getAttributes() as $attr) {
+            $newGrp->add($newObject->getAttribute($attr->getAliasWithRelationPath()));
+        }
+        return $newGrp;
     }
 }

@@ -515,6 +515,9 @@ class MetaObject implements MetaObjectInterface
         foreach ($parent->getAttributes() as $attr) {
             $this->getAttributes()->add($attr->withExtendedObject($this));
         }
+        foreach ($parent->getAttributeGroups() as $attrGrp) {
+            $this->addAttributeGroup($attrGrp->withExptendedObject($this));
+        }
         
         // Inherit Relations
         // If we can access the relations array directly, iterate over it instead of
