@@ -436,7 +436,7 @@ class DataTable extends Data implements
         return $this;
     }
 
-    public function getMultiSelect()
+    public function getMultiSelect() : bool
     {
         return $this->multi_select;
     }
@@ -450,9 +450,10 @@ class DataTable extends Data implements
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
      */
-    public function setMultiSelect($value)
+    public function setMultiSelect(bool $value) : iSupportMultiSelect
     {
         $this->multi_select = $value;
+        return $this;
     }
     
     /**

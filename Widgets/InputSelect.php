@@ -91,6 +91,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
  */
 class InputSelect extends Input implements iSupportMultiSelect
 {
+    private $value_set = null;
 
     private $value_text = '';
 
@@ -159,10 +160,9 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::getMultiSelect()
      */
-    public function getMultiSelect()
+    public function getMultiSelect() : bool
     {
         return $this->getMultipleValuesAllowed();
     }
@@ -176,9 +176,16 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
      */
-    public function setMultiSelect($value)
+    public function setMultiSelect(bool $value) : iSupportMultiSelect
     {
-        return $this->setMultipleValuesAllowed(\exface\Core\DataTypes\BooleanDataType::cast($value));
+        $prev = $this->getMultiSelect();
+        $this->setMultipleValuesAllowed($value);
+        // If the original value set was a list, it will be handled differently depending
+        // on the multi-select state. So re-set the value if multi-select changes!
+        if ($value !== $prev && $this->value_set !== null) {
+            $this->setValue($this->value_set);
+        }
+        return $this;
     }
     
     /**
@@ -1170,14 +1177,15 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
+        $this->value_set = $value;
+        $delim = $this->getMultipleValuesDelimiter();
         if ($this->getMultiSelect() === true) {
             if (is_array($value)) {
-                $delim = $this->getMultipleValuesDelimiter();
                 $value = implode($delim, $value);
             }
         } else {
-            if (mb_strpos($value ?? '', $this->getMultiSelectValueDelimiter()) > 0 && ! $this->hasOption($value)) {
-                $firstVal = explode($this->getMultiSelectValueDelimiter(), $value)[0];
+            if (mb_strpos($value ?? '', $delim) > 0 && ! $this->hasOption($value)) {
+                $firstVal = explode($delim, $value)[0];
                 return parent::setValue($firstVal, $parseStringAsExpression);
             }
         }
