@@ -46,5 +46,24 @@ interface MetaAttributeGroupInterface extends MetaAttributeListInterface
      * @return MetaAttributeGroupInterface
      */
     public function getInvertedAttributeGroup();
+
+    /**
+     * Returns TRUE if this group belongs to a related object (= has a relation path)
+     * @return bool
+     */
+    public function isRelated() : bool;
+
+    /**
+     * 
+     * @return MetaRelationPathInterface
+     */
+    public function getRelationPath() : ?MetaRelationPathInterface;
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $newObject
+     * @return MetaAttributeGroupInterface
+     */
+    public function withExptendedObject(MetaObjectInterface $newObject) : MetaAttributeGroupInterface;
 }
 
