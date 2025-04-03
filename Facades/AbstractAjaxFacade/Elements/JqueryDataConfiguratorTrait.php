@@ -67,7 +67,7 @@ trait JqueryDataConfiguratorTrait
                 if ($filter->hasCustomConditionGroup() === true) {
                     $nestedGroups[] = $filterElement->buildJsCustomConditionGroup();
                 } else {
-                    $filters[] = $filterElement->buildJsConditionGetter();
+                    $filters[] = $filterElement->buildJsConditionGetter(null, $widget->getMetaObject());
                 }
             }
         } else {
@@ -83,15 +83,16 @@ trait JqueryDataConfiguratorTrait
                 if ($filter->hasCustomConditionGroup() === true) {
                     $nestedGroups[] = $filterElement->buildJsCustomConditionGroup($filter_value);
                 } else {
-                    $filters[] = $filterElement->buildJsConditionGetter($filter_value);
+                    $filters[] = $filterElement->buildJsConditionGetter($filter_value, $widget->getMetaObject());
                 }
             }
         }
         // Remove empty values
         $filters = array_filter($filters);
-        
+        $conditionsJs = '[' . implode(",\n", $filters) . ']';
+        $conditionsJs .= ".filter(function(oCond){return oCond.value !== null && oCond.value !== undefined && oCond.value !== '';})";
         if (empty($filters) === false  || empty($nestedGroups) === false) {
-            $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
+            $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: ' . $conditionsJs . ', nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
         } else {
             $filter_group = '';
         }

@@ -38,7 +38,7 @@ trait JqueryDataTableTrait {
             $filter_element = $this->getFacade()->getElement($filter);
             $detail_filters_js .= '
 				if (' . $filter_element->buildJsValueGetter() . '){
-					filters.conditions.push(' . $filter_element->buildJsConditionGetter() . ');
+					filters.conditions.push(' . $filter_element->buildJsConditionGetter(null, $widget->getMetaObject()) . ');
 				}';
         }
         return 'function(){' . $detail_filters_js . ' return filters;}()';

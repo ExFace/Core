@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\Model\MetaObject;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Widgets\InlineGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
@@ -77,13 +79,13 @@ trait JsRangeFilterTrait
      *
      * @param string|null $valueJs
      */
-    public function buildJsConditionGetter($valueJs = null)
+    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null)
     {
         $conditions = [];
         foreach ($this->getWidgetInlineGroup()->getWidgets() as $filter) {
             $filterEl = $this->getFacade()->getElement($filter);
             if (method_exists($filterEl, 'buildJsConditionGetter') === true) {
-                $conditions[] = $filterEl->buildJsConditionGetter($valueJs);
+                $conditions[] = $filterEl->buildJsConditionGetter($valueJs, $baseObject);
             }
         }
         return implode(',', $conditions);
