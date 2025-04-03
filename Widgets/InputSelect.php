@@ -89,7 +89,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
  *
  * @author Andrej Kabachnik
  */
-class InputSelect extends Input implements iSupportMultiSelect
+class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
 {
     private $value_set = null;
 
