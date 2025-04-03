@@ -238,6 +238,16 @@ class Expression implements ExpressionInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isUnknownType()
+     */
+    public function isUnknownType() : bool
+    {
+        return $this->type === self::TYPE_UNKNOWN;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::isEmpty()
      */
     public function isEmpty() : bool
