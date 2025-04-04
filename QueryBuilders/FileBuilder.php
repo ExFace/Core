@@ -891,7 +891,7 @@ class FileBuilder extends AbstractQueryBuilder
                 if ($attr->isUidForObject()) {
                     continue;
                 }
-                $fileQuery->addAttribute($attr->getAliasWithNamespace());
+                $fileQuery->addAttribute($attr->getAliasWithRelationPath());
             }
             $fileReadResult = $fileQuery->read($dataConnection);
             foreach ($fileReadResult->getResultRows() as $row) {
