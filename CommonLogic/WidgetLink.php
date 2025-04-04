@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -13,6 +14,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\DataTypes\StringDataType;
+use Throwable;
 
 /**
  * A reference to another widget or its data.
@@ -53,23 +55,15 @@ use exface\Core\DataTypes\StringDataType;
  */
 class WidgetLink implements WidgetLinkInterface
 {
-    
+    private $originalLink = null;
     private $sourcePage = null;
-    
     private $sourceWidget = null;
-
     private $targetPageAlias = null;
-    
     private $targetPage = null;
-
     private $targetWidgetId = null;
-
     private $widget_id_space = null;
-
     private $targetColumnId = null;
-
     private $targetRowNumber = null;
-    
     private $ifNotEmpty = false;
 
     /**
@@ -221,6 +215,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function parseLink($string_or_object) : WidgetLinkInterface
     {
+        $this->originalLink = $string_or_object;
         if ($string_or_object instanceof UxonObject) {
             $this->parseLinkUxon($string_or_object);
         } else {
@@ -331,8 +326,10 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function setWidgetId($value)
     {
-        // Handle magir refs
+        // Handle magic refs and invalid values
         switch ($value) {
+            case (is_string($value) && ! self::isValidWidgetId($value)):
+                throw new InvalidArgumentException('Widget id "' . $value . '" is not valid: only alphanumeric characters, "_" and "." are allowed!');
             case WidgetLinkInterface::REF_SELF:
                 if ($this->hasSourceWidget()) {
                     $value = $this->getSourceWidget()->getId();
@@ -367,7 +364,11 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getTargetWidget() : WidgetInterface
     {
-        $widget = $this->getTargetPage()->getWidget($this->getTargetWidgetId());
+        try {
+            $widget = $this->getTargetPage()->getWidget($this->getTargetWidgetId());
+        } catch (Throwable $e) {
+            throw new WidgetNotFoundError('Cannot resolve widget link "' . $this->__tostring() . '" in resource "' . $this->getTargetPage()->getAliasWithNamespace() . '"!');
+        }
         if (! $widget) {
             throw new WidgetNotFoundError('Cannot find widget "' . $this->getTargetWidgetId() . '" in resource "' . $this->getTargetPage()->getAliasWithNamespace() . '"!');
         }
@@ -626,5 +627,25 @@ class WidgetLink implements WidgetLinkInterface
         $this->ifNotEmpty = $value;
         return $this;
     }
+
+    /**
+     * 
+     * @return string
+     */
+    public function __tostring() : string
+    {
+        switch (true) {
+            case is_string($this->originalLink):
+                return $this->originalLink;
+            case $this->originalLink instanceof UxonObject:
+                return $this->originalLink->toJson();
+            default:
+                return '';
+        }
+    }
+
+    public static function isValidWidgetId(string $id) : bool
+    {
+        return preg_match('/^[a-zA-Z0-9_\.]+$/', $id) === 1;
+    }
 }
-?>

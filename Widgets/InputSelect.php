@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -1177,16 +1178,20 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
-        $this->value_set = $value;
-        $delim = $this->getMultipleValuesDelimiter();
-        if ($this->getMultiSelect() === true) {
-            if (is_array($value)) {
-                $value = implode($delim, $value);
-            }
-        } else {
-            if (mb_strpos($value ?? '', $delim) > 0 && ! $this->hasOption($value)) {
-                $firstVal = explode($delim, $value)[0];
-                return parent::setValue($firstVal, $parseStringAsExpression);
+        // See if scalar values are delimited lists. Only do it for scalars, not for formulas
+        // or references
+        if (is_string($value) && Expression::detectCalculation($value) === false) {
+            $this->value_set = $value;
+            $delim = $this->getMultipleValuesDelimiter();
+            if ($this->getMultiSelect() === true) {
+                if (is_array($value)) {
+                    $value = implode($delim, $value);
+                }
+            } else {
+                if (mb_strpos($value ?? '', $delim) > 0 && ! $this->hasOption($value)) {
+                    $firstVal = explode($delim, $value)[0];
+                    return parent::setValue($firstVal, $parseStringAsExpression);
+                }
             }
         }
         return parent::setValue($value, $parseStringAsExpression);
