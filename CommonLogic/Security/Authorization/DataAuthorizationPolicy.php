@@ -224,7 +224,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
             // Add filter obligations if required
             if ($applied === true && null !== $filtersUxon = $this->getFiltersUxon()) {
                 if ($relationPathToDataObj !== null) {
-                    $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, MetaObjectFactory::create($this->metaObjectSelector));
+                    $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, MetaObjectFactory::createFromSelector($this->metaObjectSelector));
                     $condGrp = $condGrp->rebase($relationPathToDataObj);
                 } else {
                     $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, $dataSheet->getMetaObject());
