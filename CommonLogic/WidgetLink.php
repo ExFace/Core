@@ -328,8 +328,6 @@ class WidgetLink implements WidgetLinkInterface
     {
         // Handle magic refs and invalid values
         switch ($value) {
-            case (is_string($value) && ! self::isValidWidgetId($value)):
-                throw new InvalidArgumentException('Widget id "' . $value . '" is not valid: only alphanumeric characters, "_" and "." are allowed!');
             case WidgetLinkInterface::REF_SELF:
                 if ($this->hasSourceWidget()) {
                     $value = $this->getSourceWidget()->getId();
@@ -351,6 +349,8 @@ class WidgetLink implements WidgetLinkInterface
                     }
                 }
                 throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is a button (or any other widget with an input widget) and the input widget is known!');
+            case (is_string($value) && ! self::isValidWidgetId($value)):
+                throw new InvalidArgumentException('Widget id "' . $value . '" is not valid: only alphanumeric characters, "_" and "." are allowed!');
         }
         
         $this->targetWidgetId = $value;
