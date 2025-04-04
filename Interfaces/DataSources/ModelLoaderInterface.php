@@ -55,31 +55,14 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return ModelLoaderSelectorInterface
      */
     public function getSelector() : ModelLoaderSelectorInterface;
-    
+
     /**
+     * Loads metamodel data into the given object
      * 
-     * @param AppInterface $app
-     * @param string $object_alias
-     * 
-     * @throws MetaObjectNotFoundError
-     * 
-     * @triggers \exface\Core\Events\Model\OnMetaObjectLoadedEvent
-     * 
-     * @return MetaObjectInterface            
-     */
-    public function loadObjectByAlias(AppInterface $app, $object_alias);
-    
-    /**
-     * 
-     * @param string $uid
-     * 
-     * @throws MetaObjectNotFoundError
-     * 
-     * @triggers \exface\Core\Events\Model\OnMetaObjectLoadedEvent
-     * 
+     * @param MetaObjectInterface $object
      * @return MetaObjectInterface
      */
-    public function loadObjectById(ModelInterface $model, $uid);
+    public function loadObject(MetaObjectInterface $object) : MetaObjectInterface;
     
     /**
      * 

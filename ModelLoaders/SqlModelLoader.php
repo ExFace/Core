@@ -209,7 +209,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param MetaObjectInterface $object
      * @return MetaObjectInterface
      */
-    protected function loadObject(MetaObjectInterface $object)
+    public function loadObject(MetaObjectInterface $object) : MetaObjectInterface
     {
         $exface = $object->getWorkbench();
         $load_behaviors = false;
