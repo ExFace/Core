@@ -352,6 +352,9 @@ class StringDataType extends AbstractDataType
      */
     public static function findPlaceholders($string)
     {
+        if ($string === null) {
+            return [];
+        }
         $placeholders = array();
         preg_match_all("/\[#([^#]+)#\]/", $string, $placeholders);
         return is_array($placeholders[1]) ? $placeholders[1] : array();
