@@ -459,9 +459,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_DATA_SOURCE);
             if (! empty($matches)) {
                 if (count($matches) > 1) {
-                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source!', null, null, $logbook);
+                    $firstMatch = reset($matches);
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source for row ' . $firstMatch->getMatchedPointer()->getRowNumber() + 1 . '!', null, null, $logbook);
                 }
-                $match = $matches[0] ?? null;
+                $match = $matches[0];
                 if($match->hasUid()) {
                     // If the event row does not have a UID value, it was intended to be created.
                     // But since there is a duplicate, it is now an update. In this case, we need
@@ -478,7 +479,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     $updateSheetRowIdxToEventRowIdx[] = $duplRowNo;
                     $rowsHandled[] = $duplRowNo;
                 } else {
-                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!', null, null, $logbook);
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate for row ' . $match->getMatchedPointer()->getRowNumber() + 1 . ' was found, but it has no UID, so it cannot be updated!', null, null, $logbook);
                 }
             }
             
