@@ -326,6 +326,9 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function setWidgetId($value)
     {
+        if ($value === '') {
+            $value = null;
+        }
         // Handle magic refs and invalid values
         switch ($value) {
             case WidgetLinkInterface::REF_SELF:
@@ -349,7 +352,7 @@ class WidgetLink implements WidgetLinkInterface
                     }
                 }
                 throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is a button (or any other widget with an input widget) and the input widget is known!');
-            case (is_string($value) && ! self::isValidWidgetId($value)):
+            case ($value !== null && ! self::isValidWidgetId($value)):
                 throw new InvalidArgumentException('Widget id "' . $value . '" is not valid: only alphanumeric characters, "_" and "." are allowed!');
         }
         
