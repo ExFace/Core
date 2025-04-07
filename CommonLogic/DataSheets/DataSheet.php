@@ -3241,12 +3241,20 @@ class DataSheet implements DataSheetInterface
                     case $dataType instanceof DataSheetDataType:
                         // Truncate strings that go beyond human-readable lengths.
                         foreach ($col->getValues() as $rowNo => $value) {
-                            if ($value instanceof DataSheetInterface) {
-                                $subsheet = $value;
-                            } else {
-                                $subsheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $value);
+                            switch (true) {
+                                case $value instanceof DataSheetInterface:
+                                    $subsheet = $value;
+                                    break;
+                                case is_array($value):
+                                case $value instanceof UxonObject: 
+                                    $subsheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $value);
+                                    break;
+                                default:
+                                    $subsheet = null;
                             }
-                            $col->setValue($rowNo, $subsheet->createDebugSheet()->exportUxonObject()->toArray());
+                            if ($subsheet !== null) {
+                                $col->setValue($rowNo, $subsheet->createDebugSheet()->exportUxonObject()->toArray());
+                            }
                         }
                         break;
                 }
