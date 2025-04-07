@@ -212,7 +212,10 @@ class DocsFacade extends AbstractHttpFacade
                 }
 
                 header img {
+                    position: fixed;
                     height: 0.5cm;
+                    top: 0;
+                    right: 0;
                     padding: 0;
                 }
 
@@ -252,9 +255,7 @@ class DocsFacade extends AbstractHttpFacade
             // Only add a logo if a $logoPath has been given via query param
             if ($logoPath !== null) {
                 $printString .= 
-                    '<div class="logo-container">
-                        <img src="' . $logoPath .  '" alt="Logo">
-                    </div>';
+                    '<img src="http://localhost/exface/exface/vendor/nbr/OneLink/Docs/' . $logoPath .  '" alt="Logo">';
             }
 
     $printString .= 
