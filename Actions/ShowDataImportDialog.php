@@ -26,6 +26,7 @@ class ShowDataImportDialog extends ShowDialog
     private $targetWidgetId = null;
     private $targetWidget = null;
     private $excludedAliases = [];
+    private $updateIfMatchingAttributeAliases = [];
     
     /**
      * 
@@ -125,24 +126,13 @@ class ShowDataImportDialog extends ShowDialog
         $importer->setHeight('100%');
         $dialog->setWidth($width);
 
-        $actionUxon = new UxonObject([
-            'alias' => 'exface.Core.MergeData'
-        ]);
-        if (false) {
-            // TODO
-        } elseif ($this->getMetaObject()->hasLabelAttribute()) {
-            $actionUxon->setProperty('update_if_matching_attributes', new UxonObject([
-                $this->getMetaObject()->getLabelAttribute()->getAlias()
-            ]));
-        }
-
         if ($dialog->getHeight()->isUndefined()) {
             $dialog->setHeight('80%');
         }
 
         $dialog->addButton($dialog->createButton(new UxonObject([
             'caption' => $this->isDefinedInWidget() ? $this->getWidgetDefinedIn()->getCaption() : $this->getName(),
-            'action' => $actionUxon,
+            'action' => $this->getMergeActionUxon(),
             'visibility' => WidgetVisibilityDataType::PROMOTED,
             'align' => EXF_ALIGN_OPPOSITE
         ])));
@@ -214,5 +204,62 @@ class ShowDataImportDialog extends ShowDialog
         ]));
         $dialog->addWidget($message);
         return $message;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getUpdateIfMatchingAttributeAliases() : array
+    {
+        return $this->updateIfMatchingAttributeAliases;
+    }
+    
+    /**
+     * If values in these attibutes are found in the data source, the corresponding rows will be updated instead of a create.
+     * 
+     * **NOTE:** in case of an update this will overwrite data in all the attributes included in the import.
+     *
+     * @uxon-property update_if_matching_attributes
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return ShowDataImportDialog
+     */
+    protected function setUpdateIfMatchingAttributes(UxonObject $uxon) : ShowDataImportDialog
+    {
+        $this->updateIfMatchingAttributeAliases = $uxon->toArray();
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isUpdateIfMatchingAttributes() : bool
+    {
+        return empty($this->updateIfMatchingAttributeAliases) === false;
+    }
+
+    /**
+     * 
+     * @return UxonObject
+     */
+    protected function getMergeActionUxon() : UxonObject
+    {
+        $actionUxon = new UxonObject([
+            'alias' => 'exface.Core.MergeData'
+        ]);
+        if ($this->isUpdateIfMatchingAttributes()) {
+            $actionUxon->setProperty('update_if_matching_attributes', new UxonObject(
+                $this->getUpdateIfMatchingAttributeAliases()
+            ));
+        } elseif ($this->getMetaObject()->hasLabelAttribute()) {
+            $actionUxon->setProperty('update_if_matching_attributes', new UxonObject([
+                $this->getMetaObject()->getLabelAttribute()->getAlias()
+            ]));
+        }
+        return $actionUxon;
     }
 }
