@@ -255,7 +255,7 @@ class DocsFacade extends AbstractHttpFacade
             // Only add a logo if a $logoPath has been given via query param
             if ($logoPath !== null) {
                 $printString .= 
-                    '<img src="http://localhost/exface/exface/vendor/nbr/OneLink/Docs/' . $logoPath .  '" alt="Logo">';
+                    '<img src="' . $logoPath .  '" alt="Logo">';
             }
 
     $printString .= 
