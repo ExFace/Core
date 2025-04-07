@@ -36,9 +36,11 @@ class DocsFacade extends AbstractHttpFacade
 
     const URL_PARAM_RENDER_PRINT = 'print';
 
-    const URL_PARAM_RENDER_LOGO = 'logo';
+    const URL_PARAM_RENDER_LOGO_PATH = 'logoPath';
 
     const URL_PARAM_FILE_NAME = 'fileName';
+
+    const URL_PARAM_HEADER_TITLE = 'headerTitle';
 
     const URL_PARAM_RENDER_CHAPTER = 'chapter';
     
@@ -95,7 +97,8 @@ class DocsFacade extends AbstractHttpFacade
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
                 $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));       
                 $response = $handler->handle($request);
-                $logoPath = $request->getQueryParams()[self::URL_PARAM_RENDER_LOGO];
+                $logoPath = $request->getQueryParams()[self::URL_PARAM_RENDER_LOGO_PATH];
+                $headerTitle = $request->getQueryParams()[self::URL_PARAM_HEADER_TITLE];
                 $htmlString = $response->getBody()->__toString();
 
                 // Set the title and file name for the PDF
@@ -106,13 +109,13 @@ class DocsFacade extends AbstractHttpFacade
                     $htmlString
                 );
 
-                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString(), $logoPath);
+                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString(), $logoPath, $headerTitle);
 
                 $response = new Response(200, [], $htmlString);
                 $response = $response->withHeader('Content-Type', 'text/html');
                 break;
                 
-            // If the page is to be rendered as a chapter, used a different template
+            // If the page is to be rendered as a chapter, use a different template
             // TODO move the whole printing logic to a middleware
             case ($request->getQueryParams()[self::URL_PARAM_RENDER] === self::URL_PARAM_RENDER_CHAPTER):
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/templatePDF.html']);
@@ -167,7 +170,7 @@ class DocsFacade extends AbstractHttpFacade
      * @param string $logoPath
      * @return string
      */
-    protected function printCombinedPages(string $htmlString, string $requestUri, ?string $logoPath) : string
+    protected function printCombinedPages(string $htmlString, string $requestUri, ?string $logoPath, ?string $headerTitle) : string
     {
         // Find all links in first document page
         $linksArray = $this->findLinksInHtml($htmlString);
@@ -185,7 +188,10 @@ class DocsFacade extends AbstractHttpFacade
         '<style>
             @media print {
                 body {
-                    margin: 2cm;
+                    margin-top: 2cm;
+                    margin-bottom: 2cm;
+                    margin-left: 0.2cm;
+                    margin-right: 0.2cm;
                 }
             
                 header {
@@ -202,6 +208,7 @@ class DocsFacade extends AbstractHttpFacade
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    z-index: 1000;
                 }
 
                 header img {
@@ -210,7 +217,31 @@ class DocsFacade extends AbstractHttpFacade
                 }
 
                 header a {
+                    position: fixed;   
+                    top: 0;            
+                    left: 0;           
+                    padding: 0;
                     font-size: 16px;
+                    z-index: 9999;     
+                }
+
+            @page {
+                margin-top: 1cm;
+                margin-bottom: 1cm;
+                margin-left: 0.2cm;
+                margin-right: 0.2cm;
+                
+                /* Add page counter to footer */
+                @bottom-center {
+                    content: counter(page);
+                    font-size: 0.8em;
+                    color: #666;
+                }
+                /* Add project name to header */
+                @top-center {
+                    content: "' . $headerTitle . '";
+                    font-size: 0.8em;
+                    color: #666;
                 }
             }
         </style>
@@ -222,7 +253,7 @@ class DocsFacade extends AbstractHttpFacade
             if ($logoPath !== null) {
                 $printString .= 
                     '<div class="logo-container">
-                        <img src="placeholder/path/' . $logoPath .  '" alt="Logo">
+                        <img src="' . $logoPath .  '" alt="Logo">
                     </div>';
             }
 
