@@ -7,6 +7,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
@@ -15,8 +16,24 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 /**
  * Looks up a value in a separate data sheet and places it in the to-column
  * 
+ * This mapper looks up a value for each row in the from-sheet and writes this value into
+ * the same row in the to-sheet. This means, it produces as many rows in the to-sheet as
+ * there where in the from-sheet. 
+ * 
+ * You can think of it as a column-to-column mapping, which uses an additional step reading
+ * a third data sheet (called `lookup`) and maps data from that lookup sheet to the to-sheet
+ * instead of getting its values from the from-sheet directly.
+ * 
+ * ## Things to keep in mind
+ * 
+ * This mapping does not check, if the rows of the to-sheet are in the same order as those in
+ * the from-sheet. In fact, it does not even understand if they are related at all - looks up
+ * values in the lookup sheet for every row in the from-sheet and puts them to the to-row with 
+ * the same number. 
+ * 
  * ## Examples
  * 
+ * ```
  * {
  *   "from_object_alias": "exface.Core.ATTRIBUTE",
  *   "to_object_alias": "exface.Core.OBJECT",
@@ -34,6 +51,8 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 	    }
  *   ]
  * }
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
  *
@@ -146,8 +165,9 @@ class LookupMapping extends AbstractDataSheetMapping
         $matches = $this->getMatches();
         $lookupSheet = DataSheetFactory::createFromObject($this->getLookupObject());
         $lookupCol = $lookupSheet->getColumns()->addFromExpression($lookupExpr);
-        foreach ($matches as $match) {
-            $lookupSheet->getColumns()->addFromExpression($match['lookup']);
+        foreach ($matches as $i => $match) {
+            $matchLookupCol = $lookupSheet->getColumns()->addFromExpression($match['lookup']);
+            $matches[$i]['lookup_datatype'] = $matchLookupCol->getDataType();
         }
         foreach($matches as $match) {
             $fromExpr = ExpressionFactory::createForObject($fromSheet->getMetaObject(), $match['from']);
@@ -182,9 +202,19 @@ class LookupMapping extends AbstractDataSheetMapping
                 $prevVal = $toColVals[$i];
                 // If any of the keys DO NOT match, continue with next lookup row
                 foreach ($matches as $match) {
+                    // Convert both values to the data type of the lookup side so
+                    // that both are in the same format
+                    $matchType = $match['lookup_datatype'];
                     $matchVal = $lookupRow[$match['lookup']];
                     $fromVal = $fromRow[$match['from']];
-                    if ($matchVal !== $fromVal) {
+                    try {
+                        $fromVal = $matchType->parse($fromVal);
+                    } catch (DataTypeExceptionInterface $e) {
+                        continue 2;
+                    }
+                    // Compare WITHOUT strict type checking here! This ensures, that "1" is equal to 1
+                    // and "1.0" is equal to 1.0
+                    if ($matchVal != $fromVal) {
                         continue 2;
                     }
                 }
@@ -208,7 +238,7 @@ class LookupMapping extends AbstractDataSheetMapping
                     if ($prevVal === null) {
                         $toColVals[$i] = $lookupVal;
                     } else {
-                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Lookup returned more than 1 value on row ' . $i);
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $i);
                     }
                 }
             }
