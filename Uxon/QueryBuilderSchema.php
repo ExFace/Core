@@ -82,43 +82,13 @@ class QueryBuilderSchema extends UxonSchema
         
         return [];
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Uxon\UxonSchema::getPropertiesSheet()
+     * @inheritdoc 
+     * @see UxonSchema::loadPropertiesSheet()
      */
-    protected function getPropertiesSheet(string $prototypeClass) : DataSheetInterface
+    protected function loadPropertiesSheet(string $prototypeClass, string $notationObjectAlias): DataSheetInterface
     {
-        if ($cache = $this->prototypePropCache[$prototypeClass]) {
-            return $cache;
-        }
-        
-        if ($cache = $this->getCache($prototypeClass, 'properties')) {
-            return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
-        }
-        
-        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION');
-        $ds->getColumns()->addMultiple([
-            'PROPERTY',
-            'TYPE',
-            'TEMPLATE',
-            'DEFAULT',
-            'REQUIRED',
-            'TRANSLATABLE',
-            'TARGET'
-        ]);
-        $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
-        try {
-            $ds->dataRead();
-        } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-            // TODO
-        }
-        $this->prototypePropCache[$prototypeClass] = $ds;
-        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
-        
-        return $ds;
+        return parent::loadPropertiesSheet($prototypeClass, 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION');
     }
 }
