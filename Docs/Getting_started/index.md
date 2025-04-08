@@ -15,4 +15,4 @@ The [book club tutorial](../Tutorials/BookClub_walkthrough/index.md) will lead y
 ## 4. Start creating your own apps
 
 - Have a look in [the cookbook](../Cookbook/index.md) for best practices and helpful ideas
-- See the [Troubleshooting links collection](../Cookbook/Troubleshooting.md) if you get stuck
+- See the [Troubleshooting links collection](../Troubleshooting.md) if you get stuck
