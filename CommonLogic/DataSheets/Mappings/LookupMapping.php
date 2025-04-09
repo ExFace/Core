@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Uxon\DataSheetLookupMappingSchema;
 
 /**
  * Looks up a value in a separate data sheet and places it in the to-column
@@ -33,19 +34,46 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * ## Examples
  * 
+ * ### Lookup a UID by name or alias
+ * 
+ * Concider having a data sheet of exface.Core.ATTRIBUTE, that includes object aliases, but not
+ * their UIDs.
+ * 
  * ```
  * {
  *   "from_object_alias": "exface.Core.ATTRIBUTE",
  *   "to_object_alias": "exface.Core.OBJECT",
  *   "lookup_mappings": [
  * 	    {
- * 	        "to": "UID",
+ * 	        "to": "OBJECT",
  * 	        "lookup_object_alias": "exface.Core.OBJECT",
- * 	        "lookup_column": "UID",
  * 	        "match": [
  * 		        {
  * 		            "from": "OBJECT__ALIAS",
  * 		            "lookup": "ALIAS"
+ * 		        }
+ * 	        ]
+ * 	    }
+ *   ]
+ * }
+ * 
+ * ```
+ * 
+ * ### Create mappings by looking up related objects
+ * 
+ * ```
+ * {
+ *   "from_object_alias": "my.App.TASK_TEMPLATE",
+ *   "to_object_alias": "my.App.TASK",
+ *   "lookup_mappings": [
+ * 	    {
+ * 	        "to": "TASK_TAGS__TAG",
+ * 	        "lookup_object_alias": "my.App.TAG",
+ * 	        "lookup_column": "UID",
+ * 	        "match": [
+ * 		        {
+ * 		            "from": "TAGS",
+ * 		            "lookup": "NAME"
  * 		        }
  * 	        ]
  * 	    }
@@ -254,6 +282,11 @@ class LookupMapping extends AbstractDataSheetMapping
         return $toSheet;
     }
 
+    /**
+     * Checks if the expression is a meta attribute and if it is a reverse relation
+     * @param \exface\Core\Interfaces\Model\ExpressionInterface $expr
+     * @return bool
+     */
     protected function needsSubsheet(ExpressionInterface $expr) : bool
     {
         if (! $expr->isMetaAttribute()) {
@@ -369,5 +402,15 @@ class LookupMapping extends AbstractDataSheetMapping
             $expressions[] = ExpressionFactory::createForObject($this->getMapper()->getFromMetaObject(), $match['from']);;
         }
         return $expressions;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\CommonLogic\DataSheets\Mappings\AbstractDataSheetMapping::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return DataSheetLookupMappingSchema::class;
     }
 }
