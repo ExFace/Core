@@ -45,3 +45,19 @@ kabachello
 
 >git credential-manager github logout 4246282
 ```
+
+## Dubious Ownership
+
+If you have a local development installation of PowerUI running with wamp, you might encounter dubious ownership git issues such as this:
+
+```
+fatal: detected dubious ownership in repository at '<repository-path>' 
+
+'<repository-path>' is owned by DIR/<user> but the current user is: NT AUTHORITY/SYSTEM 
+```
+
+This can happen because the repository files are likely owned by your current windows user, while the wamp process runs as administrator (which is a different user). A workaround for this is to add an exception for the repository to the git config. For this, you need to run CMD as administrator and add the following (systemwide) exception for your repository:
+
+```
+git config --system --add safe.directory "<repository-path>"
+```
