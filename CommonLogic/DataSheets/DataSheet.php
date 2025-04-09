@@ -3233,7 +3233,7 @@ class DataSheet implements DataSheetInterface
                     case $dataType instanceof StringDataType:
                         // Truncate strings that go beyond human-readable lengths.
                         foreach ($col->getValues() as $rowNo => $value) {
-                            if($value !== null && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
+                            if($value !== null && is_string($value) && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
                                 $col->setValue($rowNo, mb_substr($value, 0, self::DEBUG_STRING_MAX_LENGTH) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')');
                             }
                         }
