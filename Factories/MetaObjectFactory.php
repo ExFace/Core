@@ -45,7 +45,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      * 
      * @param \exface\Core\Interfaces\WorkbenchInterface $workbench
      * @param MetaObjectSelectorInterface|string $selectorOrString
-     * @throws \exface\Core\Exceptions\InvalidArgumentException
+     * @throws \exface\Core\Exceptions\Model\MetaObjectNotFoundError
      * @return MetaObjectInterface
      */
     public static function create(WorkbenchInterface $workbench, $selectorOrString) : MetaObjectInterface
@@ -60,7 +60,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
                 $selector = $selectorOrString;
                 break;
             default:
-                throw new InvalidArgumentException('Invalid meta object selector provided: expecting string or instantiated MetaObjectSelector, received ' . gettype($selectorOrString));
+                throw new MetaObjectNotFoundError('Invalid meta object selector provided: expecting string or instantiated MetaObjectSelector, received ' . gettype($selectorOrString));
         }
 
         if (null !== $cache = static::getCache($selectorString)) {
@@ -127,7 +127,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
             $obj = $workbench->model()->getModelLoader()->loadObjectByAlias($workbench->getApp($namespace), $alias);
             static::setCache($obj);
         } catch (AppNotFoundError $e) {
-            throw new MetaObjectNotFoundError('Meta object "' . $fullAlias . '" not found! Invalid app namespace "' . $namespace . '"!');
+            throw new MetaObjectNotFoundError('Meta object "' . $fullAlias . '" not found! Invalid app namespace "' . $namespace . '"!', null, $e);
         }
         return $obj;
     }
@@ -255,7 +255,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
                 $type = DataTypeFactory::createBaseDataType($obj->getWorkbench());
                 break;
             default:
-                throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . get_class($dataTypeOrSelector));
+                throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . gettype($dataTypeOrSelector));
         }
 
         $attr->setDataType($type);
