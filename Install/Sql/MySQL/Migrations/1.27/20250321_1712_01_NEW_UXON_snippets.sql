@@ -1,6 +1,6 @@
 -- UP
 
-CREATE TABLE `exf_uxon_snippet` (
+CREATE TABLE IF NOT EXISTS `exf_uxon_snippet` (
   `oid` binary(16) NOT NULL,
   `created_on` datetime NOT NULL,
   `modified_on` datetime NOT NULL,
