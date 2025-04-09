@@ -736,7 +736,11 @@ class FileBuilder extends AbstractQueryBuilder
         $filenameQpart = null;
         $contentQpart = null;
         $folderQpart = null;
+        $uidIsPath = $this->isFilePathAddress($this->getMainObject()->getUidAttribute()->getDataAddress());
         foreach ($this->getValues() as $qpart) {
+            if ($qpart->hasUids() && $uidIsPath === true) {
+                return $qpart->getUids();
+            }
             switch (true) {
                 case $this->isFilePath($qpart) && $qpart->hasValues():
                     $pathQpart = $qpart;
@@ -753,17 +757,22 @@ class FileBuilder extends AbstractQueryBuilder
             }
         }
         
+        $objectBasePath = $this->getPathForObject($this->getMainObject());
+        $objectBasePath = rtrim(trim($objectBasePath), '*?');
+        $paths = [];
         switch (true) {
-            case $contentQpart !== null && $this->isFilePathAddress($this->getMainObject()->getUidAttribute()->getDataAddress()):
-                return $contentQpart->getUids();
+            case $contentQpart !== null && $uidIsPath === true:
+                $paths = $contentQpart->getUids();
+                break;
             case $pathQpart !== null:
-                return $pathQpart->getValues();
+                $paths = $pathQpart->getValues();
+                break;
             case $folderQpart !== null && $filenameQpart !== null:
                 foreach ($folderQpart->getValues() as $i => $folder) {
                     $paths[$i] = $folder . $this->getDirectorySeparator() . $filenameQpart->getValues()[$i];
                 }
-                return $paths;
-            case $filenameQpart !== null && ! FilePathDataType::isPattern($this->getPathForObject($this->getMainObject())):
+                break;
+            case $filenameQpart !== null && ! FilePathDataType::isPattern($objectBasePath):
                 $paths = [];
                 $sep = $this->getDirectorySeparator();
                 $addr = FilePathDataType::normalize($this->getPathForObject($this->getMainObject()) ?? '', $sep);
@@ -780,10 +789,10 @@ class FileBuilder extends AbstractQueryBuilder
                     $path = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
                     $paths[$rowIdx] = $path;
                 }
-                return $paths;
+                break;
         }
-        
-        return [];
+
+        return $paths;
     }
 
     /**
