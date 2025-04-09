@@ -193,7 +193,11 @@ class LookupMapping extends AbstractDataSheetMapping
 
         $lookupColName = $lookupCol->getName();
         $toColVals = [];
-        $toValDelim = $toExpr->getAttribute()->getValueListDelimiter();
+        if ($toExpr->isMetaAttribute()) {
+            $toValDelim = $toExpr->getAttribute()->getValueListDelimiter();
+        } else {
+            $toValDelim = EXF_LIST_SEPARATOR;
+        }
         // For every row in the from-sheet we will create a row in the to-sheet
         foreach ($fromSheet->getRows() as $i => $fromRow) {
             $toColVals[$i] = null;
