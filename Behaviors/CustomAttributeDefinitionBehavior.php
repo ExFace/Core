@@ -599,6 +599,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
         }
         $aliases = array_unique($aliases);
+        // If array_unique() produces gaps, the array is recognized as an asscociative array
+        // from this point on. This makes trouble: for example, the InputSelect widget
+        // produced for the default editor interprets it as key-value pairs and not
+        // as a simple list of values. To avoid this, reindex the array here.
+        $aliases = array_values($aliases);
         return $aliases;
     }
     
