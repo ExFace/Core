@@ -256,6 +256,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to a positive number to make this attribute appear in data widgets if no columns are specified explicitly.
+     * 
      * @uxon-property default_display_order
      * @uxon-type integer
      * 
@@ -278,6 +280,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE to make this attribute editable in the UI and FALSE to hide it from editors by default
+     * 
      * @uxon-property editable
      * @uxon-type boolean
      * 
@@ -333,6 +337,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE to mark this attribute as hidden
+     * 
      * @uxon-property hidden
      * @uxon-type boolean
      * 
@@ -375,6 +381,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to FALSE to explicitly forbid reading this attribute or to TRUE to explicitly allow it
+     * 
      * @uxon-property readable
      * @uxon-type boolean
      * 
@@ -398,6 +406,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to FALSE to explicitly forbid writing this attribute or to TRUE to explicitly allow it
+     * 
      * @uxon-property writable
      * @uxon-type boolean
      * 
@@ -421,8 +431,11 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE to mark the attribute as required (not nullable)
+     * 
      * @uxon-property required
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setRequired()
@@ -443,8 +456,9 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * The address in the data source - e.g. SQL for SQL data sources or parts of the URL for web services.
      * 
-     * @uxon-property data_type
+     * @uxon-property data_address
      * @uxon-type metamodel:datatype
      * 
      * {@inheritDoc}
@@ -665,9 +679,11 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Direction of default soring if this attribute is one of the default sorting attributes of the object.
+     * 
      * @uxon-property default_sorter_dir
      * @uxon-type string
-     * @uxon-template "ASC"
+     * @uxon-template asc
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()
@@ -936,8 +952,10 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * When aggregating use this aggregator by default for this attribute (if no aggregator is defined explicitly)
+     * 
      * @uxon-property default_aggregate_function
-     * @uxon-type string
+     * @uxon-type metamodel:aggregator
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultAggregateFunction()
@@ -962,6 +980,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE/FALSE to allow/forbid sorting over this attribute
+     * 
      * @uxon-property sortable
      * @uxon-type boolean
      * 
@@ -985,6 +1005,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE/FALSE to allow/forbid filtering over this attribute
+     * 
      * @uxon-property filterable
      * @uxon-type boolean
      * 
@@ -1008,6 +1030,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE/FALSE to allow/forbid aggregating over this attribute
+     * 
      * @uxon-property aggregatable
      * @uxon-type boolean
      * 
@@ -1031,9 +1055,11 @@ class Attribute implements MetaAttributeInterface
     }
     
     /**
+     * Separator character to use when listing multiple values of this attribute
+     * 
      * @uxon-property value_list_delimiter
      * @uxon-type string
-     * @uxon-template ","
+     * @uxon-default ,
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setValueListDelimiter()
@@ -1240,7 +1266,7 @@ class Attribute implements MetaAttributeInterface
      * Default display widget to use for this attribute
      * 
      * @uxon-property default_display_widget
-     * @uxon-type \exface\Core\Widgets\Value
+     * @uxon-type \exface\Core\Widgets\Display
      * @uxon-template {"widget_type": ""}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
@@ -1272,6 +1298,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to FALSE to skip this attribute when copying an instance of its objects
+     * 
      * @uxon-property copyable
      * @uxon-type boolean
      * 
@@ -1301,7 +1329,7 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
-     * Place this attribute into one or more attribute groups
+     * A list of group aliases, this attribute belongs to.
      * 
      * @uxon-property groups
      * @uxon-type metamodel:attribute_group[]
