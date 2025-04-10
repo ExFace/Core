@@ -294,12 +294,32 @@ class UxonSchema implements UxonSchemaInterface
             return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
         }
         
+        $ds = $this->loadPropertiesSheet($prototypeClass, 'exface.Core.UXON_PROPERTY_ANNOTATION');
+        
+        $this->prototypePropCache[$prototypeClass] = $ds;
+        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
+        
+        return $ds;
+    }
+
+    /**
+     * Loads a data sheet containing all the uxon-properties contained in the prototype class via the
+     * specified notation object.
+     * 
+     * NOTE: This function ALWAYS performs a DataSheetInterface::dataRead()!
+     * 
+     * @param string $prototypeClass
+     * @param string $notationObjectAlias
+     * @return DataSheetInterface
+     */
+    protected function loadPropertiesSheet(string $prototypeClass, string $notationObjectAlias) : DataSheetInterface
+    {
         $filepathRelative = $this->getFilenameForEntity($prototypeClass);
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $notationObjectAlias);
         $ds->getColumns()->addMultiple([
-            'PROPERTY', 
-            'TYPE', 
-            'TEMPLATE', 
+            'PROPERTY',
+            'TYPE',
+            'TEMPLATE',
             'DEFAULT',
             'REQUIRED',
             'TRANSLATABLE'
@@ -311,8 +331,6 @@ class UxonSchema implements UxonSchemaInterface
             $this->getWorkbench()->getLogger()->logException($e);
             // TODO
         }
-        $this->prototypePropCache[$prototypeClass] = $ds;
-        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
         
         return $ds;
     }
@@ -675,7 +693,8 @@ class UxonSchema implements UxonSchemaInterface
     }
 
     /**
-     * Collects all attribute groups available for a given meta-object with respect to the provided relaiton path (search).
+     * Collects all attribute groups available for a given meta-object with respect to the provided relaiton path
+     * (search).
      * 
      * Works similarly to getAttributeAliases()
      * 
