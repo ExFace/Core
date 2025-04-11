@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -19,7 +20,6 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
@@ -39,6 +39,7 @@ use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Translation\TranslationsArray;
 use exface\Core\Interfaces\Widgets\iHaveValue;
+use Throwable;
 use function Sabre\Event\Loop\instance;
 
 /**
@@ -250,6 +251,11 @@ abstract class AbstractWidget implements WidgetInterface
             return $this->importUxonObjectDefault($uxon);
         } catch (UxonMapError $e) {
             throw new WidgetPropertyUnknownError($this, 'Unknown UXON property found for widget "' . $this->getWidgetType() . '": ' . $e->getMessage(), '6UNTXJE', $e);
+        } catch (Throwable $e) {
+            if (! $e instanceof WidgetExceptionInterface) {
+                throw new WidgetConfigurationError($this, 'Cannot initialize widget "' . $this->getWidgetType() . '"! ' . $e->getMessage(), null, $e);
+            }
+            throw $e;
         }
         return;
     }
