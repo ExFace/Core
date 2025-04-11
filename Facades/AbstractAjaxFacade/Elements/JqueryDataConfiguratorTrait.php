@@ -139,34 +139,10 @@ JS;
             return '';
         }
         $onlyIfDomExistsJs = $onlyIfDomExists ? 'true' : 'false';
-        $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
-        foreach ($this->getWidget()->getDataWidget()->getColumns() as $col) {
-            if (! $col->isBoundToAttribute()) {
-                continue;
-            }
-            $attr = $col->getAttribute();
-            if ($attr->getRelationPath()->isEmpty()) {
-                continue;
-            }
-            foreach ($attr->getRelationPath()->getRelations() as $rel) {
-                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
-                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
-            }
-        }
-        foreach ($this->getWidget()->getFilters() as $filter) {
-            if (! $filter->isBoundToAttribute()) {
-                continue;
-            }
-            $attr = $filter->getAttribute();
-            if ($attr->isRelation()) {
-                $effectedAliases[] = $attr->getRelation()->getRightObject()->getAliasWithNamespace();   
-            }
-            if ($attr->getRelationPath()->isEmpty()) {
-                continue;
-            }
-            foreach ($attr->getRelationPath()->getRelations() as $rel) {
-                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
-                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+        $effectedAliases = [];
+        foreach ($this->getWidget()->getDataWidget()->getMetaObjectsEffectingThisWidget() as $object) {
+            if ($object->getAliasWithNamespace() !== null) {
+                $effectedAliases[] = $object->getAliasWithNamespace();
             }
         }
         $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
