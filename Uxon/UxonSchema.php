@@ -294,7 +294,7 @@ class UxonSchema implements UxonSchemaInterface
             return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
         }
         
-        $ds = $this->loadPropertiesSheet($prototypeClass, 'exface.Core.UXON_PROPERTY_ANNOTATION');
+        $ds = $this->loadPropertiesSheet($prototypeClass);
         
         $this->prototypePropCache[$prototypeClass] = $ds;
         $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
@@ -309,13 +309,13 @@ class UxonSchema implements UxonSchemaInterface
      * NOTE: This function ALWAYS performs a DataSheetInterface::dataRead()!
      * 
      * @param string $prototypeClass
-     * @param string $notationObjectAlias
+     * @param string $aliasOfAnnotationObject
      * @return DataSheetInterface
      */
-    protected function loadPropertiesSheet(string $prototypeClass, string $notationObjectAlias) : DataSheetInterface
+    protected function loadPropertiesSheet(string $prototypeClass, string $aliasOfAnnotationObject = 'exface.Core.UXON_PROPERTY_ANNOTATION') : DataSheetInterface
     {
         $filepathRelative = $this->getFilenameForEntity($prototypeClass);
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $notationObjectAlias);
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $aliasOfAnnotationObject);
         $ds->getColumns()->addMultiple([
             'PROPERTY',
             'TYPE',
