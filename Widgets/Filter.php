@@ -1542,4 +1542,23 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     {
         return $this->multiSelect ?? true;
     }
+
+    /**
+     * Filters are affected by the same objects as their input widget, but if the filter
+     * points to a relation, the related object also effects the filter!
+     * 
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Effecting objects from the input widget will contain its object as well as any
+        // objects along the relation path used.
+        $objs = $this->getInputWidget()->getMetaObjectsEffectingThisWidget();
+        // Additionally, if a filter points to a relation-attribute, it will be effected
+        // by changes to the target object too.
+        if ((null !== $attr = $this->getAttribute()) && $attr->isRelation()) {
+            $objs[] = $attr->getRelation()->getRightObject();   
+        }
+        return array_unique($objs);
+    }
 }

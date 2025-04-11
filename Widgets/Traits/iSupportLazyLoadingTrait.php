@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
@@ -46,7 +45,7 @@ trait iSupportLazyLoadingTrait {
      */
     public function setLazyLoading(bool $value) : iSupportLazyLoading
     {
-        $this->lazy_loading = BooleanDataType::cast($value);
+        $this->lazy_loading = $value;
         return $this;
     }
     
@@ -84,9 +83,10 @@ trait iSupportLazyLoadingTrait {
      * @uxon-property lazy_loading_group_id
      * @uxon-type string
      * 
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
+     * @param string $value
+     * @return \exface\Core\Interfaces\Widgets\iSupportLazyLoading
      */
-    public function setLazyLoadingGroupId(string $value) : iSupportLazyLoading
+    protected function setLazyLoadingGroupId(string $value) : iSupportLazyLoading
     {
         $this->lazy_loading_group_id = $value;
         return $this;
@@ -118,7 +118,9 @@ trait iSupportLazyLoadingTrait {
      * @uxon-type \exface\Core\CommonLogic\AbstractAction
      * @uxon-template {"alias": ""}
      * 
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @throws \exface\Core\Exceptions\Widgets\WidgetLogicError
+     * @return \exface\Core\Interfaces\Widgets\iSupportLazyLoading
      */
     public function setLazyLoadingAction(UxonObject $uxon) : iSupportLazyLoading
     {
@@ -172,10 +174,10 @@ trait iSupportLazyLoadingTrait {
      * @see \exface\Core\Interfaces\Widgets\iTriggerAction::getAction()
      */
     public function getAction()
-    {
+    {/*
         if ($this->getLazyLoading() === false) {
             return null;
-        }
+        }*/
         return $this->getLazyLoadingAction();
     }
     
