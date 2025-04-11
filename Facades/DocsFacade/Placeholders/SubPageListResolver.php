@@ -143,8 +143,6 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
         return $items;
     }
     
-
-
     function renderMarkdownList($items, $listType, $depth, $level = 0) {
         $output = '';
         $indent = str_repeat("  ", $level);
