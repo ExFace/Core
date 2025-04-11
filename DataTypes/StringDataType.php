@@ -37,6 +37,16 @@ class StringDataType extends AbstractDataType
     /**
      * Defines a regular expression to validate values of this data type.
      * 
+     * Example:
+     * 
+     * ```
+     * {
+     *  "validator_regex": "/^..[+]...$/",
+     *  "validation_error_text": "The value must be formatted as follows: xx+xxx (e.g. `Ab+123`)!"
+     * }
+     * 
+     * ```
+     * 
      * Use regular expressions compatible with PHP preg_match(). A good
      * tool to create and test regular expressions can be found here:
      * https://regex101.com/.
