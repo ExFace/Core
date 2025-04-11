@@ -128,6 +128,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         yield from $this->installDatabase($this->getDataConnection(), $indent.$indent);
         yield from $this->installMigrations($source_absolute_path, $indent.$indent);
         yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
+        // TODO make schema compare work
+        // yield from $this->compareSchemas($source_absolute_path, $indent.$indent);
         
         return;
     }
@@ -140,6 +142,37 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function installStaticSql(string $source_absolute_path, string $indent = '') : \Iterator
     {
         yield from $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql(), $indent);
+    }
+    
+    /**
+     * 
+     * @param string $source_absolute_path
+     * @return string
+     */
+    protected function compareSchemas(string $source_absolute_path, string $indent = '') : \Iterator
+    {
+        yield 'Schema compare not available for this database yet';
+    }
+    
+    /**
+     * 
+     * @param string $source_absolute_path
+     * @return string
+     */
+    protected function dumpSchema(string $destination_absolute_path, string $indent = '') : \Iterator
+    {
+        // Save schema dump to schema.sql in the $sqlFolder folder
+        $sqlFolder = $this->getSqlFolderAbsolutePath($destination_absolute_path);
+        $schema = $this->buildSqlSchema();
+        if ($schema !== '') {
+            $this->getWorkbench()->filemanager()->dumpFile($sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql', $schema);
+        }
+        yield 'Schema dumps not available for this database yet';
+    }
+
+    protected function buildSqlSchema() : string
+    {
+        return '';
     }
     
     /**
@@ -213,7 +246,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     public function backup(string $destination_absolute_path) : \Iterator
     {
-        yield 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->toString() . '"!' . PHP_EOL;
+        yield from $this->dumpSchema($destination_absolute_path);
     }
     
     /**
