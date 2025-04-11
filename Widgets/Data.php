@@ -1452,4 +1452,31 @@ class Data
         $this->getConfiguratorWidget()->getMessageList()->setMessages($arrayOfUxon);
         return $this;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        // Objects used in columns
+        foreach ($this->getColumns() as $col) {
+            if (! $col->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $col->getAttribute();
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $objs[] = $rel->getLeftObject();
+                $objs[] = $rel->getRightObject();
+            }
+        }
+        // Objects used in the configurator - e.g. filters, sorters, etc.
+        $objs = array_merge($objs, $this->getConfiguratorWidget()->getMetaObjectsEffectingThisWidget());
+        return array_unique($objs);
+    }
 }

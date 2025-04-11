@@ -161,6 +161,31 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function getMetaObject();
 
     /**
+     * Returns an array with all objects, that will have significant effect on this widget.
+     * 
+     * It is important for a widget to know, changes to which affect its inner state - e.g. make
+     * its prefill data obsolete. Facades should then decide, what to do - e.g. refresh the widget,
+     * show a warning, etc.
+     * 
+     * This feature goes hand-in-hand with action effects - see ActionInterface::getEffects(). An
+     * action knows, which objects it will effect and a widget knows, if these objects will effect
+     * its current state.
+     * 
+     * This method will only return objects, that have "significant" effects, requiring some
+     * reaction. For example, if a container has children with lazy loading, their object should
+     * not be in this list because these widget will be able to take care of their changes
+     * themselves - their contents is not the business of the container.
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionEffectInterface
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffects()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasEffectOn()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffectsOn()
+     * 
+     * @return MetaObjectInterface[]
+     */
+    public function getMetaObjectsEffectingThisWidget() : array;
+
+    /**
      * Sets the given object as the new base object for this widget
      *
      * @param MetaObjectInterface $object            
@@ -459,6 +484,4 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return bool
      */
     public function hasFunction(string $functionName) : bool;
-
-    
 }
