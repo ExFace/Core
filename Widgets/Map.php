@@ -919,4 +919,21 @@ class Map extends AbstractWidget implements
         }
         return false;
     }
+    
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        // Widgets of each layer
+        foreach ($this->getLayers() as $layer) {
+            foreach ($layer->getWidgets() as $child) {
+                $objs = array_merge($objs, $child->getMetaObjectsEffectingThisWidget());
+            }
+        }
+        return array_unique($objs);
+    }
 }

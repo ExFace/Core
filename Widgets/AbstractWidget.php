@@ -1769,4 +1769,14 @@ MD;
         
         $uxon->addSnippet('attribute_group_alias', $resolver);
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        return [$this->getMetaObject()];
+    }
 }
