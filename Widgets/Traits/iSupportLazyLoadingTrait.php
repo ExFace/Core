@@ -174,10 +174,24 @@ trait iSupportLazyLoadingTrait {
      * @see \exface\Core\Interfaces\Widgets\iTriggerAction::getAction()
      */
     public function getAction()
-    {/*
-        if ($this->getLazyLoading() === false) {
+    {
+        /* There is some uncertainity about when to return null here. If null is returned,
+         * the lazy loading action _cannot_ be called from a facade via task, because tasks
+         * will ask their widgets if they really can trigger such actions - see 
+         * `GenericTask::getAction()`. Sometimes it is important to get the lazy loading data
+         * even if lazy loading is off. For example, non-lazy InputComboTable might need to
+         * refresh their data when it is effected by an action or with a prefill. This is
+         * particularly important in AJAX facades with view caching like UI5: since non-lazy
+         * data is part of the view, it would be cached forever even if the underlying data
+         * is changed.
+         * 
+         * Right now, the lazy loading action is always available unless lazy loading is off
+         * AND the action's object is not readable.
+         */ 
+        $action = $this->getLazyLoadingAction();
+        if ($this->getLazyLoading() === false && ($action === null || $action->getMetaObject()->isReadable() === false)) {
             return null;
-        }*/
+        }
         return $this->getLazyLoadingAction();
     }
     
