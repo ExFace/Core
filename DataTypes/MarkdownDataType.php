@@ -135,4 +135,14 @@ class MarkdownDataType
             return '';
         }
     }
+
+    public static function findHeadOfFile(string $filePath) : string 
+    {
+        $content = file_get_contents($filePath);
+        if (preg_match('/^#{1,6}\s+(.+)/', $content, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return pathinfo($filePath, PATHINFO_FILENAME);
+    }
 }
