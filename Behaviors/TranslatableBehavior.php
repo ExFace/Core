@@ -3,6 +3,8 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
+use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Action\OnActionPerformedEvent;
@@ -475,7 +477,13 @@ class TranslatableBehavior extends AbstractBehavior
             return;
         }
         
-        $translator = $menuItem->getApp()->getTranslator();
+        try {
+            $translator = $menuItem->getApp()->getTranslator();
+        } catch (AppNotFoundError $e) {
+            $event->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot translate UI page. ' . $e->getMessage(), null, $e));
+            return;
+        }
+
         $domain = 'Pages/' . $menuItem->getAliasWithNamespace();
         
         if (! $translator->hasTranslationDomain($domain)) {
@@ -503,8 +511,15 @@ class TranslatableBehavior extends AbstractBehavior
     public static function onMessageLoadedTranslate(OnMessageLoadedEvent $event)
     {
         $msg = $event->getMessage();
-        
-        if (($app = $msg->getApp()) === null) {
+
+        try {
+            $app = $msg->getApp();
+        } catch (AppNotFoundError $e) {
+            $event->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot translate message model. ' . $e->getMessage(), null, $e));
+            return;
+        }
+
+        if ($app === null) {
             return;
         }
         

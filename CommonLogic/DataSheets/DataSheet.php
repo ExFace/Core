@@ -62,6 +62,8 @@ use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\DataSheets\DataNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetDuplicatesError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -1025,8 +1027,9 @@ class DataSheet implements DataSheetInterface
             
             // Fetch all attributes with fixed values and add them to the sheet if not already there
             
-            // If it's a column with a related attribute, we only need to process the relation
-            // once, so skip already processed relations at this point.
+            // Make sure to search for fixed values for each object once only. To do so, remember the
+            // relation paths. Direct attributes will produce an empty relation path - `""`, so direct
+            // attributes will only will examied once too.
             $rel_path = $col->getAttribute()->getRelationPath()->toString();
             if ($processed_relations[$rel_path]) {
                 continue;
@@ -1138,6 +1141,9 @@ class DataSheet implements DataSheetInterface
                     $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($col->getValues(false))), EXF_COMPARATOR_IN);
                 }
                 // Do not update the UID attribute if it is neither editable nor required
+                // Note, that the UID values will still be passed to the query, however not as a
+                // separate value query part, but rather as references for each other value.
+                // See ValueQueryPart for details.
                 if ($uidAttr->isEditable() === false && $uidAttr->isRequired() === false) {
                     continue;
                 }
@@ -3233,7 +3239,7 @@ class DataSheet implements DataSheetInterface
                     case $dataType instanceof StringDataType:
                         // Truncate strings that go beyond human-readable lengths.
                         foreach ($col->getValues() as $rowNo => $value) {
-                            if($value !== null && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
+                            if($value !== null && is_string($value) && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
                                 $col->setValue($rowNo, mb_substr($value, 0, self::DEBUG_STRING_MAX_LENGTH) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')');
                             }
                         }
@@ -3241,12 +3247,20 @@ class DataSheet implements DataSheetInterface
                     case $dataType instanceof DataSheetDataType:
                         // Truncate strings that go beyond human-readable lengths.
                         foreach ($col->getValues() as $rowNo => $value) {
-                            if ($value instanceof DataSheetInterface) {
-                                $subsheet = $value;
-                            } else {
-                                $subsheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $value);
+                            switch (true) {
+                                case $value instanceof DataSheetInterface:
+                                    $subsheet = $value;
+                                    break;
+                                case is_array($value):
+                                case $value instanceof UxonObject: 
+                                    $subsheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $value);
+                                    break;
+                                default:
+                                    $subsheet = null;
                             }
-                            $col->setValue($rowNo, $subsheet->createDebugSheet()->exportUxonObject()->toArray());
+                            if ($subsheet !== null) {
+                                $col->setValue($rowNo, $subsheet->createDebugSheet()->exportUxonObject()->toArray());
+                            }
                         }
                         break;
                 }
@@ -3357,10 +3371,10 @@ class DataSheet implements DataSheetInterface
     {
         $cnt = $this->countRows();
         if ($cnt === 0) {
-            throw new DataSheetStructureError($this, "Data is empty while exactly one row is expected");
+            throw new DataNotFoundError($this, 'No data for "' . $this->getMetaObject()->__toString() . '" was found while expacting exaclty one row');
         }
         if ($cnt > 1) {
-            throw new DataSheetStructureError($this, "Multiple data rows found while exactly one is expected");
+            throw new DataNotFoundError($this, 'Found multiple data rows for "' . $this->getMetaObject()->__toString() . '" while expecting exaclty one row');
         }
         return $this->rows[0];
     }

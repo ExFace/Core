@@ -768,4 +768,29 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         return $this;
     }
+
+    /**
+     * Value widgets are affected by their own object and any objects in the relation path
+     * if the value belongs to a relation attribute.
+     * 
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        // Objects used in columns
+        
+        if ($this->isBoundToAttribute()) {
+            $attr = $this->getAttribute();
+            $relPath = $attr->getRelationPath();
+            if (! $relPath->isEmpty()) {
+                foreach ($relPath->getRelations() as $rel) {
+                    $objs[] = $rel->getLeftObject();
+                    $objs[] = $rel->getRightObject();
+                }
+            }
+        }
+        return array_unique($objs);
+    }
 }

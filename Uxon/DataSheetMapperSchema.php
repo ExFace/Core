@@ -3,6 +3,7 @@ namespace exface\Core\Uxon;
 
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * UXON-schema class for data data sheet mappers.
@@ -104,10 +105,11 @@ class DataSheetMapperSchema extends UxonSchema
      */
     public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '', string $prototypeClass = null)
     {
-        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'from' && $uxon->hasProperty('from_object_alias')) {
+        $pathEnd = $path[count($path)-1];
+        if ($propertyName === 'object_alias' && ($pathEnd === 'from' || StringDataType::startsWith($pathEnd, 'from_')) && $uxon->hasProperty('from_object_alias')) {
             return $uxon->getProperty('from_object_alias');
         }
-        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'to' && $uxon->hasProperty('to_object_alias')) {
+        if ($propertyName === 'object_alias' && ($pathEnd === 'to' || StringDataType::startsWith($pathEnd, 'to_')) && $uxon->hasProperty('to_object_alias')) {
             return $uxon->getProperty('to_object_alias');
         }
         return parent::getPropertyValueRecursive($uxon, $path, $propertyName, $rootValue, $prototypeClass);

@@ -13,6 +13,9 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * 
  * **NOTE:** an effect on a specific object, does not guarantee, that it will be changed every
  * time the action is performed - it only means, the action **can** modify that object.
+ * 
+ * @see \exface\Core\Interfaces\WidgetInterface::getMetaObjectsEffectingThisWidget()
+ * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffects()
  *
  * @author Andrej Kabachnik
  *        

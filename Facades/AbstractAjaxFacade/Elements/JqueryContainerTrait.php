@@ -254,17 +254,8 @@ JS;
     protected function buildJsRegisterOnActionPerformed(string $scriptJs) : string
     {
         $relatedObjAliases = [];
-        foreach ($this->getWidget()->getWidgetsRecursive() as $child) {
-            if (! (($child instanceof iShowSingleAttribute) && $child->isBoundToAttribute())) {
-                continue;
-            }
-            $attr = $child->getAttribute();
-            if ($attr->getRelationPath()->isEmpty()) {
-                continue;
-            }
-            foreach ($attr->getRelationPath()->getRelations() as $rel) {
-                $relatedObjAliases[] = $rel->getRightObject()->getAliasWithNamespace();
-            }
+        foreach ($this->getWidget()->getMetaObjectsEffectingThisWidget() as $obj) {
+            $relatedObjAliases[] = $obj->getAliasWithNamespace();
         }
         $relatedObjAliasesJs = json_encode(array_values(array_unique($relatedObjAliases)));
         $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
