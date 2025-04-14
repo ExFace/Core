@@ -12,7 +12,7 @@ CREATE TABLE `etl_step_notes` (
   `log_level` varchar(20) DEFAULT NULL,
   `exception_flag` tinyint DEFAULT NULL,
   `exception_message` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci,
-  `exception_log_oid` varchar(50) DEFAULT NULL,
+  `exception_log_id` varchar(50) DEFAULT NULL,
   `count_reads` int DEFAULT NULL,
   `count_writes` int DEFAULT NULL,
   `count_creates` int DEFAULT NULL,
