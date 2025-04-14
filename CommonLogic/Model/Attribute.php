@@ -20,6 +20,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectModelError;
 use exface\Core\Interfaces\Selectors\AttributeGroupSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 
 /**
  * 
@@ -45,9 +46,9 @@ class Attribute implements MetaAttributeInterface
 
     private $data_address_properties;
 
-    private $data_type_selector;
+    private $data_type_selector = null;
 
-    private $data_type;
+    private $data_type = null;
 
     private $calculationString = null;
     
@@ -212,35 +213,58 @@ class Attribute implements MetaAttributeInterface
      */
     public function getDataType()
     {
-        if ($this->data_type === null && is_string($this->data_type_selector) === true){
-            try {
-                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type_selector)->copy();
-                $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
-            } catch (\Throwable $e) {
-                throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
-            }
+        switch (true) {
+            case $this->data_type !== null:
+                return $this->data_type;
+            case $this->data_type_selector !== null:
+                try {
+                    if ($this->data_type_selector instanceof DataTypeSelectorInterface) {
+                        $this->data_type = DataTypeFactory::createFromSelector($this->data_type_selector)->copy();
+                    } else {
+                        $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type_selector)->copy();
+                    }
+                    $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
+                } catch (\Throwable $e) {
+                    throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+                }
+                break;
+            case $this->custom_data_type_uxon !== null:
+                try {
+                    $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->getCustomDataTypeUxon());
+                } catch (\Throwable $e) {
+                    throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+                }
+                break;
+            default: 
+                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
         }
         return $this->data_type;
     }
     
     /**
+     * @uxon-property data_type
+     * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
+     * @uxon-template {"alias": ""}
      * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataType()
      */
-    public function setDataType($instance_or_resolvable_string)
+    public function setDataType($instanceOrSelectorOrUxon)
     {
         switch (true) {
-            case is_string($instance_or_resolvable_string):
-                $this->data_type_selector = $instance_or_resolvable_string;
+            case is_string($instanceOrSelectorOrUxon):
+            case $instanceOrSelectorOrUxon instanceof DataTypeSelectorInterface:
+                $this->data_type_selector = $instanceOrSelectorOrUxon;
                 $this->data_type = null;
                 break;
-            case $instance_or_resolvable_string instanceof DataTypeInterface:
-                $this->data_type_selector = $instance_or_resolvable_string->getAliasWithNamespace();
-                $this->data_type = $instance_or_resolvable_string;
+            case $instanceOrSelectorOrUxon instanceof DataTypeInterface:
+                $this->data_type_selector = $instanceOrSelectorOrUxon->getAliasWithNamespace();
+                $this->data_type = $instanceOrSelectorOrUxon;
+                break;
+            case $instanceOrSelectorOrUxon instanceof UxonObject:
+                $this->setCustomDataTypeUxon($instanceOrSelectorOrUxon);
                 break;
             default: 
-                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
+                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": expecting selector, a valid UXON or a data type class instance - received "' . gettype($instanceOrSelectorOrUxon) . '"!');
         }
         return $this;
     }

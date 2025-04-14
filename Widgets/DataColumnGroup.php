@@ -361,7 +361,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     {
         // Create the column
         $column = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getColumnDefaultWidgetType());
-        
+        if (! $column instanceof DataColumn) {
+            throw new WidgetConfigurationError($this->getDataWidget(), 'Invalid column widget type "' . $column->getWidgetType() . '" for column "' . $column->getDataColumnName() . '" in widget "' . $this->getDataWidget()->getWidgetType() . '": expecting "DataColumn" or a derivative');
+        }
         return $column;
     }
 
