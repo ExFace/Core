@@ -62,6 +62,8 @@ use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\DataSheets\DataNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetDuplicatesError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -3369,10 +3371,10 @@ class DataSheet implements DataSheetInterface
     {
         $cnt = $this->countRows();
         if ($cnt === 0) {
-            throw new DataSheetStructureError($this, "Data is empty while exactly one row is expected");
+            throw new DataNotFoundError($this, 'No data for "' . $this->getMetaObject()->__toString() . '" was found while expacting exaclty one row');
         }
         if ($cnt > 1) {
-            throw new DataSheetStructureError($this, "Multiple data rows found while exactly one is expected");
+            throw new DataNotFoundError($this, 'Found multiple data rows for "' . $this->getMetaObject()->__toString() . '" while expecting exaclty one row');
         }
         return $this->rows[0];
     }
