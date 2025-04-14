@@ -637,9 +637,9 @@
             }
         },
         {
-            "_EXPORT_SUMMARY": "Exception log oid [EXCEPTION_LOG_ID]",
+            "_EXPORT_SUMMARY": "Exception log id [EXCEPTION_LOG_ID]",
             "CREATED_ON": "2025-04-10 15:20:54",
-            "MODIFIED_ON": "2025-04-11 15:36:09",
+            "MODIFIED_ON": "2025-04-14 13:40:47",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0ad6ba1a1c93cad6bedeab5e73668",
@@ -656,13 +656,13 @@
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Exception log oid",
+            "NAME": "Exception log id",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
             "ALIAS": "EXCEPTION_LOG_ID",
-            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
-            "DATA_ADDRESS": "exception_log_oid",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "exception_log_id",
             "OBJECT": "0x11f085399b3c3e5685398b68769b2c78",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -676,9 +676,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": null,
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": {
-                "SQL_DATA_TYPE": "binary"
-            },
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
