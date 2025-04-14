@@ -639,7 +639,7 @@
         {
             "_EXPORT_SUMMARY": "Exception log id [EXCEPTION_LOG_ID]",
             "CREATED_ON": "2025-04-10 15:20:54",
-            "MODIFIED_ON": "2025-04-14 13:40:47",
+            "MODIFIED_ON": "2025-04-14 13:47:29",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0ad6ba1a1c93cad6bedeab5e73668",
@@ -671,7 +671,7 @@
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 0,
-            "RELATED_OBJ": "0x11e7359214da6ecbba83e4b318306b9a",
+            "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": null,
