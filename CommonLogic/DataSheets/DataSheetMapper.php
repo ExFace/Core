@@ -1342,8 +1342,8 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Looks up a value in a separate data sheet and places it in the to-column
      *
      * @uxon-property lookup_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping[]
-     * @uxon-template [{"to": "", "lookup_object_alias": "", "lookup_column": "", "match": [{"from": "", "lookup":""}]}]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\LookupMapping[]
+     * @uxon-template [{"to": "// place looked up value in this column of the to-data", "lookup_object_alias": "// Look in this object", "lookup_column": "// Read this attribute or expression", "match": [{"from": "// match from-data column", "lookup":"// to lookup object column"}]}]
      *
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface

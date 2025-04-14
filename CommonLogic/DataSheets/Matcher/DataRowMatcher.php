@@ -164,7 +164,7 @@ class DataRowMatcher implements DataMatcherInterface
                 $this->mainSheet->getRows(),
                 $this->compareSheet->getRows(),
                 $this->compareColumns,
-                );
+            );
         }
         return $this->matches;
     }
@@ -273,7 +273,8 @@ class DataRowMatcher implements DataMatcherInterface
                     $mainVal = $mainRow[$key];
                     $checkVal = $checkRow[$key];
                     // If both values are strings, use a case-insensitive comparison if required
-                    // Otherwise compare directly
+                    // Otherwise compare directly, but WITHOUT strict type check. This ensures,
+                    // that a string "1" is equal to an integer 1, etc.
                     if (is_string($mainVal) && is_string($checkVal) && $caseSensitive === false) {
                         if (strcasecmp($mainVal, $checkVal) !== 0) {
                             $isDuplicate = false;
@@ -294,7 +295,8 @@ class DataRowMatcher implements DataMatcherInterface
                         $mainVal = $mainRow[$key];
                         $checkVal = $checkRow[$key];
                         // If both values are strings, use a case-insensitive comparison if required
-                        // Otherwise compare directly
+                        // Otherwise compare directly, but WITHOUT strict type check. This ensures,
+                        // that a string "1" is equal to an integer 1, etc.
                         if (is_string($mainVal) && is_string($checkVal) && $caseSensitive === false) {
                             if (strcasecmp($mainVal, $checkVal) === 0) {
                                 $isUidMatch = true;

@@ -438,11 +438,8 @@ class DebugContext extends AbstractContext
                                     'object_alias' => 'exface.Core.TRACE_LOG',
                                     'caption' => $translator->translate('CONTEXT.DEBUG.TRACES_LIST_CAPTION'),
                                     'multi_select' => true,
+                                    'width' => 3,
                                     'filters' => [
-                                        [
-                                            'attribute_alias' => 'NAME',
-                                            'caption' => $translator->translate('CONTEXT.DEBUG.TRACE_NAME')
-                                        ],
                                         [
                                             'attribute_alias' => 'ACTION'
                                         ],
@@ -451,6 +448,10 @@ class DebugContext extends AbstractContext
                                         ],
                                         [
                                             'attribute_alias' => 'URL'
+                                        ],
+                                        [
+                                            'attribute_alias' => 'USER',
+                                            'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername()
                                         ]
                                     ],
                                     'columns' => [
@@ -466,6 +467,9 @@ class DebugContext extends AbstractContext
                                         ],
                                         [
                                             'attribute_alias' => 'URL'
+                                        ],
+                                        [
+                                            'attribute_alias' => 'USER'
                                         ]
                                     ],
                                     'sorters' => [

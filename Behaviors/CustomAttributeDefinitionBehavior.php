@@ -495,14 +495,14 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $alias = $this->getAliasFromName($name);
             }
             
+            // Instantiate a new custom attribute
             $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageBehavior());
             $attr->setDataAddress($address);
-            $attr->setDataType($typeModel[self::KEY_DATA_TYPE]);
             
             // Remove properties from the template that should not be applied to the attribute.
-            unset($typeModel[self::KEY_DATA_TYPE]);
             unset($typeModel[self::KEY_INHERITS_FROM]);
             unset($typeModel[$nameAlias]);
+
             // Apply the template.
             if (! empty($typeModel)) {
                 $typeModelUxon = new UxonObject($typeModel);
@@ -521,6 +521,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 }
                 $attr->importUxonObject($typeModelUxon);
             }
+
             // Set values that were not stored in the template.
             if ($hintAlias !== null) {
                 $attr->setShortDescription($definitionRow[$hintAlias]);
@@ -528,7 +529,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             if ($requiredAlias !== null) {
                 $attr->setRequired($definitionRow[$requiredAlias]);
             }
-            
+            // Add attribute groups
             if($groupsAlias !== null) {
                 $delimiter = $this->getObject()->getAttribute($groupsAlias)->getValueListDelimiter();
                 $groups = explode($delimiter, $definitionRow[$groupsAlias] ?? '');
@@ -541,6 +542,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 }
             }
             
+            // Attach the attribute to the object
             $targetObject->getAttributes()->add($attr);
             $attrs[] = $attr;
             $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
@@ -599,6 +601,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
         }
         $aliases = array_unique($aliases);
+        // If array_unique() produces gaps, the array is recognized as an asscociative array
+        // from this point on. This makes trouble: for example, the InputSelect widget
+        // produced for the default editor interprets it as key-value pairs and not
+        // as a simple list of values. To avoid this, reindex the array here.
+        $aliases = array_values($aliases);
         return $aliases;
     }
     

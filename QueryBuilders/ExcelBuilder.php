@@ -300,6 +300,10 @@ class ExcelBuilder extends FileBuilder
 
                         // specif range
                         foreach ($headerData as $columnLetter => $columnName) {
+                            $columnName = trim($columnName);
+                            if ($columnName === null || $columnName === '') {
+                                continue;
+                            }
                             // Define the range from the second row to the last row
                             $range = "{$columnLetter}2:{$columnLetter}{$highestRow}";
 

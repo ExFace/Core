@@ -45,7 +45,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
      * 
      * @param \exface\Core\Interfaces\WorkbenchInterface $workbench
      * @param MetaObjectSelectorInterface|string $selectorOrString
-     * @throws \exface\Core\Exceptions\InvalidArgumentException
+     * @throws \exface\Core\Exceptions\Model\MetaObjectNotFoundError
      * @return MetaObjectInterface
      */
     public static function create(WorkbenchInterface $workbench, $selectorOrString) : MetaObjectInterface
@@ -60,7 +60,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
                 $selector = $selectorOrString;
                 break;
             default:
-                throw new InvalidArgumentException('Invalid meta object selector provided: expecting string or instantiated MetaObjectSelector, received ' . gettype($selectorOrString));
+                throw new MetaObjectNotFoundError('Invalid meta object selector provided: expecting string or instantiated MetaObjectSelector, received ' . gettype($selectorOrString));
         }
 
         if (null !== $cache = static::getCache($selectorString)) {
@@ -127,7 +127,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
             $obj = $workbench->model()->getModelLoader()->loadObjectByAlias($workbench->getApp($namespace), $alias);
             static::setCache($obj);
         } catch (AppNotFoundError $e) {
-            throw new MetaObjectNotFoundError('Meta object "' . $fullAlias . '" not found! Invalid app namespace "' . $namespace . '"!');
+            throw new MetaObjectNotFoundError('Meta object "' . $fullAlias . '" not found! Invalid app namespace "' . $namespace . '"!', null, $e);
         }
         return $obj;
     }
@@ -255,7 +255,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
                 $type = DataTypeFactory::createBaseDataType($obj->getWorkbench());
                 break;
             default:
-                throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . get_class($dataTypeOrSelector));
+                throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . gettype($dataTypeOrSelector));
         }
 
         $attr->setDataType($type);
@@ -305,10 +305,10 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     private static function getCache(string $uidOrAlias) : ?MetaObjectInterface
     {
         // Check cache
-        if (null !== $cache = static::$cacheByUid[$uidOrAlias] ?? null) {
+        if (null !== $cache = static::$cacheByUid[static::getCacheKey($uidOrAlias)] ?? null) {
             return $cache;
         }
-        if (null !== $cache = static::$cacheByAlias[$uidOrAlias] ?? null) {
+        if (null !== $cache = static::$cacheByAlias[static::getCacheKey($uidOrAlias)] ?? null) {
             return $cache;
         }
         // If not found in the regular caches, check the temporary cache for loading objects.
@@ -331,8 +331,8 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     private static function setCache(MetaObjectInterface $obj, bool $notFullyLoaded = false) : void
     {
         if ($notFullyLoaded === false) {
-            static::$cacheByAlias[$obj->getAliasWithNamespace()] = $obj;
-            static::$cacheByUid[$obj->getId()] = $obj;
+            static::$cacheByAlias[static::getCacheKey($obj->getAliasWithNamespace())] = $obj;
+            static::$cacheByUid[static::getCacheKey($obj->getId())] = $obj;
             foreach (static::$cacheLoading as $key => $loadingObj) {
                 if ($loadingObj->getAliasWithNamespace() === $obj->getAliasWithNamespace() || $loadingObj->getId() === $obj->getId()) {
                     unset(static::$cacheLoading[$key]);
@@ -368,12 +368,23 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
             if ($dropTempObjects === false && in_array($obj, self::$tempObjects)) {
                 return;
             }
-            unset(static::$cacheByAlias[$obj->getAliasWithNamespace()]);
-            unset(static::$cacheByUid[$obj->getId()]);
+            unset(static::$cacheByAlias[static::getCacheKey($obj->getAliasWithNamespace())]);
+            unset(static::$cacheByUid[static::getCacheKey($obj->getId())]);
             if ($disableBehaviors === true) {
                 $obj->getBehaviors()->disableTemporarily(true);
             }
         }
         return;
+    }
+
+    /**
+     * Normalizes the given UID or alias to a cache key.
+     * 
+     * @param string $uidOrAlias
+     * @return string
+     */
+    private static function getCacheKey(string $uidOrAlias) : string
+    {
+        return mb_strtoupper($uidOrAlias);
     }
 }
