@@ -36,6 +36,7 @@ use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToAttribute;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -905,7 +906,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 return null;
             }
             $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
-                return ($child instanceof iTakeInput) && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) && $child->isBoundToAttribute() && $child->getAttributeAlias() === $attrAlias;
+                return ($child instanceof iTakeInput) 
+                    && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) 
+                    && ($child instanceof iCanBeBoundToAttribute)
+                    && $child->isBoundToAttribute() 
+                    && $child->getAttributeAlias() === $attrAlias;
             });
             if (! $w = $matches[0] ?? null) {
                 /*
