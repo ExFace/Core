@@ -72,10 +72,10 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                 case $column->isStatic():
                     $column->setValuesByExpression($column->getExpressionObj(), true);
                     break;
-                // If we are adding a column, that is bound to an attribute, but also has a formula, we need to
-                // calculate the values for this column from the formula. We can still concider it "fresh" because
-                // no data source read is needed - a recalculation is enough.
-                case $column->isCalculated():
+                // If we are adding a column, that is bound to an attribute, but also has a static formula, we need 
+                // to calculate the values for this column from the formula. We can still concider it "fresh" because
+                // no data source read is needed for the static formula- a recalculation is enough.
+                case $column->isCalculated() && $column->getFormula()->isStatic():
                     $column->setValuesByExpression($column->getFormula(), true);
                     break;
                 default:
