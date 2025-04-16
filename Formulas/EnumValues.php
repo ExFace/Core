@@ -13,13 +13,15 @@ use exface\Core\DataTypes\StringDataType;
  * 
  * ### Filters
  * 
- * You can filter the results by providing a filter string as third parameters. You can use the following filters:
+ * You can filter the results by providing a filter string as third parameters:
  * - The general syntax is `'[label]<Comparator><Value>'`
- * - `'=40'` (IS) and '!=40' (NOT IS): Checks if both values are of the same datatype.
- * - `'==40'` (EQUALS) and '!==40' (NOT EQUALS): Checks if both values are the same (datatype and value).
- * - `'[20,40'` (IN) and '![20,40' (NOT IN): Checks if the input value can be found in the given list of values.
- * - `'<40'` (LESS) and '>40' (GREATER): Checks if the input value is less or greater than the given value.
- * - `'<=40'` (LESS OR EQUAL) and '>=40' (GREATER OR EQUAL): Same as above, but matching equals as well.
+ * 
+ * You can use the following filters:
+ * - `'=40'` (IS) and `'!=40'` (NOT IS): Checks if both values are of the same datatype.
+ * - `'==40'` (EQUALS) and `'!==40'` (NOT EQUALS): Checks if both values are identical (datatype and value).
+ * - `'[20,40'` (IN) and `'![20,40'` (NOT IN): Checks if the input value can be found in the given list of values.
+ * - `'<40'` (LESS) and `'>40'` (GREATER): Checks if the input value is less or greater than the given value.
+ * - `'<=40'` (LESS OR EQUAL) and `'>=40'` (GREATER OR EQUAL): Same as above, but matching equals as well.
  * 
  * You can filter for the label instead, if you prepend `label` before your comparator, like so:
  * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS','label==Ticket')` only returns entries where the label equals 'Ticket', i.e. '40'.
