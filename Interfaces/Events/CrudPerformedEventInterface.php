@@ -5,7 +5,7 @@ namespace exface\Core\Interfaces\Events;
 /**
  * Interface for events that are triggered just before commiting a CRUD (Create, Read, Update, Delete) operation.
  */
-interface CrudPerformedEventInterface
+interface CrudPerformedEventInterface extends DataSheetEventInterface
 {
     /**
      * Get the number of rows affected by the source operation.
