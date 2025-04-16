@@ -156,6 +156,30 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * }
  * 
  * ```
+ * 
+ * ### Filter with a custom condition group based on widget links
+ * 
+ * ```
+ * {
+ *   "hidden": true,
+ *   "condition_group": {
+ *     "operator": "OR",
+ *     "conditions": [
+ *       {
+ *         "expression": "relation1",
+ *         "comparator": "==",
+ *         "value": "=WidgetId1"
+ *       },
+ *       {
+ *         "expression": "relation2",
+ *         "comparator": "==",
+ *         "value": "=WidgetId2"
+ *       }
+ *     ]
+ *   }
+ * }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
@@ -1178,9 +1202,13 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     /**
      * A custom condition group to apply instead of simply comparing attribute_alias to value.
      * 
-     * The condition group can include any conditions or even nested groups. The value of the filter
-     * widget can be used in the conditions by setting their `value` to the placeholder `[#value#]`.
-     * Static values can be used too!
+     * The condition group can include any conditions or even nested groups. Condition can use the
+     * following expressions for their `value`:
+     * 
+     * - `[#value#]` - this special placeholder will be replaced by the current value of the filters
+     * `input_widget`. 
+     * - static formulas like `=User()`
+     * - widget links like `=WidgetId1` or `=TableId!ATTRIBUTE_ALIAS`
      * 
      * Filters with custom `condition_group` can be easily mixed with simple filters. In the resulting
      * condition group, the latter will yield conditions and the former will produce nested condition
@@ -1231,6 +1259,30 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *         "expression": "visible_flag",
      *         "comparator": "==",
      *         "value": "1"
+     *       }
+     *     ]
+     *   }
+     * }
+     * 
+     * ```
+     * 
+     * ### Using linked widgets
+     * 
+     * ```
+     * {
+     *   "hidden": true,
+     *   "condition_group": {
+     *     "operator": "OR",
+     *     "conditions": [
+     *       {
+     *         "expression": "relation1",
+     *         "comparator": "==",
+     *         "value": "=WidgetId1"
+     *       },
+     *       {
+     *         "expression": "relation2",
+     *         "comparator": "==",
+     *         "value": "=WidgetId2"
      *       }
      *     ]
      *   }
