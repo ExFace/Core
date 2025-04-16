@@ -36,13 +36,25 @@ class DocsFacade extends AbstractHttpFacade
 
     const URL_PARAM_RENDER_PRINT = 'print';
 
-    const URL_PARAM_RENDER_LOGO_PATH = 'logoPath';
+    const URL_PARAM_RENDER_CHAPTER = 'chapter';
 
     const URL_PARAM_FILE_NAME = 'fileName';
 
+    const URL_PARAM_RENDER_LOGO_PATH = 'logoPath';
+
     const URL_PARAM_HEADER_TITLE = 'headerTitle';
 
-    const URL_PARAM_RENDER_CHAPTER = 'chapter';
+    const URL_PARAM_MARGIN_RIGHT = 'marginRight';
+
+    const URL_PARAM_MARGIN_LEFT = 'marginLeft';
+    
+    private $logoPath = null;
+
+    private $headerTitle = null;
+
+    private $marginRight = null;
+    
+    private $marginLeft = null;
     
     private $processedLinks = [];
     private $processedLinksKey = 0;
@@ -97,8 +109,10 @@ class DocsFacade extends AbstractHttpFacade
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
                 $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));       
                 $response = $handler->handle($request);
-                $logoPath = $request->getQueryParams()[self::URL_PARAM_RENDER_LOGO_PATH];
-                $headerTitle = $request->getQueryParams()[self::URL_PARAM_HEADER_TITLE];
+                $this->logoPath = $request->getQueryParams()[self::URL_PARAM_RENDER_LOGO_PATH];
+                $this->headerTitle = $request->getQueryParams()[self::URL_PARAM_HEADER_TITLE];
+                $this->marginRight = $request->getQueryParams()[self::URL_PARAM_MARGIN_RIGHT];
+                $this->marginLeft = $request->getQueryParams()[self::URL_PARAM_MARGIN_LEFT];
                 $htmlString = $response->getBody()->__toString();
 
                 // Set the title and file name for the PDF
@@ -109,7 +123,7 @@ class DocsFacade extends AbstractHttpFacade
                     $htmlString
                 );
 
-                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString(), $logoPath, $headerTitle);
+                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString());
 
                 $response = new Response(200, [], $htmlString);
                 $response = $response->withHeader('Content-Type', 'text/html');
@@ -170,7 +184,7 @@ class DocsFacade extends AbstractHttpFacade
      * @param string $logoPath
      * @return string
      */
-    protected function printCombinedPages(string $htmlString, string $requestUri, ?string $logoPath, ?string $headerTitle) : string
+    protected function printCombinedPages(string $htmlString, string $requestUri) : string
     {
         // Find all links in first document page
         $linksArray = $this->findLinksInHtml($htmlString);
@@ -182,17 +196,10 @@ class DocsFacade extends AbstractHttpFacade
         $htmlString = $this->replaceHrefChapters($htmlString);
         $htmlString = $this->replaceHrefImages($htmlString);
 
-        // Attach print function to end of html to show print window when accessing the HTML
-        // Also add an arrow as a header element to jump back to the first page in the PDF
+        // Attach css and print function to end of html to style the printed document and to open print window when accessing the HTML
         $printString = 
         '<style>
             @media print {
-                body {
-                    margin-top: 2cm;
-                    margin-bottom: 2cm;
-                    margin-left: 0.2cm;
-                    margin-right: 0.2cm;
-                }
             
                 header {
                     position: fixed;
@@ -228,21 +235,30 @@ class DocsFacade extends AbstractHttpFacade
                     z-index: 9999;     
                 }
 
-            @page {
-                margin-top: 1cm;
-                margin-bottom: 1cm;
-                margin-left: 0.2cm;
-                margin-right: 0.2cm;
-                
+            @page {';
+
+                // Only set custom right and left margins to control the distance between right and left page borders and content of the page 
+                // if a $rightMargin and $leftMargin has been given via query params
+                if ($this->marginRight !== null) {
+                    $printString .= 
+                        'margin-right: ' . $this->marginRight . 'cm;';
+                }
+
+                if ($this->marginLeft !== null) {
+                    $printString .= 
+                        'margin-left: ' . $this->marginLeft . 'cm;';
+                }
+
                 /* Add page counter to footer */
-                @bottom-center {
+                $printString .=
+                '@bottom-center {
                     content: counter(page);
                     font-size: 0.8em;
                     color: #666;
                 }
                 /* Add project name to header */
                 @top-center {
-                    content: "' . $headerTitle . '";
+                    content: "' . $this->headerTitle . '";
                     font-size: 0.8em;
                     color: #666;
                 }
@@ -250,12 +266,13 @@ class DocsFacade extends AbstractHttpFacade
         </style>
             
         <header>
+            <!-- Add an up-arrow to every page to be able to jump back to page 1 of the document -->
             <a href="#' . $this->getAnchor($requestUri) . '">↑</a>';
 
             // Only add a logo if a $logoPath has been given via query param
-            if ($logoPath !== null) {
+            if ($this->logoPath !== null) {
                 $printString .= 
-                    '<img src="' . $logoPath .  '" alt="Logo">';
+                    '<img src="' . $this->logoPath .  '" alt="Logo">';
             }
 
     $printString .= 
