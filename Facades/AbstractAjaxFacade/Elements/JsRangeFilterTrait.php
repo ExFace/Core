@@ -41,6 +41,7 @@ trait JsRangeFilterTrait
             $filterFromUxon = new UxonObject([
                 'widget_type' => 'Filter',
                 'hide_caption' => true,
+                'required' => $widget->isRequired(),
                 'input_widget' => $inputUxon
             ]);
             $filterFromUxon->setProperty('comparator', $widget->getComparatorFrom());
@@ -148,6 +149,43 @@ trait JsRangeFilterTrait
     }
 }())
 JS;
+    }
+    
+    /**
+     * Since the range filter is a group of two filters, we need to validate both of them.
+     * @param mixed $valJs
+     * @return string
+     */
+    public function buildJsValidator(?string $valJs = null) : string
+    {
+        $widget = $this->getWidget();
+        $aValidatorScripts = [];
+        foreach ($this->getWidgetInlineGroup()->getWidgets() as $w) {
+            $aValidatorScripts[] = $this->getFacade()->getElement($w)->buildJsValidator();
+        }
+        $validatorJS = implode('&&', $aValidatorScripts);
+        $constraintsJs = '';
+        if ($widget->isRequired() === true) {
+            $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
+        }
+        
+        $valJs = $valJs ?? $this->buildJsValueGetter();
+        if ($constraintsJs !== '') {
+            return <<<JS
+
+                    (
+                    (function(val){
+                    	console.log('Ich bin hier');
+                        var bConstraintsOK = true;
+                        $constraintsJs;
+                        return bConstraintsOK;
+                    })($valJs) 
+                    && {$validatorJS}
+                    )
+JS;
+        } else {
+            return $validatorJS;
+        }
     }
     
     /**
