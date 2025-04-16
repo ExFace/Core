@@ -1224,16 +1224,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *   "condition_group": {
      *     "operator": "OR",
      *     "conditions": [
-     *       {
-     *         "expression": "attr1",
-     *         "comparator": "=",
-     *         "value": "[#value#]"
-     *       },
-     *       {
-     *         "expression": "attr2",
-     *         "comparator": "=",
-     *         "value": "[#value#]"
-     *       }
+     *       {"expression": "attr1", "comparator": "=", "value": "[#value#]"},
+     *       {"expression": "attr2", "comparator": "=", "value": "[#value#]"}
      *     ]
      *   }
      * }
@@ -1250,16 +1242,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *   "condition_group": {
      *     "operator": "OR",
      *     "conditions": [
-     *       {
-     *         "expression": "attr1",
-     *         "comparator": "=",
-     *         "value": "[#value#]"
-     *       },
-     *       {
-     *         "expression": "visible_flag",
-     *         "comparator": "==",
-     *         "value": "1"
-     *       }
+     *       {"expression": "attr1", "comparator": "=", "value": "[#value#]"},
+     *       {"expression": "visible_flag", "comparator": "==", "value": "1"}
      *     ]
      *   }
      * }
@@ -1274,16 +1258,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *   "condition_group": {
      *     "operator": "OR",
      *     "conditions": [
-     *       {
-     *         "expression": "relation1",
-     *         "comparator": "==",
-     *         "value": "=WidgetId1"
-     *       },
-     *       {
-     *         "expression": "relation2",
-     *         "comparator": "==",
-     *         "value": "=WidgetId2"
-     *       }
+     *       {"expression": "relation1", "comparator": "==", "value": "=WidgetId1"},
+     *       {"expression": "relation2", "comparator": "==", "value": "=WidgetId2"}
      *     ]
      *   }
      * }
