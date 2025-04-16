@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
@@ -50,8 +52,21 @@ JSON;
             return '';
         }
 
+        $condGrp = $widget->getCustomConditionGroup();
+        $replacements = [
+            '"[#value#]"' => $valueJs ?? $this->buildJsValueGetter()
+        ];
+        foreach ($condGrp->getConditionsRecursive() as $cond) {
+            $val = $cond->getValue();
+            if (Expression::detectReference($val)) {
+                $valLink = WidgetLinkFactory::createFromWidget($widget, $val);
+                $valueGetterJs = $this->getFacade()->getElement($valLink->getTargetWidget())->buildJsValueGetter();
+                $replacements['"' . $val . '"' ] = $valueGetterJs;
+            }
+        }
+
         $jsonWithValuePlaceholder = $widget->getCustomConditionGroup()->exportUxonObject()->toJson(false);
-        return str_replace('"[#value#]"', $valueJs ?? $this->buildJsValueGetter(), $jsonWithValuePlaceholder);
+        return str_replace(array_keys($replacements), array_values($replacements), $jsonWithValuePlaceholder);
     }
     
     public function buildJsComparatorGetter()
