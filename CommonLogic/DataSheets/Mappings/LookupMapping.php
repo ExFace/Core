@@ -10,6 +10,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
+use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Uxon\DataSheetLookupMappingSchema;
@@ -94,6 +95,8 @@ class LookupMapping extends AbstractDataSheetMapping
     private $toExpression = null;
     private $createRowInEmptyData = true;
     private $matchesUxon = null;
+
+    private $ignoreIfMissingFromColumn = false;
     
     /**
      * 
@@ -200,6 +203,11 @@ class LookupMapping extends AbstractDataSheetMapping
         foreach($matches as $match) {
             $fromExpr = ExpressionFactory::createForObject($fromSheet->getMetaObject(), $match['from']);
             if (! $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)) {
+                // If not enough data, but explicitly configured to ignore it, exit here
+                if ($this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType())) {
+                    if ($logbook !== null) $logbook->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
+                    return $toSheet;
+                }
                 throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Missing column "' . $match['from'] . '" in from-data for a lookup mapping!');
             }
             $lookupSheet->getFilters()->addConditionFromValueArray($match['lookup'], $fromCol->getValues());
@@ -412,5 +420,33 @@ class LookupMapping extends AbstractDataSheetMapping
     public static function getUxonSchemaClass() : ?string
     {
         return DataSheetLookupMappingSchema::class;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function getIgnoreIfMissingFromColumn() : bool
+    {
+        return $this->ignoreIfMissingFromColumn;
+    }
+
+    /**
+     * Set to TRUE if this mapping is only to be applied if there is a corresponding from-data
+     * 
+     * By default the mapping will result in an error if the from-data does not have the 
+     * required data.
+     * 
+     * @uxon-property ignore_if_missing_from_column
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return DataColumnMapping
+     */
+    protected function setIgnoreIfMissingFromColumn(bool $trueOrFalse) : DataMappingInterface
+    {
+        $this->ignoreIfMissingFromColumn = $trueOrFalse;
+        return $this;
     }
 }
