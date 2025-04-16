@@ -66,11 +66,20 @@ class DataColumnList extends EntityList implements DataColumnListInterface
             // Mark the data as outdated if new columns are added because the values for these columns should be fetched now
             // Actually we do not need to mark static columns not fresh - we could recalculate them right away without
             // querying the data source.
-            if ($column->isStatic()) {
-                // If we are adding a static column, no data source refresh is actually needed - a recalculation is enough.
-                $column->setValuesByExpression($column->getExpressionObj(), true);
-            } else {
-                $column->setFresh(false);
+            switch (true) {
+                // If we are adding a static column, we calculate all values on its rows and concider it
+                // "fresh" because no data source refresh is needed - a recalculation is enough.
+                case $column->isStatic():
+                    $column->setValuesByExpression($column->getExpressionObj(), true);
+                    break;
+                // If we are adding a column, that is bound to an attribute, but also has a static formula, we need 
+                // to calculate the values for this column from the formula. We can still concider it "fresh" because
+                // no data source read is needed for the static formula- a recalculation is enough.
+                case $column->isCalculated() && $column->getFormula()->isStatic():
+                    $column->setValuesByExpression($column->getFormula(), true);
+                    break;
+                default:
+                    $column->setFresh(false);
             }
             
             return $this;            
