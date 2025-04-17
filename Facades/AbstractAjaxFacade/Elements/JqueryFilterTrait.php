@@ -2,8 +2,10 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
@@ -53,9 +55,29 @@ JSON;
         }
 
         $condGrp = $widget->getCustomConditionGroup();
-        $replacements = [
-            '"[#value#]"' => $valueJs ?? $this->buildJsValueGetter()
-        ];
+        $replacements = $this->getCustomConditionGroupReplacements($condGrp);
+
+        $jsonWithValuePlaceholder = $condGrp->exportUxonObject()->toJson(false);
+        return str_replace(array_keys($replacements), array_values($replacements), $jsonWithValuePlaceholder);
+    }
+
+    protected function getCustomConditionGroupReplacements(ConditionGroupInterface $condGrp) : array
+    {
+        $widget = $this->getWidget();
+        $replacements = [];
+        $condGrpStr = $condGrp->exportUxonObject()->toJson(false);
+        $phs = StringDataType::findPlaceholders($condGrpStr);
+        foreach ($phs as $ph) {
+            switch ($ph) {
+                case 'value':
+                case '~value':
+                    $replacements['"[#' . $ph . '#]"'] = $valueJs ?? $this->buildJsValueGetter();
+                    break;
+                default:
+                    throw new WidgetConfigurationError($this->getWidget(), 'Invalid placeholder "[#' . $ph . '#]" in custom condition_group of filter "' . $this->getWidget()->getCaption() . '"!');
+            }
+        }
+
         foreach ($condGrp->getConditionsRecursive() as $cond) {
             $val = $cond->getValue();
             if (Expression::detectReference($val)) {
@@ -64,9 +86,7 @@ JSON;
                 $replacements['"' . $val . '"' ] = $valueGetterJs;
             }
         }
-
-        $jsonWithValuePlaceholder = $widget->getCustomConditionGroup()->exportUxonObject()->toJson(false);
-        return str_replace(array_keys($replacements), array_values($replacements), $jsonWithValuePlaceholder);
+        return $replacements;
     }
     
     public function buildJsComparatorGetter()
@@ -143,8 +163,35 @@ JSON;
     {
         $widget = $this->getWidget();
         $constraintsJs = '';
+        $validateInputWidgetJs = "&& {$this->getInputElement()->buildJsValidator()}";
+
+        // If the filters itself is required, we need to double-check, it is not empty.
         if ($widget->isRequired() === true) {
-            $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
+            // However, the logic depends on whether the filter has a custom condition group or not.
+            // If it has, the filter is valid if at least one of the condition values is not empty.
+            if ($widget->hasCustomConditionGroup()) {
+                $valueGetters = $this->getCustomConditionGroupReplacements($widget->getCustomConditionGroup());
+                $valueGettersJs = implode(',', array_values($valueGetters));
+                $constraintsJs = <<<JS
+                
+                            var aValues = [{$valueGettersJs}];
+                            var aValuesNotEmpty = false;
+                            aValues.forEach(function(val) {
+                                if (val !== undefined && val !== null && val !== '') {
+                                    aValuesNotEmpty = true;
+                                }
+                            });
+                            bConstraintsOK = aValuesNotEmpty;
+JS;
+            } else {
+                $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
+            }
+        }
+
+        // Do not validate the original input widget if the filter has a custom condition group and it
+        // does not use the input widget.
+        if ($widget->hasCustomConditionGroup() && ($widget->isHidden() || ! $widget->isBoundToAttribute())) {
+            $validateInputWidgetJs = '';
         }
         
         $valJs = $valJs ?? $this->buildJsValueGetter();
@@ -152,12 +199,12 @@ JSON;
             return <<<JS
 
                     (
-                    (function(val){
-                        var bConstraintsOK = true;
-                        $constraintsJs;
-                        return bConstraintsOK;
-                    })($valJs) 
-                    && {$this->getInputElement()->buildJsValidator()}
+                        (function(val){
+                            var bConstraintsOK = true;
+                            $constraintsJs;
+                            return bConstraintsOK;
+                        })($valJs) 
+                        {$validateInputWidgetJs}
                     )
 JS;
         } else {
