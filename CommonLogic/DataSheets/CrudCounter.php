@@ -72,11 +72,11 @@ class CrudCounter implements WorkbenchDependantInterface
             $this->deletes = null;
             
             $this->objects = [];
-            foreach ($objects as $object) {
-                $this->addObject($object);
-            }
         }
 
+        foreach ($objects as $object) {
+            $this->addObject($object);
+        }
 
         $this->addListener(OnCreateDataEvent::getEventName(), 'createPerformed');
         $this->addListener(OnReadDataEvent::getEventName(), 'readPerformed');
