@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
 class NavButtonResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
@@ -86,7 +87,7 @@ class NavButtonResolver extends AbstractPlaceholderResolver implements Placehold
         $currentIndex = array_search(FilePathDataType::normalize($this->pagePath), array_column($files, 'link'));
         
         if ($currentIndex === false) {
-            return "Dosya liste içinde bulunamadi.";
+            "";
         }
         $prev = $currentIndex > 0 ? $files[$currentIndex - 1] : null;
         $next = $currentIndex < count($files) - 1 ? $files[$currentIndex + 1] : null;
