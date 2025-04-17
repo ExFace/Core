@@ -103,7 +103,8 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
         $sorter = new RowDataArraySorter();
         $sorter->addCriteria('title', SORT_ASC);
         return $sorter->sort($items);
-    }    
+    }
+    
     function renderMarkdownList($items, $listType, $depth, $level = 0) {
         $output = '';
         $indent = str_repeat("  ", $level);
