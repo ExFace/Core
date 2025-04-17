@@ -769,7 +769,13 @@ class DataSheet implements DataSheetInterface
             $this->sort($postprocessorSorters);
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new onReadDataEvent($this));
+        $this->getWorkbench()->eventManager()->dispatch(new onReadDataEvent(
+            $this,
+            null,
+            0,
+            $result->getAffectedRowsCounter()
+        ));
+        
         return $result->getAffectedRowsCounter();
     }
     
@@ -1238,7 +1244,11 @@ class DataSheet implements DataSheetInterface
         }
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
-        $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent($this, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent(
+            $this, 
+            $transaction,
+            $counter
+        ));
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
@@ -1719,7 +1729,11 @@ class DataSheet implements DataSheetInterface
         }
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheet\DataSheetInterface
-        $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent(
+            $this, 
+            $transaction, 
+            $result->getAffectedRowsCounter()
+        ));
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
@@ -1947,7 +1961,11 @@ class DataSheet implements DataSheetInterface
         }
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
-        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent(
+            $this, 
+            $transaction,
+            $affected_rows
+        ));
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
