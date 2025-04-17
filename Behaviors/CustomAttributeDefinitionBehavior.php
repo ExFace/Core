@@ -454,7 +454,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $logBook->addLine('No value was set for "relation_to_owner_object". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
         
-        $attributeDefinitionsSheet->dataRead();
+        try {
+            $attributeDefinitionsSheet->dataRead();
+        } catch (\Throwable $e) {
+            throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, null, $logBook);
+        }
         
         $logBook->addLine('Attribute definitions loaded successfully.');
         $logBook->addDataSheet('Attribute Definitions', $attributeDefinitionsSheet);
