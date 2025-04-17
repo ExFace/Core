@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Placeholders;
 
+use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
@@ -98,51 +99,11 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
             }
         }
     
-        return $this->sortItems($items);
-    }
-
-    function sortItems(array $items): array
-    {
-        usort($items, function ($a, $b) {
-            $aTitle = $a['title'] ?? '';
-            $bTitle = $b['title'] ?? '';
-    
-            $aIsNumeric = preg_match('/^\d+(\.\d+)*$/', $aTitle);
-            $bIsNumeric = preg_match('/^\d+(\.\d+)*$/', $bTitle);
-    
-            // take number started items first
-            if ($aIsNumeric && !$bIsNumeric) return -1;
-            if (!$aIsNumeric && $bIsNumeric) return 1;
-    
-            // if both start with number, devide and compare
-            if ($aIsNumeric && $bIsNumeric) {
-                $aParts = array_map('intval', explode('.', $aTitle));
-                $bParts = array_map('intval', explode('.', $bTitle));
-                $maxLen = max(count($aParts), count($bParts));
-    
-                for ($i = 0; $i < $maxLen; $i++) {
-                    $aPart = $aParts[$i] ?? 0;
-                    $bPart = $bParts[$i] ?? 0;
-                    if ($aPart < $bPart) return -1;
-                    if ($aPart > $bPart) return 1;
-                }
-                return 0;
-            }
-    
-            // if both start with alphabet compare
-            return strcmp($aTitle, $bTitle);
-        });
-    
-        // if it has children sort them recursively
-        foreach ($items as &$item) {
-            if (!empty($item['children']) && is_array($item['children'])) {
-                $item['children'] = $this->sortItems($item['children']);
-            }
-        }
-    
-        return $items;
-    }
-    
+        
+        $sorter = new RowDataArraySorter();
+        $sorter->addCriteria('title', SORT_ASC);
+        return $sorter->sort($items);
+    }    
     function renderMarkdownList($items, $listType, $depth, $level = 0) {
         $output = '';
         $indent = str_repeat("  ", $level);
