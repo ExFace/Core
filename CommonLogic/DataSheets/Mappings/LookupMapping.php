@@ -254,7 +254,7 @@ class LookupMapping extends AbstractDataSheetMapping
                     }
                     // Compare WITHOUT strict type checking here! This ensures, that "1" is equal to 1
                     // and "1.0" is equal to 1.0
-                    if ($matchVal != $fromVal) {
+                    if (trim($matchVal ?? '') != trim($fromVal ?? '')) {
                         continue 2;
                     }
                 }
