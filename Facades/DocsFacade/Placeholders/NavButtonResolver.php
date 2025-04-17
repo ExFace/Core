@@ -93,8 +93,8 @@ class NavButtonResolver extends AbstractPlaceholderResolver implements Placehold
         $next = $currentIndex < count($files) - 1 ? $files[$currentIndex + 1] : null;
         
         $buttons = [];
-        if ($prev) $buttons[] = $this->mdButon('Prev',$this->getRelativePath($this->pagePath, $prev['link']));
-        if ($next) $buttons[] = $this->mdButon('Next',$this->getRelativePath($this->pagePath, $next['link']));
+        if ($prev) $buttons[] = $this->mdButon('Zurück',$this->getRelativePath($this->pagePath, $prev['link']));
+        if ($next) $buttons[] = $this->mdButon('Weiter',$this->getRelativePath($this->pagePath, $next['link']));
 
         $buttonBlock = implode(' ', $buttons) . "\n";
         return $buttonBlock;
