@@ -241,6 +241,8 @@ class DataRowMatcher implements DataMatcherInterface
         
         // Extract and parse values relevant for the search. Do it once here in order to
         // improve performance on large data sets.
+        // If they are strings, trim them!
+        // IDEA perhaps we need to make the trim configurable?
         $mainRowsKeys = [];
         $checkRowsKeys = [];
         $keyCols = ($uidCol !== null ? array_merge($compareCols, [$uidCol]) : $compareCols);
@@ -248,10 +250,18 @@ class DataRowMatcher implements DataMatcherInterface
             $key = $col->getName();
             $type = $col->getDataType();
             foreach ($mainRows as $mainRowIdx => $mainRow) {
-                $mainRowsKeys[$mainRowIdx][$key] = $type->parse($mainRow[$key]);
+                $val = $type->parse($mainRow[$key]);
+                if (is_string($val)) {
+                    $val = trim($val);
+                }
+                $mainRowsKeys[$mainRowIdx][$key] = $val;
             }
             foreach ($checkRows as $checkRowIdx => $checkRow) {
-                $checkRowsKeys[$checkRowIdx][$key] = $type->parse($checkRow[$key]);
+                $val = $type->parse($checkRow[$key]);
+                if (is_string($val)) {
+                    $val = trim($val);
+                }  
+                $checkRowsKeys[$checkRowIdx][$key] = $val;
             }
         }
         
