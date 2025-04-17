@@ -317,7 +317,12 @@ class ExcelBuilder extends FileBuilder
 
                     // read column of given column name
                     $row_nr = 0;
-                    foreach ($worksheet->namedRangeToArray($rangeName, null, true, $formatValues, true) as $sheetRowNo => $colVals) {
+                    try {
+                        $range = $worksheet->namedRangeToArray($rangeName, null, true, $formatValues, true);
+                    } catch (\Throwable $e) {
+                        throw new QueryBuilderException('Cannot read column "' . $address . '" from worksheet "' . $worksheet->getTitle() . '": ' . $e->getMessage(), null, $e);
+                    }
+                    foreach ($range as $sheetRowNo => $colVals) {
                         foreach ($colVals as $val) {
                             $result_rows[$row_nr][$colKey] = $this->parseExcelValue($val, $attrType);
                         }
