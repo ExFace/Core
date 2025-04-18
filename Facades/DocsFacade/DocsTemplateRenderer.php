@@ -17,8 +17,8 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         $vals = $this->getPlaceholderValues(array_keys($phs));
         
         foreach ($phs as $ph => $phData) {
-            $val = $phData['comment'] . PHP_EOL . $vals[$ph] . PHP_EOL . '<!-- EOF ' . $phData['name'] . ' -->';
-            $regex = '/' . preg_quote($phData['comment'], '/') . '(.*?)<!-- EOF ' . preg_quote($phData['name'], '/') . ' -->/s';
+            $val = $phData['comment'] . PHP_EOL . $vals[$ph] . PHP_EOL . '<!-- END ' . $phData['name'] . ' -->';
+            $regex = '/' . preg_quote($phData['comment'], '/') . '(.*?)<!-- END ' . preg_quote($phData['name'], '/') . ' -->/s';
             if (preg_match_all($regex, $markdown, $matches)) {
                 foreach ($matches[0] as $match) {
                     $markdown = str_replace($match, $val, $markdown);
@@ -37,7 +37,7 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     protected function getPlaceholders(string $tpl) : array
     {
         // Regex to extract the comment block (e.g., <!-- ... -->)
-        $regex = '/<!-- BOF (([a-zA-Z0-9_]+):?\s*(.*)) -->/';
+        $regex = '/<!-- BEGIN (([a-zA-Z0-9_]+):?\s*(.*)) -->/';
         $matches = [
             // 0 => full match
             // 1 => placeholder with options
