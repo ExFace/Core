@@ -2,7 +2,7 @@
 
 -- Recommended by Azure Insights
 DROP INDEX IF EXISTS [IX_exf_notification_hide_from_inbox_user_oid] ON [dbo].[exf_notification];
-GO;
+GO
 CREATE NONCLUSTERED INDEX [IX_exf_notification_hide_from_inbox_user_oid] ON [dbo].[exf_notification] ( 
     [user_oid],
     [hide_from_inbox]
@@ -15,7 +15,7 @@ CREATE NONCLUSTERED INDEX [IX_exf_notification_hide_from_inbox_user_oid] ON [dbo
     [sent_on], 
     [title], 
     [widget_uxon]
-) WITH (ONLINE = ON);
+);
 
 -- DOWN
 
