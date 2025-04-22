@@ -938,7 +938,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             
             $objAlias = $baseUxon->getProperty('object_alias');
             if ($objAlias === null || ! $this->isInstallableObject($objAlias)) {
-                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $type . '": object not known to this installer!');
+                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $type . '": object not known to this installer!', ['installable_objects' => $this->dataDefs]);
                 continue;
             }
             

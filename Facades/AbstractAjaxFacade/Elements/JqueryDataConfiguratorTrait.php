@@ -67,7 +67,7 @@ trait JqueryDataConfiguratorTrait
                 if ($filter->hasCustomConditionGroup() === true) {
                     $nestedGroups[] = $filterElement->buildJsCustomConditionGroup();
                 } else {
-                    $filters[] = $filterElement->buildJsConditionGetter();
+                    $filters[] = $filterElement->buildJsConditionGetter(null, $widget->getMetaObject());
                 }
             }
         } else {
@@ -83,15 +83,16 @@ trait JqueryDataConfiguratorTrait
                 if ($filter->hasCustomConditionGroup() === true) {
                     $nestedGroups[] = $filterElement->buildJsCustomConditionGroup($filter_value);
                 } else {
-                    $filters[] = $filterElement->buildJsConditionGetter($filter_value);
+                    $filters[] = $filterElement->buildJsConditionGetter($filter_value, $widget->getMetaObject());
                 }
             }
         }
         // Remove empty values
         $filters = array_filter($filters);
-        
+        $conditionsJs = '[' . implode(",\n", $filters) . ']';
+        //$conditionsJs .= ".filter(function(oCond){return oCond.value !== null && oCond.value !== undefined && oCond.value !== '';})";
         if (empty($filters) === false  || empty($nestedGroups) === false) {
-            $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
+            $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: ' . $conditionsJs . ', nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
         } else {
             $filter_group = '';
         }
@@ -138,34 +139,10 @@ JS;
             return '';
         }
         $onlyIfDomExistsJs = $onlyIfDomExists ? 'true' : 'false';
-        $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
-        foreach ($this->getWidget()->getDataWidget()->getColumns() as $col) {
-            if (! $col->isBoundToAttribute()) {
-                continue;
-            }
-            $attr = $col->getAttribute();
-            if ($attr->getRelationPath()->isEmpty()) {
-                continue;
-            }
-            foreach ($attr->getRelationPath()->getRelations() as $rel) {
-                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
-                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
-            }
-        }
-        foreach ($this->getWidget()->getFilters() as $filter) {
-            if (! $filter->isBoundToAttribute()) {
-                continue;
-            }
-            $attr = $filter->getAttribute();
-            if ($attr->isRelation()) {
-                $effectedAliases[] = $attr->getRelation()->getRightObject()->getAliasWithNamespace();   
-            }
-            if ($attr->getRelationPath()->isEmpty()) {
-                continue;
-            }
-            foreach ($attr->getRelationPath()->getRelations() as $rel) {
-                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
-                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+        $effectedAliases = [];
+        foreach ($this->getWidget()->getDataWidget()->getMetaObjectsEffectingThisWidget() as $object) {
+            if ($object->getAliasWithNamespace() !== null) {
+                $effectedAliases[] = $object->getAliasWithNamespace();
             }
         }
         $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));

@@ -224,16 +224,12 @@ class JsonDataType extends TextDataType
      * Validate json against a specified json schema.
      *
      * @param string|array|object  $json
-     * @param string|\StdClass $schemaJson
+     * @param string|array|\StdClass $schemaJson
      * @return bool
      */
     public static function validateJsonSchema(mixed $json, mixed $schemaJson) : bool
     {
-        if (is_string($schemaJson) === false && $schemaJson instanceof \StdClass === false) {
-            throw new InvalidArgumentException('Unable to validate JSON schema. Schema has an invalid format.');
-        }
-
-    	$validator = (new Validator());
+        $validator = (new Validator());
         $json = is_string($json) ? json_decode($json) : $json;
         $schemaJson = is_string($schemaJson) ? json_decode($schemaJson) : $schemaJson;
         $validator->validate($json, $schemaJson);
@@ -242,7 +238,7 @@ class JsonDataType extends TextDataType
         if (count($errors) > 0) {
             throw new JsonSchemaValidationError(
                 $errors,
-                'Given json does not match given schema',
+                'JSON does not match schema: found ' . count($errors) . ' errors',
                 null,
                 null,
                 $json);

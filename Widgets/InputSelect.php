@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -89,14 +90,11 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
  *
  * @author Andrej Kabachnik
  */
-class InputSelect extends Input implements iSupportMultiSelect
+class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
 {
+    private $value_set = null;
 
     private $value_text = '';
-
-    private $multi_select = false;
-
-    private $multi_select_value_delimiter = null;
 
     private $multi_select_text_delimiter = null;
 
@@ -163,10 +161,9 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::getMultiSelect()
      */
-    public function getMultiSelect()
+    public function getMultiSelect() : bool
     {
         return $this->getMultipleValuesAllowed();
     }
@@ -180,9 +177,16 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
      */
-    public function setMultiSelect($value)
+    public function setMultiSelect(bool $value) : iSupportMultiSelect
     {
-        return $this->setMultipleValuesAllowed(\exface\Core\DataTypes\BooleanDataType::cast($value));
+        $prev = $this->getMultiSelect();
+        $this->setMultipleValuesAllowed($value);
+        // If the original value set was a list, it will be handled differently depending
+        // on the multi-select state. So re-set the value if multi-select changes!
+        if ($value !== $prev && $this->value_set !== null) {
+            $this->setValue($this->value_set);
+        }
+        return $this;
     }
     
     /**
@@ -308,7 +312,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         
         //Translate options
         foreach ($options as $key => $value) {
-            $options[$key] = $this->evaluatePropertyExpression($value);
+            $options[$key] = $value === null ? null : $this->evaluatePropertyExpression($value);
         }
         
         $this->selectable_options = $options;
@@ -1174,15 +1178,20 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
-        if ($this->getMultiSelect() === true) {
-            if (is_array($value)) {
-                $delim = $this->getMultipleValuesDelimiter();
-                $value = implode($delim, $value);
-            }
-        } else {
-            if (mb_strpos($value ?? '', $this->getMultiSelectValueDelimiter()) > 0 && ! $this->hasOption($value)) {
-                $firstVal = explode($this->getMultiSelectValueDelimiter(), $value)[0];
-                return parent::setValue($firstVal, $parseStringAsExpression);
+        // See if scalar values are delimited lists. Only do it for scalars, not for formulas
+        // or references
+        if (is_string($value) && Expression::detectCalculation($value) === false) {
+            $this->value_set = $value;
+            $delim = $this->getMultipleValuesDelimiter();
+            if ($this->getMultiSelect() === true) {
+                if (is_array($value)) {
+                    $value = implode($delim, $value);
+                }
+            } else {
+                if (mb_strpos($value ?? '', $delim) > 0 && ! $this->hasOption($value)) {
+                    $firstVal = explode($delim, $value)[0];
+                    return parent::setValue($firstVal, $parseStringAsExpression);
+                }
             }
         }
         return parent::setValue($value, $parseStringAsExpression);

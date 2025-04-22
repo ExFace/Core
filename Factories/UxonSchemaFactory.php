@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Uxon\UxonSchema;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Uxon\WidgetSchema;
@@ -28,28 +29,28 @@ abstract class UxonSchemaFactory extends AbstractStaticFactory
     public static function create(WorkbenchInterface $workbench, string $schemaName) : UxonSchemaInterface
     {
         switch (mb_strtolower($schemaName)) {
-            case UxonSchema::SCHEMA_WIDGET:
+            case UxonSchemaDataType::WIDGET:
                 $schema = new WidgetSchema($workbench);
                 break;
-            case UxonSchema::SCHEMA_ACTION:
+            case UxonSchemaDataType::ACTION:
                 $schema = new ActionSchema($workbench);
                 break;
-            case UxonSchema::SCHEMA_DATATYPE:
+            case UxonSchemaDataType::DATATYPE:
                 $schema = new DatatypeSchema($workbench);
                 break;
-            case UxonSchema::SCHEMA_BEHAVIOR:
+            case UxonSchemaDataType::BEHAVIOR:
                 $schema = new BehaviorSchema($workbench);
                 break;
-            case UxonSchema::SCHEMA_CONNECTION:
+            case UxonSchemaDataType::CONNECTION:
                 $schema = new ConnectionSchema($workbench);
                 break;
-            case UxonSchema::SCHEMA_QUERYBUILDER:
+            case UxonSchemaDataType::QUERYBUILDER:
                 $schema = new QueryBuilderSchema($workbench);
                 break;
-            case UxonSchema::SCHEMA_QUERYBUILDER_ATTRIBUTE:
+            case UxonSchemaDataType::QUERYBUILDER_ATTRIBUTE:
                 $schema = new QueryBuilderSchema($workbench, null, QueryBuilderSchema::LEVEL_ATTRIBUTE);
                 break;
-            case UxonSchema::SCHEMA_QUERYBUILDER_OBJECT:
+            case UxonSchemaDataType::QUERYBUILDER_OBJECT:
                 $schema = new QueryBuilderSchema($workbench, null, QueryBuilderSchema::LEVEL_OBJECT);
                 break;
             default:

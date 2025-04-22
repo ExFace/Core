@@ -24,6 +24,8 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
     private $toExpression = null;
     
     private $createRowInEmptyData = true;
+
+    private $ignoreIfMissingFromColumn = false;
     
     /**
      * 
@@ -157,6 +159,10 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
             case $fromSheet->getColumns()->isEmpty() && ! $fromExpr->isReference():
                 if ($logbook !== null) $logbook->addLine($log . ' Not required because from-sheet is empty.');
                 return $toSheet;
+            // If not enough data, but explicitly configured to ignore it, exit here
+            case $this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType()):
+                if ($logbook !== null) $logbook->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
+                return $toSheet;
             default:
                 if ($fromExpr->isMetaAttribute()) {
                     throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-column mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
@@ -195,6 +201,34 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
     public function setCreateRowInEmptyData(bool $value) : DataColumnMapping
     {
         $this->createRowInEmptyData = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function getIgnoreIfMissingFromColumn() : bool
+    {
+        return $this->ignoreIfMissingFromColumn;
+    }
+
+    /**
+     * Set to TRUE if this mapping is only to be applied if there is a corresponding from-data
+     * 
+     * By default the mapping will result in an error if the from-data does not have the 
+     * required data.
+     * 
+     * @uxon-property ignore_if_missing_from_column
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return DataColumnMapping
+     */
+    protected function setIgnoreIfMissingFromColumn(bool $trueOrFalse) : DataColumnMapping
+    {
+        $this->ignoreIfMissingFromColumn = $trueOrFalse;
         return $this;
     }
     

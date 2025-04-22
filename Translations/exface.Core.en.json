@@ -84,7 +84,13 @@
 	"ACTION.GOTOMAPS.NAME": "Maps",
 	"ACTION.GOTOMAPS.SUCCESS": "Opening map app...",
 	"ACTION.GOTOPAGE.NAME": "Go to",
+
+	"ACTION.MERGEDATA.NAME": "Merge data",
+
 	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Opening a new browser tab/window!",
+
+	"ACTION.SHOWDATAIMPORTDIALOG.NAME": "Import data",
+	"ACTION.SHOWDATAIMPORTDIALOG.MESSAGE_EMPTY": "No importable columns or attributes found!",
 	
 	"ACTION.SHOWMASSEDITDIALOG.NAME": "Mass edit",
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
@@ -143,6 +149,8 @@
 	
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR": "Not allowed to delete %object% %row%!",
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR": "Not allowed to delete %object% on row %row%!",
+	"BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR": "Not allowed to edit %object% %row%!",
+	"BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR": "Not allowed to edit %object% on row %row%!",
 	
 	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Data on row %row% of %object% is a duplicate!",
 	

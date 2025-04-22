@@ -7,16 +7,16 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 /**
  * Enumeration for UXON schema names: widget, action, datatype, etc.
  * 
- * @method UxonSchemaNameDataType GENERIC(\exface\Core\CommonLogic\Workbench $workbench)
- * @method UxonSchemaNameDataType WIDGET(\exface\Core\CommonLogic\Workbench $workbench)
- * @method UxonSchemaNameDataType ACTION(\exface\Core\CommonLogic\Workbench $workbench)
- * @method UxonSchemaNameDataType DATATYPE(\exface\Core\CommonLogic\Workbench $workbench)
- * @method UxonSchemaNameDataType BEHAVIOR(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method UxonSchemaDataType GENERIC(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method UxonSchemaDataType WIDGET(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method UxonSchemaDataType ACTION(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method UxonSchemaDataType DATATYPE(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method UxonSchemaDataType BEHAVIOR(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *
  */
-class UxonSchemaNameDataType extends StringDataType implements EnumDataTypeInterface
+class UxonSchemaDataType extends StringDataType implements EnumDataTypeInterface
 {
     use EnumStaticDataTypeTrait;
     
@@ -30,6 +30,9 @@ class UxonSchemaNameDataType extends StringDataType implements EnumDataTypeInter
     const QUERYBUILDER = 'querybuilder';
     const QUERYBUILDER_ATTRIBUTE = 'querybuilder_attribute';
     const QUERYBUILDER_OBJECT = 'querybuilder_object';
+    const SNIPPET = 'snippet';
+
+    private static $labels = [];
     
     /**
      * 
@@ -38,15 +41,14 @@ class UxonSchemaNameDataType extends StringDataType implements EnumDataTypeInter
      */
     public function getLabels()
     {
-        if (empty($this->labels)) {
+        if (empty(static::$labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
             foreach (static::getValuesStatic() as $const => $val) {
-                $this->labels[$val] = $translator->translate('GLOBAL.UXON.SCHEMA.' . $const);
+                static::$labels[$val] = $translator->translate('GLOBAL.UXON.SCHEMA.' . $const);
             }
         }
         
-        return $this->labels;
+        return static::$labels;
     }
 }
-?>

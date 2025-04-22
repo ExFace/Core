@@ -4,6 +4,8 @@ namespace exface\Core\CommonLogic\Traits;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\UxonSnippetFactory;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 trait ImportUxonObjectTrait {
 
@@ -23,6 +25,9 @@ trait ImportUxonObjectTrait {
      */
     public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
     {
+        if ($this instanceof WorkbenchDependantInterface) {
+            $uxon->setSnippetResolver(UxonSnippetFactory::getSnippetResolver($this->getWorkbench()));
+        }
         foreach ($uxon->getPropertiesAll() as $var => $val) {
             // Skip properties listed in the skip array
             foreach ($skip_property_names as $skip_name) {

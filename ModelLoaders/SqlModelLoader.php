@@ -1,8 +1,11 @@
 <?php
 namespace exface\Core\ModelLoaders;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
+use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Factories\AttributeGroupFactory;
+use exface\Core\Factories\UxonSnippetFactory;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -17,6 +20,8 @@ use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Selectors\UxonSnippetSelectorInterface;
+use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\CommonLogic\Model\Attribute;
@@ -204,7 +209,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param MetaObjectInterface $object
      * @return MetaObjectInterface
      */
-    protected function loadObject(MetaObjectInterface $object)
+    public function loadObject(MetaObjectInterface $object) : MetaObjectInterface
     {
         $exface = $object->getWorkbench();
         $load_behaviors = false;
@@ -258,7 +263,6 @@ SQL;
             $object->setId($row['oid']);
             $object->setAlias($row['object_alias']);
             $object->setDataSourceId($row['data_source_oid']);
-            $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
             
             $object->setName($row['object_name']);
@@ -2227,7 +2231,7 @@ SQL;
 
     /**
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAttributeGroups()
      */
     public function loadAttributeGroups(MetaObjectInterface $object) : MetaObjectInterface
     {
@@ -2275,6 +2279,50 @@ SQL;
         }
 
         return $object;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadSnippet()
+     */
+    public function loadSnippet(UxonSnippetSelectorInterface $selector) : UxonSnippetInterface
+    {
+        if ($selector->isUid()) {
+            $sqlWhere = "us.oid = {$selector->toString()}";
+        } else {
+            $appAlias = MetamodelAliasDataType::cast($selector->getAppAlias(), true);
+            $alias = MetamodelAliasDataType::cast(StringDataType::substringAfter($selector->toString(), $appAlias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
+            $sqlWhere = "us.alias = '{$alias}'";
+            $sqlWhere .= " AND app.app_alias = '{$appAlias}'";
+        }
+        $sql = <<<SQL
+SELECT 
+    us.*,
+    app.app_alias,
+    {$this->buildSqlUuidSelector('us.oid')} AS oid,
+    {$this->buildSqlUuidSelector('us.app_oid')} AS app_oid
+FROM exf_uxon_snippet us
+    INNER JOIN exf_app app ON app.oid = us.app_oid
+WHERE {$sqlWhere}
+SQL;
+
+        try {
+            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+        } catch (Throwable $e) {
+            throw new MetaModelLoadingFailedError('Failed to load Uxon snippet "' . $selector->toString() . '" from model!', null, $e);
+        }
+        
+        foreach ($rows as $row) {
+            $uxon = UxonObject::fromJson($row['uxon']);
+            $uxon->setProperty('name', $row['name']);
+            $snippet = UxonSnippetFactory::createFromPrototype($this->getWorkbench(), $row['prototype'], $row['alias'], $row['app_alias'], $uxon);
+        }
+
+        if ($snippet === null) {
+            throw new UxonSnippetNotFoundError('UXON snippet "' . $selector->toString() . '" not found in model!');
+        }
+
+        return $snippet;
     }
 
     /**

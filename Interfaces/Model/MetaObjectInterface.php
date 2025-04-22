@@ -403,10 +403,6 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     
     public function getModel() : ModelInterface;
     
-    public function getAppId();
-    
-    public function setAppId($value);
-    
     public function getShortDescription();
     
     public function setShortDescription($value);
@@ -454,9 +450,16 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     public function getDataAddressRequiredPlaceholders($includeStaticPlaceholders = true, $includeDynamicPlaceholders = true);
     
     /**
-     * Returns the attribute group specified by the given alias or NULL if no such group exists.
-     * Apart from explicitly defined attribute groups, built-in groups can be used. Built-in groups have aliases starting with "~".
-     * For every built-in alias there is a constant in the MetaAttributeGroupInterface (e.g. MetaAttributeGroupInterface::ALL, etc.)
+     * Returns the attribute group specified by the given alias (with or without namespace).
+     * 
+     * Aliases of attribute groups can be used with or without their app namespace. As long
+     * as the alias is unique accross all apps, no namespace is required. It is adviseable
+     * to use namespaced aliases though because they will be unique regardless of future
+     * developments in other apps.
+     * 
+     * Apart from explicitly defined attribute groups, built-in groups can be used. 
+     * Built-in groups have aliases starting with "~". For every built-in alias there is a constant 
+     * in the MetaAttributeGroupInterface (e.g. MetaAttributeGroupInterface::ALL, etc.)
      *
      * @param string $alias
      * @return MetaAttributeGroupInterface

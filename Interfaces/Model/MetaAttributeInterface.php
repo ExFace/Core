@@ -56,7 +56,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     
     /**
      *
-     * @param string|DataTypeInterface $object_or_name
+     * @param string|DataTypeInterface|UxonObject|\exface\Core\Interfaces\Selectors\DataTypeSelectorInterface $object_or_name
      * @throws UnexpectedValueException
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
