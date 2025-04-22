@@ -5,17 +5,20 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\DataSheets\DataSorterList;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Utils\LazyHierarchicalDataCache;
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Events\DataSheetTransactionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -38,7 +41,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * 
  * ## Configuration
  * 
- * - `order_number_attribute` (required) - save the order number here
+ * - `order_number_attribute` (required) - save the order number here. Must be of type `Integer`.
  * - `order_with_attributes` - all rows with the same value of these attributes will share an ordering sequence.
  * - `order_starts_with` - ordering sequences will start with this index.
  * - `close_gaps` - by default, deleting a row in the middle of the sequence will update order numbers of subsequent 
@@ -99,6 +102,7 @@ class OrderingBehavior extends AbstractBehavior
     protected function registerEventListeners(): BehaviorInterface
     {
         $priority = $this->getPriority();
+        $priority = is_numeric($priority) ? $priority : EventManagerInterface::PRIORITY_MIN;
 
         $onBeforeHandle = array($this, 'handleOnBefore');
         $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $onBeforeHandle, $priority);
@@ -235,7 +239,7 @@ class OrderingBehavior extends AbstractBehavior
             $shiftedIndices = $this->shiftIndices($eventSheet, $siblingCache, $pendingChanges, $logbook);
             
             $logbook->addLine('Shifted indices to make room for next step');
-            $logbook->addDataSheet('Shifted', $eventSheet);
+            $logbook->addDataSheet('Shifted', $eventSheet->copy());
         }
 
         // Clean up proxy UIDs.
@@ -494,7 +498,7 @@ class OrderingBehavior extends AbstractBehavior
                 $uidAlias,
                 $logbook);
             
-            $pendingChanges = array_merge($pendingChanges, $detectedChanges);
+            $pendingChanges = $this->mergePendingChanges($pendingChanges, $detectedChanges);
             
             $logbook->addIndent(-1);
         }
@@ -566,7 +570,7 @@ class OrderingBehavior extends AbstractBehavior
 
         // Fill missing indices.
         $modifiedRows = $this->fillMissingIndices($allSiblingsSheet, $updateOrder, $logbook);
-        $pendingChanges = array_merge($pendingChanges, $modifiedRows);
+        $pendingChanges = $this->mergePendingChanges($pendingChanges, $modifiedRows);
         $priorityRows = $pendingChanges;
 
         $this->sortDataSheetByOrderingIndex($allSiblingsSheet);
@@ -578,7 +582,7 @@ class OrderingBehavior extends AbstractBehavior
         if($updateOrder) {
             // Find and record changes.
             $detectedChanges = $this->updateOrder($allSiblingsSheet, $priorityRows, $logbook);
-            $pendingChanges = array_merge($pendingChanges, $detectedChanges);
+            $pendingChanges = $this->mergePendingChanges($pendingChanges, $detectedChanges);
         }
         
         $this->saveEntryToCache(
@@ -591,6 +595,23 @@ class OrderingBehavior extends AbstractBehavior
         );
         
         return $pendingChanges;
+    }
+
+    /**
+     * Merges two arrays with pending changes, similar to `array_merge()`, with the 
+     * main difference being, that numeric indices are treated the same way as string keys.
+     * 
+     * @param array $left
+     * @param array $right
+     * @return array
+     */
+    protected function mergePendingChanges(array $left, array $right) : array
+    {
+        foreach ($right as $key => $value) {
+            $left[$key] = $value;
+        }
+        
+        return $left;
     }
 
     /**
@@ -1299,7 +1320,7 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * The attribute to store the order number
+     * The attribute to store the order number. Must be of type `Integer`.
      * 
      * @uxon-property order_number_attribute
      * @uxon-type metamodel:attribute
@@ -1310,6 +1331,13 @@ class OrderingBehavior extends AbstractBehavior
      */
     protected function setOrderNumberAttribute(string $value): OrderingBehavior
     {
+        if(!empty($value)) {
+            $attr = $this->getObject()->getAttribute($value);
+            if(!($attr->getDataType() instanceof IntegerDataType)) {
+                throw new BehaviorConfigurationError($this, "The 'order_number_attribute' must be of type 'Integer'!");
+            }
+        }
+        
         $this->orderAttributeAlias = $value;
         return $this;
     }
