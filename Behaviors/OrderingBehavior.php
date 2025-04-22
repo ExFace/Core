@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\DataSheets\DataSorterList;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Utils\LazyHierarchicalDataCache;
 use exface\Core\DataTypes\IntegerDataType;
-use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
@@ -19,6 +18,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Events\DataSheetTransactionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -102,6 +102,7 @@ class OrderingBehavior extends AbstractBehavior
     protected function registerEventListeners(): BehaviorInterface
     {
         $priority = $this->getPriority();
+        $priority = is_numeric($priority) ? $priority : EventManagerInterface::PRIORITY_MIN;
 
         $onBeforeHandle = array($this, 'handleOnBefore');
         $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $onBeforeHandle, $priority);
