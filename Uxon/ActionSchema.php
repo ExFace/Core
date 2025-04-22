@@ -5,7 +5,7 @@ use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\AbstractAction;
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
@@ -21,7 +21,7 @@ class ActionSchema extends UxonSchema
 {
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::ACTION;
+        return UxonSchemaDataType::ACTION;
     }
     
     /**

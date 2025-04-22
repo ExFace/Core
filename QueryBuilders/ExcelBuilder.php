@@ -4,8 +4,7 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\DataConnectors\FileContentsConnector;
-use exface\Core\DataTypes\DateTimeDataType;
-use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
@@ -290,7 +289,9 @@ class ExcelBuilder extends FileBuilder
                     $static_values[$colKey] = $this->parseExcelValue($val, $attrType);
                     break;
                 case $this->isColumnName($address):
-                    if (empty($spreadsheet->getNamedRanges()) === true) {
+                    $addressColName = trim($address, '[]');
+                    $rangeName = mb_strtoupper($addressColName);
+                    if (! array_key_exists($rangeName, $spreadsheet->getNamedRanges())) {
                         // Read the first row as header data to get the column names
                         $headerRow = 1;
                         $highestRow = $worksheet->getHighestRow();
@@ -299,6 +300,13 @@ class ExcelBuilder extends FileBuilder
 
                         // specif range
                         foreach ($headerData as $columnLetter => $columnName) {
+                            if ($columnName === null) {
+                                continue;
+                            }
+                            $columnName = trim($columnName);
+                            if ($columnName === '') {
+                                continue;
+                            }
                             // Define the range from the second row to the last row
                             $range = "{$columnLetter}2:{$columnLetter}{$highestRow}";
 
@@ -309,7 +317,12 @@ class ExcelBuilder extends FileBuilder
 
                     // read column of given column name
                     $row_nr = 0;
-                    foreach ($worksheet->namedRangeToArray($address, null, true, $formatValues, true) as $sheetRowNo => $colVals) {
+                    try {
+                        $range = $worksheet->namedRangeToArray($rangeName, null, true, $formatValues, true);
+                    } catch (\Throwable $e) {
+                        throw new QueryBuilderException('Cannot read column "' . $address . '" from worksheet "' . $worksheet->getTitle() . '": ' . $e->getMessage(), null, $e);
+                    }
+                    foreach ($range as $sheetRowNo => $colVals) {
                         foreach ($colVals as $val) {
                             $result_rows[$row_nr][$colKey] = $this->parseExcelValue($val, $attrType);
                         }
@@ -317,7 +330,7 @@ class ExcelBuilder extends FileBuilder
                     }
                     break;
                 default:
-                    throw new QueryBuilderException('Invalid data address "' . $address . '" for Excel query builder!');
+                    throw new QueryBuilderException('Invalid data address "' . $address . '" for Excel query builder in "' . $qpart->getAlias() . '"!');
             }
         }
         
@@ -427,11 +440,9 @@ class ExcelBuilder extends FileBuilder
      * @param string $dataAddress
      * @return bool
      */
-    protected function isColumnName(string &$dataAddress) : bool
+    protected function isColumnName(string $dataAddress) : bool
     {
-        $isColumn = preg_match('/\[[a-zA-Z_]+\]/i', $dataAddress) === 1;
-        $dataAddress = trim($dataAddress, '[]');
-        return $isColumn;
+        return StringDataType::startsWith($dataAddress, '[') && StringDataType::endsWith($dataAddress, ']');
     }
     
     /**

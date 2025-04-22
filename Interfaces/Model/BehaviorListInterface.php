@@ -94,4 +94,16 @@ interface BehaviorListInterface extends EntityListInterface, iCanBeConvertedToUx
      * @throws RuntimeException
      */
     public function findBehavior(string $class, bool $allowMultiple = false) : ?BehaviorInterface;
+
+    /**
+     * Disables all active behaviors temporarily; enables them again if called with FALSE.
+     * 
+     * This special method allows to turn off and back on active (non-disabled) behaviors. It restores
+     * the behaviors completely when called with FALSE.
+     * 
+     * @param bool $trueOrFalse
+     * @param string|null $onlyForPrototypeClass
+     * @return BehaviorListInterface
+     */
+    public function disableTemporarily(bool $trueOrFalse, string $onlyForPrototypeClass = null) : BehaviorListInterface;
 }

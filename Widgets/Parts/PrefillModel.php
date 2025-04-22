@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
+use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
 use exface\Core\Interfaces\Widgets\PrefillModelInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\DataSheets\DataPointerInterface;
@@ -23,6 +24,7 @@ use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Actions\ShowWidget;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Interfaces\Actions\iUseTemplate;
+use function Sabre\Event\Loop\instance;
 
 class PrefillModel implements PrefillModelInterface
 {    
@@ -178,6 +180,15 @@ class PrefillModel implements PrefillModelInterface
             };
             $eventHandlersToRemove[OnBeforeActionInputValidatedEvent::getEventName()] = $disableInputChecksHandler;
             $eventMgr->addListener(OnBeforeActionInputValidatedEvent::getEventName(), $disableInputChecksHandler);
+            // Also make sure any input mapper checks are disabled because otherwise the dummy data will
+            // cause them to fail.
+            foreach ($action->getInputMappers() as $mapper) {
+                foreach ($mapper->getMappings() as $mapping) {
+                    if ($mapping instanceof DataCheckMapping) {
+                        $mapping->disable(true);
+                    }
+                }   
+            }
                     
             // Undo any mappings of the dummy data: Listen to OnActionInputValidated to make sure, the input data 
             // of the action always has dummy data - even if it was modified by input mappers or anything else.

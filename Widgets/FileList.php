@@ -177,6 +177,8 @@ class FileList extends DataTable
     private $delete = null;
     
     private $deleteButton = null;
+
+    private $checkedBehaviorForObject = null;
     
     /**
      * 

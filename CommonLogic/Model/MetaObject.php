@@ -37,6 +37,7 @@ use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
+use Throwable;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -99,8 +100,6 @@ class MetaObject implements MetaObjectInterface
 
     private $model;
 
-    private $app_id;
-
     private $namespace;
 
     private $short_description = '';
@@ -128,6 +127,20 @@ class MetaObject implements MetaObjectInterface
         $this->attributes = AttributeListFactory::createForObject($this);
         $this->default_sorters = EntityListFactory::createEmpty($exface, $this);
         $this->behaviors = new MetaObjectBehaviorList($exface, $this, true);
+    }
+
+    /**
+     * When destorying an object, make sure to unregister all behaviors
+     */
+    public function __destruct()
+    {
+        try {
+            foreach ($this->getBehaviors()->getAll() as $beh) {
+                $beh->disable();
+            }
+        } catch (Throwable $e) {
+            // ignore errors
+        }
     }
 
     /**
@@ -501,6 +514,9 @@ class MetaObject implements MetaObjectInterface
         // Inherit attributes
         foreach ($parent->getAttributes() as $attr) {
             $this->getAttributes()->add($attr->withExtendedObject($this));
+        }
+        foreach ($parent->getAttributeGroups() as $attrGrp) {
+            $this->addAttributeGroup($attrGrp->withExptendedObject($this));
         }
         
         // Inherit Relations
@@ -959,16 +975,6 @@ class MetaObject implements MetaObjectInterface
         return $this->model;
     }
 
-    public function getAppId()
-    {
-        return $this->app_id;
-    }
-
-    public function setAppId($value)
-    {
-        $this->app_id = $value;
-    }
-
     public function getShortDescription()
     {
         return $this->short_description;
@@ -982,7 +988,6 @@ class MetaObject implements MetaObjectInterface
     public function getAliasWithNamespace()
     {
         return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
-        ;
     }
 
     public function getNamespace()
@@ -1250,21 +1255,59 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
      */
-    public function getAttributeGroup(string $alias) : MetaAttributeGroupInterface
+    public function getAttributeGroup(string $aliasWithRelationPath) : MetaAttributeGroupInterface
     {
+        $grp = $this->attribute_groups[$aliasWithRelationPath] ?? null;
+        if (null !== $grp) {
+            return $grp;
+        }
+
+        // See if the alias has a relation path
+        if (null !== $relParts = RelationPath::slice($aliasWithRelationPath, -1)) {
+            list($relStr, $alias) = $relParts;
+            $relPath = RelationPathFactory::createFromString($this, $relStr);
+                try {
+                $relObj = $relPath->getEndObject();
+            } catch (Throwable $e) {
+                throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $aliasWithRelationPath . '" not found for object ' . $this->__toString() . ': invalid relation path!');
+            }
+            $grp = new AttributeGroup($this->getWorkbench(), $this, $relPath);
+            $grp->setAlias($aliasWithRelationPath);
+            $relGrp = $relObj->getAttributeGroup($alias);
+            foreach ($relGrp->getAttributes() as $attr) {
+                $grp->add($this->getAttribute(RelationPath::join($relStr, $attr->getAliasWithRelationPath())));
+            }
+            return $grp;
+        }
+
+        // If it is a local alias, try to get it via model loader
+        $alias = $aliasWithRelationPath;
+        $selector = new AttributeGroupSelector($this->getWorkbench(), $alias);
+        if ($selector->isBuiltInGroup()) {
+            $this->attribute_groups[$alias] = AttributeGroupFactory::createForObject($this, $alias);
+        } elseif ($this->hasAttributeGroupsInModel()) {
+            $this->getModel()->getModelLoader()->loadAttributeGroups($this);
+            $this->setLoadAttributeGroupsFromModel(false);
+        }
         $grp = $this->attribute_groups[$alias] ?? null;
-        if (null === $grp) {
-            $selector = new AttributeGroupSelector($this->getWorkbench(), $alias);
-            if ($selector->isBuiltInGroup()) {
-                $this->attribute_groups[$alias] = AttributeGroupFactory::createForObject($this, $alias);
-            } elseif ($this->hasAttributeGroupsInModel()) {
-                $this->getModel()->getModelLoader()->loadAttributeGroups($this);
-                $this->setLoadAttributeGroupsFromModel(false);
+        // If there is no direct match, see if the given alias simply lacks the namespace and try
+        // without the namespace
+        if ($grp === null && stripos($alias, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
+            $foundByAlias = null;
+            foreach ($this->attribute_groups as $g) {
+                if (StringDataType::endsWith($g->getAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias, false)) {
+                    if ($foundByAlias !== null) {
+                        throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguos! Found multiple groups for selector "' . $alias . '": ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
+                    }
+                    $foundByAlias = $g;
+                }
             }
-            $grp = $this->attribute_groups[$alias] ?? null;
-            if ($grp === null) {
-                throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $alias . '" not found for object ' . $this->__toString() . '!');
+            if ($foundByAlias !== null) {
+                $grp = $foundByAlias;
             }
+        }
+        if ($grp === null) {
+            throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $alias . '" not found for object ' . $this->__toString() . '!');
         }
         return $grp;
     }

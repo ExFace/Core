@@ -30,6 +30,13 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @return boolean
      */
     public function isMetaAttribute() : bool;
+
+    /**
+     * Returns true if the expression represents an aggregated attribute
+     * 
+     * @return bool
+     */
+    public function isMetaAttributeAggregated() : bool;
     
     /**
      * @return boolean
@@ -45,6 +52,13 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function isString() : bool;
     
     public function isNumber() : bool;
+
+    /**
+     * Returns true if the type of this expression could not be determined
+     * 
+     * @return bool
+     */
+    public function isUnknownType() : bool;
     
     /**
      * Returns TRUE if the expression can be evaluated without a data context and FALSE otherwise: 
@@ -81,7 +95,7 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @param int $row_number
      * @return array|string
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $row_number = null);
+    public function evaluate(DataSheetInterface $data_sheet = null, $row_number = null);
     
     /**
      * Returns an array with aliases of all attributes required for this expression relative to its meta object.
@@ -188,6 +202,20 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @return MetaAttributeInterface
      */
     public function getAttribute();
+
+    /**
+     * Returns the full attribute alias (with aggregator if present) or NULL for non-attribute expressions
+     * 
+     * @return string|null
+     */
+    public function getAttributeAlias() : ?string;
+
+    /**
+     * Returns the aggregator if one is used (only for attribute expressions)
+     * 
+     * @return AggregatorInterface|null
+     */
+    public function getAttributeAggregator() : ?AggregatorInterface;
     
     /**
      * @return WidgetLinkInterface

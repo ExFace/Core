@@ -164,7 +164,7 @@ class DataRowMatcher implements DataMatcherInterface
                 $this->mainSheet->getRows(),
                 $this->compareSheet->getRows(),
                 $this->compareColumns,
-                );
+            );
         }
         return $this->matches;
     }
@@ -241,6 +241,8 @@ class DataRowMatcher implements DataMatcherInterface
         
         // Extract and parse values relevant for the search. Do it once here in order to
         // improve performance on large data sets.
+        // If they are strings, trim them!
+        // IDEA perhaps we need to make the trim configurable?
         $mainRowsKeys = [];
         $checkRowsKeys = [];
         $keyCols = ($uidCol !== null ? array_merge($compareCols, [$uidCol]) : $compareCols);
@@ -248,10 +250,18 @@ class DataRowMatcher implements DataMatcherInterface
             $key = $col->getName();
             $type = $col->getDataType();
             foreach ($mainRows as $mainRowIdx => $mainRow) {
-                $mainRowsKeys[$mainRowIdx][$key] = $type->parse($mainRow[$key]);
+                $val = $type->parse($mainRow[$key]);
+                if (is_string($val)) {
+                    $val = trim($val);
+                }
+                $mainRowsKeys[$mainRowIdx][$key] = $val;
             }
             foreach ($checkRows as $checkRowIdx => $checkRow) {
-                $checkRowsKeys[$checkRowIdx][$key] = $type->parse($checkRow[$key]);
+                $val = $type->parse($checkRow[$key]);
+                if (is_string($val)) {
+                    $val = trim($val);
+                }  
+                $checkRowsKeys[$checkRowIdx][$key] = $val;
             }
         }
         
@@ -273,7 +283,8 @@ class DataRowMatcher implements DataMatcherInterface
                     $mainVal = $mainRow[$key];
                     $checkVal = $checkRow[$key];
                     // If both values are strings, use a case-insensitive comparison if required
-                    // Otherwise compare directly
+                    // Otherwise compare directly, but WITHOUT strict type check. This ensures,
+                    // that a string "1" is equal to an integer 1, etc.
                     if (is_string($mainVal) && is_string($checkVal) && $caseSensitive === false) {
                         if (strcasecmp($mainVal, $checkVal) !== 0) {
                             $isDuplicate = false;
@@ -294,7 +305,8 @@ class DataRowMatcher implements DataMatcherInterface
                         $mainVal = $mainRow[$key];
                         $checkVal = $checkRow[$key];
                         // If both values are strings, use a case-insensitive comparison if required
-                        // Otherwise compare directly
+                        // Otherwise compare directly, but WITHOUT strict type check. This ensures,
+                        // that a string "1" is equal to an integer 1, etc.
                         if (is_string($mainVal) && is_string($checkVal) && $caseSensitive === false) {
                             if (strcasecmp($mainVal, $checkVal) === 0) {
                                 $isUidMatch = true;

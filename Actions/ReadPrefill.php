@@ -138,9 +138,9 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             // IDEA are there other ways to load more data, than use UID-filters?
             $canLoadMoreData = $mainSheet->hasUidColumn(true);
             
-            if ($mainSheet->isEmpty()) {
+            if ($mainSheet->isEmpty() && $targetWidget !== null) {
                 $logBook->addLine('Did not find any prefill data till now - use filter context only.');
-                $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $mainSheet, $task, $logBook);
+                $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $task, $logBook, $mainSheet);
                 $canLoadMoreData = false;
             } else {
                 if ($mainSheet->hasUidColumn(true)) {
@@ -206,7 +206,9 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             });
             
             // Do the prefill to trigger the events
-            $targetWidget->prefill($mainSheet);
+            if ($targetWidget !== null) {
+                $targetWidget->prefill($mainSheet);
+            }
             // If there are $defaults, place the respective values in every empty cell of the data
             // columns used by widgets with default values
             $logBook->addLine('Found ' . count($defaults) . ' default values.');
@@ -240,13 +242,17 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         
         // Fire the event, log it to make it appear in the tracer
         $logBook->addDataSheet('Final prefill', $mainSheet);
-        $event = new OnPrefillDataLoadedEvent(
-            $targetWidget,
-            $mainSheet,
-            $this,
-            $logBook
-        );
-        $this->getWorkbench()->EventManager()->dispatch($event);
+        if ($targetWidget !== null) {
+            $event = new OnPrefillDataLoadedEvent(
+                $targetWidget,
+                $mainSheet,
+                $this,
+                $logBook
+            );
+            $this->getWorkbench()->EventManager()->dispatch($event);
+        } else {
+            $logBook->addLine('No prefill event triggered as no target widget was found!');
+        }
         
         // Send back the result
         $result = ResultFactory::createDataResult($task, $mainSheet);

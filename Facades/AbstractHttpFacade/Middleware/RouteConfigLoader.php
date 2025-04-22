@@ -1,9 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
-use axenox\ETL\Common\AbstractOpenApiPrototype;
 use exface\Core\Exceptions\Facades\HttpBadRequestError;
-use exface\Core\Exceptions\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

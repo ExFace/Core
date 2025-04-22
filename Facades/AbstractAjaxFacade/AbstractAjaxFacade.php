@@ -762,7 +762,7 @@ HTML;
             // and throw the original exception wrapped in a notice about the failed prettification
             $this->getWorkbench()->getLogger()->logException($e);
             $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
+            throw new RuntimeException(StringDataType::endSentence($exception->getMessage()) . ' Failed to create error report widget. ' . StringDataType::endSentence($e->getMessage()) . ' See ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details!', null, $exception);
         }
         
         return $body;

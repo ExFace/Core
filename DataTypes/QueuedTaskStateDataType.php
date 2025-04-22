@@ -24,6 +24,8 @@ class QueuedTaskStateDataType extends IntegerDataType implements EnumDataTypeInt
     CONST STATUS_REPLACED = 95;
     CONST STATUS_DONE_MANUALLY = 98;
     CONST STATUS_DONE = 99;
+
+    private $labels = [];
     
     /**
      * 

@@ -85,6 +85,14 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
     public function get($key);
 
     /**
+     * Returns TRUE if the given key exists in the list and FALSE otherwise.
+     *
+     * @param mixed $key            
+     * @return bool
+     */
+    public function has($key) : bool;
+
+    /**
      * Returns the first entity in the list or NULL if the list is empty.
      *
      * @return mixed

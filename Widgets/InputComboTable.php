@@ -236,11 +236,19 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                     $table->addColumn($col);
                 }
             } elseif ($this->isBoundToAttribute()) {
+                // If we are just showing an attribute (no relation), the table should show all available
+                // values of that attribute. So we group by our attribute and add a counter column for
+                // more information. If our meta object has a UID we can count that easily, but if not,
+                // there is no point in counting (what do we count?) and it caused trouble with some SQL
+                // data source too.
                 $table->addColumn($table->createColumnFromAttribute($this->getAttribute()));
-                $table->addColumn($table->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => DataAggregation::addAggregatorToAlias($this->getAttributeAlias(), AggregatorFunctionsDataType::COUNT),
-                    'caption' => '=TRANSLATE("exface.Core", "WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES")'
-                ])));
+                if ($table->getMetaObject()->hasUidAttribute()) {
+                    $counterAlias = $table->getMetaObject()->getUidAttributeAlias();
+                    $table->addColumn($table->createColumnFromUxon(new UxonObject([
+                        'attribute_alias' => DataAggregation::addAggregatorToAlias($counterAlias, AggregatorFunctionsDataType::COUNT),
+                        'caption' => '=TRANSLATE("exface.Core", "WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES")'
+                    ])));
+                } 
             }
         }
         

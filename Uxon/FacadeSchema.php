@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Uxon;
 
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Facades\AbstractFacade\AbstractFacade;
 
 /**
@@ -17,7 +17,7 @@ class FacadeSchema extends UxonSchema
 
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::FACADE;
+        return UxonSchemaDataType::FACADE;
     }
     
     protected function getDefaultPrototypeClass() : string

@@ -510,7 +510,11 @@ class FileBuilder extends AbstractQueryBuilder
                     }
                 }
                 switch ($filterComp) {
-                    case ComparatorDataType::IS:
+                    // If we are searching for the exact value of a path or filename, we can use the value
+                    // in our paths in most cases.
+                    // NOTE: this only works for EQUALS comparators. IS does not work, because it would produce
+                    // a pattern and that pattern would conflict with possible patterns in the data address of
+                    // the object.
                     case ComparatorDataType::EQUALS:
                         //if attribute alias is a placeholder in the path patterns, replace it with the value
                         if (in_array($qpart->getAlias(), $addrPhs)) {                            
@@ -519,11 +523,12 @@ class FileBuilder extends AbstractQueryBuilder
                                 $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                             }
                         } else {
+                            $filterVal = Filemanager::pathNormalize($filterVal);
                             if ($isPathNameFilter) {
-                                $uidPaths[] = Filemanager::pathNormalize($filterVal);
+                                $uidPaths[] = $filterVal;
                             }
                             if ($isFolderFilter) {
-                                $pathPatterns[] = Filemanager::pathNormalize($filterVal);
+                                $pathPatterns[] = $filterVal;
                             }
                         }
                         break;
@@ -731,7 +736,11 @@ class FileBuilder extends AbstractQueryBuilder
         $filenameQpart = null;
         $contentQpart = null;
         $folderQpart = null;
+        $uidIsPath = $this->isFilePathAddress($this->getMainObject()->getUidAttribute()->getDataAddress());
         foreach ($this->getValues() as $qpart) {
+            if ($qpart->hasUids() && $uidIsPath === true) {
+                return $qpart->getUids();
+            }
             switch (true) {
                 case $this->isFilePath($qpart) && $qpart->hasValues():
                     $pathQpart = $qpart;
@@ -748,17 +757,22 @@ class FileBuilder extends AbstractQueryBuilder
             }
         }
         
+        $objectBasePath = $this->getPathForObject($this->getMainObject());
+        $objectBasePath = rtrim(trim($objectBasePath), '*?');
+        $paths = [];
         switch (true) {
-            case $contentQpart !== null && $this->isFilePathAddress($this->getMainObject()->getUidAttribute()->getDataAddress()):
-                return $contentQpart->getUids();
+            case $contentQpart !== null && $uidIsPath === true:
+                $paths = $contentQpart->getUids();
+                break;
             case $pathQpart !== null:
-                return $pathQpart->getValues();
+                $paths = $pathQpart->getValues();
+                break;
             case $folderQpart !== null && $filenameQpart !== null:
                 foreach ($folderQpart->getValues() as $i => $folder) {
                     $paths[$i] = $folder . $this->getDirectorySeparator() . $filenameQpart->getValues()[$i];
                 }
-                return $paths;
-            case $filenameQpart !== null && ! FilePathDataType::isPattern($this->getPathForObject($this->getMainObject())):
+                break;
+            case $filenameQpart !== null && ! FilePathDataType::isPattern($objectBasePath):
                 $paths = [];
                 $sep = $this->getDirectorySeparator();
                 $addr = FilePathDataType::normalize($this->getPathForObject($this->getMainObject()) ?? '', $sep);
@@ -775,10 +789,10 @@ class FileBuilder extends AbstractQueryBuilder
                     $path = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
                     $paths[$rowIdx] = $path;
                 }
-                return $paths;
+                break;
         }
-        
-        return [];
+
+        return $paths;
     }
 
     /**
@@ -886,7 +900,7 @@ class FileBuilder extends AbstractQueryBuilder
                 if ($attr->isUidForObject()) {
                     continue;
                 }
-                $fileQuery->addAttribute($attr->getAliasWithNamespace());
+                $fileQuery->addAttribute($attr->getAliasWithRelationPath());
             }
             $fileReadResult = $fileQuery->read($dataConnection);
             foreach ($fileReadResult->getResultRows() as $row) {

@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Model\UiPage;
+use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -97,11 +98,8 @@ class PageInstaller extends AbstractAppInstaller
         $pagesFile = [];
         $workbench = $this->getWorkbench();
         
-        //$pageObj = $workbench->model()->getObject('exface.Core.PAGE');
-        //$this->disableTimestampingBehavior($pageObj);
         $workbench->model()->clearCache();
-        $workbench->model()->getModelLoader()->clearCache();
-        $pageObj = $workbench->model()->getObject('exface.Core.PAGE');
+        $pageObj = MetaObjectFactory::createFromString($workbench, 'exface.Core.PAGE');
         $this->disableTimestampingBehavior($pageObj);
         
         yield $idt . 'Pages: ' . PHP_EOL;

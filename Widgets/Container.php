@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
@@ -553,5 +554,25 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     {
         self::addAttributeGroupSnippet($uxon, $this);
         return parent::importUxonObject($uxon);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        // Objects used in columns
+        foreach ($this->getWidgets() as $w) {
+            // Skip lazy loading widgets like data widgets. They will take care of their
+            // effects by themselves.
+            if (($w instanceof iSupportLazyLoading) && $w->getLazyLoading() === true) {
+                continue;
+            }
+            $objs = array_merge($objs, $w->getMetaObjectsEffectingThisWidget());
+        }
+        return array_unique($objs);
     }
 }

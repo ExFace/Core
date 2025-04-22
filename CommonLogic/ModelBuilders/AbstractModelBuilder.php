@@ -10,13 +10,14 @@ use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\UxonObject;
 
 abstract class AbstractModelBuilder implements ModelBuilderInterface
 {
     private $data_types = null;
     
     private $modelLanguage = 'en';
+
+    private $data_connector = null;
     
     public function __construct(DataConnectionInterface $data_connector)
     {
