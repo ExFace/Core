@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use axenox\ETL\Events\Flow\OnAfterETLStepRun;
+use axenox\ETL\Events\Flow\OnBeforeETLStepRun;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
@@ -201,6 +203,16 @@ class Tracer extends Profiler
             $this,
             'stopBehavior'
         ]);
+
+        // ETL Steps
+        $event_manager->addListener(OnBeforeETLStepRun::getEventName(), [
+            $this,
+            'startETLStep'
+        ]);
+        $event_manager->addListener(OnAfterETLStepRun::getEventName(), [
+            $this,
+            'stopETLStep'
+        ]);
         
         // Performance summary
         $event_manager->addListener(OnBeforeStopEvent::getEventName(), [
@@ -400,6 +412,35 @@ class Tracer extends Profiler
     {
         try {
             $ms = $this->stop($event->getBehavior());
+            $name = $this->getLapName($event);
+            if ($ms !== null) {
+                $duration = ' (' . $ms . ' ms)';
+            } else {
+                $duration = '';
+            }
+            $this->getWorkbench()->getLogger()->info($name . $duration, array(), $event->getLogbook());
+        } catch (\Throwable $e){
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+    }
+
+    /**
+     * @param OnBeforeETLStepRun $event
+     * @return void
+     */
+    public function startETLStep(OnBeforeETLStepRun $event) : void
+    {
+        $this->start($event->getStep(), $this->getLapName($event), 'etlStep');
+    }
+
+    /**
+     * @param OnAfterETLStepRun $event
+     * @return void
+     */
+    public function stopETLStep(OnAfterETLStepRun $event) : void
+    {
+        try {
+            $ms = $this->stop($event->getStep());
             $name = $this->getLapName($event);
             if ($ms !== null) {
                 $duration = ' (' . $ms . ' ms)';
