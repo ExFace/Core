@@ -16,7 +16,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * objects, within a specified scope.
  * 
  * To start counting, simply call `start([$objects], $reset)`. Make sure to call `stop()` before leaving
- * your scope or the counter will continue receiving events and counting their results.
+ * the scope within which you called `start()` or the counter will continue receiving events and counting their results.
  * 
  * @see CrudPerformedEventInterface
  */
