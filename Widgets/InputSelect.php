@@ -655,12 +655,16 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
         if (empty($values)) {
             return $this;
         }
-        
-        if ($this->getMultiSelect()) {
+
+        // with the new logic for automatic multi_Select we should not distinguish here anymore if multi_select is allowed or not
+        // just parse the values from the array as a string with multi select delimiter to the setValue function, it will take care of the rest.
+        /*if ($this->getMultiSelect()) {
             $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values), $parseStringsAsExpressions);
         } else {
             $this->setValue(reset($values), $parseStringsAsExpressions);
-        }
+        }*/
+
+        $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values), $parseStringsAsExpressions);
         return $this;
     }
 
