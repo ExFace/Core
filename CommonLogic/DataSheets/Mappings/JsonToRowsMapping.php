@@ -163,15 +163,34 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
     {
         // go to innermost arrays and extract their data and parent data
         $parentKeys = $this->getParentKeys($json);
-        $rows = $this->extractJsonData($json, [], $parentKeys, $nestedMarker);
+        $uniqueKeys = [];
+        $rows = $this->extractJsonData($json, [], $parentKeys, $nestedMarker, $uniqueKeys);
+        ksort($uniqueKeys);
 
-        // clean result array and make duplicates unique
+        // re-order keys per row and fill missing keys with empty values
+        foreach ($rows as $row) {
+            $orderedRow = [];
+            foreach ($uniqueKeys as $key => $defaultValue) {
+                if (array_key_exists($key, $row)) {
+                    // if the key exists in the row, use its value
+                    $orderedRow[$key] = $row[$key];
+                } else {
+                    // otherwise use the value from uniqueKeys
+                    $orderedRow[$key] = $defaultValue;
+                }
+            }
+            $orderedRows[] = $orderedRow;
+        }
+
+        // clean result array and make duplicates unique (add suffix)
+        // (since json keys can be duplicate across different levels of nesting)
         $result = [];
-        foreach($rows as $row){
+        foreach($orderedRows as $row){
             $resultRow = [];
             $duplicates = [];
             foreach($row as $key => $values){
-                // if key is a duplicate, append key with suffix increment
+                // if key is a duplicate in row, append key with suffix increment
+                // else append basic key
                 if ($resultRow[$values[0]] != null) {
                     $duplicates[$values[0]] = ($duplicates[$values[0]] ?? 1) + 1;
                     $resultRow[$values[0] . ' ' . $duplicates[$values[0]]] = $values[1];
@@ -198,7 +217,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
      * @param int $depth
      * @return array[]
      */
-    protected function extractJsonData(array $data, array $parentData = [], array $parentKeys, string $nestedMarker, int $depth = 0): array {
+    protected function extractJsonData(array $data, array $parentData = [], array $parentKeys, string $nestedMarker, array &$uniqueKeys, int $depth = 0): array {
         $result = [];
     
         // Loop through each element in the json object
@@ -209,6 +228,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
                 $prefixedInnermostData = [];
                 foreach ($value as $innerKey => $innerValue) {
                     $prefixedInnermostData["depth{$depth}_{$innerKey}"] = [$innerKey, $innerValue];
+                    $uniqueKeys["depth{$depth}_{$innerKey}"] = [$innerKey, ""];
                 }
 
                 // Merge data (innermost array + parent data) and append to result
@@ -227,6 +247,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
                 $prefixedLevelData = [];
                 foreach ($levelData as $levelKey => $levelValue) {
                     $prefixedLevelData["depth{$depth}_{$levelKey}"] = [$levelKey, $levelValue];
+                    $uniqueKeys["depth{$depth}_{$levelKey}"] = [$levelKey, ""];
                 }
             
                 // Merge the current parent data with the prefixed level data
@@ -235,10 +256,11 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
                 // Mark the current key with the nested marker if it's a parent key
                 if (in_array($key, $parentKeys)) {
                     $currentParentData["depth{$depth}_{$key}"] = [$key, $nestedMarker];
+                    $uniqueKeys["depth{$depth}_{$key}"] = [$key, ""];
                 }
             
                 // Recursively call the function, passing the updated parent data and incrementing depth
-                $result = array_merge($result, $this->extractJsonData($value, $currentParentData, $parentKeys, $nestedMarker, $depth + 1));
+                $result = array_merge($result, $this->extractJsonData($value, $currentParentData, $parentKeys, $nestedMarker, $uniqueKeys, $depth + 1));
             }
         }
     
