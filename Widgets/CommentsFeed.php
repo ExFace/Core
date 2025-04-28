@@ -29,12 +29,12 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
  * {
  *    "widget_type": "CommentsFeed",
  *    "object_alias": "my.App.COMMENTS",
- *    "comment_id_attribute_alias": "UID",
- *    "comment_created_date_attribute_alias": "CREATED_ON",
- *    "comment_edited_date_attribute_alias": "MODIFY_ON",
- *    "comment_author_id_attribute_alias": "CREATED_BY",
- *    "comment_author_attribute_alias": "CREATED_BY__FULL_NAME",
- *    "comment_content_attribute_alias": "TITLE",
+ *    "comment_id_attribute": "UID",
+ *    "comment_created_date_attribute": "CREATED_ON",
+ *    "comment_edited_date_attribute": "MODIFY_ON",
+ *    "comment_author_id_attribute": "CREATED_BY",
+ *    "comment_author_attribute": "CREATED_BY__FULL_NAME",
+ *    "comment_content_attribute": "TITLE",
  * }
  * 
  * ```
@@ -87,12 +87,6 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     private $uploadEnabled = false;
     
     private $downloadEnabled = true;
-    
-    private $filenameAttributeAlias = null;
-    
-    private $filenameColumn = null;
-     
-    private $filesFacade = null;
     
     private $checkedBehaviorForObject = null;
 
@@ -177,13 +171,13 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     }
     
     /**
-     * @uxon-property comment_content_attribute_alias
+     * @uxon-property comment_content_attribute
      * @uxon-type metamodel:attribute
      * 
      * @param string $value
      * @return CommentsFeed
      */
-    public function setCommentContentAttributeAlias(string $value) : CommentsFeed
+    public function setCommentContentAttribute(string $value) : CommentsFeed
     {
         $this->commentContentAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -218,13 +212,13 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     
     /**
      * 
-     * @uxon-property comment_created_date_attribute_alias
+     * @uxon-property comment_created_date_attribute
      * @uxon-type metamodel:attribute
      *
      * @param string $value
      * @return CommentsFeed
      */
-    public function setCommentCreatedDateAttributeAlias(string $value) : CommentsFeed
+    public function setCommentCreatedDateAttribute(string $value) : CommentsFeed
     {
         $this->commentCreatedDateAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -259,13 +253,13 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     
     /**
      * 
-     * @uxon-property comment_edited_date_attribute_alias
+     * @uxon-property comment_edited_date_attribute
      * @uxon-type metamodel:attribute
      *
      * @param string $value
      * @return CommentsFeed
      */
-    public function setCommentEditedDateAttributeAlias(string $value) : CommentsFeed
+    public function setCommentEditedDateAttribute(string $value) : CommentsFeed
     {
         $this->commentEditedDateAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -300,13 +294,13 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     
     /**
      * 
-     * @uxon-property comment_id_attribute_alias
+     * @uxon-property comment_id_attribute
      * @uxon-type metamodel:attribute
      *
      * @param string $value
      * @return CommentsFeed
      */
-    public function setCommentIdAttributeAlias(string $value) : CommentsFeed
+    public function setCommentIdAttribute(string $value) : CommentsFeed
     {
         $this->commentIdAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -341,13 +335,13 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     
     /**
      * 
-     * @uxon-property comment_author_id_attribute_alias
+     * @uxon-property comment_author_id_attribute
      * @uxon-type metamodel:attribute
      *
      * @param string $value
      * @return CommentsFeed
      */
-    public function setCommentAuthorIdAttributeAlias(string $value) : CommentsFeed
+    public function setCommentAuthorIdAttribute(string $value) : CommentsFeed
     {
         $this->commentAuthorIdAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -392,13 +386,13 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     /**
      * 
      * 
-     * @uxon-property comment_author_attribute_alias
+     * @uxon-property comment_author_attribute
      * @uxon-type metamodel:attribute
      * 
      * @param string $value
      * @return CommentsFeed
      */
-    public function setCommentAuthorAttributeAlias(string $value) : CommentsFeed
+    public function setCommentAuthorAttribute(string $value) : CommentsFeed
     {
         $this->commentAuthorAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -616,32 +610,39 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     
     protected function guessColumns()
     {
+        // Try to get the columns from the CommentBehavior
         /* @var $behavior \exface\Core\Behaviors\CommentBehavior */
         if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(CommentBehavior::class)->getFirst()) {
             if ($this->commentAuthorColumn === null && $attr = $behavior->getCommentAuthorAttribute()) {
-                $this->setCommentAuthorAttributeAlias($attr->getAliasWithRelationPath());
+                $this->setCommentAuthorAttribute($attr->getAliasWithRelationPath());
             }
             
             if ($this->commentContentColumn === null && $attr = $behavior->getCommentContentAttribute()) {
-                $this->setCommentContentAttributeAlias($attr->getAliasWithRelationPath());
+                $this->setCommentContentAttribute($attr->getAliasWithRelationPath());
             }
             
             if ($this->commentCreatedDateColumn === null && $attr = $behavior->getCommentCreatedDateAttribute()) {
-                $this->setCommentCreatedDateAttributeAlias($attr->getAliasWithRelationPath());
+                $this->setCommentCreatedDateAttribute($attr->getAliasWithRelationPath());
             }
 
             if ($this->commentEditedDateColumn === null && $attr = $behavior->getCommentEditedDateAttribute()) {
-                $this->setCommentEditedDateAttributeAlias($attr->getAliasWithRelationPath());
+                $this->setCommentEditedDateAttribute($attr->getAliasWithRelationPath());
             }
 
             if ($this->commentIdColumn === null && $attr = $behavior->getCommentIdAttribute()) {
-                $this->setCommentIdAttributeAlias($attr->getAliasWithRelationPath());
+                $this->setCommentIdAttribute($attr->getAliasWithRelationPath());
             }
 
             if ($this->commentAuthorIdColumn === null && $attr = $behavior->getCommentAuthorIdAttribute()) {
-                $this->setCommentAuthorIdAttributeAlias($attr->getAliasWithRelationPath());
+                $this->setCommentAuthorIdAttribute($attr->getAliasWithRelationPath());
             }            
         }
+
+        // Fall back to UID attribute of object in case nothing else was specified
+        if ($this->commentIdColumn === null && $this->getMetaObject()->hasUidAttribute()) {
+            $this->setCommentIdAttribute($this->getMetaObject()->getUidAttributeAlias());
+        }
+        
         $this->checkedBehaviorForObject = $this->getMetaObject();
     }
     

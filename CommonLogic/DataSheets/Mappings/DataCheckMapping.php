@@ -17,6 +17,7 @@ use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 class DataCheckMapping extends AbstractDataSheetMapping 
 {
     private $inputChecks = [];
+    private $disabled = false;
     
     /**
      * 
@@ -25,6 +26,9 @@ class DataCheckMapping extends AbstractDataSheetMapping
      */
     public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
+        if ($this->isDisabled()) {
+            return $toSheet;
+        }
         $checks = $this->getFromDataChecks();
         if (! empty ($checks) && $logbook !== null) {
             $logbook->addLine('Checking input data:');
@@ -34,7 +38,7 @@ class DataCheckMapping extends AbstractDataSheetMapping
                 if ($logbook !== null) $logbook->addLine('Checking `' . $check->getConditionGroup()->__toString() . '`', +1);
                 $check->check($fromSheet);
             } catch (DataCheckExceptionInterface $e) {
-                if ($logbook !== null) $logbook->addLine('**Check failed:** ' . $check->getErrorText());
+                if ($logbook !== null) $logbook->addLine('**Check failed:** ' . $check->getErrorText() . ' (condition `' . $check->getConditionGroup()->__toString() . '` was `true`)', -1);
                 throw new DataMappingFailedError($this, $fromSheet, $toSheet, $e->getMessage(), null, $e, $logbook);
             }
         }
@@ -82,4 +86,23 @@ class DataCheckMapping extends AbstractDataSheetMapping
         }
         return $this;
     }
+
+    /**
+     * Disable the checks completely.
+     * 
+     * This is used for exampke in PrefillModel::emulatePrefill() to bypass the checks intitionally.
+     * 
+     * @param bool $value
+     * @return DataCheckMapping
+     */
+    public function disable(bool $value) : DataCheckMapping
+    {
+        $this->disabled = $value;
+        return $this;
+    }
+
+    protected function isDisabled() : bool
+    {
+        return $this->disabled;
+    }       
 }

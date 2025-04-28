@@ -196,6 +196,11 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
         return $this->content_array[$key] ?? null;
     }
 
+    public function has($key) : bool
+    {
+        return array_key_exists($key, $this->content_array);
+    }
+
     /**
      * Returns the first entity in the list or NULL if the list is empty.
      *

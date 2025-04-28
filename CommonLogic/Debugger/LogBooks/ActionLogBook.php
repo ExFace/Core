@@ -202,8 +202,14 @@ class ActionLogBook implements DataLogBookInterface
                     break;
                 case $event instanceof OnBeforeBehaviorAppliedEvent:
                     $behavior = $event->getBehavior();
-                    $eventName = StringDataType::substringAfter($event->getEventProcessed()::getEventName(), '.', $event->getEventProcessed()::getEventName(), false, true);
-                    $this->addLine("`{$eventName}` {$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
+                    $processedEvent = $event->getEventProcessed();
+                    if ($processedEvent == null) {
+                        $eventName = '';
+                    } else {
+                        $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
+                        $eventName = "`{$eventName}`";
+                    }
+                    $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
                     break;
                 case $event instanceof OnBeforeActionPerformedEvent:
                     $action = $event->getAction();

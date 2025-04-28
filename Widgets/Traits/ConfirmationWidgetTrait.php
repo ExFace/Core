@@ -23,6 +23,19 @@ trait ConfirmationWidgetTrait
 
     private $disabledIfNoChanges = false;
 
+    private $action = null;
+
+    public function setAction(ActionInterface $action) : ConfirmationWidgetInterface
+    {
+        $this->action = $action;
+        return $this;
+    }
+
+    protected function getAction() : ?ActionInterface
+    {
+        return $this->action;
+    }
+
     /**
      * Returns the primary button of the confirmation: accept, continue, OK, or similar.
      * 
@@ -31,6 +44,14 @@ trait ConfirmationWidgetTrait
      */
     public function getButtonContinue() : iTriggerAction
     {
+        if ($this->buttonContinue === null) {
+            $btnUxon = $this->getButtonContinueDefaults();
+            if (null !== $action = $this->getAction()) {
+                $btnUxon->setProperty('caption', $action->getName());
+            }
+            $this->setButtonContinue($btnUxon);
+                        
+        }
         return $this->buttonContinue;
     }
 

@@ -293,8 +293,8 @@ class UxonAutosuggest extends AbstractAction
     {
         $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
         return [
-            'values' => $schema->getProperties($prototypeClass),
-            'templates' => $schema->getPropertiesTemplates($prototypeClass)
+            'values' => $schema->getProperties($prototypeClass, $uxon, $path),
+            'templates' => $schema->getPropertiesTemplates($prototypeClass, $uxon, $path)
         ];
     }
     

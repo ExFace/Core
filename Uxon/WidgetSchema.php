@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Selectors\WidgetSelector;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
@@ -29,7 +29,7 @@ class WidgetSchema extends UxonSchema
      */
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::WIDGET;
+        return UxonSchemaDataType::WIDGET;
     }
     
     /**

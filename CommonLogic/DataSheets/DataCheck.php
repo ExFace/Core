@@ -273,7 +273,14 @@ class DataCheck implements DataCheckInterface
     }
     
     /**
+     * Apply this check only if the data is based on a certain meta object.
      * 
+     * This is especially useful for actions with multiple input mappers. Using
+     * this property, you can selectively apply checks only to certain input
+     * objects.
+     * 
+     * @uxon-property only_for_object
+     * @uxon-type metamodel:object
      * @param string $value
      * @return DataCheck
      */

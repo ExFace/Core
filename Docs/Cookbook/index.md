@@ -1,6 +1,6 @@
 # Common recipies
 
-Having issues? See [chapter "Troubleshooting"](Troubleshooting.md).
+Having issues? See [chapter "Troubleshooting"](../Troubleshooting.md).
 
 ## Working with SQL databases
 

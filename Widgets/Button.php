@@ -36,6 +36,7 @@ use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToAttribute;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -774,43 +775,59 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     protected function getConditionalPropertyFromAction(ActionInterface $action) : ?UxonObject
     {
-        // Currently this will only work if there is exactly one input check
-        // applicable to the input object
-        $inputWidget = $this->getInputWidget();
-        $inputWidgetObject = $inputWidget->getMetaObject();
-        $check = null;
-        /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
-        foreach ($action->getInputChecks()->getAll() as $c) {
-            if ($c->isApplicableToObject($inputWidgetObject)) {
-                if ($check === null) {
-                    $check = $c;
-                } else {
-                    continue;
-                }
-            }
-        }
-        
-        // If no checks, quit here
-        if ($check === null) {
-            return null;
-        }
-        // If there are input checks, but the input is not going to be used, quit here too
+        // If there the input is not going to be used, don't bother at all
         if (($action instanceof iPrefillWidget) && $action->getPrefillWithInputData() === false) {
             return null;
         }
-        
-        // If we have found a check, we need to make sure, the input widget will
-        // be able to supply enough data.
-        /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
-        $condGrp = $check->getConditionGroup($inputWidgetObject);
-        switch (true) {
-            case $inputWidget instanceof iShowData:
-                return $this->getConditionalPropertyForData($inputWidget, $condGrp);
-            case $inputWidget instanceof iUseData:
-                return $this->getConditionalPropertyForData($inputWidget->getData(), $condGrp);
-            case $inputWidget instanceof iContainOtherWidgets:
-                return $this->getConditionalPropertyForContainer($inputWidget, $condGrp);
+
+        $inputWidget = $this->getInputWidget();
+        $inputWidgetObject = $inputWidget->getMetaObject();
+
+        // Generate an xxx_if property for every check, that is applicable to the input widgets object
+        // If there will be multiple checks, we gather them into an array and use them in a nested
+        // OR condition later
+        $uxons = [];
+        /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
+        foreach ($action->getInputChecks()->getAll() as $check) {
+            if (! $check->isApplicableToObject($inputWidgetObject)) {
+                continue;
+            }
+
+            // If we have found a check, we need to make sure, the input widget will
+            // be able to supply enough data.
+            /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
+            $condGrp = $check->getConditionGroup($inputWidgetObject);
+            switch (true) {
+                case $inputWidget instanceof iShowData:
+                    $propUxon = $this->getConditionalPropertyForData($inputWidget, $condGrp);
+                    break;
+                case $inputWidget instanceof iUseData:
+                    $propUxon = $this->getConditionalPropertyForData($inputWidget->getData(), $condGrp);
+                    break;
+                case $inputWidget instanceof iContainOtherWidgets:
+                    $propUxon = $this->getConditionalPropertyForContainer($inputWidget, $condGrp);
+                    break;
+            }
+            if ($propUxon !== null) {
+                $uxons[] = $propUxon;
+            }
         }
+        
+        // If there is only one check, use that as-is
+        if (count($uxons) === 1) {
+            return $uxons[0];
+        }
+        // If there are multiple checks, wrap them in an OR-condition
+        if (count($uxons) > 1) {
+            $uxon = new UxonObject([
+                'operator' => 'OR'
+            ]);
+            foreach ($uxons as $propUxon) {
+                $uxon->appendToProperty('condition_groups', $propUxon);
+            }
+            return $uxon;
+        }
+        
         return null;
     }
     
@@ -829,30 +846,43 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
-            if (! $cond->getExpression()->isMetaAttribute()) {
-                return null;
-            }
-            if (! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
-                $col = $dataWidget->createColumnFromAttribute($cond->getExpression()->getAttribute());
-                $col->setHidden(true);
-                $dataWidget->addColumn($col);
-            }
-            $comp = $cond->getComparator();
-            
-            // Multi-select data widget can only handle list-comparators properly as their
-            // value is mostly a list. 
-            if ($dataMultiSelect === true) {
-                $comp = ComparatorDataType::convertToListComparator($comp, false);
-                if ($comp === null) {
+            switch (true) {
+                case $cond->getExpression()->isMetaAttribute():
+                    if (! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
+                        $col = $dataWidget->createColumnFromUxon(new UxonObject([
+                            'attribute_alias' => $cond->getAttributeAlias(),
+                            'hidden' => true
+                        ]));
+                        $dataWidget->addColumn($col);
+                    }
+
+                    $comp = $cond->getComparator();                    
+                    // Multi-select data widget can only handle list-comparators properly as their
+                    // value is mostly a list. 
+                    if ($dataMultiSelect === true) {
+                        $comp = ComparatorDataType::convertToListComparator($comp, false);
+                        if ($comp === null) {
+                            return null;
+                        }
+                    }   
+                                     
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => "=~input!" . $col->getDataColumnName(),
+                        "comparator" => $comp,
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                case $cond->getExpression()->isStatic():
+                    $comp = $cond->getComparator();
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => $cond->getExpression()->__toString(),
+                        "comparator" => $comp,
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                default:
                     return null;
-                }
-            } 
-            
-            $uxon->appendToProperty('conditions', new UxonObject([
-                "value_left" => "=~input!" . $col->getDataColumnName(),
-                "comparator" => $comp,
-                "value_right" => $cond->getRightExpression()->__toString()
-            ]));
+            }
         }
         
         foreach ($condGrp->getNestedGroups() as $nestedGrp) {
@@ -879,30 +909,45 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
-            if (! $cond->getExpression()->isMetaAttribute()) {
-                return null;
+            switch (true) {
+                case $cond->getExpression()->isMetaAttribute():
+                    $attrAlias = $cond->getExpression()->__toString();
+                    if (! $containerWidget->getMetaObject()->hasAttribute($attrAlias)) {
+                        return null;
+                    }
+                    $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
+                        return ($child instanceof iTakeInput) 
+                            && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) 
+                            && ($child instanceof iCanBeBoundToAttribute)
+                            && $child->isBoundToAttribute() 
+                            && $child->getAttributeAlias() === $attrAlias;
+                    });
+                    if (! $w = $matches[0] ?? null) {
+                        /*
+                        $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
+                            'widget_type' => 'InputHidden',
+                            'attribute_alias' => $attrAlias
+                        ]));
+                        $containerWidget->addWidget($w);*/
+                        return null;
+                    }
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => "=~input!" . $w->getDataColumnName(),
+                        "comparator" => $cond->getComparator(),
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                case $cond->getExpression()->isStatic():
+                    $comp = $cond->getComparator();
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => $cond->getExpression()->__toString(),
+                        "comparator" => $comp,
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                default:
+                    return null;
             }
-            $attrAlias = $cond->getExpression()->__toString();
-            if (! $containerWidget->getMetaObject()->hasAttribute($attrAlias)) {
-                return null;
-            }
-            $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
-                return ($child instanceof iTakeInput) && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) && $child->isBoundToAttribute() && $child->getAttributeAlias() === $attrAlias;
-            });
-            if (! $w = $matches[0] ?? null) {
-                /*
-                $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
-                    'widget_type' => 'InputHidden',
-                    'attribute_alias' => $attrAlias
-                ]));
-                $containerWidget->addWidget($w);*/
-                return null;
-            }
-            $uxon->appendToProperty('conditions', new UxonObject([
-                "value_left" => "=~input!" . $w->getDataColumnName(),
-                "comparator" => $cond->getComparator(),
-                "value_right" => $cond->getRightExpression()->__toString()
-            ]));
         }
         
         foreach ($condGrp->getNestedGroups() as $nestedGrp) {
@@ -945,11 +990,16 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     /**
      * Set to TRUE to hide the button if the input does not match the actions `input_invalid_if`.
      * 
-     * NOTE: this only works if the buttons input widget contains all values required to
-     * evaluate the `input_invalid_if` conditions (and if the facade used supports this
-     * feature of course). If anything is missing, the button will remain visible and active
-     * and the `input_invalid_if` conditions will be evaluate regularly - when trying to perform
-     * the action.
+     * **NOTE:** this only works reliably if the buttons input widget (e.g. the DataTable) contains all 
+     * values required to evaluate the `input_invalid_if` conditions (and if the facade used supports this
+     * feature of course). If anything is missing, the button will try to add the required columns
+     * automatically, but this is not always possible.  
+     * 
+     * If automatic hiding does not work, the Button will remain active and the `input_invalid_if` 
+     * conditions will be evaluated by the server - when trying to perform the action.
+     * 
+     * You can also try to fix issues by adding the required expressions as hidden column to the input
+     * widget manully. Or use an explicit `hidden_if` configuration for the button instead.
      * 
      * @uxon-property hidden_if_input_invalid
      * @uxon-type boolean
@@ -976,15 +1026,20 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     /**
      * Set to TRUE to disable the button if the input does not match the actions `input_invalid_if`.
      * 
+     * **NOTE:** this only works reliably if the buttons input widget (e.g. the DataTable) contains all 
+     * values required to evaluate the `input_invalid_if` conditions (and if the facade used supports this
+     * feature of course). If anything is missing, the button will try to add the required columns
+     * automatically, but this is not always possible. 
+     * 
+     * If automatic disabling does not work, the Button will remain active and the `input_invalid_if` 
+     * conditions will be evaluated by the server - when trying to perform the action.
+     * 
+     * You can also try to fix issues by adding the required expressions as hidden column to the input
+     * widget manully. Or use an explicit `disabled_if` configuration for the button instead.
+     * 
      * @uxon-property disabled_if_input_invalid
      * @uxon-type boolean
      * @uxon-default true
-     * 
-     * NOTE: this only works if the buttons input widget contains all values required to
-     * evaluate the `input_invalid_if` conditions (and if the facade used supports this
-     * feature of course). If anything is missing, the button will remain active
-     * and the `input_invalid_if` conditions will be evaluate regularly - when trying to perform
-     * the action.
      * 
      * @param bool $value
      * @return Button

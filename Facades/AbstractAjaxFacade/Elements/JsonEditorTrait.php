@@ -5,6 +5,7 @@ use exface\Core\Widgets\InputUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
+use exface\Core\Widgets\Tab;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -122,7 +123,7 @@ JS;
         $addHelpButtonFunction = $this::buildJsFunctionNameAddHelpButton($this->buildJsFunctionPrefix());
         /* @var \exface\Core\Facades\DocsFacade $docsFacade */
         $docsFacade = FacadeFactory::createFromAnything(DocsFacade::class, $this->getWorkbench());
-        $url = $docsFacade->buildUrlToFacade() . '/exface/Core/Docs/Creating_UIs/UXON/Introduction_to_the_UXON_editor.md';
+        $url = $docsFacade->buildUrlToFacade() . '/exface/Core/Docs/UXON/Introduction_to_the_UXON_editor.md';
         $workbench = $this->getWorkbench();
         $buttonTitleHelp = static::translateJsUxonEditorTerm($workbench, 'HELP');
         
@@ -203,6 +204,7 @@ JS;
                     
                     $('#{$uxonEditorId}').parents('.exf-input').children('label').css('vertical-align', 'top');
                     {$uxonInitScripts}
+                    {$this->buildJsRememberScrollPos($uxonEditorId, true)}
         			
         
 JS;
@@ -2032,5 +2034,47 @@ JS;
     {
         $disabledJs = $trueOrFalse ? 'true' : 'false';
         return $this::buildJsEditorGetter($this->getId()) . ".container.setDisabled({$disabledJs})";
+    }
+
+    protected function buildJsRememberScrollPos(string $uxonEditorId, bool $addEventListener = false) : string
+    {
+        $widget = $this->getWidget();
+        if (! $prefillSheet = $widget->getPrefillData()) {
+            return '';
+        }
+        if ($prefillSheet->isEmpty()) {
+            return '';
+        }
+        if (! $uidCol = $prefillSheet->getUidColumn()) {
+            return '';
+        }
+        $uid = $uidCol->getValue(0);
+        if ($uid === '' || $uid === null) {
+            return '';
+        }
+        return <<<JS
+
+        (function(jqEd, sUid){
+            var jqScroller = jqEd.find('.jsoneditor-tree');
+            var iPos = 0;
+            var bAddListener = {$this->escapeBool($addEventListener)};
+            if (window._uxonEditorScrollPos === undefined) {
+                window._uxonEditorScrollPos = {};
+            } 
+            if (window._uxonEditorScrollPos[jqEd.attr('id')] === undefined) {
+                window._uxonEditorScrollPos[jqEd.attr('id')] = {};
+            }
+            if (undefined !== (iPos = window._uxonEditorScrollPos[jqEd.attr('id')][sUid])) {
+                setTimeout(function(){
+                    jqScroller.scrollTop(iPos);
+                }, 100);
+            }
+            if (bAddListener) {
+                jqScroller.on('scroll', function(oEvent){
+                    window._uxonEditorScrollPos[jqEd.attr('id')][sUid] = jqScroller.scrollTop();
+                });
+            }
+        })($('#{$uxonEditorId}'), '{$uid}');
+JS;
     }
 }
