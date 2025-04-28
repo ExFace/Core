@@ -5,7 +5,7 @@ use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
-use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
@@ -22,7 +22,7 @@ class DatatypeSchema extends UxonSchema
     
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::DATATYPE;
+        return UxonSchemaDataType::DATATYPE;
     }
     
     /**

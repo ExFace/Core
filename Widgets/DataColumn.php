@@ -320,6 +320,17 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 }
                 
                 $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                // When using default display/editor widgets for related attributes, make sure to pass
+                // the relation path of our attribtue to these widgets, so that all attribute refs used
+                // inside the default widget definitions will be resolved relative to the same relation
+                // path. For example, if we have an ORDER and a separate SHIPPINGSTATE object, that has
+                // a COLOR attribtue, the NAME attribute of SHIPPINGSTATE might have a ColorIndicator as
+                // default display widget, referencing its own COLOR attribute. In the context of an
+                // ORDER we would use SHIPPINGSTATE__NAME to render the name and SHIPPINGSTATE__ relation
+                // path would need to be applied to ALL attribute-bound properties of the ColorIndicator. 
+                if ($this->getAttribute()->isRelated()) {
+                    $uxon->setProperty('attribute_relation_path', $this->getAttribute()->getRelationPath()->toString());
+                }
                 
             } else {
                 // If the column is not based on an attribute, use generic input/display widgets
@@ -335,6 +346,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
             
             $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon), $this, $fallbackWidgetType);
+            
             $this->cellWidget = $cellWidget;
             // Make sure, the cell widget knows, that it is hidden if the column is hidden
             // Do it only for hidden columns as optional ones can be made visible again

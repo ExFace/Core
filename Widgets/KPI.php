@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetFactory;
@@ -339,5 +340,31 @@ class KPI extends Display implements iUseData
         if ($this->hasDataWidgetLink() === false) {
             yield $this->getData();
         }
+    }
+
+    /**
+     * A KPI is effected by its own object, but also by the object of its data if its
+     * is bound to data and that data is not lazy-loaded.
+     * 
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        if ($this->hasData()) {
+            $dataWidget = $this->getData();
+            $dataEffected = false;
+            if ($dataWidget instanceof iSupportLazyLoading) {
+                if ($dataWidget->getLazyLoading() === true) {
+                    $dataEffected = true;
+                }
+            }
+            if ($dataEffected === false) {
+                $objs = array_merge($objs, $dataWidget->getMetaObjectsEffectingThisWidget());
+                $objs = array_unique($objs);
+            }
+        }
+        return $objs;
     }
 }

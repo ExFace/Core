@@ -1251,6 +1251,25 @@
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "HttpStatusCode",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "UXON schema",
+            "CREATED_ON": "2025-03-21 08:51:49",
+            "MODIFIED_ON": "2025-03-21 09:09:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f08dda58813e9e8dda025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "UXON schema",
+            "PROTOTYPE": "exface/Core/DataTypes/UxonSchemaDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect"
+            },
+            "ALIAS": "UxonSchema",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

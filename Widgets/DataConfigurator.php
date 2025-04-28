@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;

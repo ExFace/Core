@@ -7,7 +7,6 @@ use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\Events\MetaObjectEventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;

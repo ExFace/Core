@@ -86,8 +86,10 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
+     * The expression to fill this column with values
+     * 
+     * @uxon-property expression
+     * @uxon-type metamodel:expression
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setExpression()
      */
@@ -98,7 +100,9 @@ class DataColumn implements DataColumnInterface
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
             $expression = $expression_or_string;
-            $exprObj = $expression->getMetaObject;
+            // FIXME this check below was long time broken due to a typo. However, once fixed it caused
+            // many errors - e.g. in Administration > Metamodel > Apps when reading the app list.
+            // $exprObj = $expression->getMetaObject();
             $thisObj = $this->getMetaObject();
             if ($exprObj === null) {
                 $expression->setMetaObject($thisObj);
@@ -162,9 +166,11 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * The name of this column
+     * 
+     * @uxon-property name
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setName()
      */
     public function setName($value, $keep_values = false)

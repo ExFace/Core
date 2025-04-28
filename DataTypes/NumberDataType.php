@@ -108,6 +108,7 @@ class NumberDataType extends AbstractDataType
     public function parse($string)
     {
         if (is_string($string)) {
+            $string = trim($string);
             if (null !== ($pfx = $this->getPrefix()) && StringDataType::startsWith($string, $pfx, false)) {
                 $string = trim(mb_substr($string, strlen($pfx)));
             }
@@ -117,7 +118,7 @@ class NumberDataType extends AbstractDataType
         }
         
         try {
-            $number = parent::parse($string);
+            $number = self::cast($string);
         } catch (\Throwable $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
         }

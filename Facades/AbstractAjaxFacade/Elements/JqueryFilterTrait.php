@@ -1,7 +1,12 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  *
@@ -12,7 +17,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 trait JqueryFilterTrait {
 
-    public function buildJsConditionGetter($valueJs = null)
+    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null)
     {
         $widget = $this->getWidget();
         if ($widget->hasCustomConditionGroup() === true) {
@@ -26,14 +31,18 @@ trait JqueryFilterTrait {
             throw new WidgetConfigurationError($widget, 'Invalid filter configuration for filter "' . $widget->getCaption() . '": missing expression (e.g. attribute_alias)!');
         }
 
-        $appliesToAggregates = $widget->appliesToAggregatedValues() ? 'true' : 'false';
+        if ($baseObject === null || ! $baseObject->isExactly($widget->getMetaObject())) {
+            $metaObjectAliasJs = "\"object_alias\" : \"{$widget->getMetaObject()->getAliasWithNamespace()}\",";
+        } else {
+            $metaObjectAliasJs = '';
+        }
         return <<<JSON
 {
   "expression" : "{$widget->getAttributeAlias()}",
   "comparator" : {$this->buildJsComparatorGetter()},
   "value" : $value,
-  "object_alias" : "{$widget->getMetaObject()->getAliasWithNamespace()}",
-  "apply_to_aggregates" : "{$appliesToAggregates}"
+  "apply_to_aggregates" : {$this->escapeBool($widget->appliesToAggregatedValues())},
+  {$metaObjectAliasJs}
 }
 JSON;
     }
@@ -45,8 +54,39 @@ JSON;
             return '';
         }
 
-        $jsonWithValuePlaceholder = $widget->getCustomConditionGroup()->exportUxonObject()->toJson(false);
-        return str_replace('"[#value#]"', $valueJs ?? $this->buildJsValueGetter(), $jsonWithValuePlaceholder);
+        $condGrp = $widget->getCustomConditionGroup();
+        $replacements = $this->getCustomConditionGroupReplacements($condGrp);
+
+        $jsonWithValuePlaceholder = $condGrp->exportUxonObject()->toJson(false);
+        return str_replace(array_keys($replacements), array_values($replacements), $jsonWithValuePlaceholder);
+    }
+
+    protected function getCustomConditionGroupReplacements(ConditionGroupInterface $condGrp) : array
+    {
+        $widget = $this->getWidget();
+        $replacements = [];
+        $condGrpStr = $condGrp->exportUxonObject()->toJson(false);
+        $phs = StringDataType::findPlaceholders($condGrpStr);
+        foreach ($phs as $ph) {
+            switch ($ph) {
+                case 'value':
+                case '~value':
+                    $replacements['"[#' . $ph . '#]"'] = $valueJs ?? $this->buildJsValueGetter();
+                    break;
+                default:
+                    throw new WidgetConfigurationError($this->getWidget(), 'Invalid placeholder "[#' . $ph . '#]" in custom condition_group of filter "' . $this->getWidget()->getCaption() . '"!');
+            }
+        }
+
+        foreach ($condGrp->getConditionsRecursive() as $cond) {
+            $val = $cond->getValue();
+            if (Expression::detectReference($val)) {
+                $valLink = WidgetLinkFactory::createFromWidget($widget, $val);
+                $valueGetterJs = $this->getFacade()->getElement($valLink->getTargetWidget())->buildJsValueGetter();
+                $replacements['"' . $val . '"' ] = $valueGetterJs;
+            }
+        }
+        return $replacements;
     }
     
     public function buildJsComparatorGetter()
@@ -123,8 +163,35 @@ JSON;
     {
         $widget = $this->getWidget();
         $constraintsJs = '';
+        $validateInputWidgetJs = "&& {$this->getInputElement()->buildJsValidator()}";
+
+        // If the filters itself is required, we need to double-check, it is not empty.
         if ($widget->isRequired() === true) {
-            $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
+            // However, the logic depends on whether the filter has a custom condition group or not.
+            // If it has, the filter is valid if at least one of the condition values is not empty.
+            if ($widget->hasCustomConditionGroup()) {
+                $valueGetters = $this->getCustomConditionGroupReplacements($widget->getCustomConditionGroup());
+                $valueGettersJs = implode(',', array_values($valueGetters));
+                $constraintsJs = <<<JS
+                
+                            var aValues = [{$valueGettersJs}];
+                            var aValuesNotEmpty = false;
+                            aValues.forEach(function(val) {
+                                if (val !== undefined && val !== null && val !== '') {
+                                    aValuesNotEmpty = true;
+                                }
+                            });
+                            bConstraintsOK = aValuesNotEmpty;
+JS;
+            } else {
+                $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
+            }
+        }
+
+        // Do not validate the original input widget if the filter has a custom condition group and it
+        // does not use the input widget.
+        if ($widget->hasCustomConditionGroup() && ($widget->isHidden() || ! $widget->isBoundToAttribute())) {
+            $validateInputWidgetJs = '';
         }
         
         $valJs = $valJs ?? $this->buildJsValueGetter();
@@ -132,12 +199,12 @@ JSON;
             return <<<JS
 
                     (
-                    (function(val){
-                        var bConstraintsOK = true;
-                        $constraintsJs;
-                        return bConstraintsOK;
-                    })($valJs) 
-                    && {$this->getInputElement()->buildJsValidator()}
+                        (function(val){
+                            var bConstraintsOK = true;
+                            $constraintsJs;
+                            return bConstraintsOK;
+                        })($valJs) 
+                        {$validateInputWidgetJs}
                     )
 JS;
         } else {

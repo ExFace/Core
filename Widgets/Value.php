@@ -1,6 +1,10 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -71,6 +75,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     private $valueLink = null;
     
     private $calculationExpr = null;
+
+    private $attributeRelationPathString = null;
     
     /**
      * 
@@ -723,5 +729,68 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         return $this->calculationExpr;
     }
+
+    /**
+     * 
+     * @return MetaRelationPathInterface|null
+     */
+    protected function getAttributeRelationPath() : ?MetaRelationPathInterface
+    {
+        if ($this->attributeRelationPathString === null) {
+            return null;
+        }
+        return RelationPathFactory::createFromString($this->getMetaObject(), $this->attributeRelationPathString);
+    }
+
+    /**
+     * Force all attribute references in this widget to use a common relation path
+     * 
+     * This is helpful if you have multiple widget properties bound to different attributes of a single
+     * related object. 
+     * 
+     * **WARNING:** This will make the widget resolve ALL attributes relatively to the object at the
+     * end of this relation path! Use with care!
+     * 
+     * @uxon-property attribute_relation_path
+     * @uxon-type metamodel:relation
+     * 
+     * @param string $path
+     * @return Value
+     */
+    public function setAttributeRelationPath(string $path) : Value
+    {
+        $this->attributeRelationPathString = $path;
+        if ($this->attribute_alias !== null) {
+            $prefix = $path . RelationPath::getRelationSeparator();
+            if (! StringDataType::startsWith($this->attribute_alias, $prefix)) {
+                $this->attribute_alias = $prefix . $this->attribute_alias;
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Value widgets are affected by their own object and any objects in the relation path
+     * if the value belongs to a relation attribute.
+     * 
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        // Objects used in columns
+        
+        if ($this->isBoundToAttribute()) {
+            $attr = $this->getAttribute();
+            $relPath = $attr->getRelationPath();
+            if (! $relPath->isEmpty()) {
+                foreach ($relPath->getRelations() as $rel) {
+                    $objs[] = $rel->getLeftObject();
+                    $objs[] = $rel->getRightObject();
+                }
+            }
+        }
+        return array_unique($objs);
+    }
 }
-?>

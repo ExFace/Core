@@ -1,8 +1,27 @@
 # Release history
 
-## 1.27 - in development
+## 1.28 - in development
+
+## 1.27 - 20.04.2025
+
+New features:
 
 - Automated testing via [axenox.BDT](https://github.com/axenox/BDT/) app
+- UXON snippets to create reusable bits of UXON models for widgets, actions, etc.
+- Generic excel paste-action `exface.Core.ShowDataImportDialog`
+- `UneditableBehavior` to prevent changes on objects on certain conditions
+- `lookup_mappings` to look up UIDs of objects in input mappers, etc.
+- `column_to_json_mappings` and `json_to_rows_mappings` for data mappers
+- Ability to add mappers to the output of export actions via `export_mapper`
+
+Improvements
+
+- Greatly improved web services in [axenox.ETL](https://github.com/axenox/ETL/) to simplify creation of OpenAPI import services
+- All filters have `multi_select` enabled now by default
+- In-app notifications are now automatically deleted after a configurable time period
+- Improved server traces list in DebugContext with better filters
+- Attribute groups now can be accessed via relation path: e.g. `RELATED_OBJECT__~editable`.
+- Many improvements for custom attributes
 
 ## 1.26 - 18.03.2025
 

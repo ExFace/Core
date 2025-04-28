@@ -53,18 +53,22 @@ interface UxonSchemaInterface extends WorkbenchDependantInterface
     
     /**
      * Returns an array with names of all properties of a given prototype class.
-     *
+     * 
      * @param string $prototypeClass
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @param array $path
      * @return string[]
      */
-    public function getProperties(string $prototypeClass) : array;
+    public function getProperties(string $prototypeClass, UxonObject $uxon, array $path) : array;
     
     /**
      * 
      * @param string $prototypeClass
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @param array $path
      * @return string[]
      */
-    public function getPropertiesTemplates(string $prototypeClass) : array;
+    public function getPropertiesTemplates(string $prototypeClass, UxonObject $uxon, array $path) : array;
     
     /**
      * 

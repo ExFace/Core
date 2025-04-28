@@ -216,11 +216,16 @@ class ColorIndicator extends Display implements iHaveColor, iHaveHintScale
         // Create emtpy binding if none was set explicitly
         if ($this->colorBinding === null) {
             $uxon = $this->colorBindingUxon;
+            // If this widget has a global relation path for all its attributes, pass it to the color
+            // binding too!
+            if ((null !== $baseRelPath = $this->getAttributeRelationPath()) && ! $uxon->isEmpty() && ! $uxon->hasProperty('attribute_relation_path')) {
+                $uxon->setProperty('attribute_relation_path', $baseRelPath);
+            }
             $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
             if ($binding->isEmpty() && $this->hasColorScale() && $this->isBoundToAttribute()) {
                 $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
                 $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
-            }
+            } 
             $this->colorBinding = $binding;
         }
         return $this->colorBinding;

@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-03-12 11:52:18",
+            "MODIFIED_ON": "2025-03-25 08:48:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -521,6 +521,76 @@
                                                     "comparator": "==",
                                                     "value": ""
                                                 }
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                "bind_to_double_click": true
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DeleteObject"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Snippets",
+                                "widgets": [
+                                    {
+                                        "object_alias": "exface.Core.UXON_SNIPPET",
+                                        "widget_type": "DataTable",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "OBJECT",
+                                                "hidden": true,
+                                                "required": true,
+                                                "comparator": "=="
+                                            },
+                                            {
+                                                "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "UXON"
+                                            },
+                                            {
+                                                "attribute_alias": "PROTOTYPE"
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "APP__ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "PROTOTYPE__LABEL"
+                                            },
+                                            {
+                                                "attribute_alias": "UXON_SCHEMA"
+                                            },
+                                            {
+                                                "calculation": "=Left(DESCRIPTION, 80)"
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "CREATED_ON",
+                                                "direction": "desc"
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectCreateDialog"
                                             },
                                             {
                                                 "action_alias": "exface.Core.ShowObjectEditDialog",
