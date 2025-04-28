@@ -82,12 +82,14 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
                         'children' => $this->generateMarkdownList($filePath, $level++),
                     ];
                 } else {
-                    $items[] = [
-                        'title' => $folderTitle,
-                        'link' => null,
-                        'is_dir' => true,
-                        'children' => $this->generateMarkdownList($filePath, $level++),
-                    ];
+                    if($folderTitle != 'Bilder') {
+                        $items[] = [
+                            'title' => $folderTitle,
+                            'link' => null,
+                            'is_dir' => true,
+                            'children' => $this->generateMarkdownList($filePath, $level++),
+                        ];
+                    }
                 }
             } elseif (pathinfo($filePath, PATHINFO_EXTENSION) === 'md') {
                 $items[] = [
@@ -107,33 +109,47 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
     
     function renderMarkdownList($items, $listType, $depth, $level = 0) {
         $output = '';
-        $indent = str_repeat("  ", $level);
+        $listStyle = '';
+
+        if ($level === 0) {
+            $output .= '<div class="list-wrapper">' . "\n";
+        }
 
         if ($level === $depth) {
             return $output;
         }
-    
+        $indent = 20 * $level;
+
+        switch ($listType) {
+            case self::LIST_TYPE_NONE:
+                $listStyle = " style=\"list-style-type: none; padding-left: 0; margin-left: {$indent}px;\"";
+                break;
+            default:
+                $listStyle = '';
+                break;
+        }
+
+        $output .= "<ul$listStyle>\n";
         foreach ($items as $item) {
-            switch ($listType){
-                case self::LIST_TYPE_NONE:
-                    $output .=  $indent . "\n";
-                    break;
-                default:
-                    $output .= $indent . '- ';
-                    break;
+            $output .= "<li>";
+
+            if (!empty($item['link'])) {
+                $output .= '<a href="' . htmlspecialchars($item['link']) . '">' . htmlspecialchars($item['title']) . '</a>';
+            } else {
+                $output .= htmlspecialchars($item['title']);
             }
 
-            if ($item['link']) {
-                $output .= '[' . $item['title'] . '](' . $item['link'] . ')';
-            } else {
-                $output .= $item['title'];
-            }
-            $output .= "\n";
             if (!empty($item['children'])) {
                 $output .= $this->renderMarkdownList($item['children'], $listType, $depth, $level + 1);
             }
+
+            $output .= "</li>\n";
         }
-    
+        $output .= "</ul>\n";
+
+        if ($level === 0) {
+            $output .= '</div>' . "\n";
+        }
         return $output;
     }
 
