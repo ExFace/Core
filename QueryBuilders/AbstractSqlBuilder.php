@@ -2507,7 +2507,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Perhaps this bears some sacred truth, but in our case 5 does not equal NULL, so here is a workaround,
             // That will add a `AND xxx NOT NULL` at the end of the subquery, where `xxx` is the attribute, that we are
             // actually selecting.
-            if (! $relqKeyPart->getAttribute()->isRequired() && $junctionOp === 'NOT IN') {
+            if ($junctionOp === 'NOT IN' && ! $relqKeyPart->getAttribute()->isRequired()) {
                 $relq->addFilterFromString($relqKeyPart->getAttribute()->getAliasWithRelationPath(), EXF_LOGICAL_NULL, ComparatorDataType::EQUALS_NOT);
             }
 
