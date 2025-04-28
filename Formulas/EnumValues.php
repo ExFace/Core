@@ -34,12 +34,13 @@ use exface\Core\DataTypes\StringDataType;
  * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '<90')` will give you status values less than 90,
  * that would be `10,15,20,40`
  * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', 'label==Ticket')` will give you status values with the
- * specified label. In our example 'Ticket' the output is '40'.
+ * specified label. In our example for 'Ticket' the output is '40'.
  * 
  * This is particularly useful for predefined filter values. For example, if you need a filter to show 
  * all monitored errors, that have not been dealt with yet, you can create a filter like this:
  * 
  * ```
+ * 
  *  {
  *      "attribute_alias": "STATUS",
  *      "input_widget": {
@@ -50,7 +51,7 @@ use exface\Core\DataTypes\StringDataType;
  *  }
  * 
  * ```
- *
+ * 
  * @author Andrej Kabachnik
  *        
  */
