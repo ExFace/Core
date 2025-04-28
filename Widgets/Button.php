@@ -846,32 +846,43 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
-            if (! $cond->getExpression()->isMetaAttribute()) {
-                return null;
-            }
-            if (! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
-                $col = $dataWidget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $cond->getAttributeAlias(),
-                    'hidden' => true
-                ]));
-                $dataWidget->addColumn($col);
-            }
-            $comp = $cond->getComparator();
-            
-            // Multi-select data widget can only handle list-comparators properly as their
-            // value is mostly a list. 
-            if ($dataMultiSelect === true) {
-                $comp = ComparatorDataType::convertToListComparator($comp, false);
-                if ($comp === null) {
+            switch (true) {
+                case $cond->getExpression()->isMetaAttribute():
+                    if (! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
+                        $col = $dataWidget->createColumnFromUxon(new UxonObject([
+                            'attribute_alias' => $cond->getAttributeAlias(),
+                            'hidden' => true
+                        ]));
+                        $dataWidget->addColumn($col);
+                    }
+
+                    $comp = $cond->getComparator();                    
+                    // Multi-select data widget can only handle list-comparators properly as their
+                    // value is mostly a list. 
+                    if ($dataMultiSelect === true) {
+                        $comp = ComparatorDataType::convertToListComparator($comp, false);
+                        if ($comp === null) {
+                            return null;
+                        }
+                    }   
+                                     
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => "=~input!" . $col->getDataColumnName(),
+                        "comparator" => $comp,
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                case $cond->getExpression()->isStatic():
+                    $comp = $cond->getComparator();
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => $cond->getExpression()->__toString(),
+                        "comparator" => $comp,
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                default:
                     return null;
-                }
-            } 
-            
-            $uxon->appendToProperty('conditions', new UxonObject([
-                "value_left" => "=~input!" . $col->getDataColumnName(),
-                "comparator" => $comp,
-                "value_right" => $cond->getRightExpression()->__toString()
-            ]));
+            }
         }
         
         foreach ($condGrp->getNestedGroups() as $nestedGrp) {
@@ -898,34 +909,45 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
-            if (! $cond->getExpression()->isMetaAttribute()) {
-                return null;
+            switch (true) {
+                case $cond->getExpression()->isMetaAttribute():
+                    $attrAlias = $cond->getExpression()->__toString();
+                    if (! $containerWidget->getMetaObject()->hasAttribute($attrAlias)) {
+                        return null;
+                    }
+                    $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
+                        return ($child instanceof iTakeInput) 
+                            && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) 
+                            && ($child instanceof iCanBeBoundToAttribute)
+                            && $child->isBoundToAttribute() 
+                            && $child->getAttributeAlias() === $attrAlias;
+                    });
+                    if (! $w = $matches[0] ?? null) {
+                        /*
+                        $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
+                            'widget_type' => 'InputHidden',
+                            'attribute_alias' => $attrAlias
+                        ]));
+                        $containerWidget->addWidget($w);*/
+                        return null;
+                    }
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => "=~input!" . $w->getDataColumnName(),
+                        "comparator" => $cond->getComparator(),
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                case $cond->getExpression()->isStatic():
+                    $comp = $cond->getComparator();
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => $cond->getExpression()->__toString(),
+                        "comparator" => $comp,
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                default:
+                    return null;
             }
-            $attrAlias = $cond->getExpression()->__toString();
-            if (! $containerWidget->getMetaObject()->hasAttribute($attrAlias)) {
-                return null;
-            }
-            $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
-                return ($child instanceof iTakeInput) 
-                    && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) 
-                    && ($child instanceof iCanBeBoundToAttribute)
-                    && $child->isBoundToAttribute() 
-                    && $child->getAttributeAlias() === $attrAlias;
-            });
-            if (! $w = $matches[0] ?? null) {
-                /*
-                $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
-                    'widget_type' => 'InputHidden',
-                    'attribute_alias' => $attrAlias
-                ]));
-                $containerWidget->addWidget($w);*/
-                return null;
-            }
-            $uxon->appendToProperty('conditions', new UxonObject([
-                "value_left" => "=~input!" . $w->getDataColumnName(),
-                "comparator" => $cond->getComparator(),
-                "value_right" => $cond->getRightExpression()->__toString()
-            ]));
         }
         
         foreach ($condGrp->getNestedGroups() as $nestedGrp) {
