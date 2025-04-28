@@ -2,10 +2,17 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\MetaAttributeTypeDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\iCanBeEditable;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Widgets\DataTable;
 use exface\Core\Widgets\MessageList;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Events\Model\OnMetaObjectModelValidatedEvent;
@@ -18,6 +25,9 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
+use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\Model\ConditionInterface;
+use Throwable;
 
 /**
  * This behavior validates the model when an editor is opened for the object, it is attached to.
@@ -43,17 +53,18 @@ class ModelValidatingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
+        $evtMgr = $this->getWorkbench()->eventManager();
+
         // Add messages to model editors
-        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
-            $this,
-            'handleObjectEditDialog'
-        ], $this->getPriority());
+        $evtMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onObjectEditorDialog'], $this->getPriority());
+        $evtMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onAttributeEditorDialog'], $this->getPriority());
+        $evtMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onBehaviorEditorDialog'], $this->getPriority());
         
         // Add checks when saving model data
-        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
-            $this,
-            'handleModelDataSave'
-        ], $this->getPriority());
+        $evtMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onModelDataSave'], $this->getPriority());
+
+        // When reading attributes, add generated and inherited ones
+        $evtMgr->addListener(OnActionPerformedEvent::getEventName(), [$this, 'onObjectEditorReadAttributes'], $this->getPriority());
         
         return $this;
     }
@@ -65,22 +76,20 @@ class ModelValidatingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        // Add messages to model editors
-        $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
-            $this,
-            'handleObjectEditDialog'
-        ]);
+        $evtMgr = $this->getWorkbench()->eventManager();
+
+        $evtMgr->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'onObjectEditorDialog']);
+        $evtMgr->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'onAttributeEditorDialog']);
+        $evtMgr->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'onBehaviorEditorDialog']);
+
+        $evtMgr->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'onModelDataSave']);
         
-        // Add checks when saving model data
-        $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
-            $this,
-            'handleModelDataSave'
-        ]);
+        $evtMgr->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'onObjectEditorReadAttributes']);
         
         return $this;
     }
     
-    public function handleModelDataSave(OnActionPerformedEvent $event)
+    public function onModelDataSave(OnActionPerformedEvent $event)
     {
         $action = $event->getAction();
         
@@ -157,121 +166,315 @@ class ModelValidatingBehavior extends AbstractBehavior
         }
         return;
     }
+
+    /**
+     * Adds inherited and generated attributes when reading attribute data for the object editor
+     * 
+     * @param \exface\Core\Events\Action\OnActionPerformedEvent $event
+     */
+    public function onObjectEditorReadAttributes(OnActionPerformedEvent $event)
+    {
+        $action = $event->getAction();       
+        // Only handle ReadData actions for ATTRIBUTE object
+        if (! $action->is('exface.Core.ReadData')) {
+            return;
+        }
+        if (! $action->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+            return;
+        }
+        $widget = $event->getTask()->getWidgetTriggeredBy();
+        // Ignore editable tables or non-table widgets. Our attributes are not editable anyway
+        if ($widget->getWidgetType() !== 'DataTable' || ($widget instanceof iCanBeEditable && $widget->isEditable())) {
+            return;
+        }
+        // Ignore paged tables because adding rows will break pagination
+        if ($widget->isPaged()) {
+            return;
+        }
+
+        // Now get the regular result of reading data
+        if (! $event->getResult() instanceof ResultDataInterface) { 
+            return;
+        }
+        $resultSheet = $event->getResult()->getData();
+        if (! $resultSheet->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+            return;
+        }
+        
+        // Find the object, for which we are reading attributes
+        $objConditionSearcher = function(ConditionInterface $condition) {
+            $expr = $condition->getLeftExpression();
+            return $expr->isMetaAttribute() && $expr->getMetaObject()->is('exface.Core.ATTRIBUTE') && $expr->getAttribute()->getAliasWithRelationPath() === 'OBJECT';
+        };
+        $objFilters = $resultSheet->getFilters()->getConditions($objConditionSearcher);
+        $objUid = null;
+        foreach ($objFilters as $cond) {
+            if ($cond->getComparator() === ComparatorDataType::EQUALS && $cond->isEmpty() === false) {
+                if ($objUid !== null) {
+                    return;
+                }
+                $objUid = $cond->getValue();
+            }
+        }
+        // Only proceed, if we are really reading for a single object - otherwise it all does not make sense
+        if ($objUid === null) {
+            return;
+        }
+
+        // Attempt to generate additional rows for all attributes, that are not present in the data
+        // Return the original data if anything goes wrong.
+        try {
+            $object = MetaObjectFactory::createFromUid($this->getWorkbench(), $objUid);
+            $aliasCol = $resultSheet->getColumns()->getByExpression('ALIAS');
+            // Create a separate data sheet for the results in order not to break the regular data
+            $additionalSheet = $resultSheet->copy()->removeRows();
+            foreach ($additionalSheet->getFilters()->getConditions($objConditionSearcher) as $cond) {
+                $additionalSheet->getFilters()->removeCondition($cond);
+            }
+            foreach ($object->getAttributes() as $attr) {
+                if ($aliasCol->findRowByValue($attr->getAlias()) !== false) {
+                    continue;
+                }
+                foreach ($resultSheet->getColumns() as $col) {
+                    switch ($col->getExpressionObj()->__toString()) {
+                        case 'UID':
+                            $row[$col->getName()] = $attr->getId();
+                            break;
+                        case 'NAME':
+                            $row[$col->getName()] = $attr->getName();
+                            break;
+                        case 'ALIAS':
+                            $row[$col->getName()] = $attr->getAlias();
+                            break;
+                        case 'DISPLAYORDER':
+                            $row[$col->getName()] = $attr->getDefaultDisplayOrder();
+                            break;
+                        case 'DATA_ADDRESS':
+                            $row[$col->getName()] = $attr->getDataAddress();
+                            break;
+                        case '=Left(DATA_ADDRESS,60)':
+                            $row[$col->getName()] = StringDataType::truncate($attr->getDataAddress(), 60);
+                            break;  
+                        case 'TYPE':
+                            $row[$col->getName()] = $attr->getType();
+                            break;
+                        case 'DATATYPE__LABEL':
+                            $row[$col->getName()] = $attr->getDataType()->getName();
+                            break;
+                        case 'EDITABLEFLAG':
+                            $row[$col->getName()] = $attr->isEditable() ? 1 : 0;
+                            break;
+                        case 'REQUIREDFLAG':
+                            $row[$col->getName()] = $attr->isReadable() ? 1 : 0;
+                            break;
+                        case 'REQUIRELATED_OBJ__NAME':
+                            $row[$col->getName()] = $attr->isRelation() ? $attr->getRelation()->getRightObject()->getName() : null;
+                            break;   
+                        case 'HIDDENFLAG':
+                            $row[$col->getName()] = $attr->isHidden() ? 1 : 0;
+                            break;
+                        case 'UIDFLAG':
+                            $row[$col->getName()] = $attr->isUidForObject() ? 1 : 0;
+                            break;
+                        case 'LABELFLAG':
+                            $row[$col->getName()] = $attr->isLabelForObject() ? 1 : 0;
+                            break;
+                        case 'SHORT_DESCRIPTION':
+                            $row[$col->getName()] = $attr->getShortDescription();
+                            break;                      
+                    }
+                }
+                $additionalSheet->addRow($row, false, false);
+            }
+            if (! $additionalSheet->isEmpty()) {
+                // Apply the filters of the original sheet to the additional data
+                $additionalSheet = $additionalSheet->extract($additionalSheet->getFilters());
+                // Append remaining rows to the original data
+                foreach ($additionalSheet->getRows() as $row) {
+                    $resultSheet->addRow($row, false, false);
+                }
+            }
+        } catch (Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this, 'Cannot add inherited/virtual attributes to object attribute data. ' . $e->getMessage(), null, $e));
+        }
+
+        return;
+    }
     
     /**
      * Dispatches xxxModelValidatedEvents when editor-dialogs are opened for meta objects or attributes.
      * 
      * @triggers \exface\Core\Events\DataSheet\OnMetaObjectModelValidatedEvent
+     * 
+     * @param DataSheetEventInterface $event
+     * @return void
+     */
+    public function onObjectEditorDialog(OnActionPerformedEvent $event)
+    {
+        $action = $event->getAction();
+        if (! ($action->is('exface.Core.ShowObjectEditDialog'))) {
+            return;
+        }
+        /** @var \exface\Core\Actions\ShowObjectEditDialog $action */
+        if (! $action->getMetaObject()->is('exface.Core.OBJECT')) {
+            return;
+        }
+
+        $widget = $action->getWidget();
+        foreach ($widget->getChildrenRecursive() as $child) {
+            if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
+                $attrAlias = $child->getAttributeAlias();
+                if (($attrAlias === 'UID' || $attrAlias === 'ALIAS')) {
+                    if ($child->hasValue() === false) {
+                        break;
+                    }
+                    try {
+                        $object = $this->getWorkbench()->model()->getObject($child->getValue());
+                        $this->validateObject($object, $widget->getMessageList());
+                        $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectModelValidatedEvent($object, $widget->getMessageList()));
+                    } catch (\Throwable $e) {
+                        $code = ($e instanceof ExceptionInterface) ? ': error ' . $e->getAlias() : '';
+                        $widget->getMessageList()->addError($e->getMessage(), 'Failed loading meta object' . $code . '!');
+                        $this->getWorkbench()->getLogger()->logException($e);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Disable buttons of the attributes table for generated attributes - they cannot be edited, deleted, etc.
+        foreach ($widget->getChildrenRecursive(2) as $child) {
+            if (($child instanceof DataTable) && $child->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+                foreach ($child->getToolbarMain()->getButtons() as $button) {
+                    if ($button->getDisabledIf() !== null) {
+                        continue;
+                    }
+                    if (! $button->hasAction() || $button->getAction()->getInputRowsMin() === 0) {
+                        continue;
+                    }
+                    $button->setDisabledIf(new UxonObject([
+                        'operator' => 'AND',
+                        'conditions' => [
+                            [
+                                'value_left' => '=~input!TYPE',
+                                'comparator' => ComparatorDataType::EQUALS,
+                                'value_right' => MetaAttributeTypeDataType::GENERATED
+                            ]
+                        ]
+                    ]));
+                }
+            }
+        }
+        
+    }
+
+    /**
+     * Dispatches xxxModelValidatedEvents when editor-dialogs are opened for meta objects or attributes.
+     * 
      * @triggers \exface\Core\Events\DataSheet\OnMetaAttributeModelValidatedEvent
+     * 
+     * @param DataSheetEventInterface $event
+     * @return void
+     */
+    public function onAttributeEditorDialog(OnActionPerformedEvent $event)
+    {
+        $action = $event->getAction();
+        if (! ($action->is('exface.Core.ShowObjectEditDialog'))) {
+            return;
+        }
+        /** @var \exface\Core\Actions\ShowObjectEditDialog $action */
+        if (! $action->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+            return;
+        }
+
+        $widget = $action->getWidget();
+        $foundObject = false;
+        $foundAttribute = false;
+        foreach ($widget->getChildrenRecursive() as $child) {
+            if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
+                $attrAlias = $child->getAttributeAlias();
+                if (($attrAlias === 'OBJECT')) {
+                    if ($child->hasValue() === false) {
+                        break;
+                    }
+                    $foundObject = true;
+                    try {
+                        $object = $this->getWorkbench()->model()->getObject($child->getValue());
+                    } catch (\Throwable $e) {
+                        $this->getWorkbench()->getLogger()->logException($e);
+                    }
+                }
+                if (($attrAlias === 'ALIAS')) {
+                    if ($child->hasValue() === false) {
+                        break;
+                    }
+                    $foundAttribute = true;
+                    try {
+                        $attribute = $object->getAttribute($child->getValue());
+                    } catch (\Throwable $e) {
+                        $this->getWorkbench()->getLogger()->logException($e);
+                    }
+                }
+                
+                if ($foundAttribute === true && $foundObject === true && $attribute !== null) {
+                    $this->getWorkbench()->eventManager()->dispatch(new OnMetaAttributeModelValidatedEvent($attribute, $widget->getMessageList()));
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Dispatches xxxModelValidatedEvents when editor-dialogs are opened for meta objects or attributes.
+     * 
      * @triggers \exface\Core\Events\DataSheet\OnBehaviorModelValidatedEvent
      * 
      * @param DataSheetEventInterface $event
      * @return void
      */
-    public function handleObjectEditDialog(OnActionPerformedEvent $event)
+    public function onBehaviorEditorDialog(OnActionPerformedEvent $event)
     {
         $action = $event->getAction();
         
         if (! ($action->is('exface.Core.ShowObjectEditDialog'))) {
             return;
+        }        
+        /** @var \exface\Core\Actions\ShowObjectEditDialog $action */
+        if (! $action->getMetaObject()->isExactly('exface.Core.OBJECT_BEHAVIORS') || ! $this->getObject()->isExactly('exface.Core.OBJECT_BEHAVIORS')) {
+            return;
         }
-        
-        /* @var $action \exface\Core\Actions\ShowObjectEditDialog */
-        if ($action->getMetaObject()->is('exface.Core.OBJECT')) {
-            $widget = $action->getWidget();
-            foreach ($widget->getChildrenRecursive() as $child) {
-                if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
-                    $attrAlias = $child->getAttributeAlias();
-                    if (($attrAlias === 'UID' || $attrAlias === 'ALIAS')) {
-                        if ($child->hasValue() === false) {
-                            break;
-                        }
-                        try {
-                            $object = $this->getWorkbench()->model()->getObject($child->getValue());
-                            $this->validateObject($object, $widget->getMessageList());
-                            $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectModelValidatedEvent($object, $widget->getMessageList()));
-                        } catch (\Throwable $e) {
-                            $code = ($e instanceof ExceptionInterface) ? ': error ' . $e->getAlias() : '';
-                            $widget->getMessageList()->addError($e->getMessage(), 'Failed loading meta object' . $code . '!');
-                            $this->getWorkbench()->getLogger()->logException($e);
-                        }
+
+        $widget = $action->getWidget();
+        $foundObject = null;
+        $foundBehavior = null;
+        foreach ($widget->getChildrenRecursive() as $child) {
+            if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
+                $attrAlias = $child->getAttributeAlias();
+                if (($attrAlias === 'OBJECT')) {
+                    if ($child->hasValue() === false) {
                         break;
                     }
+                    $foundObject = $child->getValue();
+                }
+                if (($attrAlias === 'UID')) {
+                    if ($child->hasValue() === false) {
+                        break;
+                    }
+                    $foundBehavior = $child->getValue();
+                }
+                
+                if ($foundBehavior !== null && $foundObject !== null) {
+                    break;
                 }
             }
         }
-        
-        if ($action->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
-            $widget = $action->getWidget();
-            $foundObject = false;
-            $foundAttribute = false;
-            foreach ($widget->getChildrenRecursive() as $child) {
-                if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
-                    $attrAlias = $child->getAttributeAlias();
-                    if (($attrAlias === 'OBJECT')) {
-                        if ($child->hasValue() === false) {
-                            break;
-                        }
-                        $foundObject = true;
-                        try {
-                            $object = $this->getWorkbench()->model()->getObject($child->getValue());
-                        } catch (\Throwable $e) {
-                            $this->getWorkbench()->getLogger()->logException($e);
-                        }
-                    }
-                    if (($attrAlias === 'ALIAS')) {
-                        if ($child->hasValue() === false) {
-                            break;
-                        }
-                        $foundAttribute = true;
-                        try {
-                            $attribute = $object->getAttribute($child->getValue());
-                        } catch (\Throwable $e) {
-                            $this->getWorkbench()->getLogger()->logException($e);
-                        }
-                    }
-                    
-                    if ($foundAttribute === true && $foundObject === true && $attribute !== null) {
-                        $this->getWorkbench()->eventManager()->dispatch(new OnMetaAttributeModelValidatedEvent($attribute, $widget->getMessageList()));
-                        break;
-                    }
-                }
-            }
-        }
-        
-        if ($action->getMetaObject()->isExactly('exface.Core.OBJECT_BEHAVIORS') && $this->getObject()->isExactly('exface.Core.OBJECT_BEHAVIORS')) {
-            $widget = $action->getWidget();
-            $foundObject = null;
-            $foundBehavior = null;
-            foreach ($widget->getChildrenRecursive() as $child) {
-                if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
-                    $attrAlias = $child->getAttributeAlias();
-                    if (($attrAlias === 'OBJECT')) {
-                        if ($child->hasValue() === false) {
-                            break;
-                        }
-                        $foundObject = $child->getValue();
-                    }
-                    if (($attrAlias === 'UID')) {
-                        if ($child->hasValue() === false) {
-                            break;
-                        }
-                        $foundBehavior = $child->getValue();
-                    }
-                    
-                    if ($foundBehavior !== null && $foundObject !== null) {
-                        break;
-                    }
-                }
-            }
-            if ($foundBehavior !== null && $foundObject !== null) {
-                try {
-                    $object = $this->getWorkbench()->model()->getObject($foundObject);
-                    $behavior = $object->getBehaviors()->getByUid($foundBehavior);
-                    $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorModelValidatedEvent($behavior, $widget->getMessageList()));
-                } catch (\Throwable $e) {
-                    $this->getWorkbench()->getLogger()->logException($e);
-                }
+        if ($foundBehavior !== null && $foundObject !== null) {
+            try {
+                $object = $this->getWorkbench()->model()->getObject($foundObject);
+                $behavior = $object->getBehaviors()->getByUid($foundBehavior);
+                $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorModelValidatedEvent($behavior, $widget->getMessageList()));
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException($e);
             }
         }
     }

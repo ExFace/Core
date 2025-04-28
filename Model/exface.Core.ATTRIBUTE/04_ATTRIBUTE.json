@@ -1852,7 +1852,7 @@
         {
             "_EXPORT_SUMMARY": "Attribute Type [TYPE]",
             "CREATED_ON": "2020-01-30 18:12:29",
-            "MODIFIED_ON": "2021-08-05 13:14:13",
+            "MODIFIED_ON": "2025-04-28 10:07:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea438c13ce467bbb290205857feb80",
@@ -1888,7 +1888,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": null,
-            "SHORT_DESCRIPTION": "`Data` for regular attributes read from data sources, `Calculated` for formula-based in-memory calculations or `Compound` for attributes that consist of multiple other attributes glued together.",
+            "SHORT_DESCRIPTION": "`Data` for regular attributes read from data sources, `Calculated` for formula-based in-memory calculations or `Compound` for attributes that consist of multiple other attributes glued together. `Generated` attributes are not explicitly created in the model, but rather added on-the-fly by behaviors or other logic elements.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'D'",
             "FIXED_VALUE": "",

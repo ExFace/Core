@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-03-25 08:48:30",
+            "MODIFIED_ON": "2025-04-27 13:16:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -239,11 +239,13 @@
                                     {
                                         "widget_type": "DataTable",
                                         "object_alias": "exface.Core.ATTRIBUTE",
+                                        "paginate": false,
                                         "filters": [
                                             {
                                                 "attribute_alias": "OBJECT",
-                                                "widget_type": "InputHidden",
-                                                "required": true
+                                                "required": true,
+                                                "comparator": "==",
+                                                "hidden": true
                                             },
                                             {
                                                 "attribute_alias": "NAME"
