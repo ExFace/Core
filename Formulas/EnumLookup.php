@@ -14,8 +14,8 @@ use exface\Core\DataTypes\StringDataType;
  * ### Parameters
  *
  * `=EnumLookup('namespace.ObjectAlias','AttributeAlias','Comparator',CompareValue,'Instructions')`
- * - `'namespace.ObjectAlias'` (required): The object alias the enum belongs to. Must be a string.
- * - `'AttributeAlias'` (required): The attribute the enum belongs to. Must be a string.
+ * - `'namespace.ObjectAlias'` (required): The object alias the enum belongs to.
+ * - `'AttributeAlias'` (required): The attribute the enum belongs to.
  * - `'Comparator'` (required): The comparator used to filter the result (see below). Must be a string.
  * - `CompareValue` (required): The value used to filter the result. If you pass a string (enclosed in `''` quotation), the formula will be evaluated
  * statically (i.e. the compare value will be the same every time it is evaluated). If you pass an object (without quotation), the formula will be
@@ -34,13 +34,13 @@ use exface\Core\DataTypes\StringDataType;
  * 
  * ### Examples:
  * 
- * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '!==', '')` will always give you status values of the error object
+ * - `=EnumLookup('exface.Core.MONITOR_ERROR', 'STATUS', '!==', '')` will always give you status values of the error object
  * in the monitor, that is `10,15,20,40,90,99`
- * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '<', '90')` will always give you status values less than 90,
+ * - `=EnumLookup('exface.Core.MONITOR_ERROR', 'STATUS', '<', '90')` will always give you status values less than 90,
  * that would be `10,15,20,40`
- * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '==', 'Ticket', 'label')` will give you status values with the
+ * - `=EnumLookup('exface.Core.MONITOR_ERROR', 'STATUS', '==', 'Ticket', 'label')` will give you status values with the
  * specified label. In our example for 'Ticket' the output is '40'.
- * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '==', StatusText, 'label')` will return different values, depending on 
+ * - `=EnumLookup('exface.Core.MONITOR_ERROR', 'STATUS', '==', StatusText, 'label')` will return different values, depending on 
  * the cell contents for `StatusText` in each row.
  * 
  * This is particularly useful for predefined filter values. For example, if you need a filter to show 
