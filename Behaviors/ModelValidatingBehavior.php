@@ -2,8 +2,10 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -25,6 +27,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
+use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use Throwable;
@@ -284,12 +287,23 @@ class ModelValidatingBehavior extends AbstractBehavior
                             break;
                         case 'SHORT_DESCRIPTION':
                             $row[$col->getName()] = $attr->getShortDescription();
-                            break;                      
+                            break;    
+                        case 'ORIGIN':
+                            switch (true) {
+                                case $attr->isInherited(): $val = 2; break;
+                                case $attr instanceof CustomAttribute: $val = 3; break;
+                                default: $val = 1;
+                            }
+                            $row[$col->getName()] = $val;
+                            break;                    
                     }
                 }
                 $additionalSheet->addRow($row, false, false);
             }
             if (! $additionalSheet->isEmpty()) {
+                if ($originCol = $resultSheet->getColumns()->getByExpression('ORIGIN')) {
+                    $originCol->setValueOnAllRows(1);
+                }
                 // Apply the filters of the original sheet to the additional data
                 $additionalSheet = $additionalSheet->extract($additionalSheet->getFilters());
                 // Append remaining rows to the original data
@@ -343,32 +357,7 @@ class ModelValidatingBehavior extends AbstractBehavior
                     break;
                 }
             }
-        }
-
-        // Disable buttons of the attributes table for generated attributes - they cannot be edited, deleted, etc.
-        foreach ($widget->getChildrenRecursive(2) as $child) {
-            if (($child instanceof DataTable) && $child->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
-                foreach ($child->getToolbarMain()->getButtons() as $button) {
-                    if ($button->getDisabledIf() !== null) {
-                        continue;
-                    }
-                    if (! $button->hasAction() || $button->getAction()->getInputRowsMin() === 0) {
-                        continue;
-                    }
-                    $button->setDisabledIf(new UxonObject([
-                        'operator' => 'AND',
-                        'conditions' => [
-                            [
-                                'value_left' => '=~input!TYPE',
-                                'comparator' => ComparatorDataType::EQUALS,
-                                'value_right' => MetaAttributeTypeDataType::GENERATED
-                            ]
-                        ]
-                    ]));
-                }
-            }
-        }
-        
+        }        
     }
 
     /**
