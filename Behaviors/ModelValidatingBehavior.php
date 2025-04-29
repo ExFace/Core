@@ -175,11 +175,14 @@ class ModelValidatingBehavior extends AbstractBehavior
     public function onObjectEditorReadAttributes(OnActionPerformedEvent $event)
     {
         $action = $event->getAction();       
-        // Only handle ReadData actions for ATTRIBUTE object
+        // Only handle ReadData actions for ATTRIBUTE object triggered for table widgets
         if (! $action->is('exface.Core.ReadData')) {
             return;
         }
         if (! $action->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+            return;
+        }
+        if (! $event->getTask()->isTriggeredByWidget()) {
             return;
         }
         $widget = $event->getTask()->getWidgetTriggeredBy();
