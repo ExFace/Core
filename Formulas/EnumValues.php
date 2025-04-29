@@ -14,7 +14,7 @@ use exface\Core\DataTypes\StringDataType;
  * ### Filters
  * 
  * You can filter the results by providing a filter string as third parameters:
- * - The general syntax is `'[label]<Comparator><Value>'`
+ * - The general syntax is `'<Comparator><Value>'`.
  * 
  * You can use the following filters:
  * - `'=40'` (IS) and `'!=40'` (NOT IS): Checks if both values are of the same datatype.
@@ -22,19 +22,13 @@ use exface\Core\DataTypes\StringDataType;
  * - `'[20,40'` (IN) and `'![20,40'` (NOT IN): Checks if the input value can be found in the given list of values.
  * - `'<40'` (LESS) and `'>40'` (GREATER): Checks if the input value is less or greater than the given value.
  * - `'<=40'` (LESS OR EQUAL) and `'>=40'` (GREATER OR EQUAL): Same as above, but matching equals as well.
- * 
- * You can filter for the label instead, if you prepend `label` before your comparator, like so:
- * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS','label==Ticket')` only returns entries where the label equals 'Ticket', i.e. '40'.
- * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS','label[New,Ticket')` returns entries, where the label is in the list 'New,Ticket', i.e. '10,40'.
- * 
+ *
  * ### Examples:
  * 
  * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS')` will give you status values of the error object
  * in the monitor, that is `10,15,20,40,90,99`
  * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '<90')` will give you status values less than 90,
  * that would be `10,15,20,40`
- * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', 'label==Ticket')` will give you status values with the
- * specified label. In our example for 'Ticket' the output is '40'.
  * 
  * This is particularly useful for predefined filter values. For example, if you need a filter to show 
  * all monitored errors, that have not been dealt with yet, you can create a filter like this:
@@ -82,10 +76,6 @@ class EnumValues extends Formula
 
         if($condition === null) {
             return implode($delim, array_keys($values));
-        }
-
-        if($filterForLabel = StringDataType::startsWith($condition, 'label')) {
-            $condition = str_replace('label', '', $condition);
         }
         
         switch (true) {
@@ -155,8 +145,8 @@ class EnumValues extends Formula
                 return implode($delim, array_keys($values));
         }
         
-        $values = array_filter($values, function ($val, $key) use ($comparer, $filterForLabel) {
-            return $comparer($filterForLabel ? $val : $key);
+        $values = array_filter($values, function ($val, $key) use ($comparer) {
+            return $comparer($key);
         }, ARRAY_FILTER_USE_BOTH);
 
         return implode($delim, array_keys($values));
