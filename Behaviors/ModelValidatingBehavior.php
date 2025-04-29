@@ -295,7 +295,17 @@ class ModelValidatingBehavior extends AbstractBehavior
                                 default: $val = 1;
                             }
                             $row[$col->getName()] = $val;
-                            break;                    
+                            break;     
+                        case 'INFO_ICONS':
+                            $html = '';
+                            if ($attr->isInherited()) {
+                                $html .= '<i class="fa fa-arrow-circle-up" title="Inherited from ' . str_replace('"', '', $attr->getObjectInheritedFrom()->__toString()) . '"></i>';
+                            }
+                            if ($attr instanceof CustomAttribute) {
+                                $html .= '<i class="fa fa-user-circle-o" title="Custom attribute from ' . str_replace('"', "'", $attr->getSourceHint()) . '"></i>';
+                            }
+                            $row[$col->getName()] = $html;
+                            break;                 
                     }
                 }
                 $additionalSheet->addRow($row, false, false);
