@@ -29,6 +29,7 @@ use exface\Core\Events\Installer\OnAppBackupEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\DateDataType;
+use Throwable;
 
 /**
  * Saves all data of selected objects, that is related to the an app, in a subfolder of the app.
@@ -971,7 +972,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                 // increase readability of diffs. Need to transform them back to strings here.
                 // The check for JsonDataType is a fix upgrading older installations where the
                 // UxonDataType was not a PHP class yet.
-                $dataType = $col->getDataType();
+                try {
+                    $dataType = $col->getDataType();
+                } catch (Throwable $e) {
+                    // If anything goes wrong, just skip this particular column. There may be
+                    // issues when installing core data with column, that have data types new
+                    // to the current installation.
+                    $this->getWorkbench()->getLogger()->logException(
+                        new InstallerRuntimeError($this, 'Error reading column "' . $col->getName() . '" for "' . $type . '". ' . $e->getMessage(), null, $e),
+                        LoggerInterface::WARNING
+                    );
+                    continue;
+                }
                 $colName = $col->getName();
                 switch (true) {
                     case $dataType instanceof EncryptedDataType:
