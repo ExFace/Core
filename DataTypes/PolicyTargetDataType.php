@@ -27,6 +27,8 @@ class PolicyTargetDataType extends StringDataType implements EnumDataTypeInterfa
     const META_OBJECT = 'OBJECT';
     const APP = 'APP';
     const FACADE = 'FACADE';
+
+    private $labels = [];
     
     /**
      * 
