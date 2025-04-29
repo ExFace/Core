@@ -1,14 +1,12 @@
 <?php
 namespace exface\Core\Uxon;
 
-use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\CommonLogic\Uxon\UxonSnippetCall;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
-use exface\Core\Factories\UxonSnippetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
