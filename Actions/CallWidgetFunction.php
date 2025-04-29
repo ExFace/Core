@@ -22,11 +22,8 @@ use exface\Core\Widgets\Button;
  */
 class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
 {
-
     private $widgetId = null;
-
     private $funcName = null;
-    
     private $funcArgs = [];
 
     /**
@@ -145,9 +142,9 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     {
         $name = parent::getName();
         if ($name == $this->translate('NAME') && $this->isButtonPress()) {
-            $this->name = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getCaption();
+            $name = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getCaption();
         }
-        return $this->name;
+        return $name;
     }
     
     /**
@@ -171,9 +168,9 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     {
         $hint = parent::getHint();
         if ($hint === null && $this->isButtonPress()) {
-            $this->hint = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getHint();
+            $hint = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getHint();
         }
-        return $this->hint;
+        return $hint;
     }
     
     /**
@@ -185,8 +182,8 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     {
         $icon = parent::getIcon();
         if ($icon === Icons::MOUSE_POINTER && $this->isButtonPress()) {
-            $this->icon = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getIcon();
+            $icon = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getIcon();
         }
-        return $this->icon;
+        return $icon;
     }
 }

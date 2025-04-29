@@ -441,10 +441,14 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     /**
      * Returns an iterator over all children of the current widget including with their children,
      * childrens children, etc. as a flat array of widgets
+     * 
+     * If provided, depth limits the number of recursion levels.
      *
+     * @param int|NULL $depth
+     * 
      * @return WidgetInterface[]
      */
-    public function getChildrenRecursive() : \Iterator;
+    public function getChildrenRecursive(?int $depth = null) : \Iterator;
     
     /**
      * Returns true if current widget has at least one child and FALSE otherwise.

@@ -2500,6 +2500,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
             }
 
+            // SQL engines (at least MS SQL and MySQL) have a strange side-effect on NOT IN, where the value list
+            // includes NULLs. E.g. `SELECT IF(5 NOT IN (2, NULL, 4), 1, 0)` will return `0` because NULL is concidered
+            // to be an unknown value, that eventually could be a 5 too. This is a side-effect of the IN-operator just
+            // being a shortcut for a bunch of ORs. On the other hand, `SELECT IF(5 IN (2, NULL, 4), 1, 0)` works fine.
+            // Perhaps this bears some sacred truth, but in our case 5 does not equal NULL, so here is a workaround,
+            // That will add a `AND xxx NOT NULL` at the end of the subquery, where `xxx` is the attribute, that we are
+            // actually selecting.
+            if ($junctionOp === 'NOT IN' && ! $relqKeyPart->getAttribute()->isRequired()) {
+                $relq->addFilterFromString($relqKeyPart->getAttribute()->getAliasWithRelationPath(), EXF_LOGICAL_NULL, ComparatorDataType::EQUALS_NOT);
+            }
+
             // Handle SQL_JOIN_ON if it is defined for the right attribute (i.e. if we would join our left table to our right table,
             // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
             // the subselect.

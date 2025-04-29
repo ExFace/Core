@@ -161,27 +161,45 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
      */
     protected function flatten(array $json, string $nestedMarker) : array
     {
-        $result = [];
-
-        $parentKeys = $this->getParentKeys($json);
-        $uniqueKeys = $this->getUniqueKeys($json);
-
         // go to innermost arrays and extract their data and parent data
-        $rows = $this->extractJsonData($json, [], $uniqueKeys, $parentKeys, $nestedMarker);
+        $parentKeys = $this->getParentKeys($json);
+        $uniqueKeys = [];
+        $rows = $this->extractJsonData($json, [], $parentKeys, $nestedMarker, $uniqueKeys);
+        ksort($uniqueKeys);
 
-        // re-order rows and fill missing keys with empty strings
+        // re-order keys per row and fill missing keys with empty values
         foreach ($rows as $row) {
             $orderedRow = [];
-            foreach ($uniqueKeys as $key) {
-                // if row has key, use its value
-                // otherwise, use empty string
-                if (isset($row[$key])) {
+            foreach ($uniqueKeys as $key => $defaultValue) {
+                if (array_key_exists($key, $row)) {
+                    // if the key exists in the row, use its value
                     $orderedRow[$key] = $row[$key];
                 } else {
-                    $orderedRow[$key] = '';
+                    // otherwise use the value from uniqueKeys
+                    $orderedRow[$key] = $defaultValue;
                 }
             }
-            $result[] = $orderedRow;
+            $orderedRows[] = $orderedRow;
+        }
+
+        // clean result array and make duplicates unique (add suffix)
+        // (since json keys can be duplicate across different levels of nesting)
+        $result = [];
+        foreach($orderedRows as $row){
+            $resultRow = [];
+            $duplicates = [];
+            foreach($row as $key => $values){
+                // if key is a duplicate in row, append key with suffix increment
+                // else append basic key
+                if ($resultRow[$values[0]] != null) {
+                    $duplicates[$values[0]] = ($duplicates[$values[0]] ?? 1) + 1;
+                    $resultRow[$values[0] . ' ' . $duplicates[$values[0]]] = $values[1];
+                }
+                else{
+                    $resultRow[$values[0]] = $values[1];
+                }
+            }
+            $result[] = $resultRow;
         }
 
         return $result;
@@ -194,11 +212,12 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
      * 
      * @param array $data
      * @param array $parentData
-     * @param array $uniqueKeys
      * @param array $parentKeys
-     * @return array<array>
+     * @param string $nestedMarker
+     * @param int $depth
+     * @return array[]
      */
-    protected function extractJsonData(array $data, array $parentData = [], array $uniqueKeys, array $parentKeys, string $nestedMarker): array {
+    protected function extractJsonData(array $data, array $parentData = [], array $parentKeys, string $nestedMarker, array &$uniqueKeys, int $depth = 0): array {
         $result = [];
     
         // Loop through each element in the json object
@@ -206,68 +225,46 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
 
             // if innermost array/object is reached, merge all collected data and append to result array
             if (is_array($value) && !empty($value) && !array_filter($value, 'is_array')) {
-                
-                // merge data (innermost array + parent data) and append to result
-                $mergedData = array_merge((array) $parentData, (array) $value);
+                $prefixedInnermostData = [];
+                foreach ($value as $innerKey => $innerValue) {
+                    $prefixedInnermostData["depth{$depth}_{$innerKey}"] = [$innerKey, $innerValue];
+                    $uniqueKeys["depth{$depth}_{$innerKey}"] = [$innerKey, ""];
+                }
+
+                // Merge data (innermost array + parent data) and append to result
+                $mergedData = array_merge((array) $parentData, $prefixedInnermostData);
                 $result[] = $mergedData;
             }
 
-            // Check if current node is array or simple value
-            //     for arrays: mark parent key with X, add all key value pairs from current recursion level and recurse deeper
-            //     for simple values: append value to parent data
-            
+            // Otherwise mark parent key with nested marker and append all key value pairs from current array/level
             if (is_array($value)) {
-
-                // add all data from current level except sub-arrays
-                $levelData = array_filter($value, function($item) {
+                //filter data to exclude arrays
+                $levelData = array_filter($value, function ($item) {
                     return !is_array($item);
                 });
-                $currentParentData = array_merge((array) $parentData, (array) $levelData);
-                
-                // mark encountered parent keys with set nested marker
-                if (in_array($key, $parentKeys)) {
-                    $currentParentData[$key] = $nestedMarker;
-                }
 
-                // Recursively call the function, passing the current parent data along
-                $result = array_merge($result, $this->extractJsonData($value, $currentParentData, $uniqueKeys, $parentKeys, $nestedMarker));
-            } 
-            else {
-                // If value is not an array, append value to parent data
-                $parentData[$key] = $value;
+                // Add depth prefix to all keys in the current level data
+                $prefixedLevelData = [];
+                foreach ($levelData as $levelKey => $levelValue) {
+                    $prefixedLevelData["depth{$depth}_{$levelKey}"] = [$levelKey, $levelValue];
+                    $uniqueKeys["depth{$depth}_{$levelKey}"] = [$levelKey, ""];
+                }
+            
+                // Merge the current parent data with the prefixed level data
+                $currentParentData = array_merge((array) $parentData, $prefixedLevelData);
+            
+                // Mark the current key with the nested marker if it's a parent key
+                if (in_array($key, $parentKeys)) {
+                    $currentParentData["depth{$depth}_{$key}"] = [$key, $nestedMarker];
+                    $uniqueKeys["depth{$depth}_{$key}"] = [$key, ""];
+                }
+            
+                // Recursively call the function, passing the updated parent data and incrementing depth
+                $result = array_merge($result, $this->extractJsonData($value, $currentParentData, $parentKeys, $nestedMarker, $uniqueKeys, $depth + 1));
             }
         }
     
         return $result;
-    }
-
-
-    /**
-     * Returns a list of unique keys within a given JSON object
-     * @param array $data
-     * @return array
-     */
-    protected function getUniqueKeys(array $data): array {
-        $keys = [];
-    
-        if (is_array($data) || is_object($data)) {
-            foreach ($data as $key => $value) {
-                // add key to array if it is not already present
-                // exclude the default numeric keys per level
-                if (!is_numeric($key)) {
-                    if (!in_array($key, $keys)) {
-                        $keys[] = $key;
-                    }
-                }
-    
-                // If the value is an array or object, search further
-                if (is_array($value) || is_object($value)) {
-                    $keys = array_merge($keys, $this->getUniqueKeys($value));
-                }
-            }
-        }
-    
-        return array_unique($keys);
     }
 
 

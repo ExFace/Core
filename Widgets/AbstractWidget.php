@@ -477,7 +477,7 @@ abstract class AbstractWidget implements WidgetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WidgetInterface::getChildrenRecursive()
      */
-    public function getChildrenRecursive() : \Iterator
+    public function getChildrenRecursive(?int $depth = null) : \Iterator
     {
         // Use a generator here because widgets with lot's of children (e.g. large editor dialogs)
         // will need to instantiate ALL their children first if we use an array. This is useless,
@@ -488,9 +488,12 @@ abstract class AbstractWidget implements WidgetInterface
         foreach ($this->getChildren() as $child) {
             yield $child;
         }
-        
+        // Stop recursion if depth is reached
+        if ($depth === 0) {
+            return;
+        }
         foreach ($this->getChildren() as $child) {
-            yield from $child->getChildrenRecursive();
+            yield from $child->getChildrenRecursive($depth !== null ? ($depth - 1) : null);
             // Excplicitly continue - otherwise the foreach will break after the first yield from
             continue;
         }
