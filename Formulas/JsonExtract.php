@@ -68,6 +68,6 @@ class JsonExtract extends Formula
             }
             $result = ($result !== '' ? $delimiter : '') . $extract;
         }
-        return implode($delimiter, $extract);
+        return $result;
     }
 }
