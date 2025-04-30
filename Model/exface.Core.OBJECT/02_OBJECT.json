@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-04-30 12:57:20",
+            "MODIFIED_ON": "2025-04-30 13:15:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -270,6 +270,12 @@
                                                 }
                                             }
                                         ],
+                                        "row_grouper": {
+                                            "group_by_attribute_alias": "ORIGIN",
+                                            "expand_groups": "all",
+                                            "show_counter": true,
+                                            "hide_caption": true
+                                        },
                                         "columns": [
                                             {
                                                 "attribute_alias": "INFO_ICONS",
