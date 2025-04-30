@@ -14,7 +14,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @author Andrej Kabachnik
  *
  */
-class MetaAttributeOriginDataType extends StringDataType implements EnumDataTypeInterface
+class MetaAttributeOriginDataType extends NumberDataType implements EnumDataTypeInterface
 {
     use EnumStaticDataTypeTrait;
     
