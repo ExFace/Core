@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-04-29 13:09:08",
+            "MODIFIED_ON": "2025-04-30 12:57:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -324,7 +324,8 @@
                                                 "attribute_alias": "CREATED_ON"
                                             },
                                             {
-                                                "attribute_alias": "ORIGIN"
+                                                "attribute_alias": "ORIGIN",
+                                                "hidden": true
                                             }
                                         ],
                                         "sorters": [
@@ -355,7 +356,7 @@
                                                     "conditions": [
                                                         {
                                                             "value_left": "=~input!ORIGIN",
-                                                            "comparator": "!==",
+                                                            "comparator": ">",
                                                             "value_right": 1
                                                         }
                                                     ]
@@ -368,8 +369,8 @@
                                                     "conditions": [
                                                         {
                                                             "value_left": "=~input!ORIGIN",
-                                                            "comparator": "![",
-                                                            "value_right": "1,2"
+                                                            "comparator": ">",
+                                                            "value_right": 2
                                                         }
                                                     ]
                                                 }
@@ -381,7 +382,7 @@
                                                     "conditions": [
                                                         {
                                                             "value_left": "=~input!ORIGIN",
-                                                            "comparator": "!==",
+                                                            "comparator": ">",
                                                             "value_right": 1
                                                         }
                                                     ]
