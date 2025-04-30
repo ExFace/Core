@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\MetaAttributeOriginDataType;
 use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -1399,5 +1400,15 @@ class Attribute implements MetaAttributeInterface
     public function getType() : string
     {
         return $this->attributeType;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getOrigin()
+     */
+    public function getOrigin() : int
+    {
+        return $this->isInherited() ? MetaAttributeOriginDataType::INHERITED_ATTRIBUTE : MetaAttributeOriginDataType::DIRECT_ATTRIBUTE;
     }
 }

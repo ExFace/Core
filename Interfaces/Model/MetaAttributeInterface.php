@@ -576,4 +576,13 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function setType(string $attrType) : MetaAttributeInterface;
 
     public function getType() : string;
+
+    /**
+     * Indicates, 
+     * 
+     * Returns one of the values of MetaAttributeOriginDataType
+     * 
+     * @return int
+     */
+    public function getOrigin() : int;
 }

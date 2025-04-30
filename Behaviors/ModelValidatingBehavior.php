@@ -289,22 +289,10 @@ class ModelValidatingBehavior extends AbstractBehavior
                             $row[$col->getName()] = $attr->getShortDescription();
                             break;    
                         case 'ORIGIN':
-                            switch (true) {
-                                case $attr->isInherited(): $val = 2; break;
-                                case $attr instanceof CustomAttribute: $val = 3; break;
-                                default: $val = 1;
-                            }
-                            $row[$col->getName()] = $val;
+                            $row[$col->getName()] = $attr->getOrigin();;
                             break;     
                         case 'INFO_ICONS':
-                            $html = '';
-                            if ($attr->isInherited()) {
-                                $html .= '<i class="fa fa-arrow-circle-up" title="Inherited from ' . str_replace('"', '', $attr->getObjectInheritedFrom()->__toString()) . '"></i>';
-                            }
-                            if ($attr instanceof CustomAttribute) {
-                                $html .= '<i class="fa fa-user-circle-o" title="Custom attribute from ' . str_replace('"', "'", $attr->getSourceHint()) . '"></i>';
-                            }
-                            $row[$col->getName()] = $html;
+                            $row[$col->getName()] = $this->buildHtmlAttributeInfoIcons($attr);
                             break;                 
                     }
                 }
@@ -570,5 +558,22 @@ class ModelValidatingBehavior extends AbstractBehavior
     protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaAttributeInterface $attr
+     * @return string
+     */
+    protected function buildHtmlAttributeInfoIcons(MetaAttributeInterface $attr) : string
+    {
+        $html = '';
+        if ($attr->isInherited()) {
+            $html .= '<i class="fa fa-arrow-circle-up" title="Inherited from ' . str_replace('"', '', $attr->getObjectInheritedFrom()->__toString()) . '"></i>';
+        }
+        if ($attr instanceof CustomAttribute) {
+            $html .= '<i class="fa fa-user-circle-o" title="Custom attribute from ' . str_replace('"', "'", $attr->getSourceHint()) . '"></i>';
+        }
+        return $html;
     }
 }
