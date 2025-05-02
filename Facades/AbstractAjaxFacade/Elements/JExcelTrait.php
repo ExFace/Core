@@ -291,7 +291,7 @@ JS;
 JS;
             }
             
-            $lazyLoadingFlagJs = (($col->getCellWidget() instanceof InputCombo) && $col->getCellWidget()->getLazyLoading()) ? 'true' : 'false';
+            $lazyLoadingFlagJs = (($col->getCellWidget() instanceof InputComboTable) && $col->getCellWidget()->getLazyLoading()) ? 'true' : 'false';
             $wasLazyLoaded = 'false';
             
             // Update dropown values on action effects that might affect them
@@ -418,7 +418,7 @@ JS;
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
             var oWidget = jqSelf[0].exfWidget;
-            {$this->buildJsFixedFootersOnLoad('jqSelf')};
+            {$this->buildJsFixedFootersOnLoad('jqSelf')}
 
             try {
                 if (instance.exfWidget !== undefined) {
