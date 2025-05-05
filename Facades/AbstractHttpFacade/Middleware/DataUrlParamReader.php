@@ -67,7 +67,7 @@ class DataUrlParamReader implements MiddlewareInterface
         }
         
         $dataSheet = $this->parseRequestData($data, $task->getWorkbench());
-        if (! $dataSheet->isBlank()) {
+        if (! $dataSheet->isBlank() || ! $dataSheet->getColumns()->isEmpty()) {
             $task = $this->updateTask($task, $this->methodName, $dataSheet);
         }
         
