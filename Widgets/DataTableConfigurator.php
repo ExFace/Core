@@ -103,7 +103,7 @@ class DataTableConfigurator extends DataConfigurator
             }
         }
 
-        $this->getOptionalColumnsTab()->addWidget($column);
+        $tab->addWidget($column);
         $column->setParent($configuredWidget);
         return $this;
     }
