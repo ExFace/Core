@@ -26,7 +26,7 @@ class DataTableConfigurator extends DataConfigurator
 {
     private $column_tab = null;
 
-    private $columnsUxon = null;
+    private UxonObject|null $columnsUxon = null;
     
     private $aggregation_tab = null;
 
@@ -102,22 +102,26 @@ class DataTableConfigurator extends DataConfigurator
             return $this;
         }
         $table = $this->getWidgetConfigured();
-        // Do not create the columns for the table itself because that would reserver column
-        // ids in the main column groug, eventually resulting in shifting ids when optional
-        // columns are added. Instead create a detached column group and use that.
+        // Do not create the columns for the table itself because that would reserve column
+        // ids in the main column group, eventually resulting in shifting ids when optional
+        // columns are added. Instead, create a detached column group and use that.
         // IDEA maybe we don't even need a column group? Couldn't we just create a detached
         // column with the columns-tab as parent?
         $colGrp = WidgetFactory::createFromUxonInParent($table, new UxonObject([
             'visibility' => WidgetVisibilityDataType::OPTIONAL
         ]), 'DataColumnGroup');
-        foreach($this->columnsUxon as $columnUxon){
-            $column = $colGrp->createColumnFromUxon($columnUxon);
-            if(! $columnUxon->getProperty('visibility')){
-                $column->setVisibility($this->columnsDefaultVisibility);
+        
+        foreach($arr = $this->columnsUxon->toArray() as $key => $value) {
+            if($value['visibility'] === null) {
+                $arr[$key]['visibility'] = $this->columnsDefaultVisibility;
             }
-            $colGrp->addColumn($column);
+        }
+        
+        $colGrp->importUxonObject(new UxonObject(['columns' => $arr]));
+        foreach ($colGrp->getColumns() as $column) {
             $this->addOptionalColumn($column);
         }
+        
         return $this;
     }
     
