@@ -87,8 +87,24 @@ class DataTableConfigurator extends DataConfigurator
 
     public function addOptionalColumn(DataColumn $column) : DataTableConfigurator
     {
+        $alias = $column->getAttributeAlias();
+        
+        $tab = $this->getOptionalColumnsTab();
+        foreach ($tab->getWidgets() as $existingColumn) {
+            if($alias === $existingColumn->getAttributeAlias()) {
+                return $this;
+            }
+        }
+
+        $configuredWidget = $this->getWidgetConfigured();
+        foreach($configuredWidget->getColumns() as $existingColumn) {
+            if($alias === $existingColumn->getAttributeAlias()) {
+                return $this;
+            }
+        }
+
         $this->getOptionalColumnsTab()->addWidget($column);
-        $column->setParent($this->getWidgetConfigured());
+        $column->setParent($configuredWidget);
         return $this;
     }
 
