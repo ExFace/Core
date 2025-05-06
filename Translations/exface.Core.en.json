@@ -559,5 +559,8 @@
 	"ERROR.SUPPORT_HINT_WITH_EMAIL": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=Support%20request%20[%system_name%]%20%log_id%\">support</a>: \"%log_id%\"!",
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting support: \"%log_id%\"!",
 	
-	"WARNING.CAPTION": "Warning"
+	"WARNING.CAPTION": "Warning",
+
+	"ROW.SINGULAR": "Row",
+	"ROW.PLURAL": "Rows"
 }

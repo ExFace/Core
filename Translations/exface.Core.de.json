@@ -546,5 +546,8 @@
 	"ERROR.OBJECT_CAPTION": "Objekt \"%name%\"",
 	"ERROR.SUPPORT_HINT_WITH_EMAIL": "Bitte geben Sie bei Anfragen an den <a href=\"mailto:%support_mail%?subject=Support%20request%20%system_name%:%20%log_id%\">Support</a> stets die LOG-Nummer an: \"%log_id%\"!",
 	"ERROR.SUPPORT_HINT": "Bitte geben Sie bei Anfragen an den Support stets die LOG-Nummer an: \"%log_id%\"!",
-	"WARNING.CAPTION": "Warnung"
+	"WARNING.CAPTION": "Warnung",
+	
+	"ROW.SINGULAR": "Zeile",
+	"ROW.PLURAL": "Zeilen"
 }
