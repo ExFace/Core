@@ -2,6 +2,7 @@
 
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\DataTypes\MetaAttributeOriginDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -42,6 +43,10 @@ class CustomAttribute extends Attribute
         return $this->source;
     }
 
+    /**
+     * 
+     * @return string
+     */
     public function getSourceHint() : string
     {
         $src = $this->getSource();
@@ -57,5 +62,15 @@ class CustomAttribute extends Attribute
                 break;
         }
         return $hint;
+    }    
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getOrigin()
+     */
+    public function getOrigin() : int
+    {
+        return MetaAttributeOriginDataType::CUSTOM_ATTRIBUTE;
     }
 }
