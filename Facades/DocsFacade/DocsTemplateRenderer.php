@@ -29,25 +29,18 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     {
          $startPos = strpos($markdown, $startTag, $offset);
         if ($startPos === false) {
-            return $markdown; // Tag bulunamazsa hiçbir şey yapma
+            return $markdown; 
         }
 
-        // End tag'ı start tag'dan sonra bul
         $endPos = strpos($markdown, $endTag, $startPos);
         if ($endPos === false) {
             return $markdown;
         }
 
-        // endTag dahil bitiş pozisyonunu hesapla
         $endPos += strlen($endTag);
 
-        // Güncellenecek blok
-        $oldBlock = substr($markdown, $startPos, $endPos - $startPos);
-
-        // Yeni blok: start + yeni içerik + end
         $newBlock = $startTag . PHP_EOL . $replacement . PHP_EOL . $endTag;
 
-        // Eski bloğu yenisiyle değiştir
         return substr_replace($markdown, $newBlock, $startPos, $endPos - $startPos);
     }
 
