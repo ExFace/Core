@@ -263,7 +263,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                 try {
                     $check->check($checkSheet, $logbook);
                 } catch (DataCheckFailedError $exception) {
-                    $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
+                    $error = $error ?? new DataCheckFailedErrorMultiple('', null, null);
                     $error->appendError($exception, $index + 1, false);
                 }
             }

@@ -1,11 +1,13 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\Exceptions\ExceptionWithValuesTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Interfaces\DataSheets\DataCheckInterface;
 use exface\Core\CommonLogic\Log\Logger;
+use exface\Core\Interfaces\Exceptions\ExceptionWithValuesInterface;
 
 /**
  * Exception thrown if a check is violated by data sheet contents.
@@ -13,9 +15,12 @@ use exface\Core\CommonLogic\Log\Logger;
  * @author Andrej Kabachnik
  *
  */
-class DataCheckFailedError extends UnexpectedValueException implements DataCheckExceptionInterface
+class DataCheckFailedError 
+    extends UnexpectedValueException 
+    implements DataCheckExceptionInterface, ExceptionWithValuesInterface
 {
     use DataSheetExceptionTrait;
+    use ExceptionWithValuesTrait;
     
     private $check = null;
     
