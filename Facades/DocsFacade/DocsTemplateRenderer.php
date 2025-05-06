@@ -19,19 +19,8 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         foreach ($phs as $ph => $phData) {
             $startTag = $phData['comment'];
             $endTag = '<!-- END ' . $phData['key'] . ' -->';
-
-            // $newContent = $startTag . PHP_EOL . $vals[$ph] . PHP_EOL . $endTag;
     
             $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph], $phData['offset']);
-
-            // $regex = '/' . preg_quote($startTag, '/') . '(.*?)' . preg_quote($endTag, '/') . '/s';
-            // if (preg_match_all($regex, $markdown, $matches, PREG_OFFSET_CAPTURE)) {
-            //     foreach ($matches[0] as $i => $match) {
-            //         if($ph === $i) {
-            //             $markdown = str_replace($match, $newContent, $markdown,$numberOfReplacement);
-            //         }
-            //     }
-            // }
         }
 
         return $markdown;
