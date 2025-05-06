@@ -1263,6 +1263,25 @@
             },
             "ALIAS": "UxonSchema",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "Attribute origin",
+            "CREATED_ON": "2025-04-30 13:00:14",
+            "MODIFIED_ON": "2025-04-30 13:00:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f0b44d4b8780e2b44d025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Attribute origin",
+            "PROTOTYPE": "exface/Core/DataTypes/MetaAttributeOriginDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect"
+            },
+            "ALIAS": "AttributeOrigin",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

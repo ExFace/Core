@@ -5,10 +5,12 @@ use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Enumeration sorting directions: ASC and DESC.
+ * Enumeration attribute types: data attributes, compounds, calculated or runtime generated attribtues
  * 
- * @method MetaAttributeTypeDataType ASC(\exface\Core\CommonLogic\Workbench $workbench)
- * @method MetaAttributeTypeDataType DESC(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method MetaAttributeTypeDataType DATA(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method MetaAttributeTypeDataType COMPOUND(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method MetaAttributeTypeDataType CALCULATED(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method MetaAttributeTypeDataType GENERATED(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *
