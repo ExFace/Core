@@ -48,7 +48,7 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  * 	    {
  * 	        "to": "OBJECT",
  * 	        "lookup_object_alias": "exface.Core.OBJECT",
- * 	        "match": [
+ * 	        "matches": [
  * 		        {
  * 		            "from": "OBJECT__ALIAS",
  * 		            "lookup": "ALIAS"
@@ -71,7 +71,7 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  * 	        "to": "TASK_TAGS__TAG",
  * 	        "lookup_object_alias": "my.App.TAG",
  * 	        "lookup_column": "UID",
- * 	        "match": [
+ * 	        "matches": [
  * 		        {
  * 		            "from": "TAGS",
  * 		            "lookup": "NAME"
