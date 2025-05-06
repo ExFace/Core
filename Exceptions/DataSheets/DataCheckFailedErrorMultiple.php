@@ -2,49 +2,49 @@
 
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\Exceptions\ExceptionWithValuesTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Exceptions\ExceptionWithValuesInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
-use exface\Core\Interfaces\TranslationInterface;
 
 /**
  * Can combine any number of `DataCheckFailedError` instances, grouping them by their messages to present a unified
  * coherent error message.
  */
-class DataCheckFailedErrorMultiple extends UnexpectedValueException
+class DataCheckFailedErrorMultiple 
+    extends UnexpectedValueException
+    implements ExceptionWithValuesInterface
 {
-    private const KEY_ERRORS = 'errors';
-    private const KEY_ROWS = 'affectedRows';
+    use ExceptionWithValuesTrait;
     
     /**
      * All errors handled by this exception.
      *
      * Grouped by error messages to avoid redundant output lines.
-     *
-     * ```
-     *
-     * [$errorMessage =>
-     *      ['errors' => [$errors] ],
-     *      ['affectedRows' => [$rows] ]
-     * ]
-     *
-     * ```
-     *
      * @var array
      */
     protected array $errorGroups = [];
 
-    private string $baseMessage = '';
-
-    private ?TranslationInterface $translator;
-
     /**
-     * @inheritDoc
+     * @param        $message
+     * @param null   $alias
+     * @param null   $previous
+     * @param string $singular
+     * @param string $plural
      */
-    public function __construct($message, $alias = null, $previous = null, TranslationInterface $translator = null)
+    public function __construct(
+        $message, 
+        $alias = null, 
+        $previous = null, 
+        string $singular = 'Row',
+        string $plural = 'Rows'
+    )
     {
         parent::__construct($message, $alias, $previous);
+        $this->renderingMode = self::MODE_PREPEND;
+        $this->labelSingular = $singular;
+        $this->labelPlural = $plural;
         $this->baseMessage = $message;
-        $this->translator = $translator;
     }
 
     /**
@@ -67,7 +67,6 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
     {
         foreach ($other->errorGroups as $message => $data) {
             $this->setErrorForGroup($message, array_merge($this->getErrorsForGroup($message), $other->getErrorsForGroup($message)));
-            $this->setAffectedRowsForGroup($message, array_merge($this->getAffectedRowsForGroup($message), $other->getAffectedRowsForGroup($message)));
         }
 
         if($updateMessage) {
@@ -87,15 +86,12 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      */
     public function appendError(DataCheckFailedError $error, int $rowIndex = -1, bool $updateMessage = true) : void
     {
-        $message = $error->getMessage();
-
-        // Add error to the collection. We group by message, because this removes redundant output lines.
-        $this->errorGroups[$message][self::KEY_ERRORS][] = $error;
-
-        // Add row index for this error, if it is valid and does not exist already.
-        if($rowIndex > -1 && !in_array($rowIndex, $this->getAffectedRowsForGroup($message), true)) {
-            $this->errorGroups[$message][self::KEY_ROWS][] = $rowIndex;
+        if($rowIndex > -1) {
+            $error->setValues([$rowIndex]);
         }
+        
+        // Add error to the collection. We group by message, because this removes redundant output lines.
+        $this->errorGroups[$error->getMessageWithoutValues()][] = $error;
 
         if($updateMessage) {
             $this->updateMessage();
@@ -112,43 +108,25 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      */
     public function updateMessage() : void
     {
-        $trsLine = $this->translator ? $this->translator->translate('BEHAVIOR.VALIDATINGBEHAVIOR.LINE') : 'Lines';
-        $updatedMessage = empty($this->baseMessage) ? '' : $this->baseMessage.PHP_EOL.PHP_EOL;
+        $message = empty($this->baseMessage) ? '' : $this->baseMessage.PHP_EOL.PHP_EOL;
+        $messageWithoutValues = empty($this->baseMessage) ? '' : $this->baseMessage.PHP_EOL.PHP_EOL;
 
-        foreach ($this->errorGroups as $errorMessage => $errorData){
-            if(empty($affectedRows = $this->getAffectedRowsForGroup($errorMessage))){
-                $updatedMessage .= $errorMessage;
-            } else {
-                $affectedRows = implode(', ', $affectedRows);
-                $updatedMessage .= $trsLine . ' (' . $affectedRows . '): ' . $errorMessage;
+        foreach ($this->errorGroups as $errorMessage => $errors){
+            $rows = [];
+            foreach ($errors as $error) {
+                $rows = array_merge($rows, $error->getValues());
             }
+            $proxy = new DataCheckFailedError($errors[0]->getDataSheet(), $errorMessage);
+            $proxy->setValueLabels($this->labelSingular, $this->labelPlural, false);
+            $proxy->setRenderingMode($this->getRenderingMode(), false);
+            $proxy->setValues(array_unique($rows, SORT_NUMERIC));
 
-            $updatedMessage .= PHP_EOL;
+            $message .= $proxy->getMessage() . PHP_EOL;
+            $messageWithoutValues .= $proxy->getMessageWithoutValues() . PHP_EOL;
         }
 
-        $this->message = $updatedMessage;
-    }
-
-    /**
-     * Get a list of affected row indices for the specified error message.
-     *
-     * @param string $message
-     * @return array
-     */
-    public function getAffectedRowsForGroup(string $message) : array
-    {
-        return $this->errorGroups[$message][self::KEY_ROWS] ?? [];
-    }
-
-    /**
-     * Set the list of affected row indices for the specified error message.
-     *
-     * @param string $message
-     * @param array $value
-     */
-    public function setAffectedRowsForGroup(string $message, array $value) : void
-    {
-        $this->errorGroups[$message][self::KEY_ROWS] = $value;
+        $this->message = $message;
+        $this->messageWithoutValues = $messageWithoutValues;
     }
 
     /**
@@ -159,7 +137,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      */
     public function getErrorsForGroup(string $message) : array
     {
-        return $this->errorGroups[$message][self::KEY_ERRORS] ?? [];
+        return $this->errorGroups[$message] ?? [];
     }
 
     /**
@@ -170,7 +148,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      */
     public function setErrorForGroup(string $message, array $value) : void
     {
-        $this->errorGroups[$message][self::KEY_ERRORS] = $value;
+        $this->errorGroups[$message] = $value;
     }
     
     /**
@@ -181,9 +159,37 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
         $result = [];
         
         foreach ($this->errorGroups as $errorGroup) {
-            $result = array_merge($result, $errorGroup[self::KEY_ERRORS]);
+            $result = array_merge($result, $errorGroup);
         }
         
         return $result;
+    }
+
+    /**
+     * STUB - does not perform any work.
+     */
+    public function setValues(array $values): void
+    {
+        // STUB
+    }
+
+    /**
+     * STUB - Same as `getAllErrors()`.
+     * 
+     * @return DataCheckFailedError[]
+     */
+    public function getValues() : array
+    {
+        return $this->getAllErrors();
+    }
+
+    /**
+     * STUB - returns an empty string.
+     * 
+     * @return string
+     */
+    public function getValuesToken(): string
+    {
+        return '';
     }
 }
