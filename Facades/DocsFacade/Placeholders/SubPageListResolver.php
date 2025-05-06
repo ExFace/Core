@@ -34,14 +34,18 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
      */
     public function resolve(array $placeholders) : array
     {
-        $vals = [];
-        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
-            $options = $this->stripPrefix($placeholder);
-            parse_str($options, $optionsArray);
-            $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
-            $markdownStructure = $this->generateMarkdownList($rootDirectory);
-            $val = $this->renderMarkdownList($markdownStructure, $this->getOption('list-type',$optionsArray), $this->getOption('depth',$optionsArray));
-            $vals[$placeholder] = $val;
+        $vals = [];                
+        $names = array_map(fn($ph) => $ph['name'], $placeholders);
+        $filteredNames = $this->filterPlaceholders($names);
+        foreach ($placeholders as $i => $placeholder) {
+            if (in_array($placeholder['name'], $filteredNames)) {
+                $options = $placeholder['options'];
+                parse_str($options, $optionsArray);
+                $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
+                $markdownStructure = $this->generateMarkdownList($rootDirectory);
+                $val = $this->renderMarkdownList($markdownStructure, $this->getOption('list-type',$optionsArray), $this->getOption('depth',$optionsArray));
+                $vals[$i] = $val;
+            }
         }
         return $vals;
     }
