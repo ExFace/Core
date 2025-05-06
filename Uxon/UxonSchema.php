@@ -666,11 +666,15 @@ class UxonSchema implements UxonSchemaInterface
         }
         // Reverse relations and 1-to-1 relations coming from other objects are not attributes, 
         // so we need to add them here manually
-        foreach ($object->getRelations() as $rel) {
-            $val = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
-            if (! in_array($val, $value_relations)) {
-                $values[] = $val; 
+        try {
+            foreach ($object->getRelations() as $rel) {
+                $val = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
+                if (! in_array($val, $value_relations)) {
+                    $values[] = $val; 
+                }
             }
+        } catch (\Exception $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
         }
         
         // Sort attributes and reverse relations alphabetically.
