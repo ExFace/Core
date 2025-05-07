@@ -8,6 +8,7 @@ use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
+use exface\Core\Factories\FormulaFactory;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
@@ -18,7 +19,6 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * - Unpivoting will increase the number of rows if more than one column are being transposed. There
  * will be no obvious connection between the rows before and after the process.
  * - If you need to transpose only certain columns, use `column_to_column_mapping`s for the other ones.
- * - Unpivoting does not really make sense if to- and from-objects are the same.
  * 
  * ## Example
  * 
@@ -64,6 +64,14 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * }
  * 
  * ```
+ * 
+ * ## Configuration
+ * 
+ * - `from_columns` - list of column expressions to unpivot (if you know all of them)
+ * - `from_column_calculation` - formula to calcuate possible column expressions if they are dynamic - e.g. 
+ * to `=Lookup()` them in master data
+ * - `to_labels_column` - expression of the to-object to place the labels (column expression)
+ * - `to_values_column` - expression of the to-object to place the cell values
  * 
  * @see DataColumnMappingInterface
  * 
@@ -113,6 +121,25 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
         $this->fromColsExprs = null;
         $this->fromColsStrings = $array;
         return $this;
+    }
+
+    /**
+     * Calculate from column names using a formula (use comma as delimiter!)
+     * 
+     * @uxon-property from_columns_calculation
+     * @uxon-type metamodel:formula
+     * @uxon-template =
+     * 
+     * @param string $formula
+     * @return DataUnpivotMapping
+     */
+    protected function setFromColumnsCalculation(string $formula) : DataUnpivotMapping
+    {
+        $expr = FormulaFactory::createFromString($this->getWorkbench(), $formula);
+        $list = $expr->evaluate();
+        $array = explode(',', $list);
+        $array = array_map('trim', $array);
+        return $this->setFromColumns($array);
     }
 
     /**
@@ -248,13 +275,13 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
                 case $fromExpr->isFormula():
                     $dataType = $fromExpr->getDataType();
                     $values = $fromExpr->evaluate($fromSheet);
-                    $labelValue = $fromExpr->toString();
+                    $labelValue = $fromExpr->__toString();
                     break;
                 // Data column references
                 case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
                     $dataType = $fromCol->getDataType();
                     $values = $fromCol->getValues(false);
-                    $labelValue = $fromCol->getName();
+                    $labelValue = $fromExpr->__toString();
                     break;
                 // Otherwise error
                 default:
