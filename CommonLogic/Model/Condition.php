@@ -727,7 +727,17 @@ class Condition implements ConditionInterface
             case ComparatorDataType::IS:
                 return $rightVal === null || mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) !== false;
             case ComparatorDataType::IS_NOT:
-                return mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) === false;
+                $leftStr = ($leftVal ?? '');
+                $rightStr = ($rightVal ?? '');
+                // Handle empty values separately as mb_stripos() will not do what we want then.
+                switch (true) {
+                    case $leftStr === '' && $rightStr === '':
+                        return false;
+                    case $leftStr === '' && $rightStr !== null:
+                    case $leftStr !== '' && $rightStr === '':
+                        return true;
+                }
+                return mb_stripos($leftStr, $rightStr) === false;
             case ComparatorDataType::EQUALS:
                 return $leftVal == $rightVal;
             case ComparatorDataType::EQUALS_NOT:
