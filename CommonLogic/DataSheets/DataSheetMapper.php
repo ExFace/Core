@@ -362,9 +362,14 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         if ($logbook !== null) $logbook->addLine('Checking input data for missing columns');
+
+        // TODO for a reason not known anymore, there is $readMissingColumns and $this->getReadMissingFromData()
+        // separately. It seems $readMissingColumns is passed from outside, and the other one is part of
+        // the mapper configuration. But they do different things somehow. Can they be coupled?
+
         // If the sheet is empty, just fill it with the required columns and read everything 
         // (no UID values to filter in this case)
-        if ($data_sheet->isEmpty()) {
+        if ($data_sheet->isEmpty() && $this->getReadMissingFromData() !== false) {
             foreach ($this->getMappings() as $map){
                 foreach ($map->getRequiredExpressions($data_sheet) as $expr) {
                     $data_sheet->getColumns()->addFromExpression($expr);
