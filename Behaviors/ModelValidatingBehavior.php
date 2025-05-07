@@ -238,7 +238,13 @@ class ModelValidatingBehavior extends AbstractBehavior
                 $additionalSheet->getFilters()->removeCondition($cond);
             }
             foreach ($object->getAttributes() as $attr) {
+                // Skip attributes, that are already in the data sheet
                 if ($aliasCol->findRowByValue($attr->getAlias()) !== false) {
+                    continue;
+                }
+                // Also skip the generated LABEL attribute because it is very confusing if it is there
+                // right next to the regular attribute with label-flag
+                if ($attr->isLabelForObject() && ! $attr->isInherited()) {
                     continue;
                 }
                 foreach ($resultSheet->getColumns() as $col) {
@@ -273,7 +279,7 @@ class ModelValidatingBehavior extends AbstractBehavior
                         case 'REQUIREDFLAG':
                             $row[$col->getName()] = $attr->isReadable() ? 1 : 0;
                             break;
-                        case 'REQUIRELATED_OBJ__NAME':
+                        case 'RELATED_OBJ__NAME':
                             $row[$col->getName()] = $attr->isRelation() ? $attr->getRelation()->getRightObject()->getName() : null;
                             break;   
                         case 'HIDDENFLAG':
