@@ -677,7 +677,17 @@ class Condition implements ConditionInterface
             throw new RuntimeException('Cannot evaluate a condition: do data provided!');
         }
         
-        $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
+        // For string expressions or onknown expression types, check if they match a column in the data sheet.
+        // If so, treat them as column ref.
+        // TODO this is a little confusiong. Actually, left expressions in conditions never seem to be unknown
+        // although this would be correct in this case. Need a better way to distinguish column refs and strings
+        // here
+        $leftExpr = $this->getExpression();
+        if (($leftExpr->isString() || $leftExpr->isUnknownType()) && $data_sheet && $leftCol = $data_sheet->getColumns()->getByExpression($leftExpr)) {
+            $leftVal = $leftCol->getValue($row_number);
+        } else {
+            $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
+        }
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
 
         $listDelimiter = $this->getExpression()->isMetaAttribute() ? $this->getExpression()->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
