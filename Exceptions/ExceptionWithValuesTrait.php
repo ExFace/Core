@@ -125,7 +125,7 @@ trait ExceptionWithValuesTrait
      * 
      * @return void
      */
-    protected function updateMessage() : void
+    public function updateMessage() : void
     {
         $base = $this->baseMessage ?? $this->baseMessage = $this->message;
         $values = $this->updateValuesToken();

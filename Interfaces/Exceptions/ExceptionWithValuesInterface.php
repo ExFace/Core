@@ -94,4 +94,11 @@ interface ExceptionWithValuesInterface
      * @return string
      */
     function getMessageRaw() : string;
+
+    /**
+     * Re-renders the message of this instance.
+     *
+     * @return void
+     */
+    function updateMessage() : void;
 }

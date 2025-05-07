@@ -29,10 +29,14 @@ class DataCheckWithOutputData extends DataCheck
     private ?UxonObject $outputDataSheetUxon = null;
     private ?DataSheetInterface $outputDataSheet = null;
 
-    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null): DataSheetInterface
+    public function check(
+        DataSheetInterface $sheet, 
+        LogBookInterface $logBook = null,
+        string $rowNrColumnAlias = null
+    ): DataSheetInterface
     {
         try {
-            parent::check($sheet, $logBook);
+            parent::check($sheet, $logBook, $rowNrColumnAlias);
         } catch (DataCheckFailedError $error) {
             $logBook?->addIndent(1);
             $logBook?->addLine('Generating output sheet...');

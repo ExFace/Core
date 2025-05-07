@@ -113,25 +113,24 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $logbook->addLine('Checking ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
         
         // Get datasheets.
+        $changedDataSheet = $eventSheet->copy();
         if ($this->isOldDataRequired()) {
             $previousDataSheet = $this->getOldData($event);
             if ($previousDataSheet !== null) {
                 $logbook->addLine('Found "old" data for ' . $previousDataSheet->getMetaObject()->__toString() . ' - can use `[#~old:...#]` placeholders');
                 $logbook->addDataSheet('Old data', $previousDataSheet);
                 try {
-                    $changedDataSheet = $eventSheet->copy()->sortLike($previousDataSheet);
+                    $changedDataSheet->sortLike($previousDataSheet);
                 } catch (DataSheetRuntimeError $e) {
                     $logbook->addDataSheet('New data (unsorted)', $eventSheet);
                     throw new BehaviorRuntimeError($this, "Failed to align post-transaction data!", $e->getAlias(), $e, $logbook);
                 }
 
             } else {
-                $changedDataSheet = $eventSheet;
                 $logbook->addLine('No "old" data available - cannot use `[#~old:...#]` placeholders');
             }
         } else {
             $logbook->addLine('No "old" data required');
-            $changedDataSheet = $eventSheet;
         }
         
         $logbook->addDataSheet('New data', $changedDataSheet);
@@ -246,9 +245,12 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $error = null;
         $json = $dataCheckUxon->toJson();
         $logbook->addIndent(1);
-
-        // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
+        $rowNrAlias = 'tempColRowNrValidatingBehavior';
+        
+        // Validate data row by row. This is a little inefficient, but allows us to render placeholders.
         foreach ($changedDataSheet->getRows() as $index => $row) {
+            // Pass index.
+            $row[$rowNrAlias] = $index;
             // Render placeholders.
             $renderedUxon = $this->renderUxon($json, $context, $previousDataSheet, $changedDataSheet, $index);
             // Reduce datasheet to the relevant row.
@@ -261,7 +263,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                 }
 
                 try {
-                    $check->check($checkSheet, $logbook);
+                    $check->check($checkSheet, $logbook, $rowNrAlias);
                 } catch (DataCheckFailedError $exception) {
                     $error = $error ?? new DataCheckFailedErrorMultiple(
                         '',
@@ -270,7 +272,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                         $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ROW.SINGULAR'),
                         $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ROW.PLURAL')
                     );
-                    $error->appendError($exception, $index + 1, false);
+                    $error->appendError($exception,false);
                 }
             }
         }

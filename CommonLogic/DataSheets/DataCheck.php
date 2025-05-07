@@ -62,17 +62,54 @@ class DataCheck implements DataCheckInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataCheckInterface::check()
      */
-    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : DataSheetInterface
+    public function check(
+        DataSheetInterface $sheet, 
+        LogBookInterface $logBook = null,
+        string $rowNrColumnAlias = null
+    ) : DataSheetInterface
     {
+        $rowNrColumnAlias = $rowNrColumnAlias ?? self::ROW_NUMBER_COLUMN_ALIAS;
+        $cleanupRequired = $this->ensureRowNumbers($sheet, $rowNrColumnAlias);
+        
         $badData = $this->findViolations($sheet);
+        
+        if($cleanupRequired) {
+            $sheet->getColumns()->removeByKey($rowNrColumnAlias);
+        }
         
         $errorText = $this->getErrorText($badData);
         $logBook?->addLine('Found ' . $badData->countRows() . ' matches for check "' . $this->__toString() . '".');
         
         if (! $badData->isEmpty()) {
-            throw (new DataCheckFailedError($sheet, $errorText, null, null, $this, $badData))->setUseExceptionMessageAsTitle(true);
+            $error = new DataCheckFailedError($sheet, $errorText, null, null, $this, $badData);
+            $error->setValues($badData->getColumnValues($rowNrColumnAlias));
+            $error->setUseExceptionMessageAsTitle(true);
+            throw $error;
         }
         return $sheet;
+    }
+
+    /**
+     * Checks if the column with `$rowNrColumnAlias` is present in the data sheet and adds it
+     * if necessary.
+     * 
+     * Returns TRUE if the data sheet had to be modified.
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param string             $rowNrColumnAlias
+     * @return bool
+     */
+    protected function ensureRowNumbers(DataSheetInterface $dataSheet, string $rowNrColumnAlias) : bool
+    {
+        if($dataSheet->getColumns()->getByExpression($rowNrColumnAlias)) {
+            return false;
+        }
+        
+        foreach ($dataSheet->getRows() as $rowNr => $row) {
+            $dataSheet->setCellValue($rowNrColumnAlias, $rowNr, $rowNr + 1);
+        }
+        
+        return true;
     }
 
     /**

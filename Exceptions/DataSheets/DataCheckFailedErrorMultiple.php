@@ -84,12 +84,8 @@ class DataCheckFailedErrorMultiple
      * If set to TRUE the error message will be updated with the new data.
      * @return void
      */
-    public function appendError(DataCheckFailedError $error, int $rowIndex = -1, bool $updateMessage = true) : void
+    public function appendError(DataCheckFailedError $error, bool $updateMessage = true) : void
     {
-        if($rowIndex > -1) {
-            $error->setValues([$rowIndex]);
-        }
-        
         // Add error to the collection. We group by message, because this removes redundant output lines.
         $this->errorGroups[$error->getMessageWithoutValues()][] = $error;
 

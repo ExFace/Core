@@ -20,15 +20,18 @@ use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
  */
 interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface, \Stringable
 {
+    const ROW_NUMBER_COLUMN_ALIAS = 'TempColDataCheckRowNumber';
+    
     /**
      *
      * @param DataSheetInterface    $sheet
+     * @param string|null           $rowNrColumnAlias
      * @param LogBookInterface|null $logBook
      * @return DataSheetInterface
      * @throws DataCheckFailedError
      * @throws DataCheckNotApplicableError
      */
-    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : DataSheetInterface;
+    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null, string $rowNrColumnAlias = null) : DataSheetInterface;
     
     /**
      * 
