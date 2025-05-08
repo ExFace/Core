@@ -244,7 +244,7 @@ class ModelValidatingBehavior extends AbstractBehavior
                 }
                 // Also skip the generated LABEL attribute because it is very confusing if it is there
                 // right next to the regular attribute with label-flag
-                if ($attr->isLabelForObject() && ! $attr->isInherited()) {
+                if ($attr->getAlias() === MetaAttributeInterface::OBJECT_LABEL_ALIAS && ! $attr->isInherited()) {
                     continue;
                 }
                 foreach ($resultSheet->getColumns() as $col) {
