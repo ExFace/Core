@@ -310,9 +310,15 @@ class PrefillModel implements PrefillModelInterface
             // the prefill sheet will have our values and may have other columns with NULL
             // values.
             if ($eventSheet->getMetaObject()->isExactly($dataSheet->getMetaObject()) === true) {
-                $row = $dataSheet->getRow(0);
-                foreach ($eventSheet->getRow(0) as $fld => $val) {
-                    if ($val !== null && $val !== $row[$fld]) {
+                $dummyRow = $dataSheet->getRow(0);
+                $eventRow = $eventSheet->getRow(0);
+                // Ignore any empty sheets (because our dummy is not empty :)
+                if ($eventRow === null) {
+                    return;
+                }
+                // Ignore sheets, that have other values, than our dummy
+                foreach ($eventRow as $fld => $val) {
+                    if ($val !== null && $val !== $dummyRow[$fld]) {
                         return;
                     }
                 }
