@@ -2,10 +2,13 @@
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -20,7 +23,7 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  * 
  * This mapper looks up a value for each row in the from-sheet and writes this value into
  * the same row in the to-sheet. This means, it produces as many rows in the to-sheet as
- * there where in the from-sheet. 
+ * there were in the from-sheet. 
  * 
  * You can think of it as a column-to-column mapping, which uses an additional step reading
  * a third data sheet (called `lookup`) and maps data from that lookup sheet to the to-sheet
@@ -37,7 +40,7 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  * 
  * ### Lookup a UID by name or alias
  * 
- * Concider having a data sheet of exface.Core.ATTRIBUTE, that includes object aliases, but not
+ * Consider having a data sheet of exface.Core.ATTRIBUTE, that includes object aliases, but not
  * their UIDs.
  * 
  * ```
@@ -97,6 +100,9 @@ class LookupMapping extends AbstractDataSheetMapping
     private $matchesUxon = null;
 
     private $ignoreIfMissingFromColumn = false;
+    private ?UxonObject $notFoundErrorUxon = null;
+    private string $notFoundBehavior = 'leave_empty';
+    private bool $stopOnFirstMiss = false;
     
     /**
      * 
@@ -234,7 +240,9 @@ class LookupMapping extends AbstractDataSheetMapping
         } else {
             $toValDelim = EXF_LIST_SEPARATOR;
         }
+
         // For every row in the from-sheet we will create a row in the to-sheet
+        $unmatchedRows = [];
         foreach ($fromSheet->getRows() as $i => $fromRow) {
             $toColVals[$i] = null;
             // Look for matching lookup rows for this from-row
@@ -282,12 +290,101 @@ class LookupMapping extends AbstractDataSheetMapping
                     }
                 }
             }
+            
+            // If row could not be matched to any lookup row, we might have to respond.
+            if($toColVals[$i] === null) {
+                // Cache unmatched row.
+                $unmatchedRows[$i] = $fromRow;
+                // Some configurations require, that we stop processing after encountering our first unmatched row.
+                if($this->stopOnFirstMiss) {
+                    break;
+                }
+            }
         }
+
+        $this->handleUnmatchedRows($unmatchedRows, $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
         $toCol->setValues($toColVals);
         
         if ($logbook !== null) $logbook->addLine($log);
         
         return $toSheet;
+    }
+
+    /**
+     * Handles any unmatched rows, according to the configuration of this mapper.
+     *
+     * @param array               $unmatchedRows
+     * @param DataSheetInterface  $fromSheet
+     * @param DataSheetInterface  $lookupSheet
+     * @param DataSheetInterface  $toSheet
+     * @param DataColumnInterface $toCol
+     * @return void
+     */
+    protected function handleUnmatchedRows(
+        array $unmatchedRows, 
+        array &$toColumnValues,
+        DataSheetInterface $fromSheet,
+        DataSheetInterface $lookupSheet,
+        DataSheetInterface $toSheet,
+        DataColumnInterface $toCol
+    ) : void
+    {
+        if(empty($unmatchedRows)) {
+            return;
+        }
+        
+        $error = null;
+        $fixedValue = null;
+        $behavior = $this->notFoundBehavior;
+        if(str_contains($behavior, ':')) {
+            [$behavior, $fixedValue] = explode(':', $behavior);
+        }
+        
+        
+        switch ($behavior) {
+            // Throw an error.
+            case 'error_on_first':
+            case 'error_cumulative':
+            $rowNrs = array_keys($unmatchedRows);
+            $error = new DataSheetMissingRequiredValueError(
+                $fromSheet, 
+                null, 
+                null, 
+                null, 
+                $fromSheet->getColumns()->getFirst(), 
+                $rowNrs
+            );
+            break;
+            // Set a fixed value.
+            case 'value':
+                try {
+                    $fixedValue = $toCol->getDataType()->parse($fixedValue);
+                } catch (\Throwable $e)
+                {
+                    $rowNrs = array_keys($unmatchedRows);
+                    $error = new DataSheetMissingRequiredValueError(
+                        $fromSheet,
+                        null,
+                        null,
+                        $e,
+                        $toCol,
+                        $rowNrs
+                    );
+                }
+                
+                foreach ($unmatchedRows as $rowNr => $row) {
+                    $toColumnValues[$rowNr] = $fixedValue;
+                }
+            break;
+        }
+        
+        if($error !== null) {
+            if($this->notFoundErrorUxon) {
+                $error->getMessageModel($this->getWorkbench())->importUxonObject($this->notFoundErrorUxon);
+            }
+            
+            throw $error;
+        }
     }
 
     /**
@@ -448,5 +545,75 @@ class LookupMapping extends AbstractDataSheetMapping
     {
         $this->ignoreIfMissingFromColumn = $trueOrFalse;
         return $this;
+    }
+
+    /**
+     * Customize the error that will be thrown, if one or more rows in the `from-sheet` could not be 
+     * matched with any row in the `lookup-sheet`.
+     * 
+     * NOTE: If you set `if_not_found` to any value, that does not throw errors (e.g. `leave_empty`), 
+     * this property is redundant.
+     * 
+     * @uxon-property if_not_found_error
+     * @uxon-type \exface\Core\CommonLogic\Model\Message
+     * @uxon-template {"title":"","code":"","type":""}
+     * 
+     * @param UxonObject|null $uxon
+     * @return $this
+     */
+    public function setIfNotFoundError(?UxonObject $uxon) : LookupMapping
+    {
+        $this->notFoundErrorUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getIfNotFoundError() : ?UxonObject
+    {
+        return $this->notFoundErrorUxon;
+    }
+
+    /**
+     * What should happen, if one or more rows in the `from-sheet` cannot be matched to any
+     * row in the `lookup-sheet` (default is `leave_empty`). 
+     * 
+     * You can choose from these options:
+     * - `leave_empty`: Unmatched rows produce an empty output in the `to-sheet`. No error will be thrown.
+     * - `value:VALUE`: Unmatched rows will write the value after the `:` into the `to-sheet`. No error will be thrown.
+     * - `error_on_first`: The first unmatched row will throw an error, immediately terminating the process.
+     * - `error_cumulative`: All unmatched rows will be combined into one error that will be thrown before any changes
+     * are commited. This terminates the process, after all lookups have been completed.
+     * 
+     * @uxon-property if_not_found
+     * @uxon-type [leave_empty,error_on_first,error_cumulative,value:]
+     * @uxon-template leave_empty
+     * 
+     * @param string $value
+     * @return $this
+     */
+    public function setIfNotFound(string $value) : LookupMapping
+    {
+        $this->notFoundBehavior = $value;
+        $this->stopOnFirstMiss = in_array($value, ['error_on_first']); 
+        
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIfNotFound() : string
+    {
+        return $this->notFoundBehavior;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getStopOnFirstMiss() : bool
+    {
+        return $this->stopOnFirstMiss;
     }
 }
