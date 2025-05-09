@@ -357,7 +357,7 @@ class LookupMapping extends AbstractDataSheetMapping
                 null, 
                 null, 
                 null, 
-                $fromSheet->getColumns()->getFirst(), 
+                $toCol, 
                 $rowNrs
             );
             break;
