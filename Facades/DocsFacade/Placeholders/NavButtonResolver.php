@@ -25,11 +25,15 @@ class NavButtonResolver extends AbstractPlaceholderResolver implements Placehold
     public function resolve(array $placeholders) : array
     {
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
-            $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
-            $fileList = $this->getSiblings($rootDirectory);
-            $val = $this->createButtons($fileList);
-            $vals[$placeholder] = $val;
+        $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);        
+        $names = array_map(fn($ph) => $ph['name'], $placeholders);
+        $filteredNames = $this->filterPlaceholders($names);
+        foreach ($placeholders as $i => $placeholder) {
+            if (in_array($placeholder['name'], $filteredNames)) {
+                $fileList = $this->getSiblings($rootDirectory);
+                $val = $this->createButtons($fileList);
+                $vals[$i] = $val;
+            }
         }
         return $vals;
     }
