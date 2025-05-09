@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Interfaces\AppInterface;
@@ -9,8 +12,13 @@ use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Model\MessageInterface;
 
+/**
+ * TODO - Documentation
+ */
 class Message implements MessageInterface
 {
+    use ImportUxonObjectTrait;
+    
     private $workbench = null;
     
     private $code = null;
@@ -50,6 +58,21 @@ class Message implements MessageInterface
     {
         return $this->workbench;   
     }
+
+    /**
+     * @uxon-property code
+     * @uxon-type string
+     *
+     * @param string $code
+     * @return MessageInterface
+     * 
+     * @see MessageInterface::setCode()
+     */
+    public function setCode(string $code) : MessageInterface
+    {
+        $this->code = $code;
+        return $this;
+    }
     
     /**
      * 
@@ -76,11 +99,15 @@ class Message implements MessageInterface
         }
         return $this->type ?? $default;
     }
-    
+
     /**
+     * @uxon-property type
+     * @uxon-type [ERROR,WARNING,INFO,SUCCESS,HINT,QUESTION]
+     *
+     * @param string $value
+     * @return MessageInterface
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MessageInterface::setType()
+     * @see MessageInterface::setType()
      */
     public function setType(string $value) : MessageInterface
     {
@@ -100,11 +127,15 @@ class Message implements MessageInterface
         }
         return $this->title ?? '';
     }
-    
+
     /**
+     * @uxon-property title
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return MessageInterface
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MessageInterface::setTitle()
+     * @see MessageInterface::setTitle()
      */
     public function setTitle(string $value) : MessageInterface
     {
@@ -124,11 +155,15 @@ class Message implements MessageInterface
         }
         return $this->hint;
     }
-    
+
     /**
+     * @uxon-property hint
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return MessageInterface
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MessageInterface::setHint()
+     * @see MessageInterface::setHint()
      */
     public function setHint(string $value) : MessageInterface
     {
@@ -150,9 +185,10 @@ class Message implements MessageInterface
     }
     
     /**
+     * @uxon-property description
+     * @uxon-type string
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MessageInterface::setDescription()
+     * @see MessageInterface::setDescription()
      */
     public function setDescription(string $value) : MessageInterface
     {
@@ -221,5 +257,19 @@ class Message implements MessageInterface
             $this->getWorkbench()->model()->getModelLoader()->loadMessageData($this);
         }
         return $this;
+    }
+
+    /**
+     * @inheritdoc 
+     * @see iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject() : UxonObject
+    {
+        return new UxonObject([
+            'title' => $this->getTitle(),
+            'hint' => $this->getHint(),
+            'code' => $this->getCode(),
+            'type' => $this->getType()
+        ]);
     }
 }
