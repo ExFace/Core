@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Factories\DataSheetFactory;
