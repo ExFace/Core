@@ -640,6 +640,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
                 if ($mainSheet->getColumns()->getByExpression($cond->getExpression())) {
                     $customConditionsFilters->addCondition($cond);
+                } else {
+                    $logbook->addLine('Ignoring condition: ´'  . $customConditionsFilters->__toString() . '´ in `compare_with_conditions` because required column is NOT part of event data sheet!');
                 }
             }
             $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $customConditionsFilters->__toString());

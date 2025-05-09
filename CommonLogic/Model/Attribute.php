@@ -1411,4 +1411,17 @@ class Attribute implements MetaAttributeInterface
     {
         return $this->isInherited() ? MetaAttributeOriginDataType::INHERITED_ATTRIBUTE : MetaAttributeOriginDataType::DIRECT_ATTRIBUTE;
     }
+
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject([
+            'alias' => $this->getAliasWithRelationPath(),
+            'name' => $this->getName(),
+            'data_address' => $this->getDataAddress()
+        ]);
+
+        // TODO add other UXON properties here
+
+        return $uxon;
+    }
 }

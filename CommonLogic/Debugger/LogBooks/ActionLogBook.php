@@ -325,7 +325,7 @@ class ActionLogBook implements DataLogBookInterface
                         break;
                 }
                 if ($i > 10 && $item['indent'] === 0) {
-                    $logbook->addLine('Skipping event details tabs after item ' . $i . ': too many events!', 0, self::SECTION_INNER_EVENTS);
+                    $this->logBook->addLine('Skipping event details tabs after item ' . $i . ': too many events!', 0, self::SECTION_INNER_EVENTS);
                     break;
                 }
             }
