@@ -441,6 +441,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (! $updateSheet->hasUidColumn()) {
             $uidCol = $updateSheet->getColumns()->addFromUidAttribute();
             $uidColName = $uidCol->getName();
+        } else {
+            $uidCol = $updateSheet->getUidColumn();
+            $uidColName = $uidCol->getName();
         }
         $duplRowNos = $matcher->getMatchedRowIndexes();
         $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: row number(s) ' . implode(', ', $duplRowNos));
