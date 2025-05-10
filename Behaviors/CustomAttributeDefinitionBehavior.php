@@ -33,32 +33,59 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Identifies its object as master data for custom attribute definitions.
+ * Makes this object define custom attributes to be attached to another object in addition to its regular attributes. 
  * 
- * In addition to regular attributes of meta objects defined in the model, the workbench can create 
- * so-called "custom attributes" from master data inside an app. The definitions of such attributes
- * can be stored in a SQL table or any other data source. This behavior explains the workbench, how
- * to load and "understand" these attributes.
+ * For example, if you have a list of products and you want your users to define additional attributes for every 
+ * product category, you will need a list of possible attributes per category and a place to store their values. 
+ * This will require multiple behaviors working together:
  * 
- * Custom attribute definitions will be stored on the object of this behavior, 
- * while type models can be defined in the `type_models` property of this behavior (see "Type Models").
+ * - An **attribute definition behavior** (this one) needs to be attached to the meta object representing the 
+ * list of possible attributes
+ * - An **attribute storage behavior** needs to be attached to the object, that will receive the attributes - i.e. 
+ * to the product-object in our example. 
  * 
- * ## Custom Attribute Definitions
+ * Here is how the definition-behavior might look like:
  * 
- * Each custom attribute is defined by exactly one data item of the object of this behavior. The data of this
- * object will contain all the configuraton for the attribute: its name, alias, data address and a lot more.
- * Each of these properties can be either loaded from the data source (i.e. they being the value of an attribute)
- * or configured in one of the so-called attribute type models. 
+ * ```
+ * {
+ * 	"name_attribute": "NAME", 
+ * 	"alias_attribute": "ALIAS", 
+ * 	"required_attribute": "REQUIRED_FLAG",
+ *  "type_attribute": "TYPE"
+ * }
  * 
- * Here is a list of what you can store in your data source and load by configuring the corresponding attribute 
- * in this beahvior:
+ * ```
+ * 
+ * It will generate an attribute from every data row of the definition-object. The attributes will get their names 
+ * from the `NAME` attribute of the definition-object, the alias from `ALIAS` and will be required if the `REQUIRED_FLAG` 
+ * checkbox is set. The `TYPE` widget of the editor widget for attribute definitions will be automatically turned into
+ * an `InputSelect` letting the user pick one of the standard types: text, date, number, etc. - see dedicated chapter below.
+ * 
+ * Here is another example: in a quality assurance app, you will attach every QA report to on or even multiple things like
+ * product properties, packaging, manufacturing process, etc. You could create a custom attribute for every type of allocation 
+ * for the report-object, so that in a list of reports users will immediately see, what it is related to. These will be custom 
+ * attributes too, but they will all look similar and will not be explicitly defined as such by users - instead, you just 
+ * attach a definition behavior to the existing allocation type object and tell we system to create attributes from it. 
+ * 
+ * ```
+ * {
+ * 	"name_attribute": "NAME"
+ * }
+ * 
+ * ```
+ * 
+ * As you can see, we just generate properties of attributes from available data - there is much less configuration. 
+ * 
+ * ## Attribute model
+ * 
+ * In case you need users to add new attributes explicitly (like in our product-example) you need to decide, which 
+ * aspects of the attributes they can control and give your definition-object corresponding attributes. 
+ * 
+ * Here is what you can let users define:
  * 
  * - **Name** (`name_attribute`): The display name of the custom attribute.
  * - **Alias** (`alias_attribute`): The attribute alias for the custom attribute.
- * - **Data address** (`data_address_attribute`): The data address is used to generate the data address and the
- * technical alias  of the custom attribute. Make sure it matches whatever storage behavior you are using. For example
- * if the data of the attributes is to be loaded from JSON via `CustomAttributesJsonBehavior`, the data address should 
- * be a valid JSON path. 
+ * - **Data address** (`data_address_attribute`): The data address is used to generate the data address and the technical alias  of the custom attribute. Make sure it matches whatever storage behavior you are using. For example, if the data of the attributes is to be loaded from JSON via `CustomAttributesJsonBehavior`, the data address should be a valid JSON path. 
  * - **Type** of the attribute (`type_attribute`): This is more than just a data type - it is a preconfigured model
  * of the attribute, that could even include relations, data address properties and other things. You can provide a
  * set of valid type model in this behavior via `type_models`. 
@@ -73,27 +100,34 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
  * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
- * ## Attribute types and type models
+ * ## Types models
  * 
- * Type models are special templates that simplify the creation of new custom attributes. They automatically configure
- * the properties of a custom attribute, meaning users won't have to know any technical details. When creating  a new
- * custom attribute they simply assign a type model to it, which then takes care of everything else.  They can choose
- * from all type models configured in the `type_models` property, as well as some basic default type models, such as
- * "Date", "Time", "Text" and "Number".
+ * If you need to let users pick from different attribute types, you can define multiple so-called "type models".
+ * There are built-in type models for the most important data types: "Date", "Time", "Text" and "Number". 
  * 
- * You can extend these basic type models with your own. Simply add a new entry to the `type_models` property. 
- * Type models can inherit from any other type model. You can assign a parent by entering it in the `inherits`
- * property.  The type model will then use the property value of its parent, unless you defined a value for it. If you
- * do not specify a valid parent, your type model will inherit from a default configuration.
+ * However, type models are more than just data types - they are preconfigured models for the entire attribute. You can 
+ * can set any attribute property in the type model: default display or editor widgets, relations configurations,
+ * readable/writable flags - everything! 
  * 
- * ### Default settings
+ * When a user creates a custom attribute and you have `type_attribute` set in the behavior config, the user will
+ * need to pick a type from an automatically generated list. Users cannot control all the mighty attribute configuration
+ * explicitly - they can only pick your preconfigured types. This makes it much easier to create custom attributes as
+ * there is not much to know about how the workbench works in the background.
  * 
- * If you do not define any custom, there will be some default types available automatically:
+ * You can define as many type models as many as you like. Type models can even use use inheritance: you can specify 
+ * another type model in the `inherits` property and change it selectively. By default all type models inherit from
+ * the `attribute_defaults`.
  * 
- * If you have no type selector in your definition object at all, all attributes will have the same default type. That
- * default attribute model is mostly provided by the specific custom attributes behavior, that you use. E.g. the
- * `CustomAttributesJsonBehavior` will have writable attributes while `CustomAttribtuesLookupBehavior` will have
- * non-writable ones. However, you can still customize the default settings: 
+ * ### Default attribute model
+ * 
+ * There is always a default attribute model. You can modify it using `attribute_defaults`. All type models will inherit
+ * from it.
+ * 
+ * If you have no `type_attribute` in your config at all, all attributes will have the same default model. Most
+ * storage-behaviors provide their own default models. For example, the `CustomAttributesJsonBehavior` will have 
+ * writable attributes while `CustomAttribtuesLookupBehavior` will have non-writable ones. 
+ * 
+ * Only change the default model if you know what you are doing. Here is what you can change: 
  * 
  * ```
  * {
@@ -126,30 +160,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * attributes that use it. The most useful way however, is to manually edit what groups a custom attribute belongs
  * to, by changing the values stored in `groups_attribute`. While creating or editing a custom attribute, all
  * available groups will be displayed in a  dropdown multi-select.
- * 
- * ## Setup
- * 
- * To enable custom attributes for your app, a decent amount of setup is required:
- * 
- * 1. Create a new table for your app, that has the following properties. It will be used to store the custom attribute definitions:
- * 
- *      - It must have all the default columns of your app.
- *      - It should have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),groups (varchar), hint (varchar), required (tinyint) and optionally owner_object_id (binary(16)).
- * 
- * 2. Create a new MetaObject with matching attributes. If you have a column for `owner_object`, make sure that its attribute has a relation to `exface.Core.OBJECT`!
- * 
- * 3. Add a new `CustomAttributeDefinitionBehavior` and configure it to your needs.
- * 
- * 4. Create a simple page that allows you to create and edit your custom attribute definitions.
- * 
- * 5. For each object that want to have access to these definitions, add a CustomAttributeJsonBehavior and
- * configure it as needed. 
- * 
- * 6. Each of those objects needs an attribute, where the actual JSON data will be stored and of course the underlying
- * data source needs a matching column as well (usually varchar(max)).
- * 
- * 7. You can now use any custom attributes, that you have created via the page mentioned in step 4 (see "Using Custom
- * Attributes").
  * 
  * ## Using Custom Attributes
  * 
@@ -187,65 +197,14 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      "widget_type": "DataTable",
  *      "object_alias": "some.object.Alias",
  *      "filters": [
- *          {"attribute_group_alias": "~CUSTOM"
+ *          {"attribute_group_alias": "~CUSTOM"}
  *      ],
  *      "columns": [
- *          {"attribute_group_alias": "~REQUIRED~!Custom"},
- *          {"attribute_alias": "Item"},
- *          {"attribute_group_alias": "~REQUIRED~CUSTOM:!Company B,Company C"}
+ *          {"attribute_group_alias": "~REQUIRED~!CUSTOM"},
+ *          {"attribute_alias": "MYATTR"},
+ *          {"attribute_group_alias": "~my.App.IMPORTANT_CUSTOM_ATTRS"}
  *      ]
  *  }
- * 
- * ```
- * 
- * ## Examples
- * 
- * ### Behavior Configuration
- * 
- * ```
- * 
- *  {
- *      "relation_to_owner_object": "owner_alias",
- *      "name_attribute": "name",
- *      "hint_attribute": "hint",
- *      "data_address_attribute": "storage_key",
- *      "type_attribute": "type_model",
- *      "required_attribute": "required",
- *      "groups_attribute": "groups",
- *      "type_models": {
- *          "INHERITS_DEFAULT": {
- *              "inherits": "",
- *              "required": true,
- *              "copyable": false
- *          },
- *          "INHERITS_TIME": {
- *              "inherits": "Time",
- *              "hidden": true,
- *              "editable": false
- *          },
- *          "INHERITS_ABOVE": {
- *               "inherits": "INHERITS_TIME"
- *           }
- *      }
- * }
- * 
- * ```
- * 
- * ## Code Usage
- * 
- * See `CustomAttributeJsonBehavior`:
- * 
- * ```
- * 
- *  $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
- *  if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
- *      $msg = 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!'; throw new BehaviorRuntimeError( $this, $msg, null, null, $logBook);
- *  }
- * 
- *  $customAttributes = $definitionBehavior->addAttributesToObject(
- *      $this->getObject(),
- *      $this,
- *      $logBook);
  * 
  * ```
  * 
