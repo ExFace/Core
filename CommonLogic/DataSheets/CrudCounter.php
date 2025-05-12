@@ -2,11 +2,17 @@
 
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeReadDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Events\CrudPerformedEventInterface;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -28,10 +34,12 @@ class CrudCounter implements WorkbenchDependantInterface
     public const COUNT_UPDATES = 'updates';
     public const COUNT_DELETES = 'deletes';
     
+    private int $trackingDepth = -1;
     private array $listeners = [];
     private array $objects = [];
+    private array $trackingData = [];
+
     private WorkbenchInterface $workbench;
-    
     protected ?int $writes = null;
     protected ?int $creates = null;
     protected ?int $reads = null;
@@ -40,10 +48,13 @@ class CrudCounter implements WorkbenchDependantInterface
 
     /**
      * @param WorkbenchInterface $workbench
+     * @param int                $trackingDepth
+     * CRUD operations can cascade into other CRUD operations
      */
-    public function __construct(WorkbenchInterface $workbench)
+    public function __construct(WorkbenchInterface $workbench, int $trackingDepth = -1)
     {
         $this->workbench = $workbench;
+        $this->trackingDepth = $trackingDepth;
     }
 
     /**
@@ -56,7 +67,8 @@ class CrudCounter implements WorkbenchDependantInterface
      * The objects for which you would like to count. Any events that do not relate to one of these
      * objects will be ignored.
      * @param bool  $reset
-     * If TRUE all counters and objects will be reset. If you want to continue your last count, set this value to FALSE. 
+     * If TRUE all counters and objects will be reset. If you want to continue your last count, set this value to
+     *     FALSE. 
      * @return $this
      * 
      * @see CrudCounter::stop()
@@ -77,6 +89,11 @@ class CrudCounter implements WorkbenchDependantInterface
         foreach ($objects as $object) {
             $this->addObject($object);
         }
+
+        $this->addListener(OnBeforeCreateDataEvent::getEventName(), 'crudStarted');
+        $this->addListener(OnBeforeReadDataEvent::getEventName(), 'crudStarted');
+        $this->addListener(OnBeforeUpdateDataEvent::getEventName(), 'crudStarted');
+        $this->addListener(OnBeforeDeleteDataEvent::getEventName(), 'crudStarted');
 
         $this->addListener(OnCreateDataEvent::getEventName(), 'createPerformed');
         $this->addListener(OnReadDataEvent::getEventName(), 'readPerformed');
@@ -101,6 +118,50 @@ class CrudCounter implements WorkbenchDependantInterface
     }
 
     /**
+     * @param string $eventName
+     * @param string $functionName
+     * @return void
+     */
+    protected function addListener(string $eventName, string $functionName) : void
+    {
+        if(key_exists($eventName, $this->listeners)) {
+            return;
+        }
+
+        $listener = [$this, $functionName];
+        $this->getWorkbench()->eventManager()->addListener(
+            $eventName,
+            $listener
+        );
+
+        $this->listeners[$eventName] = $listener;
+    }
+
+    /**
+     * @param string $eventName
+     * @return void
+     */
+    protected function removeListener(string $eventName) : void
+    {
+        if(!key_exists($eventName, $this->listeners)) {
+            return;
+        }
+
+        $key = $this->getEventKey($eventName);
+        foreach ($this->trackingData as $objectAlias => $trackingDepth) {
+            $this->trackingData[$objectAlias][$key] = 0;
+        }
+
+        $listener = $this->listeners[$eventName];
+        $this->getWorkbench()->eventManager()->removeListener(
+            $eventName,
+            $listener
+        );
+
+        unset($this->listeners[$eventName]);
+    }
+
+    /**
      * Add another object to be tracked. 
      * 
      * The object will not be added a second time if it is already being tracked.
@@ -110,7 +171,15 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function addObject(MetaObjectInterface $object) : CrudCounter
     {
-        $this->objects[$object->getAliasWithNamespace()] = $object;
+        $objectAlias = $object->getAliasWithNamespace();
+        
+        if(key_exists($objectAlias, $this->objects)) {
+            return $this;
+        }
+        
+        $this->objects[$objectAlias] = $object;
+        $this->trackingData[$objectAlias] = [];
+        
         return $this;
     }
 
@@ -122,10 +191,79 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function removeObject(MetaObjectInterface $object) : CrudCounter
     {
-        unset($this->objects[$object->getAliasWithNamespace()]);
+        $objectAlias = $object->getAliasWithNamespace();
+        
+        unset($this->objects[$objectAlias]);
+        foreach ($this->trackingData[$objectAlias] as $key => $depth) {
+            $this->trackingData[$objectAlias][$key] = 0;
+        }
+        
         return $this;
     }
 
+    /**
+     * Event hook.
+     * 
+     * @param DataSheetEventInterface $event
+     * @return void
+     */
+    public function crudStarted(DataSheetEventInterface $event) : void
+    {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+        
+        $objectAlias = $object->getAliasWithNamespace();
+        $key = $this->getEventKey($event::getEventName());
+        
+        if(key_exists($key, $this->trackingData[$objectAlias])) {
+            $this->trackingData[$objectAlias][$key] += 1;
+        } else {
+            $this->trackingData[$objectAlias][$key] = 1;
+        }
+    }
+    
+    protected function finalizeOperation(MetaObjectInterface $object, DataSheetEventInterface $event) : bool
+    {
+        $objectAlias = $object->getAliasWithNamespace();
+        $key = $this->getEventKey($event::getEventName());
+        
+        $inRange = $this->inTrackingRange($objectAlias, $key);
+        $this->trackingData[$objectAlias][$key] -= 1;
+
+        return $inRange;
+    }
+    
+    protected function getEventKey(string $eventName) : string
+    {
+        return match ($eventName) {
+            OnBeforeCreateDataEvent::getEventName(), 
+                OnCreateDataEvent::getEventName() => 'create',
+            OnBeforeReadDataEvent::getEventName(), 
+                OnReadDataEvent::getEventName() => 'read',
+            OnBeforeUpdateDataEvent::getEventName(), 
+                OnUpdateDataEvent::getEventName() => 'update',
+            OnBeforeDeleteDataEvent::getEventName(), 
+                OnDeleteDataEvent::getEventName() => 'delete',
+            default => throw new InvalidArgumentException('Unknown event name "' . $eventName . '"!'),
+        };
+    }
+
+    protected function inTrackingRange(string $objectAlias, string $key) : bool
+    {
+        if($this->trackingDepth < 0) {
+            return true;
+        }
+
+        $objectData = $this->trackingData[$objectAlias];
+        if($objectData === null) {
+            return true;
+        }
+
+        return ($objectData[$key] ?? 0) <= $this->trackingDepth;
+    }
+    
     /**
      * Event hook.
      * 
@@ -136,7 +274,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function createPerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+        
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
         
@@ -154,7 +297,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function readPerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
 
@@ -171,7 +319,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function updatePerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
 
@@ -189,7 +342,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function deletePerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
 
@@ -212,7 +370,7 @@ class CrudCounter implements WorkbenchDependantInterface
 
         return false;
     }
-
+    
     /**
      * Add a value to one of the tracked counters.
      * 
@@ -232,45 +390,6 @@ class CrudCounter implements WorkbenchDependantInterface
         } else {
             $this->{$counter} += $value;
         }
-    }
-
-    /**
-     * @param string $eventName
-     * @param string $functionName
-     * @return void
-     */
-    protected function addListener(string $eventName, string $functionName) : void
-    {
-        if(key_exists($eventName, $this->listeners)) {
-            return;
-        }
-        
-        $listener = [$this, $functionName];
-        $this->getWorkbench()->eventManager()->addListener(
-            $eventName,
-            $listener
-        );
-        
-        $this->listeners[$eventName] = $listener;
-    }
-
-    /**
-     * @param string $eventName
-     * @return void
-     */
-    protected function removeListener(string $eventName) : void
-    {
-        if(!key_exists($eventName, $this->listeners)) {
-            return;
-        }
-        
-        $listener = $this->listeners[$eventName];
-        $this->getWorkbench()->eventManager()->removeListener(
-            $eventName,
-            $listener
-        );
-        
-        unset($this->listeners[$eventName]);
     }
 
     /**
