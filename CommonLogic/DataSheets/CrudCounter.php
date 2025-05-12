@@ -2,11 +2,16 @@
 
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeReadDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Interfaces\Events\CrudPerformedEventInterface;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -18,6 +23,19 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * To start counting, simply call `start([$objects], $reset)`. Make sure to call `stop()` before leaving
  * the scope within which you called `start()` or the counter will continue receiving events and counting their results.
  * 
+ * Since any CRUD operation may cascade into any number of additional CRUD operations,
+ * the resulting count might not reflect what you wanted to know. To avoid this,
+ * you should specify a meaningful maximum depth with `setMaximumDepth(int)`. Any CRUD operation that occurs deeper
+ * than this limit will not be counted.
+ * 
+ * - `-1`: Infinite depth. All CRUD operations will be counted.
+ * - `0`: No operations will be counted.
+ * - `1+`: All operations up to and including the specified depth will be counted.
+ * 
+ * **Example**: You set the depth at `2`.
+ * Then, a CREATE operation causes an UPDATE, which in turn requires a READ. The counter would register +1 CREATE and
+ * +1 UPDATE, ignoring the READ, because it is 3 levels deep.
+ * 
  * @see CrudPerformedEventInterface
  */
 class CrudCounter implements WorkbenchDependantInterface
@@ -28,10 +46,12 @@ class CrudCounter implements WorkbenchDependantInterface
     public const COUNT_UPDATES = 'updates';
     public const COUNT_DELETES = 'deletes';
     
+    private int $maximumDepth = -1;
     private array $listeners = [];
     private array $objects = [];
+    private array $currentDepth = [];
+
     private WorkbenchInterface $workbench;
-    
     protected ?int $writes = null;
     protected ?int $creates = null;
     protected ?int $reads = null;
@@ -40,10 +60,24 @@ class CrudCounter implements WorkbenchDependantInterface
 
     /**
      * @param WorkbenchInterface $workbench
+     * @param int                $maximumDepth
+     * Since any CRUD operation may cascade into any number of additional CRUD operations,
+     * the resulting count might not reflect what you wanted to know. To avoid this,
+     * you should specify a meaningful maximum depth. Any CRUD operation that occurs deeper
+     * than this limit will not be counted.
+     * 
+     * - `-1`: Infinite depth. All CRUD operations will be counted.
+     * - `0`: No operations will be counted.
+     * - `1+`: All operations up to and including the specified depth will be counted.
+     * 
+     * **Example**: You set the depth at `2`.
+     * Then, a CREATE operation causes an UPDATE, which in turn requires a READ. The counter would register +1 CREATE and
+     * +1 UPDATE, ignoring the READ, because it is 3 levels deep.
      */
-    public function __construct(WorkbenchInterface $workbench)
+    public function __construct(WorkbenchInterface $workbench, int $maximumDepth = -1)
     {
         $this->workbench = $workbench;
+        $this->maximumDepth = $maximumDepth;
     }
 
     /**
@@ -56,7 +90,8 @@ class CrudCounter implements WorkbenchDependantInterface
      * The objects for which you would like to count. Any events that do not relate to one of these
      * objects will be ignored.
      * @param bool  $reset
-     * If TRUE all counters and objects will be reset. If you want to continue your last count, set this value to FALSE. 
+     * If TRUE all counters and objects will be reset. If you want to continue your last count, set this value to
+     *     FALSE. 
      * @return $this
      * 
      * @see CrudCounter::stop()
@@ -78,6 +113,11 @@ class CrudCounter implements WorkbenchDependantInterface
             $this->addObject($object);
         }
 
+        $this->addListener(OnBeforeCreateDataEvent::getEventName(), 'crudStarted');
+        $this->addListener(OnBeforeReadDataEvent::getEventName(), 'crudStarted');
+        $this->addListener(OnBeforeUpdateDataEvent::getEventName(), 'crudStarted');
+        $this->addListener(OnBeforeDeleteDataEvent::getEventName(), 'crudStarted');
+
         $this->addListener(OnCreateDataEvent::getEventName(), 'createPerformed');
         $this->addListener(OnReadDataEvent::getEventName(), 'readPerformed');
         $this->addListener(OnUpdateDataEvent::getEventName(), 'updatePerformed');
@@ -97,7 +137,50 @@ class CrudCounter implements WorkbenchDependantInterface
             $this->removeListener($event);
         }
         
+        foreach ($this->currentDepth as $key => $data) {
+            $this->currentDepth[$key] = 0;
+        }
+        
         return $this;
+    }
+
+    /**
+     * @param string $eventName
+     * @param string $functionName
+     * @return void
+     */
+    protected function addListener(string $eventName, string $functionName) : void
+    {
+        if(key_exists($eventName, $this->listeners)) {
+            return;
+        }
+
+        $listener = [$this, $functionName];
+        $this->getWorkbench()->eventManager()->addListener(
+            $eventName,
+            $listener
+        );
+
+        $this->listeners[$eventName] = $listener;
+    }
+
+    /**
+     * @param string $eventName
+     * @return void
+     */
+    protected function removeListener(string $eventName) : void
+    {
+        if(!key_exists($eventName, $this->listeners)) {
+            return;
+        }
+
+        $listener = $this->listeners[$eventName];
+        $this->getWorkbench()->eventManager()->removeListener(
+            $eventName,
+            $listener
+        );
+
+        unset($this->listeners[$eventName]);
     }
 
     /**
@@ -110,7 +193,15 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function addObject(MetaObjectInterface $object) : CrudCounter
     {
-        $this->objects[$object->getAliasWithNamespace()] = $object;
+        $objectAlias = $object->getAliasWithNamespace();
+        
+        if(key_exists($objectAlias, $this->objects)) {
+            return $this;
+        }
+        
+        $this->objects[$objectAlias] = $object;
+        $this->currentDepth[$objectAlias] = 0;
+        
         return $this;
     }
 
@@ -122,10 +213,56 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function removeObject(MetaObjectInterface $object) : CrudCounter
     {
-        unset($this->objects[$object->getAliasWithNamespace()]);
+        $objectAlias = $object->getAliasWithNamespace();
+        
+        unset($this->objects[$objectAlias]);
+        $this->currentDepth[$objectAlias] = 0;
+        
         return $this;
     }
 
+    /**
+     * Event hook.
+     * 
+     * @param DataSheetEventInterface $event
+     * @return void
+     */
+    public function crudStarted(DataSheetEventInterface $event) : void
+    {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+        
+        $objectAlias = $object->getAliasWithNamespace();
+        
+        if(key_exists($objectAlias, $this->currentDepth)) {
+            $this->currentDepth[$objectAlias] += 1;
+        } else {
+            $this->currentDepth[$objectAlias] = 1;
+        }
+    }
+
+    /**
+     * Finalize a CRUD operation, by checking whether its in tracking range and updating the current
+     * depth afterward.
+     * 
+     * NOTE: This function always reduces the depth counter for the specified object by 1 (to a minimum of 0).
+     * 
+     * @param MetaObjectInterface     $object
+     * @param DataSheetEventInterface $event
+     * @return bool
+     */
+    protected function finalizeOperation(MetaObjectInterface $object, DataSheetEventInterface $event) : bool
+    {
+        $objectAlias = $object->getAliasWithNamespace();
+        
+        $inRange = $this->inTrackingRange($objectAlias);
+        $this->currentDepth[$objectAlias] = Max(0, $this->currentDepth[$objectAlias] - 1);
+
+        return $inRange;
+    }
+    
     /**
      * Event hook.
      * 
@@ -136,7 +273,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function createPerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+        
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
         
@@ -154,7 +296,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function readPerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
 
@@ -171,7 +318,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function updatePerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
 
@@ -189,7 +341,12 @@ class CrudCounter implements WorkbenchDependantInterface
      */
     public function deletePerformed(CrudPerformedEventInterface $event) : void
     {
-        if(!$this->appliesToObject($event->getDataSheet()->getMetaObject())) {
+        $object = $event->getDataSheet()->getMetaObject();
+        if(!$this->appliesToObject($object)) {
+            return;
+        }
+
+        if(!$this->finalizeOperation($object, $event)) {
             return;
         }
 
@@ -214,6 +371,24 @@ class CrudCounter implements WorkbenchDependantInterface
     }
 
     /**
+     * Check, whether a given object is still in tracking range, i.e. if the corresponding event
+     * cascade os no deeper than the maximum depth of this instance.
+     * 
+     * @param string $objectAlias
+     * @return bool
+     * 
+     * @see CrudCounter::getMaximumDepth()
+     */
+    public function inTrackingRange(string $objectAlias) : bool
+    {
+        if($this->maximumDepth < 0) {
+            return true;
+        }
+
+        return ($this->currentDepth[$objectAlias] ?? 0) <= $this->maximumDepth;
+    }
+    
+    /**
      * Add a value to one of the tracked counters.
      * 
      * @param int|null $value
@@ -232,45 +407,6 @@ class CrudCounter implements WorkbenchDependantInterface
         } else {
             $this->{$counter} += $value;
         }
-    }
-
-    /**
-     * @param string $eventName
-     * @param string $functionName
-     * @return void
-     */
-    protected function addListener(string $eventName, string $functionName) : void
-    {
-        if(key_exists($eventName, $this->listeners)) {
-            return;
-        }
-        
-        $listener = [$this, $functionName];
-        $this->getWorkbench()->eventManager()->addListener(
-            $eventName,
-            $listener
-        );
-        
-        $this->listeners[$eventName] = $listener;
-    }
-
-    /**
-     * @param string $eventName
-     * @return void
-     */
-    protected function removeListener(string $eventName) : void
-    {
-        if(!key_exists($eventName, $this->listeners)) {
-            return;
-        }
-        
-        $listener = $this->listeners[$eventName];
-        $this->getWorkbench()->eventManager()->removeListener(
-            $eventName,
-            $listener
-        );
-        
-        unset($this->listeners[$eventName]);
     }
 
     /**
@@ -340,5 +476,38 @@ class CrudCounter implements WorkbenchDependantInterface
     public function getWorkbench() : WorkbenchInterface
     {
         return $this->workbench;
+    }
+
+    /**
+     * Set the maximum depth of this instance.
+     * 
+     * Since any CRUD operation may cascade into any number of additional CRUD operations,
+     * the resulting count might not reflect what you wanted to know. To avoid this, 
+     * you should specify a meaningful maximum depth. Any CRUD operation that occurs deeper 
+     * than this limit will not be counted.
+     * 
+     * - `-1`: Infinite depth. All CRUD operations will be counted.
+     * - `0`: No operations will be counted.
+     * - `1+`: All operations up to and including the specified depth will be counted. 
+     * 
+     * **Example**: You set the depth at `2`.
+     * Then, a CREATE operation causes an UPDATE, which in turn requires a READ. The counter would register +1 CREATE and 
+     * +1 UPDATE, ignoring the READ, because it is 3 levels deep.
+     * 
+     * @param int $value
+     * @return $this
+     */
+    public function setMaximumDepth(int $value) : CrudCounter
+    {
+        $this->maximumDepth = $value;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaximumDepth() : int
+    {
+        return $this->maximumDepth;
     }
 }
