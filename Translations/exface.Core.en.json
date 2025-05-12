@@ -215,6 +215,8 @@
 	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Invalid values for \"%column%\" of \"%object%\" on row(s) %rows%!",
 	"DATASHEET.ERROR.MISSING_VALUES": "Missing values for \"%column%\" of \"%object%\"!",
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Missing values for \"%column%\" of \"%object%\" on row(s) %rows%!",
+	"DATASHEET.ERROR.LOOKUP_FAILED": "Could not find value %values% in \"%lookup_object%\"!|Could not find values %values% in \"%lookup_object%\"!",
+	"DATASHEET.ERROR.AFFECTED_ROWS": "Affected row(s): %row_numbers%",
 	
 	"DATATYPE.VALIDATION.MUST": "Must",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "have %condition% characters",
