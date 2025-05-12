@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Factories\DataSheetFactory;
@@ -17,6 +17,7 @@ use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Uxon\DataSheetLookupMappingSchema;
+use RuntimeException;
 
 /**
  * Looks up a value in a separate data sheet and places it in the to-column
@@ -91,6 +92,15 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  */
 class LookupMapping extends AbstractDataSheetMapping
 {
+    public const CFG_LEAVE_EMPTY = 'leave_empty';
+    public const CFG_ERROR_FIRST = 'error_on_first';
+    public const CFG_ERROR_ALL = 'error_cumulative';
+    public const CFG_FALLBACK = 'use_fallback_value';
+    
+    public const STOP_ON_FIRST_MISS = [
+        self::CFG_ERROR_FIRST
+    ];
+    
     private $lookupObjectAlias = null;
     private $lookupObject = null;
     private $lookupExpressionString = null;
@@ -103,7 +113,8 @@ class LookupMapping extends AbstractDataSheetMapping
     private ?UxonObject $notFoundErrorUxon = null;
     private string $notFoundBehavior = 'leave_empty';
     private bool $stopOnFirstMiss = false;
-    
+    private ?string $fallbackValue = null;
+
     /**
      * 
      * {@inheritDoc}
@@ -314,6 +325,7 @@ class LookupMapping extends AbstractDataSheetMapping
      * Handles any unmatched rows, according to the configuration of this mapper.
      *
      * @param array               $unmatchedRows
+     * @param array               $toColumnValues
      * @param DataSheetInterface  $fromSheet
      * @param DataSheetInterface  $lookupSheet
      * @param DataSheetInterface  $toSheet
@@ -334,31 +346,40 @@ class LookupMapping extends AbstractDataSheetMapping
         }
         
         $error = null;
-        $fixedValue = null;
-        $behavior = $this->notFoundBehavior;
-        if(str_contains($behavior, ':')) {
-            [$behavior, $fixedValue] = explode(':', $behavior);
-        }
         
-        
-        switch ($behavior) {
+        switch ($this->notFoundBehavior) {
             // Throw an error.
-            case 'error_on_first':
-            case 'error_cumulative':
+            case self::CFG_ERROR_FIRST:
+            case self::CFG_ERROR_ALL:
             $rowNrs = array_keys($unmatchedRows);
             $error = new DataSheetMissingRequiredValueError(
                 $fromSheet, 
                 null, 
                 null, 
                 null, 
-                $fromSheet->getColumns()->getFirst(), 
+                $toCol, 
                 $rowNrs
             );
             break;
             // Set a fixed value.
-            case 'value':
+            case self::CFG_FALLBACK:
                 try {
-                    $fixedValue = $toCol->getDataType()->parse($fixedValue);
+                    $fallbackValue = $this->fallbackValue;
+                    $parsePerRow = false;
+                    $expression = null;
+                    // If value is a formula, evaluate it.
+                    if (Expression::detectFormula($fallbackValue) === true) {
+                        $expression = ExpressionFactory::createFromString($this->getWorkbench(), $fallbackValue);
+                        if ($expression->isStatic()) {
+                            $fallbackValue = $expression->evaluate() ?? '';
+                        } else {
+                            $fallbackValue = null;
+                            $parsePerRow = true;
+                        }
+                    } else {
+                        $fallbackValue = $toCol->getDataType()->parse($fallbackValue);
+                    }
+
                 } catch (\Throwable $e)
                 {
                     $rowNrs = array_keys($unmatchedRows);
@@ -373,7 +394,27 @@ class LookupMapping extends AbstractDataSheetMapping
                 }
                 
                 foreach ($unmatchedRows as $rowNr => $row) {
-                    $toColumnValues[$rowNr] = $fixedValue;
+                    // Dynamic formulas must be parsed per row.
+                    if($parsePerRow) {
+                        $fallbackValue = $expression?->evaluate($fromSheet, $rowNr);
+
+                        try {
+                            $fallbackValue = $toCol->getDataType()->parse($fallbackValue);
+                        } catch (\Throwable $e)
+                        {
+                            $rowNrs = array_keys($unmatchedRows);
+                            $error = new DataSheetMissingRequiredValueError(
+                                $fromSheet,
+                                null,
+                                null,
+                                $e,
+                                $toCol,
+                                $rowNrs
+                            );
+                        }
+                    }
+                    
+                    $toColumnValues[$rowNr] = $fallbackValue;
                 }
             break;
         }
@@ -468,7 +509,8 @@ class LookupMapping extends AbstractDataSheetMapping
     }
 
     /**
-     * Pairs of attribtues to match when searching lookup data: attribute from the from-sheet + attribute of the lookup object
+     * Pairs of attribtues to match when searching lookup data: attribute from the from-sheet + attribute of the lookup
+     * object
      * 
      * @uxon-property matches
      * @uxon-type metamodel:attribute[]
@@ -581,13 +623,14 @@ class LookupMapping extends AbstractDataSheetMapping
      * 
      * You can choose from these options:
      * - `leave_empty`: Unmatched rows produce an empty output in the `to-sheet`. No error will be thrown.
-     * - `value:VALUE`: Unmatched rows will write the value after the `:` into the `to-sheet`. No error will be thrown.
+     * - `use_fallback`: Unmatched rows will use the value defined in `if_not_found_fallback_value`. No error will be
+     * thrown.
      * - `error_on_first`: The first unmatched row will throw an error, immediately terminating the process.
      * - `error_cumulative`: All unmatched rows will be combined into one error that will be thrown before any changes
      * are commited. This terminates the process, after all lookups have been completed.
      * 
      * @uxon-property if_not_found
-     * @uxon-type [leave_empty,error_on_first,error_cumulative,value:]
+     * @uxon-type [leave_empty,error_on_first,error_cumulative,if_not_found_fallback_value]
      * @uxon-template leave_empty
      * 
      * @param string $value
@@ -596,7 +639,7 @@ class LookupMapping extends AbstractDataSheetMapping
     public function setIfNotFound(string $value) : LookupMapping
     {
         $this->notFoundBehavior = $value;
-        $this->stopOnFirstMiss = in_array($value, ['error_on_first']); 
+        $this->stopOnFirstMiss = in_array($value, self::STOP_ON_FIRST_MISS); 
         
         return $this;
     }
@@ -615,5 +658,30 @@ class LookupMapping extends AbstractDataSheetMapping
     public function getStopOnFirstMiss() : bool
     {
         return $this->stopOnFirstMiss;
+    }
+
+    /**
+     * Define a fallback value for unmatched rows.
+     * 
+     * NOTE: This setting only matters if `if_not_found` is set to `use_fallback_value`.
+     * 
+     * @uxon-property if_not_found_fallback_value
+     * @uxon-type metamodel:formula|string
+     * 
+     * @param mixed $value
+     * @return $this
+     */
+    public function setIfNotFoundFallbackValue(string $value) : LookupMapping
+    {
+        $this->fallbackValue = $value;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getIfNotFoundFallbackValue() : ?string
+    {
+        return $this->fallbackValue;
     }
 }

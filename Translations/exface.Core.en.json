@@ -560,7 +560,7 @@
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting support: \"%log_id%\"!",
 	
 	"WARNING.CAPTION": "Warning",
-
+	
 	"ROW.SINGULAR": "Row",
 	"ROW.PLURAL": "Rows"
 }
