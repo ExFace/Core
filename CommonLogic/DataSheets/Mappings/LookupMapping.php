@@ -346,20 +346,42 @@ class LookupMapping extends AbstractDataSheetMapping
         }
         
         $error = null;
-        
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         switch ($this->notFoundBehavior) {
             // Throw an error.
             case self::CFG_ERROR_FIRST:
             case self::CFG_ERROR_ALL:
-            $rowNrs = array_keys($unmatchedRows);
-            $error = new DataSheetMissingRequiredValueError(
-                $fromSheet, 
-                null, 
-                null, 
-                null, 
-                $toCol, 
-                $rowNrs
-            );
+                $rowNrs = array_keys($unmatchedRows);
+                $matches = $this->getMatches();
+                $matchKeys = [];
+                foreach ($unmatchedRows as $fromRow) {
+                    $rowKeys = [];
+                    foreach ($matches as $match) {
+                        $rowKeys[] = $fromRow[$match['from']];
+                    }
+                    if (count($rowKeys) > 1) {
+                        $matchKeys[] = '["' . implode('", "', $rowKeys) . '"]';
+                    } else {
+                        $matchKeys[] = '"' . $rowKeys[0] . '"';
+                    }
+                }
+                $message = $translator->translate(
+                    'DATASHEET.ERROR.LOOKUP_FAILED', 
+                    [
+                        '%values%' => implode(', ', $matchKeys),
+                        '%lookup_object%' => $lookupSheet->getMetaObject()->getName()
+                    ],
+                    count($unmatchedRows)
+                );
+                $error = new DataSheetMissingRequiredValueError(
+                    $fromSheet, 
+                    $message, 
+                    null, 
+                    null, 
+                    $toCol, 
+                    $rowNrs
+                );
+                $error->setUseExceptionMessageAsTitle(true);
             break;
             // Set a fixed value.
             case self::CFG_FALLBACK:

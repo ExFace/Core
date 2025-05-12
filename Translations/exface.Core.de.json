@@ -214,6 +214,8 @@
 	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Ungültiger Wert für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
 	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\" von \"%object%\"!",
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
+	"DATASHEET.ERROR.LOOKUP_FAILED": "Der Wert %values% wurde nicht als \"%lookup_object%\" erkannt!|Die Werte %values% wurden nicht als \"%lookup_object%\" erkannt!",
+	"DATASHEET.ERROR.AFFECTED_ROWS": "Betroffene Ziele(n): %row_numbers%",
 	
 	"DATATYPE.VALIDATION.MUST": "Muss",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
