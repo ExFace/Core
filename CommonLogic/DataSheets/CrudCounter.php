@@ -37,7 +37,7 @@ class CrudCounter implements WorkbenchDependantInterface
     private int $trackingDepth = -1;
     private array $listeners = [];
     private array $objects = [];
-    private array $trackingData = [];
+    private array $currentDepth = [];
 
     private WorkbenchInterface $workbench;
     protected ?int $writes = null;
@@ -114,6 +114,10 @@ class CrudCounter implements WorkbenchDependantInterface
             $this->removeListener($event);
         }
         
+        foreach ($this->currentDepth as $key => $data) {
+            $this->currentDepth[$key] = 0;
+        }
+        
         return $this;
     }
 
@@ -147,11 +151,6 @@ class CrudCounter implements WorkbenchDependantInterface
             return;
         }
 
-        $key = $this->getEventKey($eventName);
-        foreach ($this->trackingData as $objectAlias => $trackingDepth) {
-            $this->trackingData[$objectAlias][$key] = 0;
-        }
-
         $listener = $this->listeners[$eventName];
         $this->getWorkbench()->eventManager()->removeListener(
             $eventName,
@@ -178,7 +177,7 @@ class CrudCounter implements WorkbenchDependantInterface
         }
         
         $this->objects[$objectAlias] = $object;
-        $this->trackingData[$objectAlias] = [];
+        $this->currentDepth[$objectAlias] = 0;
         
         return $this;
     }
@@ -194,9 +193,7 @@ class CrudCounter implements WorkbenchDependantInterface
         $objectAlias = $object->getAliasWithNamespace();
         
         unset($this->objects[$objectAlias]);
-        foreach ($this->trackingData[$objectAlias] as $key => $depth) {
-            $this->trackingData[$objectAlias][$key] = 0;
-        }
+        $this->currentDepth[$objectAlias] = 0;
         
         return $this;
     }
@@ -215,53 +212,22 @@ class CrudCounter implements WorkbenchDependantInterface
         }
         
         $objectAlias = $object->getAliasWithNamespace();
-        $key = $this->getEventKey($event::getEventName());
         
-        if(key_exists($key, $this->trackingData[$objectAlias])) {
-            $this->trackingData[$objectAlias][$key] += 1;
+        if(key_exists($objectAlias, $this->currentDepth)) {
+            $this->currentDepth[$objectAlias] += 1;
         } else {
-            $this->trackingData[$objectAlias][$key] = 1;
+            $this->currentDepth[$objectAlias] = 1;
         }
     }
     
     protected function finalizeOperation(MetaObjectInterface $object, DataSheetEventInterface $event) : bool
     {
         $objectAlias = $object->getAliasWithNamespace();
-        $key = $this->getEventKey($event::getEventName());
         
-        $inRange = $this->inTrackingRange($objectAlias, $key);
-        $this->trackingData[$objectAlias][$key] -= 1;
+        $inRange = $this->inTrackingRange($objectAlias);
+        $this->currentDepth[$objectAlias] -= 1;
 
         return $inRange;
-    }
-    
-    protected function getEventKey(string $eventName) : string
-    {
-        return match ($eventName) {
-            OnBeforeCreateDataEvent::getEventName(), 
-                OnCreateDataEvent::getEventName() => 'create',
-            OnBeforeReadDataEvent::getEventName(), 
-                OnReadDataEvent::getEventName() => 'read',
-            OnBeforeUpdateDataEvent::getEventName(), 
-                OnUpdateDataEvent::getEventName() => 'update',
-            OnBeforeDeleteDataEvent::getEventName(), 
-                OnDeleteDataEvent::getEventName() => 'delete',
-            default => throw new InvalidArgumentException('Unknown event name "' . $eventName . '"!'),
-        };
-    }
-
-    protected function inTrackingRange(string $objectAlias, string $key) : bool
-    {
-        if($this->trackingDepth < 0) {
-            return true;
-        }
-
-        $objectData = $this->trackingData[$objectAlias];
-        if($objectData === null) {
-            return true;
-        }
-
-        return ($objectData[$key] ?? 0) <= $this->trackingDepth;
     }
     
     /**
@@ -369,6 +335,15 @@ class CrudCounter implements WorkbenchDependantInterface
         }
 
         return false;
+    }
+
+    public function inTrackingRange(string $objectAlias) : bool
+    {
+        if($this->trackingDepth < 0) {
+            return true;
+        }
+
+        return ($this->currentDepth[$objectAlias] ?? 0) <= $this->trackingDepth;
     }
     
     /**
