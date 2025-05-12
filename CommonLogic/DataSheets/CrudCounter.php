@@ -10,7 +10,6 @@ use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Events\CrudPerformedEventInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -24,6 +23,19 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * To start counting, simply call `start([$objects], $reset)`. Make sure to call `stop()` before leaving
  * the scope within which you called `start()` or the counter will continue receiving events and counting their results.
  * 
+ * Since any CRUD operation may cascade into any number of additional CRUD operations,
+ * the resulting count might not reflect what you wanted to know. To avoid this,
+ * you should specify a meaningful maximum depth with `setMaximumDepth(int)`. Any CRUD operation that occurs deeper
+ * than this limit will not be counted.
+ * 
+ * - `-1`: Infinite depth. All CRUD operations will be counted.
+ * - `0`: No operations will be counted.
+ * - `1+`: All operations up to and including the specified depth will be counted.
+ * 
+ * **Example**: You set the depth at `2`.
+ * Then, a CREATE operation causes an UPDATE, which in turn requires a READ. The counter would register +1 CREATE and
+ * +1 UPDATE, ignoring the READ, because it is 3 levels deep.
+ * 
  * @see CrudPerformedEventInterface
  */
 class CrudCounter implements WorkbenchDependantInterface
@@ -34,7 +46,7 @@ class CrudCounter implements WorkbenchDependantInterface
     public const COUNT_UPDATES = 'updates';
     public const COUNT_DELETES = 'deletes';
     
-    private int $trackingDepth = -1;
+    private int $maximumDepth = -1;
     private array $listeners = [];
     private array $objects = [];
     private array $currentDepth = [];
@@ -48,13 +60,24 @@ class CrudCounter implements WorkbenchDependantInterface
 
     /**
      * @param WorkbenchInterface $workbench
-     * @param int                $trackingDepth
-     * CRUD operations can cascade into other CRUD operations
+     * @param int                $maximumDepth
+     * Since any CRUD operation may cascade into any number of additional CRUD operations,
+     * the resulting count might not reflect what you wanted to know. To avoid this,
+     * you should specify a meaningful maximum depth. Any CRUD operation that occurs deeper
+     * than this limit will not be counted.
+     * 
+     * - `-1`: Infinite depth. All CRUD operations will be counted.
+     * - `0`: No operations will be counted.
+     * - `1+`: All operations up to and including the specified depth will be counted.
+     * 
+     * **Example**: You set the depth at `2`.
+     * Then, a CREATE operation causes an UPDATE, which in turn requires a READ. The counter would register +1 CREATE and
+     * +1 UPDATE, ignoring the READ, because it is 3 levels deep.
      */
-    public function __construct(WorkbenchInterface $workbench, int $trackingDepth = -1)
+    public function __construct(WorkbenchInterface $workbench, int $maximumDepth = -1)
     {
         $this->workbench = $workbench;
-        $this->trackingDepth = $trackingDepth;
+        $this->maximumDepth = $maximumDepth;
     }
 
     /**
@@ -219,13 +242,23 @@ class CrudCounter implements WorkbenchDependantInterface
             $this->currentDepth[$objectAlias] = 1;
         }
     }
-    
+
+    /**
+     * Finalize a CRUD operation, by checking whether its in tracking range and updating the current
+     * depth afterward.
+     * 
+     * NOTE: This function always reduces the depth counter for the specified object by 1 (to a minimum of 0).
+     * 
+     * @param MetaObjectInterface     $object
+     * @param DataSheetEventInterface $event
+     * @return bool
+     */
     protected function finalizeOperation(MetaObjectInterface $object, DataSheetEventInterface $event) : bool
     {
         $objectAlias = $object->getAliasWithNamespace();
         
         $inRange = $this->inTrackingRange($objectAlias);
-        $this->currentDepth[$objectAlias] -= 1;
+        $this->currentDepth[$objectAlias] = Max(0, $this->currentDepth[$objectAlias] - 1);
 
         return $inRange;
     }
@@ -337,13 +370,22 @@ class CrudCounter implements WorkbenchDependantInterface
         return false;
     }
 
+    /**
+     * Check, whether a given object is still in tracking range, i.e. if the corresponding event
+     * cascade os no deeper than the maximum depth of this instance.
+     * 
+     * @param string $objectAlias
+     * @return bool
+     * 
+     * @see CrudCounter::getMaximumDepth()
+     */
     public function inTrackingRange(string $objectAlias) : bool
     {
-        if($this->trackingDepth < 0) {
+        if($this->maximumDepth < 0) {
             return true;
         }
 
-        return ($this->currentDepth[$objectAlias] ?? 0) <= $this->trackingDepth;
+        return ($this->currentDepth[$objectAlias] ?? 0) <= $this->maximumDepth;
     }
     
     /**
@@ -434,5 +476,38 @@ class CrudCounter implements WorkbenchDependantInterface
     public function getWorkbench() : WorkbenchInterface
     {
         return $this->workbench;
+    }
+
+    /**
+     * Set the maximum depth of this instance.
+     * 
+     * Since any CRUD operation may cascade into any number of additional CRUD operations,
+     * the resulting count might not reflect what you wanted to know. To avoid this, 
+     * you should specify a meaningful maximum depth. Any CRUD operation that occurs deeper 
+     * than this limit will not be counted.
+     * 
+     * - `-1`: Infinite depth. All CRUD operations will be counted.
+     * - `0`: No operations will be counted.
+     * - `1+`: All operations up to and including the specified depth will be counted. 
+     * 
+     * **Example**: You set the depth at `2`.
+     * Then, a CREATE operation causes an UPDATE, which in turn requires a READ. The counter would register +1 CREATE and 
+     * +1 UPDATE, ignoring the READ, because it is 3 levels deep.
+     * 
+     * @param int $value
+     * @return $this
+     */
+    public function setMaximumDepth(int $value) : CrudCounter
+    {
+        $this->maximumDepth = $value;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaximumDepth() : int
+    {
+        return $this->maximumDepth;
     }
 }
