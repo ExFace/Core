@@ -8,6 +8,7 @@ use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Actions\CreateData;
+use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 
@@ -44,15 +45,15 @@ use exface\Core\Events\DataSheet\OnCreateDataEvent;
  */
 class JournalingBehavior extends AbstractBehavior
 {    
-    private $callActionBehavior = null;
-    
+    use ICanBypassDataAuthorizationTrait;
+
     private $journalRelationAlias = null;
     
     private $journalRelation = null;
     
     private $saveIfAttributesChange = [];
     
-    private $saveAttributesMappingsUxon = [];
+    private $saveAttributesMappingsUxon = null;
     
     private $saveOnCreate = true;
     
@@ -74,6 +75,7 @@ class JournalingBehavior extends AbstractBehavior
                 "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                 "event_alias" => OnUpdateDataEvent::getEventName(),
                 "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
+                "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint(),
                 "action" => [
                     "alias" => CreateData::class,
                     "object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
@@ -103,6 +105,7 @@ class JournalingBehavior extends AbstractBehavior
                     "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                     "event_alias" => OnCreateDataEvent::getEventName(),
                     "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
+                    "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint(),
                     "action" => [
                         "alias" => CreateData::class,
                         "object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
@@ -131,6 +134,9 @@ class JournalingBehavior extends AbstractBehavior
     {
         if ($this->onUpdateBehavior !== null) {
             $this->onUpdateBehavior->disable();
+        }
+        if ($this->onCreateBehavior !== null) {
+            $this->onCreateBehavior->disable();
         }
         return $this;
     }
