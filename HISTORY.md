@@ -1,6 +1,23 @@
 # Release history
 
-## 1.28 - in development
+## 1.29 - in development
+
+## 1.28 - 13.05.2025
+
+New features:
+
+- Flow notes now give an overview of key facts when a data flow is run - see [axenox.ETL](https://github.com/axenox/ETL/).
+- Redesigned attribute tab in object editor to show all attributes and not only direct attributes of the object. Now inherited and generated/custom attributes are visible in all in the same place.
+- Attributes produced by the `CustomAttributesJsonBehavior` now can have custom SQL in their data addresses - they support `@SQL` dialect tags.
+- Attribute groups in widgets can now be used with aggregators: e.g. `"attribute_group_alias": "ORDER_POS__~DEFAULT_DISPLAY:LIST_DISTINCT"`.
+- New formulas `=EnumLookup()` and `=JsonExtract()`
+
+Improvements
+
+- Improved `unpivot_mappings`
+	- Added option `from_columns_calculation` to transpose columns dynamically without knowing their names
+	- Added option ` ignore_if_missing_from_column`
+- Improved rendering of DialogHeader widgets in [JEasyUI facade](https://github.com/exface/jEasyUIFacade/)
 
 ## 1.27 - 20.04.2025
 

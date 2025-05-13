@@ -1413,7 +1413,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // see if the attribute is a JSON path
                 case $this->isJsonDataAddress($address):
                     list ($address, $jsonPath) = $this->parseJsonDataAddress($address);
-                    $column = $this->buildSqlSelect($qpart, $select_from, $address, false, null, $make_groupable, false);
+                    $column = $this->buildSqlSelect(
+                        $qpart, 
+                        $select_from, 
+                        $address, 
+                        false, // Do not use an alias
+                        false, // Do not aggregate inside JSON_VALUE()!
+                        $make_groupable, 
+                        false
+                    );
                     $output = $this->buildSqlJsonRead($column, $jsonPath);
                     break;
                 // see if the attribute is a statement. If so, just replace placeholders

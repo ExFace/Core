@@ -605,6 +605,7 @@ SQL;
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties'] ?? null));
         $attr->setRelationFlag(null !== ($row['related_object_oid'] ?? null) ? true : false);
         $attr->setDataType($row['data_type_oid']);
+        $attr->setType($row['attribute_type']);
         
         if ($val = $row['attribute_formatter'] ?? null) {
             $attr->setCalculation($val);

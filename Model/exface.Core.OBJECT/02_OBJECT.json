@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-03-25 08:48:30",
+            "MODIFIED_ON": "2025-04-30 13:15:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -239,11 +239,13 @@
                                     {
                                         "widget_type": "DataTable",
                                         "object_alias": "exface.Core.ATTRIBUTE",
+                                        "paginate": false,
                                         "filters": [
                                             {
                                                 "attribute_alias": "OBJECT",
-                                                "widget_type": "InputHidden",
-                                                "required": true
+                                                "required": true,
+                                                "comparator": "==",
+                                                "hidden": true
                                             },
                                             {
                                                 "attribute_alias": "NAME"
@@ -268,7 +270,17 @@
                                                 }
                                             }
                                         ],
+                                        "row_grouper": {
+                                            "group_by_attribute_alias": "ORIGIN",
+                                            "expand_groups": "all",
+                                            "show_counter": true,
+                                            "hide_caption": true
+                                        },
                                         "columns": [
+                                            {
+                                                "attribute_alias": "INFO_ICONS",
+                                                "caption": "I"
+                                            },
                                             {
                                                 "attribute_alias": "NAME"
                                             },
@@ -316,6 +328,10 @@
                                             },
                                             {
                                                 "attribute_alias": "CREATED_ON"
+                                            },
+                                            {
+                                                "attribute_alias": "ORIGIN",
+                                                "hidden": true
                                             }
                                         ],
                                         "sorters": [
@@ -340,13 +356,43 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.ShowObjectEditDialog",
-                                                "bind_to_double_click": true
+                                                "bind_to_double_click": true,
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=~input!ORIGIN",
+                                                            "comparator": ">",
+                                                            "value_right": 1
+                                                        }
+                                                    ]
+                                                }
                                             },
                                             {
-                                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                                "action_alias": "exface.Core.ShowObjectCopyDialog",
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=~input!ORIGIN",
+                                                            "comparator": ">",
+                                                            "value_right": 2
+                                                        }
+                                                    ]
+                                                }
                                             },
                                             {
-                                                "action_alias": "exface.Core.DeleteObject"
+                                                "action_alias": "exface.Core.DeleteObject",
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=~input!ORIGIN",
+                                                            "comparator": ">",
+                                                            "value_right": 1
+                                                        }
+                                                    ]
+                                                }
                                             },
                                             {
                                                 "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES')",

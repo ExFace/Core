@@ -215,6 +215,8 @@
 	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Invalid values for \"%column%\" of \"%object%\" on row(s) %rows%!",
 	"DATASHEET.ERROR.MISSING_VALUES": "Missing values for \"%column%\" of \"%object%\"!",
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Missing values for \"%column%\" of \"%object%\" on row(s) %rows%!",
+	"DATASHEET.ERROR.LOOKUP_FAILED": "Could not find value %values% in \"%lookup_object%\"!|Could not find values %values% in \"%lookup_object%\"!",
+	"DATASHEET.ERROR.AFFECTED_ROWS": "Affected row(s): %row_numbers%",
 	
 	"DATATYPE.VALIDATION.MUST": "Must",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "have %condition% characters",
@@ -236,6 +238,13 @@
 	"GLOBAL.MODEL.ACTION": "Action",
     "GLOBAL.MODEL.ACTIONS": "Actions",
 	"GLOBAL.MODEL.ATTRIBUTES": "Attributes",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.DATA": "Data",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.COMPOUND": "Compound",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.CALCULATED": "Calculated",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.GENERATED": "Generated",
+	"GLOBAL.MODEL.ATTRIBUTE_ORIGIN.DIRECT_ATTRIBUTE": "Direct attributes",
+	"GLOBAL.MODEL.ATTRIBUTE_ORIGIN.INHERITED_ATTRIBUTE": "Inherited attributes",
+	"GLOBAL.MODEL.ATTRIBUTE_ORIGIN.CUSTOM_ATTRIBUTE": "Custom attributes",
 	"GLOBAL.MODEL.BEHAVIORS": "Behaviors",
     "GLOBAL.MODEL.CONNECTIONS": "Connections",
     "GLOBAL.MODEL.DATA_SOURCES": "Data sources",
@@ -552,5 +561,8 @@
 	"ERROR.SUPPORT_HINT_WITH_EMAIL": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=Support%20request%20[%system_name%]%20%log_id%\">support</a>: \"%log_id%\"!",
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting support: \"%log_id%\"!",
 	
-	"WARNING.CAPTION": "Warning"
+	"WARNING.CAPTION": "Warning",
+	
+	"ROW.SINGULAR": "Row",
+	"ROW.PLURAL": "Rows"
 }

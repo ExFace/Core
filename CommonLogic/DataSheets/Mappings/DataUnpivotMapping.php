@@ -8,6 +8,7 @@ use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
+use exface\Core\Factories\FormulaFactory;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
@@ -18,7 +19,6 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * - Unpivoting will increase the number of rows if more than one column are being transposed. There
  * will be no obvious connection between the rows before and after the process.
  * - If you need to transpose only certain columns, use `column_to_column_mapping`s for the other ones.
- * - Unpivoting does not really make sense if to- and from-objects are the same.
  * 
  * ## Example
  * 
@@ -65,6 +65,14 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * 
  * ```
  * 
+ * ## Configuration
+ * 
+ * - `from_columns` - list of column expressions to unpivot (if you know all of them)
+ * - `from_column_calculation` - formula to calcuate possible column expressions if they are dynamic - e.g. 
+ * to `=Lookup()` them in master data
+ * - `to_labels_column` - expression of the to-object to place the labels (column expression)
+ * - `to_values_column` - expression of the to-object to place the cell values
+ * 
  * @see DataColumnMappingInterface
  * 
  * @author Andrej Kabachnik
@@ -85,6 +93,8 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
     private $ignoreEmptyValues = false;
     
     private $ignoreEmptyValuesInColumns = [];
+
+    private $ignoreIfMissingFromColumn = false;
     
     /**
      * Array of columns to be transposed
@@ -116,6 +126,25 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
     }
 
     /**
+     * Calculate from column names using a formula (use comma as delimiter!)
+     * 
+     * @uxon-property from_columns_calculation
+     * @uxon-type metamodel:formula
+     * @uxon-template =
+     * 
+     * @param string $formula
+     * @return DataUnpivotMapping
+     */
+    protected function setFromColumnsCalculation(string $formula) : DataUnpivotMapping
+    {
+        $expr = FormulaFactory::createFromString($this->getWorkbench(), $formula);
+        $list = $expr->evaluate();
+        $array = explode(',', $list);
+        $array = array_map('trim', $array);
+        return $this->setFromColumns($array);
+    }
+
+    /**
      * 
      * @return ExpressionInterface[]
      */
@@ -132,7 +161,7 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
     
     /**
      * 
-     * @return string
+     * @return ExpressionInterface
      */
     protected function getToLabelsColumnExpression() : ExpressionInterface
     {
@@ -159,7 +188,7 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
 
     /**
      * 
-     * @return string
+     * @return ExpressionInterface
      */
     protected function getToValuesColumnExpression() : ExpressionInterface
     {
@@ -227,8 +256,10 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
      */
     public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
-        $toColLabels = $toSheet->getColumns()->addFromExpression($this->getToLabelsColumnExpression());
-        $toColValues = $toSheet->getColumns()->addFromExpression($this->getToValuesColumnExpression());
+        $toExprLabels = $this->getToLabelsColumnExpression();
+        $toExprValues = $this->getToValuesColumnExpression();
+        $toColLabels = $toSheet->getColumns()->addFromExpression($toExprLabels);
+        $toColValues = $toSheet->getColumns()->addFromExpression($toExprValues);
         
         // If the from sheet is empty, unpivoting it wont change anything.
         // Data column references should not result in errors if the data sheet is completely empty
@@ -236,7 +267,10 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
         if ($fromSheet->isEmpty()) {
             return $toSheet;
         }
-        
+
+        if ($logbook !== null) $logbook->addLine('Unpivoting `' . implode('`, `', $this->fromColsStrings) . ' to `' . $toExprLabels->__toString() . '` and `' . $toExprValues->__toString() . '`');
+        if ($logbook !== null) $logbook->addIndent(+1);
+
         $toRowsBefore = ! $toSheet->isEmpty() ? $toSheet->getRows() : [[]];
         $toRowsAfter = [];
         $ignoreEmpty = $this->getIgnoreEmptyValues();
@@ -248,20 +282,24 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
                 case $fromExpr->isFormula():
                     $dataType = $fromExpr->getDataType();
                     $values = $fromExpr->evaluate($fromSheet);
-                    $labelValue = $fromExpr->toString();
+                    $labelValue = $fromExpr->__toString();
                     break;
                 // Data column references
                 case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
                     $dataType = $fromCol->getDataType();
                     $values = $fromCol->getValues(false);
-                    $labelValue = $fromCol->getName();
+                    $labelValue = $fromExpr->__toString();
                     break;
+                // If not enough data, but explicitly configured to ignore it, exit here
+                case $this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType()):
+                    if ($logbook !== null) $logbook->addLine('Ignoring `' . $fromExpr->__toString() . '` because `ignore_if_missing_from_column` is `true` and no from-data was found.');
+                    continue 2;
                 // Otherwise error
                 default:
                     if ($fromExpr->isMetaAttribute()) {
-                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-column mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map from attribute "' . $fromExpr->__toString() . '" in a column-to-column mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
                     }
-                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!', '7H6M243');
+                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->__toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!', '7H6M243');
             }
             
             foreach ($toRowsBefore as $i => $toRow) {
@@ -277,6 +315,10 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
                 $toRowsAfter[] = $toRow;
             }
         }
+
+        if ($logbook !== null) $logbook->addLine('Transformed **' . $toSheet->countRows() . ' rows into ' . count($toRowsAfter) . '** unpivoted rows.');
+        if ($logbook !== null) $logbook->addIndent(-1);
+
         $toSheet->removeRows()->addRows($toRowsAfter);
         
         return $toSheet;
@@ -355,6 +397,34 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
                 throw new DataMapperConfigurationError($this, 'Invalid value for `ignore_empty_values_in_columns`: expection an array of expressions!');
         }
         $this->ignoreEmptyValuesInColumns = $array;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function getIgnoreIfMissingFromColumn() : bool
+    {
+        return $this->ignoreIfMissingFromColumn;
+    }
+
+    /**
+     * Set to TRUE if this mapping is only to be applied if there is a corresponding from-data
+     * 
+     * By default the mapping will result in an error if the from-data does not have the 
+     * required data.
+     * 
+     * @uxon-property ignore_if_missing_from_column
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return DataColumnMapping
+     */
+    protected function setIgnoreIfMissingFromColumn(bool $trueOrFalse) : DataUnpivotMapping
+    {
+        $this->ignoreIfMissingFromColumn = $trueOrFalse;
         return $this;
     }
 }
