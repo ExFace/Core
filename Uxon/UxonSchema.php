@@ -532,7 +532,7 @@ class UxonSchema implements UxonSchemaInterface
                 }
                 break;
             case strcasecmp($type, 'metamodel:attribute_group') === 0 && $object !== null:
-                $options = $this->getAttributeGroupsForObject($object, $search);
+                $options = $this->getMetamodelAttributeGroupAliases($object, $search);
                 break;
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
@@ -704,7 +704,7 @@ class UxonSchema implements UxonSchemaInterface
      * @param string|null $search
      * @return string[]
      */
-    protected function getAttributeGroupsForObject(MetaObjectInterface $object, string $search = null) : array
+    protected function getMetamodelAttributeGroupAliases(MetaObjectInterface $object, string $search = null) : array
     {
         // See if $search contains an relation path
         $rels = $search !== null ? (RelationPath::relationPathParse($search) ?? []) : [];
@@ -713,16 +713,6 @@ class UxonSchema implements UxonSchemaInterface
         if (! empty($rels)) {
             $relPath = implode(RelationPath::RELATION_SEPARATOR, $rels);
             $object = $object->getRelatedObject($relPath);
-        }
-        
-        // Find forward relations of the focused object
-        $relations = [];
-        foreach ($object->getAttributes() as $attr) {
-            $alias = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
-            if ($attr->isRelation() === true) {
-                // Remember forward-relations to append them later (after alphabetical sorting)
-                $relations[] = $alias . RelationPath::RELATION_SEPARATOR;
-            }
         }
 
         // Get the built-in groups
@@ -737,14 +727,16 @@ class UxonSchema implements UxonSchemaInterface
             $aliases[] = $group->getAliasWithNamespace();
         }
 
+        // Add relations from the current object        
+        $relations = $this->getMetamodelRelationAliases($object, $search, true);
+        $aliases = array_merge($aliases, $relations);
+
         // Prefix all the groups with the relaiton path if needed
         $values = [];
         foreach ($aliases as $alias) {
             $values[] = ($relPath === null ? '' : $relPath . RelationPath::getRelationSeparator()) . $alias;
         }
 
-        // Add all possible forward relations of the current object
-        $values = array_merge($values, $relations);
         return $values;
     }
     
@@ -755,14 +747,17 @@ class UxonSchema implements UxonSchemaInterface
      * @param string $search
      * @return array
      */
-    protected function getMetamodelRelationAliases(MetaObjectInterface $object, string $search = null) : array
+    protected function getMetamodelRelationAliases(MetaObjectInterface $object, string $search = null, bool $withTrailingSeparator = false) : array
     {
         $attrAliases = $this->getMetamodelAttributeAliases($object, $search);
         $relAliases = [];
         $relSep = RelationPath::getRelationSeparator();
         foreach ($attrAliases as $alias) {
             if (true === StringDataType::endsWith($alias, $relSep)) {
-                $relAliases[] = StringDataType::substringBefore($alias, $relSep, $alias, false, true);  
+                if ($withTrailingSeparator === false) {
+                    $alias = StringDataType::substringBefore($alias, $relSep, $alias, false, true);
+                }
+                $relAliases[] = $alias;
             } 
         }
         return $relAliases;
