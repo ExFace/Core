@@ -3,6 +3,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -23,7 +24,12 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Debug\DataLogBookInterface;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use Throwable;
 
 /**
  * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
@@ -83,6 +89,8 @@ class CallActionBehavior extends AbstractBehavior
     const PREVENT_DEFAULT_NEVER = 'never';
     
     const PREVENT_DEFAULT_IF_ACTION_CALLED = 'if_action_called';
+
+    use ICanBypassDataAuthorizationTrait;
     
     private $eventAliases = [];
     
@@ -335,30 +343,28 @@ class CallActionBehavior extends AbstractBehavior
                     $task = TaskFactory::createFromDataSheet($inputSheet);
                 }
                 
-                // Handle the task
+                // Use the tasks transaction if applicable
                 if ($event instanceof DataTransactionEventInterface) {
+                    $transaction = $event->getTransaction();
                     $logbook->addLine('Getting the transaction from the original event');
-                    $this->isHandling = true;
                     // Commit the transaction if explicitly requested in the behavior config.
                     // This might be the case if the action calls a external system, which 
                     // relies on the commited data
-                    if ($this->getCommitBeforeAction()) {
-                       $event->getTransaction()->commit(); 
+                    if ($this->willCommitBeforeAction()) {
+                        // FIXME wouldn't this prevent further commits???
+                       $transaction->commit(); 
                     } else {
                         // Otherwise disable autocommit for the action to force it to use
                         // the same transaction
                         $action->setAutocommit(false);
                     }
-                    $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
-                    $result = $action->handle($task, $event->getTransaction());
-                    $this->isHandling = false;
                 } else {
                     $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
-                    $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
-                    $this->isHandling = true;
-                    $result = $action->handle($task);
-                    $this->isHandling = false;
+                    $transaction = null;
                 }
+
+                // Handle the task
+                $result = $this->callAction($action, $task, $logbook, $transaction);
 
                 // Apply data changes if it is the same object
                 if ($result instanceof ResultDataInterface) {
@@ -398,6 +404,25 @@ class CallActionBehavior extends AbstractBehavior
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             $this->getWorkbench()->getLogger()->logException($e);
         }
+    }
+
+    protected function callAction(ActionInterface $action, TaskInterface $task, DataLogBookInterface $logbook, DataTransactionInterface $transaction = null) : ResultInterface
+    {
+        $this->isHandling = true;
+        $inputSheet = $task->getInputData();
+        $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
+        
+        if ($this->willBypassDataAuthorizationPoint()) {
+            $callback = function() use ($action, $task, $transaction) {
+                return $action->handle($task, $transaction);
+            };
+            $result = $this->bypassDataAuthorization($callback);
+        } else {
+            $result = $action->handle($task, $transaction);
+        }
+
+        $this->isHandling = false;
+        return $result;
     }
     
     /**
@@ -553,7 +578,7 @@ class CallActionBehavior extends AbstractBehavior
         return $this;
     }
     
-    protected function getCommitBeforeAction() : bool
+    protected function willCommitBeforeAction() : bool
     {
         return $this->commitBeforeAction;
     }
