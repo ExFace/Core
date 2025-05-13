@@ -14,20 +14,35 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         }
         $markdown = file_get_contents($filePathAbsolute);
 		$phs = $this->getPlaceholders($markdown);
-        $vals = $this->getPlaceholderValues(array_keys($phs));
+        $vals = $this->getPlaceholderValues($phs);
         
         foreach ($phs as $ph => $phData) {
-            $val = $phData['comment'] . PHP_EOL . $vals[$ph] . PHP_EOL . '<!-- END ' . $phData['name'] . ' -->';
-            $regex = '/' . preg_quote($phData['comment'], '/') . '(.*?)<!-- END ' . preg_quote($phData['name'], '/') . ' -->/s';
-            if (preg_match_all($regex, $markdown, $matches)) {
-                foreach ($matches[0] as $match) {
-                    $markdown = str_replace($match, $val, $markdown);
-                }
-            }
+            $startTag = $phData['comment'];
+            $endTag = '<!-- END ' . $phData['key'] . ' -->';
+    
+            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph], $phData['offset']);
         }
 
         return $markdown;
 	}
+    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset): string
+    {
+         $startPos = strpos($markdown, $startTag, $offset);
+        if ($startPos === false) {
+            return $markdown; 
+        }
+
+        $endPos = strpos($markdown, $endTag, $startPos);
+        if ($endPos === false) {
+            return $markdown;
+        }
+
+        $endPos += strlen($endTag);
+
+        $newBlock = $startTag . PHP_EOL . $replacement . PHP_EOL . $endTag;
+
+        return substr_replace($markdown, $newBlock, $startPos, $endPos - $startPos);
+    }
 
 	public function exportUxonObject()
 	{
@@ -44,14 +59,17 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
             // 2 => placeholder name
             // 3 => placeholder options
         ];
-        preg_match_all($regex, $tpl, $matches);
+        preg_match_all($regex, $tpl, $matches, PREG_OFFSET_CAPTURE);
 
         $phs = [];
-        foreach ($matches[0] as $i => $fullMatch) {
-            $phs[$matches[1][$i]] = [
-                'name' => $matches[2][$i],
-                'options' => trim($matches[3][$i]),
-                'comment' => $fullMatch
+        foreach ($matches[0] as $i => $match) {
+            [$fullMatch, $offset] = $match;
+            $phs[] = [
+                'key' => $matches[2][$i][0], // e.g. 'ImageCaptionNr'
+                'name' => $matches[1][$i][0], // e.g. 'ImageCaptionNr:'
+                'options' => trim($matches[3][$i][0]),
+                'comment' => $fullMatch,
+                'offset' => $offset
             ];
         }
         return $phs;

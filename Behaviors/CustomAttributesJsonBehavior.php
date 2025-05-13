@@ -18,33 +18,166 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
- * Automatically adds custom attributes to the object, whenever it is loaded from into memory.
+ * Allows to create additional "custom" attributes in master data and store their values in a single JSON column.
  * 
- * ### Usage Modes
+ * Major business objects often require a lot of attributes, that do not play a direct role in the logic of an
+ * app, but rather just keep some information important for the user - reference numbers, notes, categories of
+ * something, etc. Very often users will come up with new attributes of this sort regularly, require changes, etc.
+ * You can greatly simplify keeping track of these attribtues by adding custom attributes to your object. Instead
+ * of creating a data source column for every one of the attributes, with this behavior you will just need a
+ * single JSON column and a meta object holding the definitions of these custom attributes. Each attributes defined
+ * in the data of that definition-object will act just like a regular attribute in your meta model, but will be
+ * stored in the JSON and can be modified/extended any time without changes to the model of the app.
  * 
- * The current implementation supports loading custom attribute definitions from two different sources, depending on
- * the configuration of this behavior:
+ * In order tu use JSON custom attributes, you will need two behaviors:
  * 
- * 1. **From an exclusive definition table:** If you define a value for `definition_object_alias`, the custom attribute
- *  definitions will be loaded from that object. It MUST have a `CustomAttributeDefinitionBehavior` attached to it.
- *  This is very fast and can handle a wide range of data types, but requires you to set up the definition object,
- *  behavior and table. RECOMMENDED.
+ * - This `CustomAttributesJsonBehavior` also called "storage-behavior" in the context of custom attributes
+ * - A `CustomAttributesDefinitionBehavior` of the object that will hold the available attributes names and settings
+ * in your app - referred to as "definition-behavior".
  * 
- * 2. **From data:** If you do not define a value for `definition_object_alias` the behavior will instead
- * try to deduce its custom attribute definitions from the data stored in the data address of `json_attribute_alias`.
+ * ## Regular attributes vs. custom JSON attributes
+ * 
+ * Main differences between normal attributes and JSON custom attributes:
+ * 
+ * - Regular meta attributes are defined by designers inside the meta object. JSON custom attributes are created
+ * in master data by designers or even by power users. They are not part of the app model, will not be exported
+ * and can even be different on different installations.
+ * - Adding a regular attribute requires a data source change (e.g. SQL migration) and an update of the app, while
+ * adding a custom attribute can happen on-the-fly any time. As soon, as the attribute definition is saved, the
+ * object will have a new attribute and it will be ready to use.
+ * - Since custom attributes are not part of the model, you should not use them via `attribute_alias` in pages,
+ * actions, etc. directly. Instead, create attribute groups, let the creator of the attributes choose, which groups
+ * the attribute should be part of and use these groups in the UI and app logic instead of individual attributes.
+ * - Custom attributes are much easier to create than regular ones: all you need is a name, and a type and optionally
+ * some other things like attribute groups. The designer of the app decides, what options of custom attributes can be
+ * set, what types there are, etc. This is done in the definiton-behavior. After that, users can simply pick their
+ * desired options and save the attribute in a very simplified way.
+ * 
+ * ## Setting up custom JSON attributes for an object
+ * 
+ * To use custom JSON attributes, follow these steps.
+ * 
+ * ### 1. Create a place to store attribute definitions
+ * 
+ * Create a data source and a meta object to store your attribute definitions: e.g. a SQL table. Every data row
+ * will represent one custom attribute. Use the following recommended columns:
+ * 
+ *  - `Name` - the future attribute name (e.g. for widget captions)
+ *  - `Alias` - any attribute needs an alias, although it is much less important for custom attributes. You can
+ * autogenerate it using the `AliasGeneratingBehavior`.
+ *  - `DataAddress` - this will be the key in the JSON storage. You can auto-generate it the same way as the alias.
+ * Although, the address can be auto-generated, it is recommended to store it separately nevertheless. If the user
+ * chooses to rename the attribute, the address must stay the same in order to keep the values. You can also use this
+ * address to add calculated attributes. This is probably too complicated for users, but designer can even add
+ * `@T-SQL:` or `@MySQL:` data addresses to for calculated custom attributes. 
+ *  - `Description` - This will be used as hint (tooltip) in widgets - it is very helpful!
+ *  - `Type` - that will be one of the predefined types of attributes: text, checkbox, number, date, dropdown to pick a 
+ * user, etc. We will dive in to this later.
+ *  - `Groups` - this will hold a comma-separated list of attribute group aliases
+ *  - `OrderNo` - to control the order in which the custom attributes will be displayed
+ * 
+ * You can also add other options if you like you users to have more control - e.g. a `RequiredFlag` to control if the
+ * attribute should be required or not. See `CustomAttributesDefinitioBehavior` for a full list of options.
+ * 
+ * ### 2. Configure the `CustomAttributesDefinitionBehavior` for the definition-object
+ * 
+ * Now the meta object created in the previous step needs the `CustomAttributesDefinitionBehavior` to tell the workbench
+ * to create custom attributes from its data. You will need to tell this behavior, where it can find the name of the 
+ * future attribute, its data address, etc.
+ * 
+ * ```
+ * {
+ *  "name_attribute": "Name",
+ *  "alias_attribute": "Alias",
+ *  "data_address_attribute": "DataAddress",
+ *  "hint_attribute": "Description",
+ *  "type_attribute": "Type",
+ *  "groups_attribute": "Groups",
+ *  "sorters": [
+ *      {"attribute_alias": "OrderNo", "direction": "asc"}
+ *  ]
+ * }
+ * 
+ * ```
+ * 
+ * ### 3. Create a JSON attribute for your main object
+ * 
+ * The object, that you want to get the custom attributes now needs a place to store tham - e.g. a SQL column and a 
+ * corresponding attribute. In most cases a large text column will be enough. We will store a JSON with all the custom
+ * attribute values there.
+ * 
+ * ### 4. Give the main object the `CustomAttributesJsonBehavior`
+ * 
+ * Now you can configre this `CustomAttributesJsonBehavior`: 
+ * 
+ * ```
+ * {
+ *  "json_attribute_alias": "CustomAttributesJSON",
+ *  "attributes_definition": {
+ *      "object_alias":"my.App.CustomAttribute"
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * ### 5. Make custom attributes visible
+ * 
+ * Now that you have a way to create custom attributes and store their values, make sure they actually appear in the UI.
+ * Here are some recommendations.
+ * 
+ * #### Register all custom attributes as optional columns
+ * 
+ * Add a `WidgetModifyingBehavior` to the object, that gets the attributes:
+ * 
+ * ```
+ * {
+ *  "add_columns": [
+ *      {"attribute_group_alias": "~CUSTOM"}
+ *  ]
+ * }
+ * 
+ * ```
+ * 
+ * Now every table widget of you main object will get ALL custom attributes as optional columns, that users can pick
+ * in the configurator.
+ * 
+ * #### Create attribute groups for important usages
+ * 
+ * If some of the custom attributes are expected to be more important than others, create attribute groups to allow
+ * users to control, where their custom attributes are going to be shown. For example:
+ * 
+ * - `InfoDialogHeaderColumn1` - if the attribute is placed here, it will appear in the header of the main object
+ * info dialog in the first column
+ * - `InfoDialogHeaderColumn2` - less important attributes go to second column
+ * - `VisibleInAllTables` - if placed here, the attribute will be visible in tables right away instead of being
+ * an optional column. Of course, you will need to place this attribute group in the column of every widget, that
+ * it should effect now: `{"attribute_group_alias": "my.App.VisibleInAllTables"}`
+ * 
+ * ## SQL data addresses
+ * 
+ * JSON custom attributes are often used in SQL based data sources. Just like regular attributes can use custom
+ * SQL in their data addresses, you can use that in custom attributes addresses as well. However, in custom
+ * attribtues the **SQL dialect prefix is required** while being optional in regular attributes. 
+ * 
+ * Make sure, your data address starts with `@T-SQL:` or `@MySQL:` depending on your query builder. You can even 
+ * use placeholders like `[#~alias#]` - just like you would do in regular SQL attributes.
+ * 
+ * **NOTE:** Custom attributes with SQL data addresses will automatically become non-editable!
+ * 
+ * ## Raw data mode
+ * 
+ * If you do not define a value for `attribute_defition` the behavior will instead try to deduce its custom attribute 
+ * definitions from the data stored in the data address of `json_attribute_alias`.
+ * 
  * This requires loading and parsing the entire data set, which is very slow. In addition, this approach can only
- * produce attributes with data type string. NOT RECOMMENDED.
+ * produce attributes with data type string. NOT RECOMMENDED in most cases!
  * 
- * @author Georg Bieger
+ * @author Georg Bieger, Andrej Kabachnik
  */
 class CustomAttributesJsonBehavior extends AbstractBehavior
 {
-    private bool $processed = false;
-    
     private ?CustomAttributesDefinition $attributeDefinition = null;
-
     private ?string $jsonAttributeAlias = null;
-    private ?string $jsonDataAddress = null;
     private ?UxonObject $definitionDefaults = null;
 
     protected function registerEventListeners(): BehaviorInterface
@@ -76,10 +209,19 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      */
     public function onLoadedAddAttributesToObject(OnMetaObjectLoadedEvent $event) : void
     {
-        if($this->isDisabled() || $this->processed || !$event->getObject()->isExactly($this->getObject())) {
+        if($this->isDisabled() || ! $event->getObject()->isExactly($this->getObject())) {
             return;
         }
-        $this->processed = true;
+
+        $obj = $event->getObject();
+
+        // See if the object instance already has attributes generated by this behavior. If so, exit here.
+        foreach ($obj->getAttributes() as $attr) {
+            if (($attr instanceof CustomAttribute) && $attr->getSource() === $this) {
+                return;
+            }
+        }
+
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logBook->addLine('Object loaded, checking for custom attributes...');
 
@@ -126,6 +268,9 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
         );
 
         foreach ($attrs as $attr) {
+            if ($this->isNonJsonDataAddress($attr->getDataAddress())) {
+                $attr->setEditable(false);
+            }
             $attr->setDataAddress($this->getCustomAttributeDataAddress($attr->getDataAddress()));
         }
         return $attrs;
@@ -220,19 +365,6 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     }
 
     /**
-     * @deprecated user `setAttributesDefinition()` instead
-     * 
-     * @param string $alias
-     * @return CustomAttributesJsonBehavior
-     */
-    protected function setDefinitionObjectAlias(string $alias) : CustomAttributesJsonBehavior
-    {
-        return $this->setAttributesDefinition(new UxonObject([
-            'object_alias' => $alias
-        ]));
-    }
-
-    /**
      * Define the attribute alias where the actual JSON data is stored. It must belong to the object this behavior is attached to.
      * 
      * @uxon-property json_attribute_alias 
@@ -254,41 +386,35 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
     {
         return $this->jsonAttributeAlias;
     }
-
-    protected function getCustomAttributeDataAddressPrefix(): string
-    {
-        if(!$this->jsonDataAddress) {
-            $jsonAttribute = $this->getObject()->getAttribute($this->getJsonAttributeAlias());
-            $this->jsonDataAddress = $jsonAttribute->getDataAddress();
-        }
-        
-        return $this->jsonDataAddress . '::$.';
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface::customAttributeStorageKeyToAlias()
-     */
-    public function customAttributeStorageKeyToAlias(string $storageKey) : string
-    {
-        if($keyWithoutPrefix = StringDataType::substringAfter($storageKey, '.')){
-            $storageKey = $keyWithoutPrefix;
-        }
-        
-        return StringDataType::convertCasePascalToUnderscore($storageKey);
-    }
     
     /**
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\Behaviors\CustomAttributeLoaderInterface::getCustomAttributeDataAddress()
      */
-    public function getCustomAttributeDataAddress(string $storageKey) : string
+    protected function getCustomAttributeDataAddress(string $jsonKey) : string
     {
-        if($keyWithoutPrefix = StringDataType::substringAfter($storageKey, '.')){
-            $storageKey = $keyWithoutPrefix;
+        if ($this->isNonJsonDataAddress($jsonKey)) {
+            return $jsonKey;
         }
-        
-        return $this->getCustomAttributeDataAddressPrefix() . $storageKey;
+
+        if (! StringDataType::startsWith($jsonKey, '$.')) {
+            $jsonPath = '$.' . $jsonKey;
+        } else {
+            $jsonPath = $jsonKey;
+        }
+        $jsonAttribute = $this->getObject()->getAttribute($this->getJsonAttributeAlias());
+        return $jsonAttribute->getDataAddress() . '::' . $jsonPath;
+    }
+
+    /**
+     * Returns TRUE if the given data address is NOT a JSON path or JSON key
+     * 
+     * @param string $address
+     * @return bool
+     */
+    protected function isNonJsonDataAddress(string $address) : bool
+    {
+        return StringDataType::startsWith($address, '@');
     }
 
     /**

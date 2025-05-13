@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Facades\DocsFacade\DocsTemplateRenderer;
+use exface\Core\Facades\DocsFacade\Placeholders\ImageNumberResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\NavButtonResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\SubPageListResolver;
 use exface\Core\Interfaces\AppExporterInterface;
@@ -72,6 +73,7 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
             $fileRenderer = $baseRenderer->copy();
             $fileRenderer->addPlaceholder(new SubPageListResolver($file));
             $fileRenderer->addPlaceholder(new NavButtonResolver($file));
+            $fileRenderer->addPlaceholder(new ImageNumberResolver($file));
             // TODO add other placeholder classes here
             $rendered = $fileRenderer->render($file);
             file_put_contents($file, $rendered);

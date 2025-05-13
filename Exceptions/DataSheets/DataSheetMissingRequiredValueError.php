@@ -37,7 +37,7 @@ class DataSheetMissingRequiredValueError extends DataSheetInvalidValueError
             }
         } else {
             try {
-                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.MISSING_VALUES', ['%object%'=> $col->getMetaObject()->getName(), '%column%' => $colCaption, '%rows%' => $rowNoList]);
+                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.MISSING_VALUES', ['%object%'=> $col->getMetaObject()->getName(), '%column%' => $colCaption]);
             } catch (\Throwable $e) {
                 $col->getWorkbench()->getLogger()->logException($e);
                 $message = 'Missing values for "' . $colCaption . '"!';

@@ -100,25 +100,20 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * for all columns.
      *
      * Example:
+     * 
+     * ```
      *  {
      *      "object_alias": "ORDER_POSITION"
      *      "filters": [
-     *          {
-     *              "attribute_alias": "ORDER"
-     *          },
-     *          {
-     *              "attribute_alias": "CUSTOMER__CLASS"
-     *          },
-     *          {
-     *              "attribute_alias": "ORDER__ORDER_POSITION__VALUE:SUM",
-     *              "caption": "Order total"
-     *          },
-     *          {
-     *              "attribute_alias": "VALUE",
-     *              "widget_type": "InputNumberSlider"
-     *          }
+     *          {"attribute_alias": "ORDER"},
+     *          {"attribute_alias": "ORDER__DATE", "widget_type": "RangeFilter"},
+     *          {"attribute_alias": "ORDER__CUSTOMER__CLASS"},
+     *          {"attribute_alias": "ORDER__ORDER_POSITION__VALUE:SUM", "caption": "Order total"},
+     *          {"attribute_group_alias": "ORDER__~DEFAULT_DISPLAY"}
      *      ]
      *  }
+     * 
+     * ```
      *  
      * @uxon-property filters
      * @uxon-type exface\Core\Widgets\Filter[]

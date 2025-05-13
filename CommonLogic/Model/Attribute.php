@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\MetaAttributeOriginDataType;
+use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
@@ -21,6 +23,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectModelError;
 use exface\Core\Interfaces\Selectors\AttributeGroupSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use Throwable;
 
 /**
  * 
@@ -117,6 +120,8 @@ class Attribute implements MetaAttributeInterface
     // Properties NOT to be dublicated on copy()
     /** @var Model */
     private $object;
+
+    private $attributeType = MetaAttributeTypeDataType::GENERATED;
 
     public function __construct(MetaObjectInterface $object, string $name, string $alias)
     {
@@ -1369,5 +1374,54 @@ class Attribute implements MetaAttributeInterface
             $obj->getAttributeGroup($alias)->add($this);
         }
         return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setType()
+     */
+    public function setType(string $attrType) : MetaAttributeInterface
+    {
+        try {
+            $this->attributeType = MetaAttributeTypeDataType::cast($attrType);
+        } catch (Throwable $e) {
+            throw new MetaObjectModelError($this->getObject(), 'Invalid attribute type "' . $attrType . '" provided for ' . $this->__toString());
+        }
+        
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getType()
+     */
+    public function getType() : string
+    {
+        return $this->attributeType;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getOrigin()
+     */
+    public function getOrigin() : int
+    {
+        return $this->isInherited() ? MetaAttributeOriginDataType::INHERITED_ATTRIBUTE : MetaAttributeOriginDataType::DIRECT_ATTRIBUTE;
+    }
+
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject([
+            'alias' => $this->getAliasWithRelationPath(),
+            'name' => $this->getName(),
+            'data_address' => $this->getDataAddress()
+        ]);
+
+        // TODO add other UXON properties here
+
+        return $uxon;
     }
 }

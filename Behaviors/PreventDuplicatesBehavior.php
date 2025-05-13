@@ -441,6 +441,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (! $updateSheet->hasUidColumn()) {
             $uidCol = $updateSheet->getColumns()->addFromUidAttribute();
             $uidColName = $uidCol->getName();
+        } else {
+            $uidCol = $updateSheet->getUidColumn();
+            $uidColName = $uidCol->getName();
         }
         $duplRowNos = $matcher->getMatchedRowIndexes();
         $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: row number(s) ' . implode(', ', $duplRowNos));
@@ -640,6 +643,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
                 if ($mainSheet->getColumns()->getByExpression($cond->getExpression())) {
                     $customConditionsFilters->addCondition($cond);
+                } else {
+                    $logbook->addLine('Ignoring condition: ´'  . $customConditionsFilters->__toString() . '´ in `compare_with_conditions` because required column is NOT part of event data sheet!');
                 }
             }
             $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $customConditionsFilters->__toString());

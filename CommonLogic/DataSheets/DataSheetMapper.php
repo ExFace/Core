@@ -362,9 +362,14 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         if ($logbook !== null) $logbook->addLine('Checking input data for missing columns');
+
+        // TODO for a reason not known anymore, there is $readMissingColumns and $this->getReadMissingFromData()
+        // separately. It seems $readMissingColumns is passed from outside, and the other one is part of
+        // the mapper configuration. But they do different things somehow. Can they be coupled?
+
         // If the sheet is empty, just fill it with the required columns and read everything 
         // (no UID values to filter in this case)
-        if ($data_sheet->isEmpty()) {
+        if ($data_sheet->isEmpty() && $this->getReadMissingFromData() !== false) {
             foreach ($this->getMappings() as $map){
                 foreach ($map->getRequiredExpressions($data_sheet) as $expr) {
                     $data_sheet->getColumns()->addFromExpression($expr);
@@ -1343,7 +1348,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      *
      * @uxon-property lookup_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\LookupMapping[]
-     * @uxon-template [{"to": "// place looked up value in this column of the to-data", "lookup_object_alias": "// Look in this object", "lookup_column": "// Read this attribute or expression", "match": [{"from": "// match from-data column", "lookup":"// to lookup object column"}]}]
+     * @uxon-template [{"to": "// place looked up value in this column of the to-data", "lookup_object_alias": "// Look in this object", "lookup_column": "// Read this attribute or expression", "if_not_found": "leave_empty", "matches": [{"from": "// match from-data column", "lookup":"// to lookup object column"}]}]
      *
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface

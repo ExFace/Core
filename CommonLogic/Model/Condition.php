@@ -677,7 +677,17 @@ class Condition implements ConditionInterface
             throw new RuntimeException('Cannot evaluate a condition: do data provided!');
         }
         
-        $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
+        // For string expressions or onknown expression types, check if they match a column in the data sheet.
+        // If so, treat them as column ref.
+        // TODO this is a little confusiong. Actually, left expressions in conditions never seem to be unknown
+        // although this would be correct in this case. Need a better way to distinguish column refs and strings
+        // here
+        $leftExpr = $this->getExpression();
+        if (($leftExpr->isString() || $leftExpr->isUnknownType()) && $data_sheet && $leftCol = $data_sheet->getColumns()->getByExpression($leftExpr)) {
+            $leftVal = $leftCol->getValue($row_number);
+        } else {
+            $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
+        }
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
 
         $listDelimiter = $this->getExpression()->isMetaAttribute() ? $this->getExpression()->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
@@ -717,7 +727,17 @@ class Condition implements ConditionInterface
             case ComparatorDataType::IS:
                 return $rightVal === null || mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) !== false;
             case ComparatorDataType::IS_NOT:
-                return mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) === false;
+                $leftStr = ($leftVal ?? '');
+                $rightStr = ($rightVal ?? '');
+                // Handle empty values separately as mb_stripos() will not do what we want then.
+                switch (true) {
+                    case $leftStr === '' && $rightStr === '':
+                        return false;
+                    case $leftStr === '' && $rightStr !== null:
+                    case $leftStr !== '' && $rightStr === '':
+                        return true;
+                }
+                return mb_stripos($leftStr, $rightStr) === false;
             case ComparatorDataType::EQUALS:
                 return $leftVal == $rightVal;
             case ComparatorDataType::EQUALS_NOT:
