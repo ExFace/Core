@@ -40,7 +40,7 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Translation\TranslationsArray;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use Throwable;
-use function Sabre\Event\Loop\instance;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * Base class for facade elements in AJAX facades using jQuery
@@ -1767,9 +1767,18 @@ MD;
         $resolver = function(array $widgetUxon) use ($widget) {
             $resultUxon = [];
             
-            $attrGrp = $widget->getMetaObject()->getAttributeGroup($widgetUxon['attribute_group_alias']);
+            $attrGrpAlias = $widgetUxon['attribute_group_alias'];
+            $aggr = DataAggregation::getAggregatorFromAlias($widget->getWorkbench(), $attrGrpAlias);
+            if ($aggr) {
+                $attrGrpAlias = DataAggregation::stripAggregator($attrGrpAlias);
+            }
+            $attrGrp = $widget->getMetaObject()->getAttributeGroup($attrGrpAlias);
             foreach ($attrGrp->getAttributes() as $attr) {
-                $widgetUxon['attribute_alias'] = $attr->getAliasWithRelationPath();
+                $attrAlias = $attr->getAliasWithRelationPath();
+                if ($aggr) {
+                    $attrAlias = DataAggregation::addAggregatorToAlias($attrAlias, $aggr);
+                }
+                $widgetUxon['attribute_alias'] = $attrAlias;
                 $resultUxon[] = $widgetUxon;
             }
             
