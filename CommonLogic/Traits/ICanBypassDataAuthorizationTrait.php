@@ -16,7 +16,7 @@ use Throwable;
  */
 trait ICanBypassDataAuthorizationTrait {
     
-    private $bypassDataAuthorizationPoint = false;
+    private $bypassDataAuthorizationPoint = null;
 
     protected function bypassDataAuthorization(callable $callback)
     {
@@ -33,16 +33,21 @@ trait ICanBypassDataAuthorizationTrait {
     }
 
     /**
+     * Returns TRUE or FALSE if `bypass_data_authorization_point` is explicitly set and NULL otherwise
      * 
-     * @return bool
+     * @return bool|null
      */
-    protected function willBypassDataAuthorizationPoint() : bool
+    protected function willBypassDataAuthorizationPoint() : ?bool
     {
         return $this->bypassDataAuthorizationPoint;
     }
 
     /**
-     * Set to TRUE to disable data authorization for the called action
+     * Set to TRUE to disable data authorization for the called action or to FALSE to force data authorization explicitly
+     * 
+     * In general, the workbench attempts to figure out automatically, in which case it needs to
+     * bypass data authorization. However, there are cases, when this results in a different
+     * behavior than expected by a human - that's when you can override it using this property.
      * 
      * @uxon-property bypass_data_authorization_point
      * @uxon-type boolean

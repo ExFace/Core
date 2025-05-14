@@ -75,7 +75,7 @@ class JournalingBehavior extends AbstractBehavior
                 "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                 "event_alias" => OnUpdateDataEvent::getEventName(),
                 "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
-                "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint(),
+                "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint() ?? true,
                 "action" => [
                     "alias" => CreateData::class,
                     "object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
@@ -105,7 +105,7 @@ class JournalingBehavior extends AbstractBehavior
                     "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                     "event_alias" => OnCreateDataEvent::getEventName(),
                     "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
-                    "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint(),
+                    "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint() ?? true,
                     "action" => [
                         "alias" => CreateData::class,
                         "object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
