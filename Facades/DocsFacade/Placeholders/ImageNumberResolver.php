@@ -40,6 +40,7 @@ class ImageNumberResolver extends AbstractPlaceholderResolver implements Placeho
         }
         return $vals;
     }
+
     function getOrderedMarkdownFiles($rootDir) : array
     {
         $iterator = new RecursiveIteratorIterator(
@@ -76,7 +77,6 @@ class ImageNumberResolver extends AbstractPlaceholderResolver implements Placeho
             }
         }
 
-        // Şimdi her klasörü sırayla işle
         foreach ($folderGroups as $group) {
             if ($group['index']) {
                 $result[] = $group['index'];
@@ -89,17 +89,28 @@ class ImageNumberResolver extends AbstractPlaceholderResolver implements Placeho
             }
         }
 
-        return $result; // flat dosya yolları listesi
+        return $result;
     }
     
     function countImagesAndUpdate($files, $targetFile, $order) {
         $currentAbbildungNumber = 1;
         foreach ($files as $file) {
             $content = file_get_contents($file);
-    
-            preg_match_all('/<div class="image-container">\s*<img[^>]*>\s*<div class="caption">.*?<\/div>\s*<\/div>/is', $content, $matches);
+            $pattern = '/
+                        <div\s+class="image-container"(?:\s+id="[^"]*")?>
+                        (?:\s*<img[^>]*>)+
+                        \s*<div\s+class="caption">\s*
+                        (?:<!--\s*BEGIN\s+ImageCaptionNr:\s*-->\s*)?
+                        Abbildung\s+(\d+):\s*
+                        (?:<!--\s*END\s+ImageCaptionNr\s*-->\s*)?
+                        (.*?)
+                        <\/div>\s*<\/div>
+                        /six';
+
+
+            preg_match_all($pattern, $content, $matches);
             
-            if (FilePathDataType::normalize($file) === FilePathDataType::normalize($targetFile)) {
+            if (FilePathDataType::normalize($file) === FilePathDataType::normalize($targetFile) && count($matches[0]) > 0) {
                 return "Abbildung " . $currentAbbildungNumber + $order . ":";
             }
 
