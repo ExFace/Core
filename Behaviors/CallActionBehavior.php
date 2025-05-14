@@ -412,12 +412,14 @@ class CallActionBehavior extends AbstractBehavior
         $inputSheet = $task->getInputData();
         $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
         
-        if ($this->willBypassDataAuthorizationPoint()) {
+        if ($this->willBypassDataAuthorizationPoint() === true) {
+            $logbook->addLine('BYPASS data authorization because `bypass_data_authorization_point` is `' . ($this->willBypassDataAuthorizationPoint() ?? 'null') . '`');
             $callback = function() use ($action, $task, $transaction) {
                 return $action->handle($task, $transaction);
             };
             $result = $this->bypassDataAuthorization($callback);
         } else {
+            $logbook->addLine('Enforcing data authorization inside the action regularly because `bypass_data_authorization_point` is `' . ($this->willBypassDataAuthorizationPoint() ?? 'null') . '`');
             $result = $action->handle($task, $transaction);
         }
 
