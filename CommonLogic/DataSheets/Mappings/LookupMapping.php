@@ -420,21 +420,18 @@ class LookupMapping extends AbstractDataSheetMapping
         
         if($error !== null) {
             if($this->notFoundErrorUxon) {
-                $message = $this->notFoundErrorUxon->hasProperty('title') ? 
-                    $this->notFoundErrorUxon->getProperty('title') : null;
-                $alias = $this->notFoundErrorUxon->hasProperty('code') ?
-                    $this->notFoundErrorUxon->getProperty('code') : null;
+                $model = $error->getMessageModel($this->getWorkbench());
+                $model->importUxonObject($this->notFoundErrorUxon);
                 
                 $error = new DataSheetMissingRequiredValueError(
                     $fromSheet,
-                    $message,
-                    $alias,
+                    $model->getTitle(),
+                    $model->getCode(),
                     $error->getPrevious(),
                     $toCol,
                     $error->getRowNumbers()
                 );
-                
-                $error->getMessageModel($this->getWorkbench())->importUxonObject($this->notFoundErrorUxon);
+
             }
             
             throw $error;
