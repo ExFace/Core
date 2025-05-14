@@ -17,7 +17,6 @@ use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Uxon\DataSheetLookupMappingSchema;
-use RuntimeException;
 
 /**
  * Looks up a value in a separate data sheet and places it in the to-column
@@ -421,6 +420,20 @@ class LookupMapping extends AbstractDataSheetMapping
         
         if($error !== null) {
             if($this->notFoundErrorUxon) {
+                $message = $this->notFoundErrorUxon->hasProperty('title') ? 
+                    $this->notFoundErrorUxon->getProperty('title') : null;
+                $alias = $this->notFoundErrorUxon->hasProperty('code') ?
+                    $this->notFoundErrorUxon->getProperty('code') : null;
+                
+                $error = new DataSheetMissingRequiredValueError(
+                    $fromSheet,
+                    $message,
+                    $alias,
+                    $error->getPrevious(),
+                    $toCol,
+                    $error->getRowNumbers()
+                );
+                
                 $error->getMessageModel($this->getWorkbench())->importUxonObject($this->notFoundErrorUxon);
             }
             
