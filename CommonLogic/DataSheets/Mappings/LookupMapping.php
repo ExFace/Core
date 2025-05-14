@@ -441,21 +441,24 @@ class LookupMapping extends AbstractDataSheetMapping
         }
         
         if($error !== null) {
-            if($this->notFoundErrorUxon) {
-                $model = $error->getMessageModel($this->getWorkbench());
-                $model->importUxonObject($this->notFoundErrorUxon);
-                
+            if($uxon = $this->notFoundErrorUxon) {
+                $message = $uxon->hasProperty('title') ?
+                    $uxon->getProperty('title') : null;
+                $alias = $uxon->hasProperty('code') ?
+                    $uxon->getProperty('code') : null;
+
                 $error = new DataSheetMissingRequiredValueError(
                     $fromSheet,
-                    $model->getTitle(),
-                    $model->getCode(),
+                    $message,
+                    $alias,
                     $error->getPrevious(),
                     $toCol,
                     $error->getRowNumbers()
                 );
 
+                $error->getMessageModel($this->getWorkbench())->importUxonObject($uxon);
             }
-            
+
             throw $error;
         }
     }
