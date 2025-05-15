@@ -395,7 +395,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $attributeDefinitionsSheet->getColumns()->addFromExpression($groupsAlias);
         }
         if (null !== $filtersUxon = $this->getFiltersUxon()) {
-            $attributeDefinitionsSheet->setFilters(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject()));
+            $conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject());
+            if(empty($attributeDefinitionsSheet->getFilters())) {
+                $attributeDefinitionsSheet->setFilters($conditionGroup);
+            } else {
+                $attributeDefinitionsSheet->getFilters()->addNestedGroup($conditionGroup);
+            }
         }
         if (null !== $sortersUxon = $this->getSortersUxon()) {
             $attributeDefinitionsSheet->getSorters()->importUxonObject($sortersUxon);
