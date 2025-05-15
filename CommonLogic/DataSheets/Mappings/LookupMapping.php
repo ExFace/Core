@@ -92,13 +92,12 @@ use RuntimeException;
  */
 class LookupMapping extends AbstractDataSheetMapping
 {
-    public const CFG_LEAVE_EMPTY = 'leave_empty';
-    public const CFG_ERROR_FIRST = 'error_on_first';
-    public const CFG_ERROR_ALL = 'error_cumulative';
-    public const CFG_FALLBACK = 'use_fallback_value';
-    
+    public const IF_NOT_FOUND_LEAVE_EMPTY = 'leave_empty';
+    public const IF_NOT_FOUND_ERROR_FIRST = 'error_on_first';
+    public const IF_NOT_FOUND_ERROR_ALL = 'error_cumulative';
+    public const IF_NOT_FOUND_FALLBACK = 'use_fallback_value';
     public const STOP_ON_FIRST_MISS = [
-        self::CFG_ERROR_FIRST
+        self::IF_NOT_FOUND_ERROR_FIRST
     ];
     
     private $lookupObjectAlias = null;
@@ -349,8 +348,8 @@ class LookupMapping extends AbstractDataSheetMapping
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         switch ($this->notFoundBehavior) {
             // Throw an error.
-            case self::CFG_ERROR_FIRST:
-            case self::CFG_ERROR_ALL:
+            case self::IF_NOT_FOUND_ERROR_FIRST:
+            case self::IF_NOT_FOUND_ERROR_ALL:
                 $rowNrs = array_keys($unmatchedRows);
                 $matches = $this->getMatches();
                 $matchKeys = [];
@@ -365,6 +364,7 @@ class LookupMapping extends AbstractDataSheetMapping
                         $matchKeys[] = '"' . $rowKeys[0] . '"';
                     }
                 }
+                $errorUxon = $this->getIfNotFoundError();
                 $message = $translator->translate(
                     'DATASHEET.ERROR.LOOKUP_FAILED', 
                     [
@@ -376,7 +376,7 @@ class LookupMapping extends AbstractDataSheetMapping
                 $error = new DataSheetMissingRequiredValueError(
                     $fromSheet, 
                     $message, 
-                    null, 
+                    $errorUxon->getProperty('code') ?? '80YWY1Z', 
                     null, 
                     $toCol, 
                     $rowNrs
@@ -384,7 +384,7 @@ class LookupMapping extends AbstractDataSheetMapping
                 $error->setUseExceptionMessageAsTitle(true);
             break;
             // Set a fixed value.
-            case self::CFG_FALLBACK:
+            case self::IF_NOT_FOUND_FALLBACK:
                 try {
                     $fallbackValue = $this->fallbackValue;
                     $parsePerRow = false;
@@ -402,8 +402,7 @@ class LookupMapping extends AbstractDataSheetMapping
                         $fallbackValue = $toCol->getDataType()->parse($fallbackValue);
                     }
 
-                } catch (\Throwable $e)
-                {
+                } catch (\Throwable $e) {
                     $rowNrs = array_keys($unmatchedRows);
                     $error = new DataSheetMissingRequiredValueError(
                         $fromSheet,
@@ -612,20 +611,27 @@ class LookupMapping extends AbstractDataSheetMapping
     }
 
     /**
-     * Customize the error that will be thrown, if one or more rows in the `from-sheet` could not be 
-     * matched with any row in the `lookup-sheet`.
+     * Customize the error that will be shown if the lookup does not find any values
      * 
-     * NOTE: If you set `if_not_found` to any value, that does not throw errors (e.g. `leave_empty`), 
-     * this property is redundant.
+     * **NOTE:** this requires `if_not_found` to be set to `error_on_first` or `error_cumulative`! 
+     * 
+     * You can modify the following properties of the error:
+     * 
+     * - `title` - the text, that the user will see. By default, that text is generated automatically including
+     * the affected values and row number. If you modify it, you can only use static text though (no placeholders).
+     * - `code` - use a custom error code. You can create a new message model in `Administration > Metamodel > Messages`
+     * with a custom hint and description. Place the code of the create error here, and all settings from that message
+     * model will be used except for the title - that is controlled separately
+     * - `type` - change the type of the message shown in case of an error - e.g. make it a `warning` 
      * 
      * @uxon-property if_not_found_error
      * @uxon-type \exface\Core\CommonLogic\Model\Message
-     * @uxon-template {"title":"","code":"","type":""}
+     * @uxon-template {"code":""}
      * 
      * @param UxonObject|null $uxon
      * @return $this
      */
-    public function setIfNotFoundError(?UxonObject $uxon) : LookupMapping
+    protected function setIfNotFoundError(?UxonObject $uxon) : LookupMapping
     {
         $this->notFoundErrorUxon = $uxon;
         return $this;
@@ -634,9 +640,9 @@ class LookupMapping extends AbstractDataSheetMapping
     /**
      * @return UxonObject|null
      */
-    public function getIfNotFoundError() : ?UxonObject
+    protected function getIfNotFoundError() : UxonObject
     {
-        return $this->notFoundErrorUxon;
+        return $this->notFoundErrorUxon ?? new UxonObject();
     }
 
     /**
@@ -658,7 +664,7 @@ class LookupMapping extends AbstractDataSheetMapping
      * @param string $value
      * @return $this
      */
-    public function setIfNotFound(string $value) : LookupMapping
+    protected function setIfNotFound(string $value) : LookupMapping
     {
         $this->notFoundBehavior = $value;
         $this->stopOnFirstMiss = in_array($value, self::STOP_ON_FIRST_MISS); 
@@ -669,7 +675,7 @@ class LookupMapping extends AbstractDataSheetMapping
     /**
      * @return string
      */
-    public function getIfNotFound() : string
+    protected function getIfNotFound() : string
     {
         return $this->notFoundBehavior;
     }
@@ -677,7 +683,7 @@ class LookupMapping extends AbstractDataSheetMapping
     /**
      * @return bool
      */
-    public function getStopOnFirstMiss() : bool
+    protected function getStopOnFirstMiss() : bool
     {
         return $this->stopOnFirstMiss;
     }
@@ -693,7 +699,7 @@ class LookupMapping extends AbstractDataSheetMapping
      * @param mixed $value
      * @return $this
      */
-    public function setIfNotFoundFallbackValue(string $value) : LookupMapping
+    protected function setIfNotFoundFallbackValue(string $value) : LookupMapping
     {
         $this->fallbackValue = $value;
         return $this;
@@ -702,7 +708,7 @@ class LookupMapping extends AbstractDataSheetMapping
     /**
      * @return string|null
      */
-    public function getIfNotFoundFallbackValue() : ?string
+    protected function getIfNotFoundFallbackValue() : ?string
     {
         return $this->fallbackValue;
     }
