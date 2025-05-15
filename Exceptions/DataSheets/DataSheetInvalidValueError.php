@@ -3,7 +3,9 @@ namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\CommonLogic\Log\Logger;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Exceptions\DataSheetValueExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown if a value within the data sheet is not valid 
@@ -15,11 +17,11 @@ use exface\Core\CommonLogic\Log\Logger;
  * @author Andrej Kabachnik
  *        
  */
-class DataSheetInvalidValueError extends DataSheetRuntimeError
+class DataSheetInvalidValueError extends DataSheetRuntimeError implements DataSheetValueExceptionInterface
 {
     private $columnName = null;
-    
     private $rowIndexes = null;
+    private $messageWithoutRowNumbers = null;
     
     /**
      * 
@@ -36,10 +38,15 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
             $this->columnName = ($column instanceof DataColumnInterface) ? $column->getName() : $column;
         }
         $this->rowIndexes = $rowIndexes;
+
+        if ($customMessage !== null) {
+            $this->messageWithoutRowNumbers = $customMessage;
+        }
         
         if ($customMessage === null && $this->columnName !== null) {
             $col = $data_sheet->getColumns()->get($this->columnName);
             if ($col) {
+                $this->messageWithoutRowNumbers = $this->generateMessage($col);
                 $customMessage = $this->generateMessage($col, $this->getRowNumbers());
                 $this->setUseExceptionMessageAsTitle(true);
                 $this->setLogLevel($this->getDefaultLogLevel());
@@ -62,14 +69,27 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
         if ($rowNumbers !== null) {
             $rowNoList = implode(', ', $rowNumbers);
             try {
-                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES_ON_ROWS', ['%object%'=> $col->getMetaObject()->getName(), '%column%' => $colCaption, '%rows%' => $rowNoList]);
+                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate(
+                    'DATASHEET.ERROR.INVALID_VALUES_ON_ROWS', 
+                    [
+                        '%object%'=> $col->getMetaObject()->getName(), 
+                        '%column%' => $colCaption, 
+                        '%rows%' => $rowNoList
+                    ]
+                );
             } catch (\Throwable $e) {
                 $col->getWorkbench()->getLogger()->logException($e);
                 $message = 'Invalid values for "' . $colCaption . '" on row(s) ' . $rowNoList;
             }
         } else {
             try {
-                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES', ['%object%'=> $col->getMetaObject()->getName(), '%column%' => $colCaption, '%rows%' => $rowNoList]);
+                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate(
+                    'DATASHEET.ERROR.INVALID_VALUES', 
+                    [
+                        '%object%'=> $col->getMetaObject()->getName(), 
+                        '%column%' => $colCaption
+                    ]
+                );
             } catch (\Throwable $e) {
                 $col->getWorkbench()->getLogger()->logException($e);
                 $message = 'Invalid values for "' . $colCaption . '"';
@@ -77,7 +97,7 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
         }
         
         if (null !== $msg = $col->getDataType()->getValidationErrorMessage()) {
-            $message .= ' ' . $msg->getTitle();
+            $message = StringDataType::endSentence($message) . ' ' . $msg->getTitle();
         }
         
         return $message;
@@ -100,7 +120,7 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
      */
     public function getDefaultLogLevel()
     {
-        return Logger::ERROR;
+        return LoggerInterface::ERROR;
     }
     
     /**
@@ -122,8 +142,8 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
     }
     
     /**
-     * Returns the affected row indexes (starting with 0)
-     * @return array|NULL
+     * {@inheritDoc}
+     * @see DataSheetValueExceptionInterface::getRowIndexes()
      */
     public function getRowIndexes() : ?array
     {
@@ -131,12 +151,20 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
     }
     
     /**
-     * Returns the affected row numbers (starting with 1)
-     * 
-     * @return array|NULL
+     * {@inheritDoc}
+     * @see DataSheetValueExceptionInterface::getRowNumbers()
      */
     public function getRowNumbers() : ?array
     {
         return $this->rowIndexes === null ? null : array_map(function(int $rowIdx){ return $rowIdx + 1; }, $this->rowIndexes);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataSheetValueExceptionInterface::getMessageTitleWithoutLocation()
+     */
+    public function getMessageTitleWithoutLocation() : string
+    {
+        return $this->messageWithoutRowNumbers;
     }
 }
