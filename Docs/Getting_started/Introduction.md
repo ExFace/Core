@@ -80,3 +80,10 @@ If any error occurs, it is logged with a unique LogID and a lot of additional in
 To debug an action, that does not result in an error, app designers can turn on the tracer right before triggering it. The workbench will create detailed logs then and make the available in the tracer menu. However, it is important to turn the tracer back off quickly to avoid a writing gigantic trace logs. 
 
 ## Contexts 
+
+## Placeholders 
+
+Placeholders are used to dynamically inject content into Markdown files.
+Documentation is a living entity — it evolves over time, gets updated, and gradually takes its final shape. In such a dynamic environment, manually maintaining certain repetitive elements can become time-consuming and error-prone. To address this, **placeholders** are introduced.
+
+Placeholders provide a way to **automate common patterns** in documentation — such as generating a table of contents, assigning centralized image numbers, or creating navigation buttons — without needing to manually update these elements each time content changes.These tools help keep your documentation **clean, consistent, and up to date**, with minimal manual effort.
