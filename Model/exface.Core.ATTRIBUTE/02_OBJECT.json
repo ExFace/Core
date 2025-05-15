@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Attribute [exface.Core.ATTRIBUTE]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-03-12 13:02:17",
+            "MODIFIED_ON": "2025-05-03 11:21:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -220,40 +220,61 @@
                                             {
                                                 "attribute_alias": "RELATED_OBJ_ATTR",
                                                 "autoselect_single_suggestion": false,
+                                                "widget_type": "InputComboTable",
                                                 "filters": [
                                                     {
                                                         "attribute_alias": "OBJECT",
                                                         "value": "=related_object_selector!UID"
                                                     }
                                                 ],
-                                                "disable_condition": {
-                                                    "widget_link": "related_object_selector!UID",
-                                                    "comparator": "==",
-                                                    "value": ""
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=related_object_selector!UID",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
                                                 }
                                             },
                                             {
                                                 "attribute_alias": "RELATION_CARDINALITY",
-                                                "disable_condition": {
-                                                    "widget_link": "related_object_selector!UID",
-                                                    "comparator": "==",
-                                                    "value": ""
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=related_object_selector!UID",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
                                                 }
                                             },
                                             {
                                                 "attribute_alias": "COPY_WITH_RELATED_OBJECT",
-                                                "disable_condition": {
-                                                    "widget_link": "related_object_selector!UID",
-                                                    "comparator": "==",
-                                                    "value": ""
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=related_object_selector!UID",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
                                                 }
                                             },
                                             {
                                                 "attribute_alias": "DELETE_WITH_RELATED_OBJECT",
-                                                "disable_condition": {
-                                                    "widget_link": "related_object_selector!UID",
-                                                    "comparator": "==",
-                                                    "value": ""
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=related_object_selector!UID",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
                                                 }
                                             }
                                         ]
