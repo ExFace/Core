@@ -42,14 +42,28 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * The DataColumn represents a column in Data-widgets a DataTable.
  *
  * DataColumns are not always visible as columns. But they are always there, when tabular data is needed
- * for a widget. A DataColumn has a caption (header), an expression for it's contents (an attribute alias,
- * a formula, etc.) and an optional footer, where the contents can be summarized (e.g. summed up).
+ * for a widget. Most important properties are:
+ * 
+ * - `attribute_alias` or `calculation` - the contents to be shown in the column. In many cases, `attribute_alias` is
+ * enough to add a column to a data-widget.
+ * - `attribute_group_alias` - generate columns for each attribute of the group instead of a single column. In this case,
+ * the other properties defined here will be used as a template for the generated columns.
+ * - `caption` and `hint` - column header and its tooltip
+ * - `footer` - adds a totals-row in the table footer with an aggreagtion (e.g. `SUM`, `AVG`, etc.). This only
+ * works for aggregatable attributes.
+ * - `align` - force-align values inside the column left or right
+ * - `data_type` - changes the data type - e.g. to make a `Date` from a `DateTime` or an `Integer` from an `Number`
+ * - `cell_widget`- fully customize the widget inside each cell of the column. The default cell widget is a `Display`,
+ * but you can also use `Progressbar`, `ColorIndicator` or input-widgets in editable tables.
  *
- * Many widgets support inline-editing. Their columns can be made editable by defining an cell widget
- * for the column. Any input or display widget (Inputs, Combo, Text, ProgressBar etc.) can be used as cell widget.
- *
- * DataColumns can also be made sortable. This is usefull for facade features like changing the sort
- * order via mouse click on the colum header.
+ * You can also control features of the column itself. For example, in DataTables the user can typically click on
+ * the header of a column for sorting, filtering, etc. This can be controlled by the following properties:
+ * 
+ * - `sortable`
+ * - `filterable`
+ * 
+ * If the data-widget has export actions like `ExportXLSX`, you can explicitly exclude certain columns from the
+ * export by setting `exportable` to FALSE.
  *
  * @method DataColumnGroup getParent()
  * 
@@ -114,6 +128,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $readOnly = false;
     
     private $mergeCells = false;
+
+    private $dataTypeUxon = null;
 
     public function getAttributeAlias()
     {
@@ -346,8 +362,19 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
             
             $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon), $this, $fallbackWidgetType);
-            
             $this->cellWidget = $cellWidget;
+
+            if (null !== $this->dataTypeUxon) {
+                switch (true) {
+                    case $cellWidget instanceof Value:
+                        $cellWidget->setValueDataType($this->dataTypeUxon);
+                        break;
+                    // IDEA possibly add other widget types here, that can change their data type
+                    default:
+                        throw new WidgetConfigurationError($this, 'Cannot use a custom data_type on data column "' . $this->getDataColumnName() . '": cell widget ' . $cellWidget->getWidgetType() . ' does not support custom data types!');
+                }
+            }
+
             // Make sure, the cell widget knows, that it is hidden if the column is hidden
             // Do it only for hidden columns as optional ones can be made visible again
             // TODO not sure, if this is entirely a good idea, because hidden columns could
@@ -566,7 +593,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @uxon-property cell_widget
      * @uxon-type \exface\Core\Widgets\Value
-     * @uxon-template {"widget_type": ""}
+     * @uxon-template {"widget_type": "Display", "": ""}
      *
      * @param UxonObject $uxon_object            
      * @return DataColumn
@@ -620,6 +647,28 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getDataType()
     {
         return $this->getCellWidget()->getValueDataType();
+    }
+
+    /**
+     * Modify the data type of this column
+     * 
+     * By default, the column will use the data type of its `cell_widget`. For convenience, you can change that
+     * data type here instead of defining a custom cell widget.
+     * 
+     * @uxon-property data_type
+     * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
+     * @uxon-template {"alias": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return DataColumn
+     */
+    protected function setDataType(UxonObject $uxon) : DataColumn
+    {
+        $this->dataTypeUxon = $uxon;
+        if ($this->cellWidget !== null) {
+            $this->cellWidget = null;
+        }
+        return $this;
     }
 
     /**

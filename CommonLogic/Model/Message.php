@@ -157,8 +157,6 @@ class Message implements MessageInterface
     }
 
     /**
-     * @uxon-property hint
-     * @uxon-type string
      *
      * @param string $value
      * @return MessageInterface
@@ -185,9 +183,7 @@ class Message implements MessageInterface
     }
     
     /**
-     * @uxon-property description
-     * @uxon-type string
-     * 
+     * {@inheritDoc}
      * @see MessageInterface::setDescription()
      */
     public function setDescription(string $value) : MessageInterface

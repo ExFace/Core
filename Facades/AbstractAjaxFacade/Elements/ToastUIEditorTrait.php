@@ -3,9 +3,6 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\InputMarkdown;
-use exface\JEasyUIFacade\Facades\Elements\EuiInputMarkdown;
-use exface\UI5Facade\Facades\Elements\UI5DisplayMarkdown;
-use exface\UI5Facade\Facades\Elements\UI5InputMarkdown;
 
 /**
  * Aides Facade specific implementation of the ToastUI markdown editor.
@@ -36,7 +33,6 @@ trait ToastUIEditorTrait
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
         $editorOptions = "initialEditType: '" . ($widget->getEditorMode() === InputMarkdown::MODE_WYSIWYG ? 'wysiwyg' : 'markdown') . "'";
-        $markdownVarJs = str_replace("'", '"', $this->buildJsMarkdownVar());
         
         return <<<JS
 
