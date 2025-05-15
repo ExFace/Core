@@ -16,6 +16,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Events\DataSheetTransactionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\EventManagerInterface;
@@ -159,7 +160,7 @@ class OrderingBehavior extends AbstractBehavior
         if(!$logbook = $this->beginWork($event)) {
             return;
         }
-
+        
         $eventSheet = $event->getDataSheet();
         $logbook->addDataSheet('InputData', $eventSheet->copy());
         
@@ -903,9 +904,12 @@ class OrderingBehavior extends AbstractBehavior
     {
         // Generate update sheet.
         $eventSheet = $event->getDataSheet();
-        $updateSheet = $this->createEmptyCopy($eventSheet, true, false);
-        $updateSheet->addRows($pendingChanges);
-        
+        $updateSheet = DataSheetFactory::createFromObject($eventSheet->getMetaObject());
+        $updateSheet->getColumns()->addFromSystemAttributes();
+        $updateSheet->getColumns()->addFromExpression($this->getOrderNumberAttributeAlias());
+        $shiftSheet = $updateSheet->copy();
+        $updateSheet->addRows($pendingChanges, false, false);
+
         if(!$event instanceof OnDeleteDataEvent) {
             // Make sure any data we didn't modify is up-to-date.
             $currentSheet = $eventSheet->copy();
@@ -917,15 +921,15 @@ class OrderingBehavior extends AbstractBehavior
         $logBook->addDataSheet('PendingChanges', $updateSheet);
 
         // In order to avoid collisions, we first need to shift all changed rows out of the way.
-        $shiftSheet = $updateSheet->copy();
         $indexAlias = $this->getOrderNumberAttributeAlias();
         $startIndex = $this->getOrderStartsWith();
 
-        foreach ($shiftSheet->getRows() as $rowNr => $row) {
+        foreach ($updateSheet->getRows() as $row) {
             $siblingData = $siblingCache->getData($this->getParentsForRow($row));
             $pendingIndex = $row[$indexAlias];
             $safeIndex = $siblingData[self::KEY_MAX_INDEX] - $startIndex + 1;
-            $shiftSheet->setCellValue($indexAlias, $rowNr, $pendingIndex + $safeIndex);
+            $row[$indexAlias] = $pendingIndex + $safeIndex;
+            $shiftSheet->addRow($row, false, false);
         }
 
         try {
