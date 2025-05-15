@@ -57,6 +57,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     private $attribute_alias = null;
     
     private $data_type = null;
+
+    private $data_type_custom_uxon = null;
     
     private $aggregate_function = null;
     
@@ -106,8 +108,15 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function setAttributeAlias($value)
     {
+        // Do not do anything if the attribute alias does not change
+        if ($this->attribute_alias === $value) {
+            return $this;
+        }
+        // If the attribute alias actually does change, reset the possible cached data type
+        if ($this->attribute_alias !== null) {
+            $this->data_type = null;
+        }
         $this->attribute_alias = $value;
-        $this->data_type = null;
         return $this;
     }
     
@@ -341,12 +350,20 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         if ($this->data_type === null) {
             $expr = $this->getValueExpression();
             switch (true) {
+                // If we have a value_data_type set in the UXON, use that
+                case $this->data_type_custom_uxon !== null:
+                    $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->data_type_custom_uxon);
+                    break;
+                // If we have a value AND that is an attribute or a formula, get the data type from the expression
                 case $expr && ! $expr->isEmpty() && ! $expr->isConstant() && ! $expr->isReference():
                     $this->data_type = $expr->getDataType();
                     break;
+                // If we don't have a value, but the widget is bound to an attribute, take the data type of the attribute
                 case $this->isBoundToAttribute():
-                    $this->data_type = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject())->getDataType();
+                    $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
+                    $this->data_type = $expr->getDataType();
                     break;
+                // If we have the value set to a widget link, use the data type of the link target
                 case $expr && $expr->isReference():                    
                     $target = $expr->getWidgetLink($this)->getTargetWidget();
                     if ($target instanceof iHaveValue && $expr->getWidgetLink($this)->getTargetColumnId() === null) {
@@ -355,9 +372,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                         $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
                     }
                     break;
+                // If we have a value set and non of the above worked, use the type of the value
                 case $expr:
                     $this->data_type = $expr->getDataType();
                     break;
+                // Final fallback is the base data type
                 default:
                     $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
                     break;
@@ -384,13 +403,13 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         switch (true) {
             case $data_type_or_string instanceof UxonObject:
-                $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $data_type_or_string);
+                $this->data_type_custom_uxon = $data_type_or_string;
                 break;
             case $data_type_or_string instanceof DataTypeInterface:
                 $this->data_type = $data_type_or_string;
                 break;
             case is_string($data_type_or_string):
-                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_string);
+                $this->data_type_custom_uxon = new UxonObject(['alias' => $data_type_or_string]);
                 break;
             default:
                 throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');

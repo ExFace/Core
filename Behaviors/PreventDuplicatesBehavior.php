@@ -25,7 +25,9 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPoint;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use Throwable;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
@@ -45,6 +47,12 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
  * You can customize the error message by setting `duplicate_error_code` (to load a message from
  * the messages model) or `duplicate_error_text` to specify a custom text directly without creating
  * a message in the metamodel.
+ * 
+ * ## Data authorization policies are ignored
+ * 
+ * When reading potential duplicates this behavior will ignore data authorization policies. This
+ * ensures, that even if users are only allowed to see subsets of data, duplicate checks still
+ * work globally!
  * 
  * ## Effects on data and other behaviors
  * 
@@ -617,7 +625,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 $logbook->addLine($attr->getAliasWithRelationPath(), 1);
                 $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);
             }
-            $missingAttrSheet->dataRead();
+            $missingAttrSheet = $this->readBypassingDataAuthorization($missingAttrSheet);
             $logbook->addLine('Read ' . $missingAttrSheet->countRows() . ' rows to get values of missing attributes', 1);
             
             $uidColName = $eventSheet->getUidColumnName();
@@ -717,7 +725,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $checkSheet->getFilters()->addNestedGroup($orFilterGroup);        
         
         // Read the data with the applied filters
-        $checkSheet->dataRead();
+        $checkSheet = $this->readBypassingDataAuthorization($checkSheet);
         
         $logbook->addDataSheet('Data in data source', $checkSheet);
         
@@ -736,6 +744,31 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $matcher->addMatcher($dataSourceMatcher);
         
         return $matcher;
+    }
+
+    /**
+     * Reads the given data sheet without applying data authorization policies
+     * 
+     * This is important for the PreventDuplicatesBehavior because duplicates must be prevented even if the
+     * current user is not allowed to see all the data! The behavior must throw an error even if the
+     * user would not see the potential duplicate if reading the data regularly.
+     * 
+     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $dataSheet
+     * @return DataSheetInterface
+     */
+    protected function readBypassingDataAuthorization(DataSheetInterface $dataSheet) : DataSheetInterface
+    {
+        $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        $wasDisabled = $dataAP->isDisabled();
+        $dataAP->setDisabled(true);
+        try {
+            $dataSheet->dataRead();
+        } catch (Throwable $e) {
+            throw $e;
+        } finally {
+            $dataAP->setDisabled($wasDisabled);
+        }
+        return $dataSheet;
     }
     
     /**

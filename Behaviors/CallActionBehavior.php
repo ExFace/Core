@@ -3,6 +3,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -23,21 +24,60 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Debug\DataLogBookInterface;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use Throwable;
 
 /**
- * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
+ * Calls an action when an event ist triggered for the behaviors object
  * 
- * For this behavior to work, it has to be attached to an object in the metamodel. The event-
- * alias and the action have to be configured in the behavior configuration.
+ * Being attached to a meta object, this behavior will trigger its action every time something happens
+ * to its object.
+ * 
+ * You can make the behavior listen to one `event_alias` or event multiple `event_aliases`. Additionally
+ * you can define configure it to call the action only on certain conditions via `only_if_attributes_change` 
+ * and `only_if_data_matches_conditions`.
+ * 
+ * It is also possible to make this behavior replace the original action, that triggers it. Use `event_prevent_default`
+ * to prevent the operation of on-before events.
+ * 
+ * ## Transaction handling and errors
+ * 
+ * By default, the action is performed within the same transaction as the original event (only if the
+ * event actually has a transaction, of course - like for data sheet events). However, you can explicitly
+ * commit the transaction before calling the action via `commit_before_action`.
+ * 
+ * Being part of the transaction also implies, that any error in the called action will roll back the
+ * entire transaction. If that is unwanted, but you do not want to commit the transaction either, set
+ * `error_if_action_fails` to FALSE.
+ * 
+ * ## Permissions and data authorization
+ * 
+ * By default, the called action will adhere to all authorization policies - just like when it would be
+ * called by the current user directly. 
+ * 
+ * However, there may be cases, when the action is supposed to run without any restrictions - for example,
+ * if the behavior should ensure, that things are written in the background, that the user does not have
+ * access to. Use `bypass_data_authorization_point` in this case to use elevated data access.
+ * 
+ * A common use case for this feature is reading missing data for some internal logic after the user has
+ * explicitly passed a business object out of his scope. E.g. passing an order to the next department would
+ * make it inaccessible for the current user while there still might be some on-update-behaviors that
+ * certainly need to read/write the data of this order.
  * 
  * ## Examples
  * 
- * ### Call an ection every time an instance of this object is created
+ * ### Call an ection every time an instance of this object is created or updated
  * 
  * ```
  * {
- *  "event_alias": "exface.Core.DataSheet.OnBeforeCreateData",
+ *  "event_aliass": [
+ *      "exface.Core.DataSheet.OnBeforeCreateData",
+ *      "exface.Core.DataSheet.OnBeforeUpdateData"
+ *  ],
  *  "action": {
  *      "alias": "..."
  *  }
@@ -83,6 +123,8 @@ class CallActionBehavior extends AbstractBehavior
     const PREVENT_DEFAULT_NEVER = 'never';
     
     const PREVENT_DEFAULT_IF_ACTION_CALLED = 'if_action_called';
+
+    use ICanBypassDataAuthorizationTrait;
     
     private $eventAliases = [];
     
@@ -335,30 +377,28 @@ class CallActionBehavior extends AbstractBehavior
                     $task = TaskFactory::createFromDataSheet($inputSheet);
                 }
                 
-                // Handle the task
+                // Use the tasks transaction if applicable
                 if ($event instanceof DataTransactionEventInterface) {
+                    $transaction = $event->getTransaction();
                     $logbook->addLine('Getting the transaction from the original event');
-                    $this->isHandling = true;
                     // Commit the transaction if explicitly requested in the behavior config.
                     // This might be the case if the action calls a external system, which 
                     // relies on the commited data
-                    if ($this->getCommitBeforeAction()) {
-                       $event->getTransaction()->commit(); 
+                    if ($this->willCommitBeforeAction()) {
+                        // FIXME wouldn't this prevent further commits???
+                       $transaction->commit(); 
                     } else {
                         // Otherwise disable autocommit for the action to force it to use
                         // the same transaction
                         $action->setAutocommit(false);
                     }
-                    $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
-                    $result = $action->handle($task, $event->getTransaction());
-                    $this->isHandling = false;
                 } else {
                     $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
-                    $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
-                    $this->isHandling = true;
-                    $result = $action->handle($task);
-                    $this->isHandling = false;
+                    $transaction = null;
                 }
+
+                // Handle the task
+                $result = $this->callAction($action, $task, $logbook, $transaction);
 
                 // Apply data changes if it is the same object
                 if ($result instanceof ResultDataInterface) {
@@ -398,6 +438,27 @@ class CallActionBehavior extends AbstractBehavior
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             $this->getWorkbench()->getLogger()->logException($e);
         }
+    }
+
+    protected function callAction(ActionInterface $action, TaskInterface $task, DataLogBookInterface $logbook, DataTransactionInterface $transaction = null) : ResultInterface
+    {
+        $this->isHandling = true;
+        $inputSheet = $task->getInputData();
+        $logbook->addLine('**Performing action**' . ($inputSheet !== null ? ' with input data ' . DataLogBook::buildTitleForData($inputSheet) : ''), -1);
+        
+        if ($this->willBypassDataAuthorizationPoint() === true) {
+            $logbook->addLine('BYPASS data authorization because `bypass_data_authorization_point` is `' . ($this->willBypassDataAuthorizationPoint() ?? 'null') . '`');
+            $callback = function() use ($action, $task, $transaction) {
+                return $action->handle($task, $transaction);
+            };
+            $result = $this->bypassDataAuthorization($callback);
+        } else {
+            $logbook->addLine('Enforcing data authorization inside the action regularly because `bypass_data_authorization_point` is `' . ($this->willBypassDataAuthorizationPoint() ?? 'null') . '`');
+            $result = $action->handle($task, $transaction);
+        }
+
+        $this->isHandling = false;
+        return $result;
     }
     
     /**
@@ -553,7 +614,7 @@ class CallActionBehavior extends AbstractBehavior
         return $this;
     }
     
-    protected function getCommitBeforeAction() : bool
+    protected function willCommitBeforeAction() : bool
     {
         return $this->commitBeforeAction;
     }

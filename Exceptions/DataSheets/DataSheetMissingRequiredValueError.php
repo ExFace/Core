@@ -1,9 +1,8 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
 
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\CommonLogic\Log\Logger;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown if a value required for some operation on the data sheet is missing 
@@ -63,6 +62,6 @@ class DataSheetMissingRequiredValueError extends DataSheetInvalidValueError
      */
     public function getDefaultLogLevel()
     {
-        return Logger::ERROR;
+        return LoggerInterface::ERROR;
     }
 }
