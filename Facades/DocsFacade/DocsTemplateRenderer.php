@@ -20,7 +20,7 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
             $startTag = $phData['comment'];
             $endTag = '<!-- END ' . $phData['key'] . ' -->';
     
-            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph], $phData['offset']);
+            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph] ?? '', $phData['offset']);
         }
 
         return $markdown;
