@@ -1883,18 +1883,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlJoinSide($data_address, $table_alias)
     {
         $join_side = $data_address;
-        if ($this->isSqlStatement($join_side)) {
-            $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
-            if (! empty(StringDataType::findPlaceholders($join_side))) {
-                throw new QueryBuilderException('Cannot use placeholders in SQL JOIN keys: "' . $join_side . '"');
-            }
-            // IDEA Allow placeholders in JOINed data addresses. This would allow to use compound
-            // attributes with placeholders for JOINs very effectively. However, replacePlaceholdersInSqlAddress()
-            // will need the correct base object then - a different one on each side. Not quite sure
-            // how to do this.
-            // $join_side = $this->replacePlaceholdersInSqlAddress($join_side, null, ['~alias' => $table_alias], $table_alias);
-        } else {
-            $join_side = $table_alias . $this->getAliasDelim() . $join_side;
+        switch (true) {
+            // Custom SQL statements
+            case $this->isSqlStatement($join_side):
+                $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
+                if (! empty(StringDataType::findPlaceholders($join_side))) {
+                    throw new QueryBuilderException('Cannot use placeholders in SQL JOIN keys: "' . $join_side . '"');
+                }
+                // IDEA Allow placeholders in JOINed data addresses. This would allow to use compound
+                // attributes with placeholders for JOINs very effectively. However, replacePlaceholdersInSqlAddress()
+                // will need the correct base object then - a different one on each side. Not quite sure
+                // how to do this.
+                // $join_side = $this->replacePlaceholdersInSqlAddress($join_side, null, ['~alias' => $table_alias], $table_alias);
+                break;
+            // JSON address as column::$.path
+            case $this->isJsonDataAddress($data_address):
+                list ($address, $jsonPath) = $this->parseJsonDataAddress($join_side);
+                $join_side = $this->buildSqlJsonRead($table_alias . '.' . $address, $jsonPath);
+                break;
+            // SQL column names
+            default:
+                $join_side = $table_alias . $this->getAliasDelim() . $join_side;
+                break;
         }
         return $join_side;
     }
