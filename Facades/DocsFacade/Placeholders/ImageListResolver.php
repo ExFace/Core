@@ -78,8 +78,7 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
         foreach ($files as $filePath) {
     
             $originalHtml = file_get_contents($filePath);
-            $fileName = basename($filePath);
-            $fileBase = pathinfo($fileName, PATHINFO_FILENAME);
+            $relativePath = $this->relativePath($filePath);
             if (empty(trim($originalHtml))) {
                 continue;
             }
@@ -105,7 +104,7 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
                 $existingId = $container->getAttribute('id');
                 // create Id if there is not already
                 if (!$existingId) {
-                    $newId = $this->findNextImageContainerId($updatedHtml, $fileBase);
+                    $newId = $this->findNextImageContainerId($updatedHtml, $relativePath);
                     $container->setAttribute('id', $newId);
                     $existingId = $newId;
                 }
@@ -146,15 +145,17 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
     }
 
     function findNextImageContainerId(string $markdown, string $fileBase): string 
-    {        
+    {
         $pattern = '/<div\s+class="image-container"\s+id="' . preg_quote($fileBase, '/') . '-image-(\d+)"/i';
         preg_match_all($pattern, $markdown, $matches);
-    
+        
+        $relative = str_replace('.md', '', $fileBase);
+        $relative = str_replace(['/', '\\'], '-', $relative);
         if (empty($matches[1])) {
-            return $fileBase . '-image-' . 1;
+            return $relative . '-image-' . 1;
         }
     
         $numbers = array_map('intval', $matches[1]);
-        return $fileBase . '-image-' . max($numbers) + 1;
+        return $relative . '-image-' . max($numbers) + 1;
     }
 }
