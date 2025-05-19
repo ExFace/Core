@@ -27,10 +27,12 @@ class ImageNumberResolver extends AbstractPlaceholderResolver implements Placeho
             
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
         $filteredNames = $this->filterPlaceholders($names);
+        $order = 0;
         foreach ($placeholders as $i => $placeholder) {
             if (in_array($placeholder['name'], $filteredNames)) {
-                $val = $this->countImagesAndUpdate($markdownStructure, $this->pagePath, $i);
+                $val = $this->countImagesAndUpdate($markdownStructure, $this->pagePath, $order);
                 $vals[$i] = $val;
+                $order++;
             }
         }
         return $vals;

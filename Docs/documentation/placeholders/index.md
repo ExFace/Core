@@ -30,3 +30,4 @@ If you believe there is an error in the generated content, please contact the so
 - [ImageCaptionNr](ImageCaptionNumberPlaceholder.md)
 - [ImageList](ImageListPlaceholder.md)
 - [NavButtons](NavButtonsPlaceholder.md)
+- [ImageRef](ImageReferencePlaceholder.md)
