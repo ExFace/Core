@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Facades\DocsFacade\DocsTemplateRenderer;
 use exface\Core\Facades\DocsFacade\Placeholders\ImageListResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\ImageNumberResolver;
+use exface\Core\Facades\DocsFacade\Placeholders\ImageReferenceResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\NavButtonResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\SubPageListResolver;
 use exface\Core\Interfaces\AppExporterInterface;
@@ -72,9 +73,10 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
 
         foreach ($this->getMarkdownFiles($rootPath) as $file) {
             $fileRenderer = $baseRenderer->copy();
+            $fileRenderer->addPlaceholder(new ImageNumberResolver($file));
             $fileRenderer->addPlaceholder(new SubPageListResolver($file));
             $fileRenderer->addPlaceholder(new NavButtonResolver($file));
-            $fileRenderer->addPlaceholder(new ImageNumberResolver($file));
+            $fileRenderer->addPlaceholder(new ImageReferenceResolver($file));
             $fileRenderer->addPlaceholder(new ImageListResolver($file));
             // TODO add other placeholder classes here
             $rendered = $fileRenderer->render($file);
