@@ -776,8 +776,8 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
      * Direction of default soring if this attribute is one of the default sorting attributes of the object.
      * 
      * @uxon-property default_sorter_dir
-     * @uxon-type string
-     * @uxon-template asc
+     * @uxon-type [ASC,DESC]
+     * @uxon-template ASC
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()
