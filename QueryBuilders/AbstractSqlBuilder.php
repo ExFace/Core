@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
