@@ -1,0 +1,109 @@
+{
+    "object_alias": "exface.Core.MUTATION_TYPE",
+    "columns": [
+        {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "MUTATION_POINT_FILE",
+            "attribute_alias": "MUTATION_POINT_FILE"
+        },
+        {
+            "name": "MUTATION_PROTOTYPE_FILE",
+            "attribute_alias": "MUTATION_PROTOTYPE_FILE"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "MUTATION_TARGET",
+            "attribute_alias": "MUTATION_TARGET"
+        }
+    ],
+    "rows": [
+        {
+            "_EXPORT_SUMMARY": "Action mutation",
+            "CREATED_ON": "2025-05-16 11:38:15",
+            "MODIFIED_ON": "2025-05-17 23:37:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f084227ddaad428422025041000001",
+            "MUTATION_POINT_FILE": "exface/Core/Mutations/MutationPoints/ObjectActionMutationPoint.php",
+            "MUTATION_PROTOTYPE_FILE": "exface/Core/Mutations/Prototypes/ObjectActionMutation.php",
+            "DESCRIPTION": "",
+            "NAME": "Action mutation",
+            "APP": "0x31000000000000000000000000000000",
+            "MUTATION_TARGET": "0x11f0813f222376e4813f025041000001"
+        },
+        {
+            "_EXPORT_SUMMARY": "Additional action",
+            "CREATED_ON": "2025-05-16 11:39:24",
+            "MODIFIED_ON": "2025-05-17 23:37:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f09992a72949a69992025041000001",
+            "MUTATION_POINT_FILE": "exface/Core/Mutations/MutationPoints/ObjectActionMutationPoint.php",
+            "MUTATION_PROTOTYPE_FILE": "exface/Core/Mutations/Prototypes/ObjectActionAddition.php",
+            "DESCRIPTION": "",
+            "NAME": "Additional action",
+            "APP": "0x31000000000000000000000000000000",
+            "MUTATION_TARGET": "0x11f0813f222376e4813f025041000001"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.MUTATION_TYPE",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.MUTATION_TYPE"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

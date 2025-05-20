@@ -121,6 +121,10 @@ class MetaModelInstaller extends DataInstaller
         $this->addDataOfObject('exface.Core.EXTERNAL_SYSTEM', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.ATTRIBUTE_GROUP', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.UXON_SNIPPET', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.MUTATION_TARGET', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.MUTATION_TYPE', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.MUTATION_SET', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.MUTATION', 'CREATED_ON', 'MUTATION_SET__APP');
     }
     
     /**
