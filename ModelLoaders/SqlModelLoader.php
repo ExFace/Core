@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\ModelLoaders;
 
+use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
 use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
@@ -20,6 +22,8 @@ use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Mutations\MutationPointInterface;
+use exface\Core\Interfaces\Mutations\MutationTargetInterface;
 use exface\Core\Interfaces\Selectors\UxonSnippetSelectorInterface;
 use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -102,6 +106,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
 use exface\Core\DataTypes\MessageCodeDataType;
+use exface\Core\Mutations\MetaObjectUidMutationTarget;
 use Throwable;
 
 /**
@@ -140,6 +145,8 @@ class SqlModelLoader implements ModelLoaderInterface
     private $auth_policies_loaded = null;
     
     private $apps_loaded = null;
+
+    private $mutations_loaded = null;
 
     private $compatibilityMode = [
         'no_attribute_groups' => false
@@ -1010,6 +1017,7 @@ SQL;
         $query = $this->getDataConnection()->runSql('
                 /* Load action */
 				SELECT
+					' . $this->buildSqlUuidSelector('oa.oid') . ' AS oid,
 					' . $this->buildSqlUuidSelector('oa.object_oid') . ' AS object_oid,
 					oa.action, 
 					oa.alias, 
@@ -1033,7 +1041,7 @@ SQL;
                     $action_uxon->setProperty('hint', $row['short_description']);
                 }
                 
-                $this->getWorkbench()->eventManager()->dispatch(new OnBeforeMetaObjectActionLoadedEvent($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget));
+                $this->getWorkbench()->eventManager()->dispatch(new OnBeforeMetaObjectActionLoadedEvent($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget, $row['oid']));
                 
                 $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget);
                 
@@ -2345,5 +2353,38 @@ SQL;
             $this->getWorkbench()->getLogger()->logException($exception);
         }
         return $useCompatibility;
+    }
+
+    public function loadMutations(MutationPointInterface $mutationPoint, MutationTargetInterface $target) : array
+    {
+        if (null === $this->mutations_loaded) {
+            $sql = <<<SQL
+SELECT 
+    m.*,
+    mt.mutation_prototype_file
+FROM exf_mutation m
+    INNER JOIN exf_mutation_type mt ON mt.oid = m.mutation_type_oid
+-- WHERE JSON_VALUE(m.targets_json, '$."{$target->getTargetKey()}"') = '{$target->getTargetValue()}'
+SQL;
+            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+            $this->mutations_loaded = [];
+            foreach ($rows as $row) {
+                $this->mutations_loaded[$row['targets_json']][] = $row;
+            }
+        }
+        $mutations = [];
+        $targetJson = '{"' . $target->getTargetKey() . '": "' . $target->getTargetValue() . '"}';
+        foreach ($this->mutations_loaded[$targetJson] as $row) {
+            $uxon = UxonObject::fromJson($row['config_uxon']);
+            $file = $row['mutation_prototype_file'];
+            $class = PhpFilePathDataType::findClassInFile($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $file);
+            /** @var \exface\Core\CommonLogic\Mutations\AbstractMutation $mutation */
+            $mutation = new $class($this->getWorkbench(), $uxon);
+            if ($row['enabled_flag'] === 0) {
+                $mutation->setDisabled(true);
+            }
+            $mutations[] = $mutation;
+        }
+        return $mutations;
     }
 }
