@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -1636,7 +1637,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // Can't just list binary values - need to transform them to strings first!
         $aggrFunc = $aggregator->getFunction()->__toString();
-        if (strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '','binary') === 0 && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+        if ($this->isBinaryColumn($qpart) && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc == AggregatorFunctionsDataType::LIST_DISTINCT)) {
             $select = $this->buildSqlSelectBinaryAsHEX($select);
         }
         
@@ -1842,10 +1843,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $join = implode(' AND ', $compoundJoins);
         } else {
+            // Build the left side of the JOIN
             $right_obj = $rightKeyAttr->getObject();
-            $left_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($leftKeyAttr), $leftTableAlias);
-            $right_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($rightKeyAttr), $rightTableAlias);
-            $join .=  $left_join_on . ' = ' . $right_join_on;
+            $leftAddress = $this->buildSqlDataAddress($leftKeyAttr);
+            $leftJoinOn = $this->buildSqlJoinSide($leftAddress, $leftTableAlias);
+            // If this side is a binary and the other side is not, select the binary as a HEX string
+            if ($this->isBinaryColumn($leftKeyAttr) && ! $this->isBinaryColumn($rightKeyAttr)) {
+                $leftJoinOn = $this->buildSqlSelectBinaryAsHEX($leftJoinOn);
+            }
+
+            // Build the right side of the JOIN
+            $rightAddress = $this->buildSqlDataAddress($rightKeyAttr);
+            $rightJoinOn = $this->buildSqlJoinSide($rightAddress, $rightTableAlias);
+            // If this side is a binary and the other side is not, select the binary as a HEX string
+            if ($this->isBinaryColumn($rightKeyAttr) && ! $this->isBinaryColumn($leftKeyAttr)) {
+                $rightJoinOn = $this->buildSqlSelectBinaryAsHEX($rightJoinOn);
+            }
+
+            // Combine to a JOIN
+            $join .=  $leftJoinOn . ' = ' . $rightJoinOn;
+
+            // Add a custom WHERE if the right side has one. No need to add a custom WHERE for the left side
+            // as it will be part of the regular WHERE of the query
             if ($customSelectWhere = $right_obj->getDataAddressProperty(self::DAP_SQL_SELECT_WHERE)) {
                 if (mb_stripos($customSelectWhere, 'SELECT ') === false) {
                     $join .= ' AND ' . $this->replacePlaceholdersInSqlAddress($customSelectWhere, null, ['~alias' => $rightTableAlias]);
@@ -2869,7 +2888,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // to use UUIDs in most custom SQL SELECTs very easily. On the other hand, it will probably
             // break SQLs where the value is supposed to be raw binary. Not sure, if this is
             // always a good idea, but it certainly helps in most cases!
-            if(strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '', 'binary' === 0)) {
+            if($this->isBinaryColumn($qpart)) {
                 $ph_select = $this->buildSqlSelectBinaryAsHEX($ph_select);
             }
 
@@ -3374,5 +3393,16 @@ SQL;
     protected function buildSqlJsonWrite(string $address, string $jsonPath, string $escapedValue) : string
     {
         return "JSON_SET({$address}, '{$jsonPath}', $escapedValue)";
+    }
+
+    /**
+     * Returns TRUE if the given query part or attribute reference a binary column and FALSE otherwise
+     *
+     * @param MetaAttributeInterface|QueryPartAttribute $qpartOrAttr
+     * @return bool
+     */
+    protected function isBinaryColumn(MetaAttributeInterface|QueryPartAttribute $qpartOrAttr) : bool
+    {
+        return strcasecmp(($qpartOrAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? ''), 'binary') === 0;
     }
 }
