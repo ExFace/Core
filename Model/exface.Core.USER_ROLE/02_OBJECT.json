@@ -290,11 +290,11 @@
                                                 "icon": "minus"
                                             },
                                             {
-                                                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                                                "action_alias": "exface.Core.ShowObjectEditDialog",
                                                 "bind_to_double_click": true
                                             },
                                             {
-                                                "action_alias": "exface.Core.ShowObjectEditDialog"
+                                                "action_alias": "exface.core.ShowObjectCopyDialog"
                                             }
                                         ]
                                     }
