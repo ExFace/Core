@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Placeholders;
 
-use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
-class ImageReferenceResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
+class ImageReferenceResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
     
     const OPTION_IMAGE_ID = "image-id";
