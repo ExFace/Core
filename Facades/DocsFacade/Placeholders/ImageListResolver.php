@@ -3,14 +3,9 @@ namespace exface\Core\Facades\DocsFacade\Placeholders;
 
 use DOMDocument;
 use DOMXPath;
-use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 class ImageListResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
 {
@@ -45,7 +40,7 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
             if (in_array($placeholder['name'], $filteredNames)) {
                 $options = $placeholder['options'];
                 parse_str($options, $optionsArray);
-            	$markdownStructure = $this->getOrderedMarkdownFiles($rootDirectory);
+            	$markdownStructure = $this->getFlattenMarkdownFiles($rootDirectory);
                 $val = $this->renderMarkdownList($markdownStructure, listType: $this->getOption('list-type',$optionsArray));
                 $vals[$i] = $val;
             }
@@ -62,58 +57,7 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
         }
         return $value ?? $default;
     }
-    
-    function getOrderedMarkdownFiles($rootDir) : array
-    {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($rootDir, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-
-        $folderGroups = [];
-
-        $sorter = new RowDataArraySorter();
-        $sorter->addCriteria('title', SORT_ASC);
-        foreach ($iterator as $fileInfo) {
-            if ($fileInfo->isDir()) continue;
-            if (strtolower($fileInfo->getExtension()) !== 'md') continue;
-
-            $path = $fileInfo->getPathname();
-            $folder = dirname($path);
-
-            if (!isset($folderGroups[$folder])) {
-                $folderGroups[$folder] = [
-                    'index' => null,
-                    'files' => [],
-                ];
-            }
-
-            if (strtolower($fileInfo->getFilename()) === 'index.md') {
-                $folderGroups[$folder]['index'] = $path;
-            } else {
-                $title = MarkdownDataType::findHeadOfFile($path);
-                $folderGroups[$folder]['files'][] = [
-                    'path' => $path,
-                    'title' => $title
-                ];
-            }
-        }
-
-        foreach ($folderGroups as $group) {
-            if ($group['index']) {
-                $result[] = $group['index'];
-            }
-
-            $group['files'] = $sorter->sort($group['files']);
-
-            foreach ($group['files'] as $item) {
-                $result[] = $item['path'];
-            }
-        }
-
-        return $result;
-    }
-    
+        
     function renderMarkdownList($files, $listType) {
         $output = '';
         $listStyle = '';
@@ -134,8 +78,7 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
         foreach ($files as $filePath) {
     
             $originalHtml = file_get_contents($filePath);
-            $fileName = basename($filePath);
-            $fileBase = pathinfo($fileName, PATHINFO_FILENAME);
+            $relativePath = $this->relativePath($filePath);
             if (empty(trim($originalHtml))) {
                 continue;
             }
@@ -161,10 +104,10 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
                 $existingId = $container->getAttribute('id');
                 // create Id if there is not already
                 if (!$existingId) {
-                    $newId = $this->findNextImageContainerId($updatedHtml, $fileBase);
+                    $newId = $this->findNextImageContainerId($updatedHtml, $relativePath);
                     $container->setAttribute('id', $newId);
                     $existingId = $newId;
-                }    
+                }
     
                 $captionDiv = $xpath->query('.//div[contains(@class, "caption")]', $container)->item(0);
                 if ($captionDiv) {
@@ -202,24 +145,17 @@ class ImageListResolver extends AbstractPlaceholderResolver implements Placehold
     }
 
     function findNextImageContainerId(string $markdown, string $fileBase): string 
-    {        
+    {
         $pattern = '/<div\s+class="image-container"\s+id="' . preg_quote($fileBase, '/') . '-image-(\d+)"/i';
         preg_match_all($pattern, $markdown, $matches);
-    
+        
+        $relative = str_replace('.md', '', $fileBase);
+        $relative = str_replace(['/', '\\'], '-', $relative);
         if (empty($matches[1])) {
-            return 1; // Hiç yoksa 1 ile başla
+            return $relative . '-image-' . 1;
         }
     
         $numbers = array_map('intval', $matches[1]);
-        return $fileBase . '-image-' . max($numbers) + 1;
-    }
-
-    protected function relativePath(string $fullPath): string
-    {
-        $marker = 'Docs';
-        $normalizedFull = FilePathDataType::normalize($fullPath);
-        $parts = explode("/$marker/", $normalizedFull);
-
-        return isset($parts[1]) ? $parts[1] : null;
+        return $relative . '-image-' . max($numbers) + 1;
     }
 }

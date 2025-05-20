@@ -25,6 +25,7 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
 
         return $markdown;
 	}
+    
     function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset): string
     {
         $startPos = strpos($markdown, $startTag, $offset);
@@ -52,7 +53,7 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     protected function getPlaceholders(string $tpl) : array
     {
         // Regex to extract the comment block (e.g., <!-- ... -->)
-        $regex = '/<!-- BEGIN (([a-zA-Z0-9_]+):?\s*(.*)) -->/';
+        $regex = '/<!--\s*BEGIN\s+((\w+)(?::([^\s]*))?)\s*-->/i';
         $matches = [
             // 0 => full match
             // 1 => placeholder with options
@@ -65,8 +66,8 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         foreach ($matches[0] as $i => $match) {
             [$fullMatch, $offset] = $match;
             $phs[] = [
-                'key' => $matches[2][$i][0], // e.g. 'ImageCaptionNr'
-                'name' => $matches[1][$i][0], // e.g. 'ImageCaptionNr:'
+                'key' => $matches[2][$i][0],
+                'name' => $matches[1][$i][0],
                 'options' => trim($matches[3][$i][0]),
                 'comment' => $fullMatch,
                 'offset' => $offset

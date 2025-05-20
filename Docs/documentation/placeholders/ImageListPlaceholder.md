@@ -11,7 +11,7 @@ It lists each image found in a `div` with the class `image-container`, including
 - In each file, it locates all `div` blocks with the class `image-container`.
 - Each of these blocks must have a **unique `id`** to enable linking.
   - If an `id` is missing, it will be automatically added using the format:  
-    `filename-image-NR`  
+    `foldername-filename-image-NR`  
     where `NR` is the image number **within that file**.
   - If an `id` is already present, it is preserved.
   - **Warning**: If manually assigning `id`s, ensure they are globally unique across all documentation files.
