@@ -61,7 +61,8 @@
         "npm-asset/eruda": "^2",
         "justinrainbow/json-schema": "^5.2",
         "composer/semver": "^3",
-        "softcreatr/jsonpath": "~0.7"
+        "softcreatr/jsonpath": "~0.7",
+        "galbar/jsonpath": "^3"
     },
     "bin": [
         "Facades/ConsoleFacade/bin/action"
