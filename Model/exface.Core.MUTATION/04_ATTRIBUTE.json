@@ -177,9 +177,9 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Config UXON [CONFIG_UXON]",
+            "_EXPORT_SUMMARY": "Mutation configuration [CONFIG_UXON]",
             "CREATED_ON": "2025-05-16 11:17:23",
-            "MODIFIED_ON": "2025-05-18 12:54:49",
+            "MODIFIED_ON": "2025-05-20 20:51:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f087a09364c51087a0025041000001",
@@ -196,7 +196,7 @@
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Config UXON",
+            "NAME": "Mutation configuration",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,

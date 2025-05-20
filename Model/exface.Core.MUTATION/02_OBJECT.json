@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Mutation [exface.Core.MUTATION]",
             "CREATED_ON": "2025-05-16 11:17:22",
-            "MODIFIED_ON": "2025-05-19 13:09:43",
+            "MODIFIED_ON": "2025-05-20 20:48:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f09ca793446fe09ca7025041000001",
@@ -146,7 +146,7 @@
                         "widgets": [
                             {
                                 "attribute_alias": "DESCRIPTION",
-                                "height": 5,
+                                "height": 4,
                                 "hide_caption": true
                             }
                         ]
