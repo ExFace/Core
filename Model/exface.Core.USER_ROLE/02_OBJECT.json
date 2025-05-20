@@ -245,10 +245,10 @@
                                                 "attribute_alias": "EFFECT"
                                             },
                                             {
-                                                "attribute_alias": "DISABLED_FLAG"
+                                                "attribute_alias": "NAME"
                                             },
                                             {
-                                                "attribute_alias": "NAME"
+                                                "attribute_alias": "DISABLED_FLAG"
                                             },
                                             {
                                                 "attribute_alias": "TARGET_PAGE_GROUP__LABEL"
