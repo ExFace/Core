@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Placeholders;
 
-use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
-class ImageNumberResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
+class ImageNumberResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
     private $pagePath = null;
 
