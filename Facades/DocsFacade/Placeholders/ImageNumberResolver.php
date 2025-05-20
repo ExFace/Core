@@ -1,14 +1,9 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Placeholders;
 
-use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 class ImageNumberResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
 {
@@ -28,85 +23,39 @@ class ImageNumberResolver extends AbstractPlaceholderResolver implements Placeho
     {
         $vals = [];
         $rootDirectory = $this->getDocsPath();
-        $markdownStructure = $this->getOrderedMarkdownFiles($rootDirectory);
+        $markdownStructure = $this->getFlattenMarkdownFiles($rootDirectory);
             
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
         $filteredNames = $this->filterPlaceholders($names);
+        $order = 0;
         foreach ($placeholders as $i => $placeholder) {
             if (in_array($placeholder['name'], $filteredNames)) {
-                $val = $this->countImagesAndUpdate($markdownStructure, $this->pagePath, $i);
+                $val = $this->countImagesAndUpdate($markdownStructure, $this->pagePath, $order);
                 $vals[$i] = $val;
+                $order++;
             }
         }
         return $vals;
     }
-
-    function getOrderedMarkdownFiles($rootDir) : array
-    {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($rootDir, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-
-        $folderGroups = [];
-
-        $sorter = new RowDataArraySorter();
-        $sorter->addCriteria('title', SORT_ASC);
-        foreach ($iterator as $fileInfo) {
-            if ($fileInfo->isDir()) continue;
-            if (strtolower($fileInfo->getExtension()) !== 'md') continue;
-
-            $path = $fileInfo->getPathname();
-            $folder = dirname($path);
-
-            if (!isset($folderGroups[$folder])) {
-                $folderGroups[$folder] = [
-                    'index' => null,
-                    'files' => [],
-                ];
-            }
-
-            if (strtolower($fileInfo->getFilename()) === 'index.md') {
-                $folderGroups[$folder]['index'] = $path;
-            } else {
-                $title = MarkdownDataType::findHeadOfFile($path);
-                $folderGroups[$folder]['files'][] = [
-                    'path' => $path,
-                    'title' => $title
-                ];
-            }
-        }
-
-        foreach ($folderGroups as $group) {
-            if ($group['index']) {
-                $result[] = $group['index'];
-            }
-
-            $group['files'] = $sorter->sort($group['files']);
-
-            foreach ($group['files'] as $item) {
-                $result[] = $item['path'];
-            }
-        }
-
-        return $result;
-    }
     
     function countImagesAndUpdate($files, $targetFile, $order) {
         $currentAbbildungNumber = 1;
+        
         foreach ($files as $file) {
             $content = file_get_contents($file);
             $pattern = '/
                         <div\s+class="image-container"(?:\s+id="[^"]*")?>
-                        (?:\s*<img[^>]*>)+
+                        (?:
+                            \s*<img[^>]*>\s*
+                            (?:<br\s*\/?>\s*)*
+                        )+
                         \s*<div\s+class="caption">\s*
                         (?:<!--\s*BEGIN\s+ImageCaptionNr:\s*-->\s*)?
-                        Abbildung\s+(\d+):\s*
+                        (?:Abbildung\s+(\d+):)?\s*
                         (?:<!--\s*END\s+ImageCaptionNr\s*-->\s*)?
                         (.*?)
                         <\/div>\s*<\/div>
                         /six';
-
 
             preg_match_all($pattern, $content, $matches);
             
