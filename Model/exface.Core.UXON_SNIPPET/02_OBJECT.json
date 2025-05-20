@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "UXON snippet [exface.Core.UXON_SNIPPET]",
             "CREATED_ON": "2025-03-21 08:44:34",
-            "MODIFIED_ON": "2025-03-21 10:03:12",
+            "MODIFIED_ON": "2025-05-20 20:50:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f098e3552728e098e3025041000001",
@@ -106,48 +106,59 @@
                 "widget_type": "Dialog",
                 "widgets": [
                     {
-                        "attribute_alias": "NAME"
-                    },
-                    {
-                        "attribute_alias": "DESCRIPTION",
-                        "height": 6
-                    },
-                    {
-                        "attribute_alias": "ALIAS"
-                    },
-                    {
-                        "attribute_alias": "APP"
-                    },
-                    {
-                        "attribute_alias": "OBJECT",
-                        "id": "object_selector"
-                    },
-                    {
-                        "attribute_alias": "PROTOTYPE",
-                        "id": "prototype_selector"
-                    },
-                    {
-                        "attribute_alias": "UXON_SCHEMA",
-                        "disabled_if": {
-                            "operator": "AND",
-                            "conditions": [
-                                {
-                                    "value_left": "=prototype_selector",
-                                    "comparator": "!=",
-                                    "value_right": "Generic"
+                        "widget_type": "WidgetGroup",
+                        "widgets": [
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "ALIAS"
+                            },
+                            {
+                                "attribute_alias": "APP"
+                            },
+                            {
+                                "attribute_alias": "OBJECT",
+                                "id": "object_selector"
+                            },
+                            {
+                                "attribute_alias": "PROTOTYPE",
+                                "id": "prototype_selector"
+                            },
+                            {
+                                "attribute_alias": "UXON_SCHEMA",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=prototype_selector",
+                                            "comparator": "!=",
+                                            "value_right": "Generic"
+                                        }
+                                    ]
+                                },
+                                "required_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=prototype_selector",
+                                            "comparator": "==",
+                                            "value_right": "Generic"
+                                        }
+                                    ]
                                 }
-                            ]
-                        },
-                        "required_if": {
-                            "operator": "AND",
-                            "conditions": [
-                                {
-                                    "value_left": "=prototype_selector",
-                                    "comparator": "==",
-                                    "value_right": "Generic"
-                                }
-                            ]
-                        }
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Description",
+                        "widgets": [
+                            {
+                                "attribute_alias": "DESCRIPTION",
+                                "height": 5
+                            }
+                        ]
                     },
                     {
                         "attribute_alias": "UXON",
