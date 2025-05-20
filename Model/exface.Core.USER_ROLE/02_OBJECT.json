@@ -245,6 +245,9 @@
                                                 "attribute_alias": "EFFECT"
                                             },
                                             {
+                                                "attribute_alias": "DISABLED_FLAG"
+                                            },
+                                            {
                                                 "attribute_alias": "NAME"
                                             },
                                             {
@@ -295,6 +298,12 @@
                                             },
                                             {
                                                 "action_alias": "exface.core.ShowObjectCopyDialog"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.EnableAuthorizationPolicy"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DisableAuthorizationPolicy"
                                             }
                                         ]
                                     }
