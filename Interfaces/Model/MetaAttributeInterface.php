@@ -56,11 +56,11 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     
     /**
      *
-     * @param string|DataTypeInterface|UxonObject|\exface\Core\Interfaces\Selectors\DataTypeSelectorInterface $object_or_name
+     * @param string|DataTypeInterface|UxonObject|\exface\Core\Interfaces\Selectors\DataTypeSelectorInterface $instanceOrSelectorOrUxon
      * @throws UnexpectedValueException
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function setDataType($instance_or_resolvable_string);
+    public function setDataType($instanceOrSelectorOrUxon);
     
     public function getDefaultDisplayOrder();
     
@@ -134,10 +134,10 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     
     /**
      *
-     * @param string $expression
+     * @param string $expressionString
      * @return MetaAttributeInterface
      */
-    public function setCalculation(string $expression) : MetaAttributeInterface;
+    public function setCalculation(string $expressionString) : MetaAttributeInterface;
     
     /**
      * Returns TURE if this attribute has a calculation expression to be applied on data source values.
