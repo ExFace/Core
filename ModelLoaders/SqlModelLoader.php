@@ -2355,6 +2355,10 @@ SQL;
         return $useCompatibility;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ModelLoaderInterface::loadMutations()
+     */
     public function loadMutations(MutationPointInterface $mutationPoint, MutationTargetInterface $target) : array
     {
         if (null === $this->mutations_loaded) {
@@ -2376,6 +2380,7 @@ SQL;
         $targetJson = '{"' . $target->getTargetKey() . '": "' . $target->getTargetValue() . '"}';
         foreach ($this->mutations_loaded[$targetJson] as $row) {
             $uxon = UxonObject::fromJson($row['config_uxon']);
+            $uxon->setProperty('name', $row['name']);
             $file = $row['mutation_prototype_file'];
             $class = PhpFilePathDataType::findClassInFile($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $file);
             /** @var \exface\Core\CommonLogic\Mutations\AbstractMutation $mutation */

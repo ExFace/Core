@@ -6,6 +6,9 @@ use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
+use exface\Core\Interfaces\Mutations\MutationInterface;
+use exface\Core\Interfaces\Mutations\MutationPointInterface;
+use exface\Core\Interfaces\Mutations\MutationTargetInterface;
 use exface\Core\Interfaces\Selectors\UxonSnippetSelectorInterface;
 use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -270,4 +273,11 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return void
      */
     public function loadSnippet(UxonSnippetSelectorInterface $selector) : UxonSnippetInterface;
+
+    /**
+     * @param MutationPointInterface $mutationPoint
+     * @param MutationTargetInterface $target
+     * @return MutationInterface[]
+     */
+    public function loadMutations(MutationPointInterface $mutationPoint, MutationTargetInterface $target) : array;
 }

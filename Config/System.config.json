@@ -96,6 +96,7 @@
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel"
     	],
     	"exface.Core.Model.OnBeforeMetaObjectActionLoaded": [
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectActionMutationPoint::onActionLoadedApplyMutations",
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
     	],
         "exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded": [
