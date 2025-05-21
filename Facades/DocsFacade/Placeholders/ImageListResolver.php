@@ -3,11 +3,11 @@ namespace exface\Core\Facades\DocsFacade\Placeholders;
 
 use DOMDocument;
 use DOMXPath;
-use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
-class ImageListResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
+class ImageListResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
     const OPTION_LIST_TYPE = "list-type";
 

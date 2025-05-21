@@ -167,64 +167,6 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
-     * Make this attribute a relation
-     *
-     * Similarly to the object editor UI, you can set additional relation properties here:
-     *
-     * ```
-     * {
-     *     "relation": {
-     *          "related_object_alias": "my.App.OBJ_ALIAS",
-     *          "related_object_key_attribute_alias": "NON_UID_ATTRIBUTE",
-     *          "relation_cardinality": "N1",
-     *          "copy_with_related_object": false,
-     *          "delete_with_related_object": true
-     *     }
-     * }
-     * ```
-     *
-     * @uxon-property relation
-     * @uxon-type \exface\Core\CommonLogic\Model\Relation
-     * @uxon-template {"related_object_alias": ""}
-     *
-     * @param UxonObject $uxon
-     * @return MetaAttributeInterface
-     */
-    protected function setRelation(UxonObject $uxon) : MetaAttributeInterface
-    {
-        $workbench = $this->getWorkbench();
-        // Relation cardinality in the DB is empty if it's a regular n-to-1 relation!
-        $cardinality = $uxon->hasProperty('relation_cardinality') ? RelationCardinalityDataType::fromValue($workbench, $uxon->getProperty('relation_cardinality')) : RelationCardinalityDataType::N_TO_ONE($workbench);
-
-        $rightSelector = new MetaObjectSelector($this->getWorkbench(), $uxon->getProperty('related_object_alias'));
-        $rightObjUid = $rightSelector->isUid() ? $rightSelector->toString() : MetaObjectFactory::createFromSelector($rightSelector)->getId();
-        $rel = new Relation(
-            $workbench,
-            $cardinality,
-            $this->getId(), // relation id
-            $this->getAlias(), // relation alias
-            '', // alias modifier allways empty for direct regular relations
-            $this->getObject(), //  left object
-            $this, // left key attribute
-            $rightObjUid, // right object UID
-            $uxon->getProperty('related_object_key_attribute_alias') // related object key attribute (UID will be used if not set)
-        );
-
-        if ($uxon->getProperty('delete_with_related_object') === true) {
-            $rel->setLeftObjectToBeDeletedWithRightObject(true);
-        }
-        if ($uxon->getProperty('copy_with_related_object') === true) {
-            $rel->setLeftObjectToBeCopiedWithRightObject(true);
-        }
-
-        $this->setRelationFlag(true);
-
-        // Add the relation
-        $this->getObject()->addRelation($rel);
-        return $this;
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getAliasWithRelationPath()
@@ -776,8 +718,8 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
      * Direction of default soring if this attribute is one of the default sorting attributes of the object.
      * 
      * @uxon-property default_sorter_dir
-     * @uxon-type string
-     * @uxon-template asc
+     * @uxon-type [ASC,DESC]
+     * @uxon-template ASC
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()

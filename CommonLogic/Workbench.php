@@ -11,6 +11,7 @@ use exface\Core\Factories\ModelLoaderFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
+use exface\Core\Interfaces\Mutations\MutatorInterface;
 use exface\Core\Interfaces\WorkbenchCacheInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -35,6 +36,7 @@ use exface\Core\CommonLogic\Model\App;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\CommonLogic\Communication\Communicator;
 use exface\Core\Interfaces\Events\EventManagerInterface;
+use exface\Core\Mutations\Mutator;
 
 class Workbench implements WorkbenchInterface
 {
@@ -73,6 +75,8 @@ class Workbench implements WorkbenchInterface
     private $security = null;
     
     private $communicator = null;
+
+    private $mutator = null;
     
     private $startTime = null;
 
@@ -498,5 +502,13 @@ class Workbench implements WorkbenchInterface
             $this->communicator = new Communicator($this);
         }
         return $this->communicator;
+    }
+
+    public function getMutator() : MutatorInterface
+    {
+        if ($this->mutator === null) {
+            $this->mutator = new Mutator($this);
+        }
+        return $this->mutator;
     }
 }

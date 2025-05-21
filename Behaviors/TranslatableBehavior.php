@@ -496,7 +496,7 @@ class TranslatableBehavior extends AbstractBehavior
         
         if ($menuItem instanceof UiPageInterface) {
             $uxonTranslator = new UxonTranslator($translator);
-            $uxon = UxonObject::fromAnything($menuItem->getContents());
+            $uxon = $menuItem->getContentsUxon();
             $menuItem->setContents($uxonTranslator->translateUxonProperties($uxon, $domain, 'CONTENT'));
         }
 
