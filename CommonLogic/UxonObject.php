@@ -635,4 +635,11 @@ class UxonObject implements \IteratorAggregate
         $this->snippetResolver = $callback;
         return $this;
     }
+
+    public function replace(array $data) : UxonObject
+    {
+        $this->array = $data;
+        $this->childUxons = [];
+        return $this;
+    }
 }

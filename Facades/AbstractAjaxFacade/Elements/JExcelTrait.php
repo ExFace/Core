@@ -1713,22 +1713,13 @@ JS;
         $groupSeparator = $groupSeparator ?? $dataType->getGroupSeparator();
         $decimalSeparator = $decimalSeparator ?? $dataType->getDecimalSeparator();
         
-        /*
-        if ($dataType->getPrecisionMax() === 0) {
-            return '0';
-        }
-        
-        if ($dataType->getPrecisionMin() === null && $dataType->getPrecisionMax() === null) {
-            return '';
-        }*/
-        
         $format = '';
         if ($groupSeparator) {
             $format = '#' . $groupSeparator . '##';
         }
         $format .= '0';
         
-        $minPrecision = $dataType->getPrecisionMin();
+        $minPrecision = $dataType->getPrecisionMin() ?? 0;
         if ($minPrecision > 0) {
             $format .= $decimalSeparator;
             for ($i = 1; $i <= $minPrecision; $i++) {

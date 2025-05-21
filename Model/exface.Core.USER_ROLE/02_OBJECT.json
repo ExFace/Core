@@ -248,6 +248,9 @@
                                                 "attribute_alias": "NAME"
                                             },
                                             {
+                                                "attribute_alias": "DISABLED_FLAG"
+                                            },
+                                            {
                                                 "attribute_alias": "TARGET_PAGE_GROUP__LABEL"
                                             },
                                             {
@@ -290,11 +293,17 @@
                                                 "icon": "minus"
                                             },
                                             {
-                                                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                                                "action_alias": "exface.Core.ShowObjectEditDialog",
                                                 "bind_to_double_click": true
                                             },
                                             {
-                                                "action_alias": "exface.Core.ShowObjectEditDialog"
+                                                "action_alias": "exface.core.ShowObjectCopyDialog"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.EnableAuthorizationPolicy"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DisableAuthorizationPolicy"
                                             }
                                         ]
                                     }

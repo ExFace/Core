@@ -33,17 +33,31 @@ class PhpFilePathDataType extends FilePathDataType
     /**
      * Returns the qualified class name of the first class defined in the file.
      *
-     * @param string $absolute_path
-     * @throws \InvalidArgumentException
+     * If a PSR-compatible class exists, it will be returned, otherwise the method will attempt to parse the
+     * file and to find the first class in it. PSR-compatible class means, it is named the same as the file and
+     * the namespace corresponds to the file path relative to the vendor folder.
+     *
+     * @param string $absolutePath
      * @return string|null
+     * @throws \InvalidArgumentException
      */
-    public static function findClassInFile(string $absolute_path, int $bufferSize = 512) : ?string
+    public static function findClassInFile(string $absolutePath, int $bufferSize = 512) : ?string
     {
-        if (! file_exists($absolute_path) && ! is_dir($absolute_path)) {
-            throw new FileNotFoundError('Cannot get class from file "' . $absolute_path . '" - file not found!');
+        if (! file_exists($absolutePath) && ! is_dir($absolutePath)) {
+            throw new FileNotFoundError('Cannot get class from file "' . $absolutePath . '" - file not found!');
         }
-        
-        $fp = fopen($absolute_path, 'r');
+
+        // First check class exists, where the namespace is simply the path in the vendor folder. That would be the
+        // case for most app classes and will save us from actually reading the file here
+        $pathNoralized = FilePathDataType::normalize($absolutePath, '\\');
+        $pathInVendor = StringDataType::substringAfter($pathNoralized, '\\vendor\\');
+        $psrClass = '\\' . StringDataType::substringBefore($pathInVendor, '.' . self::FILE_EXTENSION_PHP, $pathInVendor, false, true);
+        if (class_exists($psrClass)) {
+            return $psrClass;
+        }
+
+        // If our simple guess failed, look into the file and try to find the class name there
+        $fp = fopen($absolutePath, 'r');
         $class = $namespace = $buffer = '';
         $i = 0;
         
@@ -83,7 +97,7 @@ class PhpFilePathDataType extends FilePathDataType
                 if ($tokens[$i][0] === T_CLASS) {
                     for ($j = $i + 1; $j < $tokensCount; $j ++) {
                         if ($i+2 >= $tokensCount-1) {
-                            return static::findClassInFile($absolute_path, $bufferSize*2);
+                            return static::findClassInFile($absolutePath, $bufferSize*2);
                         }
                         $class = trim($tokens[$i + 2][1]);
                         break;

@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2023-11-07 08:03:03",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-03-25 08:44:30",
+    "modified_on": "2025-05-20 20:44:04",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.SEARCH_RESULT",
@@ -360,6 +360,62 @@
                                     "value_left": "=~input!TABLE_NAME",
                                     "comparator": "!==",
                                     "value_right": "exf_scheduler"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Snippet",
+                        "bind_to_double_click": true,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectEditDialog",
+                            "object_alias": "exface.Core.UXON_SNIPPET",
+                            "input_mapper": {
+                                "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                "to_object_alias": "exface.Core.UXON_SNIPPET",
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "UID",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
+                        },
+                        "disabled_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=~input!TABLE_NAME",
+                                    "comparator": "!==",
+                                    "value_right": "exf_uxon_snippet"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Mutation",
+                        "bind_to_double_click": true,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectEditDialog",
+                            "object_alias": "exface.Core.MUTATION",
+                            "input_mapper": {
+                                "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                "to_object_alias": "exface.Core.MUTATION",
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "UID",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
+                        },
+                        "disabled_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=~input!TABLE_NAME",
+                                    "comparator": "!==",
+                                    "value_right": "exf_mutation"
                                 }
                             ]
                         }
