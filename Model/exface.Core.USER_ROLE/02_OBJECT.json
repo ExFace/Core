@@ -248,6 +248,9 @@
                                                 "attribute_alias": "NAME"
                                             },
                                             {
+                                                "attribute_alias": "DISABLED_FLAG"
+                                            },
+                                            {
                                                 "attribute_alias": "TARGET_PAGE_GROUP__LABEL"
                                             },
                                             {
@@ -295,6 +298,12 @@
                                             },
                                             {
                                                 "action_alias": "exface.core.ShowObjectCopyDialog"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.EnableAuthorizationPolicy"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DisableAuthorizationPolicy"
                                             }
                                         ]
                                     }
