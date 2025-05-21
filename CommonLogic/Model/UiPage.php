@@ -182,7 +182,7 @@ class UiPage implements UiPageInterface
     {
         if (null === $this->contents_uxon) {
             if (null !== $this->contents) {
-                $contents = mb_trim($this->getContents());
+                $contents = trim($this->getContents());
                 if (mb_substr($contents, 0, 1) == '{' && mb_substr($contents, - 1) == '}') {
                     $uxon = UxonObject::fromAnything($contents);
                     if ($this->hasApp()) {
