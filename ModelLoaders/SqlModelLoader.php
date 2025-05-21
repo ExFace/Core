@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\ModelLoaders;
 
-use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
+use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\UxonSnippetFactory;
@@ -2370,7 +2370,12 @@ FROM exf_mutation m
     INNER JOIN exf_mutation_type mt ON mt.oid = m.mutation_type_oid
 -- WHERE JSON_VALUE(m.targets_json, '$."{$target->getTargetKey()}"') = '{$target->getTargetValue()}'
 SQL;
-            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+            try {
+                $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+            } catch (DataQueryFailedError $e) {
+                $this->getWorkbench()->getLogger()->logException($e);
+                return [];
+            }
             $this->mutations_loaded = [];
             foreach ($rows as $row) {
                 // Remove whitespaces from the keys because different SQL engines will handle them
