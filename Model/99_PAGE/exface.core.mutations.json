@@ -5,24 +5,25 @@
     "menu_index": 12,
     "menu_visible": true,
     "name": "Mutations",
-    "description": "",
+    "description": "Configure mutations to selectively change models of other apps",
     "intro": "",
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2025-05-16 11:30:35",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-05-20 10:24:14",
+    "modified_on": "2025-05-21 11:30:08",
     "contents": {
         "object_alias": "exface.Core.MUTATION_SET",
         "widget_type": "SplitHorizontal",
         "panels": [
             {
                 "caption": "Mutation sets",
-                "width": "50%",
+                "width": "40%",
                 "widgets": [
                     {
                         "widget_type": "DataTable",
                         "object_alias": "exface.Core.MUTATION_SET",
+                        "id": "mutation_set_table",
                         "filters": [
                             {
                                 "attribute_alias": "ENABLED_FLAG"
@@ -35,6 +36,10 @@
                             }
                         ],
                         "columns": [
+                            {
+                                "attribute_alias": "ENABLED_FLAG",
+                                "caption": "On"
+                            },
                             {
                                 "attribute_alias": "NAME"
                             },
@@ -79,7 +84,23 @@
                         "object_alias": "exface.Core.MUTATION",
                         "filters": [
                             {
+                                "attribute_alias": "MUTATION_SET",
+                                "hidden": true,
+                                "value": "=mutation_set_table!UID",
+                                "comparator": "==",
+                                "apply_on_change": true
+                            },
+                            {
                                 "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "CONFIG_UXON"
+                            },
+                            {
+                                "attribute_alias": "CONFIG_BASE_OBJECT"
+                            },
+                            {
+                                "attribute_alias": "MUTATION_TYPE"
                             }
                         ],
                         "columns": [
@@ -94,7 +115,7 @@
                                 "attribute_alias": "MUTATION_TYPE__LABEL"
                             },
                             {
-                                "attribute_alias": "OBJECT_ACTION__LABEL"
+                                "attribute_group_alias": "~CUSTOM"
                             },
                             {
                                 "attribute_alias": "CREATED_ON"

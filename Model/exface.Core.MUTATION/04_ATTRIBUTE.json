@@ -271,9 +271,9 @@
             }
         },
         {
-            "_EXPORT_SUMMARY": "Enabled flag [ENABLED_FLAG]",
+            "_EXPORT_SUMMARY": "Enabled [ENABLED_FLAG]",
             "CREATED_ON": "2025-05-16 11:17:23",
-            "MODIFIED_ON": "2025-05-19 17:33:16",
+            "MODIFIED_ON": "2025-05-21 09:21:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f08d5a936493608d5a025041000001",
@@ -296,7 +296,7 @@
                 ]
             },
             "COMMENTS": "",
-            "NAME": "Enabled flag",
+            "NAME": "Enabled",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,

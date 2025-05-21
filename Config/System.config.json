@@ -96,17 +96,22 @@
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel"
     	],
     	"exface.Core.Model.OnBeforeMetaObjectActionLoaded": [
-			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectActionMutationPoint::onActionLoadedApplyMutations",
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
-    	],
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectActionMutationPoint::onActionLoadedApplyMutations"
+		],
         "exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded": [
-            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onBehaviorLoadedTranslateModel"
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onBehaviorLoadedTranslateModel",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectBehaviorMutationPoint::onBehaviorLoadedApplyMutations"
         ],
     	"exface.Core.Model.OnUiMenuItemLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate"
     	],
+		"exface.Core.Model.OnUiPageLoaded": [
+			"\\exface\\Core\\Mutations\\MutationPoints\\UiPageMutationPoint::onPageLoadedApplyMutations"
+		],
     	"exface.Core.Model.OnBeforeDefaultObjectEditorInit": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate"
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
     	],
     	"exface.Core.Model.OnMessageLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"

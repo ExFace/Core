@@ -1,17 +1,17 @@
 {
     "uid": "0x11f0a944d913dfa4a944025041000001",
-    "alias_with_namespace": "exface.core.mutation-types",
+    "alias_with_namespace": "exface.core.mutations-types-targets",
     "menu_parent_page_selector": "0x11f097716b9c72ec9771025041000001",
     "menu_index": 0,
     "menu_visible": true,
-    "name": "Mutation types",
-    "description": "",
+    "name": "Types & Targets",
+    "description": "Configure mutations targets and types",
     "intro": "",
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2025-05-16 11:33:38",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-05-17 23:37:09",
+    "modified_on": "2025-05-21 11:29:12",
     "contents": {
         "widget_type": "SplitHorizontal",
         "object_alias": "exface.Core.MUTATION_TYPE",
@@ -80,6 +80,9 @@
                         "filters": [
                             {
                                 "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "APP"
                             }
                         ],
                         "columns": [

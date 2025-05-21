@@ -226,7 +226,7 @@
         {
             "_EXPORT_SUMMARY": "Enabled [ENABLED_FLAG]",
             "CREATED_ON": "2025-05-16 11:17:23",
-            "MODIFIED_ON": "2025-05-16 11:18:47",
+            "MODIFIED_ON": "2025-05-21 09:22:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0980b93675140980b025041000001",
@@ -241,7 +241,13 @@
             "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
-            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "Icon",
+                "icon_scale": [
+                    "toggle-off",
+                    "toggle-on"
+                ]
+            },
             "COMMENTS": "",
             "NAME": "Enabled",
             "RELATION_CARDINALITY": "",

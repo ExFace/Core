@@ -8,7 +8,20 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Mutations\AppliedMutation;
 use JsonPath\JsonObject;
-
+/**
+ * Allows to modify UXON configurations using JSONpath based operations
+ *
+ * You can define multiple operations like append, replace, etc. Each will require a JSONpath pointing
+ * to the place in the UXON where the operation is to be applied and a new value (if required by the
+ * operation).
+ *
+ * - `append` - adds one or more UXON objects at the end of the array located by the JSONpath
+ * - `change` - changes a scalar property at the end of the JSONpath - e.g. to set a widget to `hidden:true`
+ * - `replace` - replaces a UXON object with another one. The JSONpath should point to an object
+ * - `remove` - removes all keys corresponding to the JSONpath entirely
+ *
+ * @author Andrej Kabachnik
+ */
 class GenericUxonMutation extends AbstractMutation
 {
     const MUTATION_COMMENT = '// Mutation';
@@ -18,6 +31,9 @@ class GenericUxonMutation extends AbstractMutation
     private $replace = [];
     private $remove = [];
 
+    /**
+     * @see MutationInterface::apply()
+     */
     public function apply($subject): AppliedMutationInterface
     {
         if (! $subject instanceof UxonObject) {
@@ -51,6 +67,9 @@ class GenericUxonMutation extends AbstractMutation
         return new AppliedMutation($this, $subject, $stateBefore, $stateAfter);
     }
 
+    /**
+     * @see MutationInterface::supports()
+     */
     public function supports($subject): bool
     {
         return $subject instanceof UxonObject;
