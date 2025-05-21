@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-05-20 12:21:56",
+            "MODIFIED_ON": "2025-05-21 11:31:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -699,7 +699,7 @@
                                                 "attribute_alias": "MUTATION_SET__APP__ALIAS"
                                             },
                                             {
-                                                "attribute_alias": "DESCRIPTION"
+                                                "attribute_group_alias": "~CUSTOM"
                                             }
                                         ],
                                         "sorters": [

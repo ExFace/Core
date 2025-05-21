@@ -32,7 +32,6 @@ use exface\Core\Events\Widget\OnUiPageInitEvent;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Translation\UxonTranslator;
-use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -47,7 +46,7 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
  * @author Andrej Kabachnik
  *
  */
-class UiPage implements UiPageInterface, iHaveIcon
+class UiPage implements UiPageInterface
 {
     use ImportUxonObjectTrait;
     
@@ -57,7 +56,7 @@ class UiPage implements UiPageInterface, iHaveIcon
 
     const WIDGET_ID_SPACE_SEPARATOR = '.';
 
-    private $widgets = array();
+    private $widgets = [];
 
     private $facadeSelector = null;
     
@@ -176,33 +175,27 @@ class UiPage implements UiPageInterface, iHaveIcon
     }
 
     /**
-     * Returns the UXON representation of the contents (or an empty UXON object if there is no contents
-     * or the contents is not UXON).
-     * 
-     * NOTE: This method will return an empty UXON object even if the page has some other type of contents
-     * (e.g. HTML). Do not use this method to get the contents in general, use getContents() instead. This
-     * method is only legitim if you know, the page has UXON content.
-     * 
-     * @return UxonObject
+     * {@inheritDoc}
+     * @see UiPageInterface::getContentsUxon()
      */
-    public function getContentsUxon()
+    public function getContentsUxon() : UxonObject
     {
-        if (is_null($this->contents_uxon)) {
-            if (! is_null($this->contents)) {
-                $contents = $this->getContents();
-                if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
+        if (null === $this->contents_uxon) {
+            if (null !== $this->contents) {
+                $contents = mb_trim($this->getContents());
+                if (mb_substr($contents, 0, 1) == '{' && mb_substr($contents, - 1) == '}') {
                     $uxon = UxonObject::fromAnything($contents);
                     if ($this->hasApp()) {
                         (new UxonTranslator($this->getApp()->getTranslator()))->translateUxonProperties($uxon, 'Pages/' . $this->getAliasWithNamespace(), 'CONTENT');
                     }
-                } else {
-                    $uxon = new UxonObject();
                 }
-            } else {
-                $uxon = new UxonObject();
             }
         } else {
             $uxon = $this->contents_uxon;
+        }
+
+        if ($uxon === null) {
+            $uxon = new UxonObject();
         }
         
         return $uxon;
@@ -449,8 +442,6 @@ class UiPage implements UiPageInterface, iHaveIcon
         // TODO We still need some kind of fallback for example 5 here!
         
         throw new WidgetNotFoundError('Widget "' . $id . '" not found in id space "' . $id_space . '" within parent "' . $parent->getId() . '" on page "' . $this->getAliasWithNamespace() . '"!');
-        
-        return;
     }
 
     private static function addIdSpace($id_space, $id)

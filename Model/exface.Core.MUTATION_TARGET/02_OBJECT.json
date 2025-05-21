@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Mutation target [exface.Core.MUTATION_TARGET]",
             "CREATED_ON": "2025-05-17 23:32:20",
-            "MODIFIED_ON": "2025-05-17 23:35:11",
+            "MODIFIED_ON": "2025-05-21 09:16:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0a5f869b27c5ea5f8025041000001",
@@ -102,7 +102,25 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": null,
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "width": 1,
+                "height": "auto",
+                "widgets": [
+                    {
+                        "attribute_alias": "NAME"
+                    },
+                    {
+                        "attribute_alias": "APP"
+                    },
+                    {
+                        "attribute_alias": "OBJECT"
+                    },
+                    {
+                        "attribute_alias": "DESCRIPTION"
+                    }
+                ]
+            },
             "ALIAS": "MUTATION_TARGET",
             "DATA_ADDRESS": "exf_mutation_target"
         }

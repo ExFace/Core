@@ -4,25 +4,19 @@ namespace exface\Core\Mutations;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 
-class AppliedMutation implements AppliedMutationInterface
+class AppliedEmptyMutation implements AppliedMutationInterface
 {
     private MutationInterface $mutation;
     private mixed $subject;
-    private string $stateBefore;
-    private string $stateAfter;
 
     /**
      * @param MutationInterface $mutation
      * @param object $subject
-     * @param string $stateBefore
-     * @param string $stateAfter
      */
-    public function __construct(MutationInterface $mutation, $subject, string $stateBefore, string $stateAfter)
+    public function __construct(MutationInterface $mutation, $subject)
     {
         $this->mutation = $mutation;
         $this->subject = $subject;
-        $this->stateBefore = $stateBefore;
-        $this->stateAfter = $stateAfter;
     }
 
     /**
@@ -49,7 +43,7 @@ class AppliedMutation implements AppliedMutationInterface
      */
     public function hasChanges(): bool
     {
-        return $this->stateAfter !== $this->stateBefore;
+        return false;
     }
 
     /**
@@ -58,7 +52,7 @@ class AppliedMutation implements AppliedMutationInterface
      */
     public function dumpStateBefore(): string
     {
-        return $this->stateBefore;
+        return '';
     }
 
     /**
@@ -67,6 +61,6 @@ class AppliedMutation implements AppliedMutationInterface
      */
     public function dumpStateAfter(): string
     {
-        return $this->stateAfter;
+        return '';
     }
 }
