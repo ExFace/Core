@@ -42,5 +42,29 @@ class RelationCardinalityDataType extends StringDataType implements EnumDataType
         return $this->labels;
     }
 
+    /**
+     * @param string $cardinality
+     * @return string
+     */
+    public static function findCardinalityOfReverseRelation(string $cardinality) : string
+    {
+        switch ($cardinality) {
+            case 'NM':
+                $cardinality = RelationCardinalityDataType::N_TO_M;
+                break;
+            case '11':
+                $cardinality = RelationCardinalityDataType::ONE_TO_ONE;
+                break;
+            case '1N':
+                $cardinality = RelationCardinalityDataType::N_TO_ONE;
+                break;
+            default:
+                // An regular n-to-1 relation pointing to our attribute is a reversed one (1-to-n)
+                // from it's point of view.
+                $cardinality = RelationCardinalityDataType::ONE_TO_N;
+        }
+        return $cardinality;
+    }
+
 }
 ?>
