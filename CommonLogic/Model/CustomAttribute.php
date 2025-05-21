@@ -144,7 +144,7 @@ class CustomAttribute extends Attribute
             $workbench,
             $cardinality,
             $this->getId(), // relation id
-            $rightObj->getAlias(), // relation alias
+            $this->getObject()->getAlias(), // relation alias
             $this->getAlias(), // relation modifier: the alias of the right key attribute
             $rightObj, // left object
             $uxon->getProperty('related_object_key_attribute_alias') ? $rightObj->getAttribute($uxon->getProperty('related_object_key_attribute_alias')) : $rightObj->getUidAttribute(), // left key in the main object
