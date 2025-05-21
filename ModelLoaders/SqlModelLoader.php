@@ -2373,12 +2373,15 @@ SQL;
             $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
             $this->mutations_loaded = [];
             foreach ($rows as $row) {
-                $this->mutations_loaded[$row['targets_json']][] = $row;
+                // Remove whitespaces from the keys because different SQL engines will handle them
+                // differently: MySQL will add a whitespace after `:` and MS SQL will not.
+                $cacheKey = str_replace(' ', '', $row['targets_json']);
+                $this->mutations_loaded[$cacheKey][] = $row;
             }
         }
         $mutations = [];
-        $targetJson = '{"' . $target->getTargetKey() . '": "' . $target->getTargetValue() . '"}';
-        foreach ($this->mutations_loaded[$targetJson] as $row) {
+        $cacheKey = '{"' . $target->getTargetKey() . '":"' . $target->getTargetValue() . '"}';
+        foreach ($this->mutations_loaded[$cacheKey] as $row) {
             $uxon = UxonObject::fromJson($row['config_uxon']);
             $uxon->setProperty('name', $row['name']);
             $file = $row['mutation_prototype_file'];
