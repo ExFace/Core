@@ -758,7 +758,15 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function readBypassingDataAuthorization(DataSheetInterface $dataSheet) : DataSheetInterface
     {
-        $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        if ($this->getWorkbench()->isInstalled() === false) {
+            return $dataSheet;
+        }
+        try {
+            $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        } catch (throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $dataSheet;
+        }
         $wasDisabled = $dataAP->isDisabled();
         $dataAP->setDisabled(true);
         try {
