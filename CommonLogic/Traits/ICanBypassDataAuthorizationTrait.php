@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Traits;
 
 use exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPoint;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -20,7 +21,15 @@ trait ICanBypassDataAuthorizationTrait {
 
     protected function bypassDataAuthorization(callable $callback)
     {
-        $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        if ($this->getWorkbench()->isInstalled() === false) {
+            return $callback();
+        }
+        try {
+            $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        } catch (throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $callback();
+        }
         $wasDisabled = $dataAP->isDisabled();
         $dataAP->setDisabled(true);
         try {
