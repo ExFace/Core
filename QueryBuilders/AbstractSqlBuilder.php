@@ -1696,7 +1696,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
-                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($qpart, $sql, $if_comp, $if_val, false, false) . " THEN 1 ELSE 0 END)";
+                //we have to explicitly use the datatype of the attribute here so we can parte the values correctly in the where part
+                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($qpart, $sql, $if_comp, $if_val, false, false, $qpart->getAttribute()->getDataType()) . " THEN 1 ELSE 0 END)";
                 break;
             default:
                 break;
@@ -2168,16 +2169,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
     
     /**
-     *
-     * @param string $subject column name or subselect
-     * @param string $comparator one of the EXF_COMPARATOR_xxx constants
-     * @param string $value value or SQL expression to compare to
+     * 
+     * @param QueryPartAttribute $qpart
+     * @param string $subject
+     * @param string $comparator
+     * @param mixed $value
+     * @param bool $rely_on_joins
      * @param bool $valueIsSQL
-     * @return string
+     * @param DataTypeInterface|null $data_type
+     * @throws QueryBuilderException
+     * @return bool|string
      */
-    protected function buildSqlWhereComparator(QueryPartAttribute $qpart, string $subject, string $comparator, $value, bool $rely_on_joins, bool $valueIsSQL = null) : string
+    protected function buildSqlWhereComparator(QueryPartAttribute $qpart, string $subject, string $comparator, $value, bool $rely_on_joins, bool $valueIsSQL = null, DataTypeInterface $data_type = null) : string
     {
-        $data_type = $qpart->getDataType();
+        $data_type = $data_type ?? $qpart->getDataType();
         $dataAddressProps = $qpart->getDataAddressProperties();
         $value_list_delimiter = $qpart->getValueListDelimiter();
         $valueIsSQL = $valueIsSQL ?? $qpart->isValueDataAddress();
