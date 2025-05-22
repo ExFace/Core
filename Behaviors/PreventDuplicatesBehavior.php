@@ -314,7 +314,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
-        if (in_array($eventSheet, $this->ignoreDataSheets)) {
+        if (in_array($eventSheet, $this->ignoreDataSheets, true)) {
             return;
         }
         
