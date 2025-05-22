@@ -67,7 +67,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         
         $fullSpell = array_shift($spells);
         $fullSpell = explode(':', $fullSpell);
-        $spell = mb_trim($fullSpell[0]);
+        $spell = trim($fullSpell[0]);
         
         $components = count($fullSpell) ? $fullSpell[1] : "";
         $components = empty($components) ? [] : explode(',', $components);
