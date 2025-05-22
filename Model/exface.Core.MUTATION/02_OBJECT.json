@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Mutation [exface.Core.MUTATION]",
             "CREATED_ON": "2025-05-16 11:17:22",
-            "MODIFIED_ON": "2025-05-20 20:48:16",
+            "MODIFIED_ON": "2025-05-22 14:48:34",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f09ca793446fe09ca7025041000001",
@@ -104,6 +104,8 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Dialog",
+                "width": 3,
+                "columns_in_grid": 3,
                 "widgets": [
                     {
                         "widget_type": "WidgetGroup",
@@ -142,21 +144,21 @@
                     },
                     {
                         "widget_type": "WidgetGroup",
+                        "caption": "Targets",
+                        "widgets": [
+                            {
+                                "attribute_group_alias": "~CUSTOM"
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
                         "caption": "Description",
                         "widgets": [
                             {
                                 "attribute_alias": "DESCRIPTION",
                                 "height": 4,
                                 "hide_caption": true
-                            }
-                        ]
-                    },
-                    {
-                        "widget_type": "WidgetGroup",
-                        "caption": "Targets",
-                        "widgets": [
-                            {
-                                "attribute_group_alias": "~CUSTOM"
                             }
                         ]
                     },
