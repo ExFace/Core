@@ -234,12 +234,26 @@ class LookupMapping extends AbstractDataSheetMapping
         // for subsheets (the attribute_alias is the reverse relation) and for regular columns 
         // (attribute_alias points to the specific attribute)
         $isSubsheet = false;
+        $isRequired = false;
         if (! $toCol = $toSheet->getColumns()->getByExpression($toExpr)) {
             if ($this->needsSubsheet($toExpr)) {
                 $isSubsheet = true;
+                // Currently there is no way to tell, if at least on row is required in a subsheet,
+                // so we assume, that they are never required.
+                // TODO perhaps, an explicit `required` property of the lookup mapping could solve this issue.
+                $isRequired = false;
                 $toCol = $toSheet->getColumns()->addFromExpression($toExpr->getAttribute()->getRelationPath()->getRelationFirst()->getAlias());
+                $subsheetTpl = [
+                    'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
+                    'rows' => []
+                ];
             } else {
+                $isRequired = $toExpr->isMetaAttribute() ? $toExpr->getAttribute()->isRequired() : false;
                 $toCol = $toSheet->getColumns()->addFromExpression($toExpr);
+            }
+        } else {
+            if ($this->needsSubsheet($toExpr)) {
+                $isSubsheet = true;
             }
         }
 
@@ -255,6 +269,11 @@ class LookupMapping extends AbstractDataSheetMapping
         $unmatchedRows = [];
         foreach ($fromSheet->getRows() as $i => $fromRow) {
             $toColVals[$i] = null;
+            // Collect all from-values into a single string to quickly find out
+            $fromRowValsJoined = '';
+            foreach ($matches as $match) {
+                $fromRowValsJoined .= trim($fromRow[$match['from']] ?? '');
+            }
             // Look for matching lookup rows for this from-row
             foreach ($lookupSheet->getRows() as $lookupRow) {
                 $prevVal = $toColVals[$i];
@@ -282,10 +301,8 @@ class LookupMapping extends AbstractDataSheetMapping
                 // of a data sheet. Otherwise save it as-is.
                 if ($isSubsheet) {
                     if (! is_array($prevVal)) {
-                        $toColVals[$i] = [
-                            'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
-                            'rows' => []
-                        ];
+                        // Copy the template. Remember, that assigning arrays in PHP will do copy-on-wirte
+                        $toColVals[$i] = $subsheetTpl;
                     }
                     if ($lookupVal !== null && $lookupVal !== '') {
                         foreach (explode($toValDelim, $lookupVal) as $val) {
@@ -302,12 +319,24 @@ class LookupMapping extends AbstractDataSheetMapping
             }
             
             // If row could not be matched to any lookup row, we might have to respond.
-            if($toColVals[$i] === null) {
-                // Cache unmatched row.
-                $unmatchedRows[$i] = $fromRow;
-                // Some configurations require, that we stop processing after encountering our first unmatched row.
-                if($this->stopOnFirstMiss) {
-                    break;
+            if(null === $toColVals[$i] ?? null) {
+                // If we do not have a lookup-value, that is perfectly fine if we did not have a
+                // from-value either.
+                if (! $isRequired && '' === trim($fromRowValsJoined)) {
+                    // In case of subsheets, leaving the cell empty will actually not change anything. To really
+                    // set it to an empty value, we need an empty subsheet here.
+                    if ($isSubsheet) {
+                        $toColVals[$i] = $subsheetTpl;
+                    }
+                }
+                // Otherwise this from-row is a miss and we need to handle it according to `if_not_found`
+                else {
+                    // Cache unmatched row.
+                    $unmatchedRows[$i] = $fromRow;
+                    // Some configurations require, that we stop processing after encountering our first unmatched row.
+                    if ($this->stopOnFirstMiss) {
+                        break;
+                    }
                 }
             }
         }
