@@ -20,13 +20,13 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
             $startTag = $phData['comment'];
             $endTag = '<!-- END ' . $phData['key'] . ' -->';
     
-            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph] ?? '', $phData['offset']);
+            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph] ?? '', $phData['offset'], $phData['key']);
         }
 
         return $markdown;
 	}
     
-    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset): string
+    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName): string
     {
         $startPos = strpos($markdown, $startTag, $offset);
         if ($startPos === false) {
@@ -40,7 +40,13 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
 
         $endPos += strlen($endTag);
 
-        $newBlock = $startTag . PHP_EOL . $replacement . PHP_EOL . $endTag;
+        if ($placeholderName === 'ImageRef') {
+            $newBlock = $startTag . $replacement . $endTag;
+        }
+        else {
+            $newBlock = $startTag . PHP_EOL . $replacement . PHP_EOL . $endTag;
+        }
+
 
         return substr_replace($markdown, $newBlock, $startPos, $endPos - $startPos);
     }
