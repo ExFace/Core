@@ -159,16 +159,13 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         $sqlFolder = $this->getSqlFolderAbsolutePath($source_absolute_path);
         $schemaFile = $sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql';
         if(!file_exists($schemaFile)) {
-            yield from $this->dumpSchema($source_absolute_path, $indent);
+            yield $indent . 'No comparison possible Schema dump not found.';
+            return;
         }
         $schema = file_get_contents($schemaFile);
         $tmpSchema = $this->buildSqlSchema();
-
-        $diffs = array_merge(
-            $this->compareCreateTablesDetailed($schema, $tmpSchema),
-            $this->comparePrimaryKeysDetailed($schema, $tmpSchema),
-            $this->compareForeignKeysDetailed($schema, $tmpSchema)
-        );
+        
+        $diffs = $this->performComparison($tmpSchema, $schema);
         
         if (empty($diffs)) {
             yield "The schemas matches fully";
@@ -224,7 +221,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         $existing_objects->getSorters()->addFromString('DATA_ADDRESS', 'ASC');
         $existing_objects->dataRead();
         $result = $existing_objects->getRows();
-        return $result;
+
+        $seen = [];
+        $returnResult = [];
+        foreach ($result as $item) {
+            if (!in_array($item['DATA_ADDRESS'], $seen)) {
+                $seen[] = $item['DATA_ADDRESS'];
+                $returnResult[] = $item;
+            }
+        }
+
+        return $returnResult;
     }
 
     /**

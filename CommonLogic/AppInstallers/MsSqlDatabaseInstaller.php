@@ -407,219 +407,189 @@ SQL;
 
     }
     
-    protected function parseCreateTables($sql) 
+    
+    function extractCreateTableBlocks($sql) 
     {
-      $tables = [];
+      $blocks = [];
+      $offset = 0;
   
-      // find CREATE TABLE blocks
-      preg_match_all('/CREATE TABLE\s+\[dbo\]\.\[(\w+)\]\s*\((.*?)\)\s*\)/is', $sql, $matches, PREG_SET_ORDER);
+      while (($start = stripos($sql, 'CREATE TABLE', $offset)) !== false) {
+          $openParen = strpos($sql, '(', $start);
+          if ($openParen === false) break;
   
-      foreach ($matches as $match) {
-          $tableName = strtolower($match[1]);
-          $columnsRaw = trim($match[2]);
+          $depth = 1;
+          $i = $openParen + 1;
   
-          // devide the columns
-          $columns = array_map('trim', explode(',', $columnsRaw));
-          $columnDefs = [];
-  
-          foreach ($columns as $col) {
-              // extract Column name, data type and nullability
-              if (preg_match('/^\[(.*?)\]\s+([a-z0-9\(\)]+).*?(not null|null)?/i', $col, $colMatch)) {
-                  $colName = strtolower($colMatch[1]);
-                  $dataType = strtolower($colMatch[2]);
-                  $nullable = isset($colMatch[3]) ? strtolower(trim($colMatch[3])) : 'null';
-  
-                  $columnDefs[] = [
-                      'name' => $colName,
-                      'type' => $dataType,
-                      'nullable' => $nullable === 'not null' ? false : true,
-                  ];
-              }
+          while ($depth > 0 && $i < strlen($sql)) {
+              if ($sql[$i] === '(') $depth++;
+              elseif ($sql[$i] === ')') $depth--;
+              $i++;
           }
   
-          // sort the columns alphabetically
-          usort($columnDefs, fn($a, $b) => strcmp($a['name'], $b['name']));
+          $block = substr($sql, $start, $i - $start);
+          $blocks[] = $block;
   
-          $tables[$tableName] = $columnDefs;
-      }
-  
-      // sort the table alphabetically
-      ksort($tables);
-  
-      return $tables;
+          $offset = $i;
+        }
+    
+        return $blocks;
     }
     
-    protected function compareCreateTablesDetailed($sql1, $sql2) 
+    function parseTablesAndPrimaryKeys(string $sql) 
     {
-      $tables1 = $this->parseCreateTables($sql1);
-      $tables2 = $this->parseCreateTables($sql2);
-  
-      $diffs = [];
-  
-      $allTables = array_unique(array_merge(array_keys($tables1), array_keys($tables2)));
-      sort($allTables);
-  
-      foreach ($allTables as $table) {
-          $cols1 = $tables1[$table] ?? null;
-          $cols2 = $tables2[$table] ?? null;
-  
-          if (!$cols1) {
-              $diffs[] = "Table '$table' exists only in current schema.";
-              continue;
-          }
-  
-          if (!$cols2) {
-              $diffs[] = "Table '$table' exists only in the file.";
-              continue;
-          }
-  
-          // compare the columns
-          $names1 = array_column($cols1, 'name');
-          $names2 = array_column($cols2, 'name');
-  
-          $missingIn2 = array_diff($names1, $names2);
-          $missingIn1 = array_diff($names2, $names1);
-  
-          foreach ($missingIn2 as $col) {
-              $diffs[] = "Table '$table': '$col' column is missing in the current schema.";
-          }
-          foreach ($missingIn1 as $col) {
-              $diffs[] = "Table '$table': '$col' column is missing in the file.";
-          }
-  
-          // compare the details of common columns
-          $common = array_intersect($names1, $names2);
-          foreach ($common as $colName) {
-              $colDef1 = current(array_filter($cols1, fn($c) => $c['name'] === $colName));
-              $colDef2 = current(array_filter($cols2, fn($c) => $c['name'] === $colName));
-  
-              if ($colDef1['type'] !== $colDef2['type']) {
-                  $diffs[] = "Table '$table': '$colName' data dtype is different (In the file: {$colDef1['type']}, Current schema: {$colDef2['type']}).";
+      $tables = [];
+      
+      $blocks = $this->extractCreateTableBlocks($sql);
+      foreach ($blocks as $block) {
+          if (preg_match('/CREATE TABLE\s+\[dbo\]\.\[(\w+)\]/i', $block, $match)) {
+              $tableName = $match[1];
+
+              $columns = [];
+              $primaryKey = [];
+
+              $lines = preg_split('/,\r?\n|\r|\n/', $block);
+
+              foreach ($lines as $line) {
+                  $line = trim($line, " \t\n\r\0\x0B,");
+                  // PRIMARY KEY
+                  if (preg_match('/CONSTRAINT\s+\[.*?\]\s+PRIMARY KEY\s*\((.*?)\)/i', $line, $pkMatch)) {
+                      preg_match_all('/\[(\w+)\]/', $pkMatch[1], $pkCols);
+                      $primaryKey = $pkCols[1];
+                      continue;
+                  }
+
+                  if (preg_match('/^\[([^\]]+)\]\s+([A-Z0-9\(\)]+)(?:\s+COLLATE\s+[^\s]+)?(?:\s+(NOT\s+NULL|NULL))?/i', $line, $colMatch)) {
+                      $columns[] = [
+                          'name' => $colMatch[1],
+                          'type' => strtoupper($colMatch[2]),
+                          'nullable' => !isset($colMatch[3]) || strtoupper($colMatch[3]) !== 'NOT NULL'
+                      ];
+                  }
               }
-  
-              if ($colDef1['nullable'] !== $colDef2['nullable']) {
-                  $diffs[] = "Table '$table': '$colName' has different null status (In the file: " . ($colDef1['nullable'] ? 'NULL' : 'NOT NULL') . ", Current schema: " . ($colDef2['nullable'] ? 'NULL' : 'NOT NULL') . ").";
-              }
+
+              $tables[$tableName] = [
+                  'columns' => $columns,
+                  'primary_key' => $primaryKey
+              ];
           }
       }
-  
-      return $diffs;
+
+      return $tables;
     }
   
-    protected function parsePrimaryKeys($sql) 
-    {
-      $primaryKeys = [];
-  
-      // find PRIMARY KEY constraints
-      preg_match_all(
-          '/CONSTRAINT\s+\[PK_(.*?)\]\s+PRIMARY KEY\s+\((.*?)\)/i',
-          $sql,
-          $matches,
-          PREG_SET_ORDER
-      );
-  
-      foreach ($matches as $match) {
-          $table = strtolower($match[1]); 
-          $columnsRaw = strtolower($match[2]);
-  
-          // clear columns and sort
-          $columns = array_map(function($col) {
-              return trim(str_replace(['[', ']'], '', $col));
-          }, explode(',', $columnsRaw));
-          sort($columns);
-  
-          $primaryKeys[$table] = $columns;
-      }
-  
-      // sort the tables
-      ksort($primaryKeys);
-  
-      return $primaryKeys;
-    }
+      function parseForeignKeys(string $sql) {
+        $foreignKeys = [];
 
-    function comparePrimaryKeysDetailed($sql1, $sql2) 
-    {
-      $pk1 = $this->parsePrimaryKeys($sql1);
-      $pk2 = $this->parsePrimaryKeys($sql2);
-  
-      $diffs = [];
-      $allTables = array_unique(array_merge(array_keys($pk1), array_keys($pk2)));
-      sort($allTables);
-  
-      foreach ($allTables as $table) {
-          $cols1 = $pk1[$table] ?? null;
-          $cols2 = $pk2[$table] ?? null;
-  
-          if (!$cols1) {
-              $diffs[] = "Table '$table': NO PRIMARY KEY in current schema.";
-              continue;
-          }
-          if (!$cols2) {
-              $diffs[] = "Table '$table':  NO PRIMARY KEY in the file.";
-              continue;
-          }
-  
-          if ($cols1 !== $cols2) {
-              $diffs[] = "Table '$table': different PRIMARY KEY columns (current schema: " . implode(', ', $cols1) . " | the file: " . implode(', ', $cols2) . ").";
-          }
-      }
-  
-      return $diffs;
-  }
-  
-  
+        preg_match_all(
+            '/ALTER TABLE \[dbo\]\.\[(\w+)\] WITH CHECK ADD CONSTRAINT \[[^\]]+\] FOREIGN KEY \(\[(\w+)\]\) REFERENCES \[dbo\]\.\[(\w+)\] \(\[(\w+)\]\)/i',
+            $sql,
+            $matches,
+            PREG_SET_ORDER
+        );
 
-    protected function parseForeignKeys($sql) 
-    {
-      $foreignKeys = [];
+        foreach ($matches as $match) {
+            $table = $match[1];
+            $column = $match[2];
+            $referencedTable = $match[3];
+            $referencedColumn = $match[4];
 
-      preg_match_all(
-          '/CONSTRAINT\s+\[(.*?)\]\s+FOREIGN KEY\s+\(\[(.*?)\]\)\s+REFERENCES\s+\[dbo\]\.\[(.*?)\]\s+\(\[(.*?)\]\)/i',
-          $sql,
-          $matches,
-          PREG_SET_ORDER
-      );
+            if (!isset($foreignKeys[$table])) {
+                $foreignKeys[$table] = [];
+            }
 
-      foreach ($matches as $match) {
-          $sourceColumn = strtolower($match[2]);
-          $targetTable = strtolower($match[3]);
-          $targetColumn = strtolower($match[4]);
-
-          $key = strtolower($match[1]);
-
-          $foreignKeys[] = [
-              'from_column' => $sourceColumn,
-              'to_table' => $targetTable,
-              'to_column' => $targetColumn,
-          ];
-      }
-
-      usort($foreignKeys, fn($a, $b) =>
-          strcmp(json_encode($a), json_encode($b))
-      );
-
-      return $foreignKeys;
-    }
-
-    protected function compareForeignKeysDetailed($sql1, $sql2) 
-    {
-        $fk1 = $this->parseForeignKeys($sql1);
-        $fk2 = $this->parseForeignKeys($sql2);
-
-        $missingIn2 = array_udiff($fk1, $fk2, fn($a, $b) => strcmp(json_encode($a), json_encode($b)));
-        $missingIn1 = array_udiff($fk2, $fk1, fn($a, $b) => strcmp(json_encode($a), json_encode($b)));
-
-        $diffs = [];
-
-        foreach ($missingIn2 as $fk) {
-            $diffs[] = "Missing Foreign key (current): {$fk['from_column']} → {$fk['to_table']}.{$fk['to_column']}";
+            $foreignKeys[$table][] = [
+                'column' => $column,
+                'references_table' => $referencedTable,
+                'references_column' => $referencedColumn
+            ];
         }
 
-        foreach ($missingIn1 as $fk) {
-            $diffs[] = "Missing Foreign key (file): {$fk['from_column']} → {$fk['to_table']}.{$fk['to_column']}";
-        }
+        return $foreignKeys;
+    }
 
-        return $diffs;
+    function compareSchemasDetailed(array $currentSchema, array $previousSchema) 
+    {
+        $differences = [];
+    
+        $currentTables = array_keys($currentSchema['tables']);
+        $previousTables = array_keys($previousSchema['tables']);
+    
+        $missingInPrevious = array_diff($currentTables, $previousTables);
+        $missingInCurrent = array_diff($previousTables, $currentTables);
+    
+        foreach ($missingInPrevious as $table) {
+            $differences[] = "Table '$table' is missing in previous schema";
+        }
+        foreach ($missingInCurrent as $table) {
+            $differences[] = "Table '$table' is missing in current schema";
+        }
+    
+        // check common tables
+        $commonTables = array_intersect($currentTables, $previousTables);
+        foreach ($commonTables as $table) {
+            // compare columns
+            $currentSchemaColumns = $currentSchema['tables'][$table]['columns'];
+            $previousSchemaColumns = $previousSchema['tables'][$table]['columns'];
+    
+            $colNamesCurrent = array_column($currentSchemaColumns, 'name');
+            $colNamesPrevious = array_column($previousSchemaColumns, 'name');
+    
+            $missingColsInPrevious = array_diff($colNamesCurrent, $colNamesPrevious);
+            $missingColsInCurrent = array_diff($colNamesPrevious, $colNamesCurrent);
+    
+            foreach ($missingColsInPrevious as $col) {
+                $differences[] = "Column '$col' is missing in table '$table' in previous schema";
+            }
+            foreach ($missingColsInCurrent as $col) {
+                $differences[] = "Column '$col' is missing in table '$table' in current schema";
+            }
+    
+            // compare Primary key columns
+            $pkCurrent = $currentSchema['tables'][$table]['primary_key'];
+            $pkPrevious = $previousSchema['tables'][$table]['primary_key'];
+    
+            if ($pkCurrent !== $pkPrevious) {
+                $differences[] = "Primary key mismatch in table '$table': [" . implode(', ', $pkCurrent) . "] vs [" . implode(', ', $pkPrevious) . "]";
+            }
+    
+            // compare Foreign keys with table and columns 
+            $fkCurrent = $currentSchema['foreign_keys'][$table] ?? [];
+            $fkPrevious = $previousSchema['foreign_keys'][$table] ?? [];
+    
+            $normalizedFk1 = array_map(function($fk) {
+                return "{$fk['column']}->{$fk['references_table']}.{$fk['references_column']}";
+            }, $fkCurrent);
+            $normalizedFk2 = array_map(function($fk) {
+                return "{$fk['column']}->{$fk['references_table']}.{$fk['references_column']}";
+            }, $fkPrevious);
+    
+            $missingFkInPrevious = array_diff($normalizedFk1, $normalizedFk2);
+            $missingFkInCurrent = array_diff($normalizedFk2, $normalizedFk1);
+    
+            foreach ($missingFkInPrevious as $fk) {
+                $differences[] = "Foreign key '$fk' missing in previous schema table '$table'";
+            }
+            foreach ($missingFkInCurrent as $fk) {
+                $differences[] = "Foreign key '$fk' missing in current schema table '$table'";
+            }
+        }
+    
+        return $differences;
+    }
+    
+    function performComparison(string $currentSchema, string $previousSchema) : array
+    {
+      $schema1 = [
+        'tables' => $this->parseTablesAndPrimaryKeys($currentSchema),
+        'foreign_keys' => $this->parseForeignKeys($currentSchema),
+      ];
+      
+      $schema2 = [
+          'tables' => $this->parseTablesAndPrimaryKeys($previousSchema),
+          'foreign_keys' => $this->parseForeignKeys($previousSchema),
+      ];
+      
+      return $this->compareSchemasDetailed($schema1, $schema2);
     }
 
 }
