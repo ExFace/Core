@@ -477,34 +477,34 @@ SQL;
       return $tables;
     }
   
-      function parseForeignKeys(string $sql) {
-        $foreignKeys = [];
+    function parseForeignKeys(string $sql) {
+      $foreignKeys = [];
 
-        preg_match_all(
-            '/ALTER TABLE \[dbo\]\.\[(\w+)\] WITH CHECK ADD CONSTRAINT \[[^\]]+\] FOREIGN KEY \(\[(\w+)\]\) REFERENCES \[dbo\]\.\[(\w+)\] \(\[(\w+)\]\)/i',
-            $sql,
-            $matches,
-            PREG_SET_ORDER
-        );
+      preg_match_all(
+          '/ALTER TABLE \[dbo\]\.\[(\w+)\] WITH CHECK ADD CONSTRAINT \[[^\]]+\] FOREIGN KEY \(\[(\w+)\]\) REFERENCES \[dbo\]\.\[(\w+)\] \(\[(\w+)\]\)/i',
+          $sql,
+          $matches,
+          PREG_SET_ORDER
+      );
 
-        foreach ($matches as $match) {
-            $table = $match[1];
-            $column = $match[2];
-            $referencedTable = $match[3];
-            $referencedColumn = $match[4];
+      foreach ($matches as $match) {
+          $table = $match[1];
+          $column = $match[2];
+          $referencedTable = $match[3];
+          $referencedColumn = $match[4];
 
-            if (!isset($foreignKeys[$table])) {
-                $foreignKeys[$table] = [];
-            }
+          if (!isset($foreignKeys[$table])) {
+              $foreignKeys[$table] = [];
+          }
 
-            $foreignKeys[$table][] = [
-                'column' => $column,
-                'references_table' => $referencedTable,
-                'references_column' => $referencedColumn
-            ];
-        }
+          $foreignKeys[$table][] = [
+              'column' => $column,
+              'references_table' => $referencedTable,
+              'references_column' => $referencedColumn
+          ];
+      }
 
-        return $foreignKeys;
+      return $foreignKeys;
     }
 
     function compareSchemasDetailed(array $currentSchema, array $previousSchema) 
