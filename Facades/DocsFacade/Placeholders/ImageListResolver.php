@@ -146,11 +146,12 @@ class ImageListResolver extends AbstractMarkdownPlaceholderResolver implements P
 
     function findNextImageContainerId(string $markdown, string $fileBase): string 
     {
-        $pattern = '/<div\s+class="image-container"\s+id="' . preg_quote($fileBase, '/') . '-image-(\d+)"/i';
-        preg_match_all($pattern, $markdown, $matches);
-        
         $relative = str_replace('.md', '', $fileBase);
         $relative = str_replace(['/', '\\'], '-', $relative);
+      
+        $pattern = '/<div\s+class="image-container"\s+id="' . preg_quote($relative, '/') . '-image-(\d+)"/i';
+        preg_match_all($pattern, $markdown, $matches);
+        
         if (empty($matches[1])) {
             return $relative . '-image-' . 1;
         }
