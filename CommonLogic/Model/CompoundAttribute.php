@@ -115,11 +115,8 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     }
     
     /**
-     * Merge the given values array to a compound value with the components prefixes and suffixes added
-     * 
-     * @param array $values
-     * @throws RuntimeException
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\CompoundAttributeInterface::mergeValues()
      */
     public function mergeValues(array $values) : string
     {
