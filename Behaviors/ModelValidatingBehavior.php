@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\DataTypes\MetaAttributeOriginDataType;
 use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -202,8 +203,9 @@ class ModelValidatingBehavior extends AbstractBehavior
         if (! $event->getResult() instanceof ResultDataInterface) { 
             return;
         }
+        /** @var \exface\Core\Interfaces\DataSheets\DataSheetInterface $resultSheet */
         $resultSheet = $event->getResult()->getData();
-        if (! $resultSheet->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+        if (! $resultSheet->getMetaObject()->isExactly('exface.Core.ATTRIBUTE') || ! $resultSheet->getAggregations()->isEmpty()) {
             return;
         }
         
@@ -232,14 +234,17 @@ class ModelValidatingBehavior extends AbstractBehavior
         try {
             $object = MetaObjectFactory::createFromUid($this->getWorkbench(), $objUid);
             $aliasCol = $resultSheet->getColumns()->getByExpression('ALIAS');
+            $parentAttrs = $this->getParentAttributeAliases($object);
             // Create a separate data sheet for the results in order not to break the regular data
             $additionalSheet = $resultSheet->copy()->removeRows();
             foreach ($additionalSheet->getFilters()->getConditions($objConditionSearcher) as $cond) {
                 $additionalSheet->getFilters()->removeCondition($cond);
             }
             foreach ($object->getAttributes() as $attr) {
-                // Skip attributes, that are already in the data sheet
-                if ($aliasCol->findRowByValue($attr->getAlias()) !== false) {
+                $attrRowIdx = $aliasCol->findRowByValue($attr->getAlias());
+                // For attributes, that are already in the data sheet, just add the icons and skip the rest
+                if ($attrRowIdx !== false) {
+                    $resultSheet->setCellValue('INFO_ICONS', $attrRowIdx, $this->buildHtmlAttributeInfoIcons($attr, $parentAttrs));
                     continue;
                 }
                 // Also skip the generated LABEL attribute because it is very confusing if it is there
@@ -571,15 +576,36 @@ class ModelValidatingBehavior extends AbstractBehavior
      * @param \exface\Core\Interfaces\Model\MetaAttributeInterface $attr
      * @return string
      */
-    protected function buildHtmlAttributeInfoIcons(MetaAttributeInterface $attr) : string
+    protected function buildHtmlAttributeInfoIcons(MetaAttributeInterface $attr, array $parentAttributes = []) : string
     {
         $html = '';
         if ($attr->isInherited()) {
             $html .= '<i class="fa fa-arrow-circle-up" title="Inherited from ' . str_replace('"', '', $attr->getObjectInheritedFrom()->__toString()) . '"></i>';
+        } elseif (null !== $parentAttr = $parentAttributes[$attr->getAlias()]) {
+            $html .= '<i class="fa fa-arrow-circle-down" title="Overwritten from ' . str_replace('"', '', $parentAttr->getObject()->__toString()) . '"></i>';
         }
         if ($attr instanceof CustomAttribute) {
             $html .= '<i class="fa fa-user-circle-o" title="Custom attribute from ' . str_replace('"', "'", $attr->getSourceHint()) . '"></i>';
         }
         return $html;
+    }
+
+    /**
+     * Returns an array of parent attributes inherited or overwritten by this object with their aliases as keys.
+     *
+     * For attributes, that are inherited multiple times, the version closest to this object is returned.
+     *
+     * @param MetaObjectInterface $obj
+     * @return array<string, MetaAttributeInterface>
+     */
+    protected function getParentAttributeAliases(MetaObjectInterface $obj) : array
+    {
+        $aliases = [];
+        foreach ($obj->getParentObjects() as $parent) {
+            foreach ($parent->getAttributes()->getAll() as $attr) {
+                $aliases[$attr->getAlias()] = $attr;
+            }
+        }
+        return $aliases;
     }
 }
