@@ -7,7 +7,7 @@ Each placeholder can optionally accept parameters, formatted as key-value pairs 
 In order for placeholders to be processed, an **`Export Model`** must be applied via the relevant application.  
 Every time an export model is run, the values of all placeholders will be recalculated and updated accordingly.
 
-Folders named **`Bilder`** and **`Archive`** are **excluded** from all placeholder operations.  
+Folders named **`Bilder`**, **`Archive`** and **`Intro`** are **excluded** from all placeholder operations.  
 Any files or content within these folders will **not** be scanned or processed by placeholder logic.
 
 Any **manual edits** made **between** the `<!-- BEGIN ... -->` and `<!-- END ... -->` tags **will be overwritten** during the next export model execution.  
