@@ -902,6 +902,7 @@
 				// Make sure boolean values and strings representing booleans are converted to the strings 
 				// '0' and '1' so that comparing values 0 and false and 1 and true return true and not false.
 				// If not explicitly normalized (false).toString() will yield '' and not '0'.
+				// See also Expression::__construct() for more details
 				if (mVal === true || (bValIsString && mVal.toLowerCase() === 'true')) return '1';
 				if (mVal === false || (bValIsString && mVal.toLowerCase() === 'false')) return '0';
 				
