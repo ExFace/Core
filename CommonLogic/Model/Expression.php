@@ -71,15 +71,27 @@ class Expression implements ExpressionInterface
      * @deprecated use ExpressionFactory instead!
      * 
      * @param \exface\Core\CommonLogic\Workbench $exface
-     * @param string $string
+     * @param string|int|float|bool $string
      * @param MetaObjectInterface $meta_object
      * @param bool $parseString
      * @param bool $treatUnknownAsString
      */
-    public function __construct(WorkbenchInterface $exface, string $string = null, MetaObjectInterface $meta_object = null, bool $parseString = true, bool $treatUnknownAsString = false)
+    public function __construct(WorkbenchInterface $exface, $string = null, MetaObjectInterface $meta_object = null, bool $parseString = true, bool $treatUnknownAsString = false)
     {
         $this->exface = $exface;
         $this->meta_object = $meta_object;
+
+        // Parse the expression string. Actually, it is not always a string - it can be any scalar like number
+        // and boolean too. We will normalize all to strings here. While numbers are converted to strings automatically
+        // in PHP, it gets a bit tricky with booleans: `false` will become an empty string, thus becoming the same
+        // as NULL. This is not good, so we normalize booleans to 1 and 0 as strings. We do that in PHP here and in
+        // JS in exfTools.data.comparableValue(), so both worlds work similarly.
+        // IDEA do we need a separate expression type "boolean" similarly to "number"?
+        if ($string === false) {
+            $string = '0';
+        } elseif ($string === true) {
+            $string = '1';
+        }
         $this->originalString = $string;
         if ($parseString === true) {
             $this->parse($string, $treatUnknownAsString);
@@ -200,7 +212,7 @@ class Expression implements ExpressionInterface
      */
     public function isFormula() : bool
     {
-        if ($this->type === SELF::TYPE_FORMULA)
+        if ($this->type === self::TYPE_FORMULA)
             return true;
         else
             return false;
@@ -271,7 +283,7 @@ class Expression implements ExpressionInterface
      */
     public function isReference() : bool
     {
-        return $this->type === SELF::TYPE_REFERENCE;
+        return $this->type === self::TYPE_REFERENCE;
     }
 
     /**
@@ -624,7 +636,7 @@ class Expression implements ExpressionInterface
     public function getAttributeAggregator() : ?AggregatorInterface
     {
         $aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->__toString());
-        return $aggr === false ? false : $aggr;
+        return $aggr === false ? null : $aggr;
     }
 
     /**

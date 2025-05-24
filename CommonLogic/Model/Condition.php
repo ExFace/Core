@@ -3,12 +3,9 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
@@ -68,8 +65,6 @@ class Condition implements ConditionInterface
     private $value_set = false;
 
     private $comparator = null;
-
-    private $data_type = null;
     
     private $ignoreEmptyValues = null;
 
@@ -146,7 +141,7 @@ class Condition implements ConditionInterface
      * {@inheritdoc}
      * @see ConditionInterface::getValue()
      */
-    public function getValue() : ?string
+    public function getValue() : mixed
     {
         return $this->value;
     }
@@ -169,7 +164,7 @@ class Condition implements ConditionInterface
      * 
      * @see ConditionInterface::setValue()
      */
-    public function setValue(?string $value) : ConditionInterface
+    public function setValue(mixed $value) : ConditionInterface
     {
         $this->unsetValue();
         if (Expression::detectFormula($value)) {
@@ -187,15 +182,10 @@ class Condition implements ConditionInterface
         // only use an explicitly set comparater here and not let the comparater be guessed, as that could guess a wrong comparator
         // when the value is not set yet. For example that happens in a autosuggest action request with an filter parameter containing an IN filter
         // like in a Prefill of an InputComboTable with multi-select
-        if ($this->getDataType()->isValueEmpty($value) && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
+        if (($value === null || $value === '') && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
             return $this;
         }
         $this->value_set = true;
-        try {
-            $value = $this->getDataType()->parse($value);
-        } catch (\Throwable $e) {
-            throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
-        }
         $this->value = $value;
         return $this;
     }
@@ -414,19 +404,6 @@ class Condition implements ConditionInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see ConditionInterface::getDataType()
-     */
-    public function getDataType() : DataTypeInterface
-    {
-        if ($this->data_type === null) {
-            $this->data_type = DataTypeFactory::createBaseDataType($this->exface);
-        }
-        return $this->data_type;
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionInterface::getAttributeAlias()
@@ -447,7 +424,7 @@ class Condition implements ConditionInterface
      */
     public function toString() : string
     {
-        return $this->getExpression()->toString() . ' ' . $this->getComparator() . ' ' . $this->getValue();
+        return $this->getExpression()->__toString() . ' ' . $this->getComparator() . ' ' . $this->getValue();
     }
 
     /**
