@@ -24,7 +24,7 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
             $filePath = $directory . DIRECTORY_SEPARATOR . $file;
     
             if (is_dir($filePath)) {
-                if (in_array($file, ['Bilder', 'Archive'])) {
+                if (in_array($file, ['Bilder', 'Archive', 'Intro'])) {
                     continue;
                 }
     
