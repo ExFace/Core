@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authorization;
 
+use exface\Core\CommonLogic\Model\ExistsCondition;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -76,6 +78,12 @@ use exface\Core\Factories\ConditionGroupFactory;
  * (`false`). NOTE: such policies never apply to actions, that explicitly do not 
  * require a trigger widget - e.g. `exface.Core.Login` or similar.
  * - `exclude_actions` - list of action selectors not to apply this policy to
+ * - `apply_if` - conditions (filters) to evaluate when authorizing - the policy
+ * will become inapplicable if these condition evaluate to FALSE.
+ * - `apply_if_exists` - a data sheet, that will be read when authorizing - the
+ * policy will become inapplicable if it is empty.
+ *  - `apply_if_not_exists` - a data sheet, that will be read when authorizing - the
+ *  policy will become inapplicable if it is NOT empty.
  * 
  * @author Andrej Kabachnik
  *
@@ -83,46 +91,31 @@ use exface\Core\Factories\ConditionGroupFactory;
 class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
 {
     use ImportUxonObjectTrait;
-    
+
     private $workbench = null;
-    
     private $name = '';
-    
     private $userRoleSelector = null;
-    
     private $actionSelector = null;
-    
     private $metaObjectSelector = null;
-    
     private $pageGroupSelector = null;
-    
     private $facadeSelector = null;
-    
     private $appUid = null;
-    
     private $conditionUxon = null;
-    
     private $effect = null;
-    
     private $actionTriggerWidgetMatch = null;
-    
     private $excludeActionSelectors = [];
-    
     private $cliTasks = null;
-    
     private $scheduledTasks = null;
-    
     private $httpTasks = null;
-    
     private $appUidAppliesToAction = true;
-    
     private $appUidAppliesToObject = false;
-    
     private $appUidAppliesToPage = false;
-    
     private $applyIfUxon = null;
-    
     private $applyIfConditionGroup = null;
+    private $applyIfExistsUxon = null;
+    private $applyIfExists = null;
+    private $applyIfNotExistsUxon = null;
+    private $applyIfNotExists = null;
     
     /**
      * 
@@ -315,13 +308,37 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
                     if ($conditionGrp->evaluate($task->getInputData()) === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched in context of action input data');
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
                     } else {
                         $applied = true;
                     }
                 } else {
                     if ($conditionGrp->evaluate() === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
+                    } else {
+                        $applied = true;
+                    }
+                }
+            }
+
+            // Match apply_if_exists
+            if (null !== $condition = $this->getApplyIfExists()) {
+                if ($task && $task->hasInputData()) {
+                    $inputData = $task->getInputData();
+                    if (! $condition->evaluate($inputData)) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_exists` not matched by action input data');
+                    } else {
+                        $applied = true;
+                    }
+                }
+            }
+
+            // Match apply_if_exists
+            if (null !== $condition = $this->getApplyIfNotExists()) {
+                if ($task && $task->hasInputData()) {
+                    $inputData = $task->getInputData();
+                    if ($condition->evaluate($inputData)) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data');
                     } else {
                         $applied = true;
                     }
@@ -752,6 +769,105 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->applyIfUxon = $value;
         $this->applyIfConditionGroup = null;
+        return $this;
+    }
+
+    /**
+     * @return ExistsCondition|null
+     */
+    protected function getApplyIfExists() : ?ExistsCondition
+    {
+        if ($this->applyIfExists === null && $this->applyIfExistsUxon !== null) {
+            $this->applyIfExists = new ExistsCondition($this->workbench, $this->applyIfExistsUxon);;
+        }
+        return $this->applyIfExists;
+    }
+
+    /**
+     * Only apply this policy if at least on row of data defined here exists for every input row of the action
+     *
+     * Here you can define a data sheet to check if this policy is applicable to a specific row of input data.
+     * You can use placeholders to include values from the input data in the filters of the lookup-sheet.
+     *
+     * For example, this can be used to build access control lists (ACLs) for a `PRODUCT` object. Assume, we have
+     * a table `PRODUCT_ACL` with `USER_ROLE`, `CATEGORY` and `MANAGER_GROUP`. It sais, that a user role can edit
+     * product data if there is an entry in the ACL table for that role and at least one category of that product.
+     *
+     * However, some products are explicitly managed by a `MANAGER_GROUP`. So in our ACL table we can make some of
+     * the rules apply only if the product belongs to a certain manager group. Technically, this means, the ACL
+     * rule will apply if it has no `MANAGER_GROUP` or the product has the same group as the rule.
+     *
+     * Here is how to create a corresponding allowing permission. The placeholders in the values refer to the
+     * input data of our action - in this example the input data is assumed to be based on `PRODUCT`.
+     *
+     * ```
+     * {
+     *  "apply_if_exists": {
+     *      "data_sheet": {
+     *          "object_alias": "my.App.PRODUCT_ACL",
+     *          "filters": {
+     *              "operator": "AND",
+     *              "conditions": [
+     *                  {"expression": "CATEGORY", "comparator": "[", "value": "[#PRODUCT_CATEGORIES__CATEGORY:LIST_DISTINCT#]"},
+     *                  {"expression": "ROLE", "comparator": "[", "value": "=User('USER_ROLE_USERS__USER_ROLE:LIST_DISTINCT')"}
+     *              ],
+     *              "nested_groups": [
+     *                  {
+     *                      "operator": "OR",
+     *                      "conditions": [
+     *                          {"expression": "MANAGER_GROUP", "comparator": "==", "value": ""},
+     *                          {"expression": "MANAGER_GROUP", "comparator": "==", "value": "[#MANAGER_GROUP#]"}
+     *                      ]
+     *                  }
+     *              ]
+     *          }
+     *      }
+     *  }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property apply_if_exists
+     * @uxon-type \exface\Core\CommonLogic\Model\ExistsCondition
+     * @uxon-template {"data_sheet": {"object_alias": "", "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "==", "value": ""}]}}}
+     *
+     * @uxon-placeholder [#<metamodel:attribute>#]
+     * @uxon-placeholder [#<metamodel:formula>#]
+     *
+     * @return ExistsCondition|null
+     */
+    protected function setApplyIfExists(UxonObject $uxon) : ActionAuthorizationPolicy
+    {
+        $this->applyIfExistsUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return ExistsCondition|null
+     */
+    protected function getApplyIfNotExists() : ?ExistsCondition
+    {
+        if ($this->applyIfNotExists === null && $this->applyIfNotExistsUxon !== null) {
+            $this->applyIfNotExists = new ExistsCondition($this->workbench, $this->applyIfNotExistsUxon);;
+        }
+        return $this->applyIfNotExists;
+    }
+
+    /**
+     * Only apply this policy if no row of data defined here exists for any input row of the action
+     *
+     * This is the exact opposite of `apply_if_exists`. It uses the same logic, but makes the policy
+     * inapplicable if anything is found.
+     *
+     * @uxon-property apply_if_exists
+     * @uxon-type \exface\Core\CommonLogic\Model\ExistsCondition
+     * @uxon-template {"data_sheet": {"object_alias": "", "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "==", "value": ""}]}}}
+     *
+     * @return ExistsCondition|null
+     */
+    protected function setApplyIfNotExists(UxonObject $uxon) : ActionAuthorizationPolicy
+    {
+        $this->applyIfNotExistsUxon = $uxon;
         return $this;
     }
 }

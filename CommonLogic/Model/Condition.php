@@ -18,6 +18,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * A condition is a simple conditional predicate to compare two expressions.
@@ -838,5 +839,10 @@ class Condition implements ConditionInterface
     public function appliesToAggregatedValues() : bool
     {
         return $this->applyToAggregates;
+    }
+
+    public function getRequiredExpressions(?MetaObjectInterface $object = null) : array
+    {
+        return [$this->getExpression()];
     }
 }
