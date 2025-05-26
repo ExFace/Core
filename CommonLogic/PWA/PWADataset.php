@@ -375,7 +375,7 @@ class PWADataset implements PWADatasetInterface
      * This means all columns in the datasheet that cannot be requested incremental
      * will not be recognized when searching for changes!
      *
-     * @uxon-proeprty: force_incremental_sync
+     * @uxon-property: force_incremental_sync
      * @param bool $forced
      * @return PWADatasetInterface
      */
