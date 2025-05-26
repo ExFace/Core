@@ -28,6 +28,10 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     
     function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName): string
     {
+        if ($offset > strlen($markdown)) {
+        	return $markdown;
+        }
+        
         $startPos = strpos($markdown, $startTag, $offset);
         if ($startPos === false) {
             return $markdown; 
