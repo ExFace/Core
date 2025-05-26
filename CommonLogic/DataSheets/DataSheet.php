@@ -3005,19 +3005,17 @@ class DataSheet implements DataSheetInterface
         
         if ($readMissingData === true) {
             // TODO #DataCollector needs to be used here instead of all the following logic
-            foreach ($condGrp->getConditionsRecursive() as $cond) {
-                foreach ($cond->getExpression()->getRequiredAttributes() as $attrAlias) {
-                    if (! $this->getColumns()->getByExpression($attrAlias)) {
-                        $missingCols[] = $attrAlias;
-                    }
+            foreach ($condGrp->getRequiredExpressions($this->getMetaObject()) as $expr) {
+                if (! $this->getColumns()->getByExpression($expr)) {
+                    $missingCols[] = $expr;
                 }
             }
             if (! empty($missingCols)) {
                 if ($this->hasUidColumn(true)) {
                     $missingSheet = DataSheetFactory::createFromObject($this->getMetaObject());
                     $missingSheet->getColumns()->addFromUidAttribute();
-                    foreach ($missingCols as $alias) {
-                        $missingSheet->getColumns()->addFromExpression($alias);
+                    foreach ($missingCols as $expr) {
+                        $missingSheet->getColumns()->addFromExpression($expr);
                     }
                     $missingSheet->getFilters()->addConditionFromColumnValues($this->getUidColumn());
                     $missingSheet->dataRead();
