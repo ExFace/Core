@@ -25,7 +25,7 @@ class IsActionAuthorized extends Formula
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run(?string $actionAliasOrUid = null, string $username = null): bool
+    public function run(?string $actionAliasOrUid = null, ?string $username = null): bool
     {
         if ($actionAliasOrUid === null) {
             throw new FormulaError("No action provided for =IsActionAuthorized() formula");
