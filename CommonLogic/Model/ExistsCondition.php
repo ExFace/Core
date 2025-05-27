@@ -27,12 +27,15 @@ class ExistsCondition implements ConditionalExpressionInterface
 {
     use ImportUxonObjectTrait;
 
-    private WorkbenchInterface $workbench;
-    private UxonObject $uxon;
-    private UxonObject|null $dataSheetUxon = null;
-    private bool $invert = false;
+    private WorkbenchInterface      $workbench;
+    private UxonObject              $uxon;
+    private UxonObject|null         $dataSheetUxon = null;
+    private bool                    $invert = false;
     private DataSheetInterface|null $dataSheet = null;
     private DataSheetInterface|null $baseSheet = null;
+    private bool                    $baseSheetCacheable = false;
+    private ?string                 $baseSheetLabelColName = null;
+    private array                   $decisionsHistory = [];
 
     /**
      * @deprecated use ConditionFactory instead
@@ -87,10 +90,12 @@ class ExistsCondition implements ConditionalExpressionInterface
 
             // Add column required for further logic
             if ($base->getMetaObject()->hasUidAttribute()) {
-                $base->getColumns()->addFromUidAttribute();
+                $col = $base->getColumns()->addFromUidAttribute();
+                $this->baseSheetLabelColName = $col->getName();
             }
             if ($base->getMetaObject()->hasLabelAttribute()) {
                 $base->getColumns()->addFromLabelAttribute();
+                $this->baseSheetLabelColName = $col->getName();
             }
 
             // See if we can read data once only and then filter in-memory
@@ -99,10 +104,10 @@ class ExistsCondition implements ConditionalExpressionInterface
 
             // TODO there surely will be cases, when it is not a good idea to cache the
             // lookup-sheet. But how to detect them?
-            $cacheable = true;
+            $this->baseSheetCacheable = true;
 
             // If we can cache values, read once and peform all filtering in-memory
-            if ($cacheable === true) {
+            if ($this->baseSheetCacheable === true) {
                 $base->dataRead();
             }
 
@@ -111,28 +116,59 @@ class ExistsCondition implements ConditionalExpressionInterface
 
         if ($rowIdx !== null) {
             $inputRow = $inputData->getRow($rowIdx);
-            $exists = $this->evaluateExistsForRow($inputRow, $this->baseSheet, $json, $phsCols);
+            $existingData = $this->getExistingDataForRow($inputRow, $this->baseSheet, $json, $phsCols);
+            $exists = ! $existingData->isEmpty();
         } else {
             $exists = true;
             foreach ($inputData->getRows() as $inputRow) {
-                if (false === $this->evaluateExistsForRow($inputRow, $this->baseSheet, $json, $phsCols, ! $cacheable)) {
+                $existingData = $this->getExistingDataForRow($inputRow, $this->baseSheet, $json, $phsCols, ! $this->baseSheetCacheable);
+                if ($existingData->isEmpty()) {
                     $exists = false;
                     break;
                 }
             }
         }
 
+        $this->decisionsHistory[$this->getDecisionHistoryKey($dataSheet, $rowIdx)] = $this->baseSheet;
         return $this->invert === false ? $exists : ! $exists;
     }
 
     /**
+     * Returns an explanation about the evaluation of this condition for the given data - for debug purposes
+     *
+     * TODO add explain() to other conditional expressions?
+     *
+     * @param DataSheetInterface|null $dataSheet
+     * @param int|null $rowIdx
+     * @return string
+     */
+    public function explain(DataSheetInterface $dataSheet = null, int $rowIdx = null) : string
+    {
+        $historyKey = $this->getDecisionHistoryKey($dataSheet, $rowIdx);
+        $existingData = $this->decisionsHistory[$historyKey] ?? null;
+        if ($existingData === null) {
+            return 'Condition not yet evaluated';
+        }
+        if ($existingData->isEmpty()) {
+            return 'No data found for `' . $existingData->getFilters()->__toString() . '`';
+        }
+        if ($this->baseSheetLabelColName !== null && $col = $existingData->getColumns()->get($this->baseSheetLabelColName)) {
+            $vals = $col->getValues();
+            $vals = array_unique($vals);
+            return 'Found ' . $existingData->getMetaObject()->getName() . ' `' . implode('`, `', $vals) . '` via `' . $existingData->getFilters()->__toString() . '`';
+        }
+        return 'Found ' . $existingData->countRows() . ' data rows for `' . $existingData->getFilters()->__toString() . '`';
+    }
+
+    /**
+     *
      * @param array $inputRow
      * @param DataSheetInterface $lookupSheet
      * @param string $filterTpl
      * @param array $placeholdersToColumns
-     * @return bool
+     * @return DataSheetInterface
      */
-    protected function evaluateExistsForRow(array $inputRow, DataSheetInterface $lookupSheet, string $filterTpl, array $placeholdersToColumns, bool $readData) : bool
+    protected function getExistingDataForRow(array $inputRow, DataSheetInterface $lookupSheet, string $filterTpl, array $placeholdersToColumns, bool $readData) : DataSheetInterface
     {
         $phVals = [];
         foreach ($placeholdersToColumns as $ph => $phCol) {
@@ -146,8 +182,10 @@ class ExistsCondition implements ConditionalExpressionInterface
             $filteredSheet->dataRead();
         } else {
             $filteredSheet = $lookupSheet->extract($filters);
+            // Overwrite the filters after extracting just to improve explain() output
+            $filteredSheet->setFilters($filters);
         }
-        return $filteredSheet->isEmpty() === false;
+        return $filteredSheet;
     }
 
     /**
@@ -292,5 +330,10 @@ class ExistsCondition implements ConditionalExpressionInterface
             $exprs[] = ExpressionFactory::createFromString($this->getWorkbench(), $ph, $object);
         }
         return $exprs;
+    }
+
+    protected function getDecisionHistoryKey(?DataSheetInterface $dataSheet = null, ?int $rowIdx = null) : string
+    {
+        return ($dataSheet === null ? '' : spl_object_id($dataSheet)) . ':' . $rowIdx ?? '';
     }
 }
