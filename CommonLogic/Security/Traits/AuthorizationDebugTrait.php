@@ -187,6 +187,10 @@ trait AuthorizationDebugTrait
             'hide_header' => true,
             'hide_footer' => true,
             'nowrap' => false,
+            'row_grouper' => [
+                'group_by_expression' => '_APPLIED',
+                'show_counter' => true
+            ],
             'columns' => [
                 [
                     'attribute_alias' => 'EFFECT',
@@ -216,6 +220,10 @@ trait AuthorizationDebugTrait
                 [
                     'data_column_name' => '_EXPLANATION',
                     'caption' => 'Explanation'
+                ],
+                [
+                    'data_column_name' => '_APPLIED',
+                    'caption' => 'Applied'
                 ]
             ]
         ]);
@@ -235,17 +243,20 @@ trait AuthorizationDebugTrait
                 case $policy = $permission->getPolicy():
                     $name = $policy ? $policy->getName() : '';
                     $effect = $policy ? $policy->getEffect()->__toString() : '';
+                    $applied = $permission->isNotApplicable() ? 'No' : 'Yes';
                     break;
                 case $permission instanceof CombinedPermission:
                     $name = 'Combining algorithm "' . $permission->getPolicyCombiningAlgorithm()->getValue() . '"';
                     $effect = '';
+                    $applied = 'Yes';
                     break;
             }
             $dataSheet->addRow([
                 'EFFECT' => $effect,
                 'NAME' => $name,
                 '_DECISION' => $permission->toXACMLDecision(),
-                '_EXPLANATION' => $permission->getExplanation()
+                '_EXPLANATION' => $permission->getExplanation(),
+                '_APPLIED' => $applied
             ]);
         }
         
