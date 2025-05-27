@@ -26,19 +26,23 @@ trait PrefillValueTrait
      *
      * This method is hande in all sorts of prepareDataSheetToXXX() and doPrefill() methods - see
      * corresponding implementations in this class.
-     * 
+     *
      * @param DataSheetInterface $prefillData
      * @param MetaObjectInterface $widget_object
-     * @param string $attributeAlias
-     * @param string $dataColumnName
-     * 
-     * @return string|NULL
+     * @param string|null $attributeAlias
+     * @param string|null $dataColumnName
+     * @param string|null $formula
+     * @return string|null
      */
-    protected function getPrefillExpression(DataSheetInterface $prefillData, MetaObjectInterface $widget_object, string $attributeAlias = null, string $dataColumnName = null) : ?string
+    protected function getPrefillExpression(DataSheetInterface $prefillData, MetaObjectInterface $widget_object, ?string $attributeAlias = null, ?string $dataColumnName = null, ?ExpressionInterface $formula = null) : ?string
     {
-        $expression = $attributeAlias ?? $dataColumnName;
+        switch (true) {
+            case $attributeAlias !== null: $exprString = $attributeAlias; break;
+            case $formula !== null: $exprString = $formula->__toString(); break;
+            case $dataColumnName !== null: $exprString = $dataColumnName; break;
+        }
         
-        if ($expression === null || $expression === '') {
+        if ($exprString === null || $exprString === '') {
             return null;
         }
         
@@ -51,7 +55,7 @@ trait PrefillValueTrait
         // If it's a different object, than try to find some relation wetween them.
         if ($prefill_object->is($widget_object)) {
             // If we are looking for attributes of the object of this widget, then just return the attribute_alias
-            return $expression;
+            return $exprString;
         } elseif ($attributeAlias !== null && $widget_object->hasAttribute($attributeAlias)) {
             $attribute = $this->getMetaObject()->getAttribute($attributeAlias);
             // If not, we are dealing with a prefill with data of another object. It only makes sense to try to prefill here,

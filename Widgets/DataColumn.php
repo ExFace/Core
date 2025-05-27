@@ -18,6 +18,7 @@ use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToCalculation;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iTakeInput;
@@ -70,7 +71,7 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * @author Andrej Kabachnik
  *        
  */
-class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText
+class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText, iCanBeBoundToCalculation
 {
     use iHaveAttributeGroupTrait;
     
@@ -1062,10 +1063,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * @uxon-property calculation
      * @uxon-type metamodel:expression
      * 
-     * @param string $expression
-     * @return DataColumn
+     * @see iCanBeBoundToCalculation::setCalculation()
      */
-    public function setCalculation(string $expression) : DataColumn
+    public function setCalculation(string $expression) : iCanBeBoundToCalculation
     {
         $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
         return $this;
@@ -1073,7 +1073,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
-     * @return bool
+     * @see iCanBeBoundToCalculation::isCalculated()
      */
     public function isCalculated() : bool
     {
@@ -1082,7 +1082,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
-     * @return ExpressionInterface|NULL
+     * @see iCanBeBoundToCalculation::setCalculation()
      */
     public function getCalculationExpression() : ?ExpressionInterface
     {

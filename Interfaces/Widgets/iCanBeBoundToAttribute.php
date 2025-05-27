@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
- * Model entities implementig this interface can reference a single attribute from the meta model.
+ * Model entities implementing this interface can reference a single attribute from the metamodel.
  * 
  * @author Andrej Kabachnik
  *
