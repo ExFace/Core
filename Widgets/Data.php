@@ -330,6 +330,13 @@ class Data
                 }
             }
         }
+
+        // Buttons can have prefill logic too - e.g. when the have complex disabled_if or hidden_if and
+        // need data for that.
+        foreach ($this->getButtons() as $button) {
+            $button->prepareDataSheetToPrefill($data_sheet);
+        }
+
         return $data_sheet;
     }
     
