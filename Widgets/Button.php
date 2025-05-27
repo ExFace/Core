@@ -642,7 +642,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             return $hiddenExplicitly;
         }
         return $this->getAction()->isAuthorized() === false;
-
     }
 
     public function getAppearance() : string
@@ -761,8 +760,62 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             return null;
         }
 
+        $hiddenIfInvalid = null;
+        $hiddenIfUnauthorized = null;
         if ($this->isHiddenIfInputInvalid() === true && null !== $uxon = $this->getConditionalPropertyFromAction($this->getAction())) {
-            $this->setHiddenIf($uxon);
+            $hiddenIfInvalid = $uxon;
+        }
+        if ($this->hiddenIfAccessDenied === true) {
+            $inputWidget = $this->getInputWidget();
+            $formula = "=IsButtonAuthorized('{$this->getPage()->getAliasWithNamespace()}', '{$this->getId()}')";
+            $formulaLink = null;
+            switch (true) {
+                case $inputWidget instanceof iShowData:
+                case $inputWidget instanceof iUseData:
+                    $dataWidget = $inputWidget instanceof iUseData ? $inputWidget->getData() : $inputWidget;
+                    if (! $formulaCol = $dataWidget->getColumnByExpression($formula)) {
+                        $formulaCol = $dataWidget->createColumnFromUxon(new UxonObject([
+                            'calculation' => $formula,
+                            'hidden' => true,
+                            'exportable' => false
+                        ]));
+                        $dataWidget->addColumn($formulaCol);
+                    }
+                    $formulaLink = "=~input!{$formulaCol->getDataColumnName()}";
+                    break;
+                case $inputWidget instanceof iContainOtherWidgets:
+                    // TODO how to add the formula to containers?
+                    break;
+            }
+            if ($formulaLink !== null) {
+                $hiddenIfUnauthorized = new UxonObject([
+                    'conditions' => [
+                        [
+                            'value_left' => $formulaLink,
+                            'comparator' => ComparatorDataType::EQUALS,
+                            'value_right' => false
+                        ]
+                    ]
+                ]);
+            }
+        }
+
+        switch (true) {
+            case $hiddenIfInvalid !== null && $hiddenIfUnauthorized === null:
+                $this->setHiddenIf($hiddenIfInvalid);
+                break;
+            case $hiddenIfUnauthorized !== null && $hiddenIfInvalid === null:
+                $this->setHiddenIf($hiddenIfUnauthorized);
+                break;
+            case $hiddenIfInvalid !== null && $hiddenIfUnauthorized !== null:
+                $this->setHiddenIf(new UxonObject([
+                    'operator' => EXF_LOGICAL_OR,
+                    'nested_groups' => [
+                        $hiddenIfInvalid->toArray(),
+                        $hiddenIfUnauthorized->toArray()
+                    ]
+                ]));
+                break;
         }
 
         return parent::getHiddenIf();
