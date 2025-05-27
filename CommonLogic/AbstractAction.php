@@ -1707,6 +1707,7 @@ abstract class AbstractAction implements ActionInterface
             $uxon->setProperty('effected_object', $effectedObject->getAliasWithNamespace());
         }
         $this->customEffects[] = new ActionEffect($this, $uxon);
+        return $this;
     }
     
     /**
