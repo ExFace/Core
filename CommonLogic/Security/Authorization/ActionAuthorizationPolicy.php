@@ -172,6 +172,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, TaskInterface $task = null): PermissionInterface
     {
         $applied = false;
+        $appliedExplanation = null;
         
         try {
             if ($action === null) {
@@ -307,7 +308,11 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $object = $object ?? $this->findObject($action);
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
-                    if ($conditionGrp->evaluate($task->getInputData()) === false) {
+                    $inputData = $task->getInputData();
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($task->getInputData())) {
+                        $inputData = $mapper->map($inputData);
+                    }
+                    if ($conditionGrp->evaluate($inputData) === false) {
                         return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
                     } else {
                         $applied = true;
@@ -323,25 +328,34 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
 
             // Match apply_if_exists
             if (null !== $condition = $this->getApplyIfExists()) {
-                if ($task && $task->hasInputData()) {
+                if ($task !== null && $task->hasInputData()) {
                     $inputData = $task->getInputData();
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
+                        $inputData = $mapper->map($inputData);
+                    }
                     if (! $condition->evaluate($inputData)) {
                         return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_exists` not matched by action input data');
                     } else {
+                        $appliedExplanation = $condition->explain($inputData);
                         $applied = true;
                     }
+                } else {
+                    return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Input data required for apply_if_exists, but not provided');
                 }
             }
 
-            // Match apply_if_exists
+            // Match apply_if_not_exists
             if (null !== $condition = $this->getApplyIfNotExists()) {
                 if ($task && $task->hasInputData()) {
                     $inputData = $task->getInputData();
                     if ($condition->evaluate($inputData)) {
                         return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data');
                     } else {
+                        $appliedExplanation = $condition->explain($inputData);
                         $applied = true;
                     }
+                } else {
+                    return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Input data required for apply_if_not_exists, but not provided');
                 }
             }
             
@@ -403,7 +417,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         }
         
         // If all targets are applicable, the permission is the effect of this condition.
-        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this);
+        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $appliedExplanation);
     }
     
     /**
@@ -848,7 +862,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function getApplyIfNotExists() : ?ExistsCondition
     {
         if ($this->applyIfNotExists === null && $this->applyIfNotExistsUxon !== null) {
-            $this->applyIfNotExists = new ExistsCondition($this->workbench, $this->applyIfNotExistsUxon);;
+            $this->applyIfNotExists = new ExistsCondition($this->workbench, $this->applyIfNotExistsUxon, true);
         }
         return $this->applyIfNotExists;
     }
