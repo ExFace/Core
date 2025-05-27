@@ -10,6 +10,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 
 /**
@@ -91,6 +92,7 @@ class IsButtonAuthorized extends Formula
         try {
             $actionAP->authorize($action, $task);
         } catch (AccessPermissionDeniedError $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             return false;
         }
         return true;
