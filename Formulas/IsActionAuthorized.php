@@ -10,6 +10,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\TaskFactory;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Returns TRUE if the current user is authorized to call the given action and FALSE otherwise
@@ -50,6 +51,7 @@ class IsActionAuthorized extends Formula
         try {
             $actionAP->authorize($action, $task);
         } catch (AccessPermissionDeniedError $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             return false;
         }
         return true;

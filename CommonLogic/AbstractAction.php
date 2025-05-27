@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Actions\ActionConfirmationList;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
@@ -1366,6 +1367,7 @@ abstract class AbstractAction implements ActionInterface
             $actionAP->authorize($this, null, $userOrToken);
             return true;
         } catch (AuthorizationExceptionInterface $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             return false;
         }
     }
