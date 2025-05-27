@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "User Role [exface.Core.USER_ROLE]",
             "CREATED_ON": "2020-02-09 07:27:44",
-            "MODIFIED_ON": "2023-06-01 13:16:15",
+            "MODIFIED_ON": "2025-05-27 11:59:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -229,11 +229,35 @@
                                         },
                                         "filters": [
                                             {
+                                                "attribute_alias": "APP"
+                                            },
+                                            {
+                                                "attribute_alias": "AUTHORIZATION_POINT"
+                                            },
+                                            {
+                                                "//": "overrides default relation filled filter with nothing",
                                                 "attribute_alias": "TARGET_USER_ROLE",
-                                                "required": true,
-                                                "input_widget": {
-                                                    "widget_type": "InputHidden"
-                                                }
+                                                "comparator": "==",
+                                                "value": "",
+                                                "widget_type": "InputHidden"
+                                            },
+                                            {
+                                                "condition_group": {
+                                                    "operator": "OR",
+                                                    "conditions": [
+                                                        {
+                                                            "expression": "TARGET_USER_ROLE",
+                                                            "value": "=uid_field",
+                                                            "comparator": "=="
+                                                        },
+                                                        {
+                                                            "expression": "TARGET_USER_ROLE",
+                                                            "value": "null",
+                                                            "comparator": "=="
+                                                        }
+                                                    ]
+                                                },
+                                                "widget_type": "InputHidden"
                                             }
                                         ],
                                         "columns": [
@@ -276,6 +300,10 @@
                                             {
                                                 "attribute_alias": "AUTHORIZATION_POINT__LABEL",
                                                 "direction": "asc"
+                                            },
+                                            {
+                                                "attribute_alias": "EFFECT",
+                                                "direction": "DESC"
                                             },
                                             {
                                                 "attribute_alias": "NAME",
