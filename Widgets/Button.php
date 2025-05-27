@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
@@ -766,41 +767,30 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
         $hiddenIfInvalid = null;
         $hiddenIfUnauthorized = null;
+        // See if we can derive a hidden_if from the action config
         if ($this->isHiddenIfInputInvalid() === true && null !== $uxon = $this->getConditionalPropertyFromAction($this->getAction())) {
             $hiddenIfInvalid = $uxon;
         }
+        // Create an additional hidden_if using the =IsButtonAuthorized() formula to check, if this
+        // button is authorized for the current user and each line of potential input data
         if ($this->hiddenIfAccessDenied === true) {
             $inputWidget = $this->getInputWidget();
-            $formula = "=IsButtonAuthorized('{$this->getPage()->getAliasWithNamespace()}', '{$this->getId()}')";
-            $formulaLink = null;
-            switch (true) {
-                case $inputWidget instanceof iShowData:
-                case $inputWidget instanceof iUseData:
-                    $dataWidget = $inputWidget instanceof iUseData ? $inputWidget->getData() : $inputWidget;
-                    if (! $formulaCol = $dataWidget->getColumnByExpression($formula)) {
-                        $formulaCol = $dataWidget->createColumnFromUxon(new UxonObject([
-                            'calculation' => $formula,
-                            'hidden' => true,
-                            'exportable' => false
-                        ]));
-                        $dataWidget->addColumn($formulaCol);
-                    }
-                    $formulaLink = "=~input!{$formulaCol->getDataColumnName()}";
-                    break;
-                case $inputWidget instanceof iContainOtherWidgets:
-                    // TODO how to add the formula to containers?
-                    break;
-            }
-            if ($formulaLink !== null) {
-                $hiddenIfUnauthorized = new UxonObject([
+            $condGrp = ConditionGroupFactory::createFromUxon(
+                $this->getWorkbench(),
+                new UxonObject([
                     'conditions' => [
                         [
-                            'value_left' => $formulaLink,
+                            'expression' => "=IsButtonAuthorized('{$this->getPage()->getAliasWithNamespace()}', '{$this->getId()}')",
                             'comparator' => ComparatorDataType::EQUALS,
-                            'value_right' => false
+                            'value' => false
                         ]
                     ]
-                ]);
+                ]),
+                $this->getMetaObject()
+            );
+            $condUxon = $this->getConditionalPropertyForWidget($inputWidget, $condGrp);
+            if ($condUxon !== null) {
+                $hiddenIfUnauthorized = $condUxon;
             }
         }
 
@@ -854,24 +844,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             // be able to supply enough data.
             /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
             $condGrp = $check->getConditionGroup($inputWidgetObject);
-            switch (true) {
-                // Regular data widgets like DataTable - we can add columns here
-                case $inputWidget instanceof iShowData:
-                    $propUxon = $this->getConditionalPropertyForData($inputWidget, $condGrp);
-                    break;
-                // Complex widgets using data like Map - we can add column here too
-                case $inputWidget instanceof iUseData:
-                    $propUxon = $this->getConditionalPropertyForData($inputWidget->getData(), $condGrp);
-                    break;
-                // Containers - we can add hidden widgets here
-                case $inputWidget instanceof iContainOtherWidgets:
-                    $propUxon = $this->getConditionalPropertyForContainer($inputWidget, $condGrp);
-                    break;
-                // Simple widgets - we can add hidden widgets to their containers
-                case $inputWidget->hasParent():
-                    $propUxon = $this->getConditionalPropertyForSingleWidget($inputWidget, $condGrp);
-                    break;
-            }
+            $propUxon = $this->getConditionalPropertyForWidget($inputWidget, $condGrp);
             if ($propUxon !== null) {
                 $uxons[] = $propUxon;
             }
@@ -893,6 +866,30 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         }
 
         return null;
+    }
+
+    protected function getConditionalPropertyForWidget(WidgetInterface $widget, ConditionGroupInterface $condGrp) : ?UxonObject
+    {
+        $propUxon = null;
+        switch (true) {
+            // Regular data widgets like DataTable - we can add columns here
+            case $widget instanceof iShowData:
+                $propUxon = $this->getConditionalPropertyForData($widget, $condGrp);
+                break;
+            // Complex widgets using data like Map - we can add column here too
+            case $widget instanceof iUseData:
+                $propUxon = $this->getConditionalPropertyForData($widget->getData(), $condGrp);
+                break;
+            // Containers - we can add hidden widgets here
+            case $widget instanceof iContainOtherWidgets:
+                $propUxon = $this->getConditionalPropertyForContainer($widget, $condGrp);
+                break;
+            // Simple widgets - we can add hidden widgets to their containers
+            case $widget->hasParent():
+                $propUxon = $this->getConditionalPropertyForSingleWidget($widget, $condGrp);
+                break;
+        }
+        return $propUxon;
     }
 
     /**
