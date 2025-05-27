@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
@@ -117,6 +119,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $disabledIfInputInvalid = true;
 
     private $showIcon = null;
+
+    private $addedWidgets = [];
 
     /**
      *
@@ -851,14 +855,21 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
             $condGrp = $check->getConditionGroup($inputWidgetObject);
             switch (true) {
+                // Regular data widgets like DataTable - we can add columns here
                 case $inputWidget instanceof iShowData:
                     $propUxon = $this->getConditionalPropertyForData($inputWidget, $condGrp);
                     break;
+                // Complex widgets using data like Map - we can add column here too
                 case $inputWidget instanceof iUseData:
                     $propUxon = $this->getConditionalPropertyForData($inputWidget->getData(), $condGrp);
                     break;
+                // Containers - we can add hidden widgets here
                 case $inputWidget instanceof iContainOtherWidgets:
                     $propUxon = $this->getConditionalPropertyForContainer($inputWidget, $condGrp);
+                    break;
+                // Simple widgets - we can add hidden widgets to their containers
+                case $inputWidget->hasParent():
+                    $propUxon = $this->getConditionalPropertyForSingleWidget($inputWidget, $condGrp);
                     break;
             }
             if ($propUxon !== null) {
@@ -985,6 +996,19 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         return $uxon;
     }
 
+    /**
+     * Transforms the given condition group into a conditional property UXON for the provided container widget
+     *
+     * Returns NULL if no conditional property can be generated automatically!
+     *
+     * If the container does not include widgets, that provide the required data, InputHidden widgets
+     * will be added automatically. The Button remembers these additional widgets and makes sure, they
+     * get their data when being read for or prefilled - see `prepareDataSheetToRead()`.
+     *
+     * @param iContainOtherWidgets $containerWidget
+     * @param ConditionGroupInterface $condGrp
+     * @return UxonObject|null
+     */
     protected function getConditionalPropertyForContainer(iContainOtherWidgets $containerWidget, ConditionGroupInterface $condGrp) : ?UxonObject
     {
         $uxon = new UxonObject([
@@ -994,9 +1018,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
+            $expr = $cond->getExpression();
             switch (true) {
-                case $cond->getExpression()->isMetaAttribute():
-                    $attrAlias = $cond->getExpression()->__toString();
+                // Attributes
+                case $expr->isMetaAttribute():
+                    $attrAlias = $expr->__toString();
                     if (! $containerWidget->getMetaObject()->hasAttribute($attrAlias)) {
                         return null;
                     }
@@ -1008,13 +1034,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                             && $child->getAttributeAlias() === $attrAlias;
                     });
                     if (! $w = $matches[0] ?? null) {
-                        /*
                         $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
                             'widget_type' => 'InputHidden',
                             'attribute_alias' => $attrAlias
                         ]));
-                        $containerWidget->addWidget($w);*/
-                        return null;
+                        $this->addedWidgets[] = $w;
+                        $containerWidget->addWidget($w);
                     }
                     $uxon->appendToProperty('conditions', new UxonObject([
                         "value_left" => "=~input!" . $w->getDataColumnName(),
@@ -1022,11 +1047,34 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                         "value_right" => $cond->getRightExpression()->__toString()
                     ]));
                     break;
-                case $cond->getExpression()->isStatic():
+                // Static formulas and constants
+                // TODO should we treat static formulas the same as non-static ones below?
+                case $expr->isStatic():
                     $comp = $cond->getComparator();
                     $uxon->appendToProperty('conditions', new UxonObject([
-                        "value_left" => $cond->getExpression()->__toString(),
+                        "value_left" => $expr->__toString(),
                         "comparator" => $comp,
+                        "value_right" => $cond->getRightExpression()->__toString()
+                    ]));
+                    break;
+                // Non-static (data driven) formulas
+                case $expr->isFormula():
+                    $matches = $containerWidget->findChildrenRecursive(function($child) use ($expr, $containerWidget) {
+                        return ($child instanceof Value)
+                            && $child->getCalculationExpression() !== null
+                            && $child->getCalculationExpression()->__toString() === $expr->__toString();
+                    });
+                    if (null === $w = $matches[0] ?? null) {
+                        $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
+                            'widget_type' => 'InputHidden',
+                            'calculation' => $expr->__toString()
+                        ]));
+                        $this->addedWidgets[] = $w;
+                        $containerWidget->addWidget($w);
+                    }
+                    $uxon->appendToProperty('conditions', new UxonObject([
+                        "value_left" => "=~input!" . $w->getDataColumnName(),
+                        "comparator" => $cond->getComparator(),
                         "value_right" => $cond->getRightExpression()->__toString()
                     ]));
                     break;
@@ -1051,14 +1099,75 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
+     * Transforms the given condition group into a conditional property UXON for the provided simple widget
+     *
+     * Returns NULL if no conditional property can be generated automatically!
+     *
+     * Since simple widget cannot provide more data, than they have, this method can call
+     * `getConditionalPropertyForContainer()` on the container of the simple widget to add missing
+     * data there.
+     *
+     * @param WidgetInterface $widget
+     * @param ConditionGroupInterface $condGrp
+     * @return UxonObject|null
+     */
+    protected function getConditionalPropertyForSingleWidget(WidgetInterface $widget, ConditionGroupInterface $condGrp) : ?UxonObject
+    {
+        $parent = $widget->getParent();
+        while ($parent !== null && ! $parent instanceof iContainOtherWidgets) {
+            $parent = $parent->getParent();
+        }
+        if ($parent === null) {
+            return null;
+        }
+
+        // Try to create a conditional property for the container. This will include live-refs like
+        // `~input!...` - we will simply replace them later with the real id of the container.
+        $parentCondProp = $this->getConditionalPropertyForContainer($parent, $condGrp);
+        if ($parentCondProp === null) {
+            return null;
+        }
+
+        // Replace the live refs
+        $json = $parentCondProp->toJson();
+        $jsonRebased = str_replace('~input!', $parent->getIdAutogenerated() . '!', $json);
+        $uxon = UxonObject::fromJson($jsonRebased);
+
+        return $uxon;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
+    {
+        return $this->prepareDataSheetToRead($data_sheet);
+    }
+
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
-        if ($this->hasAction() && parent::getDisabledIf() === null) {
-            $this->getDisabledIf();
+        if ($this->hasAction()) {
+            // Make sure autogenerated disabled_if and hidden_if are generated here because they
+            // might need extra data
+            if (parent::getDisabledIf() === null) {
+                $this->getDisabledIf();
+            }
+            if (parent::getHiddenIf() === null) {
+                $this->getHiddenIf();
+            }
+            // If the buttons logic has added new widgets to the input widget, make sure they are
+            // prefilled!
+            // @see getConditionPropertyFromAction() for details
+            foreach ($this->addedWidgets as $widget) {
+                $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
+            }
         }
         return $data_sheet;
     }
