@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToCalculation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -48,7 +49,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * @author Andrej Kabachnik
  *
  */
-class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators
+class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators, iCanBeBoundToCalculation
 {
     use AttributeCaptionTrait;
     use iHaveAttributeGroupTrait;
@@ -150,7 +151,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                  $data_sheet->getColumns()->addFromExpression($prefillExpr, $columnName, $this->isHidden());
              }
          } elseif ($this->isBoundToDataColumn() || $this->isBoundToAttribute()) {
-             $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName());
+             $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName(), $this->getCalculationExpression());
              // FIXME #unknown-column-types currently need to double-check column type here because
              // of issues with columns with aggregators. E.g. an attribute column `MY_ATTR:SUM`
              // will match an unknown column `MY_ATTR_SUM`, which may or may not be
@@ -498,13 +499,19 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getDataColumnName()
     {
         if ($this->data_column_name === null) {
-            if ($this->isBoundToAttribute()) {
-                $this->data_column_name = DataColumn::sanitizeColumnName($this->getAttributeAlias());
-            } elseif ($this->hasValue()) {
-                $expr = $this->getValueExpression();
-                if ($expr && ! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
-                    $this->data_column_name = DataColumn::sanitizeColumnName($expr->toString());
-                }
+            switch (true) {
+                case $this->isBoundToAttribute():
+                    $this->data_column_name = DataColumn::sanitizeColumnName($this->getAttributeAlias());
+                    break;
+                case $this->hasValue():
+                    $expr = $this->getValueExpression();
+                    if ($expr && ! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
+                        $this->data_column_name = DataColumn::sanitizeColumnName($expr->toString());
+                    }
+                    break;
+                case (null !== $calcExpr = $this->getCalculationExpression()) && $calcExpr->isFormula() && ! $calcExpr->isStatic():
+                    $this->data_column_name = DataColumn::sanitizeColumnName($calcExpr->__toString());
+                    break;
             }
         }
         return $this->data_column_name ?? '';
@@ -721,10 +728,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * @uxon-property calculation
      * @uxon-type metamodel:expression
      *
-     * @param string $expression
-     * @return DataColumn
+     * @see iCanBeBoundToCalculation::setCalculation()
      */
-    public function setCalculation(string $expression) : Value
+    public function setCalculation(string $expression) : iCanBeBoundToCalculation
     {
         $this->calculationLink = null;
         $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
@@ -733,7 +739,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     /**
      *
-     * @return bool
+     * @see iCanBeBoundToCalculation::isCalculated()
      */
     public function isCalculated() : bool
     {
@@ -742,7 +748,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     /**
      *
-     * @return ExpressionInterface|NULL
+     * @see iCanBeBoundToCalculation::getCalculationExpression()
      */
     public function getCalculationExpression() : ?ExpressionInterface
     {
