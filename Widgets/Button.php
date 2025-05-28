@@ -774,6 +774,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // Create an additional hidden_if using the =IsButtonAuthorized() formula to check, if this
         // button is authorized for the current user and each line of potential input data
         if ($this->hiddenIfAccessDenied === true) {
+            /*
             $inputWidget = $this->getInputWidget();
             $condGrp = ConditionGroupFactory::createFromUxon(
                 $this->getWorkbench(),
@@ -792,6 +793,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             if ($condUxon !== null) {
                 $hiddenIfUnauthorized = $condUxon;
             }
+            */
         }
 
         switch (true) {
