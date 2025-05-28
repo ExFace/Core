@@ -112,6 +112,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
     private $hiddenIfAccessDenied = false;
 
+    private $hiddenIfAccessDeniedForInputData = false;
+
     private $appearance = self::APPEARANCE_DEFAULT;
 
     private $inputDataUxon = null;
@@ -637,6 +639,28 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
+     * In addition to `hidden_if_access_denied` this will check, if the current user has access to the input data of the action
+     *
+     * **CAUTION:** this may severely decrease performance because it will add the formula =IsButtonAuthorized()
+     * to all data being loaded - for data widgets, for prefills, etc.
+     *
+     * @uxon-property hidden_if_access_denied_for_input_data
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setHiddenIfAccessDeniedForInputData(bool $trueOrFalse) : Button
+    {
+        $this->hiddenIfAccessDeniedForInputData = $trueOrFalse;
+        if ($trueOrFalse === true) {
+            $this->setHiddenIfAccessDenied(true);
+        }
+        return $this;
+    }
+
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::isHidden()
@@ -772,10 +796,10 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         if ($this->isHiddenIfInputInvalid() === true && null !== $uxon = $this->getConditionalPropertyFromAction($this->getAction())) {
             $hiddenIfInvalid = $uxon;
         }
+
         // Create an additional hidden_if using the =IsButtonAuthorized() formula to check, if this
         // button is authorized for the current user and each line of potential input data
-        if ($this->hiddenIfAccessDenied === true) {
-
+        if ($this->hiddenIfAccessDeniedForInputData === true) {
             $inputWidget = $this->getInputWidget();
             $condGrp = ConditionGroupFactory::createFromUxon(
                 $this->getWorkbench(),
