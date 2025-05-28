@@ -804,7 +804,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             case $hiddenIfInvalid !== null && $hiddenIfUnauthorized !== null:
                 $this->setHiddenIf(new UxonObject([
                     'operator' => EXF_LOGICAL_OR,
-                    'nested_groups' => [
+                    'condition_groups' => [
                         $hiddenIfInvalid->toArray(),
                         $hiddenIfUnauthorized->toArray()
                     ]
