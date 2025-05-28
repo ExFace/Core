@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iContainTypedWidgets;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
@@ -774,7 +775,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // Create an additional hidden_if using the =IsButtonAuthorized() formula to check, if this
         // button is authorized for the current user and each line of potential input data
         if ($this->hiddenIfAccessDenied === true) {
-            /*
+
             $inputWidget = $this->getInputWidget();
             $condGrp = ConditionGroupFactory::createFromUxon(
                 $this->getWorkbench(),
@@ -793,7 +794,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             if ($condUxon !== null) {
                 $hiddenIfUnauthorized = $condUxon;
             }
-            */
         }
 
         switch (true) {
@@ -888,7 +888,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 break;
             // Simple widgets - we can add hidden widgets to their containers
             case $widget->hasParent():
-                $propUxon = $this->getConditionalPropertyForSingleWidget($widget, $condGrp);
+                $propUxon = $this->getConditionalPropertyForSimpleWidget($widget, $condGrp);
                 break;
         }
         return $propUxon;
@@ -1033,12 +1033,19 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                             && $child->getAttributeAlias() === $attrAlias;
                     });
                     if (! $w = $matches[0] ?? null) {
-                        $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
-                            'widget_type' => 'InputHidden',
-                            'attribute_alias' => $attrAlias
-                        ]));
-                        $this->addedWidgets[] = $w;
-                        $containerWidget->addWidget($w);
+                        // Try to add an InputHidden for the missing attribute
+                        // Only do this for containers, that all InputHidden widgets
+                        if (! $containerWidget instanceof iContainTypedWidgets || $containerWidget->isWidgetTypeAllowed(InputHidden::class)) {
+                            $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
+                                'widget_type' => 'InputHidden',
+                                'attribute_alias' => $attrAlias
+                            ]));
+                            $this->addedWidgets[] = $w;
+                            $containerWidget->addWidget($w);
+                        } else {
+                            // TODO find a better container?
+                            return null;
+                        }
                     }
                     $uxon->appendToProperty('conditions', new UxonObject([
                         "value_left" => "=~input!" . $w->getDataColumnName(),
@@ -1064,12 +1071,19 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                             && $child->getCalculationExpression()->__toString() === $expr->__toString();
                     });
                     if (null === $w = $matches[0] ?? null) {
-                        $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
-                            'widget_type' => 'InputHidden',
-                            'calculation' => $expr->__toString()
-                        ]));
-                        $this->addedWidgets[] = $w;
-                        $containerWidget->addWidget($w);
+                        // Try to add an InputHidden for the missing attribute
+                        // Only do this for containers, that all InputHidden widgets
+                        if (! $containerWidget instanceof iContainTypedWidgets || $containerWidget->isWidgetTypeAllowed(InputHidden::class)) {
+                            $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
+                                'widget_type' => 'InputHidden',
+                                'calculation' => $expr->__toString()
+                            ]));
+                            $this->addedWidgets[] = $w;
+                            $containerWidget->addWidget($w);
+                        } else {
+                            // TODO find a better container?
+                            return null;
+                        }
                     }
                     $uxon->appendToProperty('conditions', new UxonObject([
                         "value_left" => "=~input!" . $w->getDataColumnName(),
@@ -1110,26 +1124,36 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      * @param ConditionGroupInterface $condGrp
      * @return UxonObject|null
      */
-    protected function getConditionalPropertyForSingleWidget(WidgetInterface $widget, ConditionGroupInterface $condGrp) : ?UxonObject
+    protected function getConditionalPropertyForSimpleWidget(WidgetInterface $widget, ConditionGroupInterface $condGrp) : ?UxonObject
     {
-        $parent = $widget->getParent();
-        while ($parent !== null && ! $parent instanceof iContainOtherWidgets) {
-            $parent = $parent->getParent();
-        }
-        if ($parent === null) {
+        // Find a parent container, where we can put an InputHidden widget
+        $container = $widget->getParents(
+            function(WidgetInterface $parent){
+               if ($parent instanceof iContainOtherWidgets) {
+                   if (! $parent instanceof iContainTypedWidgets || $parent->isWidgetTypeAllowed(InputHidden::class)) {
+                       return true;
+                   }
+               }
+               return false;
+            },
+            1
+        )[0] ?? null;
+
+        // If no container found, we cannot add the widget
+        if ($container === null) {
             return null;
         }
 
         // Try to create a conditional property for the container. This will include live-refs like
         // `~input!...` - we will simply replace them later with the real id of the container.
-        $parentCondProp = $this->getConditionalPropertyForContainer($parent, $condGrp);
+        $parentCondProp = $this->getConditionalPropertyForContainer($container, $condGrp);
         if ($parentCondProp === null) {
             return null;
         }
 
         // Replace the live refs
         $json = $parentCondProp->toJson();
-        $jsonRebased = str_replace('~input!', $parent->getIdAutogenerated() . '!', $json);
+        $jsonRebased = str_replace('~input!', $container->getIdAutogenerated() . '!', $json);
         $uxon = UxonObject::fromJson($jsonRebased);
 
         return $uxon;
