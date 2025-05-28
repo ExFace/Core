@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Traits;
 
+use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -189,19 +190,22 @@ trait AuthorizationDebugTrait
             'nowrap' => false,
             'row_grouper' => [
                 'group_by_expression' => '_APPLIED',
-                'show_counter' => true
+                'show_counter' => true,
+                'hide_caption' => true
             ],
             'columns' => [
                 [
+                    'data_column_name' => '_POS',
+                    'caption' => '#',
+                    'hint' => 'Sequence number while evaluating'
+                ],[
                     'attribute_alias' => 'EFFECT',
                     'cell_widget' => [
                         "widget_type" => "Display",
                     ]
-                ],
-                [
+                ],[
                     'attribute_alias' => 'NAME'
-                ],
-                [
+                ],[
                     'data_column_name' => '_DECISION',
                     'caption' => 'Decision',
                     'cell_widget' => [
@@ -213,15 +217,14 @@ trait AuthorizationDebugTrait
                             "Deny" => "orangered",
                             "Indeterminate" => "lightgray",
                             "Indeterminate{P}" => "lightgray",
-                            "Indeterminate{D}" => "lightgray"
+                            "Indeterminate{D}" => "lightgray",
+                            "Indeterminate{DP}" => "lightgray"
                         ]
                     ]
-                ],
-                [
+                ],[
                     'data_column_name' => '_EXPLANATION',
                     'caption' => 'Explanation'
-                ],
-                [
+                ],[
                     'data_column_name' => '_APPLIED',
                     'caption' => 'Applied'
                 ]
@@ -237,28 +240,38 @@ trait AuthorizationDebugTrait
         ]);
         $dataSheet->getColumns()->addFromExpression('_DECISION');
         $dataSheet->getColumns()->addFromExpression('_EXPLANATION');
-        
-        foreach ($permissions as $permission) {
+
+        $rowsApplied = [];
+        $rowsNotApplied = [];
+        foreach ($permissions as $i => $permission) {
             switch (true) {
                 case $policy = $permission->getPolicy():
                     $name = $policy ? $policy->getName() : '';
                     $effect = $policy ? $policy->getEffect()->__toString() : '';
-                    $applied = $permission->isNotApplicable() ? 'No' : 'Yes';
+                    $applied = $permission->isNotApplicable() ? 'Not applied' : 'Applied';
                     break;
                 case $permission instanceof CombinedPermission:
                     $name = 'Combining algorithm "' . $permission->getPolicyCombiningAlgorithm()->getValue() . '"';
                     $effect = '';
-                    $applied = 'Yes';
+                    $applied = 'Applied';
                     break;
             }
-            $dataSheet->addRow([
+            $row = [
+                '_POS' => $i + 1,
                 'EFFECT' => $effect,
                 'NAME' => $name,
                 '_DECISION' => $permission->toXACMLDecision(),
                 '_EXPLANATION' => $permission->getExplanation(),
                 '_APPLIED' => $applied
-            ]);
+            ];
+            if ($applied === 'Applied') {
+                $rowsApplied[] = $row;
+            } else {
+                $rowsNotApplied[] = $row;
+            }
         }
+        $dataSheet->addRows($rowsApplied, false, false);
+        $dataSheet->addRows($rowsNotApplied, false, false);
         
         $table->prefill($dataSheet);
         
