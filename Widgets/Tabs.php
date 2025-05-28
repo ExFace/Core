@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iContainTypedWidgets;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
@@ -29,7 +30,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *        
  */
-class Tabs extends Container implements iFillEntireContainer
+class Tabs extends Container implements iFillEntireContainer, iContainTypedWidgets
 {
     const NAV_POSITION_TOP = 'top';
     
@@ -188,7 +189,7 @@ class Tabs extends Container implements iFillEntireContainer
                 // If we have a UXON or instantiated widget object, use the widget directly
                 $page = $this->getPage();
                 $widget = WidgetFactory::createFromUxon($page, $w, $this, $this->getTabWidgetType());
-            } elseif ($w instanceof AbstractWidget){
+            } elseif ($w instanceof WidgetInterface){
                 $widget = $w;
             } else {
                 // If it is something else, just add it to the result and let the parent object deal with it
@@ -196,7 +197,7 @@ class Tabs extends Container implements iFillEntireContainer
             }
             
             // If the widget is not a Tab itslef, wrap it in a Tab. Otherwise add it directly to the result.
-            if (! ($widget instanceof Tab)) {
+            if (! $this->isWidgetAllowed($widget)) {
                 $widgets[] = $this->createTab($widget);
             } else {
                 $widgets[] = $widget;
@@ -254,7 +255,7 @@ class Tabs extends Container implements iFillEntireContainer
      */
     public function addTab(WidgetInterface $widget, int $position = null) : Tabs
     {
-        if ($widget instanceof Tab) {
+        if ($this->isWidgetAllowed($widget)) {
             $tab = $widget;
         } elseif ($widget->isExactly('Panel')) {
             $tab = $this->createTab();
@@ -366,6 +367,27 @@ class Tabs extends Container implements iFillEntireContainer
         }
         return $uxon;
     }
- 
+
+    /**
+     * {@inheritDoc}
+     * @see iContainTypedWidgets::isWidgetAllowed()
+     */
+    public function isWidgetAllowed(WidgetInterface $widget) : bool
+    {
+        return $widget instanceof Tab;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iContainTypedWidgets::isWidgetTypeAllowed()
+     */
+    public function isWidgetTypeAllowed(string $typeOrClassOrInterface) : bool
+    {
+        if (mb_strpos($typeOrClassOrInterface, '\\') !== false) {
+            $class = $typeOrClassOrInterface;
+        } else {
+            $class = WidgetFactory::getWidgetClassFromType($typeOrClassOrInterface);
+        }
+        return is_a($class, Tab::class, true);
+    }
 }
-?>

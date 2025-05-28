@@ -5,6 +5,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iContainTypedWidgets;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
@@ -12,7 +13,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * A Split consists of multiple panels aligned vertically or horizontally.
  * 
  * Splits allow groups of widgets to be explicitly positioned side-by-side or below-each-other 
- * instead of leaving the positioning to the tempalte. The borders between panels within a split can 
+ * instead of leaving the positioning to the template. The borders between panels within a split can
  * be dragged, thus resizing parts of the split.
  * 
  * Apart from a generic `Split` with a configurable orientation, there are specific widgets for each
@@ -25,7 +26,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *        
  */
-class Split extends Container implements iFillEntireContainer
+class Split extends Container implements iFillEntireContainer, iContainTypedWidgets
 {
     const ORIENTATION_HORIZONTAL = 'horizontal';
     const ORIENTATION_VERTICAL = 'vertical';
@@ -105,7 +106,7 @@ class Split extends Container implements iFillEntireContainer
             }
             
             // If the widget is not a SplitPanel itslef, wrap it in a SplitPanel. Otherwise add it directly to the result.
-            if (! ($widget instanceof SplitPanel)) {
+            if (! $this->isWidgetAllowed($widget)) {
                 $panel = $this->createSplitPanel();
                 $panel->setHeight($widget->getHeight());
                 $widget->setHeight('100%');
@@ -198,5 +199,28 @@ class Split extends Container implements iFillEntireContainer
             }
         }
         return $firstPanel;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iContainTypedWidgets::isWidgetAllowed()
+     */
+    public function isWidgetAllowed(WidgetInterface $widget) : bool
+    {
+        return $widget instanceof SplitPanel;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iContainTypedWidgets::isWidgetTypeAllowed()
+     */
+    public function isWidgetTypeAllowed(string $typeOrClassOrInterface) : bool
+    {
+        if (mb_strpos($typeOrClassOrInterface, '\\') !== false) {
+            $class = $typeOrClassOrInterface;
+        } else {
+            $class = WidgetFactory::getWidgetClassFromType($typeOrClassOrInterface);
+        }
+        return is_a($class, SplitPanel::class, true);
     }
 }

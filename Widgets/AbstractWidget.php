@@ -1456,6 +1456,26 @@ abstract class AbstractWidget implements WidgetInterface
         
         return $this->disabled_if;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see WidgetInterface::getParents()
+     */
+    public function getParents(callable $filter, ?int $maxResults = null) : array
+    {
+        $results = [];
+        $parent = $this->getParent();
+        while ($parent !== null) {
+            if ($filter($parent) === true) {
+                $results[] = $parent;
+            }
+            if ($maxResults !== null && count($results) >= $maxResults) {
+                break;
+            }
+            $parent = $parent->getParent();
+        }
+        return $results;
+    }
     
     /**
      * Returns the closest parent widget which implements the passed class or interface.
