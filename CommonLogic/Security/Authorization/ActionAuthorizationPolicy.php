@@ -334,7 +334,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         $inputData = $mapper->map($inputData);
                     }
                     if (! $condition->evaluate($inputData)) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_exists` not matched by action input data');
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_exists` not matched by action input data. ' . $condition->explain($inputData));
                     } else {
                         $appliedExplanation = $condition->explain($inputData);
                         $applied = true;
@@ -349,7 +349,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 if ($task && $task->hasInputData()) {
                     $inputData = $task->getInputData();
                     if ($condition->evaluate($inputData)) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data');
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data. ' . $condition->explain($inputData));
                     } else {
                         $appliedExplanation = $condition->explain($inputData);
                         $applied = true;
