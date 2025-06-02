@@ -129,7 +129,7 @@ class ExistsCondition implements ConditionalExpressionInterface
             }
         }
 
-        $this->decisionsHistory[$this->getDecisionHistoryKey($dataSheet, $rowIdx)] = $this->baseSheet;
+        $this->decisionsHistory[$this->getDecisionHistoryKey($dataSheet, $rowIdx)] = $existingData;
         return $this->invert === false ? $exists : ! $exists;
     }
 
