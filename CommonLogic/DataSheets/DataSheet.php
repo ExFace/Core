@@ -200,6 +200,7 @@ class DataSheet implements DataSheetInterface
             $right_cols[] = $col->copy();
         }
         $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
+        $leftColNamesUpdated = [];
         // Now process the data and join rows
         if (! is_null($leftKeyColName) && ! is_null($rightKeyColName)) {
             $addedRowsCnt = 0;
@@ -210,11 +211,11 @@ class DataSheet implements DataSheetInterface
                 // data.
                 $left_row_nr += $addedRowsCnt;
                 // Check if the right column is really present in the data to be joined
-                if (! $rCol = $other_sheet->getColumns()->get($rightKeyColName)) {
+                if (! $rightKeyCol = $other_sheet->getColumns()->get($rightKeyColName)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $rightKeyColName . '" for a left join!', '6T5E849');
                 }
                 // Find rows in the other sheet, that match the currently processed key
-                $right_row_nrs = $rCol->findRowsByValue($row[$leftKeyColName]);
+                $right_row_nrs = $rightKeyCol->findRowsByValue($row[$leftKeyColName]);
                 // If corresponding rows are found in the right sheet, apply their values
                 if (false === empty($right_row_nrs)) {
                     // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
@@ -235,7 +236,9 @@ class DataSheet implements DataSheetInterface
                         }
                         $right_row = $other_sheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
-                            $this->setCellValue(RelationPath::join($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                            $leftColName = RelationPath::join($relation_path, $col_name);
+                            $leftColNamesUpdated[] = $leftColName;
+                            $this->setCellValue($leftColName, ($left_row_new_nr ?? $left_row_nr), $val);
                         }
                         $needRowCopy = true;
                     }                    
@@ -245,7 +248,9 @@ class DataSheet implements DataSheetInterface
                     // do not empty its values just because the right sheet did not has less data!
                     if ($relation_path !== '') {
                         foreach ($right_cols as $col) {
-                            $this->setCellValue(RelationPath::join($relation_path, $col->getName()), $left_row_nr, null);
+                            $leftColName = RelationPath::join($relation_path, $col->getName());
+                            $leftColNamesUpdated[] = $leftColName;
+                            $this->setCellValue($leftColName, $left_row_nr, null);
                         }
                     }
                 }
@@ -255,11 +260,24 @@ class DataSheet implements DataSheetInterface
             // need to dublicate rows as in the case above - but it's unclear, what should
             // happen if there are actually no key columns...
             foreach ($this->rows as $left_row_nr => $row) {
-                $this->rows[$left_row_nr] = array_merge($row, $other_sheet->getRow($left_row_nr));
+                $rightRow = $other_sheet->getRow($left_row_nr);
+                $rightColNames = array_keys($rightRow);
+                $leftColNamesUpdated = array_merge($leftColNamesUpdated, $rightColNames);
+                $this->rows[$left_row_nr] = array_merge($row, $rightRow);
             }
         } else {
             throw new DataSheetJoinError($this, 'Cannot join data sheets, if only one key column specified!', '6T5V0GU');
         }
+
+        // Mark all columns of this sheet, that were updated while JOINing as fresh
+        $leftColNamesUpdated = array_unique($leftColNamesUpdated);
+        foreach ($leftColNamesUpdated as $leftColName) {
+            $leftCol = $this->getColumns()->get($leftColName);
+            if ($leftCol) {
+                $leftCol->setFresh(true);
+            }
+        }
+
         return $this;
     }
 

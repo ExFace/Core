@@ -654,24 +654,42 @@ class Condition implements ConditionInterface
         if ($data_sheet === null && $row_number !== null) {
             throw new RuntimeException('Cannot evaluate a condition: do data provided!');
         }
-        
-        // For string expressions or onknown expression types, check if they match a column in the data sheet.
-        // If so, treat them as column ref.
-        // TODO this is a little confusiong. Actually, left expressions in conditions never seem to be unknown
-        // although this would be correct in this case. Need a better way to distinguish column refs and strings
-        // here
+
+        // Get the value of the left expression
         $leftExpr = $this->getExpression();
-        if (($leftExpr->isString() || $leftExpr->isUnknownType()) && $data_sheet && $leftCol = $data_sheet->getColumns()->getByExpression($leftExpr)) {
-            $leftVal = $leftCol->getValue($row_number);
-        } else {
-            $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
+        $leftCol = null;
+        // If working in data context, see if that data has a matching column
+        if ($data_sheet !== null) {
+            $leftCol = $data_sheet->getColumns()->getByExpression($leftExpr);
         }
+        // Depending on the context and on the expression type, we now need to decide, if we evaluate
+        // the expression or take the value to compare from the context (e.g. from data)
+        switch (true) {
+            // If the data sheet includes a matching column AND it is fresh, take the value from there
+            case $leftCol && $leftCol->isFresh():
+                $leftVal = $leftCol->getValue($row_number);
+                break;
+            // For strings and unknown expressions, ALWAYS take the current column value if there is one - even if not fresh
+            // TODO this is a little confusiong. Actually, left expressions in conditions never seem to be unknown
+            // although this would be correct in this case. Need a better way to distinguish column refs and strings
+            // here
+            case ($leftExpr->isString() || $leftExpr->isUnknownType()) && $leftCol:
+                $leftVal = $leftCol->getValue($row_number);
+                break;
+            // Otherwise evaluate the expression
+            default:
+                $leftVal = $leftExpr->evaluate($data_sheet, $row_number);
+                break;
+        }
+
+        // Get the value of the right expression
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
 
-        $listDelimiter = $this->getExpression()->isMetaAttribute() ? $this->getExpression()->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        // Determine the expected list delimiter in case we will be working with lists
+        $listDelimiter = $leftExpr->isMetaAttribute() ? $leftExpr->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
         
         // Normalize empty values according to the data type of the expression
-        $dataType = $this->getExpression()->getDataType();
+        $dataType = $leftExpr->getDataType();
         if ($dataType->isValueEmpty($leftVal)) {
             $leftVal = null;
         }
