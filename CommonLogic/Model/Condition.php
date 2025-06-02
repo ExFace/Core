@@ -425,7 +425,7 @@ class Condition implements ConditionInterface
      */
     public function toString() : string
     {
-        return $this->getExpression()->__toString() . ' ' . $this->getComparator() . ' ' . $this->getValue();
+        return $this->getExpression()->__toString() . ' ' . $this->getComparator() . ' ' . $this->getValue() ?? EXF_LOGICAL_NULL;
     }
 
     /**
