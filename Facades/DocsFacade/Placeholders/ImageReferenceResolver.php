@@ -33,7 +33,10 @@ class ImageReferenceResolver extends AbstractMarkdownPlaceholderResolver impleme
             if (in_array($placeholder['name'], $filteredNames)) {
                 $options = $placeholder['options'];
                 parse_str($options, $optionsArray);
-                $val = $this->getImageCaption($markdownStructure, $this->pagePath,$this->getOption('image-id',$optionsArray), $i);
+                $imageId = $this->getOption('image-id',$optionsArray);
+                if ($imageId !== null) {
+                    $val = $this->getImageCaption($markdownStructure, $this->pagePath, $imageId, $i);
+                }
                 $vals[$i] = $val;
             }
         }
