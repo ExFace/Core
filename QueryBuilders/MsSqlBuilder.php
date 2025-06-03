@@ -851,6 +851,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $resultJson = $initialJson;
 
         foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            // If we need to remove a key from a JSON object, we need to call JSON_MODIFY(xx, yy, null) in MS SQL
+            if ($attributeValue === null) {
+                $attributeValue = 'null';
+            }
             $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
         }
 
