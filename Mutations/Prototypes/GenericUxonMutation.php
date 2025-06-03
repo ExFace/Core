@@ -2,12 +2,13 @@
 namespace exface\Core\Mutations\Prototypes;
 
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
+use exface\Core\CommonLogic\Utils\JsonObject;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Mutations\AppliedMutation;
-use JsonPath\JsonObject;
+
 /**
  * Allows to modify UXON configurations using JSONpath based operations
  *
@@ -27,6 +28,7 @@ class GenericUxonMutation extends AbstractMutation
     const MUTATION_COMMENT = '// Mutation';
 
     private $append = [];
+    private $insert = [];
     private $change = [];
     private $replace = [];
     private $remove = [];
@@ -42,19 +44,31 @@ class GenericUxonMutation extends AbstractMutation
         $stateBefore = $subject->toJson(true);
 
         $jsonObj = new JsonObject($subject->toArray());
+        // append
         foreach ($this->append as $jsonPath => $objects) {
             foreach ($objects as $object) {
                 $object = $this->addCommentWithMutationName($object);
                 $jsonObj->add($jsonPath, $object);
             }
         }
+        foreach ($this->insert as $jsonPath => $objects) {
+            $array = [];
+            foreach ($objects as $object) {
+                $object = $this->addCommentWithMutationName($object);
+                $array[] = $object;
+            }
+            $jsonObj->insert($jsonPath, $array, true);
+        }
+        // change
         foreach ($this->change as $jsonPath => $value) {
             $jsonObj->set($jsonPath, $value);
         }
+        // replace
         foreach ($this->replace as $jsonPath => $object) {
             $object = $this->addCommentWithMutationName($object);
             $jsonObj->set($jsonPath, $object);
         }
+        // remove
         foreach ($this->remove as $jsonPath) {
             // TODO commenting out instead of removed would probably be smarter as it will not
             // change the length of array. We could also add a comment hint about this mutation
@@ -136,11 +150,11 @@ class GenericUxonMutation extends AbstractMutation
     }
 
     /**
-     * Append an object to the end of an arrays
+     * Append on or more object to the end of an array
      *
      * ## Examples
      *
-     * Hide the first column in a data table:
+     * Add some columns to a table
      *
      * ```
      * {
@@ -165,6 +179,40 @@ class GenericUxonMutation extends AbstractMutation
     protected function setAppend(UxonObject $arrayOfObjects) : GenericUxonMutation
     {
         $this->append = $arrayOfObjects->toArray();
+        return $this;
+    }
+
+    /**
+     * Insert one or more values at a specified position in an array
+     *
+     * ## Examples
+     *
+     * Insert a column into a table after the first column (positions start with 0, so `.1` would
+     * mean the second position).
+     *
+     * ```
+     * {
+     *     "insert": {
+     *          "$.columns.1": [
+     *              {
+     *                  "attribute_alias": "MY_ATTR"
+     *              }
+     *          ]
+     *     }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property insert
+     * @uxon-type object
+     * @uxon-template {"// JSONpath to position - e.g. $.columns.1": [{"":""}]}
+     *
+     * @param UxonObject $arrayOfObjects
+     * @return $this
+     */
+    protected function setInsert(UxonObject $arrayOfObjects) : GenericUxonMutation
+    {
+        $this->insert = $arrayOfObjects->toArray();
         return $this;
     }
 
