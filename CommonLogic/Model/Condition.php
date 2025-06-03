@@ -713,12 +713,21 @@ class Condition implements ConditionInterface
      */
     protected function compare($leftVal, string $comparator, $rightVal, string $listDelimiter = EXF_LIST_SEPARATOR) : bool
     {
+        // Normalize NULL values
         if ($rightVal === EXF_LOGICAL_NULL) {
             $rightVal = null;
         }
         if ($leftVal === EXF_LOGICAL_NULL) {
             $leftVal = null;
         }
+        // Normalize booleans
+        if (is_bool($rightVal) && ! is_bool($leftVal)) {
+            $leftVal = BooleanDataType::cast($leftVal);
+        } elseif (is_bool($leftVal) && ! is_bool($rightVal)) {
+            $rightVal = BooleanDataType::cast($rightVal);
+        }
+
+        // Do compare
         switch ($comparator) {
             case ComparatorDataType::IS:
                 return $rightVal === null || mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) !== false;
