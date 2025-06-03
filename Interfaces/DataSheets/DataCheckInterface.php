@@ -21,14 +21,17 @@ use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
 interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface, \Stringable
 {
     /**
+     * Performs the check and returns a textual explanation for what has been checked or throws an exception if the check fails.
      *
-     * @param DataSheetInterface    $sheet
+     * @param DataSheetInterface $sheet
      * @param LogBookInterface|null $logBook
-     * @return DataSheetInterface
+     *
      * @throws DataCheckFailedError
      * @throws DataCheckNotApplicableError
+     *
+     * @return string
      */
-    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : DataSheetInterface;
+    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : string;
     
     /**
      * 
@@ -44,9 +47,9 @@ interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantIn
      * @throws DataCheckFailedError
      * @throws DataCheckNotApplicableError
      * 
-     * @return DataSheetInterface
+     * @return int[]
      */
-    public function findViolations(DataSheetInterface $data) : DataSheetInterface;
+    public function findViolations(DataSheetInterface $data) : array;
     
     /**
      * 
@@ -61,12 +64,6 @@ interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantIn
      * @return bool
      */
     public function isApplicableToObject(MetaObjectInterface $object) : bool;
-    
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getErrorText() : ?string;
     
     /**
      * 

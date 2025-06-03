@@ -62,17 +62,18 @@ class DataCheck implements DataCheckInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataCheckInterface::check()
      */
-    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : DataSheetInterface
+    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : string
     {
-        $badData = $this->findViolations($sheet);
+        $badRowIdxs = $this->findViolations($sheet);
         
-        $errorText = $this->getErrorText($badData);
-        $logBook?->addLine('Found ' . $badData->countRows() . ' matches for check "' . $this->__toString() . '".');
+        $errorText = $this->getErrorText($sheet);
+        $explanation = 'Found ' . count($badRowIdxs) . ' matches for check "' . $this->__toString() . '".';
+        $logBook?->addLine($explanation);
         
-        if (! $badData->isEmpty()) {
-            throw (new DataCheckFailedError($sheet, $errorText, null, null, $this, $badData))->setUseExceptionMessageAsTitle(true);
+        if (! empty($badRowIdxs)) {
+            throw (new DataCheckFailedError($sheet, $errorText, null, null, $this, $badRowIdxs))->setUseExceptionMessageAsTitle(true);
         }
-        return $sheet;
+        return $explanation;
     }
 
     /**
@@ -82,42 +83,40 @@ class DataCheck implements DataCheckInterface
      */
     public function isViolatedIn(DataSheetInterface $data) : bool
     {
-        return $this->findViolations($data)->isEmpty() === false;
+        return empty($this->findViolations($data)) === false;
     }
     
     /**
      * 
-     * @param DataSheetInterface $data
-     * @return DataSheetInterface
+     * @see DataCheckInterface::findViolations()
      */
-    public function findViolations(DataSheetInterface $data) : DataSheetInterface
+    public function findViolations(DataSheetInterface $data) : array
     {
         if (! $this->isApplicable($data)) {
             throw new DataCheckNotApplicableError($data, 'Data check not applicable to given data!', null, null, $this);
         }
         
         if (null !== $subsheetRelStr = $this->getApplyToSubsheetsOfRelation()) {
-            $badData = $this->findViolationsInSubsheets($data, $subsheetRelStr);
+            $badIdxs = $this->findViolationsInSubsheets($data, $subsheetRelStr);
         } else {
-            $badData = $this->findViolationsViaFilter($data, $this->getConditionGroup($data->getMetaObject()));
+            $badIdxs = $this->findViolationsViaFilter($data, $this->getConditionGroup($data->getMetaObject()));
         }
-        return $badData;
+        return $badIdxs;
     }
     
     /**
      * 
      * @param DataSheetInterface $data
      * @param ConditionGroupInterface $filter
-     * @throws DataCheckNotApplicableError
-     * @return DataSheetInterface
+     * @return int[]
      */
-    protected function findViolationsViaFilter(DataSheetInterface $data, ConditionGroupInterface $filter) : DataSheetInterface
+    protected function findViolationsViaFilter(DataSheetInterface $data, ConditionGroupInterface $filter) : array
     {
         try {
-            return $data->extract($filter, true);
+            return $data->findRows($filter, true);
         } catch (DataSheetExtractError $e) {
             // Since the data extraction failed, we can assume that the check does not apply.
-            return $data->copy()->removeRows();
+            return [];
         }
     }
     
@@ -125,9 +124,9 @@ class DataCheck implements DataCheckInterface
      * 
      * @param DataSheetInterface $data
      * @param string $subsheetRelationPath
-     * @return DataSheetInterface
+     * @return int[]
      */
-    protected function findViolationsInSubsheets(DataSheetInterface $data, string $subsheetRelationPath) : DataSheetInterface
+    protected function findViolationsInSubsheets(DataSheetInterface $data, string $subsheetRelationPath) : array
     {
         $subsheetCol = $data->getColumns()->getByExpression($subsheetRelationPath);
         if (! $subsheetCol) {
@@ -135,7 +134,7 @@ class DataCheck implements DataCheckInterface
         }
         $innerCheckUxon = $this->exportUxonObject()->withPropertiesRemoved(['apply_to_subsheets_of_relation']);
         $innerCheck = new DataCheck($this->getWorkbench(), $innerCheckUxon);
-        $badRows = [];
+        $badIdxs = [];
         foreach ($subsheetCol->getValues(false) as $rowNr => $sheetArr) {
             if (! $sheetArr) {
                 continue;
@@ -149,15 +148,11 @@ class DataCheck implements DataCheckInterface
             try {
                 $innerCheck->check($nestedSheet);
             } catch (DataCheckFailedError $e) {
-                $badRows[] = $rowNr;
+                $badIdxs[] = $rowNr;
             }
         }
         
-        $badData = $data->copy()->removeRows();
-        foreach ($badRows as $rowNr) {
-            $badData->addRow($data->getRow($rowNr), false, false, $rowNr);
-        }
-        return $badData;
+        return $badIdxs;
     }
     
     /**
@@ -182,14 +177,14 @@ class DataCheck implements DataCheckInterface
         }
         return true;
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataCheckInterface::getErrorText()
+     * @param DataSheetInterface $dataSheet
+     * @return string|null
      */
-    public function getErrorText(DataSheetInterface $badData = null) : ?string
+    protected function getErrorText(DataSheetInterface $dataSheet) : ?string
     {
+        // TODO allow placeholders from data in the error text
         return $this->errorText;
     }
     

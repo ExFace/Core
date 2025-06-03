@@ -16,7 +16,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use Symfony\Component\Console\Exception\InvalidOptionException;
 
 /**
- * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
+ * Internal data representation - a row-based table with filters, sorters, aggregators, etc.
  * 
  * ## Structure
  * 
@@ -72,10 +72,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * $merge_uid_dublicates is TRUE, given rows with UIDs already present in the sheet, will overwrite 
      * old rows instead of being added at the end of the sheet.
      *
-     * @see import_rows() for an easy way of adding rows from another data sheet
+     * @see importRows() for an easy way of adding rows from another data sheet
      *     
      * @param array $rows            
-     * @param boolean $merge_uid_dublicates            
+     * @param bool $merge_uid_dublicates
      * @return DataSheetInterface
      */
     public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
@@ -738,6 +738,15 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
+
+    /**
+     * Returns the indexes of rows matching the given conditions (starting with 0)
+     *
+     * @param ConditionalExpressionInterface $conditionOrGroup
+     * @param bool $readMissingData
+     * @return int[]
+     */
+    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array;
     
     /**
      * Returns a copy of this data sheet, that only contains system columns

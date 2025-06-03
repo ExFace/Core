@@ -3019,8 +3019,22 @@ class DataSheet implements DataSheetInterface
      */
     public function extract(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : DataSheetInterface
     {
+        $foundIdxs = $this->findRows($conditionOrGroup, $readMissingData);
+        return $this
+            ->copy()
+            ->removeRows()
+            ->addRows($this->getRowsByIndex($foundIdxs), false, false);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::findRows()
+     */
+    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array
+    {
         $condGrp = $conditionOrGroup->toConditionGroup();
-        
+
         if ($readMissingData === true) {
             // TODO #DataCollector needs to be used here instead of all the following logic
             foreach ($condGrp->getRequiredExpressions($this->getMetaObject()) as $expr) {
@@ -3048,15 +3062,15 @@ class DataSheet implements DataSheetInterface
         } else {
             $checkSheet = $this;
         }
-        
-        $extractedRows = [];
-        foreach ($this->getRows() as $rowNr => $row) {
+
+        $foundIdxs = [];
+        foreach (array_keys($this->getRows()) as $rowNr) {
             if ($condGrp->evaluate($checkSheet, $rowNr) === true) {
-                $extractedRows[] = $row;
+                $foundIdxs[] = $rowNr;
             }
         }
-        
-        return $this->copy()->removeRows()->addRows($extractedRows);
+
+        return $foundIdxs;
     }
     
     /**
@@ -3190,7 +3204,7 @@ class DataSheet implements DataSheetInterface
         $secret = $secret ?? EncryptedDataType::getSecret($this->getWorkbench());
         $rows = array_slice($encryptedRows, 0);
         $columns = $this->getColumns();
-        foreach ($rows as $idx => $row) {                       
+        foreach ($rows as $idx => $row) {
             foreach ($columns as $col) {
                 $datatype = $col->getDataType();
                 if ($datatype instanceof EncryptedDataType) {
@@ -3206,8 +3220,11 @@ class DataSheet implements DataSheetInterface
         }
         return $rows;
     }
-    
-    
+
+    /**
+     * @param array $rowData
+     * @return int[]
+     */
     public function findRowsByValues(array $rowData) : array
     {
         $result = [];
