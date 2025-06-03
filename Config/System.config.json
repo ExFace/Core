@@ -93,7 +93,8 @@
     
     "EVENTS.STATIC_LISTENERS": {
     	"exface.Core.Model.OnMetaObjectLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel"
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectMutationPoint::onObjectLoadedApplyMutations"
     	],
     	"exface.Core.Model.OnBeforeMetaObjectActionLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel",

@@ -1,0 +1,97 @@
+<?php
+namespace exface\Core\Mutations\Prototypes;
+
+use exface\Core\CommonLogic\Mutations\AbstractMutation;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
+use exface\Core\Interfaces\Mutations\MutationInterface;
+use exface\Core\Mutations\AppliedEmptyMutation;
+
+/**
+ * Allows to modify the model of an object
+ *
+ * @author Andrej Kabachnik
+ */
+class ObjectMutation extends AbstractMutation
+{
+    private ?string $objectName = null;
+    private ?string $objectDescription = null;
+
+    /**
+     * @see MutationInterface::apply()
+     */
+    public function apply($subject): AppliedMutationInterface
+    {
+        if (! $this->supports($subject)) {
+            throw new InvalidArgumentException('Cannot apply page mutation to ' . get_class($subject) . ' - only instances of pages supported!');
+        }
+
+        /* @var $subject \exface\Core\CommonLogic\Model\MetaObject */
+        if (null !== $val = $this->getObjectName()) {
+            $subject->setName($val);
+        }
+        if (null !== $val = $this->getObjectDescription()) {
+            $subject->setShortDescription($val);
+        }
+
+        return new AppliedEmptyMutation($this, $subject);
+    }
+
+    /**
+     * @see MutationInterface::supports()
+     */
+    public function supports($subject): bool
+    {
+        return $subject instanceof MetaObjectInterface;
+    }
+
+    /**
+     * @return string|null
+     */
+    protected function getObjectName(): ?string
+    {
+        return $this->objectName;
+    }
+
+    /**
+     * Change the name of the object
+     *
+     * @uxon-property object_name
+     * @uxon-type string
+     *
+     * @param string $objectName
+     * @return $this
+     */
+    protected function setObjectName(string $objectName): ObjectMutation
+    {
+        $this->objectName = $objectName;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    protected function getObjectDescription(): ?string
+    {
+        return $this->objectDescription;
+    }
+
+    /**
+     * Change the description (hint) for the object
+     *
+     * @uxon-property object_description
+     * @uxon-type string
+     *
+     * @param string $objectDescription
+     * @return $this
+     */
+    protected function setObjectDescription(string $objectDescription): ObjectMutation
+    {
+        $this->objectDescription = $objectDescription;
+        return $this;
+    }
+}
