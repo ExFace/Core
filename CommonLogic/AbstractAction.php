@@ -1236,13 +1236,13 @@ abstract class AbstractAction implements ActionInterface
                 if ($check->isApplicable($sheet)) {
                     try {
                         $check->check($sheet);
-                        $logbook->addLine('PASSED Check `' . $check->__toString() . '` not matched on any rows');
+                        $logbook->addLine('PASSED check `' . $check->__toString() . '` not matched on any rows');
                     } catch (DataCheckExceptionInterface $e) {
                         $eHint = '';
-                        if (null !== $e->getBadData()) {
-                            $eHint = ' on ' . $e->getBadData()->countRows() . ' rows';
+                        if (null !== $e->getRowIndexes()) {
+                            $eHint = ' on row indexes ' . implode(', ', $e->getRowIndexes())    ;
                         }
-                        $logbook->addLine('**FAILED** Check `' . $check->__toString() . '` matched' . $eHint);
+                        $logbook->addLine('**FAILED** check `' . $check->__toString() . '` matched' . $eHint);
                         throw new ActionInputError($this, $e->getMessage(), null, $e);
                     }
                 } else {

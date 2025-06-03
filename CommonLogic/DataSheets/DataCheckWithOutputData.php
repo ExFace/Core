@@ -29,10 +29,10 @@ class DataCheckWithOutputData extends DataCheck
     private ?UxonObject $outputDataSheetUxon = null;
     private ?DataSheetInterface $outputDataSheet = null;
 
-    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null): DataSheetInterface
+    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null): string
     {
         try {
-            parent::check($sheet, $logBook);
+            $result = parent::check($sheet, $logBook);
         } catch (DataCheckFailedError $error) {
             $logBook?->addIndent(1);
             $logBook?->addLine('Generating output sheet...');
@@ -45,14 +45,14 @@ class DataCheckWithOutputData extends DataCheck
                     null,
                     $e,
                     $this,
-                    $error->getBadData());
+                    $error->getRowIndexes());
             }
             
             $rowTemplate = (array)$outputSheet->getRow();
             $outputSheet->removeRows();
             $outputSheet->getColumns()->addFromSystemAttributes();
             
-            $badData = $error->getBadData();
+            $badData = $error->getRowIndexes();
             
             // No output data, throw an error with an empty sheet.
             if(!$rowTemplate) {
@@ -97,7 +97,7 @@ class DataCheckWithOutputData extends DataCheck
             throw $error;
         }
         
-        return $sheet;
+        return $result;
     }
 
     /**
