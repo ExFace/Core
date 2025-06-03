@@ -754,6 +754,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If the value is to be put into a JSON inside a column, store the prepared value in a separate
                 // array for later use and skip further processing for this value.
                 if ($columnIsJson === true) {
+                    if ($value === "''") {
+                        $value = null;
+                    }
                     $valuesForJsonCols[$row][$column][$jsonPath] = $value;
                     continue;
                 }
