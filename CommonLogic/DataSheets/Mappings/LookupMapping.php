@@ -303,11 +303,19 @@ class LookupMapping extends AbstractDataSheetMapping
             
             // If row could not be matched to any lookup row, we might have to respond.
             if($toColVals[$i] === null) {
-                // Cache unmatched row.
-                $unmatchedRows[$i] = $fromRow;
-                // Some configurations require, that we stop processing after encountering our first unmatched row.
-                if($this->stopOnFirstMiss) {
-                    break;
+                if($isSubsheet) {
+                    $logbook->addLine('**ERROR**: Unmatched row `' . $i . '` is sub-sheet.');
+                    $toColVals[$i] = [
+                        'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
+                        'rows' => []
+                    ];
+                } else {
+                    // Cache unmatched row.
+                    $unmatchedRows[$i] = $fromRow;
+                    // Some configurations require, that we stop processing after encountering our first unmatched row.
+                    if($this->stopOnFirstMiss) {
+                        break;
+                    }
                 }
             }
         }
