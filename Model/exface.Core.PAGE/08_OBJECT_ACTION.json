@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Page: Open Page",
+            "_EXPORT_SUMMARY": "Page: Open Page [GoToPageUrl]",
             "CREATED_ON": "2020-04-28 10:56:00",
             "MODIFIED_ON": "2020-09-01 10:27:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -85,7 +85,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Page: Restore Menu Position",
+            "_EXPORT_SUMMARY": "Page: Restore Menu Position [RestorePageMenuPosition]",
             "CREATED_ON": "2020-05-04 10:14:44",
             "MODIFIED_ON": "2023-11-27 16:08:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -127,7 +127,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Page: Mass Edit",
+            "_EXPORT_SUMMARY": "Page: Mass Edit [ShowPageMassEditDialog]",
             "CREATED_ON": "2020-05-11 09:59:27",
             "MODIFIED_ON": "2025-01-22 22:29:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -392,7 +392,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Page: Show URL",
+            "_EXPORT_SUMMARY": "Page: Show URL [ShowPageQrCode]",
             "CREATED_ON": "2023-04-04 17:44:05",
             "MODIFIED_ON": "2023-04-04 17:45:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Communication channel: Customize connection",
+            "_EXPORT_SUMMARY": "Communication channel: Customize connection [CommunicationChannelChangeConnectionDialog]",
             "CREATED_ON": "2022-02-01 10:25:41",
             "MODIFIED_ON": "2022-02-10 16:10:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -160,7 +160,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Communication channel: Mute",
+            "_EXPORT_SUMMARY": "Communication channel: Mute [CommunicationChannelMute]",
             "CREATED_ON": "2022-02-01 16:13:03",
             "MODIFIED_ON": "2023-06-08 09:17:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -206,7 +206,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Communication channel: Unmute",
+            "_EXPORT_SUMMARY": "Communication channel: Unmute [CommunicationChannelUnmute]",
             "CREATED_ON": "2022-06-08 12:53:32",
             "MODIFIED_ON": "2023-06-08 09:17:40",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -252,7 +252,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Communication channel: Restore defaults",
+            "_EXPORT_SUMMARY": "Communication channel: Restore defaults [CommunicationChannelRestoreDefaults]",
             "CREATED_ON": "2022-06-08 12:57:18",
             "MODIFIED_ON": "2022-06-08 12:57:18",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
