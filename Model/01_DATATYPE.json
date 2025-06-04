@@ -579,9 +579,9 @@
         {
             "_EXPORT_SUMMARY": "Message Type",
             "CREATED_ON": "2018-11-19 12:24:02",
-            "MODIFIED_ON": "2025-05-16 17:27:29",
+            "MODIFIED_ON": "2025-05-23 10:06:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8ebf600b07e5287f10205857feb81",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Message Type",
@@ -591,13 +591,14 @@
             "DEFAULT_DISPLAY_UXON": {
                 "widget_type": "ColorIndicator",
                 "fill": true,
+                "color_only": false,
                 "color_scale": {
                     "HINT": "transparent",
                     "INFO": "lightblue",
-                    "SUCCESS": "green",
-                    "QUESTION": "lightyellow",
-                    "WARNING": "yellow",
-                    "ERROR": "orange"
+                    "SUCCESS": "~OK",
+                    "QUESTION": "lightblue",
+                    "WARNING": "~WARNING",
+                    "ERROR": "~ERROR"
                 }
             },
             "DEFAULT_EDITOR_UXON": {
