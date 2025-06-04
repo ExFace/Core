@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Mutation [exface.Core.MUTATION]",
             "CREATED_ON": "2025-05-16 11:17:22",
-            "MODIFIED_ON": "2025-05-22 14:48:34",
+            "MODIFIED_ON": "2025-06-04 17:20:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f09ca793446fe09ca7025041000001",
@@ -178,6 +178,120 @@
                                 "root_object": "=base_object_selector"
                             }
                         ]
+                    }
+                ],
+                "buttons": [
+                    {
+                        "caption": "Open object",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectEditDialog",
+                            "object_alias": "exface.Core.OBJECT",
+                            "input_mapper": {
+                                "from_object_alias": "exface.Core.MUTATION",
+                                "to_object_alias": "exface.Core.OBJECT",
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "OBJECT",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
+                        },
+                        "hidden_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=~input!OBJECT",
+                                    "comparator": "==",
+                                    "value_right": ""
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Open action",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectEditDialog",
+                            "object_alias": "exface.Core.OBJECT_ACTION",
+                            "input_mapper": {
+                                "from_object_alias": "exface.Core.MUTATION",
+                                "to_object_alias": "exface.Core.OBJECT_ACTION",
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "OBJECT_ACTION",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
+                        },
+                        "hidden_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=~input!OBJECT_ACTION",
+                                    "comparator": "==",
+                                    "value_right": ""
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Open behavior",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectEditDialog",
+                            "object_alias": "exface.Core.OBJECT_BEHAVIORS",
+                            "input_mapper": {
+                                "from_object_alias": "exface.Core.MUTATION",
+                                "to_object_alias": "exface.Core.OBJECT_BEHAVIORS",
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "OBJECT_BEHAVIORS",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
+                        },
+                        "hidden_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=~input!OBJECT_BEHAVIORS",
+                                    "comparator": "==",
+                                    "value_right": ""
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Open page",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectEditDialog",
+                            "object_alias": "exface.Core.PAGE",
+                            "input_mapper": {
+                                "from_object_alias": "exface.Core.MUTATION",
+                                "to_object_alias": "exface.Core.PAGE",
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "PAGE",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
+                        },
+                        "hidden_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=~input!PAGE",
+                                    "comparator": "==",
+                                    "value_right": ""
+                                }
+                            ]
+                        }
                     }
                 ]
             },
