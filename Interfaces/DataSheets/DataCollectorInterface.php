@@ -25,62 +25,58 @@ use Symfony\Component\Console\Exception\InvalidOptionException;
 interface DataCollectorInterface extends WorkbenchDependantInterface
 {
     /**
-     * Returns a datasheet containing all required data: either the given one (if sufficient) or a new one
-     *
-     * This does NOT modify the original data sheet!
-     *
-     * @param DataSheetInterface $dataSheet
-     * @return DataSheetInterface
-     */
-    public function collect(DataSheetInterface $dataSheet) : DataSheetInterface;
-
-    /**
-     * Same as collect(), but returns an array of the required columns
-     *
-     * @param DataSheetInterface $dataSheet
-     * @param LogBookInterface|null $logBook
-     * @return DataSheetInterface[]
-     */
-    public function collectColumns(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : array;
-
-    /**
      * Makes sure, the given data sheet has all required data, eventually adding missing columns
      *
      * @param DataSheetInterface $dataSheet
      * @return DataSheetInterface
      */
-    public function enrich(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface;
+    public function enrich(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataCollectorInterface;
 
     /**
-     * Reads the required data into a new empty data sheet and returns it
+     * Loads all required data into the collector eventually reading missing columns - but NOT modifying the given sheet
+     *
+     * After this method was called, you can use getRequiredData() and getRequiredColumns() to actually
+     * access the values of all the required expressions.
      *
      * @param DataSheetInterface $dataSheet
-     * @param LogBookInterface|null $logBook
+     * @return DataCollectorInterface
+     */
+    public function collectFrom(DataSheetInterface $dataSheet) : DataCollectorInterface;
+
+    /**
+     * Returns a data sheet, that contains all the required data
+     *
+     * Depending on the method called to collect data, it may be the data sheet provided as base or a different
+     * one created especially to load the data.
+     *
      * @return DataSheetInterface
      */
-    public function readFor(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface;
+    public function getRequiredData() : DataSheetInterface;
 
     /**
-     * Reads the required data into a new empty data sheet and returns an array of required columns with their expressions for keys
+     * Returns an array of columns for required data in given data sheet with their expressions as keys
      *
-     * @param DataSheetInterface $dataSheet
-     * @param LogBookInterface|null $logBook
-     * @return array
+     * @param bool $strict
+     * @return DataColumnInterface[]
      */
-    public function readColumnsFor(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : array;
-
-    /**
-     * Returns an array of columns for required data in given data sheet or NULL if not all columns are found
-     *
-     * @param DataSheetInterface $dataSheet
-     * @return array|null
-     */
-    public function getRequiredColumns(DataSheetInterface $dataSheet) : ?array;
+    public function getRequiredColumns() : array;
 
     /**
      * @return ExpressionInterface[]
      */
     public function getRequiredExpressions() : array;
+
+    /**
+     * @param bool $trueOrFalse
+     * @return DataCollectorInterface
+     */
+    public function setReadMissingData(bool $trueOrFalse) : DataCollectorInterface;
+
+    /**
+     * @param bool $trueOrFalse
+     * @return DataCollectorInterface
+     */
+    public function setIgnoreUnreadableColumns(bool $trueOrFalse) : DataCollectorInterface;
 
     /**
      * @param ExpressionInterface|string|bool|int|float $expressionOrString
