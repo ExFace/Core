@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Log Details: Show log details",
+            "_EXPORT_SUMMARY": "Log Details: Show log details [ShowLogDetailsDialog]",
             "CREATED_ON": "2017-10-18 10:22:26",
             "MODIFIED_ON": "2017-10-18 10:26:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

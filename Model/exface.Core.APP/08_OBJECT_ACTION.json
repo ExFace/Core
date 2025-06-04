@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "App: Model Graph",
+            "_EXPORT_SUMMARY": "App: Model Graph [ShowAppRelationGraph]",
             "CREATED_ON": "2019-06-25 10:54:33",
             "MODIFIED_ON": "2020-07-23 10:45:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -207,7 +207,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "App: Inspect",
+            "_EXPORT_SUMMARY": "App: Inspect [AppInspectDialog]",
             "CREATED_ON": "2020-11-09 09:16:38",
             "MODIFIED_ON": "2023-08-24 10:25:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1555,7 +1555,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "App: Files",
+            "_EXPORT_SUMMARY": "App: Files [ShowAppFilesDialog]",
             "CREATED_ON": "2022-11-02 16:23:32",
             "MODIFIED_ON": "2022-11-02 17:33:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
