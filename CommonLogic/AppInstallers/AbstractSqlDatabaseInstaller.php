@@ -2,6 +2,8 @@
 
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\AppExporterInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
@@ -87,7 +89,7 @@ use exface\Core\DataTypes\JsonDataType;
  * @author Ralf Mulansky
  *
  */
-abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
+abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller implements AppExporterInterface
 {
     const CONFIG_OPTION_SKIP_MIGRATIONS = 'SKIP_MIGRATIONS';
     const CONFIG_OPTION_DISABLED = 'DISABLED';
@@ -129,7 +131,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         yield from $this->installMigrations($source_absolute_path, $indent.$indent);
         yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
         // TODO make schema compare work
-        // yield from $this->compareSchemas($source_absolute_path, $indent.$indent);
+
+        if($this->getDataConnection()->getPrototypeSelector()->toString() === 'exface/Core/DataConnectors/MsSqlConnector.php'){
+            yield from $this->compareSchemas($source_absolute_path, $indent.$indent);
+        }
         
         return;
     }
@@ -151,7 +156,25 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function compareSchemas(string $source_absolute_path, string $indent = '') : \Iterator
     {
-        yield 'Schema compare not available for this database yet';
+        $sqlFolder = $this->getSqlFolderAbsolutePath($source_absolute_path);
+        $schemaFile = $sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql';
+        if(!file_exists($schemaFile)) {
+            yield $indent . 'No comparison possible Schema dump not found.';
+            return;
+        }
+        $schema = file_get_contents($schemaFile);
+        $tmpSchema = $this->buildSqlSchema();
+        
+        $diffs = $this->performComparison($tmpSchema, $schema);
+        
+        if (empty($diffs)) {
+            yield "The schemas matches fully";
+        } else {
+            echo "Differences found:\n";
+            foreach ($diffs as $line) {
+                echo "- $line\n";
+            }
+        }
     }
     
     /**
@@ -161,19 +184,63 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function dumpSchema(string $destination_absolute_path, string $indent = '') : \Iterator
     {
-        // Save schema dump to schema.sql in the $sqlFolder folder
         $sqlFolder = $this->getSqlFolderAbsolutePath($destination_absolute_path);
         $schema = $this->buildSqlSchema();
         if ($schema !== '') {
             $this->getWorkbench()->filemanager()->dumpFile($sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql', $schema);
+            yield $indent . 'SQL dump Schema was successfully created.';
         }
-        yield 'Schema dumps not available for this database yet';
+        else {
+            yield $indent . 'Schema dumps not available for this database yet';
+        }
     }
 
     protected function buildSqlSchema() : string
     {
-        return '';
+        $connection = $this->getDataConnection();
+        $tables = $this->getTables();
+        $tableDumps = '';
+        foreach ($tables as $table) {
+            $runQuery = $connection->runSql($this->getTableDumpSchema($table['DATA_ADDRESS']), true)->getResultArray();
+            $tableDumps .= $runQuery[0]['CreateTableScript'] . PHP_EOL;
+        }
+        $connection->disconnect();
+        return $tableDumps;
     }
+
+    /**
+     * 
+     * @return array
+     */
+    protected function getTables() : array
+    {
+        $existing_objects = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT');
+        $existing_objects->getColumns()->addFromExpression('DATA_ADDRESS');
+        $existing_objects->getFilters()->addConditionFromString('APP', $this->getWorkbench()->getApp($this->getSelectorInstalling())->getUid(), EXF_COMPARATOR_EQUALS);
+        $existing_objects->getFilters()->addConditionFromString('DATA_SOURCE__CONNECTION', $this->getDataConnection()->getId(), EXF_COMPARATOR_EQUALS);
+        $existing_objects->getSorters()->addFromString('DATA_ADDRESS', 'ASC');
+        $existing_objects->dataRead();
+        $result = $existing_objects->getRows();
+
+        $seen = [];
+        $returnResult = [];
+        foreach ($result as $item) {
+            if (!in_array($item['DATA_ADDRESS'], $seen)) {
+                $seen[] = $item['DATA_ADDRESS'];
+                $returnResult[] = $item;
+            }
+        }
+
+        return $returnResult;
+    }
+
+    /**
+     * Returns the dump script for the related table
+     * 
+     * @param string $tableName
+     * @return void
+     */
+    abstract protected function getTableDumpSchema(string $tableName) : string;
     
     /**
      *
@@ -249,6 +316,14 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         yield from $this->dumpSchema($destination_absolute_path);
     }
     
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppExporterInterface::exportModel()
+     */
+    public function exportModel() : \Iterator
+    {
+         yield from $this->dumpSchema($this->getApp()->getDirectoryAbsolutePath());
+    }
     /**
      * Method to check if Database already exists, if not, needs to create it.
      * Custom for every SQL Database Type.
