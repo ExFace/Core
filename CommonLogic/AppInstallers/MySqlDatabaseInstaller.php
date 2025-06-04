@@ -657,4 +657,8 @@ SQL;
         }
         return $connection;
     }
+    protected function getTableDumpSchema(string $tableName) : string
+    {
+        return "";
+    }
 }
