@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Workbench;
@@ -62,28 +63,11 @@ class ExistsCondition implements ConditionalExpressionInterface
         }
         $json = $this->getFiltersTemplate();
         $phs = StringDataType::findPlaceholders($json);
-        $phsCols = [];
-        $needMoreData = false;
-        foreach ($phs as $ph) {
-            if (! $col = $dataSheet->getColumns()->getByExpression($ph)) {
-               $needMoreData = true;
-               $phsCols = [];
-               break;
-            }
-            $phsCols[$ph] = $col;
-        }
-        if ($needMoreData === true) {
-            $inputData = $dataSheet->extractSystemColumns();
-            if ($dataSheet->hasUidColumn(true)) {
-                $inputData->getFilters()->addConditionFromColumnValues($inputData->getUidColumn());
-            }
-            foreach ($phs as $ph) {
-                $phsCols[$ph] = $inputData->getColumns()->addFromExpression($ph, null, true);
-            }
-            $inputData->dataRead();
-        } else {
-            $inputData = $dataSheet;
-        }
+
+        $collector = new DataCollector($dataSheet->getMetaObject());
+        $collector->addExpressions($phs);
+        $inputData = $collector->collect($dataSheet);
+        $phsCols = $collector->getRequiredColumns($inputData);
 
         if ($this->baseSheet === null) {
             $base = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->dataSheetUxon);
