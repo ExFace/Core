@@ -4,12 +4,11 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\DataSheets\DataCollectorRuntimeError;
-use exface\Core\Exceptions\DataSheets\DataMapperRuntimeError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataCollectorInterface;
-use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -25,10 +24,17 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 class DataCollector implements DataCollectorInterface
 {
-    private MetaObjectInterface     $baseObject;
     private WorkbenchInterface      $workbench;
+    private MetaObjectInterface     $baseObject;
+    private ?DataSheetInterface     $baseSheet = null;
+    private ?DataSheetInterface     $resultSheet = null;
+    private ?array                  $resultCols = null;
     private ?array                  $requiredExpressions = null;
-    private array                   $addedExrepssions = [];
+    private array                   $addedExpressions = [];
+    
+    private bool                    $readMissingData = true;
+    private bool                    $ignoreUnreadable = false;
+
     /**
      * @var MetaAttributeInterface[]
      */
@@ -38,6 +44,9 @@ class DataCollector implements DataCollectorInterface
      */
     private array                   $addedAttributeAliases = [];
 
+    /**
+     * @param MetaObjectInterface $object
+     */
     public function __construct(MetaObjectInterface $object)
     {
         $this->baseObject = $object;
@@ -46,81 +55,124 @@ class DataCollector implements DataCollectorInterface
 
     /**
      * {@inheritDoc}
-     * @see DataCollectorInterface::collect()
+     * @see DataCollectorInterface::collectFrom()
      */
-    public function collect(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface
+    public function collectFrom(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataCollectorInterface
     {
-        $cols = $this->collectColumns($dataSheet);
-        $firstCol = reset($cols);
-        return $firstCol->getDataSheet();
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see DataCollectorInterface::collectColumns()
-     */
-    public function collectColumns(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : array
-    {
-        $cols = $this->getRequiredColumns($dataSheet);
-        if ($cols === null) {
-            $cols = $this->readColumnsFor($dataSheet, $logBook);
+        if ($this->baseSheet !== null) {
+            return $this->copy()->collectFrom($dataSheet, $logBook);
         }
-        return $cols;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see DataCollectorInterface::getRequiredColumns()
-     */
-    public function getRequiredColumns(DataSheetInterface $dataSheet) : ?array
-    {
-        foreach ($this->getRequiredExpressions() as $expr) {
-            if (! $col = $dataSheet->getColumns()->getByExpression($expr)) {
-                return null;
-            }
-            $cols[$expr->__toString()] = $col;
+        $this->reset($dataSheet);
+        $missingExprs = $this->getMissingExpressions($dataSheet);
+        switch (true) {
+            case empty($missingExprs):
+                $this->resultSheet = $dataSheet;
+                break;
+            case $dataSheet->hasUidColumn(true):
+                $this->resultSheet = $dataSheet->extractSystemColumns();
+                $this->readMissingDataWithUid($this->resultSheet, $logBook);
+                break;
+            default:
+                $this->resultSheet = $dataSheet->copy();
+                $this->readMissingDataWithoutUid($this->resultSheet, $logBook);
+                break;
         }
-        return $cols;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see DataCollectorInterface::readFor()
-     */
-    public function readFor(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null): DataSheetInterface
-    {
-        $resultSheet = $dataSheet->extractSystemColumns();
-        $this->enrich($resultSheet);
-        return $resultSheet;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see DataCollectorInterface::readColumnsFor()
-     */
-    public function readColumnsFor(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null): array
-    {
-        $cols = [];
-        $resultSheet = $dataSheet->extractSystemColumns();
-        $resultSheet = $this->enrich($resultSheet);
-        foreach ($this->getRequiredExpressions() as $expr) {
-            $cols[$expr->__toString()] = $resultSheet->getColumns()->getByExpression($expr);
-        }
-        return $cols;
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      * @see DataCollectorInterface::enrich()
      */
-    public function enrich(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null): DataSheetInterface
+    public function enrich(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataCollectorInterface
     {
-        if ($dataSheet->hasUidColumn(true) && $dataSheet->isFresh()) {
-            $dataSheet = $this->readMissingDataWithUid($dataSheet, $logBook);
-        } else {
-            $dataSheet = $this->readMissingDataWithoutUid($dataSheet, $logBook);
+        if ($this->baseSheet !== null) {
+            return $this->copy()->enrich($dataSheet, $logBook);
         }
-        return $dataSheet;
+        $this->reset($dataSheet);
+        $missingExprs = $this->getMissingExpressions($dataSheet);
+        switch (true) {
+            case empty($missingExprs):
+                $this->resultSheet = $dataSheet;
+                break;
+            case $dataSheet->hasUidColumn(true) && $dataSheet->isFresh():
+                $this->resultSheet = $this->readMissingDataWithUid($dataSheet, $logBook);
+                break;
+            default:
+                $this->resultSheet = $this->readMissingDataWithoutUid($dataSheet, $logBook);
+                break;
+        }
+        return $this;
+    }
+
+    /**
+     * @return DataSheetInterface
+     */
+    public function getRequiredData(): DataSheetInterface
+    {
+        if ($this->resultSheet === null) {
+            throw new RuntimeException('Cannot call getRequiredData() on a data collector before collect() or enrich()');
+        }
+        return $this->resultSheet;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataCollectorInterface::getRequiredColumns()
+     */
+    public function getRequiredColumns() : array
+    {
+        if ($this->resultCols === null) {
+            $ignoreMissing = $this->willIgnoreUnreadableColumns();
+            $resultSheet = $this->getRequiredData();
+            foreach ($this->getRequiredExpressions() as $expr) {
+                if ($ignoreMissing === false && ! $col = $resultSheet->getColumns()->getByExpression($expr)) {
+                    throw new DataCollectorRuntimeError($resultSheet, 'Missing "' . $expr->__toString() . '" in data of ' . $resultSheet->getMetaObject()->__toString());
+                }
+                $cols[$expr->__toString()] = $col;
+            }
+            $this->resultCols = $cols;
+        }
+        return $this->resultCols;
+    }
+
+    /**
+     * @param DataSheetInterface $baseSheet
+     * @return DataCollectorInterface
+     */
+    protected function reset(?DataSheetInterface $baseSheet = null) : DataCollectorInterface
+    {
+        $this->resultSheet = null;
+        $this->resultCols = null;
+        $this->baseSheet = $baseSheet;
+        return $this;
+    }
+
+    /**
+     * @return DataCollectorInterface
+     */
+    protected function copy() : DataCollectorInterface
+    {
+        $clone = clone $this;
+        $clone->baseSheet = null;
+        $clone->resultSheet = null;
+        $clone->requiredExpressions = null;
+        return $clone;
+    }
+
+    /**
+     * @param DataSheetInterface $dataSheet
+     * @return array|null
+     */
+    protected function getMissingExpressions(DataSheetInterface $dataSheet) : ?array
+    {
+        $missing = [];
+        foreach ($this->getRequiredExpressions() as $expr) {
+            if (! $dataSheet->getColumns()->getByExpression($expr)) {
+                $missing[] = $expr;
+            }
+        }
+        return $missing;
     }
 
     /**
@@ -238,18 +290,18 @@ class DataCollector implements DataCollectorInterface
     }
 
     /**
-     * @param datasheetinter $dataSheet
+     * @param DataSheetInterface $dataSheet
      * @param LogBookInterface|null $logbook
      * @return DataSheetInterface
      */
-    protected function readMissingDataWithoutUid(datasheetinter $dataSheet, ?LogBookInterface $logbook = null): DataSheetInterface
+    protected function readMissingDataWithoutUid(DataSheetInterface $dataSheet, ?LogBookInterface $logbook = null): DataSheetInterface
     {
+        $ignoreMissing = $this->willIgnoreUnreadableColumns();
         $refreshed = false;
         // The original from-data has no UIDs or was not fresh right from the beginning
         // See if any attributes required for the missing columns are related in the way described above
         // the if(). If so, load the data separately and put it into the from-sheet. This is mainly usefull
         // for formulas.
-        $fromObj = $this->getFromMetaObject();
         foreach ($this->getRequiredExpressions() as $expr) {
             if ($dataSheet->getColumns()->getByExpression($expr)) {
                 continue;
@@ -260,23 +312,27 @@ class DataCollector implements DataCollectorInterface
                 if ($dataSheet->getColumns()->getByExpression($reqAlias)) {
                     continue;
                 }
-                $reqAttr = $fromObj->getAttribute($reqAlias);
+                $reqAggr = DataAggregation::getAggregatorFromAlias($this->workbench, $reqAlias);
+                $reqAttr = $this->baseObject->getAttribute($reqAlias);
                 $reqRelPath = $reqAttr->getRelationPath();
                 if ($reqRelPath->isEmpty()) {
+                    if ($ignoreMissing === false) {
+                        throw new DataCollectorRuntimeError($dataSheet, 'Cannot read missing data "' . $expr->__toString() . '" for ' . $dataSheet->getMetaObject()->__toString());
+                    }
                     continue;
                 }
                 // Find the last relation in the path, where there is a key column with values
                 // in the current data.
                 $reqRelKeyCol = null;
                 $reqRelKeyColPath = null;
-                $reqRelColPath = RelationPathFactory::createForObject($fromObj);
+                $reqRelColPath = RelationPathFactory::createForObject($this->baseObject);
                 $reqRelForwardOnly = true;
                 foreach ($reqRelPath->getRelations() as $reqRel) {
-                    if ($reqRel->isForwardRelation()) {
+                    if ($reqRel->isForwardRelation() || $reqAggr) {
                         $reqRelColPath = $reqRelColPath->appendRelation($reqRel);
                         if (($keyCol = $dataSheet->getColumns()->getByExpression($reqRelColPath->toString())) && $keyCol->isEmpty(true) === false) {
                             $reqRelKeyCol = $keyCol;
-                            $reqRelKeyColPath = $reqRelColPath;
+                            $reqRelKeyColPath = $reqRelColPath->copy();
                         }
                     } else {
                         // If there are backwards-relations in the path, jus skip the whole thing,
@@ -291,7 +347,7 @@ class DataCollector implements DataCollectorInterface
                 if ($reqRelForwardOnly === true && $reqRelKeyCol !== null) {
                     $targetCol = $dataSheet->getColumns()->addFromExpression($reqAlias);
                     $reqRelSheet = DataSheetFactory::createFromObject($reqRelKeyColPath->getEndObject());
-                    $valCol = $reqRelSheet->getColumns()->addFromExpression(ExpressionFactory::createForObject($fromObj, $reqAlias)->rebase($reqRelKeyColPath->toString()));
+                    $valCol = $reqRelSheet->getColumns()->addFromExpression(ExpressionFactory::createForObject($this->baseObject, $reqAlias)->rebase($reqRelKeyColPath->toString()));
                     $keyCol = $reqRelSheet->getColumns()->addFromAttribute($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute());
                     $reqRelSheet->getFilters()->addConditionFromValueArray($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute()->getAliasWithRelationPath(), $reqRelKeyCol->getValues(), ComparatorDataType::IN);
                     $reqRelSheet->dataRead();
@@ -301,6 +357,10 @@ class DataCollector implements DataCollectorInterface
                     }
 
                     $logbook?->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
+                } else {
+                    if ($ignoreMissing === false) {
+                        throw new DataCollectorRuntimeError($dataSheet, 'Cannot read missing data "' . $expr->__toString() . '" for ' . $dataSheet->getMetaObject()->__toString());
+                    }
                 }
 
             } // END foreach ($expr->getRequiredAttributes())
@@ -326,7 +386,7 @@ class DataCollector implements DataCollectorInterface
             foreach ($this->addedAttributes as $attribute) {
                 $this->requiredExpressions[$attribute->getAliasWithRelationPath()] = ExpressionFactory::createFromAttribute($attribute);
             }
-            foreach ($this->addedExrepssions as $expr) {
+            foreach ($this->addedExpressions as $expr) {
                 if ($expr instanceof ExpressionInterface) {
                     $this->requiredExpressions[$expr->__toString()] = $expr;
                 } else {
@@ -344,7 +404,7 @@ class DataCollector implements DataCollectorInterface
     public function addExpression($expressionOrString): DataCollectorInterface
     {
         $this->requiredExpressions = null;
-        $this->addedExrepssions[] = $expressionOrString;
+        $this->addedExpressions[] = $expressionOrString;
         return $this;
     }
 
@@ -354,8 +414,8 @@ class DataCollector implements DataCollectorInterface
      */
     public function addExpressions(array $expressionsOrStrings) : DataCollectorInterface
     {
-        $this->requiredExpressions = null;
-        $this->addedExrepssions = array_merge($this->addedExrepssions, $expressionsOrStrings);
+        $this->reset();
+        $this->addedExpressions = array_merge($this->addedExpressions, $expressionsOrStrings);
         return $this;
     }
 
@@ -365,7 +425,7 @@ class DataCollector implements DataCollectorInterface
      */
     public function addAttribute(MetaAttributeInterface $attribute): DataCollectorInterface
     {
-        $this->requiredExpressions = null;
+        $this->reset();
         $this->addedAttributes[] = $attribute;
         return $this;
     }
@@ -376,14 +436,31 @@ class DataCollector implements DataCollectorInterface
      */
     public function addAttributeAlias(string $alias): DataCollectorInterface
     {
-        $this->requiredExpressions = null;
+        $this->reset();
         $this->addedAttributeAliases[] = $alias;
         return $this;
     }
 
     protected function willReadMissingFromData() : bool
     {
-        return true;
+        return $this->readMissingData;
+    }
+
+    public function setReadMissingData(bool $trueOrFalse) : DataCollectorInterface
+    {
+        $this->readMissingData = $trueOrFalse;
+        return $this;
+    }
+
+    protected function willIgnoreUnreadableColumns() : bool
+    {
+        return $this->ignoreUnreadable;
+    }
+
+    public function setIgnoreUnreadableColumns(bool $trueOrFalse) : DataCollectorInterface
+    {
+        $this->ignoreUnreadable = $trueOrFalse;
+        return $this;
     }
 
     /**
