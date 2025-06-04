@@ -107,6 +107,20 @@
             "NAME": "Default editor mutation",
             "APP": "0x31000000000000000000000000000000",
             "MUTATION_TARGET": "0x11f09f3c1a8d57ec9f3c025041000001"
+        },
+        {
+            "_EXPORT_SUMMARY": "Meta object mutation",
+            "CREATED_ON": "2025-06-03 16:30:55",
+            "MODIFIED_ON": "2025-06-03 16:30:55",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f0b2715ba866ccb271025041000001",
+            "MUTATION_POINT_FILE": "exface/Core/Mutations/MutationPoints/ObjectMutationPoint.php",
+            "MUTATION_PROTOTYPE_FILE": "exface/Core/Mutations/Prototypes/ObjectMutation.php",
+            "DESCRIPTION": "",
+            "NAME": "Meta object mutation",
+            "APP": "0x31000000000000000000000000000000",
+            "MUTATION_TARGET": "0x11f087a60a7cc5e087a6025041000001"
         }
     ],
     "totals_rows": [],
