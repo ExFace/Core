@@ -22,6 +22,7 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
 
     public function __construct(string $pagePathAbsolute, string $prefix = 'SubPageList:') {
         $this->pagePath = $pagePathAbsolute;
+        $this->rootPath = FilePathDataType::normalize(FilePathDataType::findFolderPath($pagePathAbsolute)) . '/';
         $this->setPrefix($prefix);
     }
 
