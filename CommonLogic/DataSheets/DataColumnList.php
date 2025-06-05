@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Model\MetaAttributeListInterface;
  */
 class DataColumnList extends EntityList implements DataColumnListInterface
 {
+    private $columnsExpressionsCache = null;
 
     /**
      * Adds a data sheet
@@ -45,6 +46,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         $data_sheet = $this->getDataSheet();
         $existingColumn = $this->get($key);
         if (! $existingColumn || $existingColumn->getExpressionObj()->toString() !== $column->getExpressionObj()->toString()) {
+            $this->columnsExpressionsCache = null;
             if ($column->getDataSheet() !== $data_sheet) {
                 $column_original = $column;
                 $column = $column_original->copy();
@@ -360,5 +362,24 @@ class DataColumnList extends EntityList implements DataColumnListInterface
             }
         }
         return true;
+    }
+
+    /**
+     * Returns a map with column names as keys and expression strings as values.
+     *
+     * This method can be used to quickly find columns by expression without traversing all column objects. The
+     * expressions are cached for performance.
+     *
+     * @return string[]
+     */
+    public function getColumnsExpressions() : array
+    {
+        if ($this->columnsExpressionsCache === null) {
+            $this->columnsExpressionsCache = [];
+            foreach ($this->getAll() as $column) {
+                $this->columnsExpressionsCache[$column->getName()] = $column->getExpressionObj()->__toString();
+            }
+        }
+        return $this->columnsExpressionsCache;
     }
 }

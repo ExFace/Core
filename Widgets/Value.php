@@ -506,7 +506,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 case $this->hasValue():
                     $expr = $this->getValueExpression();
                     if ($expr && ! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
-                        $this->data_column_name = DataColumn::sanitizeColumnName($expr->toString());
+                        $this->data_column_name = DataColumn::sanitizeColumnName($expr->__toString());
                     }
                     break;
                 case (null !== $calcExpr = $this->getCalculationExpression()) && $calcExpr->isFormula() && ! $calcExpr->isStatic():
