@@ -4,9 +4,9 @@ namespace exface\Core\Mutations\Prototypes;
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\Model\UiMenuItemInterface;
-use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Mutations\AppliedEmptyMutation;
@@ -18,8 +18,10 @@ use exface\Core\Mutations\AppliedEmptyMutation;
  */
 class ObjectMutation extends AbstractMutation
 {
-    private ?string $objectName = null;
-    private ?string $objectDescription = null;
+    private ?string         $objectName = null;
+    private ?string         $objectDescription = null;
+    private ?array          $attributeMutations = null;
+    private ?UxonObject     $attributeMutationsUxon = null;
 
     /**
      * @see MutationInterface::apply()
@@ -36,6 +38,15 @@ class ObjectMutation extends AbstractMutation
         }
         if (null !== $val = $this->getObjectDescription()) {
             $subject->setShortDescription($val);
+        }
+        foreach ($this->getAttributeMutations() as $mutation) {
+            try {
+                $alias = $mutation->getAttributeAlias();
+                $attr = $subject->getAttribute($alias);
+                $mutation->apply($attr);
+            } catch (MetaAttributeNotFoundError $e) {
+                throw new RuntimeException('Cannot apply mutation "' . $this->getName() . '". ' . $e->getMessage(), null, $e);
+            }
         }
 
         return new AppliedEmptyMutation($this, $subject);
@@ -92,6 +103,39 @@ class ObjectMutation extends AbstractMutation
     protected function setObjectDescription(string $objectDescription): ObjectMutation
     {
         $this->objectDescription = $objectDescription;
+        return $this;
+    }
+
+    /**
+     * @return ObjectAttributeMutation[]
+     */
+    protected function getAttributeMutations(): array
+    {
+        if ($this->attributeMutations === null) {
+            $this->attributeMutations = [];
+            if ($this->attributeMutationsUxon !== null) {
+                foreach ($this->attributeMutationsUxon->getPropertiesAll() as $uxon) {
+                    $this->attributeMutations[] = new ObjectAttributeMutation($this->getWorkbench(), $uxon);
+                }
+            }
+        }
+        return $this->attributeMutations;
+    }
+
+    /**
+     * Mutations for attributes of the object
+     *
+     * @uxon-property attributes
+     * @uxon-type \exface\Core\Mutations\Prototypes\ObjectAttributeMutation
+     * @uxon-template [{"attribute_alias":"", "": ""}]
+     *
+     * @param array $attributeMutations
+     * @return ObjectMutation
+     */
+    protected function setAttributes(UxonObject $arrayOfMutations): ObjectMutation
+    {
+        $this->attributeMutations = null;
+        $this->attributeMutationsUxon = $arrayOfMutations;
         return $this;
     }
 }
