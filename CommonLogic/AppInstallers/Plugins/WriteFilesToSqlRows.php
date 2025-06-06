@@ -1,6 +1,6 @@
 <?php
 
-namespace exface\Core\Formulas;
+namespace exface\Core\CommonLogic\AppInstallers\Plugins;
 
 use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\Exceptions\FormulaError;
@@ -8,6 +8,42 @@ use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
+/**
+ * Reads a list of files, specified by a SELECT statement, and writes their contents to the database according
+ * to a specified UPDATE statement.
+ * 
+ * ## Parameters
+ * 
+ * - `selectStatement`:Provide a quoted SELECT statement that fetches both the file paths and the unique keys required for the UPDATE statement.
+ * - `updateStatement`: Provide a quoted UPDATE statement that writes the contents read from the files into the database. Use the `uKeyToken` and `contentToken` placeholders
+ * to control where in your statement the respective data should be inserted (see examples below).
+ * - `filePathColumn`: Specify the name of the SELECT column that contains the file paths.
+ * - `uniqueKeyColumn`: Specify the name of the SELECT column that contains the unique keys.
+ * - `dataSourceAlias`: Files will be accessed via this data source.
+ * - `uKeyToken` = '[#key#]' (optional): Use this placeholder to insert unique keys from your SELECT into your UPDATE statement.
+ * - `contentToken` = '[#content#]' (optional): Use this placeholder to insert the file contents into your UPDATE statement.
+ * - `directorySeparator` = '/' (optional): Specify the directory separator for your file system.
+ * 
+ * ## Usage
+ * 
+ * This plugin only works for specific App-Installers (as of 2025-06-06 only for SqlDataBaseInstallers). To call a plugin you
+ * must enclose it within a multi-line comment, begin with the @ `[at]` symbol and use the following syntax `[at]plugin.PLUGINCALL(ARG1, ARG2, ..., ARG N);`. 
+ * 
+ * ```
+ * 
+ * /*[at]plugin.WriteFilesToSqlRows(
+ *      'SELECT body_file_path, HEX(oid) as oid FROM etl_webservice_request;',
+ *      'UPDATE etl_webservice_request SET http_body = [#content#] WHERE HEX(oid) = [#key#];',
+ *      'oid',
+ *      'body_file_path',
+ *      'axenox.ETL.dataflow_upload_storage',
+ *      '[#key#]',
+ *      '[#content#]'
+ * );*\/
+ * 
+ * ```
+ * 
+ */
 class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
 {
     /**
@@ -16,8 +52,8 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
     public function run(
         string $selectStatement = null,
         string $updateStatement = null,
-        string $uniqueKeyColumn = null,
         string $filePathColumn = null,
+        string $uniqueKeyColumn = null,
         string $dataSourceAlias = null,
         string $uKeyToken = '[#key#]',
         string $contentToken = '[#content#]',
@@ -69,6 +105,8 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
         $sqlStatement = '';
         $connector = $this->getConnector();
         
+        // Assemble the UPDATE statement.
+        // Results from the load data query will be matched to unique keys according to their index.
         foreach ($readQuery->getFiles() as $file) {
             $key = $connector->escapeString($uKeyArray[$i++]);
             $rowStatement = preg_replace($uKeyToken, "'" . $key . "'", $updateStatement);
@@ -83,6 +121,9 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
     }
 
     /**
+     * Loads files via the specified connection, using the path array and returns
+     * the performed query.
+     * 
      * @param DataConnectionInterface $dataConnection
      * @param array                   $pathArray
      * @param string                  $directorySeparator
