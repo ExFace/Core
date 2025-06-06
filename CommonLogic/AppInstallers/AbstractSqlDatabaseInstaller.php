@@ -2,8 +2,8 @@
 
 namespace exface\Core\CommonLogic\AppInstallers;
 
-use exface\Core\Factories\FormulaFactory;
-use exface\Core\Formulas\AbstractSqlInstallerPlugin;
+use exface\Core\CommonLogic\AppInstallers\Plugins\AbstractSqlInstallerPlugin;
+use exface\Core\CommonLogic\AppInstallers\Plugins\AppInstallerPluginFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
@@ -1035,8 +1035,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             return;
         }
         foreach ($matches['fnc'] as $match) {
-            $script = preg_replace('/\n\s*/', '', $match);
-            $formula = FormulaFactory::createFromString($this->getWorkbench(), $script);
+            $expression = preg_replace('/\n\s*/', '', $match);
+            $formula = AppInstallerPluginFactory::createPlugin($this->getWorkbench(), $expression);
             
             if($formula instanceof AbstractSqlInstallerPlugin) {
                 $formula->setConnector($connector);
