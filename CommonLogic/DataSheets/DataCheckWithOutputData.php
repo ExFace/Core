@@ -52,7 +52,7 @@ class DataCheckWithOutputData extends DataCheck
             $outputSheet->removeRows();
             $outputSheet->getColumns()->addFromSystemAttributes();
             
-            $badData = $error->getRowIndexes();
+            $badData = $error->getBadData();
             
             // No output data, throw an error with an empty sheet.
             if(!$rowTemplate) {
