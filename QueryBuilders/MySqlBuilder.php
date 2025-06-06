@@ -125,10 +125,6 @@ class MySqlBuilder extends AbstractSqlBuilder
         /* @var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
-            // First see, if the attribute has some kind of special data type (e.g. binary)
-            if ($this->isBinaryColumn($qpart)) {
-                $this->addBinaryColumn($qpart->getAlias());
-            }
             
             switch (true) {
                 // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
