@@ -184,7 +184,7 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
+class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanPreloadData
 {
     use iHaveAttributeGroupTrait;
 
