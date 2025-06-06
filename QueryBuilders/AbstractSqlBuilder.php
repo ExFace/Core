@@ -428,8 +428,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     // Runtime vars
     private $select_distinct = false;
     
-    private $binary_columns = array();
-    
     private $query_id = null;
     
     private $subquery_counter = 0;
@@ -551,38 +549,50 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
-        
-        //convert binary
-        foreach ($this->getBinaryColumns() as $full_alias) {
-            foreach ($rows as $nr => $row) {
-                $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
-            }
-        }
+
         $tzWorkbench = DateTimeDataType::getTimeZoneDefault($this->getWorkbench());
         $tzQuery = $query->getTimeZone();
         $rowCnt = count($rows);
         foreach ($this->getAttributes() as $qpart) {
             $dataType = $qpart->getDataType();
+            $colKey = $qpart->getColumnKey();
             switch (true) {
+                // Remove explicitly excluded query parts
                 case ($qpart instanceof QueryPartSelect) && $qpart->isExcludedFromResult() === true:
-                    $colKey = $qpart->getColumnKey();
                     foreach ($rows as $nr => $row) {
                         unset ($rows[$nr][$colKey]);
                     }
                     break;
+                // Convert binary values if needed
+                case $this->isBinaryColumn($qpart):
+                    if ($qpart->hasAggregator()) {
+                        $aggr = $qpart->getAggregator();
+                        switch ($aggr->getFunction()->__toString()) {
+                            case AggregatorFunctionsDataType::COUNT:
+                            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                            case AggregatorFunctionsDataType::LIST_ALL:
+                            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                                break 2;
+                        }
+                    }
+                    foreach ($rows as $nr => $row) {
+                        $rows[$nr][$colKey] = $this->decodeBinary($row[$colKey]);
+                    }
+                    break;
+                // Parse times and apply time zones
                 case $dataType instanceof TimeDataType && ($dataType->isTimeZoneDependent() === true) && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
-                    $colKey = $qpart->getColumnKey();
                     for ($i = 0; $i < $rowCnt; $i++) {
                         $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey]);
                         $rows[$i][$colKey] = $dataType::convertTimeZone($rows[$i][$colKey], $tz, $tzWorkbench);
                     }
                     break;
+                // Parse dates
                 case $dataType instanceof DateTimeDataType && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
-                    $colKey = $qpart->getColumnKey();
                     for ($i = 0; $i < $rowCnt; $i++) {
                         $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey], false, $tz, false);
                     }
                     break;
+                // Handle compound attributes
                 case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface: 
                     $qpartChilds = $qpart->getCompoundChildren();
                     $qpartChildFirstInDB = null;
@@ -2781,19 +2791,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return stripos($string, 'SELECT ') !== false;
     }
     
-    protected function addBinaryColumn($full_alias)
-    {
-        if (! in_array($full_alias, $this->binary_columns, true)) {
-            $this->binary_columns[] = $full_alias;
-        }
-        return $this;
-    }
-    
-    protected function getBinaryColumns()
-    {
-        return $this->binary_columns;
-    }
-    
     /**
      * 
      * @param string|NULL
@@ -3434,13 +3431,14 @@ SQL;
     }
 
     /**
-     * Returns TRUE if the given query part or attribute reference a binary column and FALSE otherwise
+     * Returns TRUE if the given query part or attribute reference a binary column in the DB and FALSE otherwise
      *
      * @param MetaAttributeInterface|QueryPartAttribute $qpartOrAttr
      * @return bool
      */
     protected function isBinaryColumn(MetaAttributeInterface|QueryPartAttribute $qpartOrAttr) : bool
     {
-        return strcasecmp(($qpartOrAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? ''), 'binary') === 0;
+        $sqlType = ($qpartOrAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '');
+        return strcasecmp($sqlType, 'binary') === 0;
     }
 }
