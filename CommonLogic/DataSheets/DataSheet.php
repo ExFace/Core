@@ -632,7 +632,7 @@ class DataSheet implements DataSheetInterface
             if ($attribute->hasCalculation()) {
                 foreach ($attribute->getCalculationExpression()->getRequiredAttributes() as $req) {
                     if (! $this->getColumn($req)) {
-                        $column = $this->getColumns()->addFromExpression($req, '', true);
+                        $column = $this->getColumns()->addFromExpression($req, null, true);
                         $this->dataReadAddColumnToQuery($column, $query);
                     }
                 }
