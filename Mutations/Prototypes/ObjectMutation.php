@@ -125,14 +125,14 @@ class ObjectMutation extends AbstractMutation
     /**
      * Mutations for attributes of the object
      *
-     * @uxon-property attributes
+     * @uxon-property change_attributes
      * @uxon-type \exface\Core\Mutations\Prototypes\ObjectAttributeMutation
      * @uxon-template [{"attribute_alias":"", "": ""}]
      *
      * @param array $attributeMutations
      * @return ObjectMutation
      */
-    protected function setAttributes(UxonObject $arrayOfMutations): ObjectMutation
+    protected function setChangeAttributes(UxonObject $arrayOfMutations): ObjectMutation
     {
         $this->attributeMutations = null;
         $this->attributeMutationsUxon = $arrayOfMutations;
