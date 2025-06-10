@@ -15,6 +15,19 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 
 /**
  * Returns TRUE if the current user is authorized to call the action of the given button and FALSE otherwise
+ *
+ * The main use case for this formula is having it generated automatically by a buttons hidden_if_access_denied.
+ *
+ * ## Possible recursion
+ *
+ * To avoid recursion, this formula MUST disable authorization logic while applying input mappers because those
+ * might call this formula again! The formula remembers the data it is called for and returns NULL for any
+ * intermediate calls with the same data
+ *
+ * If the formula is generated automatically by hidden_if_access_denied, it will be added to the input data of
+ * the button as a hidden field. When the button is pressed, it will evaluate the actions input data, which in
+ * turn might lead to recalculation of formulas - including this formula itself. The formula will find the
+ * mapper and attempt to appy it, triggering the same logic once again and ultimately triggering itself.
  * 
  * @author Andrej Kabachnik
  */
@@ -23,15 +36,22 @@ class IsButtonAuthorized extends Formula
     private static array $actionsCache = [];
     private static array $dataCache = [];
 
+    private $inProgressFor = [];
+
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run(string $pageAlias = '', string $widgetId = ''): bool
+    public function run(string $pageAlias = '', string $widgetId = '') : ?bool
     {
         if ($pageAlias === '' || $widgetId === '') {
             throw new FormulaError("Missing page alias or widget id for formula =IsButtonAuthorized()");
+        }
+
+        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+        if ($actionAP->isDisabled() === true) {
+            return true;
         }
 
         // Get the action
@@ -52,6 +72,13 @@ class IsButtonAuthorized extends Formula
         // Get the input data
         $allData = $this->getDataSheet();
         $cacheKey = $cacheKey . ':' . spl_object_id($allData);
+
+        // Avoid recursion while preparing data!
+        if (true === $this->inProgressFor[$cacheKey] ?? false) {
+            return null;
+        }
+        $this->inProgressFor[$cacheKey] = true;
+
         $dataCache = static::$dataCache[$cacheKey] ?? null;
         if ($dataCache === null) {
             // See if the action has an input_mapper for the object of our data. If so, try to apply the mapper.
@@ -84,18 +111,23 @@ class IsButtonAuthorized extends Formula
         if ($mapByRow === true) {
             $inputData = $mapper->map($inputData);
         }
+
         // Create a fake task
         $task = TaskFactory::createFromDataSheet($inputData);
 
         // See if the action is authorized for this input data
-        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
         try {
             $actionAP->authorize($action, $task);
+            $result = true;
         } catch (AccessPermissionDeniedError $e) {
             $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
-            return false;
+            $result = false;
         }
-        return true;
+
+        // Stop blocking recursion
+        unset($this->inProgressFor[$cacheKey]);
+
+        return $result;
     }
     
     /**
