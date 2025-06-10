@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
 /**
@@ -30,11 +31,11 @@ class PlaceholderGroup implements PlaceholderResolverInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {     
         $vals = [];
         foreach ($this->resolvers as $resolver) {
-            $vals = array_merge($vals, $resolver->resolve($placeholders));
+            $vals = array_merge($vals, $resolver->resolve($placeholders, $logbook));
         }
         return $vals;
     }

@@ -3,6 +3,7 @@ namespace exface\Core\Templates\Placeholders;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
@@ -48,7 +49,7 @@ class OptionalPlaceholders extends AbstractPlaceholderResolver
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
         $vals = [];
         $resolver = $this->getInnerResolver();
@@ -59,7 +60,7 @@ class OptionalPlaceholders extends AbstractPlaceholderResolver
                 throw new PlaceholderNotFoundError(implode(', ', $myPhs), $this->errorText);
             }
         } else {
-            $vals = $resolver->resolve($placeholders);
+            $vals = $resolver->resolve($placeholders, $logbook);
         }
 
         return $vals;

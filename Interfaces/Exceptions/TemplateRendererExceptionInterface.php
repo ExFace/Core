@@ -9,5 +9,5 @@ Interface TemplateRendererExceptionInterface
      * 
      * @return TemplateRendererInterface
      */
-    public function getRenderer() : TemplateRendererInterface;
+    public function getResolver() : TemplateRendererInterface;
 }

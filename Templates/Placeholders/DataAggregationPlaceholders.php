@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * TODO 
@@ -39,7 +40,7 @@ class DataAggregationPlaceholders extends AbstractPlaceholderResolver
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
         $aggrPlaceholders = $this->filterPlaceholders($placeholders);
 

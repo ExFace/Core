@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\TemplateRenderer\Traits;
 
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 
@@ -28,9 +29,10 @@ trait BracketHashTemplateRendererTrait
     /**
      * 
      * @param string $tpl
+     * @param LogBookInterface|null $logBook
      * @return string[]
      */
-    protected function getPlaceholders(string $tpl) : array
+    protected function getPlaceholders(string $tpl, ?LogBookInterface $logBook = null) : array
     {
         return array_unique(StringDataType::findPlaceholders($tpl));
     }
@@ -38,22 +40,23 @@ trait BracketHashTemplateRendererTrait
     /**
      * 
      * @param string[] $placeholders
+     * @param LogBookInterface|null $logBook
      * @return array
      */
-    protected function getPlaceholderValues(array $placeholders) : array
+    protected function getPlaceholderValues(array $placeholders, ?LogBookInterface $logbook  = null) : array
     {
         $phVals = [];
         
         // Resolve regular placeholders
         foreach ($this->getPlaceholderResolvers() as $resolver) {
-            $phVals = array_merge($phVals, $resolver->resolve($placeholders));
+            $phVals = array_merge($phVals, $resolver->resolve($placeholders, $logbook));
         }
         
         // If there are placeholders left without values, see if there is a default resolver
         // and let it render the missing placeholders
         if (count($phVals) < count($placeholders) && $defaultResolver = $this->getDefaultPlaceholderResolver()) {
             $missingPhs = array_diff($placeholders, array_keys($phVals));
-            $phVals = array_merge($phVals, $defaultResolver->resolve($missingPhs));
+            $phVals = array_merge($phVals, $defaultResolver->resolve($missingPhs, $logbook));
         }
         
         // If there are still missing placeholders, either reinsert them or raise an error

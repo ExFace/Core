@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Templates;
 
 use exface\Core\Exceptions\TemplateRenderer\TemplateRendererRuntimeError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
@@ -63,12 +64,12 @@ class FacadePageTemplateRenderer extends BracketHashFileTemplateRenderer
      * {@inheritDoc}
      * @see BracketHashFileTemplateRenderer::render()
      */
-    public function render($tplPath = null)
+    public function render($tplPath = null, ?LogBookInterface $logbook = null)
     {
         // Do not throw detailed errors containing the tempaltes. They produce template tabs in a lot of errors, that
         // have nothing to do with template renderers.
         try {
-            return parent::render($tplPath);
+            return parent::render($tplPath, $logbook);
         } catch (TemplateRendererRuntimeError $e) {
             if (null !== $prev = $e->getPrevious()) {
                 throw $prev;
@@ -126,9 +127,9 @@ class FacadePageTemplateRenderer extends BracketHashFileTemplateRenderer
      * {@inheritDoc}
      * @see \exface\Core\Templates\BracketHashFileTemplateRenderer::getPlaceholderValues()
      */
-    protected function getPlaceholderValues(array $placeholders) : array
+    protected function getPlaceholderValues(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
-        $phVals = parent::getPlaceholderValues($placeholders);
+        $phVals = parent::getPlaceholderValues($placeholders, $logbook);
         
         $nullVals = array_filter($phVals, function($val) {
             return $val === null;

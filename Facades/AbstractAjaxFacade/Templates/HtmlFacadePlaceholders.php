@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Templates;
 
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
@@ -39,7 +40,7 @@ class HtmlFacadePlaceholders implements PlaceholderResolverInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
         $vals = [];
         foreach ($placeholders as $placeholder) {

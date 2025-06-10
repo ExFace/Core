@@ -2,6 +2,7 @@
 namespace exface\Core\Templates\Placeholders;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -36,7 +37,7 @@ class WidgetRenderPlaceholders extends AbstractPlaceholderResolver
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {     
         $vals = [];
         foreach ($this->filterPlaceholders($placeholders) as $placeholder) {

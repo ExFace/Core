@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\TemplateRenderers;
 
+use exface\Core\Interfaces\Debug\LogBookInterface;
+
 /**
  * Interface for placeholder resolvers used in template renderers.
  * 
@@ -20,7 +22,8 @@ interface PlaceholderResolverInterface
      * is responsible for `ph1` and `ph3`, the return values should be `["ph1" => "val1", "ph3" => "val3"]`.
      * 
      * @param string[] $placeholders
+     * @param LogBookInterface|null $logbook
      * @return array
      */
-    public function resolve(array $placeholders) : array;
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array;
 }

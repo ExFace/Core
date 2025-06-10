@@ -3,6 +3,7 @@ namespace exface\Core\Facades\DocsFacade;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractTemplateRenderer;
 use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 class DocsTemplateRenderer extends AbstractTemplateRenderer 
 {
@@ -60,7 +61,12 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
 		// Implement the exportUxonObject method
 	}
 
-    protected function getPlaceholders(string $tpl) : array
+    /**
+     * @param string $tpl
+     * @param LogBookInterface|null $logbook
+     * @return array
+     */
+    protected function getPlaceholders(string $tpl, ?LogBookInterface $logbook = null) : array
     {
         // Regex to extract the comment block (e.g., <!-- ... -->)
         $regex = '/<!--\s*BEGIN\s+((\w+)(?::([^\s]*))?)\s*-->/i';
@@ -91,13 +97,13 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
      * @param string[] $placeholders
      * @return array
      */
-    protected function getPlaceholderValues(array $placeholders) : array
+    protected function getPlaceholderValues(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
         $phVals = [];
 
         // Let each resolver handle the full placeholder list and return values indexed by their original positions
         foreach ($this->getPlaceholderResolvers() as $resolver) {
-            $resolved = $resolver->resolve($placeholders);
+            $resolved = $resolver->resolve($placeholders, $placeholders);
             foreach ($resolved as $i => $val) {
                 $phVals[$i] = $val;
             }
