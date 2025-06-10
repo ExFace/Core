@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -67,7 +68,8 @@ class DataCheck implements DataCheckInterface
         $badRowIdxs = $this->findViolations($sheet);
         
         $errorText = $this->getErrorText($sheet);
-        $explanation = 'Found ' . count($badRowIdxs) . ' matches for check "' . $this->__toString() . '".';
+        $errorCount = count($badRowIdxs);
+        $explanation = 'Found ' . ($errorCount > 0 ? "**{$errorCount}**" : $errorCount) . ' matches for check `' . $this->__toString() . '`.';
         $logBook?->addLine($explanation);
         
         if (! empty($badRowIdxs)) {
@@ -223,7 +225,11 @@ class DataCheck implements DataCheckInterface
         if (null === $baseObject) {
             $baseObject = $this->getOnlyForObject();
         }
-        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->getConditionGroupUxon(), $baseObject);
+        try {
+            return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->getConditionGroupUxon(), $baseObject);
+        } catch (\Throwable $e) {
+            throw new UnexpectedValueException('Cannot parse condition for data check "' . $this->errorText . '". ' . $e->getMessage(), null, $e);
+        }
     }
     
     /**

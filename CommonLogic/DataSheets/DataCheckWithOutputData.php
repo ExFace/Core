@@ -86,7 +86,7 @@ class DataCheckWithOutputData extends DataCheck
             }
             
             foreach ($keyColumn->getValues() as $checkedKey) {
-                $logBook?->addLine('Adding row for affected item with key "'. $checkedKey .'".');
+                $logBook?->addLine('Adding row for affected item with key `'. $checkedKey .'`.');
                 $rowTemplate[$this->foreignKeyAttributeAlias] = $checkedKey;
                 $outputSheet->addRow($rowTemplate);
             }
