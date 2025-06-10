@@ -38,7 +38,7 @@ interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantIn
      * @param DataSheetInterface $data
      * @return bool
      */
-    public function isViolatedIn(DataSheetInterface $data) : bool;
+    public function isViolatedIn(DataSheetInterface $data, ?LogBookInterface $logBook = null) : bool;
     
     /**
      * 
@@ -49,7 +49,7 @@ interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantIn
      * 
      * @return int[]
      */
-    public function findViolations(DataSheetInterface $data) : array;
+    public function findViolations(DataSheetInterface $data, ?LogBookInterface $logBook = null) : array;
     
     /**
      * 

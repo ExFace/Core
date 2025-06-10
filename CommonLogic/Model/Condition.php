@@ -536,7 +536,7 @@ class Condition implements ConditionInterface
                     $value = $uxon->getProperty('value_right');
                     break;
                 }
-                // Otherwise continue with the next case
+            // Otherwise continue with the next case
             case $uxon->hasProperty('value_right') === true:
                 $val = $uxon->getProperty('value_right');
                 $expression = ExpressionFactory::createForObject($obj, $val, $expressionUnknownAsString);
@@ -544,7 +544,7 @@ class Condition implements ConditionInterface
                     $value = $uxon->getProperty('value_left');
                     break;
                 }
-                // Otherwise continue with the next case
+            // Otherwise continue with the next case
             default:
                 throw new UxonParserError($uxon, 'Cannot parse condition UXON: no expression found!');
         }
@@ -680,6 +680,9 @@ class Condition implements ConditionInterface
                 $leftVal = $leftCol->getValue($row_number);
                 break;
             // Otherwise evaluate the expression
+            // IMPORTANT: evaluating formulas and constants in conditions on-the-fly allows to filter data, that
+            // does not explicitly include corresponding columns. This reduces additional read operations and simlifies
+            // filtering of data without UIDs.
             default:
                 $leftVal = $leftExpr->evaluate($data_sheet, $row_number);
                 break;

@@ -3056,8 +3056,14 @@ class DataSheet implements DataSheetInterface
         if ($readMissingData === true) {
             // TODO #DataCollector needs to be used here instead of all the following logic
             foreach ($condGrp->getRequiredExpressions($this->getMetaObject()) as $expr) {
-                if (! $this->getColumns()->getByExpression($expr)) {
-                    $missingCols[] = $expr;
+                // IMPORTANT: only include treat attribute aliases as missing data! We do NOT need
+                // formulas as columns to evaluate the respective conditions - conditions will evaluate
+                // formulas on-the-fly. If added to $missingCols formulas will greatly increase probability
+                // of errors in data without UIDs!
+                foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                    if (! $this->getColumns()->getByExpression($attrAlias)) {
+                        $missingCols[] = $attrAlias;
+                    }
                 }
             }
             if (! empty($missingCols)) {
