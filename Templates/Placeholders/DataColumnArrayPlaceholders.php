@@ -3,6 +3,7 @@ namespace exface\Core\Templates\Placeholders;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -89,7 +90,7 @@ class DataColumnArrayPlaceholders
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {     
         $phValsSheet = $this->getDataSheet();
         $phVals = [];

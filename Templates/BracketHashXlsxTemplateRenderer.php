@@ -9,6 +9,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\TemplateRendererRuntimeError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -36,7 +37,7 @@ class BracketHashXlsxTemplateRenderer extends AbstractTemplateRenderer
      * @throws Exception
      * @see \exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface::render()
      */
-    public function render(Spreadsheet $tplSpreadsheet = null) : Spreadsheet
+    public function render(Spreadsheet $tplSpreadsheet = null, ?LogBookInterface $logbook = null) : Spreadsheet
     {
         if($tplSpreadsheet === null) {
             throw new InvalidArgumentException('Cannot render template without a worksheet! $tplWorksheet must not be null!');
@@ -63,7 +64,7 @@ class BracketHashXlsxTemplateRenderer extends AbstractTemplateRenderer
                 }
 
                 $phs = array_unique($phs);
-                $phVals = $this->getPlaceholderValues($phs);
+                $phVals = $this->getPlaceholderValues($phs, $logbook);
 
                 $newRowsRequested = [];
                 $pendingColumns = [];
@@ -173,22 +174,23 @@ class BracketHashXlsxTemplateRenderer extends AbstractTemplateRenderer
     /**
      * 
      * @param string[] $placeholders
+     * @param LogBookInterface|null $logbook
      * @return array
      */
-    protected function getPlaceholderValues(array $placeholders) : array
+    protected function getPlaceholderValues(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
         $phVals = [];
         
         // Resolve regular placeholders
         foreach ($this->getPlaceholderResolvers() as $resolver) {
-            $phVals = array_merge($phVals, $resolver->resolve($placeholders));
+            $phVals = array_merge($phVals, $resolver->resolve($placeholders, $logbook));
         }
         
         // If there are placeholders left without values, see if there is a default resolver
         // and let it render the missing placeholders
         if (count($phVals) < count($placeholders) && $defaultResolver = $this->getDefaultPlaceholderResolver()) {
             $missingPhs = array_diff($placeholders, array_keys($phVals));
-            $phVals = array_merge($phVals, $defaultResolver->resolve($missingPhs));
+            $phVals = array_merge($phVals, $defaultResolver->resolve($missingPhs, $logbook));
         }
         
         // If there are still missing placeholders, either reinsert them or raise an error

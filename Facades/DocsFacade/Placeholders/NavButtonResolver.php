@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
 class NavButtonResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
@@ -21,7 +22,7 @@ class NavButtonResolver extends AbstractMarkdownPlaceholderResolver implements P
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
         $vals = [];
         $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);        

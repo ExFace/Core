@@ -63,7 +63,7 @@ class DataCheck implements DataCheckInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataCheckInterface::check()
      */
-    public function check(DataSheetInterface $sheet, LogBookInterface $logBook = null) : string
+    public function check(DataSheetInterface $sheet, ?LogBookInterface $logBook = null) : string
     {
         $badRowIdxs = $this->findViolations($sheet);
         

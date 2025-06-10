@@ -1,7 +1,10 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\Exceptions\TemplateRenderer\PlaceholderResolverRuntimeError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -56,48 +59,55 @@ class DataRowPlaceholders extends AbstractPlaceholderResolver
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {     
         $phVals = [];
         $phs = $this->filterPlaceholders($placeholders);
         $phSheet = DataSheetFactory::createFromObject($this->dataSheet->getMetaObject());
         $needExtraData = false;
-        foreach ($phs as $ph) {
-            $expr = $this->stripPrefix($ph);
-            $phSheet->getColumns()->addFromExpression($expr);
-            if (! $this->dataSheet->getColumns()->getByExpression($expr)) {
-                $needExtraData = true;
+        try {
+            foreach ($phs as $ph) {
+                $expr = $this->stripPrefix($ph);
+                $phSheet->getColumns()->addFromExpression($expr);
+                if (!$this->dataSheet->getColumns()->getByExpression($expr)) {
+                    $needExtraData = true;
+                }
             }
-        }
-        // TODO #DataCollector needs to be used here instead of all the following logic
-        if ($needExtraData === true && $this->dataSheet->hasUidColumn()) {
-            if ($this->dataSheet->getUidColumn()->hasEmptyValues()) {
-                throw new DataSheetMissingRequiredValueError($this->dataSheet, null, null, null, $this->dataSheet->getUidColumn(), $this->dataSheet->getUidColumn()->findEmptyRows());
-            }
-            $uidCol = $this->dataSheet->getUidColumn();
-            $phSheet->getFilters()->addConditionFromExpression($uidCol->getExpressionObj(), $uidCol->getValue($this->rowNumber));
-            $phSheet->dataRead();
-            // Overwrite freshly read values by those in the input data (in case they were not saved yet)
-            $phSheet->importRows($this->dataSheet->copy()->removeRows()->addRow($this->dataSheet->getRow($this->rowNumber)), false);
-            $phRowNo = 0;
-        } else {
-            $phSheet = $this->dataSheet;
-            $phRowNo = $this->rowNumber;
-        }
-        
-        foreach ($phs as $ph) {
-            $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph));
-            if ($col == false) {
-                throw new DataSheetColumnNotFoundError($phSheet, "Column to replace placeholder '{$ph}' not found in data sheet and it could not be loaded automatically.");
-            }
-            $val = $col->getValue($phRowNo);
-            // do not format aggregated values as the value type of the column and the value itself might conflict
-            if ($col->hasAggregator()) {
-                $formatted = $val;
+            // TODO #DataCollector needs to be used here instead of all the following logic
+            if ($needExtraData === true && $this->dataSheet->hasUidColumn()) {
+                if ($this->dataSheet->getUidColumn()->hasEmptyValues()) {
+                    throw new DataSheetMissingRequiredValueError($this->dataSheet, null, null, null, $this->dataSheet->getUidColumn(), $this->dataSheet->getUidColumn()->findEmptyRows());
+                }
+                $uidCol = $this->dataSheet->getUidColumn();
+                $phSheet->getFilters()->addConditionFromExpression($uidCol->getExpressionObj(), $uidCol->getValue($this->rowNumber));
+                $phSheet->dataRead();
+                // Overwrite freshly read values by those in the input data (in case they were not saved yet)
+                $phSheet->importRows($this->dataSheet->copy()->removeRows()->addRow($this->dataSheet->getRow($this->rowNumber)), false);
+                $phRowNo = 0;
             } else {
-                $formatted = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
+                $phSheet = $this->dataSheet;
+                $phRowNo = $this->rowNumber;
             }
-            $phVals[$ph] = $this->sanitizeValue($formatted);
+
+            foreach ($phs as $ph) {
+                $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph));
+                if ($col == false) {
+                    throw new DataSheetColumnNotFoundError($phSheet, "Column to replace placeholder '{$ph}' - it is not in the data sheet and it could not be loaded automatically.");
+                }
+                $val = $col->getValue($phRowNo);
+                // do not format aggregated values as the value type of the column and the value itself might conflict
+                if ($col->hasAggregator()) {
+                    $formatted = $val;
+                } else {
+                    $formatted = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
+                }
+                $phVals[$ph] = $this->sanitizeValue($formatted);
+            }
+        } catch (Throwable $e) {
+            if ($logbook instanceof DataLogBook) {
+                $logbook->addDataSheet('Placeholder data', $phSheet);
+            }
+            throw new PlaceholderResolverRuntimeError($this, $e->getMessage(), null, $e);
         }
         
         return $phVals;

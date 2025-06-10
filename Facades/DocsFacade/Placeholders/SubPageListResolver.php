@@ -3,6 +3,7 @@ namespace exface\Core\Facades\DocsFacade\Placeholders;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
 class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
@@ -31,7 +32,7 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
-    public function resolve(array $placeholders) : array
+    public function resolve(array $placeholders, ?LogBookInterface $logbook = null) : array
     {
         $vals = [];                
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
