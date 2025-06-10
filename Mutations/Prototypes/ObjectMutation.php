@@ -18,8 +18,8 @@ use exface\Core\Mutations\AppliedEmptyMutation;
  */
 class ObjectMutation extends AbstractMutation
 {
-    private ?string         $objectName = null;
-    private ?string         $objectDescription = null;
+    private ?string         $changedName = null;
+    private ?string         $changedDescription = null;
     private ?array          $attributeMutations = null;
     private ?UxonObject     $attributeMutationsUxon = null;
 
@@ -33,10 +33,10 @@ class ObjectMutation extends AbstractMutation
         }
 
         /* @var $subject \exface\Core\CommonLogic\Model\MetaObject */
-        if (null !== $val = $this->getObjectName()) {
+        if (null !== $val = $this->getChangeName()) {
             $subject->setName($val);
         }
-        if (null !== $val = $this->getObjectDescription()) {
+        if (null !== $val = $this->getChangeDescription()) {
             $subject->setShortDescription($val);
         }
         foreach ($this->getAttributeMutations() as $mutation) {
@@ -63,46 +63,46 @@ class ObjectMutation extends AbstractMutation
     /**
      * @return string|null
      */
-    protected function getObjectName(): ?string
+    protected function getChangeName(): ?string
     {
-        return $this->objectName;
+        return $this->changedName;
     }
 
     /**
      * Change the name of the object
      *
-     * @uxon-property object_name
+     * @uxon-property change_name
      * @uxon-type string
      *
      * @param string $objectName
      * @return $this
      */
-    protected function setObjectName(string $objectName): ObjectMutation
+    protected function setChangeName(string $objectName): ObjectMutation
     {
-        $this->objectName = $objectName;
+        $this->changedName = $objectName;
         return $this;
     }
 
     /**
      * @return string|null
      */
-    protected function getObjectDescription(): ?string
+    protected function getChangeDescription(): ?string
     {
-        return $this->objectDescription;
+        return $this->changedDescription;
     }
 
     /**
      * Change the description (hint) for the object
      *
-     * @uxon-property object_description
+     * @uxon-property change_description
      * @uxon-type string
      *
      * @param string $objectDescription
      * @return $this
      */
-    protected function setObjectDescription(string $objectDescription): ObjectMutation
+    protected function setChangeDescription(string $objectDescription): ObjectMutation
     {
-        $this->objectDescription = $objectDescription;
+        $this->changedDescription = $objectDescription;
         return $this;
     }
 
@@ -125,14 +125,14 @@ class ObjectMutation extends AbstractMutation
     /**
      * Mutations for attributes of the object
      *
-     * @uxon-property attributes
+     * @uxon-property change_attributes
      * @uxon-type \exface\Core\Mutations\Prototypes\ObjectAttributeMutation
      * @uxon-template [{"attribute_alias":"", "": ""}]
      *
      * @param array $attributeMutations
      * @return ObjectMutation
      */
-    protected function setAttributes(UxonObject $arrayOfMutations): ObjectMutation
+    protected function setChangeAttributes(UxonObject $arrayOfMutations): ObjectMutation
     {
         $this->attributeMutations = null;
         $this->attributeMutationsUxon = $arrayOfMutations;

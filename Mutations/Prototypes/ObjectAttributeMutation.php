@@ -16,8 +16,8 @@ use exface\Core\Mutations\AppliedEmptyMutation;
 class ObjectAttributeMutation extends AbstractMutation
 {
     private ?string $attributeAlias = null;
-    private ?string $attributeName = null;
-    private ?string $attributeDescription = null;
+    private ?string $changedName = null;
+    private ?string $changedDescription = null;
 
     /**
      * @see MutationInterface::apply()
@@ -29,10 +29,10 @@ class ObjectAttributeMutation extends AbstractMutation
         }
 
         /* @var $subject \exface\Core\CommonLogic\Model\Attribute */
-        if (null !== $val = $this->getAttributeName()) {
+        if (null !== $val = $this->getChangeName()) {
             $subject->setName($val);
         }
-        if (null !== $val = $this->getAttributeDescription()) {
+        if (null !== $val = $this->getChangeDescription()) {
             $subject->setShortDescription($val);
         }
 
@@ -74,9 +74,9 @@ class ObjectAttributeMutation extends AbstractMutation
     /**
      * @return string|null
      */
-    protected function getAttributeName(): ?string
+    protected function getChangeName(): ?string
     {
-        return $this->attributeName;
+        return $this->changedName;
     }
 
     /**
@@ -88,18 +88,18 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeName
      * @return $this
      */
-    protected function setAttributeName(string $attributeName): ObjectAttributeMutation
+    protected function setChangeName(string $attributeName): ObjectAttributeMutation
     {
-        $this->attributeName = $attributeName;
+        $this->changedName = $attributeName;
         return $this;
     }
 
     /**
      * @return string|null
      */
-    protected function getAttributeDescription(): ?string
+    protected function getChangeDescription(): ?string
     {
-        return $this->attributeDescription;
+        return $this->changedDescription;
     }
 
     /**
@@ -111,9 +111,9 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeDescription
      * @return $this
      */
-    protected function setAttributeDescription(string $attributeDescription): ObjectAttributeMutation
+    protected function setChangeDescription(string $attributeDescription): ObjectAttributeMutation
     {
-        $this->attributeDescription = $attributeDescription;
+        $this->changedDescription = $attributeDescription;
         return $this;
     }
 }
