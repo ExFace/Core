@@ -3,12 +3,15 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Events\DataChangeEventInterface;
@@ -247,15 +250,16 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         $json = $dataCheckUxon->toJson();
         $logbook->addIndent(1);
 
-        // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
-        foreach ($changedDataSheet->getRows() as $index => $row) {
+        // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for
+        // any errors that might occur.
+        foreach ($changedDataSheet->getRows() as $iRow => $row) {
             // Render placeholders.
-            $renderedUxon = $this->renderUxon($json, $context, $previousDataSheet, $changedDataSheet, $index);
+            $renderedUxon = $this->renderUxon($json, $context, $previousDataSheet, $changedDataSheet, $iRow);
             // Reduce datasheet to the relevant row.
             $checkSheet = $changedDataSheet->copy();
-            $checkSheet->removeRows()->addRow($row);
+            $checkSheet->removeRows()->addRow($row, false, false);
             // Perform data checks.
-            foreach ($this->generateDataChecks($renderedUxon) as $check) {
+            foreach ($this->generateDataChecks($renderedUxon) as $iCheck => $check) {
                 if (!$check->isApplicable($changedDataSheet)) {
                     continue;
                 }
@@ -264,7 +268,23 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                     $check->check($checkSheet, $logbook);
                 } catch (DataCheckFailedError $exception) {
                     $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
-                    $error->appendError($exception, $index + 1, false);
+                    $error->appendError($exception, $iRow + 1, false);
+                } catch (\Throwable $exception) {
+                    $logbook->addSection('Data check error on row ' . $iRow);
+                    $logbook->addLine('> ' . $exception->getMessage());
+                    $logbook->addLine('Data check ' . $iCheck . ':');
+                    $logbook->addCodeBlock($dataCheckUxon->getProperty($iCheck)->toJson(true));
+                    $logbook->addLine('Rendered UXON for data row ' . $iRow . ':');
+                    $logbook->addCodeBlock($renderedUxon->getProperty($iCheck)->toJson(true));
+                    $logbook->addLine('Data row of ' . $changedDataSheet->getMetaObject()->__toString() . ':');
+                    $logbook->addCodeBlock(JsonDataType::encodeJson($row, true));
+                    throw new BehaviorRuntimeError(
+                        $this,
+                        'Cannot perform data check ' . $iCheck . ' in Behavior "' . $this->getName() . '" of object ' . $this->getObject()->__toString(),
+                        null,
+                        $exception,
+                        $logbook
+                    );
                 }
             }
         }
