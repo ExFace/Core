@@ -98,11 +98,18 @@ class ShowDataImportDialog extends ShowDialog
             if (in_array($attr->getAliasWithRelationPath(), $excludeAliases)) {
                 unset($colAttrs[$i]);
                 continue;
-            } 
-            $uxon->appendToProperty('columns', new UxonObject([
+            }
+            $colUxon = new UxonObject([
                 'attribute_alias' => $attr->getAliasWithRelationPath(),
                 'editable' => true
-            ]));
+            ]);
+            if ($attr->isRelation()) {
+                $colUxon->setProperty('cell_widget', new UxonObject([
+                    'widget_type' => 'InputComboTable',
+                    'lazy_loading' => false
+                ]));
+            }
+            $uxon->appendToProperty('columns', $colUxon);
         }
         
         /** @var \exface\Core\Widgets\DataImporter $importer*/

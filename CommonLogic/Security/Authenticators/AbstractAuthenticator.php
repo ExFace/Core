@@ -302,7 +302,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      */
     protected function getAuthenticatorData(string $username) : DataSheetInterface
     {
-        if (null === $this->userAuthData[$username] ?? null) {
+        if (null === ($this->userAuthData[$username] ?? null)) {
             $exface = $this->getWorkbench();
             $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
             $dataSheet->getColumns()->addMultiple([

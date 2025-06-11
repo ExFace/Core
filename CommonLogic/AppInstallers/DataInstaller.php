@@ -801,7 +801,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     protected function createModelSheet(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataSheetInterface
     {
         $cacheKey = $objectSelector . '::' . ($appRelationAttribute ?? '') . '::' . $sorterAttribute . '::' . implode(',', $excludeAttributeAliases);
-        if (null === $ds = $this->dataSheets[$cacheKey] ?? null) {
+        if (null === $ds = ($this->dataSheets[$cacheKey] ?? null)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
             $ds->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
             if ($ds->getMetaObject()->hasUidAttribute()) {

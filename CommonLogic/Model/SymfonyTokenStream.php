@@ -97,12 +97,12 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
                 }
                 
                 //if the token is followd by a '.' it's a formula with namespace, therefor buffer the token
-                if ($next !== null && $delim === $next['punctuation'] ?? null) {
+                if ($next !== null && $delim === ($next['punctuation'] ?? null)) {
                     $buffer .= $name . $delim;
                     continue;
                 }
-                if ($next !== null && '(' === $next['punctuation'] ?? null) {
-                    if ($prev !== null && ($delim === $prev['punctuation'] ?? null) && $buffer) {
+                if ($next !== null && '(' === ($next['punctuation'] ?? null)) {
+                    if ($prev !== null && $delim === ($prev['punctuation'] ?? null) && $buffer) {
                         $forms[] = $buffer . $name;
                     } else {
                         $forms[] = $name;
@@ -207,18 +207,19 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
         $tokens = $this->getTokens();
         $buffer = null;
         foreach ($tokens as $i => $token) {
-            if (null !== $t = $token['string'] ?? null) {
+            if (null !== $t = ($token['string'] ?? null)) {
                 $args[] = $t;
                 continue;
             }
-            if (null !== $t = $token['number'] ?? null) {
+            if (null !== $t = ($token['number'] ?? null)) {
                 $args[] = $t;
                 continue;
             }
             
             //every token with 'name' key gets to the arguments unless it is the formula name itself
             // TODO maybe should also extract nested formulas here so we can run this functions once and have all tokens categorized
-            if (null !== ($name = $token['name'] ?? null) && $name !== $this->getFormulaName()) {
+            $name = $token['name'] ?? null;
+            if ($name !== null && $name !== $this->getFormulaName()) {
                 
                 if (mb_strtoupper($name) === 'TRUE' || mb_strtoupper($name) === 'FALSE') {
                     $args[] = $name;

@@ -19,7 +19,7 @@ abstract class AbstractMutationPoint implements MutationPointInterface
     public function getMutations(MutationTargetInterface $target) : array
     {
         $cacheKey = $target->__toString();
-        if (null !== $cache = $this->mutationsLoaded[$cacheKey] ?? null) {
+        if (null !== $cache = ($this->mutationsLoaded[$cacheKey] ?? null)) {
             return $cache;
         }
         $mutations = $this->getWorkbench()->model()->getModelLoader()->loadMutations($this, $target);
