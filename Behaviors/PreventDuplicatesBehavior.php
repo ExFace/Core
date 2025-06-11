@@ -480,7 +480,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     // to inherit system attributes from the duplicate! The UID is required to
                     // perform the update, but other things like the timestamp from the TimestampingBehavior
                     // should also be overwritten by values from the duplicate to be updated.
-                    if (null === $row[$uidColName] ?? null) {
+                    // NOTE: treat NULL and '' as empty here, not just NULL alone!
+                    if ('' === ($row[$uidColName] ?? '')) {
                         $matchedRow = $match->getMatchedRow();
                         foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
                             $row[$systemAttr->getAlias()] = $matchedRow[$systemAttr->getAlias()];
