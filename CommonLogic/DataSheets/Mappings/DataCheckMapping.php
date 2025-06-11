@@ -38,7 +38,7 @@ class DataCheckMapping extends AbstractDataSheetMapping
                 if ($logbook !== null) $logbook->addLine('Checking `' . $check->getConditionGroup()->__toString() . '`', +1);
                 $check->check($fromSheet);
             } catch (DataCheckExceptionInterface $e) {
-                if ($logbook !== null) $logbook->addLine('**Check failed:** ' . $check->getErrorText() . ' (condition `' . $check->getConditionGroup()->__toString() . '` was `true`)', -1);
+                if ($logbook !== null) $logbook->addLine('**Check failed:** ' . $check->getErrorText($fromSheet) . ' (condition `' . $check->getConditionGroup()->__toString() . '` was `true`)', -1);
                 throw new DataMappingFailedError($this, $fromSheet, $toSheet, $e->getMessage(), null, $e, $logbook);
             }
         }
