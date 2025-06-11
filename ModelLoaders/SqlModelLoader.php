@@ -418,7 +418,7 @@ SQL;
 
                 // If the attribute is a relation, save it for later processing. We can't create relations here right away because we need to
                 // instantiate all attributes first - otherwise we may not be able to find left keys of reverse relations!
-                if (null !== $row['related_object_oid'] ?? null) {
+                if (null !== ($row['related_object_oid'] ?? null)) {
                     $relation_attrs[] = [
                         'attr' => $attr,
                         'row' => $row
@@ -586,21 +586,21 @@ SQL;
      */
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
-        if (self::ATTRIBUTE_TYPE_COMPOUND === $row['attribute_type'] ?? null) {
+        if (self::ATTRIBUTE_TYPE_COMPOUND === ($row['attribute_type'] ?? null)) {
             $attr = new CompoundAttribute($object, $row['attribute_name'], $row['attribute_alias']);
         } else {
             $attr = new Attribute($object, $row['attribute_name'], $row['attribute_alias']);
         }
         $attr->setId($row['oid']);
-        if (null !== $val = $row['data'] ?? null){
+        if (null !== $val = ($row['data'] ?? null)){
             $attr->setDataAddress($val);
         }
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties'] ?? null));
-        $attr->setRelationFlag(null !== ($row['related_object_oid'] ?? null) ? true : false);
+        $attr->setRelationFlag(null !== ($row['related_object_oid'] ?? null));
         $attr->setDataType($row['data_type_oid']);
         $attr->setType($row['attribute_type']);
 
-        if ($val = $row['attribute_formatter'] ?? null) {
+        if ($val = ($row['attribute_formatter'] ?? null)) {
             $attr->setCalculation($val);
         }
 
@@ -618,31 +618,31 @@ SQL;
         }
 
         // Control flags
-        if (null !== $val = $row['attribute_readable_flag'] ?? null){
+        if (null !== $val = ($row['attribute_readable_flag'] ?? null)){
             $attr->setReadable($val);
         }
-        if (null !== $val = $row['attribute_writable_flag'] ?? null){
+        if (null !== $val = ($row['attribute_writable_flag'] ?? null)){
             $attr->setWritable($val);
         }
-        if (null !== $val = $row['attribute_required_flag'] ?? null){
+        if (null !== $val = ($row['attribute_required_flag'] ?? null)){
             $attr->setRequired($val);
         }
-        if (null !== $val = $row['attribute_editable_flag'] ?? null){
+        if (null !== $val = ($row['attribute_editable_flag'] ?? null)){
             $attr->setEditable($val);
         }
-        if (null !== $val = $row['attribute_copyable_flag'] ?? ($row['attribute_editable_flag'] ?? null)){
+        if (null !== $val = ($row['attribute_copyable_flag'] ?? ($row['attribute_editable_flag'] ?? null))){
             $attr->setCopyable($val);
         }
-        if (null !== $val = $row['attribute_hidden_flag'] ?? null){
+        if (null !== $val = ($row['attribute_hidden_flag'] ?? null)){
             $attr->setHidden($val);
         }
-        if (null !== $val = $row['attribute_sortable_flag'] ?? null){
+        if (null !== $val = ($row['attribute_sortable_flag'] ?? null)){
             $attr->setSortable($val);
         }
-        if (null !== $val = $row['attribute_filterable_flag'] ?? null){
+        if (null !== $val = ($row['attribute_filterable_flag'] ?? null)){
             $attr->setFilterable($val);
         }
-        if (null !== $val = $row['attribute_aggregatable_flag'] ?? null){
+        if (null !== $val = ($row['attribute_aggregatable_flag'] ?? null)){
             $attr->setAggregatable($val);
         }
 
@@ -657,17 +657,17 @@ SQL;
         if ($val !== null && $val !== '') {
             $attr->setFixedValue($val);
         }
-        if (null !== $val = $row['attribute_formula'] ?? null){
+        if (null !== $val = ($row['attribute_formula'] ?? null)){
             $attr->setFormula($val);
         }
         $val = $row['default_sorter_dir'] ?? null;
         if ($val !== null && $val !== ''){
             $attr->setDefaultSorterDir($val);
         }
-        if (null !== $val = $row['default_aggregate_function'] ?? null){
+        if (null !== $val = ($row['default_aggregate_function'] ?? null)){
             $attr->setDefaultAggregateFunction($val);
         }
-        if (null !== $val = $row['value_list_delimiter'] ?? null){
+        if (null !== $val = ($row['value_list_delimiter'] ?? null)){
             $attr->setValueListDelimiter($val);
         }
 
@@ -1380,7 +1380,7 @@ SQL;
         // use this array instead of querying the DB every time. This should be faster as most authorization
         // points will be required for every request anyway, so we simply save DB queries here.
         $username = $userOrToken->getUsername();
-        if (null === $this->auth_policies_loaded || null === $this->auth_policies_loaded[$username] ?? null) {
+        if (null === $this->auth_policies_loaded || null === ($this->auth_policies_loaded[$username] ?? null)) {
             if ($userOrToken->isAnonymous()) {
                 // Load all policies of the anonymous user
                 // + all policies without a user group

@@ -1056,7 +1056,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                             && $child->isBoundToAttribute()
                             && $child->getAttributeAlias() === $attrAlias;
                     });
-                    if (! $w = $matches[0] ?? null) {
+                    if (! $w = ($matches[0] ?? null)) {
                         // Try to add an InputHidden for the missing attribute
                         // Only do this for containers, that all InputHidden widgets
                         if (! $containerWidget instanceof iContainTypedWidgets || $containerWidget->isWidgetTypeAllowed(InputHidden::class)) {
@@ -1094,7 +1094,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                             && $child->getCalculationExpression() !== null
                             && $child->getCalculationExpression()->__toString() === $expr->__toString();
                     });
-                    if (null === $w = $matches[0] ?? null) {
+                    if (null === $w = ($matches[0] ?? null)) {
                         // Try to add an InputHidden for the missing attribute
                         // Only do this for containers, that all InputHidden widgets
                         if (! $containerWidget instanceof iContainTypedWidgets || $containerWidget->isWidgetTypeAllowed(InputHidden::class)) {

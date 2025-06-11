@@ -120,7 +120,7 @@ class AppTranslation extends Translation
                     throw new FileNotReadableError('Cannot read file "' . $path . '"!');
                 }
                 $array = json_decode($json, true);
-                if ($array && null !== $locale = $array['LOCALIZATION.LOCALE'] ?? null) {
+                if ($array && null !== $locale = ($array['LOCALIZATION.LOCALE'] ?? null)) {
                     $langs[] = $locale;
                 } else {
                     $langs[] = $lang;
