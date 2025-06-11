@@ -188,7 +188,7 @@ class DataCheck implements DataCheckInterface
      * @param DataSheetInterface $dataSheet
      * @return string|null
      */
-    protected function getErrorText(DataSheetInterface $dataSheet) : ?string
+    public function getErrorText(DataSheetInterface $dataSheet) : ?string
     {
         // TODO allow placeholders from data in the error text
         return $this->errorText;
