@@ -39,7 +39,7 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
     
                 if (file_exists($folderIndex)) {
                     $title = MarkdownDataType::findHeadOfFile($folderIndex);
-                    $link = $this->relativePath($folderIndex, $directory);
+                    $link = $relativePath . $this->relativePath($folderIndex, $directory);
                 }
     
                 $items[] = [
@@ -91,7 +91,6 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
      */
     protected function relativePath(string $fullPath, string $folderPath = '/Docs/'): string
     {
-        $marker = 'Docs';
         $normalizedFull = FilePathDataType::normalize($fullPath);
         $normalizedFolder = FilePathDataType::normalize($folderPath);
         $normalizedFolder = rtrim($normalizedFolder, '/') . '/';
