@@ -675,6 +675,48 @@
 		 * 
 		 */
 		data: {
+
+			/**
+			 * Returns TRUE if two data rows arrays contain exactly the same rows (possibly in different order)
+			 *
+			 * If the `sUidCol` is specified, two rows with the same UID value are concidered equal
+			 * regardless of their other values. If there is no `sUidCol` or it does not have a value
+			 * on either side, the rows will be compared value-by-value.
+			 *
+			 * @param {array} aRows1
+			 * @param {array} aRows2
+			 * @param {string} sUidCol
+			 * @returns {boolean}
+			 */
+			compareData: function(aRows1, aRows2, sUidCol) {
+				switch (true) {
+					// If both are empty (or falsly values), return TRUE
+					case (aRows1 || []) === (aRows2 || []):
+						return true;
+					// If one is not an array, return FALSE
+					case ! Array.isArray(aRows1):
+					case ! Array.isArray(aRows2):
+						return false;
+					// Now we know, both ar arrays, so they are definitely different if they have different length!
+					case aRows1.length !== aRows2.length:
+						return false;
+				}
+				// At this point, we know, both are arrays and have the same length. All we need to check
+				// now is, if all rows from the first one are also present in the second one
+				for (var i1 = 0; i1 < aRows1.length; i1++) {
+					var bRow1FoundIn2 = false;
+					for (var i2 = 0; i2 < aRows2.length; i2++) {
+						if (this.compareRows(aRows1[i1], aRows2[i2], sUidCol) === true) {
+							bRow1FoundIn2 = true;
+							break;
+						}
+					}
+					if (bRow1FoundIn2 === false) {
+						return false;
+					}
+				}
+				return true;
+			},
 			
 			/**
 			 * Returns TRUE if row1 is the same as row2 
@@ -689,6 +731,11 @@
 			 * @returns {boolean}
 			 */
 			compareRows: function(oRow1, oRow2, sUidCol) {
+				// If one of the side is actually an array, not an object, use the special function for array
+				if (Array.isArray(oRow1) || Array.isArray(oRow2)) {
+					return this.compareData(oRow1, oRow2, sUidCol);
+				}
+
 				if (sUidCol !== undefined && sUidCol !== null && oRow1[sUidCol] !== undefined && oRow2[sUidCol] !== undefined) {
 					return oRow1[sUidCol] === oRow2[sUidCol];
 				}
