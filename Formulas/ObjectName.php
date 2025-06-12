@@ -5,8 +5,6 @@ namespace exface\Core\Formulas;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\MetaObjectFactory;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Returns the name of an object from the metamodel
