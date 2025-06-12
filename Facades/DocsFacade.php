@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades;
 
+use exface\Core\DataTypes\FilePathDataType;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
@@ -329,15 +330,15 @@ class DocsFacade extends AbstractHttpFacade
             } else {
                 $htmlString = PHP_EOL . '<!-- SKIPPED link ' . $link . ' because it seems external -->';
             }
-        }
 
-        if ($htmlString) {
-            // Write the body content to the temporary file
-            file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
-        }
+            if ($htmlString) {
+                // Write the body content to the temporary file
+                file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
+            }
 
-        if (! empty($linksArrayRecursive)) {
-            $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
+            if (! empty($linksArrayRecursive)) {
+                $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
+            }
         }
     }
     
@@ -514,6 +515,9 @@ class DocsFacade extends AbstractHttpFacade
         foreach ($links as $link) {
             $href = $link->getAttribute('href');
             if ($href) {
+                // Normalize links to make sure /Chapter1/index.md and /Chapter1/Subfolder/../index.md
+                // are not included multiple times due to the `..` iun the URL
+                $href = FilePathDataType::normalize($href);
                 $extractedLinks[] = $href;
             }
         } 
