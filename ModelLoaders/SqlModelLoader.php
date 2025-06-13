@@ -2351,9 +2351,11 @@ SQL;
             $sql = <<<SQL
 SELECT 
     m.*,
-    mt.mutation_prototype_file
+    mt.mutation_prototype_file,
+    ms.enabled_flag AS enabled_flag_of_set
 FROM exf_mutation m
     INNER JOIN exf_mutation_type mt ON mt.oid = m.mutation_type_oid
+    INNER JOIN exf_mutation_set ms ON ms.oid = m.mutation_set_oid
 -- WHERE JSON_VALUE(m.targets_json, '$."{$target->getTargetKey()}"') = '{$target->getTargetValue()}'
 SQL;
             try {
@@ -2379,7 +2381,7 @@ SQL;
             $class = PhpFilePathDataType::findClassInFile($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $file);
             /** @var \exface\Core\CommonLogic\Mutations\AbstractMutation $mutation */
             $mutation = new $class($this->getWorkbench(), $uxon);
-            if ($row['enabled_flag'] === 0) {
+            if (intval($row['enabled_flag']) === 0 || intval($row['enabled_flag_of_set']) === 0) {
                 $mutation->setDisabled(true);
             }
             $mutations[] = $mutation;
