@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Mutations;
 
+use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Interfaces\Mutations\MutationPointInterface;
 use exface\Core\Interfaces\Mutations\MutationTargetInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
@@ -25,7 +26,7 @@ abstract class AbstractMutationPoint implements MutationPointInterface
 
     /**
      * @param MutationTargetInterface $target
-     * @return array|null
+     * @return MutationInterface[]
      */
     public function getMutations(MutationTargetInterface $target) : array
     {
@@ -49,7 +50,7 @@ abstract class AbstractMutationPoint implements MutationPointInterface
         }
         $applied = [];
         foreach ($this->getMutations($target) as $mutation) {
-            if (! $mutation->supports($subject)) {
+            if ($mutation->supports($subject) === false || $mutation->isDisabled() === true) {
                 continue;
             }
             $applied[] = $mutation->apply($subject);
