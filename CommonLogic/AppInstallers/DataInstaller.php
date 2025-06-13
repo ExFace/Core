@@ -332,7 +332,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
      */
     public function exportModel() : \Iterator
     {
+        // Disable mutations to make sure mutated object names, etc. are not exported
+        $mutationsEnabled = $this->getWorkbench()->getConfig()->getOption('MUTATIONS.ENABLED');
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', false);
+        }
+
         yield from $this->backup($this->getApp()->getDirectoryAbsolutePath());
+
+        // Re-enable mutations
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', true);
+        }
     }
     
     /**
