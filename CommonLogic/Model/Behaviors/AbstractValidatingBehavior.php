@@ -112,38 +112,72 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
 
         $this->inProgress = true;
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $logbook->addDataSheet('New data', $eventSheet);
-        $logbook->addLine('Checking ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
-        
+        $logbook->addDataSheet('Event data', $eventSheet);
+        $logbook->addLine('Checking **' . $eventSheet->countRows() . '** row(s) of ' . $eventSheet->getMetaObject()->__toString());
+        $logbook->addIndent(+1);
+
         // Get datasheets.
+        $oldData = null;
         if ($this->isOldDataRequired()) {
-            $previousDataSheet = $this->getOldData($event);
-            if ($previousDataSheet !== null) {
-                $logbook->addLine('Found "old" data for ' . $previousDataSheet->getMetaObject()->__toString() . ' - can use `[#~old:...#]` placeholders');
-                $logbook->addDataSheet('Old data', $previousDataSheet);
+            $oldData = $this->getOldData($event);
+            if ($oldData !== null) {
+                $logbook->addLine('Found "old" data for ' . $oldData->getMetaObject()->__toString() . ' - can use `[#~old:...#]` placeholders');
+                $logbook->addDataSheet('Old data', $oldData);
                 try {
-                    $changedDataSheet = $eventSheet->copy()->sortLike($previousDataSheet);
+                    $newData = $eventSheet->copy()->sortLike($oldData);
+                    $logbook->addLine('Sorting event data in the same way as "old" data, so that row numbers match');
+                    $logbook->addDataSheet('Event data resorted', $newData);
                 } catch (DataSheetRuntimeError $e) {
-                    $logbook->addDataSheet('New data (unsorted)', $eventSheet);
-                    throw new BehaviorRuntimeError($this, "Failed to align post-transaction data!", $e->getAlias(), $e, $logbook);
+                    throw new BehaviorRuntimeError($this, 'Failed to sort event data according to "old" data!', $e->getAlias(), $e, $logbook);
                 }
 
             } else {
-                $changedDataSheet = $eventSheet;
+                $newData = $eventSheet;
                 $logbook->addLine('No "old" data available - cannot use `[#~old:...#]` placeholders');
             }
         } else {
             $logbook->addLine('No "old" data required');
-            $changedDataSheet = $eventSheet;
+            $newData = $eventSheet;
         }
+
+        // Check, if the event data has rows with multiple UIDs (= delimited list of UIDs). This would be the
+        // case on mass updates by UID. In a validation behavior we need to check each UID separately though.
+        // So we copy the data sheet and split those aggregated rows, so that we have a single UID for every
+        // row.
+        // TODO this is probably incompatible with old-new-data comparisons, because we change the new data here.
+        // Would it be better to throw an error in this case?
+        if ($newData->hasUidColumn() && $newData->getUidColumn()->hasValueLists()) {
+            $logbook->addLine('Event data had at least one row with multiple UIDs - splitting rows to have single UID per row.');
+            $logbook->addIndent(+1);
+            $newDataPerUid = $newData->copy();
+            $newDataPerUid->getUidColumn()->splitRowsWithValueLists();
+
+            $logbook->addLine('Now **' . $newDataPerUid->countRows() . '** row(s) have a single UID each');
+            $logbook->addDataSheet('Event data per UID', $newDataPerUid);
+
+            // If we have other (non-UID) columns with value lists, we cannot be really sure if they resulted from the
+            // same aggregation process, that produced our UID lists. On the other hand, our data sheet is already
+            // completely detached from the original event data, so we can simply remove these columns and force
+            // checks to read that data if needed.
+            // TODO this will probably make comparisons between new and old data impossible
+            foreach ($newDataPerUid->getColumns() as $col) {
+                if ($col->hasValueLists() && ! $col->hasAggregator()) {
+                    $logbook->addLine('Column `' . $col->getName() . '` has become ambiguous because it includes values lists too - **removing column** from data to be processed');
+                    $newDataPerUid->getColumns()->remove($col);
+                }
+            }
+
+            $logbook->addIndent(-1);
+        } else {
+            $newDataPerUid = $newData;
+        }
+
+        // TODO what about mass updates by filters? Shouldn't we throw an error here?
         
-        $logbook->addDataSheet('New data', $changedDataSheet);
-        $logbook->addLine('Found new data for ' . $changedDataSheet->getMetaObject()->__toString());
-        
-        $logbook->addLine('Loading relevant UXON definitions for context '.$event::getEventName().'...');
+        $logbook->addLine('Loading data checks relevant for event `' . $event::getEventName().'`...');
         $logbook->addIndent(1);
-        if(!$uxon = $this->getRelevantUxons($event, $logbook)) {
-            $logbook->addLine('No relevant UXONs found for event '.$event::getEventName().'. Nothing to do here.');
+        if(! $uxon = $this->getRelevantUxons($event, $logbook)) {
+            $logbook->addLine('No relevant UXONs found for event ' . $event::getEventName().'. Nothing to do here.');
             $this->inProgress = false;
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
@@ -152,18 +186,17 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         
         // Perform data checks for each validation rule.
         $error = null;
-        $logbook->addLine('Processing UXON definitions per context...');
-        $logbook->addIndent(1);
+        $logbook->addSection('Performing data checks');
         foreach ($uxon as $context => $dataCheckUxon) {
-            $logbook->addLine('Context '.$context);
+            $logbook->addLine('Checks of context `' . $context . '`');
             $logbook->addIndent(1);
             // Perform data checks.
             try {
                 $this->performDataChecks(
                     $dataCheckUxon,
                     $context,
-                    $previousDataSheet,
-                    $changedDataSheet,
+                    $oldData,
+                    $newDataPerUid,
                     $logbook);
             } catch (DataCheckFailedErrorMultiple $exception) {
                 $logbook->addLine('At least one data check applied to the input data:');
@@ -178,7 +211,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
         }
         $logbook->addIndent(-1);
 
-        $logbook->addLine('Processing validation results...');
+        $logbook->addSection('Processing validation results...');
         $logbook->addIndent(1);
         $this->processValidationResult($event, $error, $logbook);
         $logbook->addIndent(-1);
@@ -213,17 +246,17 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_ANY] !== null) {
             $result[self::CONTEXT_ON_ANY] = $this->uxonsPerEventContext[self::CONTEXT_ON_ANY];
-            $logbook->addLine('Found UXON definition for "'.self::CONTEXT_ON_ANY.'".');
+            $logbook->addLine('Found **' . $result[self::CONTEXT_ON_ANY]->countProperties() . '** checks for context `'.self::CONTEXT_ON_ANY.'`.');
         }
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_UPDATE] !== null && $onUpdate) {
             $result[self::CONTEXT_ON_UPDATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_UPDATE];
-            $logbook->addLine('Found UXON definition for "'.self::CONTEXT_ON_UPDATE.'".');
+            $logbook->addLine('Found **' . $result[self::CONTEXT_ON_UPDATE]->countProperties() . '** checks for context `'.self::CONTEXT_ON_UPDATE.'`.');
         }
 
         if($this->uxonsPerEventContext[self::CONTEXT_ON_CREATE] !== null && !$onUpdate) {
             $result[self::CONTEXT_ON_CREATE] = $this->uxonsPerEventContext[self::CONTEXT_ON_CREATE];
-            $logbook->addLine('Found UXON definition "'.self::CONTEXT_ON_CREATE.'".');
+            $logbook->addLine('Found **' . $result[self::CONTEXT_ON_CREATE]->countProperties() . '** checks for context `'.self::CONTEXT_ON_CREATE.'`.');
         }
 
         return array_count_values($result) > 0 ? $result : false;
@@ -234,16 +267,16 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      *
      * @param UxonObject              $dataCheckUxon
      * @param string                  $context
-     * @param DataSheetInterface|null $previousDataSheet
-     * @param DataSheetInterface      $changedDataSheet
+     * @param DataSheetInterface|null $oldData
+     * @param DataSheetInterface      $newData
      * @param LogBookInterface        $logbook
      * @return void
      */
     protected function performDataChecks(
         UxonObject          $dataCheckUxon, 
         string              $context, 
-        ?DataSheetInterface $previousDataSheet, 
-        DataSheetInterface  $changedDataSheet,
+        ?DataSheetInterface $oldData,
+        DataSheetInterface  $newData,
         LogBookInterface    $logbook) : void
     {
         $error = null;
@@ -252,15 +285,15 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
 
         // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for
         // any errors that might occur.
-        foreach ($changedDataSheet->getRows() as $iRow => $row) {
+        foreach ($newData->getRows() as $iRow => $row) {
             // Render placeholders.
-            $renderedUxon = $this->renderUxon($json, $context, $previousDataSheet, $changedDataSheet, $iRow);
+            $renderedUxon = $this->renderUxon($json, $context, $oldData, $newData, $iRow);
             // Reduce datasheet to the relevant row.
-            $checkSheet = $changedDataSheet->copy();
+            $checkSheet = $newData->copy();
             $checkSheet->removeRows()->addRow($row, false, false);
             // Perform data checks.
             foreach ($this->generateDataChecks($renderedUxon) as $iCheck => $check) {
-                if (!$check->isApplicable($changedDataSheet)) {
+                if (! $check->isApplicable($checkSheet)) {
                     continue;
                 }
 
@@ -276,7 +309,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                     $logbook->addCodeBlock($dataCheckUxon->getProperty($iCheck)->toJson(true));
                     $logbook->addLine('Rendered UXON for data row ' . $iRow . ':');
                     $logbook->addCodeBlock($renderedUxon->getProperty($iCheck)->toJson(true));
-                    $logbook->addLine('Data row of ' . $changedDataSheet->getMetaObject()->__toString() . ':');
+                    $logbook->addLine('Data row of ' . $checkSheet->getMetaObject()->__toString() . ':');
                     $logbook->addCodeBlock(JsonDataType::encodeJson($row, true));
                     throw new BehaviorRuntimeError(
                         $this,

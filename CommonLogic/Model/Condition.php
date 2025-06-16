@@ -133,9 +133,6 @@ class Condition implements ConditionInterface
      */
     protected function setExpression(ExpressionInterface $expression) : ConditionInterface
     {
-        if ($expression->__toString() === '' && $expression->isEmpty() === false) {
-            throw new UnexpectedValueException('Cannot create condition with an empty left expression!');
-        }
         $this->expression = $expression;
         return $this;
     }

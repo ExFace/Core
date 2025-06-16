@@ -35,17 +35,20 @@ class DataCheckWithOutputData extends DataCheck
             $result = parent::check($sheet, $logBook);
         } catch (DataCheckFailedError $error) {
             $logBook?->addIndent(1);
-            $logBook?->addLine('Generating output sheet...');
             try {
                 $outputSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->outputDataSheetUxon);
+                $logBook?->addLine('Created checklist data for ' . $outputSheet->getMetaObject()->__toString());
             } catch (\Throwable $e) {
-                throw new DataCheckRuntimeError(
+                $eCreateSheet = new DataCheckRuntimeError(
                     $sheet,
                     'Cannot generate output datasheet: Data check has missing or invalid UXON property "output_data_sheet"!',
                     null,
                     $e,
                     $this,
-                    $error->getRowIndexes());
+                    $error->getRowIndexes()
+                );
+                $logBook?->addIndent('**ERROR:**: ' . $e->getMessage());
+                throw $eCreateSheet;
             }
             
             $rowTemplate = (array)$outputSheet->getRow();
@@ -55,8 +58,8 @@ class DataCheckWithOutputData extends DataCheck
             $badData = $error->getBadData();
             
             // No output data, throw an error with an empty sheet.
-            if(!$rowTemplate) {
-                $logBook?->addLine('Cannot generate output sheet: No row template found.');
+            if(! $rowTemplate) {
+                $logBook?->addLine('**ERROR:** Cannot generate output sheet: No row template found.');
                 $logBook?->addIndent(-1);
                 $this->outputDataSheet = $outputSheet;
                 throw $error;
@@ -66,13 +69,16 @@ class DataCheckWithOutputData extends DataCheck
             $ownerKeyAttribute = $relationPath->getRelationFirst()->getLeftKeyAttribute();
             $keyColumn = $badData->getColumns()->getByAttribute($ownerKeyAttribute);
             if(! $keyColumn) {
-                throw new DataCheckRuntimeError(
+                $eKeyCol = new DataCheckRuntimeError(
                     $sheet,
-                    'Cannot generate output data: Missing key attribute "' . $keyColumn->getAttributeAlias() . '"!',
+                    'Cannot generate checklist data: Missing key attribute "' . $keyColumn->getAttributeAlias() . '"!',
                     null,
                     null,
                     $this,
-                    $badData);
+                    $badData
+                );
+                $logBook?->addLine('**ERROR:**: ' . $e->getMessage());
+                throw $eKeyCol;
             }
             
             if(!$outputSheet->getMetaObject()->hasUidAttribute()) {
@@ -90,8 +96,7 @@ class DataCheckWithOutputData extends DataCheck
                 $rowTemplate[$this->foreignKeyAttributeAlias] = $checkedKey;
                 $outputSheet->addRow($rowTemplate);
             }
-            
-            $logBook?->addLine('Successfully generated output sheet with '.$outputSheet->countRows().' rows!');
+
             $logBook?->addIndent(-1);
             $this->outputDataSheet = $outputSheet;
             throw $error;
