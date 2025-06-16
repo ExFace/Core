@@ -231,7 +231,7 @@ JS;
         
         $nullStr = '" . EXF_LOGICAL_NULL . "';
         return <<<JS
-function(mVal) {console.log('validator');
+function(mVal) {
                 var bEmpty = (mVal === null || mVal === undefined || mVal.toString() === '' || mVal.toString() === $nullStr);
                 var nVal = {$this->buildJsFormatParser('mVal')};
                 return (bEmpty || ($checksOkJs));
