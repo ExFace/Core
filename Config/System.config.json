@@ -218,5 +218,7 @@
 		"Access-Control-Expose-Headers": ""
 	},
 	
-    "INSTALLER.SERVER_INSTALLER.CLASS": ""
+    "INSTALLER.SERVER_INSTALLER.CLASS": "",
+
+	"MUTATIONS.ENABLED": false
 }
