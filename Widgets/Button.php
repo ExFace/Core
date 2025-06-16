@@ -65,12 +65,13 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     use iHaveColorTrait;
 
     const APPEARANCE_DEFAULT = 'default';
-
     const APPEARANCE_FILLED = 'filled';
-
     const APPEARANCE_STROKED = 'stroked';
-
     const APPEARANCE_LINK = 'link';
+
+    const ACCESS_DENIED_TO_ACTION_GENERALLY = 'to_action_generally';
+    const ACCESS_DENIED_TO_ACTION_FOR_INPUT = 'to_action_for_button_input_data';
+    const ACCESS_DENIED_NEVER = 'never';
 
     /**
      * Press the button (default button function)
@@ -110,9 +111,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
     private $resetInputWidget = null;
 
-    private $hiddenIfAccessDenied = false;
-
-    private $hiddenIfAccessDeniedForInputData = false;
+    private $hiddenIfAccessDenied = self::ACCESS_DENIED_NEVER;
 
     private $appearance = self::APPEARANCE_DEFAULT;
 
@@ -140,7 +139,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     protected function init()
     {
         parent::init();
-        $this->hiddenIfAccessDenied = $this->getWorkbench()->getConfig()->getOption('WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED');
+        $this->setHiddenIfAccessDenied($this->getWorkbench()->getConfig()->getOption('WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED'));
     }
 
     public function getAction()
@@ -621,42 +620,69 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
+     * Returns one of the ACCESS_DENIED_xxx constants
+     * @return string
+     */
+    protected function getHiddenIfAccessDenied() : string
+    {
+        return $this->hiddenIfAccessDenied;
+    }
+
+    /**
      * Set this property if the button should be hidden if a user is not allowed access to the action bound to it.
      *
-     * The default value is set in the core configuration file `exface.Core.config.json` as
-     * `WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED`.
+     * Available options:
+     *
+     * - `never` - the button will be always visible, but disabled if the user has no permission for it
+     * - `to_action_generally` - the button will be only visible, if the user generally has permission for. If
+     * the policies have data-driven conditions like `apply_if` or `apply_if_exists`, the button will become
+     * disabled if access will be denied to the current input data. In tables, this means, the button is always
+     * visible, but will become disabled for certain rows.
+     * - `to_action_for_button_input_data` - the button will become invisible if access is denied for the action
+     * and the current input data. In tables, this means, the button will be only visible for certain rows.
+     *
+     * **CAUTION:** these options may severely affect performance: the more checks need to be done, the more the
+     * data needs to be loaded and evaluated. In particular, the option `to_action_for_button_input_data` will
+     * add the formula `=IsButtonAuthorized()` to all data being loaded - for data widgets, for prefills, etc.
+     *
+     * A system-wide default value for this option can be set in the core configuration file `exface.Core.config.json`
+     * as `WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED`.
      *
      * @uxon-property hidden_if_access_denied
-     * @uxon-type boolean
+     * @uxon-type [never,to_action_generally,to_action_for_button_input_data]
      *
-     * @param bool $trueOrFalse
+     * @param string|bool $trueOrFalse
      * @return Button
      */
-    public function setHiddenIfAccessDenied(bool $trueOrFalse) : Button
+    public function setHiddenIfAccessDenied(string|bool $value) : Button
     {
-        $this->hiddenIfAccessDenied = $trueOrFalse;
+        switch (true) {
+            case $value === true:
+                $this->hiddenIfAccessDenied = self::ACCESS_DENIED_TO_ACTION_GENERALLY;
+                break;
+            case $value === false:
+                $this->hiddenIfAccessDenied = self::ACCESS_DENIED_NEVER;
+                break;
+            case strcasecmp($value, self::ACCESS_DENIED_TO_ACTION_GENERALLY) === 0:
+            case strcasecmp($value, self::ACCESS_DENIED_TO_ACTION_FOR_INPUT) === 0:
+            case strcasecmp($value, self::ACCESS_DENIED_NEVER) === 0:
+                $this->hiddenIfAccessDenied = mb_strtolower($value);
+                break;
+            default:
+                throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for hidden_if_access_denied of ' . $this->getWidgetType() . ' widget');
+        }
         return $this;
     }
 
     /**
-     * In addition to `hidden_if_access_denied` this will check, if the current user has access to the input data of the action
-     *
-     * **CAUTION:** this may severely decrease performance because it will add the formula =IsButtonAuthorized()
-     * to all data being loaded - for data widgets, for prefills, etc.
-     *
-     * @uxon-property hidden_if_access_denied_for_input_data
-     * @uxon-type boolean
-     * @uxon-default false
+     * @deprecated use hidden_if_access_denied:to_action_for_button_input_data
      *
      * @param bool $trueOrFalse
      * @return $this
      */
-    public function setHiddenIfAccessDeniedForInputData(bool $trueOrFalse) : Button
+    protected function setHiddenIfAccessDeniedForInputData(bool $trueOrFalse) : Button
     {
-        $this->hiddenIfAccessDeniedForInputData = $trueOrFalse;
-        if ($trueOrFalse === true) {
-            $this->setHiddenIfAccessDenied(true);
-        }
+        $this->hiddenIfAccessDenied = self::ACCESS_DENIED_TO_ACTION_FOR_INPUT;
         return $this;
     }
 
@@ -799,7 +825,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
         // Create an additional hidden_if using the =IsButtonAuthorized() formula to check, if this
         // button is authorized for the current user and each line of potential input data
-        if ($this->hiddenIfAccessDeniedForInputData === true) {
+        if ($this->getHiddenIfAccessDenied() === self::ACCESS_DENIED_TO_ACTION_FOR_INPUT) {
             $inputWidget = $this->getInputWidget();
             $condGrp = ConditionGroupFactory::createFromUxon(
                 $this->getWorkbench(),

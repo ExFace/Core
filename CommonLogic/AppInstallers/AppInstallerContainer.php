@@ -36,11 +36,22 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      */
     public final function install(string $source_absolute_path) : \Iterator
     {
+        // Disable mutations
+        $mutationsEnabled = $this->getWorkbench()->getConfig()->getOption('MUTATIONS.ENABLED');
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', false);
+        }
+
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
             $eventMgr->dispatch(new OnBeforeInstallEvent($installer, $source_absolute_path));
             yield from $installer->install($source_absolute_path);
             $eventMgr->dispatch(new OnInstallEvent($installer, $source_absolute_path));
+        }
+
+        // Re-enable mutations
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', true);
         }
         
         // Update model install timestamp to make sure other code can update caches, etc.
@@ -68,6 +79,12 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      */
     public final function backup(string $destination_absolute_path) : \Iterator
     {
+        // Disable mutations
+        $mutationsEnabled = $this->getWorkbench()->getConfig()->getOption('MUTATIONS.ENABLED');
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', false);
+        }
+
         $fm = $this->getWorkbench()->filemanager();
         $appSelector = $this->getSelectorInstalling();
         $appPath = $fm->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $appSelector->getFolderRelativePath();
@@ -79,6 +96,11 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
             $eventMgr->dispatch(new OnBeforeBackupEvent($installer, $destination_absolute_path));
             yield from $installer->backup($destination_absolute_path);
             $eventMgr->dispatch(new OnBackupEvent($installer, $destination_absolute_path));
+        }
+
+        // Re-enable mutations
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', true);
         }
     }
 
@@ -92,6 +114,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      */
     public final function uninstall() : \Iterator
     {
+        // TODO disable mutations here too???
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach (array_reverse($this->getInstallers()) as $installer) {
             $eventMgr->dispatch(new OnBeforeUninstallEvent($installer));

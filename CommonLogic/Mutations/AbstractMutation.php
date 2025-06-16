@@ -30,6 +30,15 @@ abstract class AbstractMutation implements MutationInterface
 
     /**
      * {@inheritDoc}
+     * @see MutationInterface::isDisabled()
+     */
+    public function isDisabled(): bool
+    {
+        return $this->disabled;
+    }
+
+    /**
+     * {@inheritDoc}
      * @see MutationInterface::setDisabled()
      */
     public function setDisabled(bool $trueOrFalse) : MutationInterface

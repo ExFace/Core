@@ -70,7 +70,7 @@ class DataCheck implements DataCheckInterface
         
         $errorText = $this->getErrorText($sheet);
         $errorCount = count($badRowIdxs);
-        $explanation = 'Found ' . ($errorCount > 0 ? "**{$errorCount}**" : $errorCount) . ' matches for check `' . $this->__toString() . '`.';
+        $explanation = 'Found ' . ($errorCount > 0 ? "**{$errorCount}**" : $errorCount) . ' match(es) for check `' . $this->__toString() . '`.';
         $logBook?->addLine($explanation);
         
         if (! empty($badRowIdxs)) {

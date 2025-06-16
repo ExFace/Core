@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -1069,5 +1070,71 @@ class DataColumn implements DataColumnInterface
     public function isWritable() : bool
     {
         return $this->writable ?? $this->isAttribute() && $this->getAttribute()->isWritable();
+    }
+
+    /**
+     * @return string
+     */
+    public function getValueListDelimiter() : string
+    {
+        $delim = null;
+        if ($this->hasAggregator() && StringDataType::startsWith($this->getAggregator()->getFunction()->__toString(), 'LIST')) {
+            $args = $this->getAggregator()->getArguments();
+            $delim = $args[0] ?? null;
+        }
+        if ($delim === null) {
+            if ($this->isAttribute()) {
+                $delim = $this->getAttribute()->getValueListDelimiter();
+            }
+        }
+        return $delim ?? EXF_LIST_SEPARATOR;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasValueLists() : bool
+    {
+        $delim = $this->getValueListDelimiter();
+        foreach ($this->getValues() as $value) {
+            if (mb_strpos($value, $delim) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return DataColumnInterface
+     */
+    public function splitRowsWithValueLists() : DataColumnInterface
+    {
+        $delim = $this->getValueListDelimiter();
+        $splitRows = [];
+        $thisName = $this->getName();
+        $dataSheet = $this->getDataSheet();
+        foreach ($this->getValues() as $rowIdx => $value) {
+            if (! mb_strpos($value, $delim) !== false) {
+                continue;
+            }
+            $row = $dataSheet->getRow($rowIdx);
+            foreach (explode($delim, $value) as $v) {
+                $splitRow = $row;
+                $splitRow[$thisName] = $v;
+                $splitRows[$rowIdx][] = $splitRow;
+            }
+        }
+        $newRowIdx = 0;
+        foreach ($splitRows as $rowIdx => $rows) {
+            foreach ($rows as $i => $row) {
+                $newRowIdx = $newRowIdx + $rowIdx + $i;
+                if ($i === 0) {
+                    $this->setValue($newRowIdx, $row[$thisName]);
+                } else {
+                    $dataSheet->addRow($row, false, false, $newRowIdx);
+                }
+            }
+        }
+        return $this;
     }
 }
