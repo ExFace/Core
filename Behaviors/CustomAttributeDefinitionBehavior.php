@@ -412,12 +412,25 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
         }
         
-        $targetObjectId = $targetObject->getId();
-        if($ownerIdAlias = $this->getRelationPathToOwnerObject()) {
-            $logBook->addLine('Loading only definitions that match "' . $targetObjectId . '" in "' . $ownerIdAlias . '" of "' . $this->getObject()->getAliasWithNamespace() . '".');
-            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerIdAlias, $targetObjectId);
+        if($ownerRelAlias = $this->getRelationPathToOwnerObject()) {
+            $ownerRel = $attributeDefinitionsSheet->getMetaObject()->getRelation($ownerRelAlias);
+            if (! $ownerRel->getRightObject()->is('exface.Core.OBJECT')) {
+                throw new BehaviorRuntimeError($this, 'Cannot use relation "`"' . $ownerRelAlias . '" as object-filter for custom attributes because it does not point to the core object "exface.Core.OBJECT"!', null, null, $logBook);
+            }
+            switch ($ownerRel->getRightKeyAttribute()->getAlias()) {
+                case 'ALIAS_WITH_NS':
+                    $targetFilterVal = $targetObject->getAliasWithNamespace();
+                    break;
+                case 'UID':
+                    $targetFilterVal = $targetObject->getId();
+                    break;
+                default:
+                    throw new BehaviorRuntimeError($this, 'Cannot use relation "`"' . $ownerRelAlias . '" as object-filter for custom attributes because it neither points to a meta object UID nor to its namespaced alias', null, null, $logBook);
+            }
+            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerRelAlias, $targetFilterVal);
+            $logBook->addLine('Loading attribute definitions that match `' . $attributeDefinitionsSheet->getFilters()->__toString() . '` from "' . $this->getObject()->getAliasWithNamespace() . '".');
         } else {
-            $logBook->addLine('No value was set for "relation_to_owner_object". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $logBook->addLine('Property `relation_to_owner_object` not set. Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
         }
 
         $attrDefaults = $this->getAttributeDefaults($definition);
@@ -442,10 +455,10 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, null, $logBook);
         }
         
-        $logBook->addLine('Attribute definitions loaded successfully.');
+        $logBook->addLine('Found **' . $attributeDefinitionsSheet->countRows() . '** attributes');
         $logBook->addDataSheet('Attribute Definitions', $attributeDefinitionsSheet);
         $logBook->addIndent(-1);
-        $logBook->addLine('Adding custom attributes to "' . $targetObjectId . '"...');
+        $logBook->addLine('Adding custom attributes to ' . $targetObject->__toString() . '...');
         $logBook->addIndent(1);
 
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
