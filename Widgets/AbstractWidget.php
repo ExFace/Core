@@ -993,18 +993,36 @@ abstract class AbstractWidget implements WidgetInterface
      */
     protected function getHintDebug() : string
     {
-        $hint = "\n\nDebug-hints:\n- Widget type: {$this->getWidgetType()}\n- Widget object: {$this->getMetaObject()->__toString()}";
+        $hint =       "\n"
+                    . "\nWidget debug:"
+                    . "\n- Widget type: {$this->getWidgetType()}"
+                    . "\n- Widget object: {$this->getMetaObject()->__toString()}";
+
+        // Simple widgets
         if ($this instanceof iShowSingleAttribute) {
             if ($this->isBoundToAttribute()) {
-                $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
+                $hint = $hint
+                    . "\n- Attribute alias: `{$this->getAttributeAlias()}`";
                 $attr = $this->getAttribute();
                 if ($attr instanceof CustomAttribute) {
-                    $hint .= "\n- Custom attribute from " . $attr->getSourceHint();
+                    $hint = $hint
+                    . "\n- Custom attribute from " . $attr->getSourceHint();
                 }
             }
             if ($this instanceof iHaveValue) {
-                $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
+                $hint = $hint
+                    . "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
             }
+        }
+
+        // Conditional properties
+        if (null !== $condProp = $this->getDisabledIf()) {
+            $hint = $hint
+                    . "\n- Disabled if: {$condProp->getConditionGroup()->__toString()}";
+        }
+        if (null !== $condProp = $this->getHiddenIf()) {
+            $hint = $hint
+                    . "\n- Hidden if: {$condProp->getConditionGroup()->__toString()}";
         }
         return $hint ?? '';
     }
