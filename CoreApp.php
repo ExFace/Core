@@ -2,6 +2,7 @@
 namespace exface\Core;
 
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
+use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
@@ -145,6 +146,13 @@ Disallow: /
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(PWAapiFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
+
+        // Permalink facade
+        /*
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(PermalinkFacade::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+        */
         
         // Server installer (e.g. for Microsoft IIS)
         $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
