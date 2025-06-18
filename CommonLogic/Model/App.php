@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Interfaces\Selectors\PermalinkSelectorInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
@@ -617,8 +618,6 @@ class App implements AppInterface
         switch (true) {
             case $selector instanceof ActionSelectorInterface:
                 return 'Actions';
-            case $selector instanceof FacadeSelectorInterface:
-                return 'Facades';
             case $selector instanceof BehaviorSelectorInterface:
                 return 'Behaviors';
             case $selector instanceof ContextSelectorInterface:
@@ -627,10 +626,14 @@ class App implements AppInterface
                 return 'DataConnectors';
             case $selector instanceof DataTypeSelectorInterface:
                 return 'DataTypes';
+            case $selector instanceof FacadeSelectorInterface:
+                return 'Facades';
             case $selector instanceof FormulaSelectorInterface:
                 return 'Formulas';
             case $selector instanceof ModelLoaderSelectorInterface:
                 return 'ModelLoaders';
+            case $selector instanceof PermalinkSelectorInterface:
+                return 'Permalinks';
             case $selector instanceof QueryBuilderSelectorInterface:
                 return 'QueryBuilders';
             case $selector instanceof WidgetSelectorInterface:

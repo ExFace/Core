@@ -7,29 +7,36 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Interfaces\Selectors\PermalinkSelectorInterface;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Redirects the browser to a dynamic URL from a long-term
+ * Redirects the browser to a dynamic URL from a long-term link.
  * 
- * Usage:
+ * ## Link Syntax:
  * 
- * - api/permalink/exface.core.show_object/<uid_of_object> - open the object editor
- * - api/permalink/my.app.run_data_flow/<uid_of_flow>/<param1>/<param2> - run a DataFlow with parameters
+ * **General:**
+ * - `api/permalink/<config_alias>/[parameters]`
+ *     
+ * **Opening the object editor:**
+ * - `api/permalink/exface.Core.show_object/[target_uid]` - open the object editor
+ * 
+ * **Running a DataFlow with parameters:**
+ * - `api/permalink/my.app.run_data_flow/<uid_of_flow>/<param1>/<param2>` - run a DataFlow with parameters
  * 
  * @author Andrej Kabachnik
  *
  */
 class PermalinkFacade extends AbstractHttpFacade
 {
-
+    public const STATUS_CODE = 301; // Permanent redirect.
+    
     /**
      *
      * {@inheritDoc}
@@ -37,28 +44,19 @@ class PermalinkFacade extends AbstractHttpFacade
      */
     protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {
+        // Parse URL.
         $requestUri = $request->getUri();
-        /* api/permalink/exface.Core.show_object/0x812345aasdf */
-        $path = $requestUri->getPath();
-        /* exface.Core.show_object/0x812345aasdf */
-        $path = StringDataType::substringAfter($path, $this->getUrlRouteDefault());
-        list($alias, $innerPath) = explode('/', $path, 2);
-
-        $linkPrototype = $this->getPermalink(new PermalinkSelector($this->getWorkbench(), $alias));
-        $permalink = $linkPrototype->withUrl($innerPath);
-        $redirect = $permalink->getRedirect();
-
+        $urlPath = $requestUri->getPath();
+        $urlPath = StringDataType::substringAfter($urlPath, $this->getUrlRouteDefault() . '/');
+        
+        // Create instance.
+        $permalink = $this->createPermalink($urlPath);
+        
+        // Update headers.
         $headers = $this->buildHeadersCommon();
-        $headers['Location'] = $redirect;
-        switch (true) {
+        $headers['Location'] = $this->getWorkbench()->getUrl() . $permalink->getRedirect();
 
-            default:
-                // TODO add a redirect header?
-                $response = new Response(200, $headers);
-                break;
-        }
-
-        return $response;
+        return new Response(self::STATUS_CODE, $headers);
     }
     
     /**
@@ -87,10 +85,23 @@ class PermalinkFacade extends AbstractHttpFacade
         return 'api/permalink';
     }
 
-    protected function getPermalink(PermalinkSelectorInterface $selector) : PermalinkInterface
+    /**
+     * Create a new permalink instance based on a URL or selector string.
+     * 
+     * NOTE: The created instance might not be initialized, especially if the selector
+     * or URL did not point to a config alias.
+     * 
+     * @param string $urlPathOrSelector
+     * @return PermalinkInterface
+     */
+    protected function createPermalink(string $urlPathOrSelector) : PermalinkInterface
     {
+        $configUxon = null;
+        list($alias, $innerPath) = explode('/', $urlPathOrSelector, 2);
+        $selector = new PermalinkSelector($this->getWorkbench(), $alias);
+        
         switch (true) {
-            case $selector->isClassname():
+            case  $selector->isClassname():
                 $class = $selector->toString();
                 break;
             case $selector->isFilepath():
@@ -98,6 +109,7 @@ class PermalinkFacade extends AbstractHttpFacade
                 break;
             case $selector->isAlias():
                 $sheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK');
+                
                 $sheet->getColumns()->addMultiple([
                     'NAME',
                     'PROTOTYPE_FILE',
@@ -108,16 +120,31 @@ class PermalinkFacade extends AbstractHttpFacade
                 $sheet->getFilters()->addConditionFromString('APP__ALIAS', $selector->getAppAlias(), ComparatorDataType::EQUALS);
                 $sheet->getFilters()->addConditionFromString('ALIAS', $aliasOfSelector, ComparatorDataType::EQUALS);
                 $sheet->dataRead();
-                $row = $sheet->getRow(0);
-                $filePath = $row['PROTOTYPE_FILE'];
-                $class = PhpFilePathDataType::findClassInFile($filePath);
+                
+                switch ($sheet->countRows()) {
+                    case 0:
+                        throw new InvalidArgumentException('Could not find config for permalink with alias "' . $aliasOfSelector . '": Make sure a permalink with this alias exists and contains config data!');
+                    case 1:
+                        $row = $sheet->getRow();
+                        break;
+                    default:
+                        throw new InvalidArgumentException('Permalink alias "' . $aliasOfSelector . '" is ambiguous for app "' . $selector->getAppSelector()->getAppAlias() . '": Make sure only one permalink with this alias exists in that app!');
+                }
+
+                $app = $this->getWorkbench()->getApp($selector->getAppSelector());
+                $class = $app->getPrototypeClass(new PermalinkSelector($this->getWorkbench(), $row['PROTOTYPE_FILE']));
                 $configUxon = UxonObject::fromJson($row['CONFIG_UXON']);
-                $configUxon->setProperty('name',  $row['NAME']);
-                $configUxon->setProperty('alias',  $selector->toString());
                 break;
+            default:
+                throw new InvalidArgumentException('Could not create permalink: "' . $selector->toString() . '" is not a valid classname, filepath or alias!');
         }
 
-        $instance = new $class($this->getWorkbench(), $configUxon);
-        return $instance;
+        $instance = new $class($this->getWorkbench(), $alias, $configUxon);
+        
+        if(empty($innerPath)) {
+            return $instance;
+        } else {
+            return $instance->withUrl($innerPath);
+        }
     }
 }
