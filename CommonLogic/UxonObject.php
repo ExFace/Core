@@ -6,8 +6,7 @@ use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonSyntaxError;
-use exface\Core\Factories\UxonSnippetFactory;
-use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
+
 /**
  * This is a container for any UXON configuration.
  * 
@@ -266,13 +265,15 @@ class UxonObject implements \IteratorAggregate
         $isAssoc = false;
         $arraySnippets = [];
         $snippetResolver = $this->snippetResolver;
-        // Object snippets
+        // Snippets inside the object itself are definitely object-snippets
         if (null !== ($val[self::PROPERTY_SNIPPET] ?? null)) {
             $isAssoc = true;
             if ($snippetResolver !== null) {
                 $val = $snippetResolver($val);
             } 
         }
+        // Snippets in array elements can be either array snippets (= yield multiple array elements) or object
+        // snippets (= replace this particular element)
         foreach ($val as $valKey => $valInner) {
             if (! is_numeric($valKey)) {
                 $isAssoc = true;
@@ -281,7 +282,18 @@ class UxonObject implements \IteratorAggregate
             if (is_array($valInner)) {
                 if (null !== ($valInner[self::PROPERTY_SNIPPET] ?? null)) {
                     if ($snippetResolver !== null) {
-                        $arraySnippets[$valKey] = $snippetResolver($valInner)->toArray();
+                        // Resolve the snippet
+                        /* @var $resolvedUxon \exface\Core\CommonLogic\UxonObject */
+                        $resolvedUxon= $snippetResolver($valInner);
+                        // If the result is a sequential array - it was an array snippet, otherwise it
+                        // obviously was an object-snippet
+                        if ($resolvedUxon->isArray()) {
+                            // Save array snippets in a temporary structure. We will insert them into the
+                            // array later
+                            $arraySnippets[$valKey] = $resolvedUxon->toArray();
+                        } else {
+                            $val[$valKey] = $resolvedUxon->toArray();
+                        }
                     }
                 } elseif ($this->snippetsAdded !== null){
                     foreach ($this->snippetsAdded as $snipKey => $snipFunc) {
@@ -294,6 +306,9 @@ class UxonObject implements \IteratorAggregate
                 break;
             }
         }
+
+        // Now insert all the array snippet results if we are currently working on an array and
+        // there were array snippets found.
         if ($isAssoc === false && ! empty($arraySnippets)) {
             // $arraySnippets will have the structure of [valKey => `replacement`] where replacement
             // will typically be an array, so we will replace a single item with multiple
