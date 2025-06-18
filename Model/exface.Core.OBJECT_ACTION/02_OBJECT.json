@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Object Action [exface.Core.OBJECT_ACTION]",
             "CREATED_ON": "2017-01-24 09:32:09",
-            "MODIFIED_ON": "2025-05-20 12:14:28",
+            "MODIFIED_ON": "2025-06-18 13:53:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6e217f7f91457a3d9e4b318306b9a",
@@ -375,6 +375,18 @@
                                             },
                                             {
                                                 "attribute_alias": "INSTANCE_ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "TABLE_NAME",
+                                                "hidden": true
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "~snippet": "exface.Core.SearchResultEditButton",
+                                                "parameters": {
+                                                    "table_name_column": "TABLE_NAME"
+                                                }
                                             }
                                         ]
                                     }
