@@ -7,6 +7,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -24,6 +25,7 @@ class DialogPermalink extends AbstractPermalink
     private ?string $widgetId = null;
     private ?string $uid = null;
     private ?UiPageInterface $page = null;
+    private ?WidgetInterface $widget = null;
 
     /**
      * @inheritdoc 
@@ -90,6 +92,7 @@ class DialogPermalink extends AbstractPermalink
     protected function setPageAlias(string $selector) : DialogPermalink
     {
         $this->pageAlias = $selector;
+        $this->page = null;
         return $this;
     }
 
@@ -111,7 +114,11 @@ class DialogPermalink extends AbstractPermalink
      */
     protected function getWidget() : WidgetInterface
     {
-        return $this->getPage()->getWidget($this->widgetId);
+        if($this->widget === null) {
+            $this->widget = $this->getPage()->getWidget($this->widgetId);
+        }
+        
+        return $this->widget; 
     }
 
     /**
@@ -127,6 +134,7 @@ class DialogPermalink extends AbstractPermalink
     protected function setWidgetId(string $id) : DialogPermalink
     {
         $this->widgetId = $id;
+        $this->widget = null;
         return $this;
     }
 }
