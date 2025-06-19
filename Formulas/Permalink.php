@@ -3,9 +3,9 @@ namespace exface\Core\Formulas;
 
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\DataTypes\UrlDataType;
-use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\FormulaError;
+use exface\Core\Factories\PermalinkFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
@@ -42,7 +42,7 @@ class Permalink extends Formula
         
         $args = is_array($args) ? implode('/', $args) : $args;
         
-        return PermalinkFacade::buildAbsolutePermalinkUrl($this->getWorkbench(), $configAlias, $args);
+        return PermalinkFactory::buildAbsolutePermalinkUrl($this->getWorkbench(), $configAlias, $args);
     }
     
     /**

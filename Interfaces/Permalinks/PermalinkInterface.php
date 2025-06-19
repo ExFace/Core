@@ -10,31 +10,46 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
  */
 interface PermalinkInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
+    public const REDIRECT_STATUS_CODE = 301; // Permanent redirect.
+    public const API_ROUTE = 'api/permalink';
+    
     /**
-     * Get the URL this permalink redirects to.
-     * 
-     * For example in `PermalinkFacade::createResponse()`:
-     * 
-     * ```
-     *  ...
-     * 
-     *  $headers = $this->buildHeadersCommon();
-     *  $headers['Location'] = $this->getWorkbench()->getUrl() . $permalink->getRedirect();
-     *  $response = new Response(301, $headers);
-     * 
-     *  return $response;
-     * }
-     * 
-     * ```
+     * Returns a relative URL to the destination of this permalink
      * 
      * @return string
      */
-    public function getRedirect() : string;
+    public function buildRelativeRedirectUrl() : string;
+
+    /**
+     * Returns an absolute URL to the destination of this permalink within its workbench context.
+     * 
+     * For example in `PermalinkFacade::createResponse()`:
+     * 
+     *  ```
+     *   ...
+     *
+     *   $headers = $this->buildHeadersCommon();
+     *   $headers['Location'] = $permalink->buildAbsoluteRedirectUrl();
+     *   $response = new Response(301, $headers);
+     *
+     *   return $response;
+     *  }
+     *
+     *  ```
+     * 
+     * @return string
+     */
+    public function buildAbsoluteRedirectUrl() : string;
 
     /**
      * @return string
      */
     public function __toString() : string;
+
+    /**
+     * @return string|null
+     */
+    public function getMockParams() : ?string;
 
     /**
      * Parses the inner URL provided and returns a new permalink instance based on the results.

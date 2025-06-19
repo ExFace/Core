@@ -38,9 +38,9 @@ class DialogPermalink extends AbstractPermalink
 
     /**
      * @inheritdoc 
-     * @see PermalinkInterface::getRedirect()
+     * @see PermalinkInterface::buildRelativeRedirectUrl()
      */
-    public function getRedirect() : string
+    public function buildRelativeRedirectUrl() : string
     {
         $facade = $this->getFacade();
         $object = $this->getWidget()->getMetaObject();
