@@ -197,7 +197,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
             // also filter over it!
             $relKeyLookupToEvent = RelationPath::join($relPathLookupToEvent->__toString(), $relPathLookupToEvent->getEndObject()->getUidAttributeAlias());
         } else {
-            $relKeyLookupToEvent = $relPathBehaviorToEvent->__toString();
+            $relKeyLookupToEvent = $relPathLookupToEvent->__toString();
         }
         $lookupSheet->getFilters()->addConditionFromValueArray($relKeyLookupToEvent, $eventSheetKeyCol->getValues());
         $lookupKeyCol = $lookupSheet->getColumns()->addFromExpression($relKeyLookupToEvent);
