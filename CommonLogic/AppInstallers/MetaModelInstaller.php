@@ -2,6 +2,9 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\PermalinkFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -186,11 +189,54 @@ class MetaModelInstaller extends DataInstaller
             $pageInstaller->setOutputIndentation($indent);
             $pageInstaller->setTransaction($transaction);
             yield from $pageInstaller->install($source_absolute_path);
-            
+            yield from $this->verifyPermalinks($indent);
             // Commit the transaction
             $transaction->commit();
         } else {
             yield $indent . "No model files to install" . PHP_EOL;
+        }
+    }
+    
+    protected function verifyPermalinks(string $indent) : \Generator
+    {
+        yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
+        
+        $workbench = $this->getWorkbench();
+        $appAlias = $this->getApp()->getAliasWithNamespace();
+        
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.PERMALINK');
+        $dataSheet->getColumns()->addFromSystemAttributes();
+        $dataSheet->getColumns()->addFromExpression('ALIAS');
+        $dataSheet->getFilters()->addConditionFromString(
+            'APP__ALIAS', 
+            $appAlias, 
+            ComparatorDataType::EQUALS
+        );
+        $dataSheet->dataRead();
+        
+        $rowCount = $dataSheet->countRows();
+        if($rowCount === 0) {
+            yield $indent . $indent . 'No permalinks to verify.' . PHP_EOL . PHP_EOL;
+        } else {
+            $successCount = 0;
+            foreach ($dataSheet->getRows() as $row) {
+                try {
+                    $permalink = PermalinkFactory::fromUrlOrSelector($workbench, $appAlias . '.' . $row['ALIAS']);
+                    
+                    if(!empty($permalink->getMockParams())) {
+                        $permalink->withUrl($permalink->getMockParams())->buildRelativeRedirectUrl();
+                    }
+                    
+                    $successCount++;
+                    $status = 'OK';
+                } catch (\Throwable) {
+                    $status = 'FAILED';
+                }
+                
+                yield $indent . $indent . $row['ALIAS'] . "\t\t" . $status . PHP_EOL;
+            }
+        
+            yield $indent . '... ' . $successCount . ' of ' . $rowCount . ' permalinks are OK.' . PHP_EOL . PHP_EOL;
         }
     }
 
