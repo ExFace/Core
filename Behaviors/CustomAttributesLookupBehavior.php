@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesLookup;
+use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
@@ -15,6 +16,7 @@ use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
@@ -139,49 +141,82 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         }
 
         $eventSheet = $event->getDataSheet();
-        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
-
         if ($eventSheet->isEmpty()) {
             return;
         }
 
-        $requiredAttrs = [];
-        foreach ($eventSheet->getColumns() as $col) {
-            if ($col->isAttribute() && in_array($col->getAttribute(), $this->attributes)) {
-                $requiredAttrs[] = $col->getAttribute();
+        $thisObj = $this->getObject();
+        $relPathToEventRequired = $eventSheet->getMetaObject()->isExactly($thisObj);
+        $requiredAliases = [];
+        $requiredRelationsPaths = [];
+        if (! $relPathToEventRequired) {
+            foreach ($eventSheet->getColumns()->getAll() as $col) {
+                if ($col->isAttribute() && $col->getAttribute()->getObject()->isExactly($thisObj)) {
+                    if (in_array($thisObj->getAttribute($col->getAttribute()->getAlias()), $this->attributes)) {
+                        $requiredAliases[] = $col->getAttributeAlias();
+                        $requiredRelationsPaths[] = $col->getAttribute()->getRelationPath()->__toString();
+                    }
+                }
+            }
+        } else {
+            foreach ($eventSheet->getColumns() as $col) {
+                if ($col->isAttribute() && in_array($col->getAttribute(), $this->attributes)) {
+                    $requiredAliases[] = $col->getAttributeAlias();
+                }
             }
         }
-        if (empty($requiredAttrs)) {
+        if (empty($requiredAliases)) {
             return;
         }
+
         $logBook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        
+        $logBook->addLine('Required lookup attributes: `' . implode(', ', $requiredAliases) . '`');
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
+
+        $requiredRelationsPaths = array_unique($requiredRelationsPaths);
+        if (count($requiredRelationsPaths) > 1) {
+            throw new BehaviorRuntimeError($this,'Cannot read custom attribute values: multiple relations paths found for CustomAttributesLookupBehavior: `' . implode('`, `', $requiredRelationsPaths) . '`', null, null, $logBook);
+        } elseif (count($requiredRelationsPaths) === 1) {
+            $relPathEventToBehavior = RelationPathFactory::createFromString($eventSheet->getMetaObject(), $requiredRelationsPaths[0]);
+            $relPathBehaviorToEvent = $relPathEventToBehavior->reverse();
+        }
         
         $lookup = $this->getValuesLookup();
+        // Create a lookup sheet. It needs a filter over the event objects and a column with their UIDs for the
+        // JOIN later
         $lookupSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $lookup->getValuesDataSheetUxon() ?? new UxonObject(), $lookup->getObject());
         $eventSheetKeyAttr = $lookup->getRelationPathToBehaviorObject()->getRelationLast()->getRightKeyAttribute();
         $eventSheetKeyCol = $eventSheet->getColumns()->getByAttribute($eventSheetKeyAttr);
         if (! $eventSheetKeyCol) {
             throw new BehaviorRuntimeError($this, 'Cannot load custom attribute values: no key column ' . $eventSheetKeyAttr->__toString() . ' in event data!', null, null, $logBook);
         }
-        $lookupSheet->getFilters()->addConditionFromValueArray($lookup->getRelationPathToBehaviorObject()->__toString(), $eventSheetKeyCol->getValues());
-        $lookupKeyCol = $lookupSheet->getColumns()->addFromExpression($lookup->getRelationPathToBehaviorObject()->__toString());
+        $relPathLookupToBehavior = $lookup->getRelationPathToBehaviorObject();
+        $relPathLookupToEvent = $relPathToEventRequired ? $relPathLookupToBehavior : $relPathLookupToBehavior->combine($relPathBehaviorToEvent);
+        if ($relPathLookupToEvent->getRelationLast()->isReverseRelation()) {
+            // Even if it is a reverse relations, it will always have one value per row as we
+            // also filter over it!
+            $relKeyLookupToEvent = RelationPath::join($relPathLookupToEvent->__toString(), $relPathLookupToEvent->getEndObject()->getUidAttributeAlias());
+        } else {
+            $relKeyLookupToEvent = $relPathBehaviorToEvent->__toString();
+        }
+        $lookupSheet->getFilters()->addConditionFromValueArray($relKeyLookupToEvent, $eventSheetKeyCol->getValues());
+        $lookupKeyCol = $lookupSheet->getColumns()->addFromExpression($relKeyLookupToEvent);
         $lookupContentCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesContentColumnAlias());
         $lookupContentName = $lookupContentCol->getName();
         $lookupAliasCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesAttributeAliasColumnAlias());
         $lookupAliasName = $lookupAliasCol->getName();
 
+        // Add more columns if required by the custom attribute definition
         $additionalCols = [];
         foreach ($lookup->getAdditionalColumns() as $lookupCol) {
             $additionalCols[] = $lookupSheet->getColumns()->addFromExpression($lookupCol->getLookupExpression(), null, true);
         }
 
+        // Read lookup data
         $lookupSheet->dataRead();
         $logBook->addDataSheet('Custom attribute values', $lookupSheet);
 
+        // Put the looked up values into the event data
         $delim = $lookupAliasCol->getAttribute()->getValueListDelimiter();
         foreach ($lookupSheet->getRows() as $row) {
             $key = $row[$lookupKeyCol->getName()];
@@ -189,9 +224,15 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
             if ($eventRowIdx === null) {
                 continue;
             }
-            $val = $eventSheet->getCellValue($row[$lookupAliasName], $eventRowIdx);
+            $customAttrAlias = $row[$lookupAliasName];
+            $val = $eventSheet->getCellValue($customAttrAlias, $eventRowIdx);
             $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
-            $eventSheet->setCellValue($row[$lookupAliasName], $eventRowIdx, $val);
+            if ($relPathToEventRequired) {
+                $valEventColName = $customAttrAlias;
+            } else {
+                $valEventColName = RelationPath::join($relPathEventToBehavior->__toString(), $customAttrAlias);
+            }
+            $eventSheet->setCellValue($valEventColName, $eventRowIdx, $val);
 
             foreach ($additionalCols as $i => $additionalCol) {
                 $lookupCol = $lookup->getAdditionalColumns()[$i];
