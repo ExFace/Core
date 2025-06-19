@@ -3,6 +3,7 @@ namespace exface\Core\Mutations\Prototypes;
 
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -35,16 +36,19 @@ class UiPageMutation extends AbstractMutation
             throw new InvalidArgumentException('Cannot apply page mutation to ' . get_class($subject) . ' - only instances of pages supported!');
         }
 
-        $stateBefore = null;
+        $stateArrayBefore = null;
 
         // Apply changes to properties of menu items in general
         if (null !== $val = $this->getChangedName()) {
+            $stateArrayBefore['name'] = $subject->getName();
             $subject->setName($val);
         }
         if (null !== $val = $this->getChangedDescription()) {
+            $stateArrayBefore['description'] = $subject->getDescription();
             $subject->setDescription($val);
         }
         if (null !== $val = $this->getChangedIntro()) {
+            $stateArrayBefore['intro'] = $subject->getIntro();
             $subject->setIntro($val);
         }
 
@@ -52,7 +56,7 @@ class UiPageMutation extends AbstractMutation
         if ($subject instanceof UiPageInterface) {
             // Apply widget mutations
             if (null !== $mutation = $this->getWidgetMutation()) {
-                $stateBefore = $stateBefore ?? $subject->exportUxonObject()->toJson(true);
+                $stateArrayBefore['widget'] = $subject->exportUxonObject()->toArray();
                 $uxon = $subject->getContentsUxon();
                 $mutation->apply($uxon);
                 $subject->setContents($uxon);
@@ -61,7 +65,8 @@ class UiPageMutation extends AbstractMutation
             // A GenericUxonPrototypeMutation would be cool. We could use the on attributes, objects, etc.
         }
 
-        if ($stateBefore !== null) {
+        if (! empty($stateArrayBefore)) {
+            $stateBefore = $subject->exportUxonObject()->extend(new UxonObject($stateArrayBefore))->toJson(true);
             $stateAfter = $subject->exportUxonObject()->toJson(true);
         }
         return new AppliedMutation($this, $subject, $stateBefore ?? '', $stateAfter ?? '');

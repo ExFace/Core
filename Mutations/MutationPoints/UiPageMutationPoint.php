@@ -4,6 +4,7 @@ namespace exface\Core\Mutations\MutationPoints;
 use exface\Core\CommonLogic\Mutations\AbstractMutationPoint;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnUiPageLoadedEvent;
+use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
 use exface\Core\Mutations\MetaObjectUidMutationTarget;
 
 /**
@@ -28,6 +29,10 @@ class UiPageMutationPoint extends AbstractMutationPoint
     {
         $point = $event->getWorkbench()->getMutator()->getMutationPoint(self::class);
         $target = new MetaObjectUidMutationTarget('exface.Core.PAGE', $event->getMenuItem()->getUid());
-        $point->applyMutations($target, $event->getMenuItem());
+        $applied = $point->applyMutations($target, $event->getMenuItem());
+
+        if (! empty($applied)) {
+            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, 'page "' . $event->getMenuItem()->getAliasWithNamespace() . '"'));
+        }
     }
 }
