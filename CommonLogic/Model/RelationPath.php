@@ -441,7 +441,7 @@ class RelationPath implements MetaRelationPathInterface
      */
     public function getIterator() : Traversable
     {
-        return $this->relations;
+        return new \ArrayIterator($this->relations);
     }
 
     /**
