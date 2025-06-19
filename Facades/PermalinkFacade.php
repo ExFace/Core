@@ -12,6 +12,7 @@ use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -36,6 +37,7 @@ use Psr\Http\Message\ServerRequestInterface;
 class PermalinkFacade extends AbstractHttpFacade
 {
     public const STATUS_CODE = 301; // Permanent redirect.
+    public const URL_ROUTE = 'api/permalink';
     
     /**
      *
@@ -54,7 +56,7 @@ class PermalinkFacade extends AbstractHttpFacade
         
         // Update headers.
         $headers = $this->buildHeadersCommon();
-        $headers['Location'] = $this->getWorkbench()->getUrl() . $permalink->getRedirect();
+        $headers['Location'] = self::buildAbsoluteRedirectUrl($this->getWorkbench(), $permalink);
 
         return new Response(self::STATUS_CODE, $headers);
     }
@@ -82,7 +84,7 @@ class PermalinkFacade extends AbstractHttpFacade
      */
     public function getUrlRouteDefault(): string
     {
-        return 'api/permalink';
+        return self::URL_ROUTE;
     }
 
     /**
@@ -146,5 +148,30 @@ class PermalinkFacade extends AbstractHttpFacade
         } else {
             return $instance->withUrl($innerPath);
         }
+    }
+
+    /**
+     * Returns an absolute URL to the given permalink's destination within the given workbench context.
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param PermalinkInterface $permalink
+     * @return string
+     */
+    public static function buildAbsoluteRedirectUrl(WorkbenchInterface $workbench, PermalinkInterface $permalink) : string
+    {
+        return $workbench->getUrl() . $permalink->getRedirect();
+    }
+
+    /**
+     *
+     *
+     * @param WorkbenchInterface $workbench
+     * @param string             $configAlias
+     * @param string             $innerUrl
+     * @return string
+     */
+    public static function buildAbsolutePermalinkUrl(WorkbenchInterface $workbench, string $configAlias, string $innerUrl) : string
+    {
+        return $workbench->getUrl() . self::URL_ROUTE . '/' . $configAlias . '/' . $innerUrl;
     }
 }
