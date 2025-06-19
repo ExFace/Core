@@ -1,57 +1,56 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\DataTypes\UrlDataType;
+use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Facades\HttpFileServerFacade;
-use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\FormulaError;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
- * Produces a download link for a file fromn the given object and UID.
+ * Produces a persistent, absolute permalink URL from a given permalink config alias and argument string.
  * 
- * If the fourth parameter is set to `true` the link will only work one time but 
- * without authentification.
+ * ## Parameters
  * 
- * Examples: 
+ * `=Permalink(string configAlias, string|array arguments)`
  * 
- * - `=Permalink('exface.core.show_object', '8978')` => https://myserver.com/api/files/example.App.Image/8978
- * - `=FileLink('example.App.Image', '8978', null, true)` => https://myserver.com/api/files/otl/7ab61d32-ff38-4a71-a52a-ae61c016e613
+ * - string **configAlias**: The alias (with namespace) of the permalink config that will be used to redirect
+ * the resulting link. This object contains information about the type of permalink and how to access the
+ * destination. Make sure a matching config exists and is suitably configured for your use-case.
+ * - string|array **arguments**: Provide a list of arguments for the permalink. What arguments are required and in what
+ * order depends on the permalink type found the config referenced with `configAlias`. 
  * 
+ * ## Examples: 
  * 
- * @author Ralf Mulansky
- *        
+ * - `=Permalink('exface.core.show_object', '8978')` => https://myserver.com/api/permalink/exface.core.show_object/8978
+ * - `=Permalink('exface.core.run_flow', ['8978','arg1','arg2'])` => https://myserver.com/api/permalink/exface.core.run_flow/8978/arg1/arg2
+ * 
  */
-class Permalink extends \exface\Core\CommonLogic\Model\Formula
+class Permalink extends Formula
 {
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     * @see Formula::run
      */
-    public function run(string $permalinkAlias = '')
+    public function run(string $configAlias = '', string|array $args = [])
     {
-        if ($objectAlias === '') {
-            throw new FormulaError('Can not evaluate FileLink formula: no valid object provided!');
+        if(empty($configAlias)) {
+            throw new FormulaError('Cannot evaluate Permalink formula: no valid config provided!');
         }
-        if ($uid === '') {
-            throw new FormulaError('Can not evaluate FileLink formula: no UID value provided!');
-        }
-        $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
-
-        $url = HttpFileServerFacade::buildUrlToDownloadData($object, $uid, $urlParams, true, false);
-        if ($makeOneTimeLink === true) {
-            $url = HttpFileServerFacade::buildUrlToOneTimeLink($this->getWorkbench(), $url, false);
-        }
-        return $url;
+        
+        $args = is_array($args) ? implode('/', $args) : $args;
+        
+        return PermalinkFacade::buildAbsolutePermalinkUrl($this->getWorkbench(), $configAlias, $args);
     }
     
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Formula::getDataType()
+     * @see Formula::getDataType
      */
-    public function getDataType()
+    public function getDataType() : DataTypeInterface
     {
         return DataTypeFactory::createFromPrototype($this->getWorkbench(), UrlDataType::class);
     }

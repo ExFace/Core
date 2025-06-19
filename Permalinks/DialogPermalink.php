@@ -7,7 +7,6 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -17,7 +16,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * as an argument, the dialog will be prefilled with data from that entry.
  * 
  * **Link Syntax:** 
- * - `api/Permalink/<config_alias>/[target_uid]`
+ * - `api/permalink/<config_alias>/[target_uid]`
  */
 class DialogPermalink extends AbstractPermalink
 {
