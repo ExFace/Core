@@ -2,11 +2,12 @@
 namespace exface\Core\Mutations\MutationPoints;
 
 use exface\Core\CommonLogic\Mutations\AbstractMutationPoint;
+use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnUiPageLoadedEvent;
 use exface\Core\Mutations\MetaObjectUidMutationTarget;
 
 /**
- * Applies mutations when UI pages are loaded - right after the TranslatableBehavior
+ * Applies mutations when UI pages or menu items are loaded - right after the TranslatableBehavior
  *
  * TODO allow mutations to change page properties like name or description
  * TODO also need to apply mutations to menu items
@@ -23,10 +24,10 @@ class UiPageMutationPoint extends AbstractMutationPoint
      * @param OnUiPageLoadedEvent $event
      * @return void
      */
-    public static function onPageLoadedApplyMutations(OnUiPageLoadedEvent $event) : void
+    public static function onUiMenuItemLoadedApplyMutations(OnUiMenuItemLoadedEvent $event) : void
     {
         $point = $event->getWorkbench()->getMutator()->getMutationPoint(self::class);
-        $target = new MetaObjectUidMutationTarget('exface.Core.PAGE', $event->getPage()->getUid());
-        $point->applyMutations($target, $event->getPage());
+        $target = new MetaObjectUidMutationTarget('exface.Core.PAGE', $event->getMenuItem()->getUid());
+        $point->applyMutations($target, $event->getMenuItem());
     }
 }

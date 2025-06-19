@@ -1833,8 +1833,14 @@ abstract class AbstractAction implements ActionInterface
     protected function setInputInvalidIf(UxonObject $arrayOfDataChecks) : AbstractAction
     {
         $this->getInputChecks()->removeAll();
+
+        // If the action is targeting a single object explicitly, make sure the data checks will
+        // be only applicable to that object (unless explicitly bound to another one in their
+        // configuration)
+        $onlyForObject = $this->hasInputObjectRestriction() ? $this->getInputObjectExpected() : null;
+
         foreach($arrayOfDataChecks as $uxon) {
-            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
+            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon, $onlyForObject));
         }
         return $this;
     }

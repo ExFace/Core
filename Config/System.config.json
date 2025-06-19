@@ -105,11 +105,9 @@
 			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectBehaviorMutationPoint::onBehaviorLoadedApplyMutations"
         ],
     	"exface.Core.Model.OnUiMenuItemLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate"
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate",
+			"\\exface\\Core\\Mutations\\MutationPoints\\UiPageMutationPoint::onUiMenuItemLoadedApplyMutations"
     	],
-		"exface.Core.Model.OnUiPageLoaded": [
-			"\\exface\\Core\\Mutations\\MutationPoints\\UiPageMutationPoint::onPageLoadedApplyMutations"
-		],
     	"exface.Core.Model.OnBeforeDefaultObjectEditorInit": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate",
 			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
