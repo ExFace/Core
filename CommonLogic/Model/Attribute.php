@@ -1,13 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
