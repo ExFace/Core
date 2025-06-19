@@ -1,0 +1,485 @@
+{
+    "object_alias": "exface.Core.UXON_SNIPPET",
+    "columns": [
+        {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "UXON_SCHEMA",
+            "attribute_alias": "UXON_SCHEMA"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "PROTOTYPE",
+            "attribute_alias": "PROTOTYPE"
+        },
+        {
+            "name": "UXON",
+            "attribute_alias": "UXON"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        }
+    ],
+    "rows": [
+        {
+            "_EXPORT_SUMMARY": "Model search result edit button",
+            "CREATED_ON": "2025-06-18 13:19:06",
+            "MODIFIED_ON": "2025-06-18 13:52:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f0a0da0c22be6ca0da025041000001",
+            "DESCRIPTION": "",
+            "APP": "0x31000000000000000000000000000000",
+            "UXON_SCHEMA": null,
+            "NAME": "Model search result edit button",
+            "PROTOTYPE": "exface/Core/Uxon/Snippets/SingleWidgetSnippet.php",
+            "UXON": {
+                "parameters": [
+                    {
+                        "name": "table_name_column",
+                        "description": "Column name in the buttons input data, that will have the TABLE_NAME attribute of the search result. This will be used to disable/enable different editors ",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "widget": {
+                    "widget_type": "MenuButton",
+                    "caption": "Open",
+                    "icon": "pencil-square-o",
+                    "buttons": [
+                        {
+                            "caption": "Object",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.OBJECT",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.OBJECT",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_object"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Attribute",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.ATTRIBUTE",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.ATTRIBUTE",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_attribute"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Data type",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.DATATYPE",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.DATATYPE",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_data_type"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Page",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.PAGE",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.PAGE",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_page"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Behavior",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.OBJECT_BEHAVIORS",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.OBJECT_BEHAVIORS",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_object_behaviors"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Action",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.OBJECT_ACTION",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.OBJECT_ACTION",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_object_action"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Preset",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.UXON_PRESET",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.UXON_PRESET",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_uxon_preset"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Communication channel",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_communication_channel"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Communication template",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_communication_template"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Connection",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.CONNECTION",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.CONNECTION",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_data_connection"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Scheduler",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.SCHEDULER",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.SCHEDULER",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_scheduler"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Snippet",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.UXON_SNIPPET",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.UXON_SNIPPET",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_uxon_snippet"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "caption": "Mutation",
+                            "bind_to_double_click": true,
+                            "action": {
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.MUTATION",
+                                "input_mapper": {
+                                    "from_object_alias": "exface.Core.SEARCH_RESULT",
+                                    "to_object_alias": "exface.Core.MUTATION",
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=~input![#table_name_column#]",
+                                        "comparator": "!==",
+                                        "value_right": "exf_mutation"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "ALIAS": "SearchResultEditButton",
+            "OBJECT": "0x11f098e3552728e098e3025041000001"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.UXON_SNIPPET",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.UXON_SNIPPET"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
