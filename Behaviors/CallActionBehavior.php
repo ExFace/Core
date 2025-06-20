@@ -5,6 +5,9 @@ use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -119,34 +122,23 @@ use Throwable;
 class CallActionBehavior extends AbstractBehavior
 {
     const PREVENT_DEFAULT_ALWAYS = 'always';
-    
     const PREVENT_DEFAULT_NEVER = 'never';
-    
     const PREVENT_DEFAULT_IF_ACTION_CALLED = 'if_action_called';
 
     use ICanBypassDataAuthorizationTrait;
     
     private $eventAliases = [];
-    
     private $eventPreventDefault = null;
-
     private $action = null;
-    
     private $actionConfig = null;
-    
     private $onlyIfAttributesChange = [];
-    
     private $onlyIfDataMatchesConditionGroupUxon = null;
-    
     private $ignoreDataSheets = [];
-	
 	private $ignoreLogbooks = [];
-    
     private $onFailError = true;
-    
     private $isHandling = false;
-    
     private $commitBeforeAction = false;
+    private array $prefetchExprs = [];
     
     /**
      *
@@ -273,6 +265,11 @@ class CallActionBehavior extends AbstractBehavior
             }
         }
         return $this->action;
+    }
+
+    protected function getActionUxon() : ?UxonObject
+    {
+        return $this->actionConfig;
     }
 
     /**
@@ -472,11 +469,9 @@ class CallActionBehavior extends AbstractBehavior
         if ($this->isDisabled()) {
             return;
         }
-        
         if ($this->isHandling === true) {
             return;
         }
-        
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
         if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
@@ -500,6 +495,22 @@ class CallActionBehavior extends AbstractBehavior
 				$this->ignoreLogbooks[] = $logbook;
             }
         }
+    }
+
+    public function onBeforeDeleteFillPlaceholders(OnBeforeDeleteDataEvent $event)
+    {
+        if ($this->isDisabled()) {
+            return;
+        }
+        if ($this->isHandling === true) {
+            return;
+        }
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
+        if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
     }
     
     /**
