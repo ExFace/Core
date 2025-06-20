@@ -139,7 +139,7 @@ class DataSheet implements DataSheetInterface
 
     /**
      * 
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRows($rows)
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRows()
      */
     public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
     {
@@ -158,28 +158,46 @@ class DataSheet implements DataSheetInterface
     public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $index = null) : DataSheetInterface
     {
         if (! empty($row)) {
-            if ($merge_uid_dublicates === true && $this->hasUidColumn() === true && $uid = $row[$this->getUidColumn()->getName()]) {
-                $uid_row_nr = $this->getUidColumn()->findRowByValue($uid);
-                if ($uid_row_nr !== false) {
-                    $this->rows[$uid_row_nr] = array_merge($this->rows[$uid_row_nr], $row);
-                } else {
-                    if ($index === null || is_numeric($index) === false) {
-                        $this->rows[] = $row;
-                    } else {
-                        array_splice($this->rows, $index, 0, [$row]);
+            // Compare the keys of the row with column names. If there are row keys, that are NOT column names, we
+            // should do something!
+            // - We can assume, that the key is actually an expression, that produces a different column name, so
+            // we can check if the key matches the expression of any column.
+            // - We can add a new column if allowed by $auto_add_columns. But be careful: that column could actually
+            // also have a column name, that differs from the key if the latter has forbidden characters
+            $colExprMap = $this->getColumns()->getColumnsExpressions();
+            foreach (array_diff(array_keys($row), array_keys($colExprMap)) as $missingKey) {
+                // Check if there is column, where the expression matches the array key. If so, use that
+                if (false === $colName = array_search($missingKey, $colExprMap, true)) {
+                    // If the column does not exist, add it unless explicitly forbidden
+                    $colName = null;
+                    if ($auto_add_columns === true) {
+                        $col = $this->getColumns()->addFromExpression($missingKey);
+                        $colName = $col->getName();
                     }
                 }
+                // If a column is found, BUT its name is different from the key used in the row, change the key
+                // in the row!
+                if ($colName !== null && $colName !== $missingKey) {
+                    $row[$colName] = $row[$missingKey];
+                    unset($row[$missingKey]);
+                }
+            }
+
+            // Now actually add the row
+            // If we merge by UID and there is a duplicate, merge the existing UID row with the new one
+            if ($merge_uid_dublicates === true
+                && $this->hasUidColumn() === true
+                && (null !== $uid = $row[$this->getUidColumn()->getName()])
+                && (false !== $uid_row_nr = $this->getUidColumn()->findRowByValue($uid))
+            ) {
+                $this->rows[$uid_row_nr] = array_merge($this->rows[$uid_row_nr], $row);
             } else {
+                // If no $index provided, append at the end of the rows array - otherwise insert in the middle
                 if ($index === null || is_numeric($index) === false) {
                     $this->rows[] = $row;
                 } else {
                     array_splice($this->rows, $index, 0, [$row]);
                 }
-            }
-            
-            // ensure, that all columns used in the rows are present in the data sheet
-            if ($auto_add_columns === true) {
-                $this->getColumns()->addMultiple(array_keys((array) $row));
             }
             $this->setFresh(true);
         }
@@ -200,6 +218,7 @@ class DataSheet implements DataSheetInterface
             $right_cols[] = $col->copy();
         }
         $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
+        $leftColNamesUpdated = [];
         // Now process the data and join rows
         if (! is_null($leftKeyColName) && ! is_null($rightKeyColName)) {
             $addedRowsCnt = 0;
@@ -210,11 +229,11 @@ class DataSheet implements DataSheetInterface
                 // data.
                 $left_row_nr += $addedRowsCnt;
                 // Check if the right column is really present in the data to be joined
-                if (! $rCol = $other_sheet->getColumns()->get($rightKeyColName)) {
+                if (! $rightKeyCol = $other_sheet->getColumns()->get($rightKeyColName)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $rightKeyColName . '" for a left join!', '6T5E849');
                 }
                 // Find rows in the other sheet, that match the currently processed key
-                $right_row_nrs = $rCol->findRowsByValue($row[$leftKeyColName]);
+                $right_row_nrs = $rightKeyCol->findRowsByValue($row[$leftKeyColName]);
                 // If corresponding rows are found in the right sheet, apply their values
                 if (false === empty($right_row_nrs)) {
                     // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
@@ -235,7 +254,9 @@ class DataSheet implements DataSheetInterface
                         }
                         $right_row = $other_sheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
-                            $this->setCellValue(RelationPath::join($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                            $leftColName = RelationPath::join($relation_path, $col_name);
+                            $leftColNamesUpdated[] = $leftColName;
+                            $this->setCellValue($leftColName, ($left_row_new_nr ?? $left_row_nr), $val);
                         }
                         $needRowCopy = true;
                     }                    
@@ -245,7 +266,9 @@ class DataSheet implements DataSheetInterface
                     // do not empty its values just because the right sheet did not has less data!
                     if ($relation_path !== '') {
                         foreach ($right_cols as $col) {
-                            $this->setCellValue(RelationPath::join($relation_path, $col->getName()), $left_row_nr, null);
+                            $leftColName = RelationPath::join($relation_path, $col->getName());
+                            $leftColNamesUpdated[] = $leftColName;
+                            $this->setCellValue($leftColName, $left_row_nr, null);
                         }
                     }
                 }
@@ -255,11 +278,24 @@ class DataSheet implements DataSheetInterface
             // need to dublicate rows as in the case above - but it's unclear, what should
             // happen if there are actually no key columns...
             foreach ($this->rows as $left_row_nr => $row) {
-                $this->rows[$left_row_nr] = array_merge($row, $other_sheet->getRow($left_row_nr));
+                $rightRow = $other_sheet->getRow($left_row_nr);
+                $rightColNames = array_keys($rightRow);
+                $leftColNamesUpdated = array_merge($leftColNamesUpdated, $rightColNames);
+                $this->rows[$left_row_nr] = array_merge($row, $rightRow);
             }
         } else {
             throw new DataSheetJoinError($this, 'Cannot join data sheets, if only one key column specified!', '6T5V0GU');
         }
+
+        // Mark all columns of this sheet, that were updated while JOINing as fresh
+        $leftColNamesUpdated = array_unique($leftColNamesUpdated);
+        foreach ($leftColNamesUpdated as $leftColName) {
+            $leftCol = $this->getColumns()->get($leftColName);
+            if ($leftCol) {
+                $leftCol->setFresh(true);
+            }
+        }
+
         return $this;
     }
 
@@ -596,7 +632,7 @@ class DataSheet implements DataSheetInterface
             if ($attribute->hasCalculation()) {
                 foreach ($attribute->getCalculationExpression()->getRequiredAttributes() as $req) {
                     if (! $this->getColumn($req)) {
-                        $column = $this->getColumns()->addFromExpression($req, '', true);
+                        $column = $this->getColumns()->addFromExpression($req, null, true);
                         $this->dataReadAddColumnToQuery($column, $query);
                     }
                 }
@@ -3001,12 +3037,30 @@ class DataSheet implements DataSheetInterface
      */
     public function extract(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : DataSheetInterface
     {
+        $foundIdxs = $this->findRows($conditionOrGroup, $readMissingData);
+        return $this
+            ->copy()
+            ->removeRows()
+            ->addRows($this->getRowsByIndex($foundIdxs), false, false);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::findRows()
+     */
+    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array
+    {
         $condGrp = $conditionOrGroup->toConditionGroup();
-        
+
         if ($readMissingData === true) {
             // TODO #DataCollector needs to be used here instead of all the following logic
-            foreach ($condGrp->getConditionsRecursive() as $cond) {
-                foreach ($cond->getExpression()->getRequiredAttributes() as $attrAlias) {
+            foreach ($condGrp->getRequiredExpressions($this->getMetaObject()) as $expr) {
+                // IMPORTANT: only include treat attribute aliases as missing data! We do NOT need
+                // formulas as columns to evaluate the respective conditions - conditions will evaluate
+                // formulas on-the-fly. If added to $missingCols formulas will greatly increase probability
+                // of errors in data without UIDs!
+                foreach ($expr->getRequiredAttributes() as $attrAlias) {
                     if (! $this->getColumns()->getByExpression($attrAlias)) {
                         $missingCols[] = $attrAlias;
                     }
@@ -3016,8 +3070,8 @@ class DataSheet implements DataSheetInterface
                 if ($this->hasUidColumn(true)) {
                     $missingSheet = DataSheetFactory::createFromObject($this->getMetaObject());
                     $missingSheet->getColumns()->addFromUidAttribute();
-                    foreach ($missingCols as $alias) {
-                        $missingSheet->getColumns()->addFromExpression($alias);
+                    foreach ($missingCols as $expr) {
+                        $missingSheet->getColumns()->addFromExpression($expr);
                     }
                     $missingSheet->getFilters()->addConditionFromColumnValues($this->getUidColumn());
                     $missingSheet->dataRead();
@@ -3032,15 +3086,15 @@ class DataSheet implements DataSheetInterface
         } else {
             $checkSheet = $this;
         }
-        
-        $extractedRows = [];
-        foreach ($this->getRows() as $rowNr => $row) {
+
+        $foundIdxs = [];
+        foreach (array_keys($this->getRows()) as $rowNr) {
             if ($condGrp->evaluate($checkSheet, $rowNr) === true) {
-                $extractedRows[] = $row;
+                $foundIdxs[] = $rowNr;
             }
         }
-        
-        return $this->copy()->removeRows()->addRows($extractedRows);
+
+        return $foundIdxs;
     }
     
     /**
@@ -3174,7 +3228,7 @@ class DataSheet implements DataSheetInterface
         $secret = $secret ?? EncryptedDataType::getSecret($this->getWorkbench());
         $rows = array_slice($encryptedRows, 0);
         $columns = $this->getColumns();
-        foreach ($rows as $idx => $row) {                       
+        foreach ($rows as $idx => $row) {
             foreach ($columns as $col) {
                 $datatype = $col->getDataType();
                 if ($datatype instanceof EncryptedDataType) {
@@ -3190,8 +3244,11 @@ class DataSheet implements DataSheetInterface
         }
         return $rows;
     }
-    
-    
+
+    /**
+     * @param array $rowData
+     * @return int[]
+     */
     public function findRowsByValues(array $rowData) : array
     {
         $result = [];

@@ -422,7 +422,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * 
      * @uxon-property attributes_defaults
      * @uxon-type \exface\Core\CommonLogic\Model\Attribute
-     * @uxon-template {"groups": [""], "writable": true, "copyable": true, "editable": true, "required": false, "filterable": true, "sortable": true, "aggregatable": false, "value_list_delimiter": ","}
+     * @uxon-template {"groups": [""], "writable": true, "copyable": true, "editable": true, "required": false, "filterable": true, "sortable": true, "aggregatable": false}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributesJsonBehavior
@@ -450,9 +450,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
             "required" => false,
             "filterable" => true,
             "sortable" => true,
-            "aggregatable" => false,
-            // DEFAULTS
-            "value_list_delimiter" => EXF_LIST_SEPARATOR,
+            "aggregatable" => false
         ]);
     }
 }

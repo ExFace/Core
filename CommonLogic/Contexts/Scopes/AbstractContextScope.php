@@ -85,7 +85,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
         $cache = $this->active_contexts[(string)$aliasOrSelector] ?? null;
         
         if ($cache === null) {
-            if (null !== $err = $this->active_errors[(string)$aliasOrSelector] ?? null) {
+            if (null !== $err = ($this->active_errors[(string)$aliasOrSelector] ?? null)) {
                 throw $err;
             }
             try {

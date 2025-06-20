@@ -29,6 +29,35 @@ FROM exf_object o
 WHERE o.data_address_properties IS NOT NULL
 
 UNION ALL
+/* Object: Data address */
+SELECT
+    o.data_address AS uxon,
+    'Object' AS object_name,
+    'Data address' AS attribute_name,
+    o.object_name AS instance_name,
+    o.object_alias AS instance_alias,
+    o.oid AS oid,
+    'exf_object' AS "table_name",
+    o.app_oid
+FROM exf_object o
+WHERE o.data_address IS NOT NULL
+
+UNION ALL
+/* Attribute: Data Address */
+SELECT
+    a.data,
+    'Attribute' AS object_name,
+    'Data Address' AS attribute_name,
+    a.attribute_name AS instance_name,
+    a.attribute_alias AS instance_alias,
+    a.oid AS oid,
+    'exf_attribute' AS "table_name",
+    ao.app_oid
+FROM exf_attribute a
+         INNER JOIN exf_object ao ON ao.oid = a.object_oid
+WHERE a.data IS NOT NULL
+
+UNION ALL
 /* Attribute: Data Address Settings */
 SELECT 
 	a.data_properties,
@@ -255,3 +284,30 @@ SELECT
 	sct.app_oid
 FROM exf_scheduler sct
 WHERE sct.task_uxon IS NOT NULL
+
+UNION ALL
+/* Snippets: snippet UXON */
+SELECT
+    usn.uxon,
+    'UXON snippet' AS object_name,
+    'Snippet' AS attribute_name,
+    usn.name AS instance_name,
+    usn.ALIAS AS instance_alias,
+    usn.oid AS oid,
+    'exf_uxon_snippet' AS "table_name",
+    usn.app_oid
+FROM exf_uxon_snippet usn
+
+UNION ALL
+/* Mutations: mutation UXON */
+SELECT
+    mu.config_uxon,
+    'Mutation' AS object_name,
+    'Mutation config' AS attribute_name,
+    mu.name AS instance_name,
+    NULL AS instance_alias,
+    mu.oid AS oid,
+    'exf_mutation' AS "table_name",
+    mus.app_oid
+FROM exf_mutation mu
+    INNER JOIN exf_mutation_set mus ON mus.oid = mu.mutation_set_oid

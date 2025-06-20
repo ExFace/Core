@@ -316,6 +316,17 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function hasParent();
 
     /**
+     * Returns all parent widgets matching the given filter callback.
+     *
+     * The $filter function must have the following signature: `function(WidgetInterface $parent) : bool`
+     *
+     * @param callable $filter
+     * @param int|null $maxResults
+     * @return WidgetInterface[]
+     */
+    public function getParents(callable $filter, ?int $maxResults = null) : array;
+
+    /**
      * Sets the parent widget
      *
      * @param WidgetInterface $widget            

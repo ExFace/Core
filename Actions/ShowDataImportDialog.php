@@ -39,6 +39,11 @@ class ShowDataImportDialog extends ShowDialog
         $this->setIcon(Icons::UPLOAD);
     } 
 
+    /**
+     * @param UiPageInterface $page
+     * @param WidgetInterface|NULL $contained_widget
+     * @return Dialog
+     */
     protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
         $dialog = parent::createDialogWidget($page);
@@ -49,13 +54,13 @@ class ShowDataImportDialog extends ShowDialog
             return $dialog;
         }
 
-        if ($dialog->isEmpty()) {
-            $colAttrs = [];
-            $dataWidget = $this->getWidgetToImportInto();
-            $uxon = new UxonObject([
-                'columns' => []
-            ]);
-            $excludeAliases = $this->getExcludedAttributeAliases();
+        $excludeAliases = $this->getExcludedAttributeAliases();
+        $dataWidget = $this->getWidgetToImportInto();
+        $colAttrs = [];
+        $uxon = new UxonObject([
+            'columns' => []
+        ]);
+        if ($dialog->isEmpty() && $dataWidget && $actionObj->is($dataWidget->getMetaObject())) {
             foreach($dataWidget->getColumns() as $colWidget) {
                 if (! $colWidget->isBoundToAttribute()) {
                     continue;
@@ -98,11 +103,18 @@ class ShowDataImportDialog extends ShowDialog
             if (in_array($attr->getAliasWithRelationPath(), $excludeAliases)) {
                 unset($colAttrs[$i]);
                 continue;
-            } 
-            $uxon->appendToProperty('columns', new UxonObject([
+            }
+            $colUxon = new UxonObject([
                 'attribute_alias' => $attr->getAliasWithRelationPath(),
                 'editable' => true
-            ]));
+            ]);
+            if ($attr->isRelation()) {
+                $colUxon->setProperty('cell_widget', new UxonObject([
+                    'widget_type' => 'InputComboTable',
+                    'lazy_loading' => false
+                ]));
+            }
+            $uxon->appendToProperty('columns', $colUxon);
         }
         
         /** @var \exface\Core\Widgets\DataImporter $importer*/
@@ -194,6 +206,13 @@ class ShowDataImportDialog extends ShowDialog
     {
         return $this->excludedAliases;
     }
+
+    /**
+     * @param Dialog $dialog
+     * @param string $message
+     * @param string $type
+     * @return Message
+     */
     protected function addMessage(Dialog $dialog, string $message, string $type = MessageTypeDataType::WARNING) : Message
     {
         $message = WidgetFactory::createFromUxonInParent($dialog, new UxonObject([

@@ -20,6 +20,7 @@ If you stick to the guidelines below, your docs will be fully accessible in the 
 - [Tips on structuring the "Docs" folder](docs_structure.md)
 - [Using screenshots](screenshots.md)
 - [Using diagrams](diagrams.md)
+- [Using Placeholders](placeholders/index.md)
 
 ## In-code documentation (PHPDoc)
 

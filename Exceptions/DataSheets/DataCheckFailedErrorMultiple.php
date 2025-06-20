@@ -3,15 +3,24 @@
 namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Exceptions\DataSheetValueExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\TranslationInterface;
 
 /**
  * Can combine any number of `DataCheckFailedError` instances, grouping them by their messages to present a unified
  * coherent error message.
+ *
+ * TODO Make this exception implement DataSheetValueExceptionInterface. Make sure, all inner exceptions target
+ * the same data sheet.
+ * TODO create a MultiExceptionInterface and use it here and in AuthenticationFailedMultiError
+ *
+ * @author Georg Bieger, Andrej Kabachnik
  */
 class DataCheckFailedErrorMultiple extends UnexpectedValueException
 {
+    use DataSheetValueExceptionTrait;
+
     private const KEY_ERRORS = 'errors';
     private const KEY_ROWS = 'affectedRows';
     
@@ -146,7 +155,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      * @param string $message
      * @param array $value
      */
-    public function setAffectedRowsForGroup(string $message, array $value) : void
+    protected function setAffectedRowsForGroup(string $message, array $value) : void
     {
         $this->errorGroups[$message][self::KEY_ROWS] = $value;
     }
@@ -168,7 +177,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      * @param string $message
      * @param array $value
      */
-    public function setErrorForGroup(string $message, array $value) : void
+    protected function setErrorForGroup(string $message, array $value) : void
     {
         $this->errorGroups[$message][self::KEY_ERRORS] = $value;
     }
@@ -185,5 +194,23 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
         }
         
         return $result;
+    }
+
+    /**
+     * @inheritDoc
+     * @see DataSheetValueExceptionInterface::getRowIndexes()
+     */
+    public function getRowIndexes(): ?array
+    {
+        $idxs = [];
+        foreach ($this->getAllErrors() as $error) {
+            $idxs = array_merge($idxs, $error->getRowIndexes());
+        }
+        if (empty($idxs)) {
+            return null;
+        }
+        $idxs = array_unique($idxs);
+        sort($idxs);
+        return $idxs;
     }
 }

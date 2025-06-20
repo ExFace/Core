@@ -184,7 +184,7 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
+class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanPreloadData
 {
     use iHaveAttributeGroupTrait;
 
@@ -1213,6 +1213,10 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * Filters with custom `condition_group` can be easily mixed with simple filters. In the resulting
      * condition group, the latter will yield conditions and the former will produce nested condition
      * groups.
+     *
+     * **NOTE:** just like regular filters, custom conditions with empty values will be ignored (the filter
+     * will not be applied at all instead of searching for empty values). If you want you filter to search
+     * for empty values explicitly, set `ignore_empty_values` for corresponding conditions.
      * 
      * ## Examples
      * 
@@ -1268,7 +1272,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * 
      * @uxon-property condition_group
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
-     * @uxon-template {"operator": "OR", "conditions": [{"expression": "", "value": "[#value#]", "comparator": "="}]}
+     * @uxon-template {"operator": "OR", "conditions": [{"expression": "", "value": "[#value#]", "comparator": "==", "ignore_empty_values": true}]}
      * 
      * @param UxonObject $uxon
      * @return Filter

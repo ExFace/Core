@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Widgets;
 
 /**
- * Model entities implementig this interface can reference a single attribute from the meta model.
+ * Model entities (e.g. widgets) implementing this interface can reference a single column of data.
  * 
  * @author Andrej Kabachnik
  *

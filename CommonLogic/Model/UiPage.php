@@ -1,38 +1,37 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
-use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\CommonLogic\Translation\UxonTranslator;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Factories\SelectorFactory;
-use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
-use exface\Core\Factories\FacadeFactory;
+use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
+use exface\Core\Events\Widget\OnUiPageInitEvent;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Model\UiMenuItemInterface;
-use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Factories\FacadeFactory;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UserFactory;
-use exface\Core\Events\Widget\OnUiPageInitEvent;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
-use exface\Core\CommonLogic\Selectors\PWASelector;
-use exface\Core\CommonLogic\Translation\UxonTranslator;
-use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -47,7 +46,7 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
  * @author Andrej Kabachnik
  *
  */
-class UiPage implements UiPageInterface, iHaveIcon
+class UiPage implements UiPageInterface
 {
     use ImportUxonObjectTrait;
     
@@ -57,7 +56,7 @@ class UiPage implements UiPageInterface, iHaveIcon
 
     const WIDGET_ID_SPACE_SEPARATOR = '.';
 
-    private $widgets = array();
+    private $widgets = [];
 
     private $facadeSelector = null;
     
@@ -176,33 +175,27 @@ class UiPage implements UiPageInterface, iHaveIcon
     }
 
     /**
-     * Returns the UXON representation of the contents (or an empty UXON object if there is no contents
-     * or the contents is not UXON).
-     * 
-     * NOTE: This method will return an empty UXON object even if the page has some other type of contents
-     * (e.g. HTML). Do not use this method to get the contents in general, use getContents() instead. This
-     * method is only legitim if you know, the page has UXON content.
-     * 
-     * @return UxonObject
+     * {@inheritDoc}
+     * @see UiPageInterface::getContentsUxon()
      */
-    public function getContentsUxon()
+    public function getContentsUxon() : UxonObject
     {
-        if (is_null($this->contents_uxon)) {
-            if (! is_null($this->contents)) {
-                $contents = $this->getContents();
-                if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
+        if (null === $this->contents_uxon) {
+            if (null !== $this->contents) {
+                $contents = trim($this->getContents());
+                if (mb_substr($contents, 0, 1) == '{' && mb_substr($contents, - 1) == '}') {
                     $uxon = UxonObject::fromAnything($contents);
                     if ($this->hasApp()) {
                         (new UxonTranslator($this->getApp()->getTranslator()))->translateUxonProperties($uxon, 'Pages/' . $this->getAliasWithNamespace(), 'CONTENT');
                     }
-                } else {
-                    $uxon = new UxonObject();
                 }
-            } else {
-                $uxon = new UxonObject();
             }
         } else {
             $uxon = $this->contents_uxon;
+        }
+
+        if ($uxon === null) {
+            $uxon = new UxonObject();
         }
         
         return $uxon;
@@ -449,8 +442,6 @@ class UiPage implements UiPageInterface, iHaveIcon
         // TODO We still need some kind of fallback for example 5 here!
         
         throw new WidgetNotFoundError('Widget "' . $id . '" not found in id space "' . $id_space . '" within parent "' . $parent->getId() . '" on page "' . $this->getAliasWithNamespace() . '"!');
-        
-        return;
     }
 
     private static function addIdSpace($id_space, $id)
@@ -917,7 +908,7 @@ class UiPage implements UiPageInterface, iHaveIcon
     public function getContents()
     {
         if (is_null($this->contents) && ! is_null($this->contents_uxon)) {
-            $this->contents = $this->contents_uxon->toJson();
+            $this->contents = $this->contents_uxon->toJson(true);
         }
         
         return $this->contents;
@@ -959,7 +950,9 @@ class UiPage implements UiPageInterface, iHaveIcon
     public function setContents($contents)
     {
         $this->setDirty();
-        
+        $this->contents = null;
+        $this->contents_uxon = null;
+
         if (is_string($contents)) {
             $this->contents = trim($contents);
         } elseif ($contents instanceof UxonObject) {

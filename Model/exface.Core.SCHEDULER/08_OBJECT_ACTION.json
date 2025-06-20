@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Scheduler: Turn OFF",
+            "_EXPORT_SUMMARY": "Scheduler: Turn OFF [DisableScheduler]",
             "CREATED_ON": "2021-02-01 15:56:27",
             "MODIFIED_ON": "2022-02-02 16:02:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -110,7 +110,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Scheduler: Turn ON",
+            "_EXPORT_SUMMARY": "Scheduler: Turn ON [EnableScheduler]",
             "CREATED_ON": "2021-02-01 15:58:35",
             "MODIFIED_ON": "2022-02-02 16:02:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

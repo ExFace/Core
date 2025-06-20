@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
@@ -30,7 +33,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequired
+class Input extends Value implements iTakeInput, iHaveDefaultValue
 {
     /**
      * Focus the input
@@ -585,6 +588,27 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequir
     {
         $this->disableValidation = $value;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getHintDebug()
+     */
+    protected function getHintDebug() : string
+    {
+        $hint = parent::getHintDebug();
+
+        // Input-specific conditional properties
+        if (null !== $condProp = $this->getRequiredIf()) {
+            $hint = $hint
+                . "\n- Required if: {$condProp->getConditionGroup()->__toString()}";
+        }
+        if (null !== $condProp = $this->getInvalidIf()) {
+            $hint = $hint
+                . "\n- Invalid if: {$condProp->getConditionGroup()->__toString()}";
+        }
+
+        return $hint;
     }
 }
 ?>

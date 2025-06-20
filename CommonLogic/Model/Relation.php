@@ -164,7 +164,12 @@ class Relation implements MetaRelationInterface
     }
 
     /**
-     * 
+     * The object, that this relation points to
+     *
+     * @uxon-property related_object_alias
+     * @uxon-type metamodel:object
+     * @uxon-required true
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightObject()
      */
@@ -201,7 +206,11 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * The key attribute of the related object (its UID by default)
+     *
+     * @uxon-property related_object_key_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyAttribute()
      */
@@ -251,7 +260,12 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * The cardinality of the relation: N1, 11, 1N or NM
+     *
+     * @uxon-property cardinality
+     * @uxon-type [N1,11,1N,NM]
+     * @uxon-default N1
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getCardinality()
      */
@@ -537,7 +551,12 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * Delete the object of this attribute whenever the related attribute is deleted
+     *
+     * @uxon-property delete_with_related_object
+     * @uxon-type boolean
+     * @uxon-default false
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setLeftObjectToBeDeletedWithRightObject()
      */
@@ -557,7 +576,12 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * Check to copy the object of this attribute whenever the related object is being copied
+     *
+     * @uxon-property copy_with_related_object
+     * @uxon-type boolean
+     * @uxon-default false
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isLeftObjectToBeCopiedWithRightObject()
      */

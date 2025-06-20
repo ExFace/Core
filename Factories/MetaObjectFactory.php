@@ -305,10 +305,10 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     private static function getCache(string $uidOrAlias) : ?MetaObjectInterface
     {
         // Check cache
-        if (null !== $cache = static::$cacheByUid[static::getCacheKey($uidOrAlias)] ?? null) {
+        if (null !== $cache = (static::$cacheByUid[static::getCacheKey($uidOrAlias)] ?? null)) {
             return $cache;
         }
-        if (null !== $cache = static::$cacheByAlias[static::getCacheKey($uidOrAlias)] ?? null) {
+        if (null !== $cache = (static::$cacheByAlias[static::getCacheKey($uidOrAlias)] ?? null)) {
             return $cache;
         }
         // If not found in the regular caches, check the temporary cache for loading objects.

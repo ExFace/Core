@@ -155,12 +155,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         /*	@var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
-            
-            // First see, if the attribute has some kind of special data type (e.g. binary)
-            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '', 'binary') === 0) {
-                $this->addBinaryColumn($qpart->getAlias());
-            }
-            
+
             switch (true) {
                 // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
                 // Otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
@@ -851,6 +846,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $resultJson = $initialJson;
 
         foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            // If we need to remove a key from a JSON object, we need to call JSON_MODIFY(xx, yy, null) in MS SQL
+            if ($attributeValue === null) {
+                $attributeValue = 'null';
+            }
             $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
         }
 

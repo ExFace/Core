@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "External User Role: Disable",
+            "_EXPORT_SUMMARY": "External User Role: Disable [UserRoleExternalDisable]",
             "CREATED_ON": "2023-08-29 20:18:43",
             "MODIFIED_ON": "2023-10-13 09:34:52",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -103,7 +103,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "External User Role: Enable",
+            "_EXPORT_SUMMARY": "External User Role: Enable [UserRoleExternalEnable]",
             "CREATED_ON": "2023-08-29 20:20:41",
             "MODIFIED_ON": "2023-10-13 09:34:18",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -141,7 +141,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "External User Role: Keep manual assingments",
+            "_EXPORT_SUMMARY": "External User Role: Keep manual assingments [KeepManualAssingments]",
             "CREATED_ON": "2024-05-06 14:52:16",
             "MODIFIED_ON": "2024-05-06 14:55:26",
             "CREATED_BY_USER": "0x11ed9f5019075a8a9f50025041000001",
@@ -179,7 +179,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "External User Role: Synchronize manual assingments",
+            "_EXPORT_SUMMARY": "External User Role: Synchronize manual assingments [SyncManualAssignments]",
             "CREATED_ON": "2024-05-06 14:53:07",
             "MODIFIED_ON": "2024-05-06 14:55:35",
             "CREATED_BY_USER": "0x11ed9f5019075a8a9f50025041000001",
