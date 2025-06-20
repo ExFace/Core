@@ -2,8 +2,10 @@
 
 namespace exface\Core\Events\Mutations;
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\AbstractEvent;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationPointInterface;
 use exface\Core\Widgets\DebugMessage;
 
@@ -25,10 +27,39 @@ class OnMutationsAppliedEvent extends AbstractEvent implements iCanGenerateDebug
      */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
+        $tab = $debug_widget->createTab();
+        $tab->setCaption('Mutations');
+        $tab->setWidgets(new UxonObject([
+            [
+                'widget_type' => 'Markdown',
+                'height' => '100%',
+                'width' => '100%',
+                'hide_caption' => true,
+                'value' => $this->buildMarkdownSummary()
+            ]
+        ]));
+        $debug_widget->addTab($tab);
         foreach ($this->getMutationsApplied() as $i => $mutationApplied) {
-            $debug_widget = $mutationApplied->createDebugWidget($debug_widget, $i);
+            $debug_widget = $mutationApplied->createDebugWidget($debug_widget, $i + 1);
         }
         return $debug_widget;
+    }
+
+    protected function buildMarkdownSummary() : string
+    {
+        $applied = $this->getMutationsApplied();
+        $appliedCnt = count($applied);
+        $appliedList = '';
+        foreach ($applied as $i => $mutationApplied) {
+            $appliedList .= "\n" . ($i + 1) . ". {$mutationApplied->getMutation()->getName()}}";
+        }
+        return <<<MD
+# Mutations for {$this->getSubjectName()}
+
+Found {$appliedCnt} mutations.
+{$appliedList}
+MD;
+
     }
 
     public function getMutationPoint() : MutationPointInterface
@@ -36,6 +67,9 @@ class OnMutationsAppliedEvent extends AbstractEvent implements iCanGenerateDebug
         return $this->mutationPoint;
     }
 
+    /**
+     * @return AppliedMutationInterface[]
+     */
     public function getMutationsApplied() : array
     {
         return $this->mutations;
