@@ -34,13 +34,14 @@ class Permalink extends Formula
      * {@inheritDoc}
      * @see Formula::run
      */
-    public function run(string $configAlias = '', string|array $args = [])
+    public function run(string $configAlias = '')
     {
         if(empty($configAlias)) {
             throw new FormulaError('Cannot evaluate Permalink formula: no valid config provided!');
         }
         
-        $args = is_array($args) ? implode('/', $args) : $args;
+        $args = array_slice(func_get_args(), 1);
+        $args = count($args) > 0 ? implode('/', $args) : '';
         
         return PermalinkFactory::buildAbsolutePermalinkUrl($this->getWorkbench(), $configAlias, $args);
     }
