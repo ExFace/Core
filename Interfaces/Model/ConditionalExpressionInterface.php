@@ -24,7 +24,7 @@ interface ConditionalExpressionInterface extends WorkbenchDependantInterface, iC
 
     /**
      * @param MetaObjectInterface|null $object
-     * @return array
+     * @return ExpressionInterface[]
      */
     public function getRequiredExpressions(?MetaObjectInterface $object = null) : array;
 
