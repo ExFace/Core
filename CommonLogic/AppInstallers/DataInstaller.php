@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Behaviors\ValidatingBehavior;
-use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -827,18 +826,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
                 
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
-                // Ignore explicitly excluded attribtues
                 if (in_array($attr->getAlias(), $excludeAttributeAliases)){
-                    continue;
-                }
-                // Ignore custom attributes created at runtime. We never know, if they will be known to a different
-                // system with a different set of apps. Apart from that, their contents will definitely be available
-                // at some real attribute - that is where they will get exported.
-                // For example, exporting custom attribute caused issues with mutations because attributes for mutation
-                // targets were exported in addition to the JSON attribute holding them all - when imported, this led
-                // to mutations being created with null-values for every unused target in the JSON, witch broke the
-                // search for mutations in the SqlModelLoader.
-                if ($attr instanceof CustomAttribute) {
                     continue;
                 }
                 $ds->getColumns()->addFromExpression($attr->getAlias());

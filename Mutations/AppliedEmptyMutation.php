@@ -1,10 +1,8 @@
 <?php
 namespace exface\Core\Mutations;
 
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
-use exface\Core\Widgets\DebugMessage;
 
 class AppliedEmptyMutation implements AppliedMutationInterface
 {
@@ -64,22 +62,5 @@ class AppliedEmptyMutation implements AppliedMutationInterface
     public function dumpStateAfter(): string
     {
         return '';
-    }
-
-    public function createDebugWidget(DebugMessage $debug_widget)
-    {
-        $tab = $debug_widget->createTab();
-        $tab->setCaption('Mutations');
-        $tab->setWidgets(new UxonObject([
-            [
-                'widget_type' => 'Markdown',
-                'height' => '100%',
-                'width' => '100%',
-                'hide_caption' => true,
-                'value' => 'No mutations applied'
-            ]
-        ]));
-        $debug_widget->addTab($tab);
-        return $debug_widget;
     }
 }

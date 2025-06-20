@@ -7,7 +7,6 @@ use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
-use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -256,13 +255,7 @@ class Tracer extends Profiler
             $this,
             'logEvent'
         ]);
-
-        // Mutations
-        $event_manager->addListener(OnMutationsAppliedEvent::getEventName(), [
-            $this,
-            'logMutationsApplied'
-        ]);
-
+        
         return $this;
     }
     
@@ -286,9 +279,6 @@ class Tracer extends Profiler
                 break;
             case $event instanceof BehaviorEventInterface:
                 $name = PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior()) . ' "' . $event->getBehavior()->getName() . '" of "' . $event->getBehavior()->getObject()->getAliasWithNamespace() . '"';
-                break;
-            case $event instanceof OnMutationsAppliedEvent:
-                $name = 'Mutations applied to ' . $event->getSubjectName();
                 break;
             default:
                 $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
@@ -329,13 +319,6 @@ class Tracer extends Profiler
     public function logEvent(EventInterface $event)
     {
         $this->start($event, $this->getLapName($event), 'event');
-    }
-
-    public function logMutationsApplied(onmutationsAppliedEvent $event)
-    {
-        $lapName = $this->getLapName($event);
-        $this->start($event, $lapName, 'event');
-        $this->getWorkbench()->getLogger()->info($lapName, array(), $event);
     }
     
     /**

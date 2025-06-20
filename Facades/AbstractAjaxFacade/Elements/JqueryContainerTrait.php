@@ -118,25 +118,7 @@ trait JqueryContainerTrait {
                 return parent::buildJsValueGetter($dataColumnName);
             }
         }
-        // TODO Currently AbstractJqueryElement::buildJsDataGetter() uses attribute aliases as row object keys
-        // preferably. This value getter here will fail to find such a column if the attribute alias is not
-        // the same as the data column name (e.g. has an aggregator). Here is an ugly workaround, but we really
-        // should force data getters to use data column names in their results!
-        return <<<JS
-function(oRow){
-    var sKey = '{$dataColumnName}';
-    var mVal = oRow[sKey];
-    if (mVal !== undefined) {
-        return mVal; 
-    }
-    sKey = (function(str) {
-        const lastIdx = str.lastIndexOf("_");
-        if (lastIdx === -1) return str;
-        return (str.substring(0, lastIdx) + ":" + str.substring(lastIdx + 1));
-    })(sKey);
-    return oRow[sKey];
-}({$this->buildJsDataGetter()}.rows[0] || {})
-JS;
+        return "({$this->buildJsDataGetter()}.rows[0] || {})['{$dataColumnName}']";
     }
     
     /**

@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Mutations;
 
-use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Interfaces\Mutations\MutationPointInterface;
 use exface\Core\Interfaces\Mutations\MutationTargetInterface;
@@ -61,7 +60,6 @@ abstract class AbstractMutationPoint implements MutationPointInterface
             'subject' => $subject,
             'mutations' => $applied
         ];
-
         return $applied;
     }
 
