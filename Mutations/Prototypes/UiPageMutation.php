@@ -1,14 +1,15 @@
 <?php
 namespace exface\Core\Mutations\Prototypes;
 
+use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
-use exface\Core\Mutations\AppliedEmptyMutation;
 use exface\Core\Mutations\AppliedMutation;
 
 /**
@@ -21,50 +22,80 @@ class UiPageMutation extends AbstractMutation
     private UxonObject|null $widgetMutationUxon = null;
     private GenericUxonMutation|null $widgetMutation = null;
 
-    private string|null $changedName = null;
-    private string|null $changedDescription = null;
-    private string|null $changedIntro = null;
+    private array $changesForMenuItems = [];
+    private array $changesForPages = [];
 
     /**
      * @see MutationInterface::apply()
      */
     public function apply($subject): AppliedMutationInterface
     {
-        /* @var $subject \exface\Core\CommonLogic\Model\UiPage */
+        /* @var $subject \exface\Core\Interfaces\Model\UiMenuItemInterface */
         if (! $this->supports($subject)) {
             throw new InvalidArgumentException('Cannot apply page mutation to ' . get_class($subject) . ' - only instances of pages supported!');
         }
 
-        $stateBefore = null;
+        if ($subject instanceof UiPageInterface) {
+            $applied = $this->applyToPage($subject);
+        } else {
+            $applied = $this->applyToMenuItem($subject);
+        }
+        return $applied;
+    }
+
+    protected function applyToPage(UiPageInterface $page) : AppliedMutationInterface
+    {
+        $stateArrayBefore = $page->exportUxonObject()->toArray();
 
         // Apply changes to properties of menu items in general
-        if (null !== $val = $this->getChangedName()) {
-            $subject->setName($val);
-        }
-        if (null !== $val = $this->getChangedDescription()) {
-            $subject->setDescription($val);
-        }
-        if (null !== $val = $this->getChangedIntro()) {
-            $subject->setIntro($val);
-        }
+        $changes = $this->getChangesForMenuItem();
+        $changes = array_merge($changes, $this->getChangesForPages());
+        $page->importUxonObject(new UxonObject($changes));
 
-        // Apply page specific mutations
-        if ($subject instanceof UiPageInterface) {
-            // Apply widget mutations
-            if (null !== $mutation = $this->getWidgetMutation()) {
-                $stateBefore = $stateBefore ?? $subject->exportUxonObject()->toJson(true);
-                $uxon = $subject->getContentsUxon();
-                $mutation->apply($uxon);
-                $subject->setContents($uxon);
+        // Apply widget mutations
+        if (null !== $mutation = $this->getWidgetMutation()) {
+            $uxon = $page->getContentsUxon();
+            $mutation->apply($uxon);
+            $page->setContents($uxon);
+        }
+        // TODO implement a mutation to change all properties of the page: e.g. name, description, etc.
+        // A GenericUxonPrototypeMutation would be cool. We could use the on attributes, objects, etc.
+
+        $stateBefore = (new UxonObject($stateArrayBefore))->toJson(true);
+        $stateAfter = $page->exportUxonObject()->toJson(true);
+
+        return new AppliedMutation($this, $page, $stateBefore ?? '', $stateAfter ?? '');
+    }
+
+    protected function applyToMenuItem(UiMenuItemInterface $menuItem): AppliedMutationInterface
+    {
+        // Apply changes to properties of menu items in general
+        $changes = $this->getChangesForMenuItem();
+
+        if (! empty($changes)) {
+            // Menu items cannot be converted to UXON, so we just put those things in the state array, that
+            // can be changed for a menu item
+            $stateArrayBefore = [
+                'name' => $menuItem->getName(),
+                'description' => $menuItem->getDescription(),
+                'intro' => $menuItem->getIntro()
+            ];
+
+            if (null !== $val = ($changes['name'] ?? null)) {
+                $menuItem->setName($val);
             }
-            // TODO implement a mutation to change all properties of the page: e.g. name, description, etc.
-            // A GenericUxonPrototypeMutation would be cool. We could use the on attributes, objects, etc.
+            if (null !== $val = ($changes['description'] ?? null)) {
+                $menuItem->setDescription($val);
+            }
+            if (null !== $val = ($changes['intro'] ?? null)) {
+                $menuItem->setIntro($val);
+            }
+
+            $stateBefore = (new UxonObject($stateArrayBefore))->toJson(true);
+            $stateAfter = (new UxonObject(array_merge($stateArrayBefore, $changes)))->toJson(true);
         }
 
-        if ($stateBefore !== null) {
-            $stateAfter = $subject->exportUxonObject()->toJson(true);
-        }
-        return new AppliedMutation($this, $subject, $stateBefore ?? '', $stateAfter ?? '');
+        return new AppliedMutation($this, $menuItem, $stateBefore ?? '', $stateAfter ?? '');
     }
 
     /**
@@ -72,7 +103,7 @@ class UiPageMutation extends AbstractMutation
      */
     public function supports($subject): bool
     {
-        return $subject instanceof UiMenuItemInterface;
+        return ($subject instanceof UiMenuItemInterface && $this->hasChangesForMenuItems()) || $subject instanceof UiPageInterface;
     }
 
     /**
@@ -115,11 +146,32 @@ class UiPageMutation extends AbstractMutation
     }
 
     /**
-     * @return string|null
+     * @return bool
      */
-    protected function getChangedName() : ?string
+    protected function hasChanges() : bool
     {
-        return $this->changedName;
+        return ! empty($this->changesForMenuItems) || ! empty($this->changesForPages) || $this->widgetMutation !== null;
+    }
+
+    protected function hasChangesForMenuItems() : bool
+    {
+        return ! empty($this->changesForMenuItems);
+    }
+
+    /**
+     * @return array
+     */
+    protected function getChangesForMenuItem() : array
+    {
+        return $this->changesForMenuItems;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getChangesForPages() : array
+    {
+        return $this->changesForPages;
     }
 
     /**
@@ -133,16 +185,8 @@ class UiPageMutation extends AbstractMutation
      */
     protected function setChangeName(string $changedName) : UiPageMutation
     {
-        $this->changedName = $changedName;
+        $this->changesForMenuItems['name'] = $changedName;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangedDescription() : ?string
-    {
-        return $this->changedDescription;
     }
 
     /**
@@ -156,16 +200,8 @@ class UiPageMutation extends AbstractMutation
      */
     protected function setChangeDescription(string $changedDescription) : UiPageMutation
     {
-        $this->changedDescription = $changedDescription;
+        $this->changesForMenuItems['description'] = $changedDescription;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangedIntro() : ?string
-    {
-        return $this->changedIntro;
     }
 
     /**
@@ -179,7 +215,7 @@ class UiPageMutation extends AbstractMutation
      */
     protected function setChangeIntro(string $changedIntro) : UiPageMutation
     {
-        $this->changedIntro = $changedIntro;
+        $this->changesForMenuItems['intro'] = $changedIntro;
         return $this;
     }
 }
