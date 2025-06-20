@@ -218,25 +218,29 @@ class MetaModelInstaller extends DataInstaller
         if($rowCount === 0) {
             yield $indent . $indent . 'No permalinks to verify.' . PHP_EOL . PHP_EOL;
         } else {
-            $successCount = 0;
+            $errorCount = 0;
             foreach ($dataSheet->getRows() as $row) {
                 try {
                     $permalink = PermalinkFactory::fromUrlOrSelector($workbench, $appAlias . '.' . $row['ALIAS']);
-                    
-                    if(!empty($permalink->getMockParams())) {
-                        $permalink->withUrl($permalink->getMockParams())->buildRelativeRedirectUrl();
+                    $params = $permalink->getExampleParams() ?? '';
+                    $permalink->withUrl($params)->buildRelativeRedirectUrl();
+
+                } catch (\Throwable) {
+                    if($errorCount++ === 0) {
+                        yield $indent . $indent . "Result\t\tAlias" .PHP_EOL;
+                        yield $indent . $indent . "------\t\t-----" . PHP_EOL;
                     }
                     
-                    $successCount++;
-                    $status = 'OK';
-                } catch (\Throwable) {
-                    $status = 'FAILED';
+                    yield $indent . $indent . "ERROR\t\t" . $appAlias . $row['ALIAS'] . PHP_EOL;
                 }
-                
-                yield $indent . $indent . $row['ALIAS'] . "\t\t" . $status . PHP_EOL;
             }
         
-            yield $indent . '... ' . $successCount . ' of ' . $rowCount . ' permalinks are OK.' . PHP_EOL . PHP_EOL;
+            if($errorCount > 0) {
+                $reference = $errorCount === 1 ? 'permalink' : $errorCount . ' permalinks listed';
+                yield $indent . '...the ' . $reference . ' above could not be verified.' . PHP_EOL . PHP_EOL;
+            } else {
+                yield $indent . '...all permalinks verified successfully.' . PHP_EOL . PHP_EOL;
+            }
         }
     }
 

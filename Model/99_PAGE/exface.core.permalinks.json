@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2025-06-19 16:18:58",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2025-06-19 16:45:29",
+    "modified_on": "2025-06-20 13:21:43",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.PERMALINK",
@@ -25,6 +25,9 @@
             },
             {
                 "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "EXAMPLE_PARAMS"
             }
         ],
         "row_grouper": {
@@ -45,6 +48,12 @@
             },
             {
                 "attribute_alias": "DESCRIPTION"
+            },
+            {
+                "attribute_alias": "EXAMPLE_PARAMS"
+            },
+            {
+                "attribute_alias": "EXAMPLE_URL"
             }
         ],
         "sorters": [
@@ -67,6 +76,9 @@
             {
                 "action_alias": "exface.Core.DeleteObject",
                 "visibility": "optional"
+            },
+            {
+                "action_alias": "exface.Core.VisitPermalink"
             }
         ]
     }

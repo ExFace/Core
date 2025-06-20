@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use http\Exception\BadUrlException;
 
 /**
  * Use this prototype to configure a persistent link to any dialog in the application. If a valid UID is passed
@@ -42,8 +43,13 @@ class DialogPermalink extends AbstractPermalink
      */
     public function buildRelativeRedirectUrl() : string
     {
+        $widget = $this->getWidget();
+        if(!$this->destinationMatchesProfile($widget->exportUxonObjectOriginal())) {
+            throw new BadUrlException('Cannot resolve permalink (' . $this->getAliasWithNamespace() . '): Destination does not match profile!');
+        }
+        
         $facade = $this->getFacade();
-        $object = $this->getWidget()->getMetaObject();
+        $object = $widget->getMetaObject();
 
         $prefillSheet = null;
         if(!empty($this->uid) && $object->hasUidAttribute()) {

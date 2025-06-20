@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Permalinks;
 
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 
@@ -47,10 +49,27 @@ interface PermalinkInterface extends WorkbenchDependantInterface, iCanBeConverte
     public function __toString() : string;
 
     /**
+     * @param string $params
+     * @return PermalinkInterface
+     */
+    public function setExampleParams(string $params) : PermalinkInterface;
+    
+    /**
      * @return string|null
      */
-    public function getMockParams() : ?string;
+    public function getExampleParams() : ?string;
 
+    /**
+     * @param UxonObject $profile
+     * @return PermalinkInterface
+     */
+    public function setDestinationProfile(UxonObject $profile) : PermalinkInterface;
+
+    /**
+     * @return Condition[]
+     */
+    public function getDestinationProfile() : array;
+    
     /**
      * Parses the inner URL provided and returns a new permalink instance based on the results.
      * 
