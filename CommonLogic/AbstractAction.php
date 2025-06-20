@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Actions\ActionConfirmationList;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
@@ -1235,13 +1236,13 @@ abstract class AbstractAction implements ActionInterface
                 if ($check->isApplicable($sheet)) {
                     try {
                         $check->check($sheet);
-                        $logbook->addLine('Check `' . $check->__toString() . '` passed');
+                        $logbook->addLine('PASSED check `' . $check->__toString() . '` not matched on any rows');
                     } catch (DataCheckExceptionInterface $e) {
                         $eHint = '';
-                        if (null !== $e->getBadData()) {
-                            $eHint = ' on ' . $e->getBadData()->countRows() . ' rows';
+                        if (null !== $e->getRowIndexes()) {
+                            $eHint = ' on row indexes ' . implode(', ', $e->getRowIndexes())    ;
                         }
-                        $logbook->addLine('Check `' . $check->__toString() . '` failed' . $eHint);
+                        $logbook->addLine('**FAILED** check `' . $check->__toString() . '` matched' . $eHint);
                         throw new ActionInputError($this, $e->getMessage(), null, $e);
                     }
                 } else {
@@ -1366,6 +1367,7 @@ abstract class AbstractAction implements ActionInterface
             $actionAP->authorize($this, null, $userOrToken);
             return true;
         } catch (AuthorizationExceptionInterface $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             return false;
         }
     }
@@ -1705,6 +1707,7 @@ abstract class AbstractAction implements ActionInterface
             $uxon->setProperty('effected_object', $effectedObject->getAliasWithNamespace());
         }
         $this->customEffects[] = new ActionEffect($this, $uxon);
+        return $this;
     }
     
     /**
@@ -1830,8 +1833,14 @@ abstract class AbstractAction implements ActionInterface
     protected function setInputInvalidIf(UxonObject $arrayOfDataChecks) : AbstractAction
     {
         $this->getInputChecks()->removeAll();
+
+        // If the action is targeting a single object explicitly, make sure the data checks will
+        // be only applicable to that object (unless explicitly bound to another one in their
+        // configuration)
+        $onlyForObject = $this->hasInputObjectRestriction() ? $this->getInputObjectExpected() : null;
+
         foreach($arrayOfDataChecks as $uxon) {
-            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
+            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon, $onlyForObject));
         }
         return $this;
     }

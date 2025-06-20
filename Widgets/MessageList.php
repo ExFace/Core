@@ -8,6 +8,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iContainTypedWidgets;
 
 /**
  * Lists `Message` widgets - usefull within `Form`s, `Dialog`s, etc.
@@ -30,7 +31,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * @author Andrej Kabachnik
  *        
  */
-class MessageList extends Container
+class MessageList extends Container implements iContainTypedWidgets
 {
     private $messageCodesToLoad = [];
     
@@ -77,7 +78,7 @@ class MessageList extends Container
                 $widget = $widgetOrUxon;
             }
             
-            if (! ($widget instanceof Message)) {
+            if (! $this->isWidgetAllowed($widget)) {
                 throw new WidgetConfigurationError($this, 'Cannot include "' . ($widget instanceof WidgetInterface ? $widget->getWidgetType() : gettype($widget)) . '" in a ' . $this->getWidgetType() . ': only Message widgets or derivatives allowed!');
             }
             
@@ -245,5 +246,27 @@ class MessageList extends Container
         
         return parent::getWidgets($filter);
     }
+
+    /**
+     * {@inheritDoc}
+     * @see iContainTypedWidgets::isWidgetAllowed()
+     */
+    public function isWidgetAllowed(WidgetInterface $widget) : bool
+    {
+        return $widget instanceof Message;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iContainTypedWidgets::isWidgetTypeAllowed()
+     */
+    public function isWidgetTypeAllowed(string $typeOrClassOrInterface) : bool
+    {
+        if (mb_strpos($typeOrClassOrInterface, '\\') !== false) {
+            $class = $typeOrClassOrInterface;
+        } else {
+            $class = WidgetFactory::getWidgetClassFromType($typeOrClassOrInterface);
+        }
+        return is_a($class, Message::class, true);
+    }
 }
-?>

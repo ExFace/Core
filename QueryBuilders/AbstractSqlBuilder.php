@@ -428,8 +428,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     // Runtime vars
     private $select_distinct = false;
     
-    private $binary_columns = array();
-    
     private $query_id = null;
     
     private $subquery_counter = 0;
@@ -551,38 +549,50 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
-        
-        //convert binary
-        foreach ($this->getBinaryColumns() as $full_alias) {
-            foreach ($rows as $nr => $row) {
-                $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
-            }
-        }
+
         $tzWorkbench = DateTimeDataType::getTimeZoneDefault($this->getWorkbench());
         $tzQuery = $query->getTimeZone();
         $rowCnt = count($rows);
         foreach ($this->getAttributes() as $qpart) {
             $dataType = $qpart->getDataType();
+            $colKey = $qpart->getColumnKey();
             switch (true) {
+                // Remove explicitly excluded query parts
                 case ($qpart instanceof QueryPartSelect) && $qpart->isExcludedFromResult() === true:
-                    $colKey = $qpart->getColumnKey();
                     foreach ($rows as $nr => $row) {
                         unset ($rows[$nr][$colKey]);
                     }
                     break;
+                // Convert binary values if needed
+                case $this->isBinaryColumn($qpart):
+                    if ($qpart->hasAggregator()) {
+                        $aggr = $qpart->getAggregator();
+                        switch ($aggr->getFunction()->__toString()) {
+                            case AggregatorFunctionsDataType::COUNT:
+                            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                            case AggregatorFunctionsDataType::LIST_ALL:
+                            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                                break 2;
+                        }
+                    }
+                    foreach ($rows as $nr => $row) {
+                        $rows[$nr][$colKey] = $this->decodeBinary($row[$colKey]);
+                    }
+                    break;
+                // Parse times and apply time zones
                 case $dataType instanceof TimeDataType && ($dataType->isTimeZoneDependent() === true) && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
-                    $colKey = $qpart->getColumnKey();
                     for ($i = 0; $i < $rowCnt; $i++) {
                         $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey]);
                         $rows[$i][$colKey] = $dataType::convertTimeZone($rows[$i][$colKey], $tz, $tzWorkbench);
                     }
                     break;
+                // Parse dates
                 case $dataType instanceof DateTimeDataType && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
-                    $colKey = $qpart->getColumnKey();
                     for ($i = 0; $i < $rowCnt; $i++) {
                         $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey], false, $tz, false);
                     }
                     break;
+                // Handle compound attributes
                 case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface: 
                     $qpartChilds = $qpart->getCompoundChildren();
                     $qpartChildFirstInDB = null;
@@ -754,6 +764,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If the value is to be put into a JSON inside a column, store the prepared value in a separate
                 // array for later use and skip further processing for this value.
                 if ($columnIsJson === true) {
+                    if ($value === "''") {
+                        $value = null;
+                    }
                     $valuesForJsonCols[$row][$column][$jsonPath] = $value;
                     continue;
                 }
@@ -846,7 +859,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $insertedIds = [];
         $insertedCounter = 0;
-        $lastColumn = array_key_last($columns);
 
         // We now have the following prepared data:
         // - $values - array of rows, where each row is an array with SQL column for keys and their respective prepared values
@@ -855,7 +867,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // FIXME how to handle JSON data here? 
         // - create a JSON in PHP and put it into the $values/$columns?
         // - use native SQL functions to update the JSON after the regular INSERT?
-        foreach ($values as $nr => $row) {
+        foreach ($values as $rowIdx => $row) {
             // See if a UID (primary key) is provided
             $customUid = null;
             if ($uidQpart !== null) {
@@ -874,7 +886,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
 
-            $jsonsForRow = $valuesForJsonCols[$nr];
+            $jsonsForRow = $valuesForJsonCols[$rowIdx];
             $output = [];
             foreach ($columns as $column) {
                 if(!empty($jsonsForRow) && key_exists($column, $jsonsForRow)) {
@@ -888,8 +900,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
             
-            $beforeSql = $before_each_insert_sqls[$nr] . ($uidBeforeEach ?? '');
-            $afterSql = $after_each_insert_sqls[$nr] . ($uidAfterEach ?? '');
+            $beforeSql = $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '');
+            $afterSql = $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '');
             if ($beforeSql || $afterSql) {
                 $query = $data_connection->runSql($beforeSql . $sql . '; ' . $afterSql, true);
                 if ($uidAddress && $customUid === null && $rRow = $query->getResultArray()[0]) {
@@ -909,17 +921,44 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If the primary key was autogenerated by the database, fetch it via built-in function
                 $insertedId = $query->getLastInsertId();
             }
-            
-            
+
+
             // Remember inserted ids for this row if it really was inserted
             if ($cnt = $query->countAffectedRows()) {
                 $insertedCounter += $cnt;
-                $uidColKey = $uidQpart ? $uidQpart->getColumnKey() : null;
-                if ($uidColKey === null && $this->getMainObject()->hasUidAttribute()) {
-                    $uidColKey = DataColumn::sanitizeColumnName($this->getMainObject()->getUidAttribute()->getAlias());
+                $uidColKey = null;
+                // If there was a UID part in the query, use that. But even if the UID was not explicitly
+                // part of the query, but the objecdt HAS a UID, add a UID column to the result
+                if ($uidQpart) {
+                    $uidColKey = $uidQpart->getColumnKey();
+                    $uidAttr = $uidQpart->getAttribute();
+                } elseif ($this->getMainObject()->hasUidAttribute()) {
+                    $uidAttr = $this->getMainObject()->getUidAttribute();
+                    $uidColKey = DataColumn::sanitizeColumnName($uidAttr->getAlias());
                 }
+                // Get the values for the UID either from the last inserted id provided by the SQL
+                // engine or derive it from the data in case of compound attributes.
                 if ($uidColKey !== null) {
-                    $insertedIds[] = [$uidColKey => $insertedId];
+                    // If we have a compound attribute, we
+                    if ($uidAttr instanceof CompoundAttributeInterface) {
+                        $compVals = [];
+                        foreach ($uidAttr->getComponents() as $uidComp) {
+                            $uidCompQpart = $this->getValue($uidComp->getAttribute()->getAliasWithRelationPath());
+                            // IDEA what if one of the UID parts is not even part of the query? It should not really
+                            // happen, because the UID is supposed to be the primary key, but what if? Currently
+                            // we just set the UID value for this row to null if at least one of its parts is missing.
+                            if (! $uidCompQpart) {
+                                $insertedIds[] = [$uidColKey => null];
+                                continue 2;
+                            }
+                            $compVals[] = $uidCompQpart->getValues()[$rowIdx];
+                        }
+                        $insertedIds[] = [$uidColKey => $uidAttr->mergeValues($compVals)];
+                    } else {
+                        if ($uidColKey !== null) {
+                            $insertedIds[] = [$uidColKey => $insertedId];
+                        }
+                    }
                 }
             }
             
@@ -931,9 +970,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // insert. The code below worked but only returned the first id.
         // Perhaps, some possibility will be found in future.
         
-        /*foreach ($values as $nr => $row) {
+        /*foreach ($values as $rowIdx => $row) {
          foreach ($row as $val) {
-         $values[$nr] = implode(',', $row);
+         $values[$rowIdx] = implode(',', $row);
          }
          }
          $sql = 'INSERT INTO ' . $mainObj->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
@@ -1026,8 +1065,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Otherwise we will do an UPDATE with a WHERE over the UID-column
             if (count($qpart->getValues()) == 1 && (! $qpart->hasUids() || '' === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? '')) {
                 $values = $qpart->getValues();
+                $value = reset($values);
                 try {
-                    $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $qpart->getDataAddressProperties());
+                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                 }
@@ -1078,6 +1118,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                          */
                         // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
                         if($this->isJsonDataAddress($column)) {
+                            // Remove the JSON property if the value is empty!
+                            if ($value === "''" || $value === 'null') {
+                                $value = null;
+                            }
                             list($jsonColumn, $jsonPath) = $this->parseJsonDataAddress($column);
                             $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$jsonColumn][$jsonPath] = $value;
                         } else {
@@ -1636,7 +1680,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // Can't just list binary values - need to transform them to strings first!
         $aggrFunc = $aggregator->getFunction()->__toString();
-        if (strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '','binary') === 0 && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+        if ($this->isBinaryColumn($qpart) && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc == AggregatorFunctionsDataType::LIST_DISTINCT)) {
             $select = $this->buildSqlSelectBinaryAsHEX($select);
         }
         
@@ -1843,10 +1887,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $join = implode(' AND ', $compoundJoins);
         } else {
+            // Build the left side of the JOIN
             $right_obj = $rightKeyAttr->getObject();
-            $left_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($leftKeyAttr), $leftTableAlias);
-            $right_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($rightKeyAttr), $rightTableAlias);
-            $join .=  $left_join_on . ' = ' . $right_join_on;
+            $leftAddress = $this->buildSqlDataAddress($leftKeyAttr);
+            $leftJoinOn = $this->buildSqlJoinSide($leftAddress, $leftTableAlias);
+            // If this side is a binary and the other side is not, select the binary as a HEX string
+            if ($this->isBinaryColumn($leftKeyAttr) && ! $this->isBinaryColumn($rightKeyAttr)) {
+                $leftJoinOn = $this->buildSqlSelectBinaryAsHEX($leftJoinOn);
+            }
+
+            // Build the right side of the JOIN
+            $rightAddress = $this->buildSqlDataAddress($rightKeyAttr);
+            $rightJoinOn = $this->buildSqlJoinSide($rightAddress, $rightTableAlias);
+            // If this side is a binary and the other side is not, select the binary as a HEX string
+            if ($this->isBinaryColumn($rightKeyAttr) && ! $this->isBinaryColumn($leftKeyAttr)) {
+                $rightJoinOn = $this->buildSqlSelectBinaryAsHEX($rightJoinOn);
+            }
+
+            // Combine to a JOIN
+            $join .=  $leftJoinOn . ' = ' . $rightJoinOn;
+
+            // Add a custom WHERE if the right side has one. No need to add a custom WHERE for the left side
+            // as it will be part of the regular WHERE of the query
             if ($customSelectWhere = $right_obj->getDataAddressProperty(self::DAP_SQL_SELECT_WHERE)) {
                 if (mb_stripos($customSelectWhere, 'SELECT ') === false) {
                     $join .= ' AND ' . $this->replacePlaceholdersInSqlAddress($customSelectWhere, null, ['~alias' => $rightTableAlias]);
@@ -1884,18 +1946,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlJoinSide($data_address, $table_alias)
     {
         $join_side = $data_address;
-        if ($this->isSqlStatement($join_side)) {
-            $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
-            if (! empty(StringDataType::findPlaceholders($join_side))) {
-                throw new QueryBuilderException('Cannot use placeholders in SQL JOIN keys: "' . $join_side . '"');
-            }
-            // IDEA Allow placeholders in JOINed data addresses. This would allow to use compound
-            // attributes with placeholders for JOINs very effectively. However, replacePlaceholdersInSqlAddress()
-            // will need the correct base object then - a different one on each side. Not quite sure
-            // how to do this.
-            // $join_side = $this->replacePlaceholdersInSqlAddress($join_side, null, ['~alias' => $table_alias], $table_alias);
-        } else {
-            $join_side = $table_alias . $this->getAliasDelim() . $join_side;
+        switch (true) {
+            // Custom SQL statements
+            case $this->isSqlStatement($join_side):
+                $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
+                if (! empty(StringDataType::findPlaceholders($join_side))) {
+                    throw new QueryBuilderException('Cannot use placeholders in SQL JOIN keys: "' . $join_side . '"');
+                }
+                // IDEA Allow placeholders in JOINed data addresses. This would allow to use compound
+                // attributes with placeholders for JOINs very effectively. However, replacePlaceholdersInSqlAddress()
+                // will need the correct base object then - a different one on each side. Not quite sure
+                // how to do this.
+                // $join_side = $this->replacePlaceholdersInSqlAddress($join_side, null, ['~alias' => $table_alias], $table_alias);
+                break;
+            // JSON address as column::$.path
+            case $this->isJsonDataAddress($data_address):
+                list ($address, $jsonPath) = $this->parseJsonDataAddress($join_side);
+                $join_side = $this->buildSqlJsonRead($table_alias . '.' . $address, $jsonPath);
+                break;
+            // SQL column names
+            default:
+                $join_side = $table_alias . $this->getAliasDelim() . $join_side;
+                break;
         }
         return $join_side;
     }
@@ -2719,19 +2791,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return stripos($string, 'SELECT ') !== false;
     }
     
-    protected function addBinaryColumn($full_alias)
-    {
-        if (! in_array($full_alias, $this->binary_columns, true)) {
-            $this->binary_columns[] = $full_alias;
-        }
-        return $this;
-    }
-    
-    protected function getBinaryColumns()
-    {
-        return $this->binary_columns;
-    }
-    
     /**
      * 
      * @param string|NULL
@@ -2864,7 +2923,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // to use UUIDs in most custom SQL SELECTs very easily. On the other hand, it will probably
             // break SQLs where the value is supposed to be raw binary. Not sure, if this is
             // always a good idea, but it certainly helps in most cases!
-            if(strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '', 'binary' === 0)) {
+            if($this->isBinaryColumn($qpart)) {
                 $ph_select = $this->buildSqlSelectBinaryAsHEX($ph_select);
             }
 
@@ -3369,5 +3428,17 @@ SQL;
     protected function buildSqlJsonWrite(string $address, string $jsonPath, string $escapedValue) : string
     {
         return "JSON_SET({$address}, '{$jsonPath}', $escapedValue)";
+    }
+
+    /**
+     * Returns TRUE if the given query part or attribute reference a binary column in the DB and FALSE otherwise
+     *
+     * @param MetaAttributeInterface|QueryPartAttribute $qpartOrAttr
+     * @return bool
+     */
+    protected function isBinaryColumn(MetaAttributeInterface|QueryPartAttribute $qpartOrAttr) : bool
+    {
+        $sqlType = ($qpartOrAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '');
+        return strcasecmp($sqlType, 'binary') === 0;
     }
 }

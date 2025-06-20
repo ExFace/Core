@@ -229,7 +229,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      */
     public function hasPool(string $name) : bool
     {
-        return null !== $this->pools[$name] ?? null;
+        return null !== ($this->pools[$name] ?? null);
     }
     
     /**

@@ -1,13 +1,11 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Placeholders;
 
-use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
-use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
-class SubPageListResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
+class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
     const OPTION_DEPTH = "depth";
 
@@ -24,6 +22,7 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
 
     public function __construct(string $pagePathAbsolute, string $prefix = 'SubPageList:') {
         $this->pagePath = $pagePathAbsolute;
+        $this->rootPath = FilePathDataType::normalize(FilePathDataType::findFolderPath($pagePathAbsolute)) . '/';
         $this->setPrefix($prefix);
     }
 
@@ -42,7 +41,7 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
                 $options = $placeholder['options'];
                 parse_str($options, $optionsArray);
                 $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
-                $markdownStructure = $this->generateMarkdownList($rootDirectory);
+                $markdownStructure = $this->generateMarkdownList($rootDirectory, $this->getOption('depth',$optionsArray));
                 $val = $this->renderMarkdownList($markdownStructure, $this->getOption('list-type',$optionsArray), $this->getOption('depth',$optionsArray));
                 $vals[$i] = $val;
             }
@@ -63,53 +62,37 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
         return $value ?? $default;
     }
     
-    protected function generateMarkdownList(string $directory, int $level = 0): array {
-        $items = [];
-        $files = scandir($directory);
+    protected function generateMarkdownList(string $directory, int $maxDepth) : array 
+    {
+        $rawList = $this->scanMarkdownDirectory($directory, $maxDepth);
     
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..' || strtolower($file) === 'index.md') {
-                continue;
+        $convert = function(array $items) use (&$convert): array {
+            $result = [];
+    
+            foreach ($items as $item) {
+                if ($item['type'] === 'file') {
+                    $result[] = [
+                        'title' => $item['title'],
+                        'link' => $item['link'],
+                        'is_dir' => false,
+                        'children' => [],
+                    ];
+                } elseif ($item['type'] === 'directory') {
+                    $result[] = [
+                        'title' => $item['title'],
+                        'link' => $item['link'],
+                        'is_dir' => true,
+                        'children' => $convert($item['children']),
+                    ];
+                }
             }
             
-            $filePath = $directory . DIRECTORY_SEPARATOR . $file;
+            return $result;
+        };
     
-            if (is_dir($filePath)) {
-                $folderIndex = $filePath . DIRECTORY_SEPARATOR . 'index.md';
-                $folderTitle = ucfirst($file); // Default folder name as title
-                if (file_exists($folderIndex)) {
-                    $folderTitle = MarkdownDataType::findHeadOfFile($folderIndex);
-                    $items[] = [
-                        'title' => $folderTitle,
-                        'link' => $this->relativePath($folderIndex),
-                        'is_dir' => true,
-                        'children' => $this->generateMarkdownList($filePath, $level++),
-                    ];
-                } else {
-                    if($folderTitle != 'Bilder') {
-                        $items[] = [
-                            'title' => $folderTitle,
-                            'link' => null,
-                            'is_dir' => true,
-                            'children' => $this->generateMarkdownList($filePath, $level++),
-                        ];
-                    }
-                }
-            } elseif (pathinfo($filePath, PATHINFO_EXTENSION) === 'md') {
-                $items[] = [
-                    'title' => MarkdownDataType::findHeadOfFile($filePath),
-                    'link' => $this->relativePath($filePath),
-                    'is_dir' => false,
-                    'children' => [],
-                ];
-            }
-        }
-    
-        
-        $sorter = new RowDataArraySorter();
-        $sorter->addCriteria('title', SORT_ASC);
-        return $sorter->sort($items);
+        return $convert($rawList);
     }
+    
     
     function renderMarkdownList($items, $listType, $depth, $level = 0) {
         $output = '';
@@ -155,14 +138,5 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
             $output .= '</div>' . "\n";
         }
         return $output;
-    }
-
-    protected function relativePath(string $fullPath): string
-    {
-        $marker = 'Docs';
-        $normalizedFull = FilePathDataType::normalize($fullPath);
-        $parts = explode("/$marker/", $normalizedFull);
-
-        return isset($parts[1]) ? $parts[1] : null;
     }
 }

@@ -133,7 +133,7 @@ class JsonToRowsMapping extends AbstractDataSheetMapping
             foreach($jsonRows as $jsonRow) {
                 $newRow = [];
                 foreach ($jsonRow as $jsonKey => $val) {
-                    if (null === $colKeys[$jsonKey] ?? null) {
+                    if (null === ($colKeys[$jsonKey] ?? null)) {
                         $colKeys[$jsonKey] = DataColumn::sanitizeColumnName($jsonKey);
                     }
                     $newRow[$colKeys[$jsonKey]] = $val;

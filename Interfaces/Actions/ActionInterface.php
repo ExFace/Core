@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
-use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;

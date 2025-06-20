@@ -897,4 +897,13 @@ class ConditionGroup implements ConditionGroupInterface
         $this->ignoreEmptyValues = $trueOrFalse;
         return $this;
     }
+
+    public function getRequiredExpressions(?MetaObjectInterface $object = null) : array
+    {
+        $exprs = [];
+        foreach ($this->getConditionsRecursive() as $cond) {
+            $exprs = array_merge($exprs, $cond->getRequiredExpressions($object));
+        }
+        return $exprs;
+    }
 }

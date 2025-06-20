@@ -8,6 +8,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -26,11 +27,12 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use Throwable;
 
 /**
- * 
+ * A regular meta object attribute
+ *
  * @author Andrej Kabachnik
  *
  */
-class Attribute implements MetaAttributeInterface
+class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
 {
     use ImportUxonObjectTrait;
     
@@ -247,6 +249,8 @@ class Attribute implements MetaAttributeInterface
     }
     
     /**
+     * The data type of the attribute
+     *
      * @uxon-property data_type
      * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
      * @uxon-template {"alias": ""}
@@ -711,8 +715,8 @@ class Attribute implements MetaAttributeInterface
      * Direction of default soring if this attribute is one of the default sorting attributes of the object.
      * 
      * @uxon-property default_sorter_dir
-     * @uxon-type string
-     * @uxon-template asc
+     * @uxon-type [ASC,DESC]
+     * @uxon-template ASC
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()
@@ -1412,6 +1416,10 @@ class Attribute implements MetaAttributeInterface
         return $this->isInherited() ? MetaAttributeOriginDataType::INHERITED_ATTRIBUTE : MetaAttributeOriginDataType::DIRECT_ATTRIBUTE;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = new UxonObject([

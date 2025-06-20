@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\Exceptions;
 use exface\Core\Interfaces\DataSheets\DataCheckInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
-Interface DataCheckExceptionInterface extends DataSheetExceptionInterface
+Interface DataCheckExceptionInterface extends DataSheetValueExceptionInterface
 {
     /**
      * 

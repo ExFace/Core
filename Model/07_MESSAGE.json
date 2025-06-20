@@ -1786,7 +1786,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "6XDP7LI Model entity aliases can only contain letters, digits and '_', but may not start with '_'!",
+            "_EXPORT_SUMMARY": "6XDP7LI Model entity aliases can only contain letters, digits and '_', but may not start with '_'! Umlaut are invalid letters!",
             "CREATED_ON": "2017-10-13 15:35:07",
             "MODIFIED_ON": "2019-01-29 09:41:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -1794,8 +1794,8 @@
             "UID": "0x11e7b02c1305514998350205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XDP7LI",
-            "TITLE": "Model entity aliases can only contain letters, digits and '_', but may not start with '_'!",
-            "DESCRIPTION": "Aliases of meta model entities can only contain any upper and lower case letters, digits and underscores. However they may not start with an underscore '_'.",
+            "TITLE": "Model entity aliases can only contain letters, digits and '_', but may not start with '_'! Umlaut are invalid letters!",
+            "DESCRIPTION": "Aliases of meta model entities can only contain any upper and lower case letters, digits and underscores. However they may not start with an underscore '_'. Umlaut are invalid letters.",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""

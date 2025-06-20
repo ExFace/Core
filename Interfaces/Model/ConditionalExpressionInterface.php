@@ -15,29 +15,35 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 interface ConditionalExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon
 {
     /**
-     * 
-     * @return ConditionGroupInterface
-     */
-    public function toConditionGroup() : ConditionGroupInterface;
-    
-    /**
-     *
-     * @return string
-     */
-    public function __toString() : string;
-    
-    /**
-     *
-     * @return bool
-     */
-    public function isEmpty() : bool;
-    
-    /**
      *
      * @param DataSheetInterface $data_sheet
      * @param int $row_number
      * @return bool
      */
     public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool;
+
+    /**
+     * @param MetaObjectInterface|null $object
+     * @return array
+     */
+    public function getRequiredExpressions(?MetaObjectInterface $object = null) : array;
+
+    /**
+     *
+     * @return bool
+     */
+    public function isEmpty() : bool;
+
+    /**
+     *
+     * @return ConditionGroupInterface
+     */
+    public function toConditionGroup() : ConditionGroupInterface;
+
+    /**
+     *
+     * @return string
+     */
+    public function __toString() : string;
 }
 

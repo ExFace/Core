@@ -20,14 +20,19 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
             $startTag = $phData['comment'];
             $endTag = '<!-- END ' . $phData['key'] . ' -->';
     
-            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph], $phData['offset']);
+            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph] ?? '', $phData['offset'], $phData['key']);
         }
 
         return $markdown;
 	}
-    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset): string
+    
+    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName): string
     {
-         $startPos = strpos($markdown, $startTag, $offset);
+        if ($offset > strlen($markdown)) {
+        	return $markdown;
+        }
+        
+        $startPos = strpos($markdown, $startTag, $offset);
         if ($startPos === false) {
             return $markdown; 
         }
@@ -39,7 +44,13 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
 
         $endPos += strlen($endTag);
 
-        $newBlock = $startTag . PHP_EOL . $replacement . PHP_EOL . $endTag;
+        if ($placeholderName === 'ImageRef') {
+            $newBlock = $startTag . $replacement . $endTag;
+        }
+        else {
+            $newBlock = $startTag . PHP_EOL . $replacement . PHP_EOL . $endTag;
+        }
+
 
         return substr_replace($markdown, $newBlock, $startPos, $endPos - $startPos);
     }
@@ -52,7 +63,7 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     protected function getPlaceholders(string $tpl) : array
     {
         // Regex to extract the comment block (e.g., <!-- ... -->)
-        $regex = '/<!-- BEGIN (([a-zA-Z0-9_]+):?\s*(.*)) -->/';
+        $regex = '/<!--\s*BEGIN\s+((\w+)(?::([^\s]*))?)\s*-->/i';
         $matches = [
             // 0 => full match
             // 1 => placeholder with options
@@ -65,8 +76,8 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         foreach ($matches[0] as $i => $match) {
             [$fullMatch, $offset] = $match;
             $phs[] = [
-                'key' => $matches[2][$i][0], // e.g. 'ImageCaptionNr'
-                'name' => $matches[1][$i][0], // e.g. 'ImageCaptionNr:'
+                'key' => $matches[2][$i][0],
+                'name' => $matches[1][$i][0],
                 'options' => trim($matches[3][$i][0]),
                 'comment' => $fullMatch,
                 'offset' => $offset
@@ -83,20 +94,25 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     protected function getPlaceholderValues(array $placeholders) : array
     {
         $phVals = [];
-        
-        // Resolve regular placeholders
+
+        // Let each resolver handle the full placeholder list and return values indexed by their original positions
         foreach ($this->getPlaceholderResolvers() as $resolver) {
-            $phVals = array_merge($phVals, $resolver->resolve($placeholders));
-        }
-        
-        // If there are still missing placeholders, either reinsert them or raise an error
-        if (count($phVals) < count($placeholders)) {
-            $missingPhs = array_diff($placeholders, array_keys($phVals));
-            foreach ($missingPhs as $ph) {
-                $phVals[$ph] = '[#' . $ph . '#]';
+            $resolved = $resolver->resolve($placeholders);
+            foreach ($resolved as $i => $val) {
+                $phVals[$i] = $val;
             }
         }
         
+        // Find placeholders that were not resolved by any resolver
+        $placeholderIndexes = array_keys($placeholders);
+        $missingIndexes = array_diff($placeholderIndexes, array_keys($phVals));
+        
+        // Assign fallback value for missing placeholders
+        foreach ($missingIndexes as $i) {
+            $ph = $placeholders[$i];
+            $phVals[$i] = '[#' . ($ph['key'] ?? $ph['name']) . '#]';
+        }
+
         return $phVals;
     }
 }

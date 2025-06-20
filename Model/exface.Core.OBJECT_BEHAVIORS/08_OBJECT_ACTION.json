@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Object Behavior: On/Off",
+            "_EXPORT_SUMMARY": "Object Behavior: On/Off [ObjectBehaviorOnOffToggle]",
             "CREATED_ON": "2024-02-20 13:06:32",
             "MODIFIED_ON": "2024-02-20 13:07:35",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",

@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Interfaces\Widgets\PrefillModelInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\DataSheets\DataPointerInterface;
@@ -24,7 +25,6 @@ use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Actions\ShowWidget;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Interfaces\Actions\iUseTemplate;
-use function Sabre\Event\Loop\instance;
 
 class PrefillModel implements PrefillModelInterface
 {    
@@ -93,7 +93,8 @@ class PrefillModel implements PrefillModelInterface
         if (! ($widget->getParent() instanceof iTriggerAction)) {
             return $widget;   
         }
-        
+
+        $workbench = $widget->getWorkbench();
         $button = $widget->getParent();
         // Make sure, the task has page and widget selectors (they are not set automatically, for routed URLs)
         $task->setPageSelector($button->getPage()->getSelector());
@@ -121,7 +122,7 @@ class PrefillModel implements PrefillModelInterface
             }
         }
         
-        $eventMgr = $widget->getWorkbench()->eventManager();
+        $eventMgr = $workbench->eventManager();
         $eventHandlersToRemove = [];
         
         if (($action instanceof iShowWidget) && ($action->getPrefillWithInputData() || $action->getPrefillWithPrefillData() || $action->getPrefillWithFilterContext())) {
@@ -149,7 +150,7 @@ class PrefillModel implements PrefillModelInterface
                 $this->addBindingPointer($event->getWidget(), $event->getPropertyName(), $event->getPrefillValuePointer());
             };
             $eventHandlersToRemove[OnPrefillChangePropertyEvent::getEventName()] = $prefillAppliedHandler;
-            $widget->getWorkbench()->eventManager()->addListener(OnPrefillChangePropertyEvent::getEventName(), $prefillAppliedHandler);
+            $workbench->eventManager()->addListener(OnPrefillChangePropertyEvent::getEventName(), $prefillAppliedHandler);
             
             // Listen to the OnBeforePrefill event and empty data before prefilling the action's widget
             // to make sure there are no hard-coded values! This is important because we added a dummy
@@ -220,7 +221,18 @@ class PrefillModel implements PrefillModelInterface
         
         // Handle the modified task
         try {
-            $result = $widget->getWorkbench()->handle($task);
+            $wasDisabled = null;
+            if ($workbench->isInstalled()) {
+                $actionAP = $workbench->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+                $wasDisabled = $actionAP->isDisabled();
+                if (! $wasDisabled) {
+                    $actionAP->setDisabled(true);
+                }
+            }
+            $result = $workbench->handle($task);
+            if ($wasDisabled === false) {
+                $actionAP->setDisabled($wasDisabled);
+            }
             if ($result instanceof ResultWidgetInterface) {
                 $widget = $result->getWidget();
             }
@@ -236,8 +248,11 @@ class PrefillModel implements PrefillModelInterface
         
         return $widget;
     }
-    
-    protected function getExpectedInputWidget() : WidgetInterface
+
+    /**
+     * @return WidgetInterface|null
+     */
+    protected function getExpectedInputWidget() : ?WidgetInterface
     {
         // TODO what if the button has has a custom `input_widget_id`?
         $widgetToPrefill = $this->getWidget();
@@ -246,7 +261,11 @@ class PrefillModel implements PrefillModelInterface
         }
         return null;
     }
-    
+
+    /**
+     * @param WidgetInterface|null $inputWidget
+     * @return DataSheetInterface|null
+     */
     public function getExpectedInputData(WidgetInterface $inputWidget = null) : ?DataSheetInterface
     {
         $inputWidget = $inputWidget ?? $this->getExpectedInputWidget();

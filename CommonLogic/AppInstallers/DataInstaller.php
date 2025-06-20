@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Behaviors\ValidatingBehavior;
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -332,7 +333,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
      */
     public function exportModel() : \Iterator
     {
+        // Disable mutations to make sure mutated object names, etc. are not exported
+        $mutationsEnabled = $this->getWorkbench()->getConfig()->getOption('MUTATIONS.ENABLED');
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', false);
+        }
+
         yield from $this->backup($this->getApp()->getDirectoryAbsolutePath());
+
+        // Re-enable mutations
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', true);
+        }
     }
     
     /**
@@ -801,7 +813,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     protected function createModelSheet(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataSheetInterface
     {
         $cacheKey = $objectSelector . '::' . ($appRelationAttribute ?? '') . '::' . $sorterAttribute . '::' . implode(',', $excludeAttributeAliases);
-        if (null === $ds = $this->dataSheets[$cacheKey] ?? null) {
+        if (null === $ds = ($this->dataSheets[$cacheKey] ?? null)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
             $ds->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
             if ($ds->getMetaObject()->hasUidAttribute()) {
@@ -815,7 +827,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
                 
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
+                // Ignore explicitly excluded attribtues
                 if (in_array($attr->getAlias(), $excludeAttributeAliases)){
+                    continue;
+                }
+                // Ignore custom attributes created at runtime. We never know, if they will be known to a different
+                // system with a different set of apps. Apart from that, their contents will definitely be available
+                // at some real attribute - that is where they will get exported.
+                // For example, exporting custom attribute caused issues with mutations because attributes for mutation
+                // targets were exported in addition to the JSON attribute holding them all - when imported, this led
+                // to mutations being created with null-values for every unused target in the JSON, witch broke the
+                // search for mutations in the SqlModelLoader.
+                if ($attr instanceof CustomAttribute) {
                     continue;
                 }
                 $ds->getColumns()->addFromExpression($attr->getAlias());

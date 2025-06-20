@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades;
 
+use exface\Core\DataTypes\FilePathDataType;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
@@ -84,6 +85,7 @@ class DocsFacade extends AbstractHttpFacade
         if (! $baseRewriteRules->isEmpty()) {
             foreach ($baseRewriteRules->getPropertiesAll() as $pattern => $replace) {
                 $baseUrl = preg_replace($pattern, $replace, $baseUrl);
+                $this->docsPath = preg_replace($pattern, $replace, $this->docsPath);
             }
         }
         
@@ -304,6 +306,8 @@ class DocsFacade extends AbstractHttpFacade
      */
     protected function printLinkedPages(string $tempFilePath, array $linksArray) 
     {
+        $htmlString = '';
+        $linksArrayRecursive = [];
         foreach ($linksArray as $link) {
             // Only process links that are markdown files, are part of the same app documentation and have not been processed before
             if (str_ends_with($link, '.md') && str_starts_with($link, $this->docsPath) && !in_array($link, $this->processedLinks)) {
@@ -323,13 +327,17 @@ class DocsFacade extends AbstractHttpFacade
                 $htmlString = $this->addIdToFirstHeading($link, $htmlString);
                 $htmlString = $this->replaceHrefImages($htmlString);
                 $htmlString = $this->addIdToImages($htmlString);
+            } else {
+                $htmlString = PHP_EOL . '<!-- SKIPPED link ' . $link . ' because it seems external -->';
+            }
 
+            if ($htmlString) {
                 // Write the body content to the temporary file
                 file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
-                
-                if (!empty($linksArrayRecursive)) {
-                    $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
-                }
+            }
+
+            if (! empty($linksArrayRecursive)) {
+                $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
             }
         }
     }
@@ -507,6 +515,9 @@ class DocsFacade extends AbstractHttpFacade
         foreach ($links as $link) {
             $href = $link->getAttribute('href');
             if ($href) {
+                // Normalize links to make sure /Chapter1/index.md and /Chapter1/Subfolder/../index.md
+                // are not included multiple times due to the `..` iun the URL
+                $href = FilePathDataType::normalize($href);
                 $extractedLinks[] = $href;
             }
         } 

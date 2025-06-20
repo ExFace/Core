@@ -58,7 +58,7 @@ class CreateData extends SaveData implements iCreateData
                 }
             }
             try {
-                $affected_rows += $clean_sheet->dataCreate(true, $transaction);
+                $affected_rows += $clean_sheet->dataCreate($this->willUpdateIfUidFound(), $transaction);
             } catch (\Throwable $e) {
                 throw new ActionRuntimeError($this, 'Cannot create data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
             }
@@ -70,7 +70,7 @@ class CreateData extends SaveData implements iCreateData
             }
         } else {
             try {
-                $affected_rows += $data_sheet->dataCreate(true, $transaction);
+                $affected_rows += $data_sheet->dataCreate($this->willUpdateIfUidFound(), $transaction);
             } catch (\Throwable $e) {
                 throw new ActionRuntimeError($this, 'Cannot save data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
             }
@@ -135,5 +135,12 @@ class CreateData extends SaveData implements iCreateData
         $this->ingnore_related_objects_in_input_data = BooleanDataType::cast($true_or_false);
         return $this;
     }
+
+    /**
+     * @return bool
+     */
+    protected function willUpdateIfUidFound() : bool
+    {
+        return true;
+    }
 }
-?>

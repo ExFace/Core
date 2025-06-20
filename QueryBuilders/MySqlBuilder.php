@@ -125,10 +125,6 @@ class MySqlBuilder extends AbstractSqlBuilder
         /* @var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
-            // First see, if the attribute has some kind of special data type (e.g. binary)
-            if (strcasecmp(($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? ''), 'binary') === 0) {
-                $this->addBinaryColumn($qpart->getAlias());
-            }
             
             switch (true) {
                 // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
@@ -447,7 +443,11 @@ class MySqlBuilder extends AbstractSqlBuilder
         $resultJson = $initialJson;
 
         foreach ($keyValuePairs as $attributePath => $attributeValue) {
-            $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+            if ($attributeValue === null) {
+                $resultJson = "JSON_REMOVE(" . $resultJson . ", '" . $attributePath . "')";
+            } else {
+                $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+            }
         }
 
         return $resultJson;

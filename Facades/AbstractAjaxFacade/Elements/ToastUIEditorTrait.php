@@ -265,10 +265,18 @@ JS;
      */
     public function buildJsValueGetter()
     {
+        // Make sure, the value getter does not crash if the editor was not initialized yet!
         return <<<JS
-
         (function () {
-            var value = {$this->buildJsMarkdownVar()}.getMarkdown();
+            var value = '';
+            var oEditor = {$this->buildJsMarkdownVar()};
+            if (oEditor) {
+                if (oEditor.getMarkdown !== undefined) {
+                    value = oEditor.getMarkdown();
+                } else if (oEditor._lastSetValue !== undefined) {
+                        value = oEditor._lastSetValue;
+                }
+            }
             if(value === undefined || value === null) {
                 return "";
             }

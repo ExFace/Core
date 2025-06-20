@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -26,19 +27,28 @@ trait PrefillValueTrait
      *
      * This method is hande in all sorts of prepareDataSheetToXXX() and doPrefill() methods - see
      * corresponding implementations in this class.
-     * 
+     *
      * @param DataSheetInterface $prefillData
      * @param MetaObjectInterface $widget_object
-     * @param string $attributeAlias
-     * @param string $dataColumnName
-     * 
-     * @return string|NULL
+     * @param string|null $attributeAlias
+     * @param string|null $dataColumnName
+     * @param string|null $formula
+     * @return string|null
      */
-    protected function getPrefillExpression(DataSheetInterface $prefillData, MetaObjectInterface $widget_object, string $attributeAlias = null, string $dataColumnName = null) : ?string
+    protected function getPrefillExpression(DataSheetInterface $prefillData, MetaObjectInterface $widget_object, ?string $attributeAlias = null, ?string $dataColumnName = null, ?ExpressionInterface $formula = null) : ?string
     {
-        $expression = $attributeAlias ?? $dataColumnName;
+        // What is the widget bound to? If explicitly bound to an attribute or a formula - use that.
+        switch (true) {
+            case $attributeAlias !== null: $exprString = $attributeAlias; break;
+            case $formula !== null: $exprString = $formula->__toString(); break;
+        }
+        // However, if there is a DIFFERENT data_column_name or ONLY a data_column_name without another binding,
+        // use the data_column_name
+        if ($dataColumnName !== null && $exprString !== null && $dataColumnName !== DataColumn::sanitizeColumnName($exprString)) {
+            $exprString = $dataColumnName;
+        }
         
-        if ($expression === null || $expression === '') {
+        if ($exprString === null || $exprString === '') {
             return null;
         }
         
@@ -51,7 +61,7 @@ trait PrefillValueTrait
         // If it's a different object, than try to find some relation wetween them.
         if ($prefill_object->is($widget_object)) {
             // If we are looking for attributes of the object of this widget, then just return the attribute_alias
-            return $expression;
+            return $exprString;
         } elseif ($attributeAlias !== null && $widget_object->hasAttribute($attributeAlias)) {
             $attribute = $this->getMetaObject()->getAttribute($attributeAlias);
             // If not, we are dealing with a prefill with data of another object. It only makes sense to try to prefill here,
