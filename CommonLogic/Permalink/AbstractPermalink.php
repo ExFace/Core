@@ -2,11 +2,14 @@
 
 namespace exface\Core\CommonLogic\Permalink;
 
+use exface\Core\CommonLogic\DataSheets\DataCheck;
+use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use Flow\JSONPath\JSONPath;
 
 /**
  * Base class for all Permalink prototypes with constructor and basic setters.
@@ -19,7 +22,8 @@ abstract class AbstractPermalink implements PermalinkInterface
     private ?WorkbenchInterface $workbench;
     private ?string $name = null;
     private ?string $aliasWithNamespace = null;
-    private ?string $mockParams = null;
+    private ?string $exampleParams = null;
+    private array $destinationProfile = [];
 
     /**
      * @param WorkbenchInterface $workbench
@@ -91,27 +95,67 @@ abstract class AbstractPermalink implements PermalinkInterface
     }
 
     /**
-     * @uxon-property mock_params
+     * @uxon-property example_params
      * @uxon-type string
      * 
      * @param string $params
      * @return $this
      */
-    public function setMockParams(string $params) : AbstractPermalink
+    public function setExampleParams(string $params) : AbstractPermalink
     {
-        $this->mockParams = $params;
+        $this->exampleParams = $params;
         return $this;
     }
 
     /**
      * @inheritdoc 
-     * @see PermalinkInterface::getMockParams()
+     * @see PermalinkInterface::getExampleParams()
      */
-    public function getMockParams() : ?string
+    public function getExampleParams() : ?string
     {
-        return $this->mockParams;
+        return $this->exampleParams;
+    }
+
+    /**
+     * @uxon-property destination_profile
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * @uxon-template [{"expression": "", "comparator": "", "value": ""}]
+     *
+     * @param UxonObject $profile
+     * @return PermalinkInterface
+     */
+    public function setDestinationProfile(UxonObject $profile): PermalinkInterface
+    {
+        $this->destinationProfile = $profile->toArray();
+        return $this;
+    }
+
+    /**
+     * @return Condition[]
+     */
+    public function getDestinationProfile(): array
+    {
+        return $this->destinationProfile;
     }
     
+    public function destinationMatchesProfile(UxonObject $destinationUxon) : bool
+    {
+        $profile = $this->getDestinationProfile();
+        if(empty($profile)) {
+            return true;
+        }
+        
+        $json = new JSONPath($destinationUxon->toArray());
+        foreach ($profile as $condition) {
+            if(!$json->find($condition['expression'])) {
+                return false;
+            }
+            
+        }
+        
+        return true;
+    }
+
     /**
      * @inheritdoc 
      * @see PermalinkInterface::buildAbsoluteRedirectUrl()
