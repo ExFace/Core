@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Mutations\AbstractMutationPoint;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnUiPageLoadedEvent;
 use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Mutations\MetaObjectUidMutationTarget;
 
 /**
@@ -28,11 +29,13 @@ class UiPageMutationPoint extends AbstractMutationPoint
     public static function onUiMenuItemLoadedApplyMutations(OnUiMenuItemLoadedEvent $event) : void
     {
         $point = $event->getWorkbench()->getMutator()->getMutationPoint(self::class);
-        $target = new MetaObjectUidMutationTarget('exface.Core.PAGE', $event->getMenuItem()->getUid());
-        $applied = $point->applyMutations($target, $event->getMenuItem());
+        $menuItem = $event->getMenuItem();
+        $target = new MetaObjectUidMutationTarget('exface.Core.PAGE', $menuItem->getUid());
+        $applied = $point->applyMutations($target, $menuItem);
 
         if (! empty($applied)) {
-            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, 'page "' . $event->getMenuItem()->getAliasWithNamespace() . '"'));
+            $subjType = $menuItem instanceof UiPageInterface ? 'page' : 'menu item';
+            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, $subjType . ' "' . $menuItem->getAliasWithNamespace() . '"'));
         }
     }
 }
