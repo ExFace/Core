@@ -1,10 +1,8 @@
 <?php
 namespace exface\Core\Mutations;
 
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
-use exface\Core\Widgets\DebugMessage;
 
 class AppliedMutation implements AppliedMutationInterface
 {
@@ -70,25 +68,5 @@ class AppliedMutation implements AppliedMutationInterface
     public function dumpStateAfter(): string
     {
         return $this->stateAfter;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function createDebugWidget(DebugMessage $debugWidget, ?string $tabTitle = null)
-    {
-        $tab = $debugWidget->createTab();
-        $tab->setCaption($tabTitle ?? $this->getMutation()->getName());
-        $tab->setWidgets(new UxonObject([
-            [
-                'widget_type' => 'DiffText',
-                'hide_caption' => true,
-                'width' => '100%',
-                'value' => $this->dumpStateBefore(),
-                'value_to_compare' =>  $this->dumpStateAfter()
-            ]
-        ]));
-        $debugWidget->addTab($tab);
-        return $debugWidget;
     }
 }

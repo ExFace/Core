@@ -3,10 +3,13 @@
 namespace exface\Core\Mutations;
 
 use exface\Core\Interfaces\Mutations\MutationTargetInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 class MetaObjectUidMutationTarget implements MutationTargetInterface
 {
     private $selector = null;
+    private $alias = null;
+    private $namespace = null;
     private $uid = null;
     public function __construct(string $objectAlias, string $instanceUid)
     {

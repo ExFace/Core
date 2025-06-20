@@ -3,7 +3,6 @@ namespace exface\Core\Mutations\MutationPoints;
 
 use exface\Core\CommonLogic\Mutations\AbstractMutationPoint;
 use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
-use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
 use exface\Core\Mutations\MetaObjectUidMutationTarget;
 /**
  * Applies mutations before an object action is instantiated - right after the TranslatableBehavior
@@ -24,10 +23,6 @@ class ObjectActionMutationPoint extends AbstractMutationPoint
     {
         $point = $event->getWorkbench()->getMutator()->getMutationPoint(self::class);
         $target = new MetaObjectUidMutationTarget('exface.Core.OBJECT_ACTION', $event->getActionUid());
-        $applied = $point->applyMutations($target, $event->getUxon());
-
-        if (! empty($applied)) {
-            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, 'action "' . $event->getActionAliasWithNamespace() . '"'));
-        }
+        $point->applyMutations($target, $event->getUxon());
     }
 }
