@@ -26,6 +26,9 @@ class ObjectMutation extends AbstractMutation
     private ?bool           $changeReadable = null;
     private ?bool           $changeWritable = null;
 
+    private ?UxonObject $dataAddressPropertiesMutationUxon = nulL;
+    private ?GenericUxonMutation $dataAddressPropertiesMutation = nulL;
+
     /**
      * @see MutationInterface::apply()
      */
@@ -44,6 +47,11 @@ class ObjectMutation extends AbstractMutation
         }
         if (null !== $val = $this->getChangeDataAddress()) {
             $subject->setDataAddress($val);
+        }
+        if (null !== $mutation = $this->getDataAddressPropertiesMutation()) {
+            $uxon = $subject->getDataAddressProperties();
+            $mutation->apply($uxon);
+            $subject->setDataAddressProperties($uxon);
         }
         if (null !== $val = $this->getChangeReadable()) {
             $subject->setReadable($val);
@@ -138,7 +146,7 @@ class ObjectMutation extends AbstractMutation
      * Mutations for attributes of the object
      *
      * @uxon-property change_attributes
-     * @uxon-type \exface\Core\Mutations\Prototypes\ObjectAttributeMutation
+     * @uxon-type \exface\Core\Mutations\Prototypes\ObjectAttributeMutation[]
      * @uxon-template [{"attribute_alias":"", "": ""}]
      *
      * @param array $attributeMutations
@@ -163,6 +171,7 @@ class ObjectMutation extends AbstractMutation
      * Changes the data address of the object
      *
      * @uxon-property change_data_address
+     * @uxon-type string
      *
      * @uxon-type string
      *
@@ -187,7 +196,6 @@ class ObjectMutation extends AbstractMutation
      * Changes the readable flag of the object
      *
      * @uxon-property change_readable
-     *
      * @uxon-type boolean
      *
      * @param bool $objectReadableFlag
@@ -211,7 +219,6 @@ class ObjectMutation extends AbstractMutation
      * Changes the writable flag of the object
      *
      * @uxon-property change_writable
-     *
      * @uxon-type boolean
      *
      * @param bool $objectWritableFlag
@@ -221,5 +228,33 @@ class ObjectMutation extends AbstractMutation
     {
         $this->changeWritable = $objectWritableFlag;
         return $this;
+    }
+
+    /**
+     * Modifies the data address properties of the object by applying UXON mutation rules
+     *
+     * @uxon-property change_data_address_properties
+     * @uxon-type \exface\Core\Mutations\Prototypes\GenericUxonMutation
+     * @uxon-template {"": ""}
+     *
+     * @param UxonObject $uxonMutation
+     * @return $this
+     */
+    protected function setChangeDataAddressProperties(UxonObject $uxonMutation) : ObjectMutation
+    {
+        $this->dataAddressPropertiesMutationUxon = $uxonMutation;
+        $this->dataAddressPropertiesMutation = null;
+        return $this;
+    }
+
+    /**
+     * @return GenericUxonMutation|null
+     */
+    protected function getDataAddressPropertiesMutation() : ?GenericUxonMutation
+    {
+        if ($this->dataAddressPropertiesMutation === null && $this->dataAddressPropertiesMutationUxon !== null) {
+            $this->dataAddressPropertiesMutation = new GenericUxonMutation($this->getWorkbench(), $this->dataAddressPropertiesMutationUxon);
+        }
+        return $this->dataAddressPropertiesMutation;
     }
 }

@@ -3,6 +3,7 @@ namespace exface\Core\Mutations\Prototypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
@@ -19,7 +20,8 @@ class ObjectAttributeMutation extends AbstractMutation
     private ?string $attributeAlias = null;
     private ?string $changedName = null;
     private ?string $changedDescription = null;
-    private ?AbstractDataType $changedDataType = null;
+    private ?UxonObject $changedDataTypeUxon = null;
+    private ?GenericUxonMutation $changedDataTypeMutation = null;
     private ?string $changedDataAddress = null;
     private ?string $changedCalculation = null;
     private ?bool $changedReadable = null;
@@ -51,8 +53,17 @@ class ObjectAttributeMutation extends AbstractMutation
         if (null !== $val = $this->getChangeDescription()) {
             $subject->setShortDescription($val);
         }
-        if (null !== $val = $this->getChangeDataType()) {
-            $subject->setDataType($val);
+        if (null !== $mutation = $this->getChangeDataTypeMutation()) {
+            // Get the current data type customization UXON from the attribute.
+            // DO NOT use $subject->getDataType()->exportUxonObject() here because may contain later changes or default
+            // values from the data type. However, the creator of the mutation will have the attribute configuration
+            // in mind, so the mutation must be applied to it instead of the resulting data type UXON.
+            $uxon = $subject->getCustomDataTypeUxon();
+            // Since the customization does not include a data type selector, add it here to make the UXON compatible
+            // with Attribute::setDataType().
+            $uxon->setProperty('alias', $subject->getDataType()->getAliasWithNamespace());
+            $mutation->apply($uxon);
+            $subject->setDataType($uxon);
         }
         if (null !== $val = $this->getChangeDataAddress()) {
             $subject->setDataAddress($val);
@@ -178,15 +189,18 @@ class ObjectAttributeMutation extends AbstractMutation
     }
 
     /**
-     * @return AbstractDataType|null
+     * @return GenericUxonMutation|null
      */
-    protected function getChangeDataType(): ?AbstractDataType
+    protected function getChangeDataTypeMutation(): ?GenericUxonMutation
     {
-        return $this->changedDataType;
+        if ($this->changedDataTypeMutation === null && $this->changedDataTypeUxon !== null) {
+            $this->changedDataTypeMutation = new GenericUxonMutation($this->getWorkbench(), $this->changedDataTypeUxon);
+        }
+        return $this->changedDataTypeMutation;
     }
 
     /**
-     * Change the data type of the attribute
+     * Change the data type of the attribute including its custom options
      *
      * @uxon-property change_data_type
      * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
@@ -195,9 +209,10 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param AbstractDataType $attributeDataType
      * @return $this
      */
-    protected function setChangeDataType(AbstractDataType $attributeDataType): ObjectAttributeMutation
+    protected function setChangeDataType(UxonObject $uxon): ObjectAttributeMutation
     {
-        $this->changedDataType = $attributeDataType;
+        $this->changedDataTypeUxon = $uxon;
+        $this->changedDataTypeMutation = null;
         return $this;
     }
 
@@ -213,7 +228,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * Changes the data address of the attribute
      *
      * @uxon-property change_data_address
-     * @uxon-type metamodel:datatype
+     * @uxon-type string
      *
      * @param string $attributeDataAddress
      * @return $this
@@ -236,7 +251,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * Changes the calculation of the attribute
      *
      * @uxon-property change_calculation
-     * @uxon-type string
+     * @uxon-type metamodel:formula
      *
      * @param string $attributeCalculation
      * @return $this
@@ -420,7 +435,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * Changes the default value of the attribute
      *
      * @uxon-property change_default_value
-     * @uxon-type string
+     * @uxon-type metamodel:formula|string|number
      *
      * @param string $attributeDefaultValue
      * @return $this
@@ -443,7 +458,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * Changes the fixed value of the attribute
      *
      * @uxon-property change_fixed_value
-     * @uxon-type string
+     * @uxon-type metamodel:formula
      *
      * @param string $attributeFixedValue
      * @return $this
@@ -489,6 +504,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * Changes the default display order of the attribute
      *
      * @uxon-property change_default_display_order
+     * @uxon-type integer
      *
      * @param int $attributeDefaultDisplayOrder
      * @return $this
