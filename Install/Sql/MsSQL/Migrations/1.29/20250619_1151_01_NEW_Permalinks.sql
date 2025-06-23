@@ -1,12 +1,12 @@
 -- UP
 
 CREATE TABLE exf_permalink (
-    oid UNIQUEIDENTIFIER NOT NULL,
+    oid BINARY(16) NOT NULL,
     created_on DATETIME NOT NULL,
     modified_on DATETIME NOT NULL,
-    created_by_user_oid UNIQUEIDENTIFIER NOT NULL,
-    modified_by_user_oid UNIQUEIDENTIFIER NOT NULL,
-    app_oid UNIQUEIDENTIFIER NULL,
+    created_by_user_oid BINARY(16) NOT NULL,
+    modified_by_user_oid BINARY(16) NOT NULL,
+    app_oid BINARY(16) NULL,
     name VARCHAR(50) NOT NULL,
     alias VARCHAR(100) NULL,
     description VARCHAR(200) NULL,
