@@ -1,12 +1,16 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Widgets\WidgetFunctionUnknownError;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToAttribute;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToDataColumn;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\StringDataType;
@@ -590,7 +594,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      * Each element can decide itself, which data it should return for which type of action. If no action is given, the entire data
      * set used in the element should be returned.
      *
-     * In contrast to build_js_value_getter(), which returns a value without context, the data getters return JS-representations of
+     * In contrast to buildJsValueGetter(), which returns a value without context, the data getters return JS-representations of
      * data sheets - thus, the data is alwas bound to a meta object.
      *
      * @param ActionInterface $action            
@@ -599,15 +603,20 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
-        if ($widget instanceof iShowSingleAttribute) {
-            $alias = $widget->getAttributeAlias();
-            if (! $alias && $widget instanceof iShowDataColumn) {
-                $alias = $widget->getDataColumnName();
-            }
-            if ($alias) {
-                $rowsJs = "{'$alias': {$this->buildJsValueGetter()} }";
-            }
+        // If the widget shows a single column/attribute, use its value getter to add a row with its column
+        // to the JS data.
+        $colName = null;
+        // If the widget can be bound to a data column directly, use its column name. This should actually always
+        // be the case, but there might be rare (perhaps outdated) exceptions
+        if ($widget instanceof iCanBeBoundToDataColumn) {
+            $colName = $widget->getDataColumnName();
         }
+        // If not, but the widget can be bound to an attribute, generate a data column name from the attribute alias
+        if ($colName === null && $widget instanceof iCanBeBoundToAttribute) {
+            $colName = DataColumn::sanitizeColumnName($widget->getAttributeAlias());
+        }
+        // Add a row with a single column if we have a column name
+        $rowsJs = $colName !== null ? "{'$colName': {$this->buildJsValueGetter()} }" : '';
         return "{oId: '{$widget->getMetaObject()->getId()}', rows: [{$rowsJs}]}";
     }
     
