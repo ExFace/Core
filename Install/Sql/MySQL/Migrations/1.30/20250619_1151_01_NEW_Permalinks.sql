@@ -14,7 +14,9 @@ CREATE TABLE `exf_permalink` (
   `prototype_file` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   `config_uxon` longtext CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci,
   PRIMARY KEY (`oid`),
-  UNIQUE KEY `Alias unique` (`alias`)
+  UNIQUE KEY `Alias unique` (`alias`),
+  CONSTRAINT `FK_permalink_app` FOREIGN KEY (`app_oid`) REFERENCES `exf_app` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `FK_permalink_object` FOREIGN KEY (`object_oid`) REFERENCES `exf_object` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC;
 
 -- DOWN

@@ -14,7 +14,9 @@ CREATE TABLE exf_permalink (
     prototype_file VARCHAR(200) COLLATE Latin1_General_CI_AS NULL,
     config_uxon NVARCHAR(MAX) COLLATE Latin1_General_CI_AS,
     CONSTRAINT PK_exf_permalink PRIMARY KEY (oid),
-    CONSTRAINT UQ_exf_permalink_alias UNIQUE (alias)
+    CONSTRAINT UQ_exf_permalink_alias UNIQUE (alias),
+    CONSTRAINT FK_exf_permalink_set_app FOREIGN KEY (app_oid) REFERENCES exf_app (oid),
+    CONSTRAINT FK_exf_permalink_object_app FOREIGN KEY (object_oid) REFERENCES exf_object (oid)
 );
 
 -- DOWN
