@@ -19,6 +19,7 @@ abstract class AbstractPermalink implements PermalinkInterface
     private ?WorkbenchInterface $workbench;
     private ?string $name = null;
     private ?string $aliasWithNamespace = null;
+    private ?string $exampleParams = null;
 
     /**
      * @param WorkbenchInterface $workbench
@@ -87,5 +88,27 @@ abstract class AbstractPermalink implements PermalinkInterface
     public function exportUxonObject() : UxonObject
     {
         return $this->uxon ?? new UxonObject();
+    }
+
+    /**
+     * @uxon-property example_params
+     * @uxon-type string
+     *
+     * @param string $params
+     * @return $this
+     */
+    public function setExampleParams(string $params) : AbstractPermalink
+    {
+        $this->exampleParams = $params;
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     * @see PermalinkInterface::getExampleParams()
+     */
+    public function getExampleParams() : ?string
+    {
+        return $this->exampleParams;
     }
 }
