@@ -7,8 +7,10 @@ use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
@@ -291,11 +293,19 @@ class UxonSchema implements UxonSchemaInterface
         if ($cache = $this->getCache($prototypeClass, 'properties')) {
             return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
         }
-        
-        $ds = $this->loadPropertiesSheet($prototypeClass);
-        
-        $this->prototypePropCache[$prototypeClass] = $ds;
-        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
+
+        try {
+            $ds = $this->loadPropertiesSheet($prototypeClass);
+            $this->prototypePropCache[$prototypeClass] = $ds;
+            $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
+            $logHint = $e instanceof ExceptionInterface ? ' See Log-ID ' . $e->getId() : ' See logs for details';
+            $ds->addRow([
+                'PROPERTY' => '// ERROR: cannot read prototype annotations!' . $logHint
+            ]);
+        }
         
         return $ds;
     }
@@ -312,7 +322,6 @@ class UxonSchema implements UxonSchemaInterface
      */
     protected function loadPropertiesSheet(string $prototypeClass, string $aliasOfAnnotationObject = 'exface.Core.UXON_PROPERTY_ANNOTATION') : DataSheetInterface
     {
-        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $aliasOfAnnotationObject);
         $ds->getColumns()->addMultiple([
             'PROPERTY',
@@ -322,12 +331,12 @@ class UxonSchema implements UxonSchemaInterface
             'REQUIRED',
             'TRANSLATABLE'
         ]);
+        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
         try {
             $ds->dataRead();
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-            // TODO
+            throw new RuntimeException('Cannot read UXON properties from file "' . $filepathRelative . '". ' . $e->getMessage(), null, $e);
         }
         
         return $ds;
