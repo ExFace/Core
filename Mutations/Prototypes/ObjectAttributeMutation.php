@@ -7,7 +7,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
-use exface\Core\Mutations\AppliedEmptyMutation;
+use exface\Core\Mutations\AppliedMutation;
 
 /**
  * Allows to modify the model of an attribute
@@ -35,6 +35,10 @@ class ObjectAttributeMutation extends AbstractMutation
         }
 
         /* @var $subject \exface\Core\CommonLogic\Model\Attribute */
+        $stateBefore = null;
+        if ($this->hasChanges()) {
+            $stateBefore = $subject->exportUxonObject();
+        }
 
         if (null !== $mutation = $this->getChangeDataTypeMutation()) {
             // Get the current data type customization UXON from the attribute.
@@ -50,13 +54,11 @@ class ObjectAttributeMutation extends AbstractMutation
         }
         if (null !== $mutation = $this->getChangedDefaultEditorMutation()) {
             $uxon = $subject->getDefaultEditorUxon();
-            $uxon->setProperty('alias', $subject->getDataType()->getAliasWithNamespace());
             $mutation->apply($uxon);
             $subject->setDefaultEditorUxon($uxon);
         }
         if (null !== $mutation = $this->getChangedDefaultDisplayMutation()) {
             $uxon = $subject->getDefaultDisplayUxon();
-            $uxon->setProperty('alias', $subject->getDataType()->getAliasWithNamespace());
             $mutation->apply($uxon);
             $subject->setDefaultDisplayUxon($uxon);
         }
@@ -66,7 +68,7 @@ class ObjectAttributeMutation extends AbstractMutation
             $subject->importUxonObject(new UxonObject($changes));
         }
 
-        return new AppliedEmptyMutation($this, $subject);
+        return new AppliedMutation($this, $subject, $stateBefore ?? '', $stateBefore !== null ? $subject->exportUxonObject() : '');
     }
 
     /**
@@ -429,5 +431,10 @@ class ObjectAttributeMutation extends AbstractMutation
     {
         $this->changedAttributes['defaultSorterDir'] = $attributeDefaultSorterDir;
         return $this;
+    }
+
+    protected function hasChanges() : bool
+    {
+        return ! empty($this->changedAttributes) || null !== $this->changedDataTypeUxon || null !== $this->changedDefaultDisplayUxon || null !== $this->changedDefaultEditorUxon;
     }
 }
