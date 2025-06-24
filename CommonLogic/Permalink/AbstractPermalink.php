@@ -137,7 +137,16 @@ abstract class AbstractPermalink implements PermalinkInterface
     {
         return $this->destinationProfile;
     }
-    
+
+    /**
+     * Checks a destination UXON against the cached destination profile of this instance.
+     * Returns TRUE if the destination matched the profile.
+     * 
+     * TODO STUB geb 2025-06-24: Implement JSON validation.
+     * 
+     * @param UxonObject $destinationUxon
+     * @return bool
+     */
     public function destinationMatchesProfile(UxonObject $destinationUxon) : bool
     {
         $profile = $this->getDestinationProfile();
@@ -145,13 +154,13 @@ abstract class AbstractPermalink implements PermalinkInterface
             return true;
         }
         
-        $json = new JSONPath($destinationUxon->toArray());
+        /*$json = new JSONPath($destinationUxon->toArray());
         foreach ($profile as $condition) {
             if(!$json->find($condition['expression'])) {
                 return false;
             }
             
-        }
+        }*/
         
         return true;
     }

@@ -190,58 +190,11 @@ class MetaModelInstaller extends DataInstaller
             $pageInstaller->setOutputIndentation($indent);
             $pageInstaller->setTransaction($transaction);
             yield from $pageInstaller->install($source_absolute_path);
-            yield from $this->verifyPermalinks($indent);
+            yield from $this->validatePermalinks($indent);
             // Commit the transaction
             $transaction->commit();
         } else {
             yield $indent . "No model files to install" . PHP_EOL;
-        }
-    }
-    
-    protected function verifyPermalinks(string $indent) : \Generator
-    {
-        yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
-        
-        $workbench = $this->getWorkbench();
-        $appAlias = $this->getApp()->getAliasWithNamespace();
-        
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.PERMALINK');
-        $dataSheet->getColumns()->addFromSystemAttributes();
-        $dataSheet->getColumns()->addFromExpression('ALIAS');
-        $dataSheet->getFilters()->addConditionFromString(
-            'APP__ALIAS', 
-            $appAlias, 
-            ComparatorDataType::EQUALS
-        );
-        $dataSheet->dataRead();
-        
-        $rowCount = $dataSheet->countRows();
-        if($rowCount === 0) {
-            yield $indent . $indent . 'No permalinks to verify.' . PHP_EOL . PHP_EOL;
-        } else {
-            $errorCount = 0;
-            foreach ($dataSheet->getRows() as $row) {
-                try {
-                    $permalink = PermalinkFactory::fromUrlOrSelector($workbench, $appAlias . '.' . $row['ALIAS']);
-                    $params = $permalink->getExampleParams() ?? '';
-                    $permalink->withUrl($params)->buildRelativeRedirectUrl();
-
-                } catch (\Throwable) {
-                    if($errorCount++ === 0) {
-                        yield $indent . $indent . "Result\t\tAlias" .PHP_EOL;
-                        yield $indent . $indent . "------\t\t-----" . PHP_EOL;
-                    }
-                    
-                    yield $indent . $indent . "ERROR\t\t" . $appAlias . $row['ALIAS'] . PHP_EOL;
-                }
-            }
-        
-            if($errorCount > 0) {
-                $reference = $errorCount === 1 ? 'permalink' : $errorCount . ' permalinks listed';
-                yield $indent . '...the ' . $reference . ' above could not be verified.' . PHP_EOL . PHP_EOL;
-            } else {
-                yield $indent . '...all permalinks verified successfully.' . PHP_EOL . PHP_EOL;
-            }
         }
     }
 
@@ -254,6 +207,9 @@ class MetaModelInstaller extends DataInstaller
     {
         $idt = $this->getOutputIndentation();
         $app = $this->getApp();
+
+        // Verify permalinks.
+        yield from $this->validatePermalinks($idt);
         
         yield from parent::backup($destinationAbsolutePath);
         
@@ -275,7 +231,60 @@ class MetaModelInstaller extends DataInstaller
         $pageInstaller->setOutputIndentation($idt);
         yield from $pageInstaller->backup($destinationAbsolutePath);
     }
-    
+
+    /**
+     * Validates all permalinks present in the app and outputs a list of link aliases that failed validation.
+     * 
+     * @param string $indent
+     * @return \Generator
+     */
+    protected function validatePermalinks(string $indent) : \Generator
+    {
+        yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
+
+        $workbench = $this->getWorkbench();
+        $appAlias = $this->getApp()->getAliasWithNamespace();
+
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.PERMALINK');
+        $dataSheet->getColumns()->addFromSystemAttributes();
+        $dataSheet->getColumns()->addFromExpression('ALIAS');
+        $dataSheet->getFilters()->addConditionFromString(
+            'APP__ALIAS',
+            $appAlias,
+            ComparatorDataType::EQUALS
+        );
+        $dataSheet->dataRead();
+
+        $rowCount = $dataSheet->countRows();
+        if($rowCount === 0) {
+            yield $indent . $indent . 'No permalinks to validate.' . PHP_EOL . PHP_EOL;
+        } else {
+            $errorCount = 0;
+            foreach ($dataSheet->getRows() as $row) {
+                try {
+                    $permalink = PermalinkFactory::fromUrlOrSelector($workbench, $appAlias . '.' . $row['ALIAS']);
+                    $params = $permalink->getExampleParams() ?? '';
+                    $permalink->withUrl($params)->buildRelativeRedirectUrl();
+
+                } catch (\Throwable $e) {
+                    $msg = '';
+                    if($errorCount++ === 0) {
+                        $msg .= $indent . $indent . "Result\t\tAlias" .PHP_EOL;
+                        $msg .= $indent . $indent . "------\t\t-----" . PHP_EOL;
+                    }
+
+                    yield $msg . $indent . $indent . "INVALID\t\t" . $appAlias . $row['ALIAS'] . PHP_EOL;
+                }
+            }
+
+            if($errorCount > 0) {
+                yield $indent . '...please check the configuration of the permalinks listed above.' . PHP_EOL . PHP_EOL;
+            } else {
+                yield $indent . '...all permalinks verified successfully.' . PHP_EOL . PHP_EOL;
+            }
+        }
+    }
+
     /**
      * 
      * @return PageInstaller
