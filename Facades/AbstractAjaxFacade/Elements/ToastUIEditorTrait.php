@@ -41,6 +41,7 @@ trait ToastUIEditorTrait
                     el: document.querySelector('#{$this->getId()}'),
                     height: '100%',
                     initialValue: ($contentJs || ''),
+                    extendedAutolinks: true,
                     language: 'en',
                     autofocus: false,
                     viewer: false,
@@ -80,6 +81,7 @@ JS;
                     el: document.querySelector('#{$this->getId()}'),
                     height: '100%',
                     initialValue: ($contentJs || ''),
+                    extendedAutolinks: true,
                     language: 'en',
                     autofocus: false,
                     viewer: true,
@@ -274,7 +276,7 @@ JS;
                 if (oEditor.getMarkdown !== undefined) {
                     value = oEditor.getMarkdown();
                 } else if (oEditor._lastSetValue !== undefined) {
-                        value = oEditor._lastSetValue;
+                    value = oEditor._lastSetValue;
                 }
             }
             if(value === undefined || value === null) {

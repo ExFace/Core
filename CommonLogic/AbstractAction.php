@@ -1285,6 +1285,11 @@ abstract class AbstractAction implements ActionInterface
      * 
      * By default, an action accepts data of any object and attempts to deal with it.
      * Many of the core actions are actually agnostic to objects.
+     *
+     * A note on **inheritance**: if you have an object REPORT and an EXTENDED_REPORT, that
+     * inherits from REPORT, input data of EXTENDED_REPORT will work for an action with
+     * REPORT as `input_object_alias`, but not the other way around. That is because, an
+     * EXTENDED_REPORT might have more attributes, that might be required for its actions.
      * 
      * @uxon-property input_object_alias
      * @uxon-type metamodel:object
