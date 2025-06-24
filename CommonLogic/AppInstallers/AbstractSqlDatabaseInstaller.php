@@ -551,7 +551,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @return string
      */
     protected function getMarkerMultilineComment() : string{
-        return '/\/\*|\*\//';
+        return '/(\/\*)|(\*\/)/';
     }
     
     /**
@@ -1057,19 +1057,22 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         if (null === $mlDelim = $this->getMarkerMultilineComment()) {
             $results[] = $connection->runSql($script, true);
         }
-        if (!RegularExpressionDataType::isRegex($mlDelim)) {
-            $mlDelim = '/' . preg_quote($mlDelim, '/') . '/';
-        }
-        foreach (preg_split($mlDelim, $script) as $mlStmt) {
+
+        $isComment = false;
+        foreach (preg_split($mlDelim, $script, -1, PREG_SPLIT_DELIM_CAPTURE) as $mlStmt) {
             if(empty(trim($mlStmt))) {
                 continue;
             }
             
+            $isCommentNext = (preg_match($mlDelim, $mlStmt) xor $isComment);
+
             if ($this->hasPlugin($mlStmt)) {
                 $this->runPlugin($connection, $mlStmt);
-            } else {
+            } else if(!$isComment && !$isCommentNext){
                 $results[] = $connection->runSql($mlStmt, true);
             }
+
+            $isComment = $isCommentNext;
         }
         return $results;
     }
