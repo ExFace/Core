@@ -134,6 +134,17 @@
                         "height": "max",
                         "root_object": "exface.Core.PERMALINK",
                         "root_prototype": "=prototype_selector"
+                    },
+                    {
+                        "attribute_alias": "EXAMPLE_URL",
+                        "hidden": true,
+                        "id": "URL"
+                    }
+                ],
+                "buttons": [
+                    {
+                        "input_widget_id": "URL",
+                        "action_alias": "exface.Core.VisitPermalink"
                     }
                 ]
             },
