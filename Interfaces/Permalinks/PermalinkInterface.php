@@ -37,6 +37,17 @@ interface PermalinkInterface extends WorkbenchDependantInterface, iCanBeConverte
     public function __toString() : string;
 
     /**
+     * @param string $params
+     * @return PermalinkInterface
+     */
+    public function setExampleParams(string $params) : PermalinkInterface;
+
+    /**
+     * @return string|null
+     */
+    public function getExampleParams() : ?string;
+    
+    /**
      * Parses the inner URL provided and returns a new permalink instance based on the results.
      * 
      * @param string $innerUrl
