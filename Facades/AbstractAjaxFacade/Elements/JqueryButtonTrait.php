@@ -32,9 +32,8 @@ use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
- * 
- * @method Button getWidget()
- * @method AbstractAjaxFacade getFacade()
+ *
+ * @method \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade getFacade()
  * 
  * @author Andrej Kabachnik
  *
@@ -216,8 +215,6 @@ trait JqueryButtonTrait {
                             default:
                                 throw new WidgetConfigurationError($this, 'Invalid row value "' . $val . '" in input_data of ' . $this->getWidget()->getWidgetType());
                         }
-                    } else {
-                        
                     }
                 }
                 $customDataRows .= '{' . $jsRow . '},';
@@ -736,7 +733,7 @@ JS;
         
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
-        $output .= "
+        $output = "
 						if ({$this->getInputElement()->buildJsValidator()}) {
                             {$this->buildJsRequestDataCheckSize($jsRequestData, $this->getAjaxPostSizeMax())}
 							{$this->buildJsBusyIconShow()}

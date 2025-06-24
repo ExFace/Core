@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "Permalink [exface.Core.PERMALINK]",
             "CREATED_ON": "2025-06-18 11:07:34",
-            "MODIFIED_ON": "2025-06-20 11:31:44",
+            "MODIFIED_ON": "2025-06-23 18:16:10",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0943fac6e2acc943f9dc538708a84",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -109,20 +109,22 @@
                         "attribute_alias": "NAME"
                     },
                     {
-                        "attribute_alias": "ALIAS"
+                        "attribute_alias": "DESCRIPTION",
+                        "width": "max",
+                        "height": 5
                     },
                     {
-                        "attribute_alias": "PROTOTYPE_FILE",
-                        "caption": "Prototype",
-                        "id": "prototype_selector"
+                        "attribute_alias": "ALIAS"
                     },
                     {
                         "attribute_alias": "APP"
                     },
                     {
-                        "attribute_alias": "DESCRIPTION",
-                        "width": "max",
-                        "height": 2
+                        "attribute_alias": "PROTOTYPE_FILE",
+                        "id": "prototype_selector"
+                    },
+                    {
+                        "attribute_alias": "OBJECT"
                     },
                     {
                         "attribute_alias": "CONFIG_UXON",
@@ -132,17 +134,6 @@
                         "height": "max",
                         "root_object": "exface.Core.PERMALINK",
                         "root_prototype": "=prototype_selector"
-                    },
-                    {
-                        "attribute_alias": "EXAMPLE_URL",
-                        "hidden": true,
-                        "id": "URL"
-                    }
-                ],
-                "buttons": [
-                    {
-                        "input_widget_id": "URL",
-                        "action_alias": "exface.Core.VisitPermalink"
                     }
                 ]
             },
