@@ -1240,7 +1240,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
     
     /**
-     * A default editor widget for this atttribute
+     * A default editor widget for this attribute
      *
      * @uxon-property default_editor_uxon
      * @uxon-type \exface\Core\Widgets\Input

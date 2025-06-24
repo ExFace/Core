@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Mutations\Prototypes;
 
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -18,24 +17,13 @@ use exface\Core\Mutations\AppliedEmptyMutation;
 class ObjectAttributeMutation extends AbstractMutation
 {
     private ?string $attributeAlias = null;
-    private ?string $changedName = null;
-    private ?string $changedDescription = null;
     private ?UxonObject $changedDataTypeUxon = null;
     private ?GenericUxonMutation $changedDataTypeMutation = null;
-    private ?string $changedDataAddress = null;
-    private ?string $changedCalculation = null;
-    private ?bool $changedReadable = null;
-    private ?bool $changedWritable = null;
-    private ?bool $changedEditable = null;
-    private ?bool $changedHidden = null;
-    private ?bool $changedRequired = null;
-    private ?bool $changedSortable = null;
-    private ?bool $changedFilterable = null;
-    private ?string $changedDefaultValue = null;
-    private ?string $changedFixedValue = null;
-    private ?string $changedValueListDelimiter = null;
-    private ?int $changedDefaultDisplayOrder = null;
-    private ?string $changedDefaultSorterDir = null;
+    private ?UxonObject $changedDefaultEditorUxon = null;
+    private ?GenericUxonMutation $changedDefaultEditorMutation = null;
+    private ?UxonObject $changedDefaultDisplayUxon = null;
+    private ?GenericUxonMutation $changedDefaultDisplayMutation = null;
+    private array $changedAttributes = [];
 
     /**
      * @see MutationInterface::apply()
@@ -47,12 +35,7 @@ class ObjectAttributeMutation extends AbstractMutation
         }
 
         /* @var $subject \exface\Core\CommonLogic\Model\Attribute */
-        if (null !== $val = $this->getChangeName()) {
-            $subject->setName($val);
-        }
-        if (null !== $val = $this->getChangeDescription()) {
-            $subject->setShortDescription($val);
-        }
+
         if (null !== $mutation = $this->getChangeDataTypeMutation()) {
             // Get the current data type customization UXON from the attribute.
             // DO NOT use $subject->getDataType()->exportUxonObject() here because may contain later changes or default
@@ -65,48 +48,24 @@ class ObjectAttributeMutation extends AbstractMutation
             $mutation->apply($uxon);
             $subject->setDataType($uxon);
         }
-        if (null !== $val = $this->getChangeDataAddress()) {
-            $subject->setDataAddress($val);
+        if (null !== $mutation = $this->getChangedDefaultEditorMutation()) {
+            $uxon = $subject->getDefaultEditorUxon();
+            $uxon->setProperty('alias', $subject->getDataType()->getAliasWithNamespace());
+            $mutation->apply($uxon);
+            $subject->setDefaultEditorUxon($uxon);
         }
-        if (null !== $val = $this->getChangeCalculation()) {
-            $subject->setCalculation($val);
+        if (null !== $mutation = $this->getChangedDefaultDisplayMutation()) {
+            $uxon = $subject->getDefaultDisplayUxon();
+            $uxon->setProperty('alias', $subject->getDataType()->getAliasWithNamespace());
+            $mutation->apply($uxon);
+            $subject->setDefaultDisplayUxon($uxon);
         }
-        if (null !== $val = $this->getChangeReadable()) {
-            $subject->setReadable($val);
+
+        $changes = $this->getAttributeChanges();
+        if (!empty($changes)) {
+            $subject->importUxonObject(new UxonObject($changes));
         }
-        if (null !== $val = $this->getChangeWritable()) {
-            $subject->setWritable($val);
-        }
-        if (null !== $val = $this->getChangeEditable()) {
-            $subject->setEditable($val);
-        }
-        if (null !== $val = $this->getChangeHidden()) {
-            $subject->setHidden($val);
-        }
-        if (null !== $val = $this->getChangeRequired()) {
-            $subject->setRequired($val);
-        }
-        if (null !== $val = $this->getChangeSortable()) {
-            $subject->setSortable($val);
-        }
-        if (null !== $val = $this->getChangeFilterable()) {
-            $subject->setFilterable($val);
-        }
-        if (null !== $val = $this->getChangeDefaultValue()) {
-            $subject->setDefaultValue($val);
-        }
-        if (null !== $val = $this->getChangeFixedValue()) {
-            $subject->setFixedValue($val);
-        }
-        if (null !== $val = $this->getChangeValueListDelimiter()) {
-            $subject->setValueListDelimiter($val);
-        }
-        if (null !== $val = $this->getChangeDefaultDisplayOrder()) {
-            $subject->setDefaultDisplayOrder($val);
-        }
-        if (null !== $val = $this->getChangeDefaultSorterDir()) {
-            $subject->setDefaultSorterDir($val);
-        }
+
         return new AppliedEmptyMutation($this, $subject);
     }
 
@@ -116,6 +75,11 @@ class ObjectAttributeMutation extends AbstractMutation
     public function supports($subject): bool
     {
         return $subject instanceof MetaAttributeInterface;
+    }
+
+    protected function getAttributeChanges(): array
+    {
+        return $this->changedAttributes;
     }
 
     /**
@@ -143,14 +107,6 @@ class ObjectAttributeMutation extends AbstractMutation
     }
 
     /**
-     * @return string|null
-     */
-    protected function getChangeName(): ?string
-    {
-        return $this->changedName;
-    }
-
-    /**
      * Change the name of the attribute
      *
      * @uxon-property change_name
@@ -161,16 +117,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeName(string $attributeName): ObjectAttributeMutation
     {
-        $this->changedName = $attributeName;
+        $this->changedAttributes['name'] = $attributeName;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeDescription(): ?string
-    {
-        return $this->changedDescription;
     }
 
     /**
@@ -184,7 +132,7 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeDescription(string $attributeDescription): ObjectAttributeMutation
     {
-        $this->changedDescription = $attributeDescription;
+        $this->changedAttributes['description'] = $attributeDescription;
         return $this;
     }
 
@@ -206,7 +154,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
      * @uxon-template {"alias": ""}
      *
-     * @param AbstractDataType $attributeDataType
+     * @param UxonObject $uxon
      * @return $this
      */
     protected function setChangeDataType(UxonObject $uxon): ObjectAttributeMutation
@@ -217,11 +165,59 @@ class ObjectAttributeMutation extends AbstractMutation
     }
 
     /**
-     * @return string|null
+     * @return GenericUxonMutation|null
      */
-    protected function getChangeDataAddress(): ?string
+    protected function getChangedDefaultEditorMutation(): ?GenericUxonMutation
     {
-        return $this->changedDataAddress;
+        if ($this->changedDefaultEditorMutation === null && $this->changedDefaultEditorUxon !== null) {
+            $this->changedDefaultEditorMutation = new GenericUxonMutation($this->getWorkbench(), $this->changedDefaultEditorUxon);
+        }
+        return $this->changedDefaultEditorMutation;
+    }
+
+    /**
+     * Change the default editor widget for this attribute
+     *
+     * @uxon-property change_default_editor_uxon
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-template {"widget_type": ""}
+     *
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setChangeDefaultEditorUxon(UxonObject $uxon):  ObjectAttributeMutation
+    {
+        $this->changedDefaultEditorUxon = $uxon;
+        $this->changedDefaultEditorMutation = null;
+        return $this;
+    }
+
+    /**
+     * @return GenericUxonMutation|null
+     */
+    protected function getChangedDefaultDisplayMutation (): ?GenericUxonMutation
+    {
+        if ($this->changedDefaultDisplayMutation === null && $this->changedDefaultDisplayUxon !== null) {
+            $this->changedDefaultDisplayMutation = new GenericUxonMutation($this->getWorkbench(), $this->changedDefaultDisplayUxon);
+        }
+        return  $this->changedDefaultDisplayMutation;
+    }
+
+    /**
+     * Changes the default display widget to use for this attribute
+     *
+     * @uxon-property change_default_display_widget
+     * @uxon-type \exface\Core\Widgets\Display
+     * @uxon-template {"widget_type": ""}
+     *
+     * @param UxonObject $uxon
+     * @return ObjectAttributeMutation
+     */
+    protected function setChangeDefaultDisplayWidget(UxonObject $uxon):  ObjectAttributeMutation
+    {
+        $this->changedDefaultDisplayUxon = $uxon;
+        $this->changedDefaultDisplayMutation = null;
+        return $this;
     }
 
     /**
@@ -235,16 +231,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeDataAddress(string $attributeDataAddress): ObjectAttributeMutation
     {
-        $this->changedDataAddress = $attributeDataAddress;
+        $this->changedAttributes['dataAddress'] = $attributeDataAddress;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeCalculation(): ?string
-    {
-        return $this->changedCalculation;
     }
 
     /**
@@ -258,16 +246,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeCalculation(string $attributeCalculation): ObjectAttributeMutation
     {
-        $this->changedCalculation = $attributeCalculation;
+        $this->changedAttributes['calculation'] =  $attributeCalculation;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeReadable(): ?bool
-    {
-        return $this->changedReadable;
     }
 
     /**
@@ -281,16 +261,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeReadable(bool $attributeReadable): ObjectAttributeMutation
     {
-        $this->changedReadable = $attributeReadable;
+        $this->changedAttributes['readable'] = $attributeReadable;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeWritable(): ?bool
-    {
-        return $this->changedWritable;
     }
 
     /**
@@ -304,16 +276,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeWritable(bool $attributeWritable): ObjectAttributeMutation
     {
-        $this->changedWritable = $attributeWritable;
+        $this->changedAttributes['writable'] = $attributeWritable;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeEditable(): ?bool
-    {
-        return $this->changedEditable;
     }
 
     /**
@@ -327,16 +291,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeEditable(bool $attributeEditable): ObjectAttributeMutation
     {
-        $this->changedEditable = $attributeEditable;
+        $this->changedAttributes['editable'] = $attributeEditable;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeHidden(): ?bool
-    {
-        return $this->changedHidden;
     }
 
     /**
@@ -350,16 +306,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeHidden(bool $attributeHidden): ObjectAttributeMutation
     {
-        $this->changedHidden = $attributeHidden;
+        $this->changedAttributes['hidden'] = $attributeHidden;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeRequired(): ?bool
-    {
-        return $this->changedRequired;
     }
 
     /**
@@ -373,16 +321,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeRequired(bool $attributeRequired): ObjectAttributeMutation
     {
-        $this->changedRequired = $attributeRequired;
+        $this->changedAttributes['required'] = $attributeRequired;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeSortable(): ?bool
-    {
-        return $this->changedSortable;
     }
 
     /**
@@ -396,16 +336,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeSortable(bool $attributeSortable): ObjectAttributeMutation
     {
-        $this->changedSortable = $attributeSortable;
+        $this->changedAttributes['sortable'] = $attributeSortable;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeFilterable(): ?bool
-    {
-        return $this->changedFilterable;
     }
 
     /**
@@ -419,16 +351,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeFilterable(bool $attributeFilterable): ObjectAttributeMutation
     {
-        $this->changedFilterable = $attributeFilterable;
+        $this->changedAttributes['filterable'] = $attributeFilterable;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeDefaultValue(): ?string
-    {
-        return $this->changedDefaultValue;
     }
 
     /**
@@ -442,16 +366,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeDefaultValue(string $attributeDefaultValue): ObjectAttributeMutation
     {
-        $this->changedDefaultValue = $attributeDefaultValue;
+        $this->changedAttributes['defaultValue'] = $attributeDefaultValue;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeFixedValue(): ?string
-    {
-        return $this->changedFixedValue;
     }
 
     /**
@@ -465,16 +381,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeFixedValue(string $attributeFixedValue): ObjectAttributeMutation
     {
-        $this->changedFixedValue = $attributeFixedValue;
+        $this->changedAttributes['fixedValue'] = $attributeFixedValue;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeValueListDelimiter(): ?string
-    {
-        return $this->changedValueListDelimiter;
     }
 
     /**
@@ -488,16 +396,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeValueListDelimiter(string $attributeValueListDelimiter): ObjectAttributeMutation
     {
-        $this->changedValueListDelimiter = $attributeValueListDelimiter;
+        $this->changedAttributes['valueListDelimiter'] = $attributeValueListDelimiter;
         return $this;
-    }
-
-    /**
-     * @return int|null
-     */
-    protected function getChangeDefaultDisplayOrder(): ?int
-    {
-        return $this->changedDefaultDisplayOrder;
     }
 
     /**
@@ -511,16 +411,8 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeDefaultDisplayOrder(int $attributeDefaultDisplayOrder): ObjectAttributeMutation
     {
-        $this->changedDefaultDisplayOrder = $attributeDefaultDisplayOrder;
+        $this->changedAttributes['defaultDisplayOrder'] = $attributeDefaultDisplayOrder;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeDefaultSorterDir(): ?string
-    {
-        return $this->changedDefaultSorterDir;
     }
 
     /**
@@ -535,7 +427,7 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeDefaultSorterDir(string $attributeDefaultSorterDir): ObjectAttributeMutation
     {
-        $this->changedDefaultSorterDir = $attributeDefaultSorterDir;
+        $this->changedAttributes['defaultSorterDir'] = $attributeDefaultSorterDir;
         return $this;
     }
 }
