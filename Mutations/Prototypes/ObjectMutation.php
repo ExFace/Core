@@ -34,15 +34,25 @@ class ObjectMutation extends AbstractMutation
         }
 
         /* @var $subject \exface\Core\CommonLogic\Model\MetaObject */
+        if (null !== $val = ($changedObjects['name'] ?? null)) {
+            $subject->setName($val);
+        }
+        if (null !== $val = ($changedObjects['description'] ?? null)) {
+            $subject->setShortDescription($val);
+        }
+        if (null !== $val = ($changedObjects['data_address'] ?? null)) {
+            $subject->setDataAddress($val);
+        }
         if (null !== $mutation = $this->getDataAddressPropertiesMutation()) {
             $uxon = $subject->getDataAddressProperties();
             $mutation->apply($uxon);
             $subject->setDataAddressProperties($uxon);
         }
-
-        $objectChanges = $this->getObjectChanges();
-        if (!empty($objectChanges)) {
-            $subject->importUxonObject(new UxonObject($objectChanges));
+        if (null !== $val = ($changedObjects['readable'] ?? null)) {
+            $subject->setReadable($val);
+        }
+        if (null !== $val = ($changedObjects['writable'] ?? null)) {
+            $subject->setWritable($val);
         }
 
         foreach ($this->getAttributeMutations() as $mutation) {
@@ -152,7 +162,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeDataAddress(string $objectDataAddress): ObjectMutation
     {
-        $this->changedObjects['dataAddress'] = $objectDataAddress;
+        $this->changedObjects['data_address'] = $objectDataAddress;
         return $this;
     }
 

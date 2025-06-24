@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Selectors\AttributeGroupSelector;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
 use exface\Core\Factories\RelationPathFactory;
@@ -48,7 +47,7 @@ use Throwable;
  */
 class MetaObject implements MetaObjectInterface
 {
-    use ImportUxonObjectTrait;
+
     private $id;
 
     private $name;
