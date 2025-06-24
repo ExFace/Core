@@ -2,11 +2,14 @@
 
 namespace exface\Core\CommonLogic\Permalink;
 
+use exface\Core\CommonLogic\DataSheets\DataCheck;
+use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use Flow\JSONPath\JSONPath;
 
 /**
  * Base class for all Permalink prototypes with constructor and basic setters.
@@ -20,6 +23,7 @@ abstract class AbstractPermalink implements PermalinkInterface
     private ?string $name = null;
     private ?string $aliasWithNamespace = null;
     private ?string $exampleParams = null;
+    private array $destinationProfile = [];
 
     /**
      * @param WorkbenchInterface $workbench
@@ -93,7 +97,7 @@ abstract class AbstractPermalink implements PermalinkInterface
     /**
      * @uxon-property example_params
      * @uxon-type string
-     *
+     * 
      * @param string $params
      * @return $this
      */
@@ -104,11 +108,69 @@ abstract class AbstractPermalink implements PermalinkInterface
     }
 
     /**
-     * @inheritdoc
+     * @inheritdoc 
      * @see PermalinkInterface::getExampleParams()
      */
     public function getExampleParams() : ?string
     {
         return $this->exampleParams;
+    }
+
+    /**
+     * @uxon-property destination_profile
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * @uxon-template [{"expression": "", "comparator": "", "value": ""}]
+     *
+     * @param UxonObject $profile
+     * @return PermalinkInterface
+     */
+    public function setDestinationProfile(UxonObject $profile): PermalinkInterface
+    {
+        $this->destinationProfile = $profile->toArray();
+        return $this;
+    }
+
+    /**
+     * @return Condition[]
+     */
+    public function getDestinationProfile(): array
+    {
+        return $this->destinationProfile;
+    }
+
+    /**
+     * Checks a destination UXON against the cached destination profile of this instance.
+     * Returns TRUE if the destination matched the profile.
+     * 
+     * TODO STUB geb 2025-06-24: Implement JSON validation.
+     * 
+     * @param UxonObject $destinationUxon
+     * @return bool
+     */
+    public function destinationMatchesProfile(UxonObject $destinationUxon) : bool
+    {
+        $profile = $this->getDestinationProfile();
+        if(empty($profile)) {
+            return true;
+        }
+        
+        /*$json = new JSONPath($destinationUxon->toArray());
+        foreach ($profile as $condition) {
+            if(!$json->find($condition['expression'])) {
+                return false;
+            }
+            
+        }*/
+        
+        return true;
+    }
+
+    /**
+     * @inheritdoc 
+     * @see PermalinkInterface::buildAbsoluteRedirectUrl()
+     */
+    public function buildAbsoluteRedirectUrl() : string
+    {
+        return $this->getWorkbench()->getUrl() . $this->buildRelativeRedirectUrl();
     }
 }
