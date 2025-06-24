@@ -18,16 +18,11 @@ use exface\Core\Mutations\AppliedEmptyMutation;
  */
 class ObjectMutation extends AbstractMutation
 {
-    private ?string         $changedName = null;
-    private ?string         $changedDescription = null;
     private ?array          $attributeMutations = null;
     private ?UxonObject     $attributeMutationsUxon = null;
-    private ?string         $changedDataAddress = null;
-    private ?bool           $changeReadable = null;
-    private ?bool           $changeWritable = null;
-
     private ?UxonObject $dataAddressPropertiesMutationUxon = nulL;
     private ?GenericUxonMutation $dataAddressPropertiesMutation = nulL;
+    private array $changedObjects = [];
 
     /**
      * @see MutationInterface::apply()
@@ -39,26 +34,17 @@ class ObjectMutation extends AbstractMutation
         }
 
         /* @var $subject \exface\Core\CommonLogic\Model\MetaObject */
-        if (null !== $val = $this->getChangeName()) {
-            $subject->setName($val);
-        }
-        if (null !== $val = $this->getChangeDescription()) {
-            $subject->setShortDescription($val);
-        }
-        if (null !== $val = $this->getChangeDataAddress()) {
-            $subject->setDataAddress($val);
-        }
         if (null !== $mutation = $this->getDataAddressPropertiesMutation()) {
             $uxon = $subject->getDataAddressProperties();
             $mutation->apply($uxon);
             $subject->setDataAddressProperties($uxon);
         }
-        if (null !== $val = $this->getChangeReadable()) {
-            $subject->setReadable($val);
+
+        $objectChanges = $this->getObjectChanges();
+        if (!empty($objectChanges)) {
+            $subject->importUxonObject(new UxonObject($objectChanges));
         }
-        if (null !== $val = $this->getChangeWritable()) {
-            $subject->setWritable($val);
-        }
+
         foreach ($this->getAttributeMutations() as $mutation) {
             try {
                 $alias = $mutation->getAttributeAlias();
@@ -81,11 +67,13 @@ class ObjectMutation extends AbstractMutation
     }
 
     /**
-     * @return string|null
+     * returns an array of changed objects.
+     *
+     * @return array
      */
-    protected function getChangeName(): ?string
+    protected function getObjectChanges(): array
     {
-        return $this->changedName;
+        return $this->changedObjects;
     }
 
     /**
@@ -99,16 +87,8 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeName(string $objectName): ObjectMutation
     {
-        $this->changedName = $objectName;
+        $this->changedObjects['name'] = $objectName;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeDescription(): ?string
-    {
-        return $this->changedDescription;
     }
 
     /**
@@ -122,7 +102,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeDescription(string $objectDescription): ObjectMutation
     {
-        $this->changedDescription = $objectDescription;
+        $this->changedObjects['description'] = $objectDescription;
         return $this;
     }
 
@@ -149,7 +129,7 @@ class ObjectMutation extends AbstractMutation
      * @uxon-type \exface\Core\Mutations\Prototypes\ObjectAttributeMutation[]
      * @uxon-template [{"attribute_alias":"", "": ""}]
      *
-     * @param array $attributeMutations
+     * @param UxonObject $arrayOfMutations
      * @return ObjectMutation
      */
     protected function setChangeAttributes(UxonObject $arrayOfMutations): ObjectMutation
@@ -157,14 +137,6 @@ class ObjectMutation extends AbstractMutation
         $this->attributeMutations = null;
         $this->attributeMutationsUxon = $arrayOfMutations;
         return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    protected function getChangeDataAddress(): ?string
-    {
-        return $this->changedDataAddress;
     }
 
     /**
@@ -180,16 +152,8 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeDataAddress(string $objectDataAddress): ObjectMutation
     {
-        $this->changedDataAddress = $objectDataAddress;
+        $this->changedObjects['dataAddress'] = $objectDataAddress;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeReadable(): ?bool
-    {
-        return $this->changeReadable;
     }
 
     /**
@@ -203,16 +167,8 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeReadable(bool $objectReadableFlag): ObjectMutation
     {
-        $this->changeReadable = $objectReadableFlag;
+        $this->changedObjects['readable'] = $objectReadableFlag;
         return $this;
-    }
-
-    /**
-     * @return bool|null
-     */
-    protected function getChangeWritable(): ?bool
-    {
-        return $this->changeWritable;
     }
 
     /**
@@ -226,7 +182,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeWritable(bool $objectWritableFlag): ObjectMutation
     {
-        $this->changeWritable = $objectWritableFlag;
+        $this->changedObjects['writable'] = $objectWritableFlag;
         return $this;
     }
 
