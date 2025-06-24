@@ -179,7 +179,37 @@ class DataCheck implements DataCheckInterface
     public function isApplicableToObject(MetaObjectInterface $object) : bool
     {
         if (null !== $onlyForObject = $this->getOnlyForObject()) {
-            return $object->is($onlyForObject);
+            // A check is applicable if the input-object is the check-object is derived from it. This guarantees,
+            // that the check only includes attribtues, that the input-object has.
+            // For example, if we have a REPORT and an EXTENDED_REPORT based on it, a REPORT-check can be applied
+            // to both, because an EXTENDED_REPORT is a REPORT too.
+            if ($object->is($onlyForObject)) {
+                return true;
+            }
+
+            // If it is the other way around, we can only use the check if it only requires inherited attributes!
+            // In our example, an EXTENDED_REPORT-check can only be applied to a REPORT if it only requires
+            // mutual attribtues
+            if ($onlyForObject->is($object)) {
+                foreach ($this->getConditionGroup($onlyForObject)->getRequiredExpressions() as $expr) {
+                    foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                        // If the check requires at least one attribute, that is not present in the input-object,
+                        // it is not applicable
+                        if (! $object->hasAttribute($attrAlias)) {
+                            return false;
+                        }
+                    }
+                }
+                // If the check only uses attributes inherited from the input-object - it is OK
+                return true;
+            }
+
+            // If the objects are unrelated, we can still apply the check if it only requires static expressions
+            foreach ($this->getConditionGroup($onlyForObject)->getRequiredExpressions() as $expr) {
+                if (! $expr->isStatic()) {
+                    return false;
+                }
+            }
         }
         return true;
     }
