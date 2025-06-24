@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Permalink [exface.Core.PERMALINK]",
             "CREATED_ON": "2025-06-18 11:07:34",
-            "MODIFIED_ON": "2025-06-18 11:27:51",
+            "MODIFIED_ON": "2025-06-20 15:42:47",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0943fac6e2acc943f9dc538708a84",
@@ -132,6 +132,17 @@
                         "height": "max",
                         "root_object": "exface.Core.PERMALINK",
                         "root_prototype": "=prototype_selector"
+                    },
+                    {
+                        "attribute_alias": "EXAMPLE_URL",
+                        "hidden": true,
+                        "id": "URL"
+                    }
+                ],
+                "buttons": [
+                    {
+                        "input_widget_id": "URL",
+                        "action_alias": "exface.Core.VisitPermalink"
                     }
                 ]
             },
