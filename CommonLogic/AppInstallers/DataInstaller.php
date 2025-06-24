@@ -401,7 +401,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         $tmpPath = $this->getTempFolderPath($dataFolderPath);
         if ($tmpPath !== null && is_dir($tmpPath)) {
             Filemanager::deleteDir($tmpPath);
-            yield $this->getOutputIndentation() . 'Cleaned up temporary folders';
+            yield $this->getOutputIndentation() . 'Cleaned up temporary folders' . PHP_EOL;
         }
         return;
     }
