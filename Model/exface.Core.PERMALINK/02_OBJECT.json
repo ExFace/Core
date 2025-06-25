@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Permalink [exface.Core.PERMALINK]",
             "CREATED_ON": "2025-06-18 11:07:34",
-            "MODIFIED_ON": "2025-06-24 10:49:05",
+            "MODIFIED_ON": "2025-06-24 10:50:42",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0943fac6e2acc943f9dc538708a84",
@@ -109,9 +109,15 @@
                         "attribute_alias": "NAME"
                     },
                     {
-                        "attribute_alias": "DESCRIPTION",
-                        "width": "max",
-                        "height": 5
+                        "widget_type": "WidgetGroup",
+                        "caption": "Description",
+                        "widgets": [
+                            {
+                                "attribute_alias": "DESCRIPTION",
+                                "height": 4,
+                                "hide_caption": true
+                            }
+                        ]
                     },
                     {
                         "attribute_alias": "ALIAS"
