@@ -190,7 +190,10 @@ class MetaModelInstaller extends DataInstaller
             $pageInstaller->setOutputIndentation($indent);
             $pageInstaller->setTransaction($transaction);
             yield from $pageInstaller->install($source_absolute_path);
+            
+            // Validate permalinks.
             yield from $this->validatePermalinks($indent);
+            
             // Commit the transaction
             $transaction->commit();
         } else {
