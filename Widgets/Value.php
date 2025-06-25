@@ -498,22 +498,23 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getDataColumnName()
     {
-        // If bound to attribute, take the sanitized attribute alias
-        if ($this->data_column_name === null && $this->isBoundToAttribute()) {
-            $this->data_column_name = DataColumn::sanitizeColumnName($this->getAttributeAlias());
-        }
-        // Otherwise see if there is a value expression and take that if it is not a widget link
-        elseif ($this->data_column_name === null && $this->hasValue()) {
-            $expr = $this->getValueExpression();
-            if ($expr && !$expr->isEmpty() && !$expr->isReference() && !($expr->isString() && $expr->__toString() === '')) {
-                $this->data_column_name = DataColumn::sanitizeColumnName($expr->__toString());
+        if ($this->data_column_name === null) {
+            // If bound to attribute, take the sanitized attribute alias
+            if ($this->isBoundToAttribute()) {
+                $this->data_column_name = DataColumn::sanitizeColumnName($this->getAttributeAlias());
+            } // Otherwise see if there is a value expression and take that if it is not a widget link
+            elseif ($this->hasValue()) {
+                $expr = $this->getValueExpression();
+                if ($expr && ! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
+                    $this->data_column_name = DataColumn::sanitizeColumnName($expr->__toString());
+                }
             }
-        }
-        // If neither of the above helped, see if we are bound to a calculation and use that if it is
-        // a formula or a static expression
-        if ($this->data_column_name === null && null !== $calcExpr = $this->getCalculationExpression()) {
-            if($calcExpr->isFormula() && ! $calcExpr->isStatic()) {
-                $this->data_column_name = DataColumn::sanitizeColumnName($calcExpr->__toString());
+            // If neither of the above helped, see if we are bound to a calculation and use that if it is
+            // a formula or a static expression
+            if (null !== $calcExpr = $this->getCalculationExpression()) {
+                if ($calcExpr->isFormula() && !$calcExpr->isStatic()) {
+                    $this->data_column_name = DataColumn::sanitizeColumnName($calcExpr->__toString());
+                }
             }
         }
         return $this->data_column_name ?? '';
