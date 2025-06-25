@@ -243,7 +243,6 @@ class MetaModelInstaller extends DataInstaller
      */
     protected function validatePermalinks(string $indent) : \Generator
     {
-        yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
 
         $workbench = $this->getWorkbench();
         $appAlias = $this->getApp()->getAliasWithNamespace();
@@ -258,10 +257,9 @@ class MetaModelInstaller extends DataInstaller
         );
         $dataSheet->dataRead();
 
-        $rowCount = $dataSheet->countRows();
-        if($rowCount === 0) {
-            yield $indent . $indent . 'No permalinks to validate.' . PHP_EOL . PHP_EOL;
-        } else {
+        if($dataSheet->countRows() > 0) {
+            yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
+            
             $errorCount = 0;
             foreach ($dataSheet->getRows() as $row) {
                 try {
