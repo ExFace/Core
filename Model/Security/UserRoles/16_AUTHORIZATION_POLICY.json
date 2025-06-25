@@ -262,6 +262,27 @@
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": "exface/Core/Facades/PWAapiFacade.php",
             "TARGET_APP": null
+        },
+        {
+            "_EXPORT_SUMMARY": "Permalink facade for everyone",
+            "CREATED_ON": "2025-06-25 11:30:35",
+            "MODIFIED_ON": "2025-06-25 11:30:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f0b5dc0c0f1d00b5dc025041000001",
+            "NAME": "Permalink facade for everyone",
+            "DESCRIPTION": "Make sure, everyone can use a permalink. Once redirected to the real destination, the target permissions will be checked anyhow.",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8e12097517b8801f025041000001",
+            "TARGET_PAGE_GROUP": null,
+            "TARGET_USER_ROLE": null,
+            "TARGET_OBJECT": null,
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": null,
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface/Core/Facades/PermalinkFacade.php",
+            "TARGET_APP": null
         }
     ],
     "totals_rows": [],
