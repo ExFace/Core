@@ -340,7 +340,10 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         $applied = true;
                     }
                 } else {
-                    return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Input data required for apply_if_exists, but not provided');
+                    // Not applicable without input data
+                    // In the beginning, we had an Indeterminate here, but that lead to false-permits if it happened
+                    // in permit-policies because it resulted in Indeterminate{P}
+                    return PermissionFactory::createNotApplicable($this, 'Input data missing for apply_if_exists');
                 }
             }
 
@@ -355,7 +358,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         $applied = true;
                     }
                 } else {
-                    return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Input data required for apply_if_not_exists, but not provided');
+                    // Not applicable without input data
+                    // See discussion at same place in apply_if_exists for details
+                    return PermissionFactory::createNotApplicable($this, 'Input data missing for apply_if_not_exists');
                 }
             }
             
