@@ -2,14 +2,12 @@
 
 namespace exface\Core\CommonLogic\Permalink;
 
-use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Permalinks\PermalinkInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use Flow\JSONPath\JSONPath;
 
 /**
  * Base class for all Permalink prototypes with constructor and basic setters.
