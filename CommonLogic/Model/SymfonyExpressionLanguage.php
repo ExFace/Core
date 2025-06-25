@@ -78,21 +78,32 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
             $this->addFormulaToExpressionLanguage($expressionLanguage, $fixedName, $nestedFormula);
         }
         
-        // Add the columns of the current data sheet row as variable arguments
+        // Add the columns of the current data sheet row as variable arguments. In some cases, having just
+        // the column names is not enough in the array of formula arguments. Some preprocessing is needed
+        // to ensure, all formulas will find their values.
+        // 1. ensure all attributes have the correct relations pqths
         // Note, that if the formula has a relation path, the tokens will not contain it! So
-        // we need to replace attribute aliases _without_ the formulas relation path with 
+        // we need to replace attribute aliases _without_ the formulas relation path with
         // column names _with_ relation path!
-        // For example, if we have `Concatenate(lat, ',', lng)` (a formula to get the latlng coordinates 
+        // For example, if we have `Concatenate(lat, ',', lng)` (a formula to get the latlng coordinates
         // from both values separately) used with the relation path `location`, than `lat` needs
         // to be replaced with `location__lat` and `lng` with `location__lng` to match the column
         // names in the provided data row.
-        
-        //TODO parse the values before evaluating the column?
+        // 2. If the column name is different from the attribute alias, make sure the array of arguments
+        // has both!
+        // TODO parse the values before evaluating the column?
         $attrsArgs = $formula->getRequiredAttributes(false);
         $attrsRequired = $formula->getRequiredAttributes(true);
+        // Cache the colName => exprString here to quickly access in the foreach
+        $attrsExprs = $this->dataSheet->getColumns()->getColumnsExpressions();
         foreach ($attrsRequired as $i => $attrAlias) {
             $columnName = DataColumn::sanitizeColumnName($attrAlias);
             $expression = str_replace($attrsArgs[$i], $columnName, $expression);
+            // If the column name is different from the attribute alias, make sure the array of arguments
+            // has both!
+            if (! array_key_exists($columnName, $row) && false !== $colNameFromExpr = array_search($attrAlias, $attrsExprs, true)) {
+                $row[$columnName] = $row[$colNameFromExpr] ?? null;
+            }
         }
         $value = $expressionLanguage->evaluate($expression, $row);
         
