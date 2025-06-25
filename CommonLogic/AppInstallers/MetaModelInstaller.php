@@ -258,10 +258,7 @@ class MetaModelInstaller extends DataInstaller
         );
         $dataSheet->dataRead();
 
-        $rowCount = $dataSheet->countRows();
-        if($rowCount === 0) {
-            yield $indent . $indent . 'No permalinks to validate.' . PHP_EOL . PHP_EOL;
-        } else {
+        if($dataSheet->countRows() > 0) {
             $errorCount = 0;
             foreach ($dataSheet->getRows() as $row) {
                 try {
