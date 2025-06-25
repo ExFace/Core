@@ -266,17 +266,55 @@ JS;
             $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
             
             $conditionsJs = '';
+            
+            
             if ($condProp = $col->getDisabledIf()) {
-                $conditionsJs .= $this->buildJsConditionalProperty(
-                    $condProp, 
-                    "aCells.forEach(function(domCell, iRowIdx){
-                        if (oWidget.hasChanged(iColIdx, iRowIdx)) {
-                            oWidget.restoreInitValue(iColIdx, iRowIdx); 
+
+                // check for self-references
+                $hasSelfReference = false;
+                foreach ($condProp->getConditions() as $condition) {
+                    $expr = $condition->getValueLeftExpression();
+                    if ($expr->isReference()){
+                        $targetWidget = $expr->getWidgetLink($col->getCellWidget())->getTargetWidgetId();
+                        if ($targetWidget === $this->getWidget()->getId()) {
+                            $hasSelfReference = true;
+                            break;
                         }
-                        domCell.classList.add('readonly');
-                    });", 
-                    "aCells.forEach(function(domCell){domCell.classList.remove('readonly')});"
-                );
+                    }
+                }
+
+                // if it is self-referencing, apply conditions per cell
+                // otherwise apply to entire column
+                if ($hasSelfReference){
+                    $conditionsJs .= <<<JS
+                    
+                    aCells.forEach(function(domCell, iRowIdx){
+                        $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(iRowIdx);
+                        
+                        {$this->buildJsConditionalProperty(
+                            $condProp, 
+                            "if (oWidget.hasChanged(iColIdx, iRowIdx)) { oWidget.restoreInitValue(iColIdx, iRowIdx); } domCell.classList.add('readonly'); ", 
+                            "domCell.classList.remove('readonly');"
+                        )}
+                        
+                        $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(null);
+                    });
+JS;
+
+                }
+                else{
+                    $conditionsJs .= $this->buildJsConditionalProperty(
+                        $condProp, 
+                        "aCells.forEach(function(domCell, iRowIdx){
+                            if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                                oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                            }
+                            domCell.classList.add('readonly');
+                        });", 
+                        "aCells.forEach(function(domCell){domCell.classList.remove('readonly')});"
+                    );
+                }
+                
             }
             if ($conditionsJs) {
                 $conditionsJs = <<<JS
@@ -385,6 +423,9 @@ JS;
             setTimeout(function(){
                 {$this->buildJsFixedFootersSpread()}
             }, 0);
+
+            // refresh the conditional properties of spreadsheet onchange
+            instance.exfWidget.refreshConditionalProperties();
         },
         oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
             
@@ -546,6 +587,7 @@ JS;
         _rowNumberColName: $rowNumberColNameJs,
         _initData: [],
         _disabled: $disabledJs,
+        _valueGetterRow: null,
         getJExcel: function(){
             return this._dom.jspreadsheet;
         },
@@ -557,6 +599,21 @@ JS;
         },
         getColumnName: function(iColIdx) {
             return this._colNames[this.getJExcel().getHeader(iColIdx)];
+        },
+        getColumnIndex: function(colName) {
+            let keys = Object.keys(this._colNames);
+            for (let i = 0; i < keys.length; i++) {
+                if (this._colNames[keys[i]] === colName) {
+                    return i;
+                }
+            }
+            return -1;
+        },
+        setValueGetterRow: function(iRow) {
+            this._valueGetterRow = iRow;
+        },
+        getValueGetterRow: function() {
+            return this._valueGetterRow;
         },
         getColumnModel: function(iColIdx) {
             return (this._cols[this.getColumnName(iColIdx)] || {});
@@ -1796,7 +1853,7 @@ JS;
      *
      * @see AbstractJqueryElement::buildJsValueGetter()
      */
-    public function buildJsValueGetter($columnName = null, $row = null)
+    public function buildJsValueGetter($columnName = null, $row = null, bool $filterTargetIsSpreadsheet = false) : string
     {
         if (is_null($columnName)) {
             if ($this->getWidget()->hasUidColumn() === true) {
@@ -1809,20 +1866,84 @@ JS;
                 $col = $this->getWidget()->getColumnByAttributeAlias($columnName);
             }
         }
-        
+
+        if ($col === null) {
+            throw new WidgetConfigurationError($this->getWidget(), 'Cannot create a filter for column "' . $columnName . '" in the spreadsheet widget "' . $this->getWidget()->getId() . '": column does not exist!');
+        }
+
         $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
-        
-        return <<<JS
+        $jsColName = json_encode($columnName);
+
+        // check if requested data is for filter, or conditionize (disabled if)
+        // -> if it is for a self-referencing filter, use value from the current row
+        // -> if it is for conditionize, use current value from saved exfwidget row idx
+        // otherwise return values from seleted indices
+
+        if ($filterTargetIsSpreadsheet === true){
+            // if target is the spreadsheet itself, get filter value from current spreadsheet row
+            return <<<JS
+
 (function(){
-    var aAllRows = {$this->buildJsDataGetter()}.rows;
-    var aSelectedIdxs = $('#{$this->getId()}').jspreadsheet('getSelectedRows', true);
-    var aVals = [];
-    aSelectedIdxs.forEach(function(iRowIdx){
-        aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
-    })
-    return aVals.join('{$delimiter}');
+
+        var aAllRows = {$this->buildJsDataGetter()}.rows; 
+        var aCurrentIdx = [y]; 
+
+        if (!({$jsColName} in instance.exfWidget._cols)) {
+            console.warn('Column {$jsColName} does not exist in the current spreadsheet');
+            aVals = [];
+        }
+        else {
+            let colIdx = instance.exfWidget.getColumnIndex({$jsColName});
+            let value = instance.jexcel.getValueFromCoords(colIdx, y);
+
+            var aVals = [];
+            aCurrentIdx.forEach(function(iRowIdx){
+                aVals.push(value); 
+            })
+
+        }
+
+        return aVals.join('{$delimiter}');
 })()
 JS;
+        }
+        else{
+            // if filter target is not the spreadsheet itself, get values from selected indices
+            // or return data from saved row idx if exfwidget data getter is not null (for disabled if)
+            return <<<JS
+(function(){
+
+        var aAllRows = {$this->buildJsDataGetter()}.rows; 
+
+        // for disabled if: use current rowIdx saved in exfwidget 
+        if ($('#{$this->getId()}')[0].exfWidget.getValueGetterRow() !== null){
+            var iRowIdx = $('#{$this->getId()}')[0].exfWidget.getValueGetterRow();
+            var aCurrentIdx = [iRowIdx]; 
+
+            let colIdx = $('#{$this->getId()}')[0].exfWidget.getColumnIndex({$jsColName});
+            let value = $('#{$this->getId()}')[0].jexcel.getValueFromCoords(colIdx, iRowIdx);
+
+            var aVals = [];
+            aCurrentIdx.forEach(function(iRowIdx){
+                aVals.push(value); 
+            })
+
+            return aVals.join('{$delimiter}');
+        }
+
+        // otherwise: return vals from currently selected rows
+        var aSelectedIdxs = $('#{$this->getId()}').jspreadsheet('getSelectedRows', true);
+        var aVals = [];
+
+        aSelectedIdxs.forEach(function(iRowIdx){
+            aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+        })
+
+        return aVals.join('{$delimiter}');
+})()
+JS;
+        }
+        
     }
     
     /**
@@ -1841,7 +1962,12 @@ JS;
             case $expr->isReference() === true:
                 $link = $expr->getWidgetLink($cellWidget);
                 if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId());
+
+                    // check if current spreadsheet is target to enable live relations
+                    $targetWidget = $expr->getWidgetLink($cellWidget)->getTargetWidgetId(); 
+                    $isTargetWidget = ($targetWidget === $this->getWidget()->getId()) ? true : false;
+
+                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId(), null, $isTargetWidget);
                 }
                 break;
             case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
