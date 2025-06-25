@@ -95,13 +95,17 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
         $attrsArgs = $formula->getRequiredAttributes(false);
         $attrsRequired = $formula->getRequiredAttributes(true);
         // Cache the colName => exprString here to quickly access in the foreach
-        $attrsExprs = $this->dataSheet->getColumns()->getColumnsExpressions();
+        if ($this->dataSheet !== null) {
+            $attrsExprs = $this->dataSheet->getColumns()->getColumnsExpressions();
+        } else {
+            $attrsExprs = null;
+        }
         foreach ($attrsRequired as $i => $attrAlias) {
             $columnName = DataColumn::sanitizeColumnName($attrAlias);
             $expression = str_replace($attrsArgs[$i], $columnName, $expression);
             // If the column name is different from the attribute alias, make sure the array of arguments
             // has both!
-            if (! array_key_exists($columnName, $row) && false !== $colNameFromExpr = array_search($attrAlias, $attrsExprs, true)) {
+            if (! array_key_exists($columnName, $row) && $attrsExprs !== null && false !== $colNameFromExpr = array_search($attrAlias, $attrsExprs, true)) {
                 $row[$columnName] = $row[$colNameFromExpr] ?? null;
             }
         }
