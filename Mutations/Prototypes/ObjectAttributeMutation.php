@@ -37,7 +37,7 @@ class ObjectAttributeMutation extends AbstractMutation
         /* @var $subject \exface\Core\CommonLogic\Model\Attribute */
         $stateBefore = null;
         if ($this->hasChanges()) {
-            $stateBefore = $subject->exportUxonObject();
+            $stateBefore = $subject->exportUxonObject()->toJson(true);
         }
 
         if (null !== $mutation = $this->getChangeDataTypeMutation()) {
@@ -68,7 +68,7 @@ class ObjectAttributeMutation extends AbstractMutation
             $subject->importUxonObject(new UxonObject($changes));
         }
 
-        return new AppliedMutation($this, $subject, $stateBefore ?? '', $stateBefore !== null ? $subject->exportUxonObject() : '');
+        return new AppliedMutation($this, $subject, $stateBefore ?? '', ($stateBefore !== null ? $subject->exportUxonObject()->toJson(true) : ''));
     }
 
     /**
