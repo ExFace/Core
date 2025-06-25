@@ -243,7 +243,6 @@ class MetaModelInstaller extends DataInstaller
      */
     protected function validatePermalinks(string $indent) : \Generator
     {
-        yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
 
         $workbench = $this->getWorkbench();
         $appAlias = $this->getApp()->getAliasWithNamespace();
@@ -259,6 +258,8 @@ class MetaModelInstaller extends DataInstaller
         $dataSheet->dataRead();
 
         if($dataSheet->countRows() > 0) {
+            yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
+            
             $errorCount = 0;
             foreach ($dataSheet->getRows() as $row) {
                 try {
