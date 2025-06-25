@@ -190,7 +190,10 @@ class MetaModelInstaller extends DataInstaller
             $pageInstaller->setOutputIndentation($indent);
             $pageInstaller->setTransaction($transaction);
             yield from $pageInstaller->install($source_absolute_path);
+            
+            // Validate permalinks.
             yield from $this->validatePermalinks($indent);
+            
             // Commit the transaction
             $transaction->commit();
         } else {
@@ -208,9 +211,6 @@ class MetaModelInstaller extends DataInstaller
         $idt = $this->getOutputIndentation();
         $app = $this->getApp();
 
-        // Verify permalinks.
-        yield from $this->validatePermalinks($idt);
-        
         yield from parent::backup($destinationAbsolutePath);
         
         // Save some information about the package in the extras of composer.json
@@ -230,6 +230,9 @@ class MetaModelInstaller extends DataInstaller
         $pageInstaller = $this->getPageInstaller();
         $pageInstaller->setOutputIndentation($idt);
         yield from $pageInstaller->backup($destinationAbsolutePath);
+
+        // Verify permalinks.
+        yield from $this->validatePermalinks($idt);
     }
 
     /**
