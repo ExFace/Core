@@ -309,7 +309,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
                     $inputData = $task->getInputData();
-                    if ($action !== null && null !== $mapper = $action->getInputMapper($task->getInputData())) {
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
                         $inputData = $mapper->map($inputData);
                     }
                     if ($conditionGrp->evaluate($inputData) === false) {
@@ -351,6 +351,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             if (null !== $condition = $this->getApplyIfNotExists()) {
                 if ($task && $task->hasInputData()) {
                     $inputData = $task->getInputData();
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
+                        $inputData = $mapper->map($inputData);
+                    }
                     if ($condition->evaluate($inputData)) {
                         return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data. ' . $condition->explain($inputData));
                     } else {
