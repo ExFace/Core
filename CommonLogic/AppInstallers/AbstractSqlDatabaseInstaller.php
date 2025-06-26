@@ -1071,7 +1071,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     /**
      * Parses a script and extracts consecutive blocks of SQL and plugin statements.
      * 
-     * NOTE: This is a very crude implementation of a state machine. If you ever want to
+     * NOTE: This is a very crude imitation of a state machine. If you ever want to
      * expand this with more complex parsing logic, consider using fully featured 3rd party
      * parser instead.
      * 
