@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
-use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Widgets\Parts\DataRowGrouper;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Widgets\Traits\DataTableTrait;
@@ -90,11 +90,11 @@ use exface\Core\Interfaces\Widgets\iCanBeDragAndDropSource;
  *        
  */
 class DataTable extends Data implements 
-    iCanEditData, 
+    iCanEditData,
     iFillEntireContainer, 
     iSupportMultiSelect, 
-    iHaveContextMenu, 
-    iTakeInput, 
+    iHaveContextMenu,
+    iTakeInputAsDataSubsheet,
     iCanWrapText,
     iCanBeDragAndDropSource
 {
