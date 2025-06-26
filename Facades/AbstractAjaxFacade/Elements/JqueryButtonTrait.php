@@ -675,6 +675,7 @@ JS;
 
                     [{
                         trigger_widget_id: "{$widget->getId()}",
+                        page_alias: "{$widget->getPage()->getAliasWithNamespace()}",
                         action_alias: "{$action->getAliasWithNamespace()}",
                         effects: [ $effectsJs ],
                         refresh_widgets: [ $refreshIds ],
@@ -1161,8 +1162,7 @@ JS;
 
             $( document ).off( "{$actionperformed}.{$this->getId()}" );
             $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
-                var sTriggerWidgetId = "{$targetEl->getWidget()->getId()}";
-                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
+                if (oParams.page_alias !== '{$targetEl->getWidget()->getPage()->getAliasWithNamespace()}' || oParams.trigger_widget_id !== '{$targetEl->getWidget()->getId()}') {
                     return;
                 }
                 // Avoid errors if widget was removed already
