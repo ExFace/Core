@@ -543,17 +543,16 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         return '@plugin\.';
     }
 
-    /**
-     * Returns a regular expression which matches the beginning and the end of a multiline comment.
-     *
-     *  Override this method to define a custom marker for a specific SQL dialect.
-     *
-     * @return string
-     */
-    protected function getMarkerMultilineComment() : string{
-        return '/(\/\*)|(\*\/)/';
+    protected function getRegexTokenOpenComment() : string
+    {
+        return '(^\/\*)|([\s]\/\*)';
     }
-    
+
+    protected function getRegexTokenCloseComment() : string
+    {
+        return '(\*\/[\s])|(\*\/$)';
+    }
+
     /**
      * Function to perform migrations on the database.
      * 
@@ -1054,26 +1053,97 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function interpretAndRunStatements(SqlDataConnectorInterface $connection, string $script, array $results): array
     {
-        if (null === $mlDelim = $this->getMarkerMultilineComment()) {
-            $results[] = $connection->runSql($script, true);
-        }
+        foreach ($this->parseScript($script) as $statement) {
+            list('isPlugin' => $isPlugin, 'script' => $script) = $statement;
+            if(empty(trim($script))) {
+                continue;
+            }
 
+            if ($isPlugin) {
+                $this->runPlugin($connection, $script);
+            } else {
+                $results[] = $connection->runSql($script, true);
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Parses a script and extracts consecutive blocks of SQL and plugin statements.
+     * 
+     * NOTE: This is a very crude imitation of a state machine. If you ever want to
+     * expand this with more complex parsing logic, consider using fully featured 3rd party
+     * parser instead.
+     * 
+     * @param string $script
+     * @return array
+     */
+    protected function parseScript(string $script) : array
+    {
+        $commentRegex = '/' . $this->getRegexTokenOpenComment() . '|' . $this->getRegexTokenCloseComment() . '/';
+        $openCommentRegex = '/' . $this->getRegexTokenOpenComment() . '/';
+        $closeCommentRegex = '/' . $this->getRegexTokenCloseComment() . '/';
+        
         $isComment = false;
-        foreach (preg_split($mlDelim, $script, -1, PREG_SPLIT_DELIM_CAPTURE) as $mlStmt) {
-            if(empty(trim($mlStmt))) {
+        $putStatement = false;
+        $statements = [];
+        $statementCache = '';
+        $commentCache = '';
+
+        foreach(preg_split($commentRegex, $script, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) as $sPart) {
+            if(empty(trim($sPart))) {
                 continue;
             }
             
-            $isCommentNext = (preg_match($mlDelim, $mlStmt) xor $isComment);
+            // Update state.
+            $isCommentNext = !$isComment ?
+                preg_match($openCommentRegex, $sPart) :
+                !preg_match($closeCommentRegex, $sPart);
 
-            if ($this->hasPlugin($mlStmt)) {
-                $this->runPlugin($connection, $mlStmt);
-            } else if(!$isComment && !$isCommentNext){
-                $results[] = $connection->runSql($mlStmt, true);
+            // Add part to statement cache.
+            $statementCache .= $sPart;
+            
+            // If part is a comment, add it to comment cache.
+            if($isComment || $isCommentNext) {
+                $commentCache .= $sPart;
+            }
+            
+            // If part has a plugin, prepare to put the current statement into the results.
+            // This is needed to execute any plugins after any SQL statements that have come before.
+            if ($this->hasPlugin($sPart)) {
+                $putStatement = true;
+            }
+            
+            // Put the statement to the results.
+            if($putStatement && $isComment && !$isCommentNext) {
+                $statements[] = [
+                    'isPlugin' => false,
+                    'script' => $statementCache
+                ];
+
+                $statements[] = [
+                    'isPlugin' => true,
+                    'script' => $commentCache
+                ];
+
+                $putStatement = false;
+                $statementCache = '';
+            } 
+
+            if(!$isCommentNext) {
+                $commentCache = '';
             }
 
             $isComment = $isCommentNext;
         }
-        return $results;
+        
+        if(!empty($statementCache)) {
+            $statements[] = [
+                'isPlugin' => false,
+                'script' => $statementCache
+            ];
+        } 
+        
+        return $statements;
     }
 }
