@@ -19,6 +19,7 @@ use exface\Core\Factories\ExpressionFactory;
 trait EditableTableTrait
 {    
     use iCanEditDataTrait;
+    use iTakeInputAsDataSubsheetTrait;
     
     private $required = false;
     

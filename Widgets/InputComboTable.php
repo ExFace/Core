@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\RelationPathFactory;
@@ -157,7 +158,7 @@ use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
  * @author Andrej Kabachnik
  *        
  */
-class InputComboTable extends InputCombo implements iCanPreloadData
+class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iCanPreloadData
 {
     use iTrackIncomingLinksTrait;
     
@@ -968,5 +969,27 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     {
         $this->autosearch_single_suggestion = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
+    }
+
+    public function isSubsheetForObject(MetaObjectInterface $objectOfInputData): bool
+    {
+        if ($this->getMetaObject()->is($objectOfInputData)) {
+            return false;
+        }
+
+        // If it's another object, we need to decide, whether to place the data in a
+        // subsheet.
+        if ($objectOfInputData->is($this->getTableObject())) {
+            // TODO not sure what to do if the action is based on the object of the table.
+            // This should be really important in lookup dialogs, but for now we just fall
+            // back to the generic input logic. See facade elements like UI5InputComboTable
+            // for more details.
+            return false;
+        }
+
+        if ($this->findRelationPathFromObject($objectOfInputData)) {
+            return true;
+        }
+        return false;
     }
 }
