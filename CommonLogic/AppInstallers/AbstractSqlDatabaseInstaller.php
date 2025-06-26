@@ -1087,7 +1087,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $isComment = false;
         $putStatement = false;
         $statements = [];
-        $pluginQueue = [];
         $statementCache = '';
         $commentCache = '';
 
