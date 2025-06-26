@@ -1872,7 +1872,6 @@ JS;
         }
 
         $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
-        $jsColName = json_encode($columnName);
 
         // check if requested data is for filter, or conditionize (disabled if)
         // -> if it is for a self-referencing filter, use value from the current row
@@ -1886,21 +1885,13 @@ JS;
 (function(){
 
         var aAllRows = {$this->buildJsDataGetter()}.rows; 
-        var aCurrentIdx = [y]; 
+        var aVals = [];
 
-        if (!({$jsColName} in instance.exfWidget._cols)) {
-            console.warn('Column {$jsColName} does not exist in the current spreadsheet');
-            aVals = [];
+        if (aAllRows[y]['{$col->getDataColumnName()}'] === undefined) {
+            console.warn('Column {$col->getDataColumnName()} does not exist in the current spreadsheet'); 
         }
         else {
-            let colIdx = instance.exfWidget.getColumnIndex({$jsColName});
-            let value = instance.jexcel.getValueFromCoords(colIdx, y);
-
-            var aVals = [];
-            aCurrentIdx.forEach(function(iRowIdx){
-                aVals.push(value); 
-            })
-
+            aVals.push(aAllRows[y]['{$col->getDataColumnName()}']); 
         }
 
         return aVals.join('{$delimiter}');
@@ -1918,16 +1909,10 @@ JS;
         // for disabled if: use current rowIdx saved in exfwidget 
         if ($('#{$this->getId()}')[0].exfWidget.getValueGetterRow() !== null){
             var iRowIdx = $('#{$this->getId()}')[0].exfWidget.getValueGetterRow();
-            var aCurrentIdx = [iRowIdx]; 
-
-            let colIdx = $('#{$this->getId()}')[0].exfWidget.getColumnIndex({$jsColName});
-            let value = $('#{$this->getId()}')[0].jexcel.getValueFromCoords(colIdx, iRowIdx);
+            let value = aAllRows[iRowIdx]['{$col->getDataColumnName()}'];
 
             var aVals = [];
-            aCurrentIdx.forEach(function(iRowIdx){
-                aVals.push(value); 
-            })
-
+            aVals.push(value); 
             return aVals.join('{$delimiter}');
         }
 
