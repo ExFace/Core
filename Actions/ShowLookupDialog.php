@@ -197,8 +197,20 @@ class ShowLookupDialog extends ShowDialog
                             break;
                     }
                     foreach ($cols as $col) {
-                        if (null !== $data_table->getColumnByDataColumnName($col->getDataColumnName())) {
-                            continue;
+                        // Avoid duplicate columns!
+                        // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
+                        // different attributes, but having the same caption, we should NOT put them both in the
+                        // table! Similarly, avoid columns with different captions, but same content!
+                        foreach ($data_table->getColumns() as $existingCol) {
+                            if ($existingCol->getCaption() === $col->getCaption()) {
+                                continue 2;
+                            }
+                            if ($existingCol->getDataColumnName() === $col->getDataColumnName()) {
+                                continue 2;
+                            }
+                            if ($col->isBoundToAttribute() && $existingCol->isBoundToAttribute() && $existingCol->getAttributeAlias() === $col->getAttributeAlias()) {
+                                continue 2;
+                            }
                         }
                         
                         $widgetType = $data_table->getColumnDefaultWidgetType();
