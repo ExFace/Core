@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
@@ -25,17 +26,23 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 class DataTableConfigurator extends DataConfigurator
 {
     private $column_tab = null;
-
     private UxonObject|null $columnsUxon = null;
-    
+    private int $columnsDefaultVisibility = WidgetVisibilityDataType::OPTIONAL;
+
     private $aggregation_tab = null;
 
-    private int $columnsDefaultVisibility = WidgetVisibilityDataType::OPTIONAL;
+    private $setupsTab = null;
+    private $setupsUxon = null;
 
     public function getWidgets(callable $filter_callback = null): array
     {
         // Make sure to initialize the columns tab. This will automatically add
         // it to the default widget array inside the container.
+        if (null === $this->setupsTab){
+            /* FIXME this leads to UI5 error
+            $this->getSetupsTab();
+            */
+        }
         if (null === $this->column_tab){
             $this->getOptionalColumnsTab();
         }
@@ -166,6 +173,80 @@ class DataTableConfigurator extends DataConfigurator
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
+    }
+
+    public function getSetupsTab() : Tab
+    {
+        if (null === $this->setupsTab){
+            $this->setupsTab = $this->createSetupsTab();
+            $this->addTab($this->setupsTab/*, 0*/);
+        }
+        return $this->setupsTab;
+    }
+
+    /**
+     *
+     * @return Tab
+     */
+    protected function createSetupsTab()
+    {
+        $tab = $this->createTab();
+        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'));
+        $tab->setIcon(Icons::STAR);
+        $tab->setWidgets(new UxonObject([[
+            'widget_type' => 'DataTableResponsive',
+            'object_alias' => 'exface.Core.WIDGET_SETUP',
+            'filters' => [
+                [
+                    'attribute_alias' => 'PAGE',
+                    'comparator' => ComparatorDataType::EQUALS,
+                    'value' => $this->getPage()->getUid(),
+                    'hidden' => true
+                ], [
+                    'attribute_alias' => 'WIDGET_ID',
+                    'comparator' => ComparatorDataType::EQUALS,
+                    'value' => $this->getDataWidget()->getId(),
+                    'hidden' => true
+                ], [
+                    'hidden' => true,
+                    'condition_group' => [
+                        'operator' => EXF_LOGICAL_OR,
+                        'conditons' => [
+                            [
+                                'expression' => 'PRIVATE_FOR_USER',
+                                'comparator' => ComparatorDataType::EQUALS,
+                                'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid()
+                            ], [
+                                'expression' => 'PRIVATE_FOR_USER',
+                                'comparator' => ComparatorDataType::EQUALS,
+                                'value' => EXF_LOGICAL_NULL
+                            ], [
+                                'expression' => 'WIDGET_SETUP_USER__USER',
+                                'comparator' => ComparatorDataType::EQUALS,
+                                'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
+                                'apply_to_aggregates' => true
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'columns' => [
+                [
+                    'attribute_alias' => 'NAME',
+                ], [
+                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG',
+                ], [
+                    'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG',
+                ]
+            ]
+        ]]));
+        return $tab;
+    }
+
+    public function setSetups(UxonObject $arrayOfSetups) : DataTableConfigurator
+    {
+        $this->setupsUxon = $arrayOfSetups;
+        return $this;
     }
     
 }
