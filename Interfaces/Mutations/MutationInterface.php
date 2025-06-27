@@ -1,18 +1,15 @@
 <?php
 namespace exface\Core\Interfaces\Mutations;
 
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
-
-interface MutationInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
+/**
+ * Mutations are sets of mutation rules to be applied to certain model instances
+ *
+ * A mutation can also be used as a rule inside another mutation, so the differences between mutations and rules
+ * is not very big: mutations basically rules, that can be used stand-alone.
+ *
+ * @author Andrej Kabachnik
+ */
+interface MutationInterface extends MutationRuleInterface
 {
     public function getName() : ?string;
-
-    public function apply($subject) : AppliedMutationInterface;
-
-    public function supports($subject) : bool;
-
-    public function isDisabled() : bool;
-
-    public function setDisabled(bool $trueOrFalse) : MutationInterface;
 }

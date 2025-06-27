@@ -1,20 +1,22 @@
 <?php
-namespace exface\Core\Mutations\Prototypes;
+namespace exface\Core\Mutations\Rules;
 
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
+use exface\Core\CommonLogic\Mutations\AbstractMutationRule;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Mutations\AppliedMutation;
+use exface\Core\Mutations\Prototypes\GenericUxonMutation;
 
 /**
  * Allows to modify the model of an attribute
  *
  * @author Andrej Kabachnik
  */
-class ObjectAttributeMutation extends AbstractMutation
+class ObjectAttributeMutationRule extends AbstractMutationRule
 {
     private ?string $attributeAlias = null;
     private ?UxonObject $changedDataTypeUxon = null;
@@ -94,7 +96,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $alias
      * @return $this
      */
-    protected function setAttributeAlias(string $alias): ObjectAttributeMutation
+    protected function setAttributeAlias(string $alias): ObjectAttributeMutationRule
     {
         $this->attributeAlias = $alias;
         return $this;
@@ -117,7 +119,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeName
      * @return $this
      */
-    protected function setChangeName(string $attributeName): ObjectAttributeMutation
+    protected function setChangeName(string $attributeName): ObjectAttributeMutationRule
     {
         $this->changedAttributes['name'] = $attributeName;
         return $this;
@@ -132,7 +134,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeDescription
      * @return $this
      */
-    protected function setChangeDescription(string $attributeDescription): ObjectAttributeMutation
+    protected function setChangeDescription(string $attributeDescription): ObjectAttributeMutationRule
     {
         $this->changedAttributes['description'] = $attributeDescription;
         return $this;
@@ -159,7 +161,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param UxonObject $uxon
      * @return $this
      */
-    protected function setChangeDataType(UxonObject $uxon): ObjectAttributeMutation
+    protected function setChangeDataType(UxonObject $uxon): ObjectAttributeMutationRule
     {
         $this->changedDataTypeUxon = $uxon;
         $this->changedDataTypeMutation = null;
@@ -187,7 +189,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param UxonObject $uxon
      * @return $this
      */
-    protected function setChangeDefaultEditorUxon(UxonObject $uxon):  ObjectAttributeMutation
+    protected function setChangeDefaultEditorUxon(UxonObject $uxon):  ObjectAttributeMutationRule
     {
         $this->changedDefaultEditorUxon = $uxon;
         $this->changedDefaultEditorMutation = null;
@@ -213,9 +215,9 @@ class ObjectAttributeMutation extends AbstractMutation
      * @uxon-template {"widget_type": ""}
      *
      * @param UxonObject $uxon
-     * @return ObjectAttributeMutation
+     * @return ObjectAttributeMutationRule
      */
-    protected function setChangeDefaultDisplayWidget(UxonObject $uxon):  ObjectAttributeMutation
+    protected function setChangeDefaultDisplayWidget(UxonObject $uxon):  ObjectAttributeMutationRule
     {
         $this->changedDefaultDisplayUxon = $uxon;
         $this->changedDefaultDisplayMutation = null;
@@ -231,7 +233,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeDataAddress
      * @return $this
      */
-    protected function setChangeDataAddress(string $attributeDataAddress): ObjectAttributeMutation
+    protected function setChangeDataAddress(string $attributeDataAddress): ObjectAttributeMutationRule
     {
         $this->changedAttributes['dataAddress'] = $attributeDataAddress;
         return $this;
@@ -246,7 +248,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeCalculation
      * @return $this
      */
-    protected function setChangeCalculation(string $attributeCalculation): ObjectAttributeMutation
+    protected function setChangeCalculation(string $attributeCalculation): ObjectAttributeMutationRule
     {
         $this->changedAttributes['calculation'] =  $attributeCalculation;
         return $this;
@@ -261,7 +263,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param bool $attributeReadable
      * @return $this
      */
-    protected function setChangeReadable(bool $attributeReadable): ObjectAttributeMutation
+    protected function setChangeReadable(bool $attributeReadable): ObjectAttributeMutationRule
     {
         $this->changedAttributes['readable'] = $attributeReadable;
         return $this;
@@ -276,7 +278,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param bool $attributeWritable
      * @return $this
      */
-    protected function setChangeWritable(bool $attributeWritable): ObjectAttributeMutation
+    protected function setChangeWritable(bool $attributeWritable): ObjectAttributeMutationRule
     {
         $this->changedAttributes['writable'] = $attributeWritable;
         return $this;
@@ -291,7 +293,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param bool $attributeEditable
      * @return $this
      */
-    protected function setChangeEditable(bool $attributeEditable): ObjectAttributeMutation
+    protected function setChangeEditable(bool $attributeEditable): ObjectAttributeMutationRule
     {
         $this->changedAttributes['editable'] = $attributeEditable;
         return $this;
@@ -306,7 +308,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param bool $attributeHidden
      * @return $this
      */
-    protected function setChangeHidden(bool $attributeHidden): ObjectAttributeMutation
+    protected function setChangeHidden(bool $attributeHidden): ObjectAttributeMutationRule
     {
         $this->changedAttributes['hidden'] = $attributeHidden;
         return $this;
@@ -321,7 +323,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param bool $attributeRequired
      * @return $this
      */
-    protected function setChangeRequired(bool $attributeRequired): ObjectAttributeMutation
+    protected function setChangeRequired(bool $attributeRequired): ObjectAttributeMutationRule
     {
         $this->changedAttributes['required'] = $attributeRequired;
         return $this;
@@ -336,7 +338,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param bool $attributeSortable
      * @return $this
      */
-    protected function setChangeSortable(bool $attributeSortable): ObjectAttributeMutation
+    protected function setChangeSortable(bool $attributeSortable): ObjectAttributeMutationRule
     {
         $this->changedAttributes['sortable'] = $attributeSortable;
         return $this;
@@ -351,7 +353,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param bool $attributeFilterable
      * @return $this
      */
-    protected function setChangeFilterable(bool $attributeFilterable): ObjectAttributeMutation
+    protected function setChangeFilterable(bool $attributeFilterable): ObjectAttributeMutationRule
     {
         $this->changedAttributes['filterable'] = $attributeFilterable;
         return $this;
@@ -366,7 +368,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeDefaultValue
      * @return $this
      */
-    protected function setChangeDefaultValue(string $attributeDefaultValue): ObjectAttributeMutation
+    protected function setChangeDefaultValue(string $attributeDefaultValue): ObjectAttributeMutationRule
     {
         $this->changedAttributes['defaultValue'] = $attributeDefaultValue;
         return $this;
@@ -381,7 +383,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeFixedValue
      * @return $this
      */
-    protected function setChangeFixedValue(string $attributeFixedValue): ObjectAttributeMutation
+    protected function setChangeFixedValue(string $attributeFixedValue): ObjectAttributeMutationRule
     {
         $this->changedAttributes['fixedValue'] = $attributeFixedValue;
         return $this;
@@ -396,7 +398,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeValueListDelimiter
      * @return $this
      */
-    protected function setChangeValueListDelimiter(string $attributeValueListDelimiter): ObjectAttributeMutation
+    protected function setChangeValueListDelimiter(string $attributeValueListDelimiter): ObjectAttributeMutationRule
     {
         $this->changedAttributes['valueListDelimiter'] = $attributeValueListDelimiter;
         return $this;
@@ -411,7 +413,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param int $attributeDefaultDisplayOrder
      * @return $this
      */
-    protected function setChangeDefaultDisplayOrder(int $attributeDefaultDisplayOrder): ObjectAttributeMutation
+    protected function setChangeDefaultDisplayOrder(int $attributeDefaultDisplayOrder): ObjectAttributeMutationRule
     {
         $this->changedAttributes['defaultDisplayOrder'] = $attributeDefaultDisplayOrder;
         return $this;
@@ -427,7 +429,7 @@ class ObjectAttributeMutation extends AbstractMutation
      * @param string $attributeDefaultSorterDir
      * @return $this
      */
-    protected function setChangeDefaultSorterDir(string $attributeDefaultSorterDir): ObjectAttributeMutation
+    protected function setChangeDefaultSorterDir(string $attributeDefaultSorterDir): ObjectAttributeMutationRule
     {
         $this->changedAttributes['defaultSorterDir'] = $attributeDefaultSorterDir;
         return $this;

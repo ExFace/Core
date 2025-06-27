@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Mutations\AppliedEmptyMutation;
+use exface\Core\Mutations\Rules\ObjectAttributeMutationRule;
 
 /**
  * Allows to modify the model of an object
@@ -117,7 +118,7 @@ class ObjectMutation extends AbstractMutation
     }
 
     /**
-     * @return ObjectAttributeMutation[]
+     * @return ObjectAttributeMutationRule[]
      */
     protected function getAttributeMutations(): array
     {
@@ -125,7 +126,7 @@ class ObjectMutation extends AbstractMutation
             $this->attributeMutations = [];
             if ($this->attributeMutationsUxon !== null) {
                 foreach ($this->attributeMutationsUxon->getPropertiesAll() as $uxon) {
-                    $this->attributeMutations[] = new ObjectAttributeMutation($this->getWorkbench(), $uxon);
+                    $this->attributeMutations[] = new ObjectAttributeMutationRule($this->getWorkbench(), $uxon);
                 }
             }
         }
