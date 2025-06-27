@@ -2,7 +2,7 @@
     "uid": "0x11ed9ffd873627329ffd747827435ce5",
     "alias_with_namespace": "exface.core.web-apps-pwas",
     "menu_parent_page_selector": "0xaab623e6632411e8aab30205857feb80",
-    "menu_index": 2,
+    "menu_index": 3,
     "menu_visible": true,
     "name": "Offline apps",
     "description": "",
@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2022-12-27 17:43:01",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2023-04-05 10:34:19",
+    "modified_on": "2025-06-27 09:56:45",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.PWA",
