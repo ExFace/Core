@@ -288,17 +288,37 @@ JS;
                 if ($hasSelfReference){
                     $conditionsJs .= <<<JS
                     
-                    aCells.forEach(function(domCell, iRowIdx){
-                        $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(iRowIdx);
-                        
-                        {$this->buildJsConditionalProperty(
-                            $condProp, 
-                            "if (oWidget.hasChanged(iColIdx, iRowIdx)) { oWidget.restoreInitValue(iColIdx, iRowIdx); } domCell.classList.add('readonly'); ", 
-                            "domCell.classList.remove('readonly');"
-                        )}
-                        
-                        $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(null);
-                    });
+                    oColOpts = oJExcel.options.columns[iColIdx];
+                    if (oColOpts !== undefined && oColOpts.type === 'checkbox'){
+                        // checkboxes need to be disabled, not set to readonly
+                        aCells.forEach(function(domCell, iRowIdx){
+                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(iRowIdx);
+                            
+                            {$this->buildJsConditionalProperty(
+                                $condProp, 
+                                "$(domCell).children('input').prop('disabled', true); ", 
+                                "$(domCell).children('input').prop('disabled', false);"
+                            )}
+                            
+                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(null);
+                        });
+
+                    }
+                    else{
+                        // other column types can be set to readonly
+                        aCells.forEach(function(domCell, iRowIdx){
+                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(iRowIdx);
+                            
+                            {$this->buildJsConditionalProperty(
+                                $condProp, 
+                                "if (oWidget.hasChanged(iColIdx, iRowIdx)) { oWidget.restoreInitValue(iColIdx, iRowIdx); } domCell.classList.add('readonly'); ", 
+                                "domCell.classList.remove('readonly');"
+                            )}
+                            
+                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(null);
+                        });
+                    }
+                    
 JS;
 
                 }
