@@ -51,7 +51,8 @@ trait ToastUIEditorTrait
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
-                    }
+                    },
+                    customHTMLRenderer: {{$this->buildJsKbdCustomHTMLRenderer()}}
                 });
                 
                 return ed;
@@ -89,7 +90,8 @@ JS;
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
-                    }
+                    },
+                    customHTMLRenderer: {{$this->buildJsKbdCustomHTMLRenderer()}}
                 });
                 
                 return ed;
@@ -117,6 +119,26 @@ JS;
                 })()
 JS;
 
+        $insertKbdButtonHTML = implode(' ', [
+            '<button type="button"',
+            'id="' . $this->getInsertKbdButton() . '"',
+            'style="margin: -7px -5px; background: transparent;">',
+            'BT',
+            '</button>',
+        ]);
+
+        $insertKbdButtonJs = <<<JS
+                (function (){
+                    let button = \$('$insertKbdButtonHTML')[0];
+                    button.addEventListener('click', () => {
+                        {$this->buildJsInsertKbdButtonClickHandler()}
+                    });
+                    
+                    return button;
+                })()
+JS;
+
+
         
         return <<<JS
 
@@ -128,10 +150,47 @@ JS;
                   },'heading', 'bold', 'italic', 'strike'],
                   ['hr', 'quote'],
                   ['ul', 'ol', 'task', 'indent', 'outdent'],
-                  ['table', {$image} 'link'],
-                  ['code', 'codeblock']],
+                  ['table', {$image} 'link',
+                  {
+                    name: 'Insert Button',
+                    tooltip: 'Insert Button',
+                    el: {$insertKbdButtonJs}
+                  }],
+                  ['code', 'codeblock',]],
 JS;
 
+    }
+
+    /**
+     * Returns the custom html renderer for the "<kbd> ... </kbd>" tags
+     *
+     * It parses the kbd tags, making the text inside look like a button.
+     *
+     * @return string
+     */
+    protected function buildJsKbdCustomHTMLRenderer(): string
+    {
+        $buttonStyle = implode(' ', [
+            'background-color: #f1f5f9;',
+            'border: 1px solid #cbd5e1;',
+            'border-radius: 4px;',
+            'padding: 4px 10px;',
+            'font-size: 14px;',
+            'font-family: inherit;',
+            'color: #1e293b;',
+            'cursor: default;',
+            'transition: background-color 0.2s ease, color 0.2s ease;',
+        ]);
+
+        return <<<JS
+        htmlInline: {
+          kbd(entering) {
+          return entering
+              ? { type: 'openTag', tagName: 'kbd', attributes: { style: "{$buttonStyle}"} }
+              : { type: 'closeTag', tagName: 'kbd' };
+          },
+        },
+        JS;
     }
 
     /**
@@ -174,11 +233,60 @@ JS;
     }
 
     /**
+     * Returns a click handler for the kbd insert button.
+     *
+     * The handler wraps the selected text into the "<kbs> ... </kbd>" tags so it can be parsed.
+     *
+     * @return string
+     */
+    protected function buildJsInsertKbdButtonClickHandler() : string
+    {
+        $markdownVarJs = $this->buildJsMarkdownVar();
+
+        return <<<JS
+                let  oEditor = {$markdownVarJs};
+
+                const [start, end] = oEditor.getSelection();
+                const selectedText = oEditor.getSelectedText();
+
+                // If no Text is selected.
+                if (!selectedText.trim()) {
+                    return;
+                }
+
+                if (oEditor.isMarkdownMode()) {
+                  // Writes the keyboard tags directly into the Markdown.
+                  const wrapped = `<kbd>\${selectedText}</kbd>`;
+                  oEditor.replaceSelection(wrapped, start, end);
+                } else {
+                  // In WYSIWYG mode, the KBD tags must be inserted directly 
+                  // into the HTML of the editor so that the customHTMLParser can process them, 
+                  // as in the Markdown section above. 
+                  //
+                  // Note: The parser will delete all non-supported attributes 
+                  // from this element if given.
+                  const kbdElement = document.createElement("kbd");
+                  const userSelection = window.getSelection();
+                  const selectedTextRange = userSelection.getRangeAt(0);
+                  selectedTextRange.surroundContents(kbdElement);
+                }
+JS;
+    }
+
+    /**
      * @return string
      */
     protected function getFullScreenToggleId() : string
     {
         return $this->getId().'_tuiFullScreenToggle';
+    }
+
+    /**
+     * @return string
+     */
+    protected function getInsertKbdButton() : string
+    {
+        return $this->getId().'_tuiInsertKbdButton';
     }
 
     /**
