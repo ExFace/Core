@@ -240,6 +240,31 @@ class DataTableConfigurator extends DataConfigurator
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG',
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG',
+                ], [
+                    'attribute_alias' => 'VISIBILITY',
+                ]
+            ],
+            'buttons' => [
+                [
+                    'caption' => 'Manage',
+                    'icon' => 'pencil-square-o'
+                ],
+                [
+                    'caption' => 'Share',
+                    'icon' => 'share-alt'
+                ],
+                [
+                    'action_alias' => 'exface.Core.DeleteObject',
+                    'disabled_if' => [
+                        'operator' => 'AND',
+                        'conditions' => [
+                            [
+                                'value_left' => '=~input!VISIBILITY',
+                                'comparator' => ComparatorDataType::EQUALS,
+                                'value_right' => 'PRIVATE'
+                            ]
+                        ]
+                    ]
                 ]
             ]
         ]));
