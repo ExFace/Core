@@ -242,8 +242,9 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
                 // more information. If our meta object has a UID we can count that easily, but if not,
                 // there is no point in counting (what do we count?) and it caused trouble with some SQL
                 // data source too.
-                $table->addColumn($table->createColumnFromAttribute($this->getAttribute()));
-                if ($table->getMetaObject()->hasUidAttribute()) {
+                $valueAttr = $this->getAttribute();
+                $table->addColumn($table->createColumnFromAttribute($valueAttr));
+                if ($table->getMetaObject()->hasUidAttribute() && ! $valueAttr->isUidForObject() && ! $valueAttr->isLabelForObject()) {
                     $counterAlias = $table->getMetaObject()->getUidAttributeAlias();
                     $table->addColumn($table->createColumnFromUxon(new UxonObject([
                         'attribute_alias' => DataAggregation::addAggregatorToAlias($counterAlias, AggregatorFunctionsDataType::COUNT),
