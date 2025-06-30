@@ -36,25 +36,24 @@ class DataTableConfigurator extends DataConfigurator
 
     public function getWidgets(callable $filter_callback = null): array
     {
-        // Make sure to initialize the columns tab. This will automatically add
-        // it to the default widget array inside the container.
-        if (null === $this->setupsTab){
-            /* FIXME this leads to UI5 error
-            $this->getSetupsTab();
-            */
-        }
-        if (null === $this->column_tab){
-            $this->getOptionalColumnsTab();
+        if (! $this->isDisabled()) {
+            // Make sure to initialize the columns tab. This will automatically add
+            // it to the default widget array inside the container.
+            if (null === $this->setupsTab) {
+                $this->getSetupsTab();
+            }
+            if (null === $this->column_tab) {
+                $this->getOptionalColumnsTab();
+            }
         }
         // TODO add aggregation tab once it is functional 
         return parent::getWidgets($filter_callback);
     }
-    
+
     /**
-     * 
-     * @return Tab
+     * @return Tab|null
      */
-    public function getOptionalColumnsTab() : Tab
+    public function getOptionalColumnsTab() : ?Tab
     {
         if (null === $this->column_tab){
             $this->column_tab = $this->createColumnsTab();
@@ -175,7 +174,10 @@ class DataTableConfigurator extends DataConfigurator
         return $tab;
     }
 
-    public function getSetupsTab() : Tab
+    /**
+     * @return Tab|null
+     */
+    public function getSetupsTab() : ?Tab
     {
         if (null === $this->setupsTab){
             $this->setupsTab = $this->createSetupsTab();
@@ -193,7 +195,8 @@ class DataTableConfigurator extends DataConfigurator
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'));
         $tab->setIcon(Icons::STAR);
-        $tab->setWidgets(new UxonObject([[
+        /* @var $table \exface\Core\Widgets\DataTableResponsive */
+        $table = WidgetFactory::createFromUxonInParent($tab, new UxonObject([
             'widget_type' => 'DataTableResponsive',
             'object_alias' => 'exface.Core.WIDGET_SETUP',
             'filters' => [
@@ -239,7 +242,12 @@ class DataTableConfigurator extends DataConfigurator
                     'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG',
                 ]
             ]
-        ]]));
+        ]));
+        $table->setHideHelpButton(true);
+        $table->getToolbarMain()->setIncludeNoExtraActions(true);
+        $table->getPaginator()->setCountAllRows(false);
+        $table->getConfiguratorWidget()->setDisabled(true);
+        $tab->addWidget($table);
         return $tab;
     }
 
@@ -248,5 +256,4 @@ class DataTableConfigurator extends DataConfigurator
         $this->setupsUxon = $arrayOfSetups;
         return $this;
     }
-    
 }
