@@ -11,43 +11,84 @@ use exface\Core\Mutations\AppliedMutation;
 
 /**
  * Allows to modify UXON configurations using JSONpath based operations
- *
+ * 
  * You can define multiple operations like append, replace, etc. Each will require a JSONpath pointing
  * to the place in the UXON where the operation is to be applied and a new value (if required by the
  * operation).
- *
+ * 
  * - `append` - adds one or more UXON objects at the end of the array located by the JSONpath
+ * - `insert` - adds one or more UXON objects to an array before the element, the JSONpath points to
  * - `change` - changes a scalar property at the end of the JSONpath - e.g. to set a widget to `hidden:true`
  * - `replace` - replaces a UXON object with another one. The JSONpath should point to an object
  * - `remove` - removes all keys corresponding to the JSONpath entirely
- *
+ * 
  * ## Using JSONpath
- *
+ * 
  * In most cases, you will need a JSONpath pointer to the place in the UXON, that you want to change.
- *
+ * 
+ * To check, where exactly you JSONpath points to, use the online evaluator at https://jsonpath.com/.
+ * 
+ * ### Quick reference
+ * 
+ * ```
+ * {
+ *      "widget_type": "DataTable",
+ *      "object_alias: "exface.Core.PAGE",
+ *      "filters": [
+ *          {"attribute_alias": "Name"},
+ *          {"attribute_alias": "APP"}
+ *      ],
+ *      "columns": [
+ *          {"attribute_alias": "Name"},
+ *          {"attribute_alias": "APP__ALIAS", "caption": "App"},
+ *          {"attribute_alias": "IN_MENU"},
+ *          {"attribute_alias": "APP", "hidden": true}
+ *      ]
+ * }
+ * 
+ * ```
+ * 
+ * | JSONpath | Result
+ * | --------- | --------
+ * | `$.widget_type` | The widget type "DataTable"
+ * | `$.filters[1]` | The second filter (because array numbering starts with `0`)
+ * | `$.filters[1].attribute_alias` | Attribute alias of the second filter
+ * | `$.columns[1,3]` | Second and fourth column 
+ * | `$.filters[1:3]` | Columns from index `1` to index `3`
+ * | `$.columns[:2]` | First three columns
+ * | `$.columns[x:y:z]` | Columns from `x` to `y` with a step of `z`.
+ * | `$.columns[?(@.attribute_alias == 'NAME')]` | Column with `attribute_alias` "NAME".
+ * | `$..*[?(@.attribute_alias == 'NAME')]` | All widgets with `attribute_alias` "NAME".
+ * | `$.columns[?(@.attribute_alias == 'NAME')].hidden` | Hidden property of column with `attribute_alias` "NAME".
+ * | `$.columns[?(@.attribute_alias == $.filters[1])]` | Columns with `attribute_alias` "APP"
+ * | `$[columns]` | All columns.
+ * | `$['columns']` | All columns.
+ * | `$.columns[*][attribute_alias, 'hidden', "caption"]` | `attribute_alias`, `hidden`-property and `caption` of all columns.
+ * | `$..filters[?(@.attribute_alias in [$.columns[0].attribute_alias, $.columns[2].attribute_alias])]` | All filters (from all widgets) with `attribute_alias` matching that of the first or thrid column.
+ * | `$.filters[?(@.attribute_alias == 'APP' and @.hidden == true 10 or @.disabled == true)]` | APP-filters, that are hidden or disabled  (`and` takes precedence to `or`)
+ * 
  * ### Getting the path from the UXON editor
- *
+ * 
  * You can start by copying the JSONpath directly in the UXON editor of whatever you are changing - e.g. an
  * action. Simly press `JSON-Path` in the menu of the desired node in the editor and copy the path.
- *
+ * 
  * You will get something like
- *
+ * 
  * ```
- * $.dialog.widgets[1].tabs[4].widgets[0].columns[4]
- *
+ *  $.dialog.widgets[1].tabs[4].widgets[0].columns[4]
+ * 
  * ```
- *
+ * 
  * To make it more readable and more immune to minor changes of the target UXON, replace numeric indices in
  * the array by matcher expressions:
- *
+ * 
  * ```
- * $.dialog.widgets[1].tabs[?(@.caption=='General')].widgets[0].columns[?(@.attribute_alias=='DISABLED_FLAG')]
- *
+ *  $.dialog.widgets[1].tabs[?(@.caption=='General')].widgets[0].columns[?(@.attribute_alias=='DISABLED_FLAG')]
+ * 
  * ```
- *
+ * 
  * This is much more verbose and will work even if the order of the tabs or columns changes in future.
- *
- *
+ * 
  * @author Andrej Kabachnik
  */
 class GenericUxonMutation extends AbstractMutation
