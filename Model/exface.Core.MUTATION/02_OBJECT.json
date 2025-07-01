@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Mutation [exface.Core.MUTATION]",
             "CREATED_ON": "2025-05-16 11:17:22",
-            "MODIFIED_ON": "2025-06-04 17:20:51",
+            "MODIFIED_ON": "2025-07-01 14:45:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f09ca793446fe09ca7025041000001",
@@ -129,6 +129,10 @@
                                         {
                                             "attribute_alias": "MUTATION_PROTOTYPE_FILE",
                                             "hidden": true
+                                        },
+                                        {
+                                            "attribute_alias": "MUTATION_TARGET__OBJECT__ALIAS",
+                                            "hidden": true
                                         }
                                     ]
                                 }
@@ -147,7 +151,18 @@
                         "caption": "Targets",
                         "widgets": [
                             {
-                                "attribute_group_alias": "~CUSTOM"
+                                "attribute_group_alias": "~CUSTOM",
+                                "hint": "Apply the mutation to this [#~attribute:NAME#]",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=mutation_type_selector!MUTATION_TARGET__OBJECT__ALIAS",
+                                            "comparator": "!==",
+                                            "value_right": "'[#~attribute:ALIAS#]'"
+                                        }
+                                    ]
+                                }
                             }
                         ]
                     },
