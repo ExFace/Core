@@ -10,16 +10,16 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 
 /**
  * DataTable-configurators contain tabs for filters, sorters and column controls.
- * 
+ *
  * In addition to the basic DataConfigurator which can be applied to any Data
  * widget, the DataTableConfigurator has a tab to control the order and visibility
  * of table columns.
- * 
+ *
  * TODO the table column control tab is not available yet
  * TODO the aggregations control tab is not available yet
- * 
+ *
  * @author Andrej Kabachnik, Georg Bieger
- * 
+ *
  * @method \exface\Core\Widgets\DataTable getWidgetConfigured()
  *
  */
@@ -46,7 +46,7 @@ class DataTableConfigurator extends DataConfigurator
                 $this->getOptionalColumnsTab();
             }
         }
-        // TODO add aggregation tab once it is functional 
+        // TODO add aggregation tab once it is functional
         return parent::getWidgets($filter_callback);
     }
 
@@ -69,7 +69,7 @@ class DataTableConfigurator extends DataConfigurator
     }
 
     /**
-     * 
+     *
      * @return Tab
      */
     protected function createColumnsTab()
@@ -94,7 +94,7 @@ class DataTableConfigurator extends DataConfigurator
     public function addOptionalColumn(DataColumn $column) : DataTableConfigurator
     {
         $alias = $column->getAttributeAlias();
-        
+
         $tab = $this->getOptionalColumnsTab();
         foreach ($tab->getWidgets() as $existingColumn) {
             if($alias === $existingColumn->getAttributeAlias()) {
@@ -115,7 +115,7 @@ class DataTableConfigurator extends DataConfigurator
     }
 
     /**
-     * 
+     *
      * @return \exface\Core\Widgets\DataTableConfigurator
      */
     protected function initColumns() : DataTableConfigurator
@@ -132,23 +132,23 @@ class DataTableConfigurator extends DataConfigurator
         $colGrp = WidgetFactory::createFromUxonInParent($table, new UxonObject([
             'visibility' => WidgetVisibilityDataType::OPTIONAL
         ]), 'DataColumnGroup');
-        
+
         foreach($arr = $this->columnsUxon->toArray() as $key => $value) {
             if($value['visibility'] === null) {
                 $arr[$key]['visibility'] = $this->columnsDefaultVisibility;
             }
         }
-        
+
         $colGrp->importUxonObject(new UxonObject(['columns' => $arr]));
         foreach ($colGrp->getColumns() as $column) {
             $this->addOptionalColumn($column);
         }
-        
+
         return $this;
     }
-    
+
     /**
-     * 
+     *
      * @return Tab
      */
     public function getAggregationTab()
@@ -159,7 +159,7 @@ class DataTableConfigurator extends DataConfigurator
         }
         return $this->column_tab;
     }
-    
+
     /**
      *
      * @return Tab
@@ -242,9 +242,21 @@ class DataTableConfigurator extends DataConfigurator
                     'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG',
                 ], [
                     'attribute_alias' => 'VISIBILITY',
+                ], [
+                    'attribute_alias' => 'SETUP_UXON',
+                    'hidden' => true
                 ]
             ],
             'buttons' => [
+                [
+                    'caption' => 'Apply',
+                    'icon' => 'check-circle-o',
+                    'visibility' => WidgetVisibilityDataType::PROMOTED,
+                    '// action' => [
+                        'alias' => "CallWidgetFunction",
+                        'function' => "apply_setup([#SETUP_UXON#])"
+                    ]
+                ],
                 [
                     'caption' => 'Manage',
                     'icon' => 'pencil-square-o'
@@ -270,7 +282,7 @@ class DataTableConfigurator extends DataConfigurator
         ]));
         $table->setHideHelpButton(true);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
-        $table->getPaginator()->setCountAllRows(false);
+        $table->setPaginate(false);
         $table->getConfiguratorWidget()->setDisabled(true);
         $tab->addWidget($table);
         return $tab;
