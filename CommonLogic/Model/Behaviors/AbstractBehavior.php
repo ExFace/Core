@@ -45,7 +45,14 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $name = null;
     
     protected bool $isInProgress = false;
-    
+
+    /**
+     * Disable this behavior type for the specified object.
+     * 
+     * @param MetaObjectInterface $object
+     * @return bool Returns TRUE, if this behavior type was found and
+     * disabled on the specified and FALSE otherwise.
+     */
     public static function disableForObject(MetaObjectInterface $object) : bool
     {
         $class = get_called_class();
@@ -59,6 +66,13 @@ abstract class AbstractBehavior implements BehaviorInterface
         return false;
     }
 
+    /**
+     * Enable this behavior type for the specified object.
+     *
+     * @param MetaObjectInterface $object
+     * @return bool Returns TRUE, if this behavior type was found and
+     * enabled on the specified and FALSE otherwise.
+     */
     public static function enableForObject(MetaObjectInterface $object) : bool
     {
         $class = get_called_class();
