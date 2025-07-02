@@ -51,7 +51,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * 
      * @param MetaObjectInterface $object
      * @return bool Returns TRUE, if this behavior type was found and
-     * disabled on the specified and FALSE otherwise.
+     * disabled on the specified object and FALSE otherwise.
      */
     public static function disableForObject(MetaObjectInterface $object) : bool
     {
@@ -71,7 +71,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      *
      * @param MetaObjectInterface $object
      * @return bool Returns TRUE, if this behavior type was found and
-     * enabled on the specified and FALSE otherwise.
+     * enabled on the specified object and FALSE otherwise.
      */
     public static function enableForObject(MetaObjectInterface $object) : bool
     {
