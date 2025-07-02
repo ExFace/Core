@@ -211,7 +211,7 @@ abstract class AbstractUxonSnippet implements UxonSnippetInterface
      * 
      * @uxon-property parameters
      * @uxon-type \exface\Core\CommonLogic\Uxon\UxonSnippetParameter[]
-     * @uxon-template [{"name": "", "description": "", "type": "", "required": false, "default":""}]
+     * @uxon-template [{"name": "", "description": "", "type": "", "required": false, "default_value":""}]
      * 
      * @param UxonObject $arrayOfParams
      * @return UxonSnippetInterface
