@@ -50,7 +50,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * Disable this behavior type for the specified object.
      * 
      * @param MetaObjectInterface $object
-     * @return bool Returns TRUE, if this behavior type was found and
+     * @return bool Returns TRUE, if this behavior type was found AND
      * disabled on the specified object and FALSE otherwise.
      */
     public static function disableForObject(MetaObjectInterface $object) : bool
@@ -58,8 +58,12 @@ abstract class AbstractBehavior implements BehaviorInterface
         $class = get_called_class();
         foreach($object->getBehaviors() as $behavior) {
             if($behavior instanceof ($class)) {
-                $behavior->disable();
-                return true;
+                if(!$behavior->isDisabled()) {
+                    $behavior->disable();
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
         
@@ -70,7 +74,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * Enable this behavior type for the specified object.
      *
      * @param MetaObjectInterface $object
-     * @return bool Returns TRUE, if this behavior type was found and
+     * @return bool Returns TRUE, if this behavior type was found AND
      * enabled on the specified object and FALSE otherwise.
      */
     public static function enableForObject(MetaObjectInterface $object) : bool
@@ -78,8 +82,12 @@ abstract class AbstractBehavior implements BehaviorInterface
         $class = get_called_class();
         foreach($object->getBehaviors() as $behavior) {
             if($behavior instanceof ($class)) {
-                $behavior->enable();
-                return true;
+                if($behavior->isDisabled()) {
+                    $behavior->enable();
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
 
