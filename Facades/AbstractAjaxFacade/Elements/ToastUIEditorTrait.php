@@ -2,7 +2,10 @@
 
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\InputMarkdown;
+use exface\Core\Widgets\Parts\HtmlTagStencil;
+use exface\Core\Widgets\Parts\TextStencil;
 
 /**
  * Aides Facade specific implementation of the ToastUI markdown editor.
@@ -52,7 +55,9 @@ trait ToastUIEditorTrait
                             {$this->getOnChangeScript()} 
                         }    
                     },
-                    customHTMLRenderer: {{$this->buildJsKbdCustomHTMLRenderer()}}
+                    customHTMLRenderer: {
+                        {$this->buildJsCustomHtmlRenderers()}
+                    }
                 });
                 
                 return ed;
@@ -73,7 +78,6 @@ JS;
     {
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
-        $markdownVarJs = str_replace("'", '"', $this->buildJsMarkdownVar());
 
         return <<<JS
 
@@ -91,12 +95,32 @@ JS;
                             {$this->getOnChangeScript()} 
                         }    
                     },
-                    customHTMLRenderer: {{$this->buildJsKbdCustomHTMLRenderer()}}
+                    customHTMLRenderer: {
+                        {$this->buildJsCustomHtmlRenderers()}
+                    }
                 });
                 
                 return ed;
             }();
 JS;
+    }
+
+    protected function buildJsCustomHtmlRenderers() : string
+    {
+        $inlineTagRenderersJs = '';
+        foreach ($this->getWidget()->getStencils() as $stencil) {
+            if ($stencil->isHtmlTag()) {
+                $inlineTagRenderersJs .= $this->buildJsCustomHtmlInlineRenderer($stencil) . ',';
+            }
+        }
+        return <<<JS
+
+                        htmlInline: {
+                            {$inlineTagRenderersJs}
+                        },
+                        /* html: {}*/
+JS;
+
     }
 
     /**
@@ -118,27 +142,6 @@ JS;
                     return button;
                 })()
 JS;
-
-        $insertKbdButtonHTML = implode(' ', [
-            '<button type="button"',
-            'id="' . $this->getInsertKbdButton() . '"',
-            'style="margin: -7px -5px; background: transparent;">',
-            'BT',
-            '</button>',
-        ]);
-
-        $insertKbdButtonJs = <<<JS
-                (function (){
-                    let button = \$('$insertKbdButtonHTML')[0];
-                    button.addEventListener('click', () => {
-                        {$this->buildJsInsertKbdButtonClickHandler()}
-                    });
-                    
-                    return button;
-                })()
-JS;
-
-
         
         return <<<JS
 
@@ -150,47 +153,99 @@ JS;
                   },'heading', 'bold', 'italic', 'strike'],
                   ['hr', 'quote'],
                   ['ul', 'ol', 'task', 'indent', 'outdent'],
-                  ['table', {$image} 'link',
-                  {
-                    name: 'Insert Button',
-                    tooltip: 'Insert Button',
-                    el: {$insertKbdButtonJs}
-                  }],
+                  ['table', {$image} 'link', {$this->buildJsToolbarItemsForStencils()}],
                   ['code', 'codeblock',]],
 JS;
 
     }
-
-    /**
-     * Returns the custom html renderer for the "<kbd> ... </kbd>" tags
-     *
-     * It parses the kbd tags, making the text inside look like a button.
-     *
-     * @return string
-     */
-    protected function buildJsKbdCustomHTMLRenderer(): string
+    
+    protected function buildJsToolbarItemsForStencils() : string
     {
-        $buttonStyle = implode(' ', [
-            'background-color: #f1f5f9;',
-            'border: 1px solid #cbd5e1;',
-            'border-radius: 4px;',
-            'padding: 4px 10px;',
-            'font-size: 14px;',
-            'font-family: inherit;',
-            'color: #1e293b;',
-            'cursor: default;',
-            'transition: background-color 0.2s ease, color 0.2s ease;',
+        $js = '';
+        foreach ($this->getWidget()->getStencils() as $stencil) {
+            switch (true) {
+                case $stencil instanceof HtmlTagStencil:
+                    $js .= $this->buildJsToolbarItemForHtmlTagStencil($stencil);
+                    break;
+                default:
+                    // TODO add support for regular stencils - just insert them at cursor position
+                    throw new WidgetConfigurationError($this->getWidget(), 'Only HtmlTag stencils currently supported');
+                    /*$js .= $this->buildJsToolbarItemForTextStencil($stencil);*/
+                    break;
+            }
+        }
+        return $js;
+    }
+    
+    protected function buildJsToolbarItemForHtmlTagStencil(TextStencil $stencil) : string
+    {
+        if ($stencil->getIcon() === null && null !== $iconText = $stencil->getIconText()) {
+            $icon = $iconText;
+        } else {
+            $icon = $stencil->getIcon();
+        }
+        $insertKbdButtonHTML = implode(' ', [
+            '<button type="button"',
+            //'id="' . $this->getId() . '_stencil_' . spl_object_id($stencil) . '"',
+            'style="margin: -7px -5px; background: transparent;">',
+            $icon,
+            '</button>',
         ]);
+        
+        $insertKbdButtonJs = <<<JS
+                (function (){
+                    let button = \$('$insertKbdButtonHTML')[0];
+                    button.addEventListener('click', () => {
+                        let  oEditor = {$this->buildJsMarkdownVar()};
 
+                        const [start, end] = oEditor.getSelection();
+                        const selectedText = oEditor.getSelectedText();
+        
+                        // If no Text is selected.
+                        if (!selectedText.trim()) {
+                            return;
+                        }
+        
+                        if (oEditor.isMarkdownMode()) {
+                          // Writes the keyboard tags directly into the Markdown.
+                          const wrapped = `<{$stencil->getHtmlTag()}>\${selectedText}</{$stencil->getHtmlTag()}>`;
+                          oEditor.replaceSelection(wrapped, start, end);
+                        } else {
+                          // In WYSIWYG mode, the KBD tags must be inserted directly 
+                          // into the HTML of the editor so that the customHTMLParser can process them, 
+                          // as in the Markdown section above. 
+                          //
+                          // Note: The parser will delete all non-supported attributes 
+                          // from this element if given.
+                          const kbdElement = document.createElement("{$stencil->getHtmlTag()}");
+                          const userSelection = window.getSelection();
+                          const selectedTextRange = userSelection.getRangeAt(0);
+                          selectedTextRange.surroundContents(kbdElement);
+                        }
+                    });
+                    
+                    return button;
+                })()
+JS;
         return <<<JS
-        htmlInline: {
-          kbd(entering) {
-          return entering
-              ? { type: 'openTag', tagName: 'kbd', attributes: { style: "{$buttonStyle}"} }
-              : { type: 'closeTag', tagName: 'kbd' };
-          },
-        },
-        JS;
+                {
+                    name: {$this->escapeString($stencil->getCaption())},
+                    tooltip: {$this->escapeString($stencil->getHint())},
+                    el: {$insertKbdButtonJs}
+                }
+JS;
+
+    }
+    
+    protected function buildJsCustomHtmlInlineRenderer(TextStencil $stencil) : string
+    {
+        return <<<JS
+          {$stencil->getHtmlTag()}(entering) {
+              return entering
+                  ? { type: 'openTag', tagName: '{$stencil->getHtmlTag()}', attributes: { style: "{$stencil->buildCssStyle()}"} }
+                  : { type: 'closeTag', tagName: '{$stencil->getHtmlTag()}' };
+              }
+JS;
     }
 
     /**
@@ -233,60 +288,11 @@ JS;
     }
 
     /**
-     * Returns a click handler for the kbd insert button.
-     *
-     * The handler wraps the selected text into the "<kbs> ... </kbd>" tags so it can be parsed.
-     *
-     * @return string
-     */
-    protected function buildJsInsertKbdButtonClickHandler() : string
-    {
-        $markdownVarJs = $this->buildJsMarkdownVar();
-
-        return <<<JS
-                let  oEditor = {$markdownVarJs};
-
-                const [start, end] = oEditor.getSelection();
-                const selectedText = oEditor.getSelectedText();
-
-                // If no Text is selected.
-                if (!selectedText.trim()) {
-                    return;
-                }
-
-                if (oEditor.isMarkdownMode()) {
-                  // Writes the keyboard tags directly into the Markdown.
-                  const wrapped = `<kbd>\${selectedText}</kbd>`;
-                  oEditor.replaceSelection(wrapped, start, end);
-                } else {
-                  // In WYSIWYG mode, the KBD tags must be inserted directly 
-                  // into the HTML of the editor so that the customHTMLParser can process them, 
-                  // as in the Markdown section above. 
-                  //
-                  // Note: The parser will delete all non-supported attributes 
-                  // from this element if given.
-                  const kbdElement = document.createElement("kbd");
-                  const userSelection = window.getSelection();
-                  const selectedTextRange = userSelection.getRangeAt(0);
-                  selectedTextRange.surroundContents(kbdElement);
-                }
-JS;
-    }
-
-    /**
      * @return string
      */
     protected function getFullScreenToggleId() : string
     {
         return $this->getId().'_tuiFullScreenToggle';
-    }
-
-    /**
-     * @return string
-     */
-    protected function getInsertKbdButton() : string
-    {
-        return $this->getId().'_tuiInsertKbdButton';
     }
 
     /**
