@@ -15,6 +15,7 @@ use exface\Core\CommonLogic\AppInstallers\MsSqlDatabaseInstaller;
  */
 class MsSqlModelLoader extends SqlModelLoader
 {
+    private MsSqlDatabaseInstaller|null $installer = null;
     /**
      * 
      * {@inheritDoc}
