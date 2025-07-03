@@ -3,7 +3,9 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -39,6 +41,8 @@ class DataCheck implements DataCheckInterface
     private $onlyObject = null;
     
     private $applyToSubsheetsRelationPathString = null;
+    
+    private string $ifMissingColumn = self::MISSING_COLS_READ;
 
     /**
      *
@@ -116,8 +120,42 @@ class DataCheck implements DataCheckInterface
      */
     protected function findViolationsViaFilter(DataSheetInterface $data, ConditionGroupInterface $filter, ?LogBookInterface $logBook = null) : array
     {
+        $cols = $data->getColumns();
+        switch ($this->getIfMissingColumns()) {
+            case self::MISSING_COLS_READ:
+                $readMissingData = true;
+                break;
+            case self::MISSING_COLS_EMPTY:
+                $workbench = $this->getWorkbench();
+                foreach ($filter->getRequiredExpressions($data->getMetaObject()) as $expr) {
+                    foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                        if (! $cols->getByExpression($attrAlias)) {
+                            $col = $cols->addFromExpression($attrAlias);
+                            $expr = ExpressionFactory::createAsScalar($workbench, $col->getDataType()->format());
+                            $col->setValuesByExpression($expr);
+                        }
+                    }
+                }
+                $readMissingData = false;
+                break;
+            case self::MISSING_COLS_PASS:
+                foreach ($filter->getRequiredExpressions($data->getMetaObject()) as $expr) {
+                    foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                        if (! $cols->getByExpression($attrAlias)) {
+                            return [];
+                        }
+                    }
+                }
+                // At this point, all required columns are confirmed to be present, so we don't have to redo
+                // the work in DataSheet::findRows().
+                $readMissingData = false;
+                break;
+            default:
+                throw new DataCheckRuntimeError($data,'Invalid value "' . $this->getIfMissingColumns() . '" for `if_missing_columns`!', null, null, $this);
+        }
+        
         try {
-            return $data->findRows($filter, true);
+            return $data->findRows($filter, $readMissingData);
         } catch (DataSheetExtractError $e) {
             $logBook->addLine('**ERROR** filtering data to check via `' . $filter->__toString() . '`. Assuming check does not apply');
             $this->getWorkbench()->getLogger()->logException(new DataCheckRuntimeError($data, 'Cannot perform data check. ' . $e->getMessage(), null, $e, $this));
@@ -418,5 +456,40 @@ class DataCheck implements DataCheckInterface
     public function __toString() : string
     {
         return $this->getConditionGroup()->__toString();
+    }
+
+    /**
+     * @return string
+     */
+    public function getIfMissingColumns() : string
+    {
+        return $this->ifMissingColumn;
+    }
+    
+    /**
+     * Configure the behavior of this data check, in case one or more columns required by the check
+     * are missing from the datasheet.
+     * 
+     * - **read**: Values from missing columns will be read from the database. (default)
+     * - **empty**: Values from missing columns will be set to their datatype equivalent of an empty value (such as NULL).
+     * - **pass**: If not all columns required by this data check are present, the check will automatically pass (i.e. will not be performed).
+     * 
+     * @uxon-property if_missing_columns
+     * @uxon-type [read,empty,pass]
+     * @uxon-tempalte {"if_missing_column":"read"}
+     * 
+     * @param string $value
+     * @return $this
+     */
+    public function setIfMissingColumns(string $value) : DataCheck
+    {
+        if( $value !== self::MISSING_COLS_READ &&
+            $value !== self::MISSING_COLS_EMPTY &&
+            $value !== self::MISSING_COLS_PASS) {
+            throw new InvalidArgumentException('Cannot set `if_missing_column`: "' . $value . '" is not a valid value!');
+        }
+        
+        $this->ifMissingColumn = $value;
+        return $this;
     }
 }
