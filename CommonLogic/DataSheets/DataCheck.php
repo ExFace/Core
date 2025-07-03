@@ -122,29 +122,27 @@ class DataCheck implements DataCheckInterface
     {
         $cols = $data->getColumns();
         switch ($this->getIfMissingColumns()) {
+            // READ is the default behavior and works the same as though no behavior was defined.
+            // Missing data will be read via `DataSheet::findRows($filter, true)`.
             case self::MISSING_COLS_READ:
                 $readMissingData = true;
                 break;
+            // EMPTY will add any missing columns and fill them with their datatype equivalent of an empty value.
             case self::MISSING_COLS_EMPTY:
                 $workbench = $this->getWorkbench();
-                foreach ($filter->getRequiredExpressions($data->getMetaObject()) as $expr) {
-                    foreach ($expr->getRequiredAttributes() as $attrAlias) {
-                        if (! $cols->getByExpression($attrAlias)) {
-                            $col = $cols->addFromExpression($attrAlias);
-                            $expr = ExpressionFactory::createAsScalar($workbench, $col->getDataType()->format());
-                            $col->setValuesByExpression($expr);
-                        }
-                    }
+                foreach ($this->findMissingColumns($data, $filter, false) as $missingCol) {
+                    $col = $cols->addFromExpression($missingCol);
+                    $expr = ExpressionFactory::createAsScalar($workbench, $col->getDataType()->format());
+                    $col->setValuesByExpression($expr);
                 }
+                // At this point, all required columns are confirmed to be present, so we don't have to redo
+                // the work in DataSheet::findRows().
                 $readMissingData = false;
                 break;
+            // PASS will return an empty violations array, if any columns are missing. 
             case self::MISSING_COLS_PASS:
-                foreach ($filter->getRequiredExpressions($data->getMetaObject()) as $expr) {
-                    foreach ($expr->getRequiredAttributes() as $attrAlias) {
-                        if (! $cols->getByExpression($attrAlias)) {
-                            return [];
-                        }
-                    }
+                if(!empty($this->findMissingColumns($data, $filter, true))) {
+                    return [];
                 }
                 // At this point, all required columns are confirmed to be present, so we don't have to redo
                 // the work in DataSheet::findRows().
@@ -161,6 +159,40 @@ class DataCheck implements DataCheckInterface
             $this->getWorkbench()->getLogger()->logException(new DataCheckRuntimeError($data, 'Cannot perform data check. ' . $e->getMessage(), null, $e, $this));
             return [];
         }
+    }
+
+    /**
+     * Find any columns required by `$filter` that are not present in `$data`.
+     * 
+     * @param DataSheetInterface      $data
+     * @param ConditionGroupInterface $filter
+     * @param bool                    $returnOnFirst
+     * If TRUE, this function will only return the first missing column it can find.
+     * Note that the order in which columns are being checked is not reliable!
+     * @return array
+     */
+    protected function findMissingColumns(
+        DataSheetInterface $data, 
+        ConditionGroupInterface $filter,
+        bool $returnOnFirst
+    ) : array
+    {
+        $inputCols = $data->getColumns();
+        $result = [];
+        
+        foreach ($filter->getRequiredExpressions($data->getMetaObject()) as $expr) {
+            foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                if (! $inputCols->getByExpression($attrAlias)) {
+                    // Associative to prevent duplicate entries.
+                    $result[$attrAlias] = $attrAlias;
+                    if($returnOnFirst) {
+                        return $result;
+                    }
+                }
+            }
+        }
+        
+        return $result;
     }
     
     /**
@@ -471,8 +503,10 @@ class DataCheck implements DataCheckInterface
      * are missing from the datasheet.
      * 
      * - **read**: Values from missing columns will be read from the database. (default)
-     * - **empty**: Values from missing columns will be set to their datatype equivalent of an empty value (such as NULL).
-     * - **pass**: If not all columns required by this data check are present, the check will automatically pass (i.e. will not be performed).
+     * - **empty**: Values from missing columns will be set to their datatype equivalent of an empty value (such as
+     * NULL).
+     * - **pass**: If not all columns required by this data check are present, the check will automatically pass (i.e.
+     * will not be performed).
      * 
      * @uxon-property if_missing_columns
      * @uxon-type [read,empty,pass]
