@@ -1019,12 +1019,15 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             ],
             'Number' => [
                 self::KEY_DATA_TYPE => NumberDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputNumber"]
             ],
             'Integer' => [
                 self::KEY_DATA_TYPE => IntegerDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputNumber"]
             ],
             'Boolean' => [
                 self::KEY_DATA_TYPE => BooleanDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputCheckBox"]
             ],
             'Date' => [
                 self::KEY_DATA_TYPE => DateDataType::class,
@@ -1036,6 +1039,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             ],
             'Time' => [
                 self::KEY_DATA_TYPE => TimeDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputTime"]
             ]
         ];
     }
