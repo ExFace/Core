@@ -974,6 +974,9 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
 
     public function isSubsheetForObject(MetaObjectInterface $objectOfInputData): bool
     {
+        if ($this->isDisplayOnly() === true) {
+            return false;
+        }
         if ($this->getMetaObject()->is($objectOfInputData)) {
             return false;
         }
