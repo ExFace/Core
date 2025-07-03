@@ -120,15 +120,15 @@ class DataCheck implements DataCheckInterface
      */
     protected function findViolationsViaFilter(DataSheetInterface $data, ConditionGroupInterface $filter, ?LogBookInterface $logBook = null) : array
     {
-        $cols = $data->getColumns();
         switch ($this->getIfMissingColumns()) {
             // READ is the default behavior and works the same as though no behavior was defined.
             // Missing data will be read via `DataSheet::findRows($filter, true)`.
             case self::MISSING_COLS_READ:
                 $readMissingData = true;
                 break;
-            // EMPTY will add any missing columns and fill them with their datatype equivalent of an empty value.
+                // EMPTY will add any missing columns and fill them with their datatype equivalent of an empty value.
             case self::MISSING_COLS_EMPTY:
+                $cols = $data->getColumns();
                 $workbench = $this->getWorkbench();
                 foreach ($this->findMissingColumns($data, $filter, false) as $missingCol) {
                     $col = $cols->addFromExpression($missingCol);
