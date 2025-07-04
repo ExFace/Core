@@ -631,6 +631,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
+        $inJson = strcasecmp($dataAddressProps[static::DAP_SQL_DATA_TYPE], static::DAP_SQL_DATA_TYPE_JSON) === 0;
         switch (true) {
             case $data_type instanceof StringDataType:
                 $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
@@ -652,7 +653,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // Use CONVERT() instead of string dates like '2023-06-20 23:50:00'
                 // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
                 // But do not convert non-strings like `NULL` or custom SQL statements
-                if ("'" === mb_substr($value, 0, 1)) {
+                if ("'" === mb_substr($value, 0, 1) && ! $inJson) {
                     $value = "CONVERT(datetime, {$value}, {$format})";
                 }
                 break;
@@ -661,7 +662,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
                 // But do not convert non-strings like `NULL` or custom SQL statements
                 $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
-                if ("'" === mb_substr($value, 0, 1)) {
+                if ("'" === mb_substr($value, 0, 1) && ! $inJson) {
                     $value = "CONVERT(date, {$value}, 23)";
                 }
                 break;
