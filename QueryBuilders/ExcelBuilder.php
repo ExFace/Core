@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileStreamInterface;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\NamedRange;
+use PhpOffice\PhpSpreadsheet\Shared\StringHelper;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\DateDataType;
@@ -290,7 +291,7 @@ class ExcelBuilder extends FileBuilder
                     break;
                 case $this->isColumnName($address):
                     $addressColName = trim($address, '[]');
-                    $rangeName = mb_strtoupper($addressColName);
+                    $rangeName = StringHelper::strToUpper($addressColName);
                     if (! array_key_exists($rangeName, $spreadsheet->getNamedRanges())) {
                         // Read the first row as header data to get the column names
                         $headerRow = 1;
