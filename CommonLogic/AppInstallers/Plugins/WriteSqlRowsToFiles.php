@@ -15,9 +15,9 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
  * ## Parameters
  *
  * - `selectStatement`:Provide a quoted SELECT statement that fetches both the file paths and the unique keys required for the UPDATE statement.
+ * - `dataSourceAlias`: Files will be accessed via this data source.
  * - `filePathColumn`: Specify the name of the SELECT column that contains the file paths.
  * - `contentColumn`: Specify the name of the SELECT column that contains the contents that will be written to the output files.
- * - `dataSourceAlias`: Files will be accessed via this data source.
  * - `directorySeparator` = '/' (optional): Specify the directory separator for your file system.
  *
  * ## Usage
