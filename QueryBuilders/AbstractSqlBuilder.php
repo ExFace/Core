@@ -182,6 +182,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_DATA_TYPE = 'SQL_DATA_TYPE';
+    const DAP_SQL_DATA_TYPE_BINARY = 'binary';
+    const DAP_SQL_DATA_TYPE_JSON = 'json';
     
     /**
      * Defines a custom time zone for a datetime or time column if it differs from the connection setting
@@ -733,6 +735,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ((! $column || $this->isSqlStatement($column)) && ! $custom_insert_sql) {
                 continue;
             }
+            // Make sure, that attributes stored as JSON have a custom data address property telling everyone the
+            // underlying column is JSON and not date/binary, etc. SQL generating functions, that do not get the
+            // query part, cannot know about the JSON otherwise. 
+            if ($this->isJsonDataAddress($attrAddress) && $qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) === null) {
+                $qpart->setDataAddressProperty(self::DAP_SQL_DATA_TYPE, self::DAP_SQL_DATA_TYPE_JSON);
+            }
             // Save the query part for later processing if it is the object's UID
             if ($attr->isUidForObject()) {
                 $uidQpart = $qpart;
@@ -1051,6 +1059,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
             if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->isSqlStatement($attrAddress)) {
                 continue;
+            }
+            // Make sure, that attributes stored as JSON have a custom data address property telling everyone the
+            // underlying column is JSON and not date/binary, etc. SQL generating functions, that do not get the
+            // query part, cannot know about the JSON otherwise. 
+            if ($this->isJsonDataAddress($attrAddress) && $qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) === null) {
+                $qpart->setDataAddressProperty(self::DAP_SQL_DATA_TYPE, self::DAP_SQL_DATA_TYPE_JSON);
             }
             
             if ($qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)){
@@ -3439,6 +3453,6 @@ SQL;
     protected function isBinaryColumn(MetaAttributeInterface|QueryPartAttribute $qpartOrAttr) : bool
     {
         $sqlType = ($qpartOrAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '');
-        return strcasecmp($sqlType, 'binary') === 0;
+        return strcasecmp($sqlType, self::DAP_SQL_DATA_TYPE_BINARY) === 0;
     }
 }
