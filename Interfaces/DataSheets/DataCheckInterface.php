@@ -20,6 +20,10 @@ use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
  */
 interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface, \Stringable
 {
+    const MISSING_COLS_READ = 'read';
+    const MISSING_COLS_EMPTY = 'empty';
+    const MISSING_COLS_PASS = 'pass';
+    
     /**
      * Performs the check and returns a textual explanation for what has been checked or throws an exception if the check fails.
      *
