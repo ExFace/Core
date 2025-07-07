@@ -25,6 +25,21 @@ If you believe there is an error in the generated content, please contact the so
 
 `option1=value1&option2=value2`: Optional settings, depending on the placeholder.
 
+## Print Visibility Control
+If a placeholder should not be visible in the exported (printed) version of the documentation,
+you can add the following **option** to the placeholder:
+
+- `noprint=true`
+
+This applies to all placeholders and ensures that the rendered output will be hidden during export or printing.
+
+Example
+
+```html
+<!-- BEGIN NavButtons:noprint=true -->
+<!-- END NavButtons -->
+```
+
 ## Supported Placeholders
 - [SubPageList](SubPageListPlaceholder.md)
 - [ImageCaptionNr](ImageCaptionNumberPlaceholder.md)
