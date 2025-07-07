@@ -24,23 +24,47 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 /**
  * Marks an object as attachment - a link between a document and a file
  * 
+ * The object will appear to the rest of the system, as though it actually contained 
+ * the referenced file, even though it will simply hold the file metadata (most importantly
+ * the file path). 
+ * 
+ * This is especially useful if you need to reference large data-items: Instead of being stored
+ * as raw values on this object, which could severely slow down your application, they will be saved
+ * as files. And whenever you need to access that data, they will automatically be loaded and become available 
+ * via the attributes of this object. Once everything is configured, you won't have to think about files or
+ * folders at all!
+ * 
+ * ##  Configuration
+ * 
+ * Add this behavior to the object, that you would've stored the raw data on. For example, the object that
+ * represents the attachment of your document. Then configure the behavior parameters as follows:
+ * 
+ * - **file_relation**: Enter the attribute alias that points to the actual file storage. This attribute should usually
+ * have the datatype `File Path`, and be a relation to an object that inherits from `exface.Core.FILE`. Do NOT enter the actual
+ * relation, just the attribute alias that contains the relation (DO: `file_path`, DON'T: `file_path__...`).
+ * - **override_file_attributes**: Loading file-metadata is slow, which is why it might be faster to have some of it stored
+ * directly on this object. You can choose, which attributes of the file-storage object you want to put on this object. 
+ * The system will use the attributes you provided, instead of the ones on the storage object.
+ * For example, if you configure `"mime_type_attribute":"content_type"`, the system will use `your.App.YourObject.content_type` 
+ * instead of `your.App.YourStorage.MIMETYPE`. It is a good idea in general to override storage attributes, whenever a local 
+ * equivalent is available.
+ * 
  * ## Saving comments for each attachment
  * 
- * Attachments often include additional information beside the file itself.
- * Aparat from the link to the object owning the attachment, a common
- * scenario is saving descriptions or comments for each attachment. 
+ * Attachments often include additional information beside the file itself,
+ * such as comments or descriptions.
  * 
  * This can be greatly simplified by setting `comments_attribute` in this behavior. 
  * This will tell all widgets with an `uploader`, that the user should be 
- * able to add a comment to every file being uploaded. How exaclty this is 
+ * able to add a comment to every file being uploaded. How exactly this is 
  * done, depends on the specific widget and the facade used, but it will
- * certainly result in a consistent way to comment attachments accross the
+ * certainly result in a consistent way to comment attachments across the
  * entire app.
  * 
  * ## Deleting files (or not)
  * 
  * Normally, when an attachment is deleted, the attached file is deleted too. 
- * Thechnically the file is deleted after the attachment link. However, since 
+ * Technically the file is deleted after the attachment link. However, since 
  * most file storages do not support transactions, this may theoretically
  * lead to attachments loosing their files - e.g. if the transaction is rolled
  * back after the file was deleted.
@@ -49,7 +73,74 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  * setting `delete_files_when_attachments_deleted` to `false`. This will force
  * files to be kept even if the attachments are deleted.
  * 
+ * ## Access and manipulate file contents in code
+ * 
+ * While the FileAttachmentBehavior tries to hide all file interactions from a Power-UI perspective,
+ * you will have to watch out for some minor gotchas, when interacting with this behavior in code. 
+ * 
+ * 1. If you want to save or load file data via datasheets, use the `file_relation` attribute with
+ * relation strings. You don't have to worry about file paths or query builders:
+ * 
+ * ```
+ *  
+ *  // Loading response data, from a file.
+ * 
+ *  $responseData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'axenox.ETL.webservice_response');
+ *  $responseData->getColumns()->addFromSystemAttributes();
+ *  // To access the file data, we use the file relations.
+ *  $responseData->getColumns()->addMultiple([
+ *      'body_file__CONTENTS',  // Loading the actual file contents.
+ *      'body_file__SIZE'       // Loading the file size.
+ *  ]);
+ *  $responseData->getColumns()->addFromExpression('webservice_request');
+ *  $responseData->getFilters()->addConditionFromString('webservice_request', $requestUid);
+ *  $responseData->dataRead();
+ * 
+ *  // The datasheet now contains both the actual file contents and the file size.
+ * 
+ * ```
+ * 
+ * 2. Creating data with `DataSheetInterface::dataUpdate(create_if_uid_not_found true)` is NOT compatible with this behavior! 
+ * Use `DataSheetInterface::dataCreate()`, instead. Updating data with `dataUpdate()` works fine. 
+ * 
+ * ```
+ * 
+ *  // Create the datasheet.
+ *  $dataSheet = DataSheetFactory::createFromObjectIdOrAlias(
+ *      $this->facade->getWorkbench(),
+ *      'axenox.ETL.webservice_response'
+ *  );
+ * 
+ *  // Adding columns and filters...
+ * 
+ *  // Since `axenox.ETL.webservice_response` has an active `FileAttachmentBehavior`, 
+ *  // we can't use `$dataSheet->dataUpdate(true)`. 
+ *  $dataSheet->dataCreate();
+ * 
+ *  // We read from the datasheet, because the behavior has now generated important data.
+ *  // Most importantly, `body_file` is now calculated, and we need it to be up-to-date.
+ *  $dataSheet->dataRead();
+ *  
+ * ```
+ * 
  * ## Examples
+ * 
+ * ### Basic Configuration
+ * 
+ * Used in `axenox.ETL.webservice_request`, the storage object is `axenox.ETL.webservice_request_storage`.
+ * 
+ * ```
+ * 
+ *  {
+ *      "file_relation": "body_file",
+ *      "override_file_attributes": {
+ *          "mime_type_attribute": "content_type",
+ *          "time_created_attribute": "CREATED_ON",
+ *          "time_modified_attribute": "MODIFIED_ON"
+ *      }
+ *  }
+ * 
+ * ```
  * 
  * ### Select folder based on data conditions
  * 
@@ -123,7 +214,11 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     private $imageResizeQuality = null;
     
     /**
-     * Relation path to the file storage object
+     * Relation path to the file storage object.
+     * 
+     * Enter the attribute alias that points to the actual file storage. This attribute should usually
+     * have the datatype `File Path`, and be a relation to an object that inherits from `exface.Core.FILE`. Do NOT enter the actual
+     * relation, just the attribute alias that contains the relation (DO: `file_path`, DON'T: `file_path__...`).
      * 
      * @uxon-property file_relation
      * @uxon-type metamodel:relation
@@ -191,15 +286,22 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     }
     
     /**
-     * Use attributes of this object instead of real file attributes if the latter are missing or difficult to get
+     * Use attributes of this object instead of real file attributes if the latter are missing or difficult to get.
+     * 
+     * Loading file-metadata is slow, which is why it might be faster to have some of it stored
+     * directly on this object. You can choose, which attributes of the file-storage object you want to put on this object.
+     * The system will use the attributes you provided, instead of the ones on the storage object.
+     * For example, if you configure `"mime_type_attribute":"content_type"`, the system will use `your.App.YourObject.content_type`
+     * instead of `your.App.YourStorage.MIMETYPE`. It is a good idea in general to override storage attributes, whenever a local
+     * equivalent is available.
      * 
      * @uxon-property override_file_attributes
      * @uxon-type metamodel:attribute[]
      * @uxon-template {"filename_attribute": "", "file_size_attribute": "", "mime_type_attribute": "", "time_created_attribute": "", "time_modified_attribute": ""}
      * 
      * @param UxonObject $value
-     * @throws BehaviorConfigurationError
      * @return FileAttachmentBehavior
+     *@throws BehaviorConfigurationError
      */
     protected function setOverrideFileAttributes(UxonObject $value) : FileAttachmentBehavior
     {
