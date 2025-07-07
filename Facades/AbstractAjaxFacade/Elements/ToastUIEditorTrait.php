@@ -107,6 +107,9 @@ JS;
 
     protected function buildJsCustomHtmlRenderers() : string
     {
+        if (! $this->getWidget() instanceof InputMarkdown) {
+            return '';
+        }
         $inlineTagRenderersJs = '';
         foreach ($this->getWidget()->getStencils() as $stencil) {
             if ($stencil->isHtmlTag()) {
@@ -162,16 +165,18 @@ JS;
     protected function buildJsToolbarItemsForStencils() : string
     {
         $js = '';
-        foreach ($this->getWidget()->getStencils() as $stencil) {
-            switch (true) {
-                case $stencil instanceof HtmlTagStencil:
-                    $js .= $this->buildJsToolbarItemForHtmlTagStencil($stencil);
-                    break;
-                default:
-                    // TODO add support for regular stencils - just insert them at cursor position
-                    throw new WidgetConfigurationError($this->getWidget(), 'Only HtmlTag stencils currently supported');
-                    /*$js .= $this->buildJsToolbarItemForTextStencil($stencil);*/
-                    break;
+        if ($this->getWidget() instanceof InputMarkdown) {
+            foreach ($this->getWidget()->getStencils() as $stencil) {
+                switch (true) {
+                    case $stencil instanceof HtmlTagStencil:
+                        $js .= $this->buildJsToolbarItemForHtmlTagStencil($stencil);
+                        break;
+                    default:
+                        // TODO add support for regular stencils - just insert them at cursor position
+                        throw new WidgetConfigurationError($this->getWidget(), 'Only HtmlTag stencils currently supported');
+                        /*$js .= $this->buildJsToolbarItemForTextStencil($stencil);*/
+                        break;
+                }
             }
         }
         return $js;
