@@ -12,6 +12,8 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
+use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
+use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
@@ -234,17 +236,30 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * Replaces the ON-part for JOINs generated from this attribute.
      * 
      * This only works for attributes, that represent a forward (n-1) relation! The
-     * option only supports these static placeholders: `[#~left_alias#]` and
-     * `[#~right_alias#]` (will be replaced by the aliases of the left and right
-     * tables in the JOIN accordingly). Use this option to JOIN on multiple columns
-     * like `[#~left_alias#].col1 = [#~right_alias#].col3 AND [#~left_alias#].col2
-     * = [#~right_alias#].col4` or introduce other conditions like `[#~left_alias#].col1
-     * = [#~right_alias#].col2 AND [#~right_alias#].status > 0`.
+     * option supports these placeholders: 
+     * - `[#~left_alias#]` or `[#~right_alias#]` - alias of the table on left/right side of the JOIN
+     * - `[#~left:MYATTR#]` or `[#~right:MYATTR#]` - alias of any attribute of the left/right object
+     * 
+     * ## Examples
+     *
+     * - `[#~left:PAGE#] = [#~right:UID#] AND [#~right:IN_MENU#] = 1` - JOIN on an attribute with an additional
+     * filter - will only JOIN pages, that are shown in the menu in this case
+     * - `[#~left:PAGE#] = [#~right:UID#] AND [#~right:PARENT__PUBLISHED#] = 1` - JOIN with additional condition
+     * using relations - will only JOIN pages where the parent is published
+     * - `[#~left_alias#].col1 = [#~right_alias#].col3 AND [#~left_alias#].col2 = [#~right_alias#].col4` - JOIN on two
+     * two different columns
+     * - `[#~left_alias#].col1 = [#~right_alias#].col2 AND [#~right_alias#].status > 0` - JOIN on a column with an
+     *  additional filter
      *
      * @uxon-property SQL_JOIN_ON
      * @uxon-target attribute
      * @uxon-type string
      * @uxon-template [#~left_alias#].col1 = [#~right_alias#].col3
+     * 
+     * @uxon-placeholder [#~left_alias#]
+     * @uxon-placeholder [#~right_alias#]
+     * @uxon-placeholder [#~left:<metamodel:attribute>#]
+     * @uxon-placeholder [#~right:<metamodel:attribute>#]
      */
     const DAP_SQL_JOIN_ON = 'SQL_JOIN_ON';
     
@@ -1652,7 +1667,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": custom JOINs via SQL_JOIN_ON only supported for regular key attributes (no compounds, etc.)!');
                 }
                 // If it's a custom JOIN, calculate it here
-                $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $relq->getMainTableAlias(), '~right_alias' => $select_from]);
+                $customJoinOn = $this->replacePlaceholdersInSqlJoin(
+                    $customJoinOn,
+                    $relq->getMainTableAlias(),
+                    $select_from,
+                    $rev_rel,
+                    $relq
+                );
                 $junctionQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
             }
         }
@@ -1841,7 +1862,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($this->getMainObject())) . $this->buildSqlAsForTables($right_table_alias) . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $this->buildSqlJoinSide($this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()), $right_table_alias);
             } else {
                 // In most cases we will build joins for attributes of related objects.
-                $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
+                $left_table_alias = ($left_table_alias ? $left_table_alias : $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getQueryId());
                 foreach ($rels as $alias => $rel) {
                     /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
                     if ($rel->isForwardRelation() === true) {
@@ -1849,15 +1870,24 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $right_table_alias = $this->getShortAlias($alias . $this->getQueryId());
                         $right_obj = $this->getMainObject()->getRelatedObject($alias);
                         // generate the join sql
-                        $join = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($right_obj)) . $this->buildSqlAsForTables($right_table_alias) . ' ON ';
+                        $join_table = str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($right_obj)) . $this->buildSqlAsForTables($right_table_alias);
                         $leftKeyAttr = $rel->getLeftKeyAttribute();
                         if ($customOn = $leftKeyAttr->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
                             // If a custom join condition ist specified in the attribute, that defines the relation, just replace the aliases in it
-                            $join .= StringDataType::replacePlaceholders($customOn, ['~left_alias' => $left_table_alias, '~right_alias' => $right_table_alias]);
+                            $join_on = $this->replacePlaceholdersInSqlJoin(
+                                $customOn,
+                                $left_table_alias,
+                                $right_table_alias,
+                                $rel,
+                                null,
+                                null,
+                                $join_table
+                            );
                         } else {
                             // Otherwise create the ON clause from the attributes on both sides of the relation.
-                            $join .= $this->buildSqlJoinOn($leftKeyAttr, $rel->getRightKeyAttribute(), $left_table_alias, $right_table_alias);
+                            $join_on = $this->buildSqlJoinOn($leftKeyAttr, $rel->getRightKeyAttribute(), $left_table_alias, $right_table_alias);
                         }
+                        $join = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . $join_table . ' ON ' . $join_on;
                         $joins[$right_table_alias] = $join;
                         // continue with the related object
                         $left_table_alias = $right_table_alias;
@@ -2614,7 +2644,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
             // the subselect.
             if ($customJoinOn = $start_rel->getRightKeyAttribute()->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
-                $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $relq->getMainTableAlias(), '~right_alias' => $this->getMainTableAlias()]);
+                $customJoinOn = $this->replacePlaceholdersInSqlJoin(
+                    $customJoinOn,
+                    $relq->getMainTableAlias(),
+                    $this->getMainTableAlias(), 
+                    $start_rel,
+                    $relq
+                );
                 $joinFilterQpart = $relq->addFilterFromString($start_rel->getRightKeyAttribute()->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
                 $joinFilterQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
                 $sql = (stripos($junctionOp, 'EXISTS') !== false ? $junctionOp : 'EXISTS') . ' (' . $relq->buildSqlQuerySelect() . ')';
@@ -2945,6 +2981,107 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $data_address = str_replace('[#' . $ph . '#]', $ph_select, $data_address);
         }
         return $data_address;
+    }
+
+    /**
+     * @param string $sqlJoin
+     * @param string $leftTableAlias
+     * @param string $rightTableAlias
+     * @param MetaObjectInterface $leftObj
+     * @param MetaObjectInterface $rigthObj
+     * @param AbstractSqlBuilder|null $leftSubquery
+     * @param AbstractSqlBuilder|null $rightSubquery
+     * @param string|null $joinedTableSQL
+     * @return string
+     */
+    protected function replacePlaceholdersInSqlJoin(
+        string $sqlJoin, 
+        string $leftTableAlias, 
+        string $rightTableAlias, 
+        MetaRelationInterface $relation, 
+        ?self $leftSubquery = null, 
+        ?self $rightSubquery = null, 
+        ?string &$joinedTableSQL = null
+    ) : string
+    {
+        $leftQuery = $leftSubquery ?? $this;
+        $rightQuery = $rightSubquery ?? $this;
+        $leftTableAlias = $leftTableAlias ?? $leftQuery->getShortAlias($relation->getLeftObject()->getAlias() . $leftQuery->getQueryId());
+        $rightTableAlias = $rightTableAlias ?? $rightQuery->getShortAlias($relation->getRightObject()->getAlias() . $rightQuery->getQueryId());
+        
+        $phs = StringDataType::findPlaceholders($sqlJoin);
+        $phVals = [];
+        foreach ($phs as $ph) {
+            switch (true) {
+                case StringDataType::startsWith($ph, '~left:'):
+                    $phVals[$ph] = $leftQuery->replacePlaceholdersInSqlAddress(
+                        '[#' . StringDataType::substringAfter($ph, '~left:') . '#]', 
+                        null, 
+                        null, 
+                        $leftTableAlias
+                    );
+                    break;
+                case StringDataType::startsWith($ph, '~right:'):
+                    $attrAlias = StringDataType::substringAfter($ph, '~right:');
+                    $relPath = $leftQuery !== $rightQuery ? null : RelationPathFactory::createForObject($relation->getLeftObject())->appendRelation($relation);
+                    // If the placeholder is a RELATED attribute of the right object, we will need to JOIN all tables
+                    // along the relation path. For example `[#~right:rel1__rel2__name#]` should produce this SQL:
+                    // ```
+                    // JOIN (
+                    //      table_to_join 
+                    //      JOIN rel1 ON ...
+                    //      JOIN rel2
+                    // ) ON ... AND ... = rel2.name
+                    // ```
+                    // We use a trick here: the related attribute is put into a temporary subquery, which is used
+                    // to render the JOINs only - these JOINs are then put into braces together with right table
+                    // alias
+                    if ($relPath !== null && $relPath->getEndObject()->hasAttribute($attrAlias) && $relPath->getEndObject()->getAttribute($attrAlias)->isRelated()) {
+                        /* @var $joinSubquery self */
+                        $joinSubquery = QueryBuilderFactory::createFromSelector($this->getSelector());
+                        $joinSubquery->setMainObject($relPath->getEndObject());
+                        // Make sure, the subquery uses its own table aliases - just in case the same tables are used
+                        // in the main query.
+                        $joinSubquery->setQueryId($this->getNextSubqueryId());
+                        $phVals[$ph] = $joinSubquery->replacePlaceholdersInSqlAddress(
+                            '[#' . $attrAlias . '#]',
+                            null,
+                            null,
+                            $rightTableAlias
+                        );
+                        $phJoins = [];
+                        // Since we did not add any query parts to the subquery, all its query parts should be required
+                        // for the placeholder. Actually, it probably always be exactly one query part.
+                        foreach ($joinSubquery->getAttributes() as $qpart) {
+                            if ($qpart->isUsedInPlaceholders() && $qpart->getAttribute()->getObject() !== $joinSubquery->getMainObject()) {
+                                $phJoins = array_merge($phJoins, $joinSubquery->buildSqlJoins($qpart, $rightTableAlias));
+                            }
+                        }
+                        $joinedTableSQL = '(' . trim(trim($joinedTableSQL), "()") . implode("\n", $phJoins) . ')';
+                    } else {
+                        // If the right placeholder does not need relations, we do not need a subquery and can just
+                        // use the regular placeholder replacer
+                        $attrAlias = StringDataType::substringAfter($ph, '~right:');
+                        $phVals[$ph] = $rightQuery->replacePlaceholdersInSqlAddress(
+                            '[#' . $attrAlias . '#]',
+                            $relPath,
+                            null,
+                            $rightTableAlias
+                        );
+                    }
+                    break;
+                case $ph === '~left_alias':
+                    $phVals[$ph] = $leftTableAlias;
+                    break;
+                case $ph === '~right_alias':
+                    $phVals[$ph] = $rightTableAlias;
+                    break;
+                default:
+                    throw new PlaceholderNotFoundError('Invalid placeholder "' . $ph . '" in custom SQL_JOIN_ON of object ' . $leftQuery->getMainObject()->__toString() . ': ' . $sqlJoin);
+            }
+        }
+        
+        return StringDataType::replacePlaceholders($sqlJoin, $phVals);
     }
     
     /**
