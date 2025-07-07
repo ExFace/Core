@@ -3392,7 +3392,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         if ($addr === '' || $addr === null) {
-            return $addr;
+            return $addr ?? '';
         }
         
         return $this->findSqlDialect($addr);
