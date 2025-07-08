@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataTypes;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -284,6 +285,9 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function setAlias($string)
     {
+        if (mb_strpos($string, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) !== false) {
+            $string = StringDataType::substringAfter($string, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string, false, true);
+        }
         $this->alias = $string;
     }
     
