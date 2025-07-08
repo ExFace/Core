@@ -58,16 +58,24 @@ class JsonExtract extends Formula
         $array = JsonDataType::decodeJson($json);
         $extracts = ArrayDataType::filterJsonPath($array, $jsonPath);
         $result = '';
-        foreach ($extracts as $extract) {
+        
+        foreach ($extracts as $i => $extract) {
             if (is_object($extract) || is_array($extract)) {
                 $result = JsonDataType::encodeJson($extracts);
                 break;
             }
+            
             if ($extract === null || $extract === '') {
                 continue;
             }
-            $result = ($result !== '' ? $delimiter : '') . $extract;
+            
+            $result .= ($result !== '' ? $delimiter : '[') . $extract;
         }
+        
+        if(!empty($result) && !str_ends_with($result, ']')) {
+            $result .= ']';
+        }
+        
         return $result;
     }
 }
