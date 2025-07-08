@@ -536,7 +536,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
             
             // Attach the attribute to the object
-            $targetObject->getAttributes()->add($attr);
+            $targetObject->addAttribute($attr);
             $attrs[] = $attr;
             $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
         }
