@@ -8,7 +8,6 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
@@ -106,7 +105,7 @@ class ObjectMutation extends AbstractMutation
                 }
                 $attr = new CustomAttribute($subject, $name, $alias, $this);
                 $attr->importUxonObject($uxon);
-                $subject->getAttributes()->add($attr);
+                $subject->addAttribute($attr);
             }
         }
         
