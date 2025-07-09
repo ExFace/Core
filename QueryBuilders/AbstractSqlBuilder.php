@@ -2625,7 +2625,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                 // Otherwise just add a regular filter
                 default:
-                    $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
+                    $relFilter = $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
+                    $relFilter->getCondition()->setApplyToAggregates($qpart->getCondition()->appliesToAggregatedValues());
                     break;
             }
 
