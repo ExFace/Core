@@ -672,7 +672,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
-        $inJson = strcasecmp($dataAddressProps[static::DAP_SQL_DATA_TYPE], static::DAP_SQL_DATA_TYPE_JSON) === 0;
+        $inJson = strcasecmp($dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? '', static::DAP_SQL_DATA_TYPE_JSON) === 0;
         switch (true) {
             case $data_type instanceof StringDataType:
                 $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
