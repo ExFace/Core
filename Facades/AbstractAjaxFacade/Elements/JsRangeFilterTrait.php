@@ -207,17 +207,17 @@ JS;
      * @param array $parameters
      * @return string
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
     {
         $widget = $this->getWidget();
         if ($widget->hasFunction($functionName, false)) {
-            return parent::buildJsCallFunction($functionName, $parameters);
+            return parent::buildJsCallFunction($functionName, $parameters, $jsRequestData);
         }
         
         $js = '';
         foreach ($this->getWidgetInlineGroup()->getWidgets() as $child) {
             if ($child->hasFunction($functionName)) {
-                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);
+                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters, $jsRequestData);
             }
         }
         

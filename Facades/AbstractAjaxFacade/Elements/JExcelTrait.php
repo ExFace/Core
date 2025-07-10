@@ -2280,7 +2280,7 @@ JS;
      * In classes, that use this trait, you can include this method like this:
      * 
      * ```
-     * public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+     * public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
      * {
      *     if (null !== $js = $this->buildJsCallFunctionOfJExcel($functionName, $parameters)) {
      *         return $js;
@@ -2294,7 +2294,7 @@ JS;
      * @param array $parameters
      * @return string|null
      */
-    protected function buildJsCallFunctionOfJExcel(string $functionName = null, array $parameters = []) : ?string
+    protected function buildJsCallFunctionOfJExcel(string $functionName = null, array $parameters = [], string $jsRequestData) : ?string
     {
         switch (true) {
             case $functionName === DataTable::FUNCTION_EMPTY:
