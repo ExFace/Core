@@ -238,13 +238,13 @@ JS;
      * @param array $parameters
      * @return string
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
     {
         $widget = $this->getWidget();
         if ($widget->hasFunction($functionName, false)) {
-            return parent::buildJsCallFunction($functionName, $parameters);
+            return parent::buildJsCallFunction($functionName, $parameters, $jsRequestData);
         }
         
-        return $this->getFacade()->getElement($widget->getInputWidget())->buildJsCallFunction($functionName, $parameters);
+        return $this->getFacade()->getElement($widget->getInputWidget())->buildJsCallFunction($functionName, $parameters, $jsRequestData);
     }
 }
