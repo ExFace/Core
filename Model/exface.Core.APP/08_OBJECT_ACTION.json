@@ -209,9 +209,9 @@
         {
             "_EXPORT_SUMMARY": "App: Inspect [AppInspectDialog]",
             "CREATED_ON": "2020-11-09 09:16:38",
-            "MODIFIED_ON": "2023-08-24 10:25:28",
+            "MODIFIED_ON": "2025-07-03 14:03:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb9dc145a378fa9dc1025041000001",
             "OBJECT": "0x35370000000000000000000000000000",
             "ACTION_PROTOTYPE": "exface/Core/Actions/ShowObjectEditDialog.php",
@@ -243,6 +243,11 @@
                                                         {
                                                             "widget_type": "WidgetGroup",
                                                             "widgets": [
+                                                                {
+                                                                    "attribute_alias": "UID",
+                                                                    "id": "uid_field",
+                                                                    "widget_type": "InputHidden"
+                                                                },
                                                                 {
                                                                     "attribute_alias": "NAME"
                                                                 },
@@ -1540,6 +1545,267 @@
                                                 },
                                                 {
                                                     "action_alias": "exface.Core.DeleteObject"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "caption": "Snippets",
+                                    "widgets": [
+                                        {
+                                            "widget_type": "DataTable",
+                                            "object_alias": "exface.Core.UXON_SNIPPET",
+                                            "filters": [
+                                                {
+                                                    "attribute_alias": "NAME"
+                                                },
+                                                {
+                                                    "attribute_alias": "APP",
+                                                    "required": true,
+                                                    "hidden": true
+                                                },
+                                                {
+                                                    "attribute_alias": "ALIAS"
+                                                },
+                                                {
+                                                    "attribute_alias": "OBJECT"
+                                                },
+                                                {
+                                                    "attribute_alias": "UXON"
+                                                },
+                                                {
+                                                    "attribute_alias": "PROTOTYPE"
+                                                }
+                                            ],
+                                            "columns": [
+                                                {
+                                                    "attribute_alias": "NAME"
+                                                },
+                                                {
+                                                    "attribute_alias": "ALIAS"
+                                                },
+                                                {
+                                                    "attribute_alias": "PROTOTYPE__LABEL"
+                                                },
+                                                {
+                                                    "attribute_alias": "OBJECT__LABEL"
+                                                },
+                                                {
+                                                    "attribute_alias": "UXON_SCHEMA"
+                                                },
+                                                {
+                                                    "calculation": "=Left(DESCRIPTION, 80)"
+                                                },
+                                                {
+                                                    "attribute_alias": "OBJECT",
+                                                    "hidden": true
+                                                }
+                                            ],
+                                            "sorters": [
+                                                {
+                                                    "attribute_alias": "CREATED_ON",
+                                                    "direction": "desc"
+                                                }
+                                            ],
+                                            "buttons": [
+                                                {
+                                                    "action_alias": "exface.Core.ShowObjectCreateDialog"
+                                                },
+                                                {
+                                                    "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                    "bind_to_double_click": true
+                                                },
+                                                {
+                                                    "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                                },
+                                                {
+                                                    "action_alias": "exface.Core.DeleteObject"
+                                                },
+                                                {
+                                                    "caption": "Open object",
+                                                    "disabled_if": {
+                                                        "operator": "AND",
+                                                        "conditions": [
+                                                            {
+                                                                "value_left": "=~input!OBJECT",
+                                                                "comparator": "==",
+                                                                "value_right": ""
+                                                            }
+                                                        ]
+                                                    },
+                                                    "action": {
+                                                        "alias": "exface.Core.ShowObjectEditDialog",
+                                                        "object_alias": "exface.Core.OBJECT",
+                                                        "input_mapper": {
+                                                            "from_object_alias": "exface.Core.UXON_SNIPPET",
+                                                            "to_object_alias": "exface.Core.OBJECT",
+                                                            "column_to_column_mappings": [
+                                                                {
+                                                                    "from": "OBJECT",
+                                                                    "to": "UID"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "caption": "Mutations",
+                                    "widgets": [
+                                        {
+                                            "object_alias": "exface.Core.MUTATION_SET",
+                                            "widget_type": "SplitHorizontal",
+                                            "panels": [
+                                                {
+                                                    "caption": "Mutation sets",
+                                                    "width": "40%",
+                                                    "widgets": [
+                                                        {
+                                                            "widget_type": "DataTable",
+                                                            "object_alias": "exface.Core.MUTATION_SET",
+                                                            "id": "mutation_set_table",
+                                                            "filters": [
+                                                                {
+                                                                    "attribute_alias": "ENABLED_FLAG"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "APP",
+                                                                    "hidden": true,
+                                                                    "required": true
+                                                                }
+                                                            ],
+                                                            "columns": [
+                                                                {
+                                                                    "attribute_alias": "ENABLED_FLAG",
+                                                                    "caption": "On"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MUTATION__UID:COUNT",
+                                                                    "caption": "Mutations"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "DESCRIPTION"
+                                                                }
+                                                            ],
+                                                            "sorters": [
+                                                                {
+                                                                    "attribute_alias": "NAME",
+                                                                    "direction": "asc"
+                                                                }
+                                                            ],
+                                                            "buttons": [
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCreateDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                                    "bind_to_double_click": true
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.DeleteObject",
+                                                                    "visibility": "optional"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "caption": "Mutations",
+                                                    "widgets": [
+                                                        {
+                                                            "widget_type": "DataTable",
+                                                            "object_alias": "exface.Core.MUTATION",
+                                                            "filters": [
+                                                                {
+                                                                    "attribute_alias": "MUTATION_SET",
+                                                                    "hidden": true,
+                                                                    "value": "=mutation_set_table!UID",
+                                                                    "comparator": "==",
+                                                                    "apply_on_change": true
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "CONFIG_UXON"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "CONFIG_BASE_OBJECT"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MUTATION_TYPE"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MUTATION_SET__APP__UID",
+                                                                    "hidden": true,
+                                                                    "required": true,
+                                                                    "comparator": "=="
+                                                                }
+                                                            ],
+                                                            "columns": [
+                                                                {
+                                                                    "attribute_alias": "ENABLED_FLAG",
+                                                                    "caption": "On"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MUTATION_TYPE__LABEL"
+                                                                },
+                                                                {
+                                                                    "attribute_group_alias": "~CUSTOM"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "CREATED_ON"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "CREATED_BY_USER__LABEL"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "DESCRIPTION"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MUTATION_SET__APP__ALIAS"
+                                                                }
+                                                            ],
+                                                            "sorters": [
+                                                                {
+                                                                    "attribute_alias": "NAME",
+                                                                    "direction": "asc"
+                                                                }
+                                                            ],
+                                                            "buttons": [
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCreateDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                                    "bind_to_double_click": true
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.DeleteObject",
+                                                                    "visibility": "optional"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }

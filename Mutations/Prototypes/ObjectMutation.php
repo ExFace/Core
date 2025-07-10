@@ -1,11 +1,13 @@
 <?php
 namespace exface\Core\Mutations\Prototypes;
 
+use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
@@ -13,16 +15,42 @@ use exface\Core\Mutations\AppliedEmptyMutation;
 
 /**
  * Allows to modify the model of an object
+ * 
+ * ## Change object properties
+ * 
+ * - `name`,
+ * - `description`,
+ * - `writable`,
+ * - `readable`
+ * 
+ * ## Change the data address
+ * 
+ * You can overwrite the `data_address` or change `data_address_properties`. Since the latter is a UXON with
+ * a data source specific additional configuration, you do not overwrite it directly, but rather define
+ * UXON mutation rules to change specific places in the data address properties. 
  *
+ * ## Change attributes
+ * 
+ * Using `change_attributes` you can modify the model of any attribute of the model. See `ObjectAttributeMutation`
+ * for more details.
+ * 
+ * ## Add custom attributes
+ * 
+ * You can add new attributes using `add_attributes`. For every attribute, you can freely set all its properties.
+ * In particular, you can use regular data addresses for the data source of the object.
+ * 
  * @author Andrej Kabachnik
  */
 class ObjectMutation extends AbstractMutation
 {
-    private ?array          $attributeMutations = null;
-    private ?UxonObject     $attributeMutationsUxon = null;
-    private ?UxonObject $dataAddressPropertiesMutationUxon = nulL;
-    private ?GenericUxonMutation $dataAddressPropertiesMutation = nulL;
-    private array $changedObjects = [];
+    private ?array                  $attributeMutations = null;
+    private ?UxonObject             $attributeMutationsUxon = null;
+    
+    private ?UxonObject             $dataAddressPropertiesMutationUxon = nulL;
+    private ?GenericUxonMutation    $dataAddressPropertiesMutation = nulL;
+    
+    private array                   $objectChanges = [];
+    private ?UxonObject             $addedAttributesUxon = null;
 
     /**
      * @see MutationInterface::apply()
@@ -64,6 +92,25 @@ class ObjectMutation extends AbstractMutation
                 throw new RuntimeException('Cannot apply mutation "' . $this->getName() . '". ' . $e->getMessage(), null, $e);
             }
         }
+        
+        if (null !== $uxonArray = $this->getCustomAttributesUxon()) {
+            foreach ($uxonArray as $uxon) {
+                $name = $uxon->getProperty('name');
+                $alias = $uxon->getProperty('alias');
+                if ($name === null) {
+                    throw new UnexpectedValueException('Missing name for custom attribute "' . $alias . '" for mutation "' . $this->getName() . '"');
+                }
+                if ($alias === null) {
+                    throw new UnexpectedValueException('Missing alias for custom attribute "' . $name . '" for mutation "' . $this->getName() . '"');
+                }
+                $attr = new CustomAttribute($subject, $name, $alias, $this);
+                $attr->importUxonObject($uxon);
+                $subject->addAttribute($attr);
+            }
+        }
+        
+        // TODO add attribute groups management here. Probably similarly to attributes also `change_attribute_groups`
+        // and `add_attribute_groups`.
 
         return new AppliedEmptyMutation($this, $subject);
     }
@@ -83,7 +130,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function getObjectChanges(): array
     {
-        return $this->changedObjects;
+        return $this->objectChanges;
     }
 
     /**
@@ -97,7 +144,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeName(string $objectName): ObjectMutation
     {
-        $this->changedObjects['name'] = $objectName;
+        $this->objectChanges['name'] = $objectName;
         return $this;
     }
 
@@ -112,7 +159,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeDescription(string $objectDescription): ObjectMutation
     {
-        $this->changedObjects['description'] = $objectDescription;
+        $this->objectChanges['description'] = $objectDescription;
         return $this;
     }
 
@@ -162,7 +209,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeDataAddress(string $objectDataAddress): ObjectMutation
     {
-        $this->changedObjects['data_address'] = $objectDataAddress;
+        $this->objectChanges['data_address'] = $objectDataAddress;
         return $this;
     }
 
@@ -177,7 +224,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeReadable(bool $objectReadableFlag): ObjectMutation
     {
-        $this->changedObjects['readable'] = $objectReadableFlag;
+        $this->objectChanges['readable'] = $objectReadableFlag;
         return $this;
     }
 
@@ -192,7 +239,7 @@ class ObjectMutation extends AbstractMutation
      */
     protected function setChangeWritable(bool $objectWritableFlag): ObjectMutation
     {
-        $this->changedObjects['writable'] = $objectWritableFlag;
+        $this->objectChanges['writable'] = $objectWritableFlag;
         return $this;
     }
 
@@ -222,5 +269,29 @@ class ObjectMutation extends AbstractMutation
             $this->dataAddressPropertiesMutation = new GenericUxonMutation($this->getWorkbench(), $this->dataAddressPropertiesMutationUxon);
         }
         return $this->dataAddressPropertiesMutation;
+    }
+    
+    protected function getCustomAttributesUxon() : ?UxonObject
+    {
+        return $this->addedAttributesUxon;
+    }
+
+    /**
+     * Add custom attributes to the target object.
+     * 
+     * These attributes will be added as long as the mutation is active. Just as regular attributes, they
+     * can have a data address, that points to their data in the data source of the object.
+     * 
+     * @uxon-property add_attributes
+     * @uxon-type \exface\Core\CommonLogic\Model\CustomAttribute[]
+     * @uxon-template [{"name": "", "alias": "", "data_address": "", "data_type": {"alias": ""}}]
+     * 
+     * @param UxonObject $arrayOfUxons
+     * @return $this
+     */
+    protected function setAddAttributes(UxonObject $arrayOfUxons) : ObjectMutation
+    {
+        $this->addedAttributesUxon = $arrayOfUxons;
+        return $this;
     }
 }

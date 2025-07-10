@@ -77,6 +77,14 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return MetaAttributeListInterface|Attribute[]
      */
     public function getAttributes();
+
+    /**
+     * Adds the given attribute to this object
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return MetaObjectInterface
+     */
+    public function addAttribute(MetaAttributeInterface $attribute) : MetaObjectInterface;
     
     /**
      * Returns an attribute matching the given attribute alias.

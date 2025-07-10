@@ -95,30 +95,30 @@
             "MUTATION_TARGET": "0x11f0be631671bc46be63025041000001"
         },
         {
-            "_EXPORT_SUMMARY": "Default editor mutation",
+            "_EXPORT_SUMMARY": "Object default editor mutation",
             "CREATED_ON": "2025-05-21 11:26:03",
-            "MODIFIED_ON": "2025-05-21 11:28:17",
+            "MODIFIED_ON": "2025-07-01 14:25:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f080759d68b2d68075025041000001",
             "MUTATION_POINT_FILE": "exface/Core/Mutations/MutationPoints/ObjectDefaultEditorMutationPoint.php",
             "MUTATION_PROTOTYPE_FILE": "exface/Core/Mutations/Prototypes/GenericUxonMutation.php",
             "DESCRIPTION": "",
-            "NAME": "Default editor mutation",
+            "NAME": "Object default editor mutation",
             "APP": "0x31000000000000000000000000000000",
-            "MUTATION_TARGET": "0x11f09f3c1a8d57ec9f3c025041000001"
+            "MUTATION_TARGET": "0x11f087a60a7cc5e087a6025041000001"
         },
         {
-            "_EXPORT_SUMMARY": "Meta object mutation",
+            "_EXPORT_SUMMARY": "Object mutation",
             "CREATED_ON": "2025-06-03 16:30:55",
-            "MODIFIED_ON": "2025-06-03 16:30:55",
+            "MODIFIED_ON": "2025-07-01 14:26:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0b2715ba866ccb271025041000001",
             "MUTATION_POINT_FILE": "exface/Core/Mutations/MutationPoints/ObjectMutationPoint.php",
             "MUTATION_PROTOTYPE_FILE": "exface/Core/Mutations/Prototypes/ObjectMutation.php",
             "DESCRIPTION": "",
-            "NAME": "Meta object mutation",
+            "NAME": "Object mutation",
             "APP": "0x31000000000000000000000000000000",
             "MUTATION_TARGET": "0x11f087a60a7cc5e087a6025041000001"
         }

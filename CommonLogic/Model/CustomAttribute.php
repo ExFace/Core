@@ -14,7 +14,9 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Custom attributes are meant to be added to objects at runtime.
- * Apart from some minor convenience features, they work the same as regular attributes.
+ * 
+ * Apart from some minor convenience features, they work the same as regular attributes. You can set most
+ * properties seen in the attribute editor UI via UXON.
  * 
  * @see \exface\Core\Behaviors\CustomAttributeDefinitionBehavior
  */
@@ -58,6 +60,9 @@ class CustomAttribute extends Attribute
         switch (true) {
             case $src instanceof BehaviorInterface:
                 $hint = PhpClassDataType::findClassNameWithoutNamespace($src) . ' "' . $src->getName() . '"';
+                break;
+            case $src instanceof \Stringable:
+                $hint = $src->__toString();
                 break;
             case $src === null:
                 $hint = 'unknown source';
