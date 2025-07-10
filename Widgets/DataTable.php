@@ -124,6 +124,8 @@ class DataTable extends Data implements
     private $multi_select_saved_on_nav = null;
 
     private $auto_row_height = true;
+    
+    private $auto_columnn_width = true;
 
     private $row_details_container = null;
 
@@ -415,7 +417,7 @@ class DataTable extends Data implements
      *
      * @return boolean
      */
-    public function getAutoRowHeight()
+    public function getAutoRowHeight() : bool
     {
         return $this->auto_row_height;
     }
@@ -431,9 +433,37 @@ class DataTable extends Data implements
      * @param boolean $value            
      * @return \exface\Core\Widgets\DataTable
      */
-    public function setAutoRowHeight($value)
+    public function setAutoRowHeight(bool $value)
     {
-        $this->auto_row_height = BooleanDataType::cast($value);
+        $this->auto_row_height = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function getAutoColumnWidth() : bool
+    {
+        return $this->auto_columnn_width;
+    }
+
+    /**
+     * Set to FALSE to prevent automatic width adjustment for columns.
+     * 
+     * The exact behavior of this depends on the facade used, but most facades will distribute columns
+     * evenly in this case. 
+     * 
+     * @uxon-property auto_column_width
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param boolean $value
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setAutoColumnWidth(bool $value)
+    {
+        $this->auto_columnn_width = $value;
         return $this;
     }
 

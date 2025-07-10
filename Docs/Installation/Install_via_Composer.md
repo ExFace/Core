@@ -12,6 +12,8 @@ If anything goes wrong during downloading dependencies (this may take quite a wh
 
 If you see errors like `FAILED installing exface.Core!`, this probably means your initial configuration is incorrect (e.g. invalid DB connection). Fix the configuration and run `composer run-script post-install-cmd` to retry installing without downloading all the dependencies.
 	
+See [general installation troubleshooting](Installation_troubleshooting.md) for more details.
+
 ## Typical minimum setup (stable versions)
 
 This will install the latest stable version and a typical minimum set of extras with open source licenses. 

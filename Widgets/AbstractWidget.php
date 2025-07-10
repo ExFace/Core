@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -1804,6 +1805,17 @@ MD;
     {
         $resolver = function(array $widgetUxon) use ($widget) {
             $resultUxon = [];
+
+            // If there are more properties than just `attribute_group_alias`, see if any
+            // of them include placeholders. We will replace those placeholders with data
+            // from the model of the attributes.
+            if (count ($widgetUxon) > 1) {
+                $json = JsonDataType::encodeJson($widgetUxon);
+                $phs = StringDataType::findPlaceholders($json);
+            } else {
+                $json = null;
+                $phs = [];
+            }
             
             $attrGrpAlias = $widgetUxon['attribute_group_alias'];
             $aggr = DataAggregation::getAggregatorFromAlias($widget->getWorkbench(), $attrGrpAlias);
@@ -1816,6 +1828,17 @@ MD;
                 if ($aggr) {
                     $attrAlias = DataAggregation::addAggregatorToAlias($attrAlias, $aggr);
                 }
+                
+                // If we have placeholders, replace them here for every attribute
+                // TODO add other attribute properties as paceholders?
+                if (! empty($phs)) {
+                    $attrJson = StringDataType::replacePlaceholders($json, [
+                        '~attribute:ALIAS' => $attrAlias,
+                        '~attribute:NAME' => $attr->getName()
+                    ]);
+                    $widgetUxon = JsonDataType::decodeJson($attrJson);
+                }
+                
                 $widgetUxon['attribute_alias'] = $attrAlias;
                 $resultUxon[] = $widgetUxon;
             }

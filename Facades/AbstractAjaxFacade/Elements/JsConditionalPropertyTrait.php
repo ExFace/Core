@@ -95,17 +95,36 @@ trait JsConditionalPropertyTrait {
     protected function buildJsConditionalPropertyValue(ExpressionInterface $expr, ConditionalProperty $conditionalProperty) : string
     {
         switch (true) {
+            // For widget links use the value getter of the linked facade element
             case $expr->isReference() === true:
                 $link = $expr->getWidgetLink($conditionalProperty->getWidget());
                 if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
                     $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId());
                 }
                 break;
-            case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
-                $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
+            // If it is a constant (string, number or boolean), take the unquoted value and quote properly
+            // for JS if needed
+            case $expr->isConstant() === true:
+                $value = $expr->evaluate();
+                switch (true) {
+                    case is_bool($value):
+                    case is_numeric($value):
+                        $valueJs = $value;
+                        break;
+                    default:
+                        $valueJs = $this->escapeString($value);
+                        break;
+                }
                 break;
+            // Keep other types of expressions as-is as quoted JS string.
+            // TODO we use single quotes here, but escape double quotes too - why? 
+            case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
+                $valueJs = "'" . str_replace(['"', "'"], ['\"', "\\'"], $expr->__toString()) . "'";
+                break;
+            // Evaluate static formulas
+            // TODO same problem with strage escaping here. Why?
             case $expr->isStatic():
-                $valueJs = "'" . str_replace('"', '\"', $expr->evaluate()) . "'";
+                $valueJs = "'" . str_replace(['"', "'"], ['\"', "\\'"], $expr->evaluate()) . "'";
                 break;
             default:
                 throw new WidgetConfigurationError($conditionalProperty->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the conditional widget property "' . $conditionalProperty->getPropertyName() . '": only scalar values, static formulas and widget links supported!');

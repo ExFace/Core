@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Dialog;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
@@ -196,19 +197,34 @@ class ShowLookupDialog extends ShowDialog
                         default:
                             break;
                     }
+                    // Remove columns from the lookup table, that are not present in the source table (e.g.
+                    // default display columns, that are not there anymore because the designer has overwritten
+                    // the columns completely).
+                    // Not doing so, will actually break many non-relation combos, where the default display
+                    // columns are not included by default. This filter will remove these columns in the lookup
+                    // too.
+                    if (! empty($cols)) {
+                        foreach ($data_table->getColumns() as $existingCol) {
+                            $found = false;
+                            foreach ($cols as $col) {
+                                if ($this->isSameColumn($existingCol, $col)) {
+                                    $found = true;
+                                    break;
+                                }
+                            }
+                            if ($found === false) {
+                                $data_table->removeColumn($existingCol);
+                            }
+                        }
+                    }
+                    // Add columns from the source table, that are not (yet) present in the lookup table
                     foreach ($cols as $col) {
                         // Avoid duplicate columns!
                         // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
                         // different attributes, but having the same caption, we should NOT put them both in the
                         // table! Similarly, avoid columns with different captions, but same content!
                         foreach ($data_table->getColumns() as $existingCol) {
-                            if ($existingCol->getCaption() === $col->getCaption()) {
-                                continue 2;
-                            }
-                            if ($existingCol->getDataColumnName() === $col->getDataColumnName()) {
-                                continue 2;
-                            }
-                            if ($col->isBoundToAttribute() && $existingCol->isBoundToAttribute() && $existingCol->getAttributeAlias() === $col->getAttributeAlias()) {
+                            if ($this->isSameColumn($existingCol, $col, true)) {
                                 continue 2;
                             }
                         }
@@ -251,6 +267,28 @@ class ShowLookupDialog extends ShowDialog
         }
         
         return $dialog;
+    }
+
+    /**
+     * Returns TRUE if two columns from different tables are the same from the point of view of the user
+     *
+     * @param DataColumn $col1
+     * @param DataColumn $col2
+     * @param bool $compareCaption
+     * @return bool
+     */
+    protected function isSameColumn(DataColumn $col1, DataColumn $col2, bool $compareCaption = true) : bool
+    {
+        if ($compareCaption === true && $col1->getCaption() === $col2->getCaption()) {
+            return true;
+        }
+        if ($col1 === $col2->getDataColumnName()) {
+            return true;
+        }
+        if ($col1->isBoundToAttribute() && $col2->isBoundToAttribute() && $col1->getAttributeAlias() === $col2->getAttributeAlias()) {
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -34,8 +34,8 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
  * /*[at]plugin.WriteFilesToSqlRows(
  *      'SELECT body_file_path, HEX(oid) as oid FROM etl_webservice_request;',
  *      'UPDATE etl_webservice_request SET http_body = [#content#] WHERE HEX(oid) = [#key#];',
- *      'oid',
  *      'body_file_path',
+ *      'oid',
  *      'axenox.ETL.dataflow_upload_storage',
  *      '[#key#]',
  *      '[#content#]'
@@ -84,11 +84,11 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
         $uKeyArray = [];
         foreach ($selectResult as $row) {
             if(!key_exists($uniqueKeyColumn, $row)) {
-                throw new FormulaError('Cannot save to files: SELECT does not contain column "' . $uniqueKeyColumn . '" (should provide unique keys)!');
+                throw new FormulaError('Cannot load from files: SELECT does not contain column "' . $uniqueKeyColumn . '" (should provide unique keys)!');
             }
 
             if(!key_exists($filePathColumn, $row)) {
-                throw new FormulaError('Cannot save to files: SELECT does not contain column "' . $filePathColumn . '" (should provide file paths)!');
+                throw new FormulaError('Cannot load from files: SELECT does not contain column "' . $filePathColumn . '" (should provide file paths)!');
             }
 
             $uKeyArray[] = $row[$uniqueKeyColumn];
@@ -104,19 +104,23 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
         $i = 0;
         $sqlStatement = '';
         $connector = $this->getConnector();
-        
+
         // Assemble the UPDATE statement.
         // Results from the load data query will be matched to unique keys according to their index.
         foreach ($readQuery->getFiles() as $file) {
             $key = $connector->escapeString($uKeyArray[$i++]);
             $rowStatement = preg_replace($uKeyToken, "'" . $key . "'", $updateStatement);
-            
+
             $content = $connector->escapeString($file->openFile()->read());
             $rowStatement = preg_replace($contentToken, "'" . $content . "'", $rowStatement);
-            
+
             $sqlStatement .= $rowStatement  . ' ';
         }
         
+        if(empty($sqlStatement)) {
+            throw new FormulaError('Cannot load from files: No files found at the specified paths! Check your paths or data source.');
+        }
+
         $this->getConnector()->runSql($sqlStatement, true);
     }
 

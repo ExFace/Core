@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\TextStencil;
+
 /**
  * Markdown editor
  * 
@@ -17,6 +20,8 @@ class InputMarkdown extends InputText
     
     private string $mode = self::MODE_MARKDOWN;
     private bool $allowImages = false;
+    private array $stencils = [];
+    private ?UxonObject $stencilsUxon = null;
     
     /**
      * Set the editor to a "Word-like" WYSIWYG mode or to raw markdown mode.
@@ -72,5 +77,42 @@ class InputMarkdown extends InputText
     public function getAllowImages() : bool
     {
         return  $this->allowImages;
+    }
+
+    /**
+     * @return TextStencil[]
+     */
+    public function getStencils() : array
+    {
+        if (empty($this->stencils) && $this->stencilsUxon !== null) {
+            foreach ($this->stencilsUxon->getPropertiesAll() as $uxon) {
+                $type = $uxon->getProperty('type');
+                if (! empty($type)) {
+                    $class = '\\exface\\Core\\Widgets\\Parts\\' . $type . 'Stencil';
+                    if (! class_exists($class)) {
+                        $class = null;
+                    }
+                }
+                $class = $class ?? '\\exface\\Core\\Widgets\\Parts\\TextStencil';
+                $this->stencils[] = new $class($this, $uxon);
+            }
+        }
+        return $this->stencils;
+    }
+
+    /**
+     * Array of stencils (templates), that will be available through the toolbar of the editor
+     * 
+     * @uxon-property stencils
+     * @uxon-type \exface\Core\Widgets\Parts\TextStencil[]
+     * @uxon-template [{"type": "HtmlTag", "caption": "", "hint": ""}]
+     * 
+     * @param UxonObject $arrayOfUxons
+     * @return $this
+     */
+    protected function setStencils(UxonObject $arrayOfUxons) : InputMarkdown
+    {
+        $this->stencilsUxon = $arrayOfUxons;
+        return $this;
     }
 }
