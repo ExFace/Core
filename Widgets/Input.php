@@ -1,9 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\CustomAttribute;
-use exface\Core\Interfaces\Widgets\iHaveValue;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
@@ -411,11 +408,11 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * The following states of input widgets are available:
      * 
-     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
-     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
-     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     * - `display_only` = true - active (user can interact with the widget), but not considered as input for actions
+     * - `disabled` = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - `readonly` = true - inactive and not considered as action input (same as `display_only` + `disabled`)
      * 
-     * If a widget is readonly, will also get display-only and disabled automatically.
+     * If a widget is `readonly`, will also get `display-only` and disabled automatically.
      * 
      * @uxon-property display_only
      * @uxon-type boolean

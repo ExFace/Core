@@ -790,8 +790,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
+     * A description for the attribute to be used in tooltips, contextual help, etc.
      * 
-     * {@inheritDoc}
+     * @uxon-property short_description
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setShortDescription()
      */
     public function setShortDescription($value)

@@ -20,6 +20,8 @@ trait iHaveAttributeGroupTrait
      * Attribute group aliases may include relation paths and aggregators, just like single attribute
      * aliases.
      * 
+     * ## Available attribute groups
+     * 
      * In addition to attribute groups defined in the model of the object, there are also some built-in
      * groups:
      * 
@@ -37,6 +39,14 @@ trait iHaveAttributeGroupTrait
      * like filtering attributes with an AND operator. The above group would contain all attributes that
      * are both visible AND required. You can negate a group alias like `~VISIBLE~!REQUIRED`. 
      * This example would select all attributes that are visible AND not required.
+     * 
+     * ## Customizing each resulting widget
+     * 
+     * Apart from `attribute_group_alias` you can also define other widget properties on group-level: e.g.
+     * `hint` or `disabled_if`, etc. These will be applied to every one of the resulting widgets.
+     * 
+     * You can use the placeholders `[#~attribute:ALIAS#]` and `[#~attribute:NAME#]` to place attribute
+     * information in specific properties of the widget.
      * 
      * ## Examples
      * 

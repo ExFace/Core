@@ -7,6 +7,7 @@ use exface\Core\Facades\DocsFacade\Placeholders\ImageNumberResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\ImageReferenceResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\NavButtonResolver;
 use exface\Core\Facades\DocsFacade\Placeholders\SubPageListResolver;
+use exface\Core\Facades\DocsFacade\Placeholders\WidgetListResolver;
 use exface\Core\Interfaces\AppExporterInterface;
 
 /**
@@ -85,6 +86,7 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
             $fileRenderer->addPlaceholder(new NavButtonResolver($file));
             $fileRenderer->addPlaceholder(new ImageReferenceResolver($file));
             $fileRenderer->addPlaceholder(new ImageListResolver($file));
+            $fileRenderer->addPlaceholder(new WidgetListResolver($this->getWorkbench()));
             // TODO add other placeholder classes here
             $rendered = $fileRenderer->render($file);
             file_put_contents($file, $rendered);
