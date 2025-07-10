@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Security\Authorization;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -75,26 +76,23 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     private $workbench = null;
     
     private $name = '';
-    
     private $userRoleSelector = null;
-    
     private $metaObjectSelector = null;
-    
     private $appUid = null;
+    private $effect = null;
     
     private $conditionUxon = null;
-    
-    private $effect = null;
     
     private $operations = null;
     
     private $filtersUxon = null;
-    
     private $filterScope = null;
     
     private $applyToRelations = [];
-    
     private $applyToExtendingObjects = true;
+
+    private $applyIfUxon = null;
+    private $applyIfConditionGroup = null;
     
     /**
      * 
@@ -179,6 +177,15 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
             } else {
                 $applied = true;
+            }
+
+            // apply_if
+            if (null !== $conditionGrp = $this->getApplyIf($dataSheet->getMetaObject())) {
+                if ($conditionGrp->evaluate($dataSheet) === false) {
+                    return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
+                } else {
+                    $applied = true;
+                }
             }
             
             // Match user
@@ -497,6 +504,38 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function setApplyToExtendingObjects(bool $value) : DataAuthorizationPolicy
     {
         $this->applyToExtendingObjects = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getApplyIf(MetaObjectInterface $object) : ?ConditionGroupInterface
+    {
+        if ($this->applyIfConditionGroup === null && $this->applyIfUxon !== null) {
+            $this->applyIfConditionGroup = ConditionGroupFactory::createFromUxon($this->workbench, $this->applyIfUxon, $object);
+        }
+        return $this->applyIfConditionGroup;
+    }
+
+    /**
+     * Only apply this policy if the provided condition is matched
+     *
+     * If `apply_if` is defined, the policy will be applied if the condition resolves to `true` or
+     * will produce a `not applicable` result if it doesn't.
+     *
+     * @uxon-property apply_if
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     *
+     * @param UxonObject $value
+     * @return $this
+     */
+    protected function setApplyIf(UxonObject $value) : self
+    {
+        $this->applyIfUxon = $value;
+        $this->applyIfConditionGroup = null;
         return $this;
     }
 }
