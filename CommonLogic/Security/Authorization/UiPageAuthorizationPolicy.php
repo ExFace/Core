@@ -233,9 +233,9 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
      * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
      * 
      * @param UxonObject $value
-     * @return AbstractAuthorizationPoint
+     * @return $this
      */
-    protected function setApplyIf(UxonObject $value) : UiPageAuthorizationPolicy
+    protected function setApplyIf(UxonObject $value) : self
     {
         $this->applyIfUxon = $value;
         $this->applyIfConditionGroup = null;
