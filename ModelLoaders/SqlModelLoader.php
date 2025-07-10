@@ -411,7 +411,7 @@ SQL;
                     // fail here in an infinite loop, because it uses get_relation_path(), etc.
                     // TODO Check if get_alias_with_relation_path() really will cause loops inevitably. If not, remove the explicit key
                     // here.
-                    $object->getAttributes()->add($attr, $attr->getAlias());
+                    $object->addAttribute($attr);
                 } else {
                     $attr = null;
                 }

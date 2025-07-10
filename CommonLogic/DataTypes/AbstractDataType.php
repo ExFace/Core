@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataTypes;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -284,6 +285,9 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function setAlias($string)
     {
+        if (mb_strpos($string, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) !== false) {
+            $string = StringDataType::substringAfter($string, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string, false, true);
+        }
         $this->alias = $string;
     }
     
@@ -412,6 +416,21 @@ abstract class AbstractDataType implements DataTypeInterface
         $this->defaultEditorUxon = $defaultEditorUxon;
         return $this;
     }
+
+    /**
+     * Default widget configuration for editing this attribute
+     *
+     * @uxon-property default_editor_widget
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-template {"widget_type": ""}
+     *
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
+     */
+    protected function setDefaultEditorWidget(UxonObject $uxon) : DataTypeInterface
+    {
+        return $this->setDefaultEditorUxon($uxon);
+    }
     
     /**
      *
@@ -446,11 +465,16 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultDisplayWidget()
+     * Default widget configuration for displaying this attribute
+     * 
+     * @uxon-property default_display_widget
+     * @uxon-type \exface\Core\Widgets\Display
+     * @uxon-template {"widget_type": ""}
+     * 
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
      */
-    public function setDefaultDisplayWidget(UxonObject $uxon) : DataTypeInterface
+    protected function setDefaultDisplayWidget(UxonObject $uxon) : DataTypeInterface
     {
         return $this->setDefaultDisplayUxon($uxon);
     }

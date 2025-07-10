@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\ModelLoaders;
 
+use exface\Core\Interfaces\AppInstallerInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\DataConnectors\MsSqlConnector;
 use exface\Core\CommonLogic\Selectors\AppSelector;
@@ -15,6 +16,7 @@ use exface\Core\CommonLogic\AppInstallers\MsSqlDatabaseInstaller;
  */
 class MsSqlModelLoader extends SqlModelLoader
 {
+    private AppInstallerInterface|null $installer = null;
     /**
      * 
      * {@inheritDoc}

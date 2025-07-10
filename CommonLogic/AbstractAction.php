@@ -1519,13 +1519,17 @@ abstract class AbstractAction implements ActionInterface
         // Totally independently, we need to examine the input widget of the button. If it has data widgets, that
         // produce subsheets, the action will obviosly also save their changes if it handles changes at all
         if ($handlesChanges === true && ($button instanceof iUseInputWidget)) {
+            $actionObj = $this->getMetaObject();
             $buttonInput = $button->getInputWidget();
             $inputDataObj = $buttonInput->getMetaObject();
+            // This can happen in containers only - their data might include subsheets
             if ($buttonInput instanceof iContainOtherWidgets) {
                 foreach ($buttonInput->getInputWidgets() as $input) {
                     if (($input instanceof iTakeInputAsDataSubsheet) && $input->isSubsheetForObject($inputDataObj)) {
                         $relPathFromParent = $input->getObjectRelationPathFromParent();
-                        if ($relPathFromParent) {
+                        // If we know the relation from the object of the action, create an effect with this relation.
+                        // If not, just create an unrelated object effect. 
+                        if ($relPathFromParent && $input->getParent()->getMetaObject()->is($actionObj)) {
                             $effects[] = ActionEffectFactory::createForEffectedRelation($this, $relPathFromParent, $name, $handlesChanges);
                         } else {
                             $effects[] = ActionEffectFactory::createForEffectedObject($this, $input->getMetaObject(), $name, $handlesChanges);
