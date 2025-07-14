@@ -197,7 +197,6 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
     if (oDirectEffect !== undefined) {
         // If a directly affecting action saves our changes, reset them before refreshing
         if (oDirectEffect.handles_changes === true) {
-            console.log('resetting changges {$dataWidget->getWidgetType()} {$this->getWidget()->getDataWidget()->getMetaObject()->getAlias()}');
             {$dataEl->buildJsDataSetter($dataEl->buildJsDataGetter())}
         }
         fnRefresh();

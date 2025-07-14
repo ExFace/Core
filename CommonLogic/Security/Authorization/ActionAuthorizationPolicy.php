@@ -318,10 +318,15 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         $applied = true;
                     }
                 } else {
-                    if ($conditionGrp->evaluate() === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
-                    } else {
-                        $applied = true;
+                    // TODO better to add something like $conditionGrp->isStatic() and check that here.
+                    try {
+                        if ($conditionGrp->evaluate() === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
+                        } else {
+                            $applied = true;
+                        }
+                    } catch (InvalidArgumentException $e) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` cannot be evaluated: ' . $e->getMessage());
                     }
                 }
             }
