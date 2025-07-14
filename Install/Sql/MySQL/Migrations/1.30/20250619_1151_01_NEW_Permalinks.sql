@@ -1,5 +1,7 @@
 -- UP
 
+DROP TABLE IF EXISTS `exf_permalink`; 
+
 CREATE TABLE `exf_permalink` (
   `oid` binary(16) NOT NULL,
   `created_on` datetime NOT NULL,
