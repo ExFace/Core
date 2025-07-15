@@ -312,11 +312,12 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                     if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
                         $inputData = $mapper->map($inputData);
                     }
-                    if ($conditionGrp->evaluate($inputData) === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
-                    } else {
-                        $applied = true;
+                    foreach ($inputData->getRows() as $rowIdx => $row) {
+                        if ($conditionGrp->evaluate($inputData, $rowIdx) === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
+                        }
                     }
+                    $applied = true;
                 } else {
                     // TODO better to add something like $conditionGrp->isStatic() and check that here.
                     try {
