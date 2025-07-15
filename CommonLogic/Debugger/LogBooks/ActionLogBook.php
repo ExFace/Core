@@ -142,6 +142,11 @@ class ActionLogBook implements DataLogBookInterface
      */
     public function onEvent(EventInterface $event)
     {
+        if($this->eventStackIndent > 9) {
+            $this->addSection('Stack overflow! This action has triggered too many cascading events. Future events will not be logged!');
+            $this->stopLoggingEvents();
+        }
+        
         switch (true) {
             // Do not include events from this action itself in the inner log
             case ($event instanceof ActionEventInterface) && $event->getAction() === $this->action:
