@@ -252,10 +252,23 @@ class DataTableConfigurator extends DataConfigurator
                     'caption' => 'Apply',
                     'icon' => 'check-circle-o',
                     'visibility' => WidgetVisibilityDataType::PROMOTED,
-                    '// action' => [
-                        'alias' => "CallWidgetFunction",
+                    'action' => [
+                        'alias' => "exface.Core.CallWidgetFunction",
+                        'widget_id' => $this->getDataWidget()->getId(),
                         'function' => "apply_setup([#SETUP_UXON#])"
                     ]
+
+                ],
+                [
+                    'caption' => 'Save',
+                    'icon' => 'bookmark-o',
+                    'visibility' => WidgetVisibilityDataType::PROMOTED,
+                    'action' => [
+                        'alias' => "exface.Core.CallWidgetFunction",
+                        'widget_id' => $this->getDataWidget()->getId(),
+                        'function' => "save_setup()"
+                    ]
+
                 ],
                 [
                     'caption' => 'Manage',
