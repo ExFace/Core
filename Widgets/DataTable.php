@@ -111,6 +111,10 @@ class DataTable extends Data implements
      */
     const FUNCTION_EMPTY = 'empty';
 
+    const FUNCTION_APPLY_SETUP = 'apply_setup';
+
+    const FUNCTION_SAVE_SETUP = 'save_setup';
+
     private $show_filter_row = null;
 
     private $show_row_numbers = false;
