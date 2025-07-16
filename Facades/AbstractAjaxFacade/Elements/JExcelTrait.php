@@ -2294,7 +2294,7 @@ JS;
      * @param array $parameters
      * @return string|null
      */
-    protected function buildJsCallFunctionOfJExcel(string $functionName = null, array $parameters = [], string $jsRequestData) : ?string
+    protected function buildJsCallFunctionOfJExcel(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : ?string
     {
         switch (true) {
             case $functionName === DataTable::FUNCTION_EMPTY:
