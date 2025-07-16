@@ -148,6 +148,7 @@ class ActionLogBook implements DataLogBookInterface
      */
     public function onEvent(EventInterface $event)
     {
+        // We need to guard against overflows to prevent out of memory issues.
         if($this->eventStackIndent > $this->maxStackDepth) {
             $this->eventStack['stackOverflow'] = 'Stack overflow! This action has triggered too many cascading events. Future events will not be logged!';
             $this->stopLoggingEvents();
