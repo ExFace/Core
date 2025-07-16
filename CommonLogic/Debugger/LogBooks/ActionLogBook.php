@@ -48,6 +48,10 @@ class ActionLogBook implements DataLogBookInterface
 
     private $eventStack = [];
 
+    private int $eventCount = 0;
+    private int $maxStackDepth = 9;
+    private int $maxEventCount = 500;
+    
     private $eventStackIndent = 0;
 
     private $eventStackProcessed = false;
@@ -59,10 +63,12 @@ class ActionLogBook implements DataLogBookInterface
      * @param TaskInterface $task
      * @param string $defaultSection
      */
-    public function __construct(string $title, ActionInterface $action, TaskInterface $task)
+    public function __construct(string $title, ActionInterface $action, TaskInterface $task, int $maxEventCount = 500, int $maxStackDepth = 9)
     {
         $this->task = $task;
         $this->action = $action;
+        $this->maxStackDepth = $maxStackDepth;
+        $this->maxEventCount = $maxEventCount;
         $this->logBook = new DataLogBook($title);
         $this->logBook->addSection('Action ' . $action->getAliasWithNamespace() . ' "' . $action->getName() . '"');
         $this->logBook->addIndent(1);
@@ -142,9 +148,16 @@ class ActionLogBook implements DataLogBookInterface
      */
     public function onEvent(EventInterface $event)
     {
-        if($this->eventStackIndent > 9) {
-            $this->addSection('Stack overflow! This action has triggered too many cascading events. Future events will not be logged!');
+        if($this->eventStackIndent > $this->maxStackDepth) {
+            $this->eventStack['stackOverflow'] = 'Stack overflow! This action has triggered too many cascading events. Future events will not be logged!';
             $this->stopLoggingEvents();
+            return;
+        }
+        
+        if($this->eventCount > $this->maxEventCount) {
+            $this->eventStack['eventLimit'] = 'Logging limit reached! This action has triggered too many events. Future events will not be logged!';
+            $this->stopLoggingEvents();
+            return;
         }
         
         switch (true) {
@@ -160,6 +173,10 @@ class ActionLogBook implements DataLogBookInterface
                     'event' => $event,
                     'indent' => $this->eventStackIndent
                 ];
+                
+                if($this->eventStackIndent === 0) {
+                    $this->eventCount++;
+                }
                 break;
             case $event->isOnBefore():
                 $this->eventStackIndent++;
@@ -167,6 +184,8 @@ class ActionLogBook implements DataLogBookInterface
                     'event' => $event,
                     'indent' => $this->eventStackIndent
                 ];
+                
+                $this->eventCount++;
                 break;
             case $event->isOnAfter():
                 $this->eventStack[] = [
@@ -188,7 +207,13 @@ class ActionLogBook implements DataLogBookInterface
         $cancelledEvents = [];
         $cancelledIdtFix = 0;
         foreach ($this->eventStack as $entry) {
-            $event = $entry['event'];	
+            // This indicates an error log.
+            if(is_string($entry)) {
+                $this->addSection($entry);
+                continue;
+            }
+
+            $event = $entry['event'];
             $idt = max($entry['indent'], 1) - $cancelledIdtFix;
             switch (true) {
                 case $event instanceof OnTransactionStartEvent:
@@ -250,7 +275,6 @@ class ActionLogBook implements DataLogBookInterface
                     break;
             }
         }
-        return;
     }
     
     /**
@@ -321,6 +345,10 @@ class ActionLogBook implements DataLogBookInterface
             ])));
             
             foreach ($this->eventStack as $i => $item) {
+                if(is_string($item)) {
+                    continue;
+                }
+                
                 $event = $item['event'];
                 switch (true) {
                     case $event->isOnBefore():
