@@ -17,9 +17,8 @@ class FilterSetupRule extends AbstractMutation
 {
     private ?string $expression = null;
     private ?bool $value = null;
-    private ?string $operator = null;
+    private ?string $exclude = null;
     private ?string $comparator = null;
-    private array $conditions = [];
 
     /**
      * @see MutationInterface::apply()
@@ -62,7 +61,7 @@ class FilterSetupRule extends AbstractMutation
      * @uxon-property value
      * @uxon-type string
      *
-     * @param string|bool|int|float $trueOrFalse
+     * @param string|bool|int|float $value
      * @return $this
      */
     protected function setValue($value): FilterSetupRule
@@ -72,12 +71,12 @@ class FilterSetupRule extends AbstractMutation
     }
 
     /**
-     * The comparator action of the filter (==, !=, etc.)
+     * The comparator action of the filter ["Contains", "EQ", "LT", "LE", "GT", "GE"]
      *
      * @uxon-property comparator
      * @uxon-type string
      *
-     * @param string|bool|int|float $trueOrFalse
+     * @param string|bool|int|float $comparator
      * @return $this
      */
     protected function setComparator($comparator): FilterSetupRule
@@ -88,32 +87,20 @@ class FilterSetupRule extends AbstractMutation
 
 
     /**
-     * The operator that chains the conditions together (AND is default in DataTableConfigurators)
+     * Whether to include or exclude matches
      *
-     * @uxon-property operator
-     * @uxon-type string
+     * @uxon-property exclude
+     * @uxon-type bool
+     * @uxon-default false
      *
-     * @param string|bool|int|float $trueOrFalse
+     * @param bool $trueOrFalse
      * @return $this
      */
-    protected function setOperator($operator): FilterSetupRule
+    protected function setExclude($trueOrFalse): FilterSetupRule
     {
-        $this->operator = $operator;
+        $this->exclude = $trueOrFalse;
         return $this;
     }
 
-    /**
-     * Array of conditions to apply
-     *
-     * @uxon-property conditions
-     * @uxon-type array
-     *
-     * @param UxonObject $uxonArray
-     * @return $this
-     */
-    protected function setConditions(UxonObject $uxonArray): FilterSetupRule
-    {
-        $this->conditions = $uxonArray->toArray();
-        return $this;
-    }
+
 }
