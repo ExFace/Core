@@ -58,7 +58,7 @@ class SorterSetupRule extends AbstractMutation
      * @uxon-property direction
      * @uxon-type string
      *
-     * @param string|bool|int|float $trueOrFalse
+     * @param string|bool|int|float $direction
      * @return $this
      */
     protected function setDirection($direction): SorterSetupRule

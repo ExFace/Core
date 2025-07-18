@@ -104,7 +104,7 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
             $idSpace = $this->getWidgetDefinedIn()->getIdSpace();
             return $page->getWidget(($idSpace ? $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR : '') . $id);
         }
-        return $id;
+        return $page->getWidget($id); 
     }
 
     /**

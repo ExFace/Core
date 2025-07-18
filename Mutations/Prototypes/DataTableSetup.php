@@ -63,7 +63,7 @@ class DataTableSetup extends AbstractMutation
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\Mutations\MutationRules\FilterSetupRule[]
-     * @uxon-template [{"operator": "AND", "conditions": [{"attribute_alias": "", "comparator": "", "value": ""}]}]
+     * @uxon-template [{"attribute_alias": "", "comparator": "", "value": "", "exclude": false}]
      *
      * @param UxonObject $uxonArray
      * @return $this

@@ -192,6 +192,13 @@ class DataTableConfigurator extends DataConfigurator
      */
     protected function createSetupsTab()
     {
+        /* TODO/FIXME:  -> the table doesnt update after changes (new, delete, updates); 
+                        -> this happens for both the JS functions, and the normal ones (like DeleteObject)
+                        -> chaining the action with a widgetRefresh breaks everything
+
+                        rn, the table must be refreshed via the refreh button (?)
+
+        */
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'));
         $tab->setIcon(Icons::STAR);
@@ -266,9 +273,91 @@ class DataTableConfigurator extends DataConfigurator
                     'action' => [
                         'alias' => "exface.Core.CallWidgetFunction",
                         'widget_id' => $this->getDataWidget()->getId(),
-                        'function' => "save_setup()"
+                        'function' => "save_setup"
                     ]
+                ],
+                /*[
+                    'caption' => 'Save Refresh Test',
+                    'action' => [
+                        "alias" => "exface.Core.ActionChain",
+                        "actions" => [
+                            [
+                                'alias' => "exface.Core.CallWidgetFunction",
+                                'widget_id' => $this->getDataWidget()->getId(),
+                                'function' => "save_setup"
+                            ],
+                            [
+                                'alias' => "exface.Core.CallWidgetFunction",
+                                'widget_id' => $this->getDataWidget()->getId(),
+                                'function' => "refresh"
+                            ]
+                        ]
+                    ]
+                ],*/
+                [
+                    'caption' => 'Default',
+                    'icon' => 'table',
+                    'action' => [
+                        "input_rows_min" => 1,
+                        "input_rows_max" => 1,
+                        "input_object_alias" => "exface.Core.WIDGET_SETUP",
+                        "alias" => "exface.Core.ActionChain",
+                        "actions" => [
+                                [
+                                "alias" => "exface.core.ReadData",
+                                "object_alias" => "exface.Core.WIDGET_SETUP",
+                                "input_mapper" => [
+                                    "from_object_alias" => "exface.Core.WIDGET_SETUP",
+                                    "to_object_alias" => "exface.Core.WIDGET_SETUP",
+                                    "column_to_filter_mappings" => [
+                                        [
+                                            "from" => "WIDGET_ID",
+                                            "to" => "WIDGET_ID",
+                                            "comparator" => "=="
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            [
+                                "alias" => "exface.core.ReadData",
+                                "object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                                "input_mappers" => [
+                                    [
+                                        "from_object_alias" => "exface.Core.WIDGET_SETUP",
+                                        "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                                        "column_to_column_mappings" => [
+                                            [
+                                            "from" => "=NullValue()",
+                                            "to" => "WIDGET_SETUP"
+                                            ]
+                                        ],
+                                        "column_to_filter_mappings" => [
+                                            [
+                                            "from" => "UID",
+                                            "to" => "WIDGET_SETUP",
+                                            "comparator" => "=="
+                                            ]
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            [
+                                "alias" => "exface.core.UpdateData",
+                                "object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                                "input_mapper" => [
+                                    "from_object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                                    "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                                    "column_to_column_mappings" => [
+                                    [
+                                        "from" => false,
+                                        "to" => "DEFAULT_SETUP_FLAG"
+                                    ]
+                                    ]
+                                ]
+                            ]
+                        ]
 
+                    ]
                 ],
                 [
                     'caption' => 'Manage',
@@ -277,6 +366,11 @@ class DataTableConfigurator extends DataConfigurator
                 [
                     'caption' => 'Share',
                     'icon' => 'share-alt'
+                ],
+                [
+                    'caption' => 'Neu laden',
+                    'icon' => 'undo',
+                    'action_alias' => 'exface.Core.RefreshWidget'
                 ],
                 [
                     'action_alias' => 'exface.Core.DeleteObject',
