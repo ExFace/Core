@@ -184,4 +184,6 @@ interface DataColumnListInterface extends EntityListInterface
      * @return string[]
      */
     public function getColumnsExpressions() : array;
+
+    public function getMultiple(array $keys) : array;
 }
