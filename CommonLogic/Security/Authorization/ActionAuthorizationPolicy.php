@@ -312,16 +312,22 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                     if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
                         $inputData = $mapper->map($inputData);
                     }
-                    if ($conditionGrp->evaluate($inputData) === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
-                    } else {
-                        $applied = true;
+                    foreach ($inputData->getRows() as $rowIdx => $row) {
+                        if ($conditionGrp->evaluate($inputData, $rowIdx) === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
+                        }
                     }
+                    $applied = true;
                 } else {
-                    if ($conditionGrp->evaluate() === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
-                    } else {
-                        $applied = true;
+                    // TODO better to add something like $conditionGrp->isStatic() and check that here.
+                    try {
+                        if ($conditionGrp->evaluate() === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
+                        } else {
+                            $applied = true;
+                        }
+                    } catch (InvalidArgumentException $e) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` cannot be evaluated: ' . $e->getMessage());
                     }
                 }
             }
