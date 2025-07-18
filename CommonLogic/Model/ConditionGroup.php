@@ -753,7 +753,7 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromString()
      */
-    public function addConditionFromString(string $expression_string, $value, string $comparator = null, bool $ignoreEmptyValue = null) : ConditionGroupInterface
+    public function addConditionFromString(string $expression_string, $value, string $comparator = null, bool $ignoreEmptyValue = null, ?bool $applyToAggregates = null) : ConditionGroupInterface
     {
         $base_object = $this->getBaseObject();
         if ($base_object === null) {
@@ -771,11 +771,19 @@ class ConditionGroup implements ConditionGroupInterface
         if (count($expression_strings) > 1) {
             $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR, $base_object, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
             foreach ($expression_strings as $f) {
-                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
+                $condition = ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
+                if ($applyToAggregates !== null) {
+                    $condition->setApplyToAggregates($applyToAggregates);
+                }
+                $group->addCondition($condition);
             }
             $this->addNestedGroup($group);
         } elseif ((!is_null($value) && $value !== '') || !$ignoreEmptyValue) {
-            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
+            $condition = ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
+            if ($applyToAggregates !== null) {
+                $condition->setApplyToAggregates($applyToAggregates);
+            }
+            $this->addCondition($condition);
         }
         
         return $this;

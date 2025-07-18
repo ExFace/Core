@@ -71,12 +71,19 @@ class PrefixedFilterUrlParamsReader implements MiddlewareInterface
                     $dataSheet = $this->getDataSheet($task, $this->getterMethodName);
                 }
                 $expr = urldecode(substr($var, $prefixLength));
+                // Quick filters are not meant to be applied to data within aggregated. If we have a table with stock
+                // per location (STOCK:SUM) and we use a quick filter over product, we do not want the stock numbers
+                // to change because they are calculated only from stock of that product - instead we just want those
+                // locations, that have this product (with their total stock). For regular filters you can control this
+                // using `apply_to_aggregates`, but quick filters (e.g. those in column headers) do not apply to
+                // aggregates by default. 
+                $applyToAggregates = false;
                 if (is_array($val)) {
                     foreach ($val as $v) {
-                        $dataSheet->getFilters()->addConditionFromString($expr, $v);
+                        $dataSheet->getFilters()->addConditionFromString($expr, $v, null, null, $applyToAggregates);
                     }
                 } else {
-                    $dataSheet->getFilters()->addConditionFromString($expr, $val);
+                    $dataSheet->getFilters()->addConditionFromString($expr, $val, null, null, $applyToAggregates);
                 }
             }
         }

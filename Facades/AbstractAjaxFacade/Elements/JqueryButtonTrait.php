@@ -1180,7 +1180,7 @@ JS;
         return <<<JS
 
             {$beforeJs}
-            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments())}
+            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments(), $jsRequestData)}
             {$afterJs}
 JS;
     }
@@ -1196,7 +1196,7 @@ JS;
      * 
      * @see AbstractJqueryElement::buildJsCallFunction()
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
     {
         switch (true) {
             case $functionName === null:
@@ -1205,7 +1205,7 @@ JS;
             case $functionName === Button::FUNCTION_FOCUS:
                 return "$('#{$this->getId()}').focus()";
         }
-        return parent::buildJsCallFunction($functionName, $parameters);
+        return parent::buildJsCallFunction($functionName, $parameters, $jsRequestData);
     }
     
     protected function buildJsRequestDataCheckSize(string $jsRequestData, int $bytes = null) : string

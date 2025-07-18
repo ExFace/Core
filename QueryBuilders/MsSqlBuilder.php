@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
@@ -9,6 +12,7 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
+use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -601,6 +605,43 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return $subselect;
     }
+
+    protected function buildSqlWhereSubquery(QueryPartFilter $qpart, $rely_on_joins = true)
+    {
+        // This is a workaround for SQL errors due to unclosed FOR XML wrappers in HAVING clauses.
+        // The problem occurs when filtering over an aggregated attribute, that has a relation path with
+        // more than one reverse relation. In this case, the WHERE gets a nested subselect with a HAVING 
+        // clause (not quite sure, if that is correct) and inside that clause there is `SELECT [text()] = `
+        // but no `FOR XML`. 
+        // The workaround simply removes the aggregator from the filter in this case. It produces different
+        // results - e.g. the filter value cannot contain a delimited list, but only a single value. But it works
+        // for a lot of cases - in particular for table columns with a filter in the header.
+        if ($qpart->hasAggregator()) {
+            $aggr = $qpart->getAggregator();
+            $aggrFunc = $aggr->getFunction()->__toString();
+            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
+                $relPath = $qpart->getAttribute()->getRelationPath();
+                $revRelCnt = 0;
+                foreach ($relPath->getRelations() as $rel) {
+                    if ($rel->isReverseRelation()) {
+                        $revRelCnt++;
+                    }
+                }
+                if ($revRelCnt > 1) {
+                    $alias = DataAggregation::stripAggregator($qpart->getAlias());
+                    $condUxon = $qpart->getCondition()->exportUxonObject();
+                    $condAlias = $condUxon->getProperty('expression');
+                    $condUxon->setProperty('expression', DataAggregation::stripAggregator($condAlias));
+                    $condNoAggr = ConditionFactory::createFromUxon($this->getWorkbench(), $condUxon);
+                    $qpartNoAggr = new QueryPartFilter($alias, $this, $condNoAggr);
+                    return parent::buildSqlWhereSubquery($qpartNoAggr, $rely_on_joins);
+                }
+            }
+        }
+        
+        // In all other cases, use the default SQL builder logic
+        return parent::buildSqlWhereSubquery($qpart, $rely_on_joins);
+    }
     
     /**
      * 
@@ -631,7 +672,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
-        $inJson = strcasecmp($dataAddressProps[static::DAP_SQL_DATA_TYPE], static::DAP_SQL_DATA_TYPE_JSON) === 0;
+        $inJson = strcasecmp($dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? '', static::DAP_SQL_DATA_TYPE_JSON) === 0;
         switch (true) {
             case $data_type instanceof StringDataType:
                 $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
