@@ -178,12 +178,15 @@ class DataTracker
 
     /**
      * Fetch the base indices for a given data set, if possible.
-     * 
+     *
      * @param array $fromData
      * @param int   $preferredVersion
+     * @param array $failedToFind
+     * Any indices in the `$fromData` that could not be traced back to 
+     * their base data will be collected in this array.
      * @return false|array
      */
-    public function getBaseIndices(array $fromData, int $preferredVersion = -1) : false|array
+    public function getBaseIndices(array $fromData, int $preferredVersion = -1, array &$failedToFind = []) : false|array
     {
         $preferredVersion = $preferredVersion > -1 ? $preferredVersion : $this->latestVersion;
         
@@ -193,8 +196,9 @@ class DataTracker
         
         foreach ($fromData as $i => $data) {
             $searchResult = $this->findData($index, $data, $preferredVersion);
-            // If we can't find a matching data set, we cannot record a transform for this item.
+            // If we can't find a matching data set, we mark it as failed and move on.
             if($searchResult === false) {
+                $failedToFind[] = $index;
                 continue;
             }
 
@@ -209,13 +213,14 @@ class DataTracker
 
     /**
      * Fetch the original data with accurate indices (i.e. row numbers) for a given data set, if possible.
-     * 
+     *
      * @param array $fromData
+     * @param array $failedToFind
      * @return false|array
      */
-    public function getBaseData(array $fromData) : false|array
+    public function getBaseData(array $fromData, array &$failedToFind = []) : false|array
     {
-        $indices = $this->getBaseIndices($fromData);
+        $indices = $this->getBaseIndices($fromData, -1, $failedToFind);
         return $indices !== false ? $this->getBaseDataFromIndices($indices) : false;
     }
     
