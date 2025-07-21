@@ -185,5 +185,11 @@ interface DataColumnListInterface extends EntityListInterface
      */
     public function getColumnsExpressions() : array;
 
+    /**
+     * Same as `get(string)` but takes an array of keys as input and returns an array of matching entries.
+     * 
+     * @param string[] $keys
+     * @return array
+     */
     public function getMultiple(array $keys) : array;
 }
