@@ -206,6 +206,7 @@ class DataTableConfigurator extends DataConfigurator
         $table = WidgetFactory::createFromUxonInParent($tab, new UxonObject([
             'widget_type' => 'DataTableResponsive',
             'object_alias' => 'exface.Core.WIDGET_SETUP',
+            'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'),
             'filters' => [
                 [
                     'attribute_alias' => 'PAGE',
@@ -244,11 +245,13 @@ class DataTableConfigurator extends DataConfigurator
                 [
                     'attribute_alias' => 'NAME',
                 ], [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG',
+                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG',
+                    'hidden' => true
                 ], [
                     'attribute_alias' => 'VISIBILITY',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
                 ], [
                     'attribute_alias' => 'SETUP_UXON',
                     'hidden' => true
@@ -256,10 +259,12 @@ class DataTableConfigurator extends DataConfigurator
             ],
             'buttons' => [
                 [
-                    'caption' => 'Apply',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY'),
                     'icon' => 'check-circle-o',
                     'visibility' => WidgetVisibilityDataType::PROMOTED,
                     'action' => [
+                        "input_rows_min" => 1,
+                        "input_rows_max" => 1,
                         'alias' => "exface.Core.CallWidgetFunction",
                         'widget_id' => $this->getDataWidget()->getId(),
                         'function' => "apply_setup([#SETUP_UXON#])"
@@ -267,7 +272,7 @@ class DataTableConfigurator extends DataConfigurator
 
                 ],
                 [
-                    'caption' => 'Save',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE'),
                     'icon' => 'bookmark-o',
                     'visibility' => WidgetVisibilityDataType::PROMOTED,
                     'action' => [
@@ -294,7 +299,7 @@ class DataTableConfigurator extends DataConfigurator
                         ]
                     ]
                 ],*/
-                [
+                /*[
                     'caption' => 'Default',
                     'icon' => 'table',
                     'action' => [
@@ -366,9 +371,8 @@ class DataTableConfigurator extends DataConfigurator
                 [
                     'caption' => 'Share',
                     'icon' => 'share-alt'
-                ],
+                ],*/
                 [
-                    'caption' => 'Neu laden',
                     'icon' => 'undo',
                     'action_alias' => 'exface.Core.RefreshWidget'
                 ],
