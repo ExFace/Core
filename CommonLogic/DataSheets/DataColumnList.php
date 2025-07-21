@@ -395,7 +395,11 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         }
         return $this->columnsExpressionsCache;
     }
-    
+
+    /**
+     * @inheritDoc
+     * @see DataColumnListInterface::getMultiple()
+     */
     public function getMultiple(array $keys) : array
     {
         $result = [];
