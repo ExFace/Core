@@ -13,7 +13,7 @@ use exface\Core\CommonLogic\UxonObject;
  *
  * @author Andrej Kabachnik
  */
-class FilterSetupRule extends AbstractMutation
+class AdvancedSearchSetupRule extends AbstractMutation
 {
     private ?string $expression = null;
     private ?bool $value = null;
@@ -41,7 +41,7 @@ class FilterSetupRule extends AbstractMutation
     }
 
     /**
-     * Target filter attribute alias - used to identify the filter to set up
+     * Target filter attribute alias - used to identify the search to set up
      *
      * @uxon-property attribute_alias
      * @uxon-type metamodel:attribute
@@ -49,14 +49,14 @@ class FilterSetupRule extends AbstractMutation
      * @param string $attributeAlias
      * @return $this
      */
-    protected function setAttributeAlias(string $attributeAlias): FilterSetupRule
+    protected function setAttributeAlias(string $attributeAlias): AdvancedSearchSetupRule
     {
         $this->expression = $attributeAlias;
         return $this;
     }
 
     /**
-     * Comparator value for the filter
+     * Comparator value for the search filter
      *
      * @uxon-property value
      * @uxon-type string
@@ -64,14 +64,14 @@ class FilterSetupRule extends AbstractMutation
      * @param string|bool|int|float $value
      * @return $this
      */
-    protected function setValue($value): FilterSetupRule
+    protected function setValue($value): AdvancedSearchSetupRule
     {
         $this->value = $value;
         return $this;
     }
 
     /**
-     * The comparator action of the filter ["Contains", "EQ", "LT", "LE", "GT", "GE"]
+     * The comparator action of the search filter ["Contains", "EQ", "LT", "LE", "GT", "GE"]
      *
      * @uxon-property comparator
      * @uxon-type string
@@ -79,7 +79,7 @@ class FilterSetupRule extends AbstractMutation
      * @param string|bool|int|float $comparator
      * @return $this
      */
-    protected function setComparator($comparator): FilterSetupRule
+    protected function setComparator($comparator): AdvancedSearchSetupRule
     {
         $this->comparator = $comparator;
         return $this;
@@ -96,7 +96,7 @@ class FilterSetupRule extends AbstractMutation
      * @param bool $trueOrFalse
      * @return $this
      */
-    protected function setExclude($trueOrFalse): FilterSetupRule
+    protected function setExclude($trueOrFalse): AdvancedSearchSetupRule
     {
         $this->exclude = $trueOrFalse;
         return $this;
