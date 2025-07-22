@@ -235,7 +235,9 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
     {
         $idxs = [];
         foreach ($this->getAllErrors() as $error) {
-            $idxs = array_merge($idxs, $error->getRowIndexes());
+            if(($errorIdxs = $error->getRowIndexes()) !== null) {
+                $idxs = array_merge($idxs, $errorIdxs);
+            }
         }
         if (empty($idxs)) {
             return null;
