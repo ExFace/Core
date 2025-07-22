@@ -216,6 +216,8 @@ class DataTracker
      *
      * @param array $fromData
      * @param array $failedToFind
+     * Any rows in the `$fromData` that could not be traced back to
+     * their base data will be collected in this array.
      * @return false|array
      */
     public function getBaseData(array $fromData, array &$failedToFind = []) : false|array
@@ -223,7 +225,16 @@ class DataTracker
         $indices = $this->getBaseIndices($fromData, -1, $failedToFind);
         return $indices !== false ? $this->getBaseDataFromIndices($indices) : false;
     }
-    
+
+    /**
+     * Fetches all base data for the given indices. 
+     * 
+     * NOTE: Indices must be base indices, use `getBaseIndices(array, int, array)` to retrieve them.
+     * 
+     * @param array $baseIndices
+     * @return false|array
+     * @see DataTracker::getBaseIndices()
+     */
     public function getBaseDataFromIndices(array $baseIndices) : false|array
     {
         $success = false;
@@ -290,7 +301,17 @@ class DataTracker
                 $index = 0;
             }
             
-            if($needle === $this->currentData[$index]) {
+            $match = true;
+            $other = $this->currentData[$index];
+            foreach ($needle as $key => $value) {
+                if( key_exists($key, $other) &&
+                    $value !== $other[$key]) {
+                    $match = false;
+                    break;
+                }
+            }
+            
+            if($match) { 
                 $version = $this->dataVersions[$index];
                 if($version === $preferredVersion) {
                     return $index;
