@@ -85,12 +85,7 @@ class DataSheetTracker extends DataTracker
     }
 
     /**
-     * Record a transform.
-     * 
-     * @param DataColumnInterface[] $fromColumns
-     * @param DataColumnInterface[] $toColumns
-     * @param int   $preferredVersion
-     * @return int
+     * @inheritDoc
      * @see DataTracker::recordDataTransform()
      */
     public function recordDataTransform(
@@ -113,8 +108,7 @@ class DataSheetTracker extends DataTracker
     }
 
     /**
-     * @param array $columns
-     * @return int
+     * @inheritDoc
      * @see DataTracker::getLatestVersionForData()
      */
     public function getLatestVersionForData(array $columns) : int
