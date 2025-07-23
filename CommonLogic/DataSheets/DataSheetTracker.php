@@ -2,60 +2,30 @@
 
 namespace exface\Core\CommonLogic\DataSheets;
 
-use axenox\ETL\Common\StepNote;
-use axenox\ETL\Interfaces\ETLStepDataInterface;
-use exface\Core\CommonLogic\Debugger\LogBooks\FlowStepLogBook;
 use exface\Core\CommonLogic\Utils\DataTracker;
-use exface\Core\DataTypes\MessageTypeDataType;
-use exface\Core\Exceptions\DataTrackerException;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
- * This a wrapper for `DataTracker` specialized in dealing with data from `DataSheet` instances.
- * It does not derive from a common interface or from `DataTracker` to allow for better clarity
- * with function footprints.
+ * This `DataTracker` is specialized for tracking data-sheet transformations.
  * 
  * @see DataTracker
  */
-class DataSheetTracker
+class DataSheetTracker extends DataTracker
 {
-    protected DataTracker $dataTracker;
     protected array $trackedAliases = [];
 
     /**
-     * Initializes the tracker with base data from an array of columns. 
-     * 
+     * Initializes the tracker with base data from an array of columns.
+     *
      * NOTE: You cannot alter the base data later, so make sure you pass a complete data set!
-     * 
+     *
      * @param DataColumnInterface[] $columns
-     * @param ETLStepDataInterface  $stepData
-     * @param FlowStepLogBook       $logBook
+     * @see DataTracker::__construct()
      */
-    public function __construct(
-        array $columns,
-        ETLStepDataInterface $stepData,
-        FlowStepLogBook $logBook
-    )
+    public function __construct(array $columns, bool $deduplicate = false)
     {
-        try {
-            $this->dataTracker = new DataTracker($this->columnsToRows($columns));
-        } catch (DataTrackerException $exception) {
-            StepNote::fromException(
-                $columns[0]->getWorkbench(),
-                $stepData,
-                $exception,
-                null,
-                false
-            )->addRowsAsContext(
-                $exception->getBadData()
-            )->setMessageType(
-                MessageTypeDataType::WARNING
-            )->takeNote();
-
-            $logBook->addLine('**WARNING** - Data tracking not possible: ' . $exception->getMessage());
-        }
-
+        parent::__construct($this->columnsToRows($columns), $deduplicate);
         $this->markColumnsAsTracked($columns);
     }
 
@@ -129,7 +99,7 @@ class DataSheetTracker
         int $preferredVersion = -1
     ) : int
     {
-        $result = $this->dataTracker->recordDataTransform(
+        $result = parent::recordDataTransform(
             $this->columnsToRows($fromColumns),
             $this->columnsToRows($toColumns),
             $preferredVersion
@@ -147,9 +117,9 @@ class DataSheetTracker
      * @return int
      * @see DataTracker::getLatestVersionForData()
      */
-    public function getVersionForData(array $columns) : int
+    public function getLatestVersionForData(array $columns) : int
     {
-        return $this->dataTracker->getLatestVersionForData($this->columnsToRows($columns));
+        return parent::getLatestVersionForData($this->columnsToRows($columns));
     }
 
     /**
@@ -161,7 +131,7 @@ class DataSheetTracker
      * @return array
      * @see DataTracker::getBaseData()
      */
-    public function getBaseData(
+    public function getBaseDataForSheet(
         DataSheetInterface $dataSheet, 
         array &$failedToFind, 
         callable $toRowNumber = null
@@ -171,7 +141,7 @@ class DataSheetTracker
         
         $failedToFindIndices = [];
         $columns = $dataSheet->getColumns()->getMultiple($this->trackedAliases);
-        $baseData = $this->dataTracker->getBaseData($this->columnsToRows($columns), $failedToFindIndices);
+        $baseData = $this->getBaseData($this->columnsToRows($columns), $failedToFindIndices);
 
         foreach ($failedToFindIndices as $index) {
             $rowNr = call_user_func($toRowNumber, $index);
