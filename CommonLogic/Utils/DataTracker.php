@@ -31,11 +31,10 @@ use exface\Core\Exceptions\DataTrackerException;
  * record the change.
  * 
  * ```
+ *
+ * $previousState = ... // Cache or copy the state before transforming. 
  * 
- * // You probably need to write some copying logic here.
- * $previousState = $data->copy(); 
- * 
- * // Apply your transform.
+ * $newState = ... // Apply your transform.
  * 
  * $dataTracker->recordTransform($previousState, $newState);
  * 
@@ -57,7 +56,7 @@ use exface\Core\Exceptions\DataTrackerException;
  * // Get indices only.
  * $originalIndices = $dataTracker->getBaseIndices($currentData);
  * 
- * // Get the latest version.
+ * // Get the latest version number.
  * $currentVersion = $dataTracker->getLatestVersionForData($currentData);
  * 
  * ```
@@ -69,8 +68,8 @@ use exface\Core\Exceptions\DataTrackerException;
  * ## Data Versioning
  * 
  * Tracked data may be updated in an aliased fashion, i.e. individual rows may be transformed multiple
- * times, while others may remain unchanged. To avoid potential conflicts, in case a row happens to be
- * transformed in such a way, that it temporarily is a duplicate of another, the tracker uses versions
+ * times ahead of other rows. To avoid potential conflicts, in case a row happens to be
+ * transformed in such a way, that it temporarily is a duplicate of another, the tracker uses version numbers
  * to group rows, according to how many transforms have been recorded for them. 
  * 
  * By default, you won't have to worry about versions. But if you want to transform data row by row, rather 
@@ -255,7 +254,7 @@ class DataTracker
     }
 
     /**
-     * Get the latest version for a given data set.
+     * Get the latest version number for a given data set.
      * 
      * @param array $fromData
      * @return int
