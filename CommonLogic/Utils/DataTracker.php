@@ -90,12 +90,16 @@ class DataTracker
 
     /**
      * @param array $data
+     * @param bool  $deduplicate
      */
-    public function __construct(array $data)
+    public function __construct(array $data, bool $deduplicate = false)
     {
-        $duplicates = $this->getDuplicates($data);
-        if(!empty($duplicates)) {
-            throw new DataTrackerException('Key data has duplicate entries!', $duplicates);
+        if(!empty($duplicates = $this->getDuplicates($data))) {
+            if($deduplicate) {
+                $data = array_unique($data);
+            } else {
+                throw new DataTrackerException('Key data has duplicate entries!', $duplicates);
+            }
         }
 
         $count = count($data);
@@ -113,7 +117,7 @@ class DataTracker
      * @param array $data
      * @return array
      */
-    private function getDuplicates(array $data) : array
+    protected function getDuplicates(array $data) : array
     {
         return array_diff_key($data, array_unique(array_map('serialize', $data)));
     }
@@ -276,7 +280,7 @@ class DataTracker
      * @param int   $preferredVersion
      * @return false|int
      */
-    private function findData(
+    protected function findData(
         int   $startingIndex,
         mixed $needle,
         int $preferredVersion
