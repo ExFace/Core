@@ -2143,25 +2143,52 @@ JS;
 
         var aAllRows = {$this->buildJsDataGetter()}.rows; 
 
-        // for disabled if: use current rowIdx saved in exfwidget 
-        if ($('#{$this->getId()}')[0].exfWidget.getValueGetterRow() !== null){
-            var iRowIdx = $('#{$this->getId()}')[0].exfWidget.getValueGetterRow();
-            let value = aAllRows[iRowIdx]['{$col->getDataColumnName()}'];
+        // for disabled if and required-if: use current rowIdx saved in exfwidget 
+        if (window.spreadsheetLoaded){
+            if ({$this->buildJsJqueryElement()}[0].exfWidget.getValueGetterRow() !== null){
+                var iRowIdx = {$this->buildJsJqueryElement()}[0].exfWidget.getValueGetterRow();
 
+                // skip automatically added empty rows
+                if (aAllRows[iRowIdx] === undefined){
+                    return "";
+                }
+
+                let value = aAllRows[iRowIdx]['{$col->getDataColumnName()}'];
+
+                let currentCol = {$this->buildJsJqueryElement()}[0].exfWidget.getColumnIndex('{$col->getDataColumnName()}');
+                if (currentCol === -1){
+                    return "";
+                }
+                let columnType = {$this->buildJsJqueryElement()}[0].jexcel.options.columns[currentCol].type;
+                
+                // if the filtered on object is a dropdown, use the name for comparison instead of the uid
+                // otherwise the users would have to provide the uid in the uxon filter
+                if (value !== '' && columnType === 'autocomplete'){
+                    let src = {$this->buildJsJqueryElement()}[0].jexcel.options.columns[currentCol].source;
+                    let entry = Array.isArray(src) ? src.find(item => item.id === value) : null;
+                    let name = entry ? entry.name : value;
+                    value = name;
+                }
+
+                var aVals = [];
+                aVals.push(value); 
+                return aVals.join('{$delimiter}');
+            }
+
+            // otherwise: return vals from currently selected rows
+            var aSelectedIdxs = {$this->buildJsJqueryElement()}.jspreadsheet('getSelectedRows', true);
             var aVals = [];
-            aVals.push(value); 
+
+            aSelectedIdxs.forEach(function(iRowIdx){
+                aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+            })
+
             return aVals.join('{$delimiter}');
         }
 
-        // otherwise: return vals from currently selected rows
-        var aSelectedIdxs = $('#{$this->getId()}').jspreadsheet('getSelectedRows', true);
-        var aVals = [];
-
-        aSelectedIdxs.forEach(function(iRowIdx){
-            aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
-        })
-
-        return aVals.join('{$delimiter}');
+        // if spreadsheet is not loaded, return empty
+        return "";
+        
 })()
 JS;
         }
