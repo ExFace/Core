@@ -309,11 +309,12 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
                     $inputData = $task->getInputData();
-                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
-                        $inputData = $mapper->map($inputData);
+                    $dataForCondition = $conditionGrp->readMissingData($inputData);
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($dataForCondition->getMetaObject())) {
+                        $dataForCondition = $mapper->map($dataForCondition);
                     }
-                    foreach ($inputData->getRows() as $rowIdx => $row) {
-                        if ($conditionGrp->evaluate($inputData, $rowIdx) === false) {
+                    foreach ($dataForCondition->getRows() as $rowIdx => $row) {
+                        if ($conditionGrp->evaluate($dataForCondition, $rowIdx, false) === false) {
                             return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
                         }
                     }
