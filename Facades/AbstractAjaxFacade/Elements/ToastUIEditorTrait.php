@@ -40,6 +40,8 @@ trait ToastUIEditorTrait
         return <<<JS
 
             function(){
+                {$this->buildJsMarkdownInitEditorGlobalVariables()}
+  
                 var ed = toastui.Editor.factory({
                     el: document.querySelector('#{$this->getId()}'),
                     height: '100%',
@@ -57,9 +59,22 @@ trait ToastUIEditorTrait
                     },
                     customHTMLRenderer: {
                         {$this->buildJsCustomHtmlRenderers()}
-                    }
+                    },
+                    widgetRules: [
+                        {$this->buildJsWidgetRules()}
+                        ],
                 });
                 
+                // Mention widget section:
+                {$this->buildJsCreateFilteredMentionWidget()}
+                
+                {$this->buildJsMentionListener()}
+                
+                {$this->buildJsSelectMentionElement()}
+                
+                {$this->buildJsAddMentionTag()}
+                
+                {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
                 return ed;
             }();
 JS;
@@ -82,6 +97,8 @@ JS;
         return <<<JS
 
             function(){
+                {$this->buildJsMarkdownInitEditorGlobalVariables()}
+  
                 var ed = toastui.Editor.factory({
                     el: document.querySelector('#{$this->getId()}'),
                     height: '100%',
@@ -97,12 +114,256 @@ JS;
                     },
                     customHTMLRenderer: {
                         {$this->buildJsCustomHtmlRenderers()}
-                    }
+                    },
+                    widgetRules: [
+                        {$this->buildJsWidgetRules()}
+                    ],
                 });
+                
+                // Mention widget code section:
+                {$this->buildJsCreateFilteredMentionWidget()}
+                
+                {$this->buildJsMentionListener()}
+                
+                {$this->buildJsSelectMentionElement()}
+                
+                {$this->buildJsAddMentionTag()}
+                
+                {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
                 
                 return ed;
             }();
 JS;
+    }
+
+    protected function buildJsMarkdownInitEditorGlobalVariables(): string
+    {
+        return <<<JS
+                // Mention global variables
+                let currentMentionWidget = null;
+                let lastLine = 0;
+                let lastCharPos = 0;
+                let lastFilter = "";
+                
+                //TODO: swap this with real persons list.
+                const mentionList = [
+                    { name: "@Andrej", url: ""},
+                    { name: "@Sergej", url: ""},
+                    { name: "@Saskia", url: ""},
+                    { name: "@Georg", url: ""},
+                    { name: "@Brooklyn", url: ""},
+                    { name: "@Gizem", url: ""},
+                    { name: "@Yonca", url: ""},
+                    ];
+JS;
+    }
+    protected function buildJsWidgetRules() : string
+    {
+        $widgetRulesJs = '';
+        //TODO: Add uxon support here like in buildJsCustomHtmlRenderers and give it as an argument here:
+        $widgetRulesJs .= $this->buildJsWidgetRule();
+        return <<<JS
+        {
+          {$widgetRulesJs}
+        }
+JS;
+    }
+
+    protected function buildJsWidgetRule() : string
+    {
+        $reMentionWidgetRule = '/\[(#\S+|@\S+)\]\((.*?)\)/';
+        $mentionWidgetCss = 'display: inline-block; padding: 4px 10px; background-color: #001580; color: white; text-decoration: none; border-radius: 9999px; font-size: 14px; font-family: sans-serif; font-weight: 600; white-space: nowrap;';
+        return <<<JS
+      /**
+       * Mention widget reacts to:
+       * "[#text](url)",
+       * "[#text]()",
+       * "[@text](url)",
+       * "[@text]()",
+       *
+       * and converts it to a span with a hyperlink
+       * that looks like a mention tag.
+       */
+      rule: {$reMentionWidgetRule},
+      toDOM(text) {
+        const matched = text.match({$reMentionWidgetRule});
+        const name = matched[1];
+        const url = matched[2];
+
+        const span = document.createElement("span");
+
+        if (url) {
+          span.innerHTML = `<a style="{$mentionWidgetCss}" href="\${url}">\${name}</a>`;
+        } else {
+          span.style.cssText = "{$mentionWidgetCss}";
+          span.innerHTML = `\${name}`;
+        }
+
+        return span;
+      }
+JS;
+    }
+
+    protected function buildJsMentionListener(): string
+    {
+        return <<<JS
+        ed.on("keyup", () => {
+          let line = null;
+          let charPos = null;
+          let textBeforeCursor = null;
+        
+          if (ed.isMarkdownMode()) {
+            [[line, charPos]] = ed.getSelection(); // line and char position
+            // It takes the text from the start of the line to the cursor.
+            textBeforeCursor = ed.getSelectedText([line, 0], [line, charPos]);
+          } else {
+            [,charPos] = ed.getSelection();
+            // It takes the text from the start of the editor to the cursor.
+            textBeforeCursor = ed.getSelectedText(0, charPos);
+          }
+        
+          const match = textBeforeCursor.match(/[#@]\w*$/);
+          if (!match) {
+            if (currentMentionWidget) {
+              currentMentionWidget.remove();
+              currentMentionWidget = null;
+            }
+            return;
+          }
+        
+          const filter = match[0];
+        
+          lastLine = line;
+          lastCharPos = charPos;
+          lastFilter = filter;
+        
+          currentMentionWidget = createFilteredMentionWidget(filter);
+          ed.addWidget(currentMentionWidget, "bottom");
+        
+          // Adds the mention widget and the click event.
+          const ul = currentMentionWidget.querySelector("ul");
+          ul.addEventListener("mousedown", (e) => {
+            const target = e.target.closest(".mention-item");
+            selectMentionElement(target);
+          });
+        });
+JS;
+    }
+
+    protected function buildJsAddEventListenerToSpaceKeydownForMentionWidget(): string
+    {
+        return <<<JS
+          /**
+          * Listens to the space bar to convert the "#text" to "[#text]()"
+          */
+          document.addEventListener("keydown", function handleSpace(e) {
+            if (currentMentionWidget && e.code === "Space") {
+              const items = currentMentionWidget.querySelectorAll(".mention-item:not(.empty)");
+          
+              if (items.length === 1) {
+                selectMentionElement(items[0]);
+              } else if (items.length === 0) {
+                addMentionTag(null);
+              }
+            }
+          });
+JS;
+    }
+
+    protected function buildJsSelectMentionElement(): string
+    {
+        return <<<JS
+          /**
+          * It takes the name and URL from the item that was clicked on in the mention widget.
+          * @param item
+          */
+          function selectMentionElement(item) {
+            if (!item) return;
+            const name = item.dataset.name;
+            const url = item.dataset.url;
+          
+            addMentionTag(name, url);
+          }
+JS;
+    }
+
+    protected function buildJsAddMentionTag(): string
+    {
+        return <<<JS
+        /**
+         *  It takes the name and URL
+         *  and converts the "#text" on saved position to "[#text]()"
+         *
+         * @param name
+         * @param url
+         */
+          function addMentionTag(name, url = "") {
+          
+            let from = null;
+            let to = null;
+          
+            if (ed.isMarkdownMode()) {
+              from = [lastLine, lastCharPos - lastFilter.length];
+              to = [lastLine, lastCharPos];
+            } else if (ed.isWysiwygMode()) {
+              from = lastCharPos - lastFilter.length;
+              to = lastCharPos;
+            }
+          
+            ed.replaceSelection(`[\${name ? name : lastFilter}](\${url})`, from, to);
+          
+            if (currentMentionWidget) {
+              currentMentionWidget.remove();
+              currentMentionWidget = null;
+            }
+          }
+JS;
+    }
+
+    protected function buildJsCreateFilteredMentionWidget(): string
+    {
+
+        $mentionMenuCss = 'position: absolute; padding: 4px 0; background: white; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,.15); border-radius: 6px; font-size: 14px; z-index: 100; min-width: 150px;';
+        $mentionItemCss = 'padding: 4px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
+        $mentionItemEmptyCss = 'color: gray; pointer-events: none;';
+        $mentionMenuUl = 'list-style: none; margin: 0; padding: 0;';
+
+        return <<<JS
+            /**
+             * builds the list of suggested mentions.
+             *
+             * @param filter
+             * @returns {HTMLDivElement}
+             */
+            function createFilteredMentionWidget(filter = "") {
+              const wrapper = document.createElement("div");
+              wrapper.style.cssText = "{$mentionMenuCss}";
+               
+              const filtered = mentionList.filter(item =>
+                  item.name.toLowerCase().includes(filter.toLowerCase())
+              );
+            
+              if (filtered.length === 0) {
+                wrapper.innerHTML = `<ul><li class="mention-item empty" style="{$mentionItemEmptyCss}">Keine Treffer</li></ul>`;
+                return wrapper;
+              }
+            
+              wrapper.innerHTML = `
+                <ul style="{$mentionMenuUl}">
+                  \${filtered
+                        .map(
+                            (item) => `<li class="mention-item" style="{$mentionItemCss}" data-url="\${item.url}" data-name="\${item.name}">
+                        \${item.name}
+                      </li>`
+              )
+              .join("")}
+                </ul>
+              `;
+            
+              return wrapper;
+}
+JS;
+
     }
 
     protected function buildJsCustomHtmlRenderers() : string
@@ -393,7 +654,20 @@ JS;
             var oEditor = {$this->buildJsMarkdownVar()};
             if (oEditor) {
                 if (oEditor.getMarkdown !== undefined) {
-                    value = oEditor.getMarkdown();
+                    if(oEditor.isMarkdownMode()) {
+                      value = oEditor.getMarkdown();
+                    } else {
+                      // ToastUi widgets in WYSIWYG mode like "[@Andrej]()" are saved as "\$\$widget0 [@Andrej])$$"
+                      // Bevor save, we have to get rid of the "\$\$widget0 .. $$" wrapper. 
+                      // To do so, we switch here to "Markdown" editor mode, write the Markdown to the value, 
+                      // and then switch back to the last-used mode.
+                      const currentMode = oEditor.mode;
+                      oEditor.changeMode("markdown",true);
+                  
+                      value = oEditor.getMarkdown();
+                      
+                      oEditor.changeMode(currentMode,true);
+                    }
                 } else if (oEditor._lastSetValue !== undefined) {
                     value = oEditor._lastSetValue;
                 }
