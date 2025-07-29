@@ -166,6 +166,8 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
 
     private $value_column_id = null;
 
+    private $hide_header_in_lookup = null;
+
     private $data_table = null;
 
     private $table_uxon = null;
@@ -563,6 +565,31 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         return parent::getMaxSuggestions();
     }
 
+    /**
+     * @return bool|null
+     */
+    public function getHideHeaderInLookup() : ?bool
+    {
+        return $this->hide_header_in_lookup;
+    }
+
+    /**
+     * It sets the collapse value of the header inside the DataLookupDialog
+     * that is called with the LookupAction of this InputComboTable.
+     *
+     * @uxon-property hide_header_in_lookup
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param boolean $value
+     * @return \exface\Core\Widgets\InputComboTable
+     */
+    public function setHideHeaderInLookup($value) : InputComboTable
+    {
+        $this->hide_header_in_lookup = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        return $this;
+    }
+
     public function getTableObjectAlias()
     {
         return $this->getOptionsObjectAlias();
@@ -827,9 +854,14 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         if ($this->lookupActionUxon !== null) {
             $uxon = $this->lookupActionUxon;
         } else {
-            $uxon = new UxonObject([
-                'alias' => 'exface.Core.ShowLookupDialog'
-            ]);
+            $uxonParams = ['alias' => 'exface.Core.ShowLookupDialog'];
+            $hideValueInLookup = $this->getHideHeaderInLookup();
+
+            if ($hideValueInLookup !== null) {
+                $uxonParams['dialog'] = new UxonObject(['hide_header' => $hideValueInLookup]);
+            }
+
+            $uxon = new UxonObject($uxonParams);
         }
         
         if ($uxon->hasProperty('object_alias') === false) {
