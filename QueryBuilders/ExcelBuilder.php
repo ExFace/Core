@@ -428,7 +428,11 @@ class ExcelBuilder extends FileBuilder
                     break;
                 }
                 try {
-                    $parsed = $dataType::formatDateNormalized(Date::excelToDateTimeObject($value));
+                    $value = is_numeric($value) ? 
+                        Date::excelToDateTimeObject($value) :
+                        $dataType->cast($value, true);
+                    
+                    $parsed = $dataType::formatDateNormalized($value);
                 } catch (\Throwable $e) {
                     if (! ($e instanceof ExceptionInterface)) {
                         $e = new QueryBuilderException($e->getMessage(), null, $e);
