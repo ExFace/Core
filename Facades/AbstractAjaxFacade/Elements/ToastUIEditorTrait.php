@@ -9,14 +9,14 @@ use exface\Core\Widgets\Parts\TextStencil;
 
 /**
  * Aides Facade specific implementation of the ToastUI markdown editor.
- * 
+ *
  * This trait supports both an editor and a viewer version:
  * - Editor: `buildJsMarkdownInitEditor()`
  * - Viewer: `buildJsMarkdownInitViewer()`
- * 
+ *
  * Only ever initialize one version per widget.
- * 
- * @see UI5InputMarkdown 
+ *
+ * @see UI5InputMarkdown
  * @see EuiInputMarkdown
  */
 trait ToastUIEditorTrait
@@ -24,19 +24,19 @@ trait ToastUIEditorTrait
     /**
      * Creates a JS snippet that initializes a ToastUI markdown editor
      * instance and returns it, complete with toolbar and live reference hooks.
-     * 
-     * @see UI5InputMarkdown
-     * @see EuiInputMarkdown
-     * 
+     *
      * @param bool $isViewer
      * @return string
+     * @see UI5InputMarkdown
+     * @see EuiInputMarkdown
+     *
      */
-    protected function buildJsMarkdownInitEditor(bool $isViewer = false) : string
+    protected function buildJsMarkdownInitEditor(bool $isViewer = false): string
     {
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
         $editorOptions = "initialEditType: '" . ($widget->getEditorMode() === InputMarkdown::MODE_WYSIWYG ? 'wysiwyg' : 'markdown') . "'";
-        
+
         return <<<JS
 
             function(){
@@ -84,12 +84,12 @@ JS;
      * Creates a JS snippet that initializes a ToastUI markdown viewer instance
      * and returns it. The viewer is much more light weight than the editor,
      * has no toolbar and does not support editing.
-     * 
-     * @see UI5DisplayMarkdown
-     * 
+     *
      * @return string
+     * @see UI5DisplayMarkdown
+     *
      */
-    protected function buildJsMarkdownInitViewer() : string
+    protected function buildJsMarkdownInitViewer(): string
     {
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
@@ -144,20 +144,10 @@ JS;
                 let lastLine = 0;
                 let lastCharPos = 0;
                 let lastFilter = "";
-                
-                //TODO: swap this with real persons list.
-                const mentionList = [
-                    { name: "@Andrej", url: ""},
-                    { name: "@Sergej", url: ""},
-                    { name: "@Saskia", url: ""},
-                    { name: "@Georg", url: ""},
-                    { name: "@Brooklyn", url: ""},
-                    { name: "@Gizem", url: ""},
-                    { name: "@Yonca", url: ""},
-                    ];
 JS;
     }
-    protected function buildJsWidgetRules() : string
+
+    protected function buildJsWidgetRules(): string
     {
         $widgetRulesJs = '';
         //TODO: Add uxon support here like in buildJsCustomHtmlRenderers and give it as an argument here:
@@ -169,9 +159,10 @@ JS;
 JS;
     }
 
-    protected function buildJsWidgetRule() : string
+    protected function buildJsWidgetRule(): string
     {
-        $reMentionWidgetRule = '/\[(#\S+|@\S+)\]\((.*?)\)/';
+        //$reMentionWidgetRule = '/\[(#\S+|@\S+)\]\((.*?)\)/';
+        $reMentionWidgetRule = '/\[(#\s?[^\]]+|@\s?[^\]]+)\]\((.*?)\)/';
         $mentionWidgetCss = 'display: inline-block; padding: 4px 10px; background-color: #001580; color: white; text-decoration: none; border-radius: 9999px; font-size: 14px; font-family: sans-serif; font-weight: 600; white-space: nowrap;';
         return <<<JS
       /**
@@ -237,14 +228,16 @@ JS;
           lastCharPos = charPos;
           lastFilter = filter;
         
-          currentMentionWidget = createFilteredMentionWidget(filter);
-          ed.addWidget(currentMentionWidget, "bottom");
+          
+          createFilteredMentionWidget(filter).then(widget => {
+            currentMentionWidget = widget;
+            ed.addWidget(currentMentionWidget, "bottom");
         
-          // Adds the mention widget and the click event.
-          const ul = currentMentionWidget.querySelector("ul");
-          ul.addEventListener("mousedown", (e) => {
-            const target = e.target.closest(".mention-item");
-            selectMentionElement(target);
+            const ul = currentMentionWidget.querySelector("ul");
+            ul.addEventListener("mousedown", (e) => {
+                const target = e.target.closest(".mention-item");
+                selectMentionElement(target);
+            });
           });
         });
 JS;
@@ -322,53 +315,82 @@ JS;
 
     protected function buildJsCreateFilteredMentionWidget(): string
     {
-
         $mentionMenuCss = 'position: absolute; padding: 4px 0; background: white; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,.15); border-radius: 6px; font-size: 14px; z-index: 100; min-width: 150px;';
         $mentionItemCss = 'padding: 4px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
         $mentionItemEmptyCss = 'color: gray; pointer-events: none;';
         $mentionMenuUl = 'list-style: none; margin: 0; padding: 0;';
 
         return <<<JS
-            /**
-             * builds the list of suggested mentions.
-             *
-             * @param filter
-             * @returns {HTMLDivElement}
-             */
+/**
+            * builds the list of suggested mentions.
+            *
+            * @param filter
+            * @returns {Promise<HTMLDivElement>}
+            */
             function createFilteredMentionWidget(filter = "") {
-              const wrapper = document.createElement("div");
-              wrapper.style.cssText = "{$mentionMenuCss}";
-               
-              const filtered = mentionList.filter(item =>
-                  item.name.toLowerCase().includes(filter.toLowerCase())
-              );
+                return new Promise((resolve) => {
+                    const wrapper = document.createElement("div");
+                    wrapper.style.cssText = "{$mentionMenuCss}";
+                    
+                    const searchQuery = filter.replace(/^[@#]/, "");
             
-              if (filtered.length === 0) {
-                wrapper.innerHTML = `<ul><li class="mention-item empty" style="{$mentionItemEmptyCss}">Keine Treffer</li></ul>`;
-                return wrapper;
-              }
+                    $.ajax({
+                        type: 'POST',
+                        url: 'http://localhost/exface/exface/api/jeasyui',
+                        data: {
+                            resource: 'exface.core.security',
+                            element: 'SplitHorizontal_SplitPanel02_SplitVertical_SplitPanel_DataTableResponsive_DataTableConfigurator_Tab_Filter_InputComboTable_DataTable',
+                            object: '0x31343400000000000000000000000000',
+                            action: 'exface.Core.Autosuggest',
+                            page: 1,
+                            rows: 20,
+                            q: searchQuery,
+                            'data[oId]': '0x31343400000000000000000000000000',
+                            'data[filters][operator]': 'AND',
+                            'data[filters][ignore_empty_values]': true,
+                            'data[filters][conditions][0][expression]': 'FULL_NAME',
+                            'data[filters][conditions][0][comparator]': '',
+                            'data[filters][conditions][0][value]': '',
+                            'data[filters][conditions][0][apply_to_aggregates]': true
+                        },
+                        success: function (response) {
+                            const mentionList = (response.rows || []).map(user => ({
+                                name: "@" + user.FULL_NAME,
+                                url: ""
+                            }));
             
-              wrapper.innerHTML = `
-                <ul style="{$mentionMenuUl}">
-                  \${filtered
-                        .map(
-                            (item) => `<li class="mention-item" style="{$mentionItemCss}" data-url="\${item.url}" data-name="\${item.name}">
-                        \${item.name}
-                      </li>`
-              )
-              .join("")}
-                </ul>
-              `;
+                            if (mentionList.length === 0) {
+                                wrapper.innerHTML = `<ul><li class="mention-item empty" style="{$mentionItemEmptyCss}">Keine Treffer</li></ul>`;
+                                return resolve(wrapper);
+                            }
             
-              return wrapper;
-}
+                            wrapper.innerHTML = `
+                                <ul style="{$mentionMenuUl}">
+                                    \${mentionList
+                                        .map(item => `<li class="mention-item" style="{$mentionItemCss}" data-url="\${item.url}" data-name="\${item.name}">
+                                            \${item.name}
+                                        </li>`)
+                                        .join("")}
+                                </ul>
+                            `;
+            
+                            resolve(wrapper);
+                        },
+                        error: function () {
+                      console.log("Ajax Error");
+                            wrapper.innerHTML = `<ul><li class="mention-item empty" style="{$mentionItemEmptyCss}">Fehler beim Laden</li></ul>`;
+                            resolve(wrapper);
+                        }
+                    });
+                });
+            }
 JS;
-
     }
 
-    protected function buildJsCustomHtmlRenderers() : string
+
+    protected function buildJsCustomHtmlRenderers(): string
     {
-        if (! $this->getWidget() instanceof InputMarkdown) {
+        if (!$this->getWidget() instanceof InputMarkdown) {
             return '';
         }
         $inlineTagRenderersJs = '';
@@ -389,11 +411,11 @@ JS;
 
     /**
      * Assembles the markdown editor toolbar.
-     * 
+     *
      * @param $widget
      * @return string
      */
-    protected function buildJsToolbarItems($widget) : string
+    protected function buildJsToolbarItems($widget): string
     {
         $image = $widget->getAllowImages() ? "'image', " : "";
         $fullScreenToggleJs = <<<JS
@@ -406,7 +428,7 @@ JS;
                     return button;
                 })()
 JS;
-        
+
         return <<<JS
 
         toolbarItems: [
@@ -422,8 +444,8 @@ JS;
 JS;
 
     }
-    
-    protected function buildJsToolbarItemsForStencils() : string
+
+    protected function buildJsToolbarItemsForStencils(): string
     {
         $js = '';
         if ($this->getWidget() instanceof InputMarkdown) {
@@ -442,8 +464,8 @@ JS;
         }
         return $js;
     }
-    
-    protected function buildJsToolbarItemForHtmlTagStencil(TextStencil $stencil) : string
+
+    protected function buildJsToolbarItemForHtmlTagStencil(TextStencil $stencil): string
     {
         if ($stencil->getIcon() === null && null !== $iconText = $stencil->getIconText()) {
             $icon = $iconText;
@@ -457,7 +479,7 @@ JS;
             $icon,
             '</button>',
         ]);
-        
+
         $insertKbdButtonJs = <<<JS
                 (function (){
                     let button = \$('$insertKbdButtonHTML')[0];
@@ -502,8 +524,8 @@ JS;
 JS;
 
     }
-    
-    protected function buildJsCustomHtmlInlineRenderer(TextStencil $stencil) : string
+
+    protected function buildJsCustomHtmlInlineRenderer(TextStencil $stencil): string
     {
         return <<<JS
           {$stencil->getHtmlTag()}(entering) {
@@ -516,20 +538,20 @@ JS;
 
     /**
      * Returns a click handler for the full screen toggle button.
-     * 
+     *
      * The handler will be used in this context:
-     * 
+     *
      * ```
-     * 
+     *
      * button.addEventListener('click', () => {
      *      {$this->buildJsFullScreenToggleClickHandler()}
      * });
-     * 
+     *
      * ```
      *
      * @return string
      */
-    protected function buildJsFullScreenToggleClickHandler() : string
+    protected function buildJsFullScreenToggleClickHandler(): string
     {
         $markdownVarJs = $this->buildJsMarkdownVar();
 
@@ -556,16 +578,16 @@ JS;
     /**
      * @return string
      */
-    protected function getFullScreenToggleId() : string
+    protected function getFullScreenToggleId(): string
     {
-        return $this->getId().'_tuiFullScreenToggle';
+        return $this->getId() . '_tuiFullScreenToggle';
     }
 
     /**
      *
      * @return string
      */
-    protected function buildJsMarkdownVar() : string
+    protected function buildJsMarkdownVar(): string
     {
         return "{$this->buildJsFunctionPrefix()}_editor";
     }
@@ -574,7 +596,7 @@ JS;
      *
      * @return string
      */
-    protected function buildJsMarkdownRemove() : string
+    protected function buildJsMarkdownRemove(): string
     {
         return "{$this->buildJsMarkdownVar()}.remove();";
     }
@@ -584,7 +606,7 @@ JS;
      * {@inheritDoc}
      * @see \exface\JEasyUIFacade\Facades\Elements\EuiInput::buildJsValueSetterMethod()
      */
-    public function buildJsValueSetter($value) : string
+    public function buildJsValueSetter($value): string
     {
         return <<<JS
         
@@ -615,24 +637,24 @@ JS;
     /**
      * Builds an inline JS snippet that removes any raw image data from a string
      * variable called `$value`.
-     * 
+     *
      * ```
-     * 
+     *
      *  if ({$value} !== undefined) {
      *      {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
      *  }
-     * 
+     *
      * ```
-     * 
+     *
      * @param string $value
      * @return string
      */
-    protected function buildJsImageDataSanitizer(string $value) : string
+    protected function buildJsImageDataSanitizer(string $value): string
     {
-        if($this->getWidget()->getAllowImages()) {
+        if ($this->getWidget()->getAllowImages()) {
             return '';
         }
-        
+
         return <<<JS
 
         {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
@@ -686,9 +708,9 @@ JS;
      *
      * @return string
      */
-    protected function buildHtmlMarkdownEditor() : string
+    protected function buildHtmlMarkdownEditor(): string
     {
-        $html = '<div id="'.$this->getId().'" class="markdown-editor"></div>';
+        $html = '<div id="' . $this->getId() . '" class="markdown-editor"></div>';
         return $html;
     }
 }
