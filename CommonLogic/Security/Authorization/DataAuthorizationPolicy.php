@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Security\Authorization;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
@@ -509,6 +510,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
 
     /**
      *
+     * @param MetaObjectInterface $object
      * @return ConditionGroupInterface|NULL
      */
     protected function getApplyIf(MetaObjectInterface $object) : ?ConditionGroupInterface
