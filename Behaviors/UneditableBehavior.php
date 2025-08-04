@@ -169,8 +169,7 @@ class UneditableBehavior extends AbstractBehavior
             $dataSheet->getColumns()->addFromAttribute($dataSheet->getMetaObject()->getLabelAttribute());
         }
         
-        // read data if $eventData->isFresh() === false and $eventData()->getMetaObject()->isReadable()
-        if ($dataSheet->isFresh() === false && $dataSheet->getMetaObject()->isReadable()){
+        if ($dataSheet->getMetaObject()->isReadable()){
             $uidCol = $dataSheet->getUidColumn();
             if ($uidCol === false){
                 $uidCol = $dataSheet->getColumns()->addFromUidAttribute();
@@ -179,7 +178,7 @@ class UneditableBehavior extends AbstractBehavior
             
             $dataSheet->dataRead();
         }
-        
+
         foreach ($this->getDataChecks() as $check) {
             if ($check->isApplicable($dataSheet)) {
                 try {
