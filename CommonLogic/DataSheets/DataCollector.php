@@ -394,7 +394,7 @@ class DataCollector implements DataCollectorInterface
                 }
             }
         }
-        return $this->requiredExpressions;
+        return $this->requiredExpressions ?? [];
     }
 
     /**

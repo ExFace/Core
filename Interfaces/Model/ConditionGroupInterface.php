@@ -2,6 +2,8 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by 
@@ -283,4 +285,25 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return ConditionGroupInterface
      */
     public function with(string $operator, ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
+
+    /**
+     * Forces the condition group to load missing data. 
+     * 
+     * This happens automatically on `evaluate()`, anyway. But if you want to control the timing
+     * or read all data in one batch to improve performance this is the way to go. Remember to
+     * call `evaluate()` with `$readMissingData = FALSE` if you do this.
+     * 
+     * @param DataSheetInterface    $dataSheet
+     * @param LogBookInterface|null $logBook
+     * @return DataSheetInterface
+     */
+    public function readMissingData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface;
+
+    /**
+     * @inheritDoc
+     * @param bool                    $readMissingData
+     * Set to FALSE, if you don't want this condition to read missing data.
+     * @see ConditionGroupInterface::readMissingData()
+     */
+    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null, bool $readMissingData = true): bool;
 }
