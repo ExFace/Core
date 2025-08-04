@@ -288,7 +288,9 @@ class PivotSheet extends DataSheet implements PivotSheetInterface
             $rowsNew[] = $row;
         }
         
-        $resultSheet->addRows($rowsNew, false, false);
+        if (!empty($rowsNew)) {
+            $resultSheet->addRows($rowsNew, false, false);
+        }        
         return $resultSheet;
     }
     
