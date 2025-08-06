@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Actions\iUpdateData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\iCanValidate;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
@@ -48,6 +49,15 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         $undoable = false;
         
         try {
+            foreach ($data_sheet->getColumns() as $column) {
+                $dataType = $column->getDataType();
+                if($dataType instanceof iCanValidate) {
+                    foreach ($column->getValues() as $value) {
+                        $dataType->validate($value);
+                    }
+                }
+            }
+            
             $affectedRows = $data_sheet->dataUpdate(false, $transaction);
         } catch (\Throwable $e) {
             throw new ActionRuntimeError($this, 'Cannot update data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
