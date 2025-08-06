@@ -309,12 +309,18 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
                     $inputData = $task->getInputData();
-                    $dataForCondition = $conditionGrp->readMissingData($inputData);
-                    if ($action !== null && null !== $mapper = $action->getInputMapper($dataForCondition->getMetaObject())) {
-                        $dataForCondition = $mapper->map($dataForCondition);
+                    $checkData = $inputData->copy();
+
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($checkData->getMetaObject())) {
+                        $checkData = $mapper->map($checkData);
                     }
-                    foreach ($dataForCondition->getRows() as $rowIdx => $row) {
-                        if ($conditionGrp->evaluate($dataForCondition, $rowIdx, false) === false) {
+                    
+                    // We need to collect and merge missing data for the policy AFTER applying input mappers,
+                    // to ensure that we are working with the right metaobject.
+                    $checkData->merge($conditionGrp->readMissingData($checkData));
+                    
+                    foreach ($checkData->getRows() as $rowIdx => $row) {
+                        if ($conditionGrp->evaluate($checkData, $rowIdx, false) === false) {
                             return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
                         }
                     }
