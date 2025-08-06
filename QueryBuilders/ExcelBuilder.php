@@ -298,10 +298,21 @@ class ExcelBuilder extends FileBuilder
                 case $this->isColumnName($address):
                     // read column of given column name
                     $row_nr = 0;
+
                     try {
+                        try {
+                            $range = $this->addressToRange($address, $worksheet);
+                        } catch (\Throwable $e) {
+                            if(!$qpart->getAttribute()->isRequired()) {
+                                break;
+                            }
+
+                            throw $e;
+                        }
+                        
                         $range = $this->rangeToArray(
                             $worksheet, 
-                            $this->addressToRange($address, $worksheet), 
+                            $range, 
                             null, 
                             true, 
                             $formatValues, 
@@ -339,12 +350,12 @@ class ExcelBuilder extends FileBuilder
 
     /**
      * Converts a data address into an Excel range.
-     * 
+     *
      * @param string    $address
      * @param Worksheet $worksheet
-     * @return string
+     * @return string|null
      */
-    protected function addressToRange(string $address, Worksheet $worksheet) : string
+    protected function addressToRange(string $address, Worksheet $worksheet) : ?string
     {
         $rangeName = trim($address, '[]');
         $rangeName = StringHelper::strToUpper($rangeName);
@@ -377,8 +388,13 @@ class ExcelBuilder extends FileBuilder
             $cellRange = str_replace('$', '', $cellRange);
             $this->ranges[StringHelper::strToUpper($columnName)] = $cellRange;
         }
+        
+        $result = $this->ranges[$rangeName];
+        if($result === null) {
+            throw new QueryBuilderException('Could not find range "' . $rangeName . '" in worksheet!');
+        }
 
-        return $this->ranges[$rangeName];
+        return $result;
     }
 
     /**
