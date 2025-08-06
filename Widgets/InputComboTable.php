@@ -578,13 +578,18 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
      *
      * ATTENTION! This property will be ignored if the "lookup_action" uxon property is set.
      * This property is a shortcut for the following uxon code:
-     *
+     * 
+     * ```
+     *  {
      *      "lookup_action": {
      *           "alias": "exface.Core.ShowLookupDialog",
      *           "dialog": {
      *               "hide_header": true
      *           }
      *      }
+     *  }
+     * 
+     * ```
      *
      * @uxon-property lookup_hide_header
      * @uxon-type boolean
