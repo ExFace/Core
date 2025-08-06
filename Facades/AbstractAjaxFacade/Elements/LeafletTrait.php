@@ -448,7 +448,7 @@ JS;
         $popupTableRowsJs = '';
         $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
         foreach ($dataWidget->getColumns() as $col) {
-            if ($col->isHidden() === true || $col->getVisibility() == WidgetVisibilityDataType::OPTIONAL) {
+            if ($col->getVisibility() < WidgetVisibilityDataType::NORMAL) {
                 continue;
             }
             if ($col->getCellWidget() instanceof Image) {
@@ -621,7 +621,7 @@ JS;
         $popupTableRowsJs = '';
         $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
         foreach ($dataWidget->getColumns() as $col) {
-            if ($col->isHidden() === true || $col->getVisibility() == WidgetVisibilityDataType::OPTIONAL) {
+            if ($col->getVisibility() < WidgetVisibilityDataType::NORMAL) {
                 continue;
             }
             if ($col->getCellWidget() instanceof Image) {
@@ -870,7 +870,7 @@ JS;
         $popupTableRowsJs = '';
         $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
         foreach ($dataWidget->getColumns() as $col) {
-            if ($col->isHidden() === true || $col->getVisibility() == WidgetVisibilityDataType::OPTIONAL) {
+            if ($col->getVisibility() < WidgetVisibilityDataType::NORMAL) {
                 continue;
             }
             if ($col->getCellWidget() instanceof Image) {
