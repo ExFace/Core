@@ -166,7 +166,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
 
     private $value_column_id = null;
 
-    private $hide_header_in_lookup = null;
+    private $lookup_hide_header = null;
 
     private $data_table = null;
 
@@ -568,25 +568,34 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
     /**
      * @return bool|null
      */
-    public function getHideHeaderInLookup() : ?bool
+    public function getLookupHideHeader() : ?bool
     {
-        return $this->hide_header_in_lookup;
+        return $this->lookup_hide_header;
     }
 
     /**
-     * It sets the collapse value of the header inside the DataLookupDialog
-     * that is called with the LookupAction of this InputComboTable.
+     * It sets the collapse value of the header inside the DataLookupDialog that is called with the LookupAction of this InputComboTable.
      *
-     * @uxon-property hide_header_in_lookup
+     * ATTENTION! This property will be ignored if the "lookup_action" uxon property is set.
+     * This property is a shortcut for the following uxon code:
+     *
+     *      "lookup_action": {
+     *           "alias": "exface.Core.ShowLookupDialog",
+     *           "dialog": {
+     *               "hide_header": true
+     *           }
+     *      }
+     *
+     * @uxon-property lookup_hide_header
      * @uxon-type boolean
-     * @uxon-default true
+     * @uxon-default false
      *
      * @param boolean $value
      * @return \exface\Core\Widgets\InputComboTable
      */
-    public function setHideHeaderInLookup($value) : InputComboTable
+    public function setLookupHideHeader($value) : InputComboTable
     {
-        $this->hide_header_in_lookup = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->lookup_hide_header = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -855,7 +864,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
             $uxon = $this->lookupActionUxon;
         } else {
             $uxonParams = ['alias' => 'exface.Core.ShowLookupDialog'];
-            $hideValueInLookup = $this->getHideHeaderInLookup();
+            $hideValueInLookup = $this->getLookupHideHeader();
 
             if ($hideValueInLookup !== null) {
                 $uxonParams['dialog'] = new UxonObject(['hide_header' => $hideValueInLookup]);
