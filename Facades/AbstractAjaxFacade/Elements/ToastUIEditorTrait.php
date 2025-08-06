@@ -65,16 +65,8 @@ trait ToastUIEditorTrait
                         ],
                 });
                 
-                // Mention widget section:
-                {$this->buildJsCreateFilteredMentionWidget()}
+                {$this->buildJsAdditionalWidgetsCode()}
                 
-                {$this->buildJsMentionListener()}
-                
-                {$this->buildJsSelectMentionElement()}
-                
-                {$this->buildJsAddMentionTag()}
-                
-                {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
                 return ed;
             }();
 JS;
@@ -120,31 +112,53 @@ JS;
                     ],
                 });
                 
-                // Mention widget code section:
-                {$this->buildJsCreateFilteredMentionWidget()}
-                
-                {$this->buildJsMentionListener()}
-                
-                {$this->buildJsSelectMentionElement()}
-                
-                {$this->buildJsAddMentionTag()}
-                
-                {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
+                {$this->buildJsAdditionalWidgetsCode()}
                 
                 return ed;
             }();
 JS;
     }
 
+    protected function buildJsAdditionalWidgetsCode(): string
+    {
+        $additionalWidgetsCode = '';
+
+        if ($this->getWidget()->getAllowMentions())
+        {
+            $additionalWidgetsCode.= <<<JS
+
+            // Mention widget code section:
+            {$this->buildJsCreateFilteredMentionWidget()}
+
+            {$this->buildJsMentionListener()}
+
+            {$this->buildJsSelectMentionElement()}
+
+            {$this->buildJsAddMentionTag()}
+
+            {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
+JS;
+        }
+
+        return $additionalWidgetsCode;
+    }
+
     protected function buildJsMarkdownInitEditorGlobalVariables(): string
     {
-        return <<<JS
+        $globalVariablesJs = '';
+
+        if ($this->getWidget()->getAllowMentions())
+        {
+            $globalVariablesJs.= <<<JS
                 // Mention global variables
                 let currentMentionWidget = null;
                 let lastLine = 0;
                 let lastCharPos = 0;
                 let lastFilter = "";
 JS;
+        }
+
+        return $globalVariablesJs;
     }
 
     protected function buildJsWidgetRules(): string
@@ -161,8 +175,7 @@ JS;
 
     protected function buildJsWidgetRule(): string
     {
-        //$reMentionWidgetRule = '/\[(#\S+|@\S+)\]\((.*?)\)/';
-        $reMentionWidgetRule = '/\[(#\s?[^\]]+|@\s?[^\]]+)\]\((.*?)\)/';
+        $reMentionWidgetRule = '/\[([#@]\s?[^\]]+)\]\((.*?)\)/';
         $mentionWidgetCss = 'display: inline-block; padding: 4px 10px; background-color: #001580; color: white; text-decoration: none; border-radius: 9999px; font-size: 14px; font-family: sans-serif; font-weight: 600; white-space: nowrap;';
         return <<<JS
       /**
@@ -227,7 +240,6 @@ JS;
           lastLine = line;
           lastCharPos = charPos;
           lastFilter = filter;
-        
           
           createFilteredMentionWidget(filter).then(widget => {
             currentMentionWidget = widget;

@@ -20,6 +20,7 @@ class InputMarkdown extends InputText
     
     private string $mode = self::MODE_MARKDOWN;
     private bool $allowImages = false;
+    private bool $allowMentions = false;
     private array $stencils = [];
     private ?UxonObject $stencilsUxon = null;
     
@@ -77,6 +78,31 @@ class InputMarkdown extends InputText
     public function getAllowImages() : bool
     {
         return  $this->allowImages;
+    }
+
+    /**
+     * Toggle whether users are allowed to use the mentions widget in the editor.
+     * The mentions widget can be triggered by typing "@" in the editor.
+     *
+     * @uxon-property allow_mentions
+     * @uxon-type bool
+     * @uxon-defaul false
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setAllowMentions(bool $value) : static
+    {
+       $this->allowMentions = $value;
+       return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowMentions() : bool
+    {
+        return  $this->allowMentions;
     }
 
     /**
