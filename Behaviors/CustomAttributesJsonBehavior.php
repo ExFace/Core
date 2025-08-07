@@ -328,7 +328,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
             $attribute->setSortable(true);
             $attribute->setEditable(true);
             $attribute->setWritable(true);
-            $targetObject->getAttributes()->add($attribute);
+            $targetObject->addAttribute($attribute);
         }
         $logBook->addIndent(-1);
 

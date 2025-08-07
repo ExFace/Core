@@ -8,11 +8,6 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 
 /**
- *
- * @method DataColumnInterface[] getAll()
- * @method DataColumnInterface get(string $key)
- * @method DataColumnInterface getFirst()
- * @method DataColumnInterface getLast()
  *        
  * @author Andrej Kabachnik
  *        
@@ -179,4 +174,22 @@ interface DataColumnListInterface extends EntityListInterface
      * @return bool
      */
     public function hasSystemColumns() : bool;
+
+    /**
+     * Returns a map with column names as keys and expression strings as values.
+     *
+     * This method can be used to quickly find columns by expression without traversing all column objects. The
+     * expressions are cached for performance.
+     *
+     * @return string[]
+     */
+    public function getColumnsExpressions() : array;
+
+    /**
+     * Same as `get(string)` but takes an array of keys as input and returns an array of matching entries.
+     * 
+     * @param string[] $keys
+     * @return array
+     */
+    public function getMultiple(array $keys) : array;
 }

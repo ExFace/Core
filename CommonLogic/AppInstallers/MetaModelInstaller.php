@@ -2,6 +2,9 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\PermalinkFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -120,11 +123,12 @@ class MetaModelInstaller extends DataInstaller
         $this->addDataOfObject('exface.Core.API', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.EXTERNAL_SYSTEM', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.ATTRIBUTE_GROUP', 'CREATED_ON', 'APP');
-        $this->addDataOfObject('exface.Core.UXON_SNIPPET', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.UXON_SNIPPET', 'CREATED_ON', 'APP', [], '[#OBJECT__ALIAS_WITH_NS#]/24_UXON_SNIPPET.json');
         $this->addDataOfObject('exface.Core.MUTATION_TARGET', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.MUTATION_TYPE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.MUTATION_SET', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.MUTATION', 'CREATED_ON', 'MUTATION_SET__APP');
+        $this->addDataOfObject('exface.Core.PERMALINK', 'CREATED_ON', 'APP', [], '[#OBJECT__ALIAS_WITH_NS#]/29_PERMALINK.json');
     }
     
     /**
@@ -187,6 +191,9 @@ class MetaModelInstaller extends DataInstaller
             $pageInstaller->setTransaction($transaction);
             yield from $pageInstaller->install($source_absolute_path);
             
+            // Validate permalinks.
+            yield from $this->validatePermalinks($indent);
+            
             // Commit the transaction
             $transaction->commit();
         } else {
@@ -203,7 +210,7 @@ class MetaModelInstaller extends DataInstaller
     {
         $idt = $this->getOutputIndentation();
         $app = $this->getApp();
-        
+
         yield from parent::backup($destinationAbsolutePath);
         
         // Save some information about the package in the extras of composer.json
@@ -223,8 +230,62 @@ class MetaModelInstaller extends DataInstaller
         $pageInstaller = $this->getPageInstaller();
         $pageInstaller->setOutputIndentation($idt);
         yield from $pageInstaller->backup($destinationAbsolutePath);
+
+        // Verify permalinks.
+        yield from $this->validatePermalinks($idt);
     }
-    
+
+    /**
+     * Validates all permalinks present in the app and outputs a list of link aliases that failed validation.
+     * 
+     * @param string $indent
+     * @return \Generator
+     */
+    protected function validatePermalinks(string $indent) : \Generator
+    {
+
+        $workbench = $this->getWorkbench();
+        $appAlias = $this->getApp()->getAliasWithNamespace();
+
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.PERMALINK');
+        $dataSheet->getColumns()->addFromSystemAttributes();
+        $dataSheet->getColumns()->addFromExpression('ALIAS');
+        $dataSheet->getFilters()->addConditionFromString(
+            'APP__ALIAS',
+            $appAlias,
+            ComparatorDataType::EQUALS
+        );
+        $dataSheet->dataRead();
+
+        if($dataSheet->countRows() > 0) {
+            yield PHP_EOL . $indent . 'Permalinks:' . PHP_EOL;
+            
+            $errorCount = 0;
+            foreach ($dataSheet->getRows() as $row) {
+                try {
+                    $permalink = PermalinkFactory::fromUrlOrSelector($workbench, $appAlias . '.' . $row['ALIAS']);
+                    $params = $permalink->getExampleParams() ?? '';
+                    $permalink->withUrl($params)->buildRelativeRedirectUrl();
+
+                } catch (\Throwable $e) {
+                    $msg = '';
+                    if($errorCount++ === 0) {
+                        $msg .= $indent . $indent . "Result\t\tAlias" .PHP_EOL;
+                        $msg .= $indent . $indent . "------\t\t-----" . PHP_EOL;
+                    }
+
+                    yield $msg . $indent . $indent . "INVALID\t\t" . $appAlias . $row['ALIAS'] . PHP_EOL;
+                }
+            }
+
+            if($errorCount > 0) {
+                yield $indent . '...please check the configuration of the permalinks listed above.' . PHP_EOL . PHP_EOL;
+            } else {
+                yield $indent . '...all permalinks verified successfully.' . PHP_EOL . PHP_EOL;
+            }
+        }
+    }
+
     /**
      * 
      * @return PageInstaller

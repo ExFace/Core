@@ -1,0 +1,85 @@
+{
+    "uid": "0x11f0a9bb5702f0fea9bbf1c27f23a6d7",
+    "alias_with_namespace": "exface.core.permalinks",
+    "menu_parent_page_selector": "0xaab623e6632411e8aab30205857feb80",
+    "menu_index": 3,
+    "menu_visible": true,
+    "name": "Permalinks",
+    "description": "Manage permalinks",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2025-06-19 16:18:58",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2025-06-24 10:49:13",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.PERMALINK",
+        "paginate": false,
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "EXAMPLE_PARAMS"
+            }
+        ],
+        "row_grouper": {
+            "group_by_attribute_alias": "APP__ALIAS"
+        },
+        "columns": [
+            {
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "PROTOTYPE_FILE"
+            },
+            {
+                "attribute_alias": "DESCRIPTION"
+            },
+            {
+                "attribute_alias": "EXAMPLE_PARAMS"
+            },
+            {
+                "attribute_alias": "EXAMPLE_URL"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "NAME",
+                "direction": "asc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            },
+            {
+                "action_alias": "exface.Core.VisitPermalink"
+            }
+        ]
+    }
+}

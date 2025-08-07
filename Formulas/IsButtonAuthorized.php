@@ -2,6 +2,7 @@
 
 namespace exface\Core\Formulas;
 
+use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Exceptions\FormulaError;
@@ -68,7 +69,7 @@ class IsButtonAuthorized extends Formula
             $action = $widget->getAction();
             static::$actionsCache[$cacheKey] = $action;
         }
-
+        
         // Get the input data
         $allData = $this->getDataSheet();
         $cacheKey = $cacheKey . ':' . spl_object_id($allData);
@@ -86,6 +87,12 @@ class IsButtonAuthorized extends Formula
             // we can cache the mapped data and avoid calling the mapper over and over again. This should save
             // us loading missing data, that is done automatically by mappers in most cases.
             if (null !== $mapper = $action->getInputMapper($allData->getMetaObject())) {
+                foreach ($mapper->getMappings() as $mapping) {
+                    if ($mapping instanceof DataCheckMapping) {
+                        $mapping->disable(true);
+                    }
+                }
+                  
                 $mappedData = $mapper->map($allData);
                 // We can cache the mapped data if we only have a single row OR the number of rows did not
                 // change after the mapping.

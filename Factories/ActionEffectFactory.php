@@ -32,13 +32,17 @@ abstract class ActionEffectFactory extends AbstractStaticFactory
      * 
      * @param ActionInterface $action
      * @param MetaObjectInterface $object
+     * @param bool|null $willHandleChanges
      * @return ActionEffectInterface
      */
-    public static function createForEffectedObject(ActionInterface $action, MetaObjectInterface $object, string $effectName = null) : ActionEffectInterface
+    public static function createForEffectedObject(ActionInterface $action, MetaObjectInterface $object, string $effectName = null, ?bool $willHandleChanges = null) : ActionEffectInterface
     {
         $uxon = new UxonObject(['effected_object' => $object->getAliasWithNamespace()]);
         if ($effectName !== null) {
             $uxon->setProperty('name', $effectName);
+        }
+        if ($willHandleChanges !== null) {
+            $uxon->setProperty('handles_changes', $willHandleChanges);
         }
         return new ActionEffect($action, $uxon);
     }
@@ -48,13 +52,17 @@ abstract class ActionEffectFactory extends AbstractStaticFactory
      * @param ActionInterface $action
      * @param string|MetaObjectSelectorInterface $selectorOrString
      * @param string $effectName
+     * @param bool|null $willHandleChanges
      * @return ActionEffectInterface
      */
-    public static function createForEffectedObjectAliasOrUid(ActionInterface $action, $selectorOrString, string $effectName = null) : ActionEffectInterface
+    public static function createForEffectedObjectAliasOrUid(ActionInterface $action, $selectorOrString, string $effectName = null, ?bool $willHandleChanges = null) : ActionEffectInterface
     {
         $uxon = new UxonObject(['effected_object' => (string)$selectorOrString]);
         if ($effectName !== null) {
             $uxon->setProperty('name', $effectName);
+        }
+        if ($willHandleChanges !== null) {
+            $uxon->setProperty('handles_changes', $willHandleChanges);
         }
         return new ActionEffect($action, $uxon);
     }
@@ -64,13 +72,17 @@ abstract class ActionEffectFactory extends AbstractStaticFactory
      * @param ActionInterface $action
      * @param MetaRelationPathInterface $relationPathFromActionObject
      * @param string $effectName
+     * @param bool|null $willHandleChanges
      * @return ActionEffectInterface
      */
-    public static function createForEffectedRelation(ActionInterface $action, MetaRelationPathInterface $relationPathFromActionObject, string $effectName = null) : ActionEffectInterface
+    public static function createForEffectedRelation(ActionInterface $action, MetaRelationPathInterface $relationPathFromActionObject, string $effectName = null, ?bool $willHandleChanges = null) : ActionEffectInterface
     {
         $uxon = new UxonObject(['relation_path_to_effected_object' => $relationPathFromActionObject->toString()]);
         if ($effectName !== null) {
             $uxon->setProperty('name', $effectName);
+        }
+        if ($willHandleChanges !== null) {
+            $uxon->setProperty('handles_changes', $willHandleChanges);
         }
         return new ActionEffect($action, $uxon);
     }

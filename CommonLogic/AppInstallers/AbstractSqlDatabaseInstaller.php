@@ -2,6 +2,8 @@
 
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\CommonLogic\AppInstallers\Plugins\AbstractSqlInstallerPlugin;
+use exface\Core\CommonLogic\AppInstallers\Plugins\AppInstallerPluginFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
@@ -528,7 +530,29 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         return '-- BATCH-DELIMITER';
     }
-    
+
+    /**
+     * Returns a string that indicates a call of a PHP plugin function.
+     *
+     * Override this method to define a custom marker for a specific SQL dialect.
+     *
+     * @return string
+     */
+    protected function getMarkerPhpPlugin() : string
+    {
+        return '@plugin\.';
+    }
+
+    protected function getRegexTokenOpenComment() : string
+    {
+        return '(^\/\*)|([\s]\/\*)';
+    }
+
+    protected function getRegexTokenCloseComment() : string
+    {
+        return '(\*\/[\s])|(\*\/$)';
+    }
+
     /**
      * Function to perform migrations on the database.
      * 
@@ -845,19 +869,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $connection->transactionStart();
             }
             if (null !== $delim = $this->getBatchDelimiter($script)) {
-                if (! RegularExpressionDataType::isRegex($delim)) {
+                if (!RegularExpressionDataType::isRegex($delim)) {
                     $delim = '/' . preg_quote($delim, '/') . '/';
                 }
                 foreach (preg_split($delim, $script) as $statement) {
-                    if ($statement) {
-                        if ($this->isPlugin($statement)) {
-                            $this->runPlugin($statement);
-                        }
-                        $results[] = $connection->runSql($statement, true);
+                    if(!$statement){
+                        continue;
                     }
+                    $results = $this->interpretAndRunStatements($connection, $statement, $results);
                 }
             } else {
-                $results[] = $connection->runSql($script, true);
+                $results = $this->interpretAndRunStatements($connection, $script, $results);
             }
             
             if ($wrapInTransaction === true) {
@@ -984,16 +1006,144 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         return $this;
     }
 
-    protected function isPlugin(string $statement) : bool
+    /**
+     * Returns an indicator if the statement provided as argument has a Plugin Call.
+     *
+     * @param string $statement the statement to be checked
+     * @return bool TRUE if $statement has a Plugin Call, otherwise FALSE
+     */
+    protected function hasPlugin(string $statement) : bool
     {
-        // TODO regex to search for @installer.xxx()
-        return false;
+        $matches = [];
+        $found = preg_match('/' . $this->getMarkerPhpPlugin() . '/', $statement, $matches);
+        return $found && $matches[0] !== null;
     }
 
-    protected function runPlugin(string $statement)
+    /**
+     * Executes the Plugin Call.
+     *
+     * @param SqlDataConnectorInterface $connector
+     * @param string                    $statement
+     * @return void
+     */
+    protected function runPlugin(SqlDataConnectorInterface $connector, string $statement) : void
     {
-        // TODO @installer.xxx() -> xxx() -> Plugin -> Formula
-        return;
+        $matches = [];
+        $found = preg_match_all('/'.$this->getMarkerPhpPlugin().'(?<fnc>[.|\s|\S]*?\)(?=;))/', $statement, $matches);
+        if(!$found){
+            return;
+        }
+        foreach ($matches['fnc'] as $match) {
+            $expression = preg_replace('/\n\s*/', '', $match);
+            $formula = AppInstallerPluginFactory::createPlugin($this->getWorkbench(), $expression);
+            
+            if($formula instanceof AbstractSqlInstallerPlugin) {
+                $formula->setConnector($connector);
+            }
+            
+            $formula->evaluate();
+        }
+    }
+
+    /**
+     * @param SqlDataConnectorInterface $connection
+     * @param string $script
+     * @param array $results
+     * @return array
+     */
+    protected function interpretAndRunStatements(SqlDataConnectorInterface $connection, string $script, array $results): array
+    {
+        foreach ($this->parseScript($script) as $statement) {
+            list('isPlugin' => $isPlugin, 'script' => $script) = $statement;
+            if(empty(trim($script))) {
+                continue;
+            }
+
+            if ($isPlugin) {
+                $this->runPlugin($connection, $script);
+            } else {
+                $results[] = $connection->runSql($script, true);
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Parses a script and extracts consecutive blocks of SQL and plugin statements.
+     * 
+     * NOTE: This is a very crude imitation of a state machine. If you ever want to
+     * expand this with more complex parsing logic, consider using fully featured 3rd party
+     * parser instead.
+     * 
+     * @param string $script
+     * @return array
+     */
+    protected function parseScript(string $script) : array
+    {
+        $commentRegex = '/' . $this->getRegexTokenOpenComment() . '|' . $this->getRegexTokenCloseComment() . '/';
+        $openCommentRegex = '/' . $this->getRegexTokenOpenComment() . '/';
+        $closeCommentRegex = '/' . $this->getRegexTokenCloseComment() . '/';
+        
+        $isComment = false;
+        $putStatement = false;
+        $statements = [];
+        $statementCache = '';
+        $commentCache = '';
+
+        foreach(preg_split($commentRegex, $script, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) as $sPart) {
+            if(empty(trim($sPart))) {
+                continue;
+            }
+            
+            // Update state.
+            $isCommentNext = !$isComment ?
+                preg_match($openCommentRegex, $sPart) :
+                !preg_match($closeCommentRegex, $sPart);
+
+            // Add part to statement cache.
+            $statementCache .= $sPart;
+            
+            // If part is a comment, add it to comment cache.
+            if($isComment || $isCommentNext) {
+                $commentCache .= $sPart;
+            }
+            
+            // If part has a plugin, prepare to put the current statement into the results.
+            // This is needed to execute any plugins after any SQL statements that have come before.
+            if ($this->hasPlugin($sPart)) {
+                $putStatement = true;
+            }
+            
+            // Put the statement to the results.
+            if($putStatement && $isComment && !$isCommentNext) {
+                $statements[] = [
+                    'isPlugin' => false,
+                    'script' => $statementCache
+                ];
+
+                $statements[] = [
+                    'isPlugin' => true,
+                    'script' => $commentCache
+                ];
+
+                $putStatement = false;
+                $statementCache = '';
+            } 
+
+            if(!$isCommentNext) {
+                $commentCache = '';
+            }
+
+            $isComment = $isCommentNext;
+        }
+        
+        if(!empty($statementCache)) {
+            $statements[] = [
+                'isPlugin' => false,
+                'script' => $statementCache
+            ];
+        } 
+        
+        return $statements;
     }
 }
-?>

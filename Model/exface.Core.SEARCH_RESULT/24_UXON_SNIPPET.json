@@ -63,7 +63,7 @@
         {
             "_EXPORT_SUMMARY": "Model search result edit button",
             "CREATED_ON": "2025-06-18 13:19:06",
-            "MODIFIED_ON": "2025-06-18 13:52:33",
+            "MODIFIED_ON": "2025-06-23 18:06:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0a0da0c22be6ca0da025041000001",
@@ -454,7 +454,7 @@
                 }
             },
             "ALIAS": "SearchResultEditButton",
-            "OBJECT": "0x11f098e3552728e098e3025041000001"
+            "OBJECT": "0x11ee8692965c23ce8692025041000001"
         }
     ],
     "totals_rows": [],

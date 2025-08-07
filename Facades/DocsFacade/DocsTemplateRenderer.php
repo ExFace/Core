@@ -19,14 +19,17 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         foreach ($phs as $ph => $phData) {
             $startTag = $phData['comment'];
             $endTag = '<!-- END ' . $phData['key'] . ' -->';
+
+            $options = [];
+            parse_str($phData['options'], $options);
     
-            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph] ?? '', $phData['offset'], $phData['key']);
+            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph] ?? '', $phData['offset'], $phData['key'], $options['noprint'] ?? '');
         }
 
         return $markdown;
 	}
     
-    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName): string
+    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName, string $noprint): string
     {
         if ($offset > strlen($markdown)) {
         	return $markdown;
@@ -45,14 +48,30 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         $endPos += strlen($endTag);
 
         if ($placeholderName === 'ImageRef') {
-            $newBlock = $startTag . $replacement . $endTag;
+            $newBlock = $startTag . $this->checkPrintStatus($replacement, $noprint) . $endTag;
         }
         else {
-            $newBlock = $startTag . PHP_EOL . $replacement . PHP_EOL . $endTag;
+            $newBlock = $startTag . PHP_EOL . $this->checkPrintStatus($replacement, $noprint) . PHP_EOL . $endTag;
         }
 
-
         return substr_replace($markdown, $newBlock, $startPos, $endPos - $startPos);
+    }
+
+    /**
+     * Checks noprint option to put noprint tags in the document
+     * 
+     * @param string $content
+     * @param string $noprint
+     * @return string
+     */
+    protected function checkPrintStatus(string $content, string $noprint) : string
+    {
+        if (!empty($noprint) && $noprint === 'true') {
+            $content = '<!-- noprint:start -->' . PHP_EOL
+                     . $content . PHP_EOL
+                     . '<!-- noprint:end -->';
+        }
+        return $content;
     }
 
 	public function exportUxonObject()
