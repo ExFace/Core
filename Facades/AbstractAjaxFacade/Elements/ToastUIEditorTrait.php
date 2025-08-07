@@ -24,14 +24,14 @@ trait ToastUIEditorTrait
     /**
      * Creates a JS snippet that initializes a ToastUI markdown editor
      * instance and returns it, complete with toolbar and live reference hooks.
-     *
-     * @param bool $isViewer
-     * @return string
+     * 
      * @see UI5InputMarkdown
      * @see EuiInputMarkdown
-     *
+     * 
+     * @param bool $isViewer
+     * @return string
      */
-    protected function buildJsMarkdownInitEditor(bool $isViewer = false): string
+    protected function buildJsMarkdownInitEditor(bool $isViewer = false) : string
     {
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
@@ -76,12 +76,12 @@ JS;
      * Creates a JS snippet that initializes a ToastUI markdown viewer instance
      * and returns it. The viewer is much more light weight than the editor,
      * has no toolbar and does not support editing.
-     *
-     * @return string
+     * 
      * @see UI5DisplayMarkdown
-     *
+     * 
+     * @return string
      */
-    protected function buildJsMarkdownInitViewer(): string
+    protected function buildJsMarkdownInitViewer() : string
     {
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
@@ -427,7 +427,7 @@ JS;
      * @param $widget
      * @return string
      */
-    protected function buildJsToolbarItems($widget): string
+    protected function buildJsToolbarItems($widget) : string
     {
         $image = $widget->getAllowImages() ? "'image', " : "";
         $fullScreenToggleJs = <<<JS
@@ -440,7 +440,7 @@ JS;
                     return button;
                 })()
 JS;
-
+        
         return <<<JS
 
         toolbarItems: [
@@ -456,8 +456,8 @@ JS;
 JS;
 
     }
-
-    protected function buildJsToolbarItemsForStencils(): string
+    
+    protected function buildJsToolbarItemsForStencils() : string
     {
         $js = '';
         if ($this->getWidget() instanceof InputMarkdown) {
@@ -476,25 +476,25 @@ JS;
         }
         return $js;
     }
-
-    protected function buildJsToolbarItemForHtmlTagStencil(TextStencil $stencil): string
+    
+    protected function buildJsToolbarItemForHtmlTagStencil(TextStencil $stencil) : string
     {
         if ($stencil->getIcon() === null && null !== $iconText = $stencil->getIconText()) {
             $icon = $iconText;
         } else {
             $icon = $stencil->getIcon();
         }
-        $insertKbdButtonHTML = implode(' ', [
+        $insertHtmlTagButtonHTML = implode(' ', [
             '<button type="button"',
             //'id="' . $this->getId() . '_stencil_' . spl_object_id($stencil) . '"',
             'style="margin: -7px -5px; background: transparent;">',
             $icon,
             '</button>',
         ]);
-
-        $insertKbdButtonJs = <<<JS
+        
+        $insertHtmlTagButtonJs = <<<JS
                 (function (){
-                    let button = \$('$insertKbdButtonHTML')[0];
+                    let button = \$('$insertHtmlTagButtonHTML')[0];
                     button.addEventListener('click', () => {
                         let  oEditor = {$this->buildJsMarkdownVar()};
 
@@ -505,22 +505,22 @@ JS;
                         if (!selectedText.trim()) {
                             return;
                         }
-        
+                        
                         if (oEditor.isMarkdownMode()) {
-                          // Writes the keyboard tags directly into the Markdown.
+                          // Writes the HTML tags directly into the Markdown.
                           const wrapped = `<{$stencil->getHtmlTag()}>\${selectedText}</{$stencil->getHtmlTag()}>`;
                           oEditor.replaceSelection(wrapped, start, end);
                         } else {
-                          // In WYSIWYG mode, the KBD tags must be inserted directly 
+                          // In WYSIWYG mode, the HTML tags must be inserted directly 
                           // into the HTML of the editor so that the customHTMLParser can process them, 
                           // as in the Markdown section above. 
                           //
                           // Note: The parser will delete all non-supported attributes 
                           // from this element if given.
-                          const kbdElement = document.createElement("{$stencil->getHtmlTag()}");
+                          const htmlElement = document.createElement("{$stencil->getHtmlTag()}");
                           const userSelection = window.getSelection();
                           const selectedTextRange = userSelection.getRangeAt(0);
-                          selectedTextRange.surroundContents(kbdElement);
+                          selectedTextRange.surroundContents(htmlElement);
                         }
                     });
                     
@@ -531,16 +531,16 @@ JS;
                 {
                     name: {$this->escapeString($stencil->getCaption())},
                     tooltip: {$this->escapeString($stencil->getHint())},
-                    el: {$insertKbdButtonJs}
+                    el: {$insertHtmlTagButtonJs}
                 }
 JS;
 
     }
-
-    protected function buildJsCustomHtmlInlineRenderer(TextStencil $stencil): string
+    
+    protected function buildJsCustomHtmlInlineRenderer(TextStencil $stencil) : string
     {
         return <<<JS
-          {$stencil->getHtmlTag()}(entering) {
+          {$stencil->getHtmlTag()}(node, { entering }) {
               return entering
                   ? { type: 'openTag', tagName: '{$stencil->getHtmlTag()}', attributes: { style: "{$stencil->buildCssStyle()}"} }
                   : { type: 'closeTag', tagName: '{$stencil->getHtmlTag()}' };
@@ -550,20 +550,20 @@ JS;
 
     /**
      * Returns a click handler for the full screen toggle button.
-     *
+     * 
      * The handler will be used in this context:
-     *
+     * 
      * ```
-     *
+     * 
      * button.addEventListener('click', () => {
      *      {$this->buildJsFullScreenToggleClickHandler()}
      * });
-     *
+     * 
      * ```
      *
      * @return string
      */
-    protected function buildJsFullScreenToggleClickHandler(): string
+    protected function buildJsFullScreenToggleClickHandler() : string
     {
         $markdownVarJs = $this->buildJsMarkdownVar();
 
@@ -590,7 +590,7 @@ JS;
     /**
      * @return string
      */
-    protected function getFullScreenToggleId(): string
+    protected function getFullScreenToggleId() : string
     {
         return $this->getId() . '_tuiFullScreenToggle';
     }
@@ -655,9 +655,9 @@ JS;
      *  if ({$value} !== undefined) {
      *      {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
      *  }
-     *
+     * 
      * ```
-     *
+     * 
      * @param string $value
      * @return string
      */
@@ -666,7 +666,7 @@ JS;
         if ($this->getWidget()->getAllowImages()) {
             return '';
         }
-
+        
         return <<<JS
 
         {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
@@ -722,7 +722,7 @@ JS;
      */
     protected function buildHtmlMarkdownEditor(): string
     {
-        $html = '<div id="' . $this->getId() . '" class="markdown-editor"></div>';
+        $html = '<div id="'.$this->getId().'" class="markdown-editor"></div>';
         return $html;
     }
 }
