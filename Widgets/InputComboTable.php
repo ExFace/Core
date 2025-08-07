@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\RelationPathFactory;
@@ -157,13 +158,15 @@ use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
  * @author Andrej Kabachnik
  *        
  */
-class InputComboTable extends InputCombo implements iCanPreloadData
+class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iCanPreloadData
 {
     use iTrackIncomingLinksTrait;
     
     private $text_column_id = null;
 
     private $value_column_id = null;
+
+    private $lookup_hide_header = null;
 
     private $data_table = null;
 
@@ -241,8 +244,9 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                 // more information. If our meta object has a UID we can count that easily, but if not,
                 // there is no point in counting (what do we count?) and it caused trouble with some SQL
                 // data source too.
-                $table->addColumn($table->createColumnFromAttribute($this->getAttribute()));
-                if ($table->getMetaObject()->hasUidAttribute()) {
+                $valueAttr = $this->getAttribute();
+                $table->addColumn($table->createColumnFromAttribute($valueAttr));
+                if ($table->getMetaObject()->hasUidAttribute() && ! $valueAttr->isUidForObject() && ! $valueAttr->isLabelForObject()) {
                     $counterAlias = $table->getMetaObject()->getUidAttributeAlias();
                     $table->addColumn($table->createColumnFromUxon(new UxonObject([
                         'attribute_alias' => DataAggregation::addAggregatorToAlias($counterAlias, AggregatorFunctionsDataType::COUNT),
@@ -561,6 +565,45 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         return parent::getMaxSuggestions();
     }
 
+    /**
+     * @return bool|null
+     */
+    public function getLookupHideHeader() : ?bool
+    {
+        return $this->lookup_hide_header;
+    }
+
+    /**
+     * It sets the collapse value of the header inside the DataLookupDialog that is called with the LookupAction of this InputComboTable.
+     *
+     * ATTENTION! This property will be ignored if the "lookup_action" uxon property is set.
+     * This property is a shortcut for the following uxon code:
+     * 
+     * ```
+     *  {
+     *      "lookup_action": {
+     *           "alias": "exface.Core.ShowLookupDialog",
+     *           "dialog": {
+     *               "hide_header": true
+     *           }
+     *      }
+     *  }
+     * 
+     * ```
+     *
+     * @uxon-property lookup_hide_header
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param boolean $value
+     * @return \exface\Core\Widgets\InputComboTable
+     */
+    public function setLookupHideHeader($value) : InputComboTable
+    {
+        $this->lookup_hide_header = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        return $this;
+    }
+
     public function getTableObjectAlias()
     {
         return $this->getOptionsObjectAlias();
@@ -825,9 +868,14 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         if ($this->lookupActionUxon !== null) {
             $uxon = $this->lookupActionUxon;
         } else {
-            $uxon = new UxonObject([
-                'alias' => 'exface.Core.ShowLookupDialog'
-            ]);
+            $uxonParams = ['alias' => 'exface.Core.ShowLookupDialog'];
+            $hideValueInLookup = $this->getLookupHideHeader();
+
+            if ($hideValueInLookup !== null) {
+                $uxonParams['dialog'] = new UxonObject(['hide_header' => $hideValueInLookup]);
+            }
+
+            $uxon = new UxonObject($uxonParams);
         }
         
         if ($uxon->hasProperty('object_alias') === false) {
@@ -968,5 +1016,30 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     {
         $this->autosearch_single_suggestion = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
+    }
+
+    public function isSubsheetForObject(MetaObjectInterface $objectOfInputData): bool
+    {
+        if ($this->isDisplayOnly() === true) {
+            return false;
+        }
+        if ($this->getMetaObject()->is($objectOfInputData)) {
+            return false;
+        }
+
+        // If it's another object, we need to decide, whether to place the data in a
+        // subsheet.
+        if ($objectOfInputData->is($this->getTableObject())) {
+            // TODO not sure what to do if the action is based on the object of the table.
+            // This should be really important in lookup dialogs, but for now we just fall
+            // back to the generic input logic. See facade elements like UI5InputComboTable
+            // for more details.
+            return false;
+        }
+
+        if ($this->findRelationPathFromObject($objectOfInputData)) {
+            return true;
+        }
+        return false;
     }
 }

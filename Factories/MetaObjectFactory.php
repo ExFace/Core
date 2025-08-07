@@ -260,7 +260,7 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
 
         $attr->setDataType($type);
         $attr->setDataAddress($dataAddress);
-        $obj->getAttributes()->add($attr);
+        $obj->addAttribute($attr);
         
         return $attr;
     }

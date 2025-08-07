@@ -135,18 +135,21 @@ JS;
      */
     protected function buildJsRegisterOnActionPerformed(string $scriptJs, bool $onlyIfDomExists = true) : string
     {
-        if ($this->getWidget()->getWidgetConfigured()->hasAutorefreshData() === false) {
+        $dataWidget = $this->getWidget()->getDataWidget();
+        if ($dataWidget->hasAutorefreshData() === false) {
             return '';
         }
+        $dataEl = $this->getFacade()->getElement($dataWidget);
         $onlyIfDomExistsJs = $onlyIfDomExists ? 'true' : 'false';
         $effectedAliases = [];
-        foreach ($this->getWidget()->getDataWidget()->getMetaObjectsEffectingThisWidget() as $object) {
+        foreach ($dataWidget->getMetaObjectsEffectingThisWidget() as $object) {
             if ($object->getAliasWithNamespace() !== null) {
                 $effectedAliases[] = $object->getAliasWithNamespace();
             }
         }
         $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
         $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+
         return <<<JS
 
 $( document ).off( "{$actionperformed}.{$this->getId()}" );
@@ -155,12 +158,13 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
     var bOnlyIfDomExists = {$onlyIfDomExistsJs};
     var aUsedObjectAliases = {$effectedAliasesJs};
     var sConfiguredWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
+    var oDirectEffect, oIndirectEffect;
     var fnRefresh = function() {
         {$scriptJs}
     };
 
     // Avoid errors if widget was removed already
-    if (bOnlyIfDomExists && $('#{$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->getId()}').length === 0) {
+    if (bOnlyIfDomExists && $('#{$dataEl->getId()}').length === 0) {
         return;
     }
 
@@ -175,15 +179,29 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
 
     for (var i = 0; i < oParams.effects.length; i++) {
         oEffect = oParams.effects[i];
-        if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-            // refresh immediately if directly affected or delayed if it is an indirect effect
-            if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
-                fnRefresh();
-            } else {
-                setTimeout(fnRefresh, 100);
+        if (oEffect.effected_object === '{$dataWidget->getMetaObject()->getAliasWithNamespace()}') {
+            if (oDirectEffect === undefined || (oDirectEffect.handles_changes === false && oEffect.handles_changes === true)) {
+                oDirectEffect = oEffect;
+                if (oEffect.handles_changes === true) {
+                    break;
+                } else {
+                    continue;
+                }
             }
-            return;
         }
+        if (oIndirectEffect === undefined && aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
+            oIndirectEffect = oEffect;
+        }
+    }
+    // refresh immediately if directly affected or delayed if it is an indirect effect
+    if (oDirectEffect !== undefined) {
+        // If a directly affecting action saves our changes, reset them before refreshing
+        if (oDirectEffect.handles_changes === true) {
+            {$dataEl->buildJsDataSetter($dataEl->buildJsDataGetter())}
+        }
+        fnRefresh();
+    } else if (oIndirectEffect !== undefined) {
+        setTimeout(fnRefresh, 100);
     }
 });
 

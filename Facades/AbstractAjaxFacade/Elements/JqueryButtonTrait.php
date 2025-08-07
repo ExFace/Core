@@ -32,9 +32,8 @@ use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
- * 
- * @method Button getWidget()
- * @method AbstractAjaxFacade getFacade()
+ *
+ * @method \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade getFacade()
  * 
  * @author Andrej Kabachnik
  *
@@ -216,8 +215,6 @@ trait JqueryButtonTrait {
                             default:
                                 throw new WidgetConfigurationError($this, 'Invalid row value "' . $val . '" in input_data of ' . $this->getWidget()->getWidgetType());
                         }
-                    } else {
-                        
                     }
                 }
                 $customDataRows .= '{' . $jsRow . '},';
@@ -737,7 +734,7 @@ JS;
         
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
-        $output .= "
+        $output = "
 						if ({$this->getInputElement()->buildJsValidator()}) {
                             {$this->buildJsRequestDataCheckSize($jsRequestData, $this->getAjaxPostSizeMax())}
 							{$this->buildJsBusyIconShow()}
@@ -1183,7 +1180,7 @@ JS;
         return <<<JS
 
             {$beforeJs}
-            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments())}
+            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments(), $jsRequestData)}
             {$afterJs}
 JS;
     }
@@ -1199,7 +1196,7 @@ JS;
      * 
      * @see AbstractJqueryElement::buildJsCallFunction()
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
     {
         switch (true) {
             case $functionName === null:
@@ -1208,7 +1205,7 @@ JS;
             case $functionName === Button::FUNCTION_FOCUS:
                 return "$('#{$this->getId()}').focus()";
         }
-        return parent::buildJsCallFunction($functionName, $parameters);
+        return parent::buildJsCallFunction($functionName, $parameters, $jsRequestData);
     }
     
     protected function buildJsRequestDataCheckSize(string $jsRequestData, int $bytes = null) : string

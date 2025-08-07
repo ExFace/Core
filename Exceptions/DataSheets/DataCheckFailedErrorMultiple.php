@@ -41,19 +41,25 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      * @var array
      */
     protected array $errorGroups = [];
-
     private string $baseMessage = '';
-
     private ?TranslationInterface $translator;
-
+    private int $startingRowNr;
+    
     /**
      * @inheritDoc
      */
-    public function __construct($message, $alias = null, $previous = null, TranslationInterface $translator = null)
+    public function __construct(
+        $message, 
+        $alias = null, 
+        $previous = null, 
+        TranslationInterface $translator = null,
+        $startingRowNr = 1
+    )
     {
         parent::__construct($message, $alias, $previous);
         $this->baseMessage = $message;
         $this->translator = $translator;
+        $this->startingRowNr = $startingRowNr;
     }
 
     /**
@@ -128,6 +134,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
             if(empty($affectedRows = $this->getAffectedRowsForGroup($errorMessage))){
                 $updatedMessage .= $errorMessage;
             } else {
+                $affectedRows = array_map(fn($value): int => $value + $this->getStartingRowNumber(), $affectedRows);
                 $affectedRows = implode(', ', $affectedRows);
                 $updatedMessage .= $trsLine . ' (' . $affectedRows . '): ' . $errorMessage;
             }
@@ -197,6 +204,30 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
     }
 
     /**
+     * @return array
+     */
+    public function getAllRowNumbers() : array
+    {
+        $result = [];
+
+        foreach ($this->errorGroups as $errorGroup) {
+            $result = array_merge($result, $errorGroup[self::KEY_ROWS]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Any line output will be counted starting from this number.
+     * 
+     * @return int
+     */
+    public function getStartingRowNumber() : int
+    {
+        return $this->startingRowNr;
+    }
+
+    /**
      * @inheritDoc
      * @see DataSheetValueExceptionInterface::getRowIndexes()
      */
@@ -204,7 +235,9 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
     {
         $idxs = [];
         foreach ($this->getAllErrors() as $error) {
-            $idxs = array_merge($idxs, $error->getRowIndexes());
+            if(($errorIdxs = $error->getRowIndexes()) !== null) {
+                $idxs = array_merge($idxs, $errorIdxs);
+            }
         }
         if (empty($idxs)) {
             return null;

@@ -22,6 +22,8 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -1285,6 +1287,11 @@ abstract class AbstractAction implements ActionInterface
      * 
      * By default, an action accepts data of any object and attempts to deal with it.
      * Many of the core actions are actually agnostic to objects.
+     *
+     * A note on **inheritance**: if you have an object REPORT and an EXTENDED_REPORT, that
+     * inherits from REPORT, input data of EXTENDED_REPORT will work for an action with
+     * REPORT as `input_object_alias`, but not the other way around. That is because, an
+     * EXTENDED_REPORT might have more attributes, that might be required for its actions.
      * 
      * @uxon-property input_object_alias
      * @uxon-type metamodel:object
@@ -1501,10 +1508,35 @@ abstract class AbstractAction implements ActionInterface
     {
         $button = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
         $name = $button ? $button->getCaption() : $this->getName();
+        $handlesChanges = $this instanceof iModifyData;
         $effects = [];
-        $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name);
-        if ($button) {
+        $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name, $handlesChanges);
+        // If the action is bound to a button, it might also affect objects of the buttons input widget (e.g. dialog)
+        // and those of the input of the button that opened that dialog, etc.
+        if ($button !== null) {
             $effects = array_merge($effects, $this->getEffectsFromTriggerWidget($button, $this->getMetaObject(), $name, RelationPathFactory::createForObject($this->getMetaObject())));
+        }
+        // Totally independently, we need to examine the input widget of the button. If it has data widgets, that
+        // produce subsheets, the action will obviosly also save their changes if it handles changes at all
+        if ($handlesChanges === true && ($button instanceof iUseInputWidget)) {
+            $actionObj = $this->getMetaObject();
+            $buttonInput = $button->getInputWidget();
+            $inputDataObj = $buttonInput->getMetaObject();
+            // This can happen in containers only - their data might include subsheets
+            if ($buttonInput instanceof iContainOtherWidgets) {
+                foreach ($buttonInput->getInputWidgets() as $input) {
+                    if (($input instanceof iTakeInputAsDataSubsheet) && $input->isSubsheetForObject($inputDataObj)) {
+                        $relPathFromParent = $input->getObjectRelationPathFromParent();
+                        // If we know the relation from the object of the action, create an effect with this relation.
+                        // If not, just create an unrelated object effect. 
+                        if ($relPathFromParent && $input->getParent()->getMetaObject()->is($actionObj)) {
+                            $effects[] = ActionEffectFactory::createForEffectedRelation($this, $relPathFromParent, $name, $handlesChanges);
+                        } else {
+                            $effects[] = ActionEffectFactory::createForEffectedObject($this, $input->getMetaObject(), $name, $handlesChanges);
+                        }
+                    }
+                }
+            }
         }
         return $effects;
     }

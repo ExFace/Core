@@ -2,7 +2,10 @@
 
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\InputMarkdown;
+use exface\Core\Widgets\Parts\HtmlTagStencil;
+use exface\Core\Widgets\Parts\TextStencil;
 
 /**
  * Aides Facade specific implementation of the ToastUI markdown editor.
@@ -41,6 +44,7 @@ trait ToastUIEditorTrait
                     el: document.querySelector('#{$this->getId()}'),
                     height: '100%',
                     initialValue: ($contentJs || ''),
+                    extendedAutolinks: true,
                     language: 'en',
                     autofocus: false,
                     viewer: false,
@@ -50,6 +54,9 @@ trait ToastUIEditorTrait
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
+                    },
+                    customHTMLRenderer: {
+                        {$this->buildJsCustomHtmlRenderers()}
                     }
                 });
                 
@@ -71,7 +78,6 @@ JS;
     {
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
-        $markdownVarJs = str_replace("'", '"', $this->buildJsMarkdownVar());
 
         return <<<JS
 
@@ -80,6 +86,7 @@ JS;
                     el: document.querySelector('#{$this->getId()}'),
                     height: '100%',
                     initialValue: ($contentJs || ''),
+                    extendedAutolinks: true,
                     language: 'en',
                     autofocus: false,
                     viewer: true,
@@ -87,12 +94,36 @@ JS;
                         change: function(){
                             {$this->getOnChangeScript()} 
                         }    
+                    },
+                    customHTMLRenderer: {
+                        {$this->buildJsCustomHtmlRenderers()}
                     }
                 });
                 
                 return ed;
             }();
 JS;
+    }
+
+    protected function buildJsCustomHtmlRenderers() : string
+    {
+        if (! $this->getWidget() instanceof InputMarkdown) {
+            return '';
+        }
+        $inlineTagRenderersJs = '';
+        foreach ($this->getWidget()->getStencils() as $stencil) {
+            if ($stencil->isHtmlTag()) {
+                $inlineTagRenderersJs .= $this->buildJsCustomHtmlInlineRenderer($stencil) . ',';
+            }
+        }
+        return <<<JS
+
+                        htmlInline: {
+                            {$inlineTagRenderersJs}
+                        },
+                        /* html: {}*/
+JS;
+
     }
 
     /**
@@ -114,7 +145,6 @@ JS;
                     return button;
                 })()
 JS;
-
         
         return <<<JS
 
@@ -126,10 +156,101 @@ JS;
                   },'heading', 'bold', 'italic', 'strike'],
                   ['hr', 'quote'],
                   ['ul', 'ol', 'task', 'indent', 'outdent'],
-                  ['table', {$image} 'link'],
-                  ['code', 'codeblock']],
+                  ['table', {$image} 'link', {$this->buildJsToolbarItemsForStencils()}],
+                  ['code', 'codeblock',]],
 JS;
 
+    }
+    
+    protected function buildJsToolbarItemsForStencils() : string
+    {
+        $js = '';
+        if ($this->getWidget() instanceof InputMarkdown) {
+            foreach ($this->getWidget()->getStencils() as $stencil) {
+                switch (true) {
+                    case $stencil instanceof HtmlTagStencil:
+                        $js .= $this->buildJsToolbarItemForHtmlTagStencil($stencil);
+                        break;
+                    default:
+                        // TODO add support for regular stencils - just insert them at cursor position
+                        throw new WidgetConfigurationError($this->getWidget(), 'Only HtmlTag stencils currently supported');
+                        /*$js .= $this->buildJsToolbarItemForTextStencil($stencil);*/
+                        break;
+                }
+            }
+        }
+        return $js;
+    }
+    
+    protected function buildJsToolbarItemForHtmlTagStencil(TextStencil $stencil) : string
+    {
+        if ($stencil->getIcon() === null && null !== $iconText = $stencil->getIconText()) {
+            $icon = $iconText;
+        } else {
+            $icon = $stencil->getIcon();
+        }
+        $insertHtmlTagButtonHTML = implode(' ', [
+            '<button type="button"',
+            //'id="' . $this->getId() . '_stencil_' . spl_object_id($stencil) . '"',
+            'style="margin: -7px -5px; background: transparent;">',
+            $icon,
+            '</button>',
+        ]);
+        
+        $insertHtmlTagButtonJs = <<<JS
+                (function (){
+                    let button = \$('$insertHtmlTagButtonHTML')[0];
+                    button.addEventListener('click', () => {
+                        let  oEditor = {$this->buildJsMarkdownVar()};
+
+                        const [start, end] = oEditor.getSelection();
+                        const selectedText = oEditor.getSelectedText();
+        
+                        // If no Text is selected.
+                        if (!selectedText.trim()) {
+                            return;
+                        }
+                        
+                        if (oEditor.isMarkdownMode()) {
+                          // Writes the HTML tags directly into the Markdown.
+                          const wrapped = `<{$stencil->getHtmlTag()}>\${selectedText}</{$stencil->getHtmlTag()}>`;
+                          oEditor.replaceSelection(wrapped, start, end);
+                        } else {
+                          // In WYSIWYG mode, the HTML tags must be inserted directly 
+                          // into the HTML of the editor so that the customHTMLParser can process them, 
+                          // as in the Markdown section above. 
+                          //
+                          // Note: The parser will delete all non-supported attributes 
+                          // from this element if given.
+                          const htmlElement = document.createElement("{$stencil->getHtmlTag()}");
+                          const userSelection = window.getSelection();
+                          const selectedTextRange = userSelection.getRangeAt(0);
+                          selectedTextRange.surroundContents(htmlElement);
+                        }
+                    });
+                    
+                    return button;
+                })()
+JS;
+        return <<<JS
+                {
+                    name: {$this->escapeString($stencil->getCaption())},
+                    tooltip: {$this->escapeString($stencil->getHint())},
+                    el: {$insertHtmlTagButtonJs}
+                }
+JS;
+
+    }
+    
+    protected function buildJsCustomHtmlInlineRenderer(TextStencil $stencil) : string
+    {
+        return <<<JS
+          {$stencil->getHtmlTag()}(node, { entering }) {
+              return entering
+                  ? { type: 'openTag', tagName: '{$stencil->getHtmlTag()}', attributes: { style: "{$stencil->buildCssStyle()}"} }
+                  : { type: 'closeTag', tagName: '{$stencil->getHtmlTag()}' };
+              }
+JS;
     }
 
     /**
@@ -274,7 +395,7 @@ JS;
                 if (oEditor.getMarkdown !== undefined) {
                     value = oEditor.getMarkdown();
                 } else if (oEditor._lastSetValue !== undefined) {
-                        value = oEditor._lastSetValue;
+                    value = oEditor._lastSetValue;
                 }
             }
             if(value === undefined || value === null) {

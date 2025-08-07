@@ -1,11 +1,13 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -65,6 +67,8 @@ class ConditionGroup implements ConditionGroupInterface
     private $baseObjectSelector = null;
     
     private $ignoreEmptyValues = null;
+    
+    private ?DataCollector $dataCollector = null;
 
     /**
      * @deprecated use ConditionGroupFactory instead!
@@ -724,13 +728,21 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::evaluate()
      */
-    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool
+    public function evaluate(
+        DataSheetInterface $data_sheet = null, 
+        int $row_number = null,
+        bool $readMissingData = true
+    ) : bool
     {
+        if($readMissingData && $data_sheet !== null) {
+            $data_sheet = $this->readMissingData($data_sheet);
+        }
+        
         $op = $this->getOperator();
         $results = [];
         $evals = array_merge($this->getConditions(), $this->getNestedGroups());
         foreach ($evals as $conditionOrGroup) {
-            $result = $conditionOrGroup->evaluate($data_sheet, $row_number);
+            $result = $conditionOrGroup->evaluate($data_sheet, $row_number, false);
             switch (true) {
                 case $op === EXF_LOGICAL_AND && $result === false: return false;
                 case $op === EXF_LOGICAL_OR && $result === true: return true;
@@ -753,7 +765,7 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromString()
      */
-    public function addConditionFromString(string $expression_string, $value, string $comparator = null, bool $ignoreEmptyValue = null) : ConditionGroupInterface
+    public function addConditionFromString(string $expression_string, $value, string $comparator = null, bool $ignoreEmptyValue = null, ?bool $applyToAggregates = null) : ConditionGroupInterface
     {
         $base_object = $this->getBaseObject();
         if ($base_object === null) {
@@ -771,11 +783,19 @@ class ConditionGroup implements ConditionGroupInterface
         if (count($expression_strings) > 1) {
             $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR, $base_object, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
             foreach ($expression_strings as $f) {
-                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
+                $condition = ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
+                if ($applyToAggregates !== null) {
+                    $condition->setApplyToAggregates($applyToAggregates);
+                }
+                $group->addCondition($condition);
             }
             $this->addNestedGroup($group);
         } elseif ((!is_null($value) && $value !== '') || !$ignoreEmptyValue) {
-            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
+            $condition = ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
+            if ($applyToAggregates !== null) {
+                $condition->setApplyToAggregates($applyToAggregates);
+            }
+            $this->addCondition($condition);
         }
         
         return $this;
@@ -898,6 +918,10 @@ class ConditionGroup implements ConditionGroupInterface
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     * @see ConditionGroupInterface::getRequiredExpressions()
+     */
     public function getRequiredExpressions(?MetaObjectInterface $object = null) : array
     {
         $exprs = [];
@@ -905,5 +929,23 @@ class ConditionGroup implements ConditionGroupInterface
             $exprs = array_merge($exprs, $cond->getRequiredExpressions($object));
         }
         return $exprs;
+    }
+
+    /**
+     * @inheritDoc
+     * @see ConditionGroupInterface::readMissingData()
+     */
+    public function readMissingData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface
+    {
+        $collector = $this->dataCollector ?? new DataCollector($dataSheet->getMetaObject());
+        $requiredExpressions = $this->getRequiredExpressions();
+        
+        if($collector->getRequiredExpressions() !== $requiredExpressions) {
+            $collector->addExpressions($requiredExpressions);
+        }
+
+        $collector->collectFrom($dataSheet, $logBook);
+
+        return $collector->getRequiredData();
     }
 }
