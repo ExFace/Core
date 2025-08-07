@@ -3,83 +3,13 @@
 namespace exface\Core\CommonLogic\Utils;
 
 use exface\Core\Exceptions\DataTrackerException;
+use exface\Core\Interfaces\DataTrackerInterface;
 
 /**
- * This class allows you to track and identify data sets across transforms.
- * The tracking is brittle and can break, especially under these circumstances:
- * 
- * - A transform is applied, but not recorded or not recorded accurately.
- * - One or more entries share the same keys.
- * - Base data is queried with data from an in-between state or a state ahead of the last
- * recorded transform.
- * 
- * Provided that the track was not lost, you can request the base data (including its original indices), 
- * by passing any current data into `getBaseData(array)`.
- * 
- * ## Tracking
- * 
- * To start tracking, you need to create a new instance and pass an associative array as the base dataset:
- * 
- * ```
- * 
- * $dataTracker = new DataTracker($data);
- * 
- * ```
- * 
- * Whenever you apply any transforms to the data, you need to record that. Remember to cache the data before
- * transforming it: The tracker needs the unchanged data to find the base set and the transformed data to 
- * record the change.
- * 
- * ```
- *
- * $previousState = ... // Cache or copy the state before transforming. 
- * 
- * $newState = ... // Apply your transform.
- * 
- * $dataTracker->recordTransform($previousState, $newState);
- * 
- * ```
- * 
- * You can wait as long as you like before recording a transform. However, if one of the key columns
- * changes (like changing column names or replacing one column with another) you should record that
- * immediately, or else future records will not track properly. 
- * 
- * ## Retrieval
- * 
- * To retrieve base data, simply call the function you need, for example:
- * 
- * ```
- * 
- * // Get both indices and key data.
- * $baseData = $dataTracker->getBaseData($currentData);
- * 
- * // Get indices only.
- * $originalIndices = $dataTracker->getBaseIndices($currentData);
- * 
- * // Get the latest version number.
- * $currentVersion = $dataTracker->getLatestVersionForData($currentData);
- * 
- * ```
- * 
- * Retrieval only works if your current data set has the same state as the last recorded 
- * transform. That also means you cannot retrieve data using in-between states, as the tracker
- * only stores two versions: base and current.
- * 
- * ## Data Versioning
- * 
- * Tracked data may be updated in an aliased fashion, i.e. individual rows may be transformed multiple
- * times ahead of other rows. To avoid potential conflicts, in case a row happens to be
- * transformed in such a way, that it temporarily is a duplicate of another, the tracker uses version numbers
- * to group rows, according to how many transforms have been recorded for them. 
- * 
- * By default, you won't have to worry about versions. But if you want to transform data row by row, rather 
- * than in batches, or if you run into duplication issues, consider manual version control. Both `recordTransform()`
- * and `getBaseIndices()` accept an optional version parameter. If you enter any integer greater than 0, data comparisons
- * will favor data with that version. You can find the current version for a dataset with either the return value
- * of `recordTransform()` or `getLatestVersionForData()`.
- * 
+ * @inheritDoc
+ * @see DataTrackerInterface
  */
-class DataTracker
+class DataTracker implements DataTrackerInterface
 {
     private array $baseData = [];
     private array $currentData = [];
@@ -122,26 +52,8 @@ class DataTracker
     }
 
     /**
-     * Record a data transform. You can pass an entire data set, a subset or even individual rows.
-     * 
-     * The transform can be arbitrarily complex. You do not have to record every step along the way,
-     * as long as you fulfill these conditions, tracking will succeed:
-     * 
-     * - Your `$fromData` can be matched with this instances' internal data.
-     * - Your `$toData` has the same length as your `$fromData` and both are sorted
-     * the same. This is essential, since index matching is used to identify rows across
-     * the recorded transform.
-     * - Both data sets are deduplicated with respect to their key columns.
-     * 
-     * @param array $fromData
-     * The data as it was BEFORE the transform was applied.
-     * @param array $toData
-     * The data AFTER the transform was applied.
-     * @param int   $preferredVersion
-     * You can pass a preferred version for matching your `$fromData`. This can improve accuracy
-     * at a minor cost to performance. Only use this feature if you have a good reason to do so.
-     * @return int
-     * Returns the latest data version AFTER the update among the updated entries.
+     * @inheritDoc
+     * @see DataTrackerInterface::recordDataTransform()
      */
     public function recordDataTransform(
         array $fromData,
@@ -159,12 +71,28 @@ class DataTracker
         
         // Update found data after searching for it.
         $version = -1;
-        foreach ($indices as $i => $index) {
-            // Update data.
-            $this->currentData[$index] = $toData[$i];
+        $toDataLength = count($toData);
+        
+        foreach ($indices as $i => $baseIndex) {
+            // Try to match with from data via keys.
+            $toIndex = $this->findData(
+                $i,
+                $fromData[$i],
+                $toData,
+                $toDataLength
+            );
             
-            // Update version.
-            $dataVersion = ++$this->dataVersions[$index];
+            // If we could not match via keys, we match via index.
+            // This may be inaccurate if the row order changed, which we cannot detect.
+            if($toIndex === false) {
+                $toIndex = $i;
+            }
+            
+            // Update data.
+            $this->currentData[$baseIndex] = $toData[$toIndex];
+            
+            // Update version. 
+            $dataVersion = ++$this->dataVersions[$baseIndex];
             if($version < $dataVersion) {
                 $version = $dataVersion;
             }
@@ -180,16 +108,14 @@ class DataTracker
     }
 
     /**
-     * Fetch the base indices for a given data set, if possible.
-     *
-     * @param array $fromData
-     * @param int   $preferredVersion
-     * @param array $failedToFind
-     * Any indices in the `$fromData` that could not be traced back to 
-     * their base data will be collected in this array.
-     * @return false|array
+     * @inheritDoc
+     * @see DataTrackerInterface::getBaseIndices()
      */
-    public function getBaseIndices(array $fromData, int $preferredVersion = -1, array &$failedToFind = []) : false|array
+    public function getBaseIndices(
+        array $fromData, 
+        int $preferredVersion = -1, 
+        array &$failedToFind = []
+    ) : false|array
     {
         $preferredVersion = $preferredVersion > -1 ? $preferredVersion : $this->latestVersion;
         
@@ -198,10 +124,18 @@ class DataTracker
         $index = 0;
         
         foreach ($fromData as $i => $data) {
-            $searchResult = $this->findData($index, $data, $preferredVersion);
+            $searchResult = $this->findData(
+                $index,
+                $data, 
+                $this->currentData,
+                $this->currentDataLength,
+                $preferredVersion,
+                $this->dataVersions
+            );
+            
             // If we can't find a matching data set, we mark it as failed and move on.
             if($searchResult === false) {
-                $failedToFind[] = $index;
+                $failedToFind[] = $i;
                 continue;
             }
 
@@ -215,13 +149,8 @@ class DataTracker
     }
 
     /**
-     * Fetch the original data with accurate indices (i.e. row numbers) for a given data set, if possible.
-     *
-     * @param array $fromData
-     * @param array $failedToFind
-     * Any rows in the `$fromData` that could not be traced back to
-     * their base data will be collected in this array.
-     * @return false|array
+     * @inheritDoc
+     * @see DataTrackerInterface::getBaseData()
      */
     public function getBaseData(array $fromData, array &$failedToFind = []) : false|array
     {
@@ -230,13 +159,8 @@ class DataTracker
     }
 
     /**
-     * Fetches all base data for the given indices. 
-     * 
-     * NOTE: Indices must be base indices, use `getBaseIndices(array, int, array)` to retrieve them.
-     * 
-     * @param array $baseIndices
-     * @return false|array
-     * @see DataTracker::getBaseIndices()
+     * @inheritDoc
+     * @see DataTrackerInterface::getBaseDataFromIndices()
      */
     public function getBaseDataFromIndices(array $baseIndices) : false|array
     {
@@ -254,10 +178,8 @@ class DataTracker
     }
 
     /**
-     * Get the latest version number for a given data set.
-     * 
-     * @param array $fromData
-     * @return int
+     * @inheritDoc
+     * @see DataTrackerInterface::getLatestVersionForData()
      */
     public function getLatestVersionForData(array $fromData) : int
     {
@@ -276,16 +198,22 @@ class DataTracker
     /**
      * @param int   $startingIndex
      * @param mixed $needle
+     * @param array $hayStack
+     * @param int   $hayStackLength
      * @param int   $preferredVersion
+     * @param array $dataVersions
      * @return false|int
      */
     protected function findData(
         int   $startingIndex,
         mixed $needle,
-        int $preferredVersion
+        array $hayStack,
+        int $hayStackLength,
+        int $preferredVersion = -1,
+        array $dataVersions = []
     ) : false|int
     {
-        if($this->currentDataLength === 0) {
+        if($hayStackLength === 0) {
             return false;
         }
         
@@ -299,13 +227,13 @@ class DataTracker
         // we can expect to find our next match close to our last match. So we allow passing in a starting index
         // and search from there, looping around as needed. Best case scenario is a match in one iteration, worst case is 
         // the same as a regular `array_find()`. 
-        while ($iterations++ < $this->currentDataLength) {
-            if($index >= $this->currentDataLength) {
+        while ($iterations++ < $hayStackLength) {
+            if($index >= $hayStackLength) {
                 $index = 0;
             }
             
             $match = true;
-            $other = $this->currentData[$index];
+            $other = $hayStack[$index];
             foreach ($needle as $key => $value) {
                 if( key_exists($key, $other) &&
                     $value !== $other[$key]) {
@@ -315,7 +243,7 @@ class DataTracker
             }
             
             if($match) { 
-                $version = $this->dataVersions[$index];
+                $version = $dataVersions[$index];
                 if($version === $preferredVersion) {
                     return $index;
                 }
