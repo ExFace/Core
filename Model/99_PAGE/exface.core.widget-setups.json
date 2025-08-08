@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2025-06-27 09:56:33",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-06-27 10:42:45",
+    "modified_on": "2025-08-08 15:16:12",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.WIDGET_SETUP",
