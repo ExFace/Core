@@ -189,7 +189,7 @@ JS;
         } else {
             $icon = $stencil->getIcon();
         }
-        $insertKbdButtonHTML = implode(' ', [
+        $insertHtmlTagButtonHTML = implode(' ', [
             '<button type="button"',
             //'id="' . $this->getId() . '_stencil_' . spl_object_id($stencil) . '"',
             'style="margin: -7px -5px; background: transparent;">',
@@ -197,9 +197,9 @@ JS;
             '</button>',
         ]);
         
-        $insertKbdButtonJs = <<<JS
+        $insertHtmlTagButtonJs = <<<JS
                 (function (){
-                    let button = \$('$insertKbdButtonHTML')[0];
+                    let button = \$('$insertHtmlTagButtonHTML')[0];
                     button.addEventListener('click', () => {
                         let  oEditor = {$this->buildJsMarkdownVar()};
 
@@ -210,22 +210,22 @@ JS;
                         if (!selectedText.trim()) {
                             return;
                         }
-        
+                        
                         if (oEditor.isMarkdownMode()) {
-                          // Writes the keyboard tags directly into the Markdown.
+                          // Writes the HTML tags directly into the Markdown.
                           const wrapped = `<{$stencil->getHtmlTag()}>\${selectedText}</{$stencil->getHtmlTag()}>`;
                           oEditor.replaceSelection(wrapped, start, end);
                         } else {
-                          // In WYSIWYG mode, the KBD tags must be inserted directly 
+                          // In WYSIWYG mode, the HTML tags must be inserted directly 
                           // into the HTML of the editor so that the customHTMLParser can process them, 
                           // as in the Markdown section above. 
                           //
                           // Note: The parser will delete all non-supported attributes 
                           // from this element if given.
-                          const kbdElement = document.createElement("{$stencil->getHtmlTag()}");
+                          const htmlElement = document.createElement("{$stencil->getHtmlTag()}");
                           const userSelection = window.getSelection();
                           const selectedTextRange = userSelection.getRangeAt(0);
-                          selectedTextRange.surroundContents(kbdElement);
+                          selectedTextRange.surroundContents(htmlElement);
                         }
                     });
                     
@@ -236,7 +236,7 @@ JS;
                 {
                     name: {$this->escapeString($stencil->getCaption())},
                     tooltip: {$this->escapeString($stencil->getHint())},
-                    el: {$insertKbdButtonJs}
+                    el: {$insertHtmlTagButtonJs}
                 }
 JS;
 
@@ -245,7 +245,7 @@ JS;
     protected function buildJsCustomHtmlInlineRenderer(TextStencil $stencil) : string
     {
         return <<<JS
-          {$stencil->getHtmlTag()}(entering) {
+          {$stencil->getHtmlTag()}(node, { entering }) {
               return entering
                   ? { type: 'openTag', tagName: '{$stencil->getHtmlTag()}', attributes: { style: "{$stencil->buildCssStyle()}"} }
                   : { type: 'closeTag', tagName: '{$stencil->getHtmlTag()}' };

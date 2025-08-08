@@ -1,5 +1,8 @@
 -- UP
 
+IF OBJECT_ID('exf_permalink', 'U') IS NOT NULL
+    DROP TABLE exf_permalink;
+
 CREATE TABLE exf_permalink (
     oid BINARY(16) NOT NULL,
     created_on DATETIME NOT NULL,

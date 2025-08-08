@@ -266,9 +266,10 @@ JS;
             $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
             
             $conditionsJs = '';
-            
+            $hasSelfRef = 'false';
             
             if ($condProp = $col->getDisabledIf()) {
+                // disabled-if conditions
 
                 // check for self-references
                 $hasSelfReference = false;
@@ -278,6 +279,7 @@ JS;
                         $targetWidget = $expr->getWidgetLink($col->getCellWidget())->getTargetWidgetId();
                         if ($targetWidget === $this->getWidget()->getId()) {
                             $hasSelfReference = true;
+                            $hasSelfRef = 'true';
                             break;
                         }
                     }
@@ -292,30 +294,30 @@ JS;
                     if (oColOpts !== undefined && oColOpts.type === 'checkbox'){
                         // checkboxes need to be disabled, not set to readonly
                         aCells.forEach(function(domCell, iRowIdx){
-                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(iRowIdx);
-                            
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
+
                             {$this->buildJsConditionalProperty(
                                 $condProp, 
                                 "$(domCell).children('input').prop('disabled', true); ", 
                                 "$(domCell).children('input').prop('disabled', false);"
                             )}
                             
-                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(null);
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
                         });
 
                     }
                     else{
                         // other column types can be set to readonly
                         aCells.forEach(function(domCell, iRowIdx){
-                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(iRowIdx);
-                            
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
+
                             {$this->buildJsConditionalProperty(
                                 $condProp, 
                                 "if (oWidget.hasChanged(iColIdx, iRowIdx)) { oWidget.restoreInitValue(iColIdx, iRowIdx); } domCell.classList.add('readonly'); ", 
                                 "domCell.classList.remove('readonly');"
                             )}
-                            
-                            $('#{$this->getId()}')[0].exfWidget.setValueGetterRow(null);
+
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
                         });
                     }
                     
@@ -335,6 +337,51 @@ JS;
                     );
                 }
                 
+            }
+            if (($col->getCellWidget() instanceof Input) && $col->getCellWidget()->getRequiredIf()) {
+                // required-if conditions
+
+                if ($requiredIf = $col->getCellWidget()->getRequiredIf()) {
+                    
+                    // check for self-references
+                    $hasSelfReference = false;
+                    foreach ($requiredIf->getConditions() as $condition) {
+                        $expr = $condition->getValueLeftExpression();
+                        if ($expr->isReference()){
+                            $targetWidget = $expr->getWidgetLink($col->getCellWidget())->getTargetWidgetId();
+                            if ($targetWidget === $this->getWidget()->getId()) {
+                                $hasSelfReference = true;
+                                $hasSelfRef = 'true';
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($hasSelfReference){
+                        $conditionsJs .= <<<JS
+
+                            aCells.forEach(function(domCell, iRowIdx){
+
+                                // apply required only if cell is empty 
+                                // (and also not a checkbox, as they cannot/should not be required)
+                                if (domCell.innerHTML.trim() !== ''){
+                                    domCell.classList.remove('exf-spreadsheet-invalid', 'required-if');
+                                    return;
+                                }
+
+                                {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
+                                
+                                {$this->buildJsConditionalProperty(
+                                    $requiredIf, 
+                                    "domCell.classList.add('exf-spreadsheet-invalid', 'required-if'); ", 
+                                    "domCell.classList.remove('exf-spreadsheet-invalid', 'required-if');"
+                                )}
+                                
+                                {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
+                            });
+    JS;
+                    }
+                }
             }
             if ($conditionsJs) {
                 $conditionsJs = <<<JS
@@ -366,6 +413,7 @@ JS;
                 $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
 
                 // js to remove old event listeners
+                // TODO: check in ui5
                 $removeDropdownRefreshListeners = <<<JS
                        $( document ).off( '{$actionperformed}.{$this->getId()}' );
 JS;
@@ -377,7 +425,7 @@ JS;
                             var oEffect = {};
                             var aUsedObjectAliases = {$effectedAliasesJs};
                             var fnRefresh = function() {
-                                $('#{$this->getId()}')[0].exfWidget.refreshDropdown({$colIdx});
+                                {$this->buildJsJqueryElement()}[0].exfWidget.refreshDropdown({$colIdx});
                             };
                         
                             for (var i = 0; i < oParams.effects.length; i++) {
@@ -439,6 +487,7 @@ JS;
                     wasLazyLoaded: {$wasLazyLoaded},
                     requestConfig: {$lazyLoadingRequestJs},
                     isRelation: {$isRelation},
+                    isSelfReferencing: {$hasSelfRef},
                     dropdownIdField: {$dropdownIdJs},
                     dropdownLabelField: {$dropdownLabelJs},
                     system: {$systemFlagJs},
@@ -830,6 +879,7 @@ JS;
         validateValue: function(iCol, iRow, mValue) {
             var oColModel = this.getColumnModel(iCol);
             var fnValidator = oColModel.validator;
+
             if (fnValidator === null || fnValidator === undefined || oColModel.hidden === true) {
                 return true;
             }            
@@ -846,7 +896,17 @@ JS;
                 oCol = this.getColumnModel(iCol);
                 mValue = oCol.parser ? oCol.parser(mValue) : mValue;
             }
-            mValidationResult = this.validateValue(iCol, iRow, mValue);
+
+            // TODO (?)
+            // In ui5, the validation of dynamic required-ifs seems to throw js errors (since it is the normal validation for ui5 inputcombotables?)
+            // it tries to access the current elements getRequired() via sap.core and the ID that isnt set or doesnt exist/undefined?
+            // so for now we skip the validation for dynamically required columns, and use the css classes applied in conditionize()
+            if ({$this->buildJsJqueryElement()}[0].exfWidget.getColumnModel(iCol).isSelfReferencing){
+                mValidationResult = true;
+            }
+            else {
+                mValidationResult = this.validateValue(iCol, iRow, mValue);
+            }
 
             if (this.hasChanged(iCol, iRow, mValue)) {
                 $(cell).addClass('exf-spreadsheet-change');
@@ -855,7 +915,8 @@ JS;
                 mValue = this.getInitValue(iCol, iRow);
             }
 
-            if (mValidationResult === true) {
+            // only remove invalid class if it is not explicitly set for required-if (in conditionize())
+            if (mValidationResult === true &&  !$(cell).hasClass('required-if')) {
                 $(cell).removeClass('exf-spreadsheet-invalid');
                 cell.title = '';
             } else {
@@ -2104,13 +2165,18 @@ JS;
             }
         }
 
+        // handle rowcount col for ui5 facade
+        if (mb_strtolower($columnName) === '~rowcount') {
+                return "(sap.ui.getCore().byId('{$this->getId()}').getModel().getData().rows || []).length";
+        }
+
         if ($col === null) {
             throw new WidgetConfigurationError($this->getWidget(), 'Cannot create a filter for column "' . $columnName . '" in the spreadsheet widget "' . $this->getWidget()->getId() . '": column does not exist!');
         }
 
         $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
 
-        // check if requested data is for filter, or conditionize (disabled if)
+        // check if requested data is for filter, or conditionize (disabled if/required if)
         // -> if it is for a self-referencing filter, use value from the current row
         // -> if it is for conditionize, use current value from saved exfwidget row idx
         // otherwise return values from seleted indices
@@ -2143,25 +2209,52 @@ JS;
 
         var aAllRows = {$this->buildJsDataGetter()}.rows; 
 
-        // for disabled if: use current rowIdx saved in exfwidget 
-        if ($('#{$this->getId()}')[0].exfWidget.getValueGetterRow() !== null){
-            var iRowIdx = $('#{$this->getId()}')[0].exfWidget.getValueGetterRow();
-            let value = aAllRows[iRowIdx]['{$col->getDataColumnName()}'];
+        // for disabled if and required-if: use current rowIdx saved in exfwidget 
+        if (window.spreadsheetLoaded){
+            if ({$this->buildJsJqueryElement()}[0].exfWidget.getValueGetterRow() !== null){
+                var iRowIdx = {$this->buildJsJqueryElement()}[0].exfWidget.getValueGetterRow();
 
+                // skip automatically added empty rows (when adding new rows is allowed)
+                if (aAllRows[iRowIdx] === undefined){
+                    return "";
+                }
+
+                let mValue = aAllRows[iRowIdx]['{$col->getDataColumnName()}'];
+
+                // get current column type
+                let iCurrentCol = {$this->buildJsJqueryElement()}[0].exfWidget.getColumnIndex('{$col->getDataColumnName()}');
+                if (iCurrentCol === -1){
+                    return "";
+                }
+                let sColType = {$this->buildJsJqueryElement()}[0].jexcel.options.columns[iCurrentCol].type;
+                
+                // if the filtered on object is a dropdown, use the name for comparison instead of the uid
+                // otherwise the users would have to provide the uid in the uxon filter
+                if (mValue !== '' && sColType === 'autocomplete'){
+                    let aDropdownSrc = {$this->buildJsJqueryElement()}[0].jexcel.options.columns[iCurrentCol].source;
+                    let oEntry = Array.isArray(aDropdownSrc) ? aDropdownSrc.find(item => item.id === mValue) : null;
+                    mValue = oEntry ? oEntry.name : mValue;
+                }
+
+                var aVals = [];
+                aVals.push(mValue); 
+                return aVals.join('{$delimiter}');
+            }
+
+            // otherwise: return vals from currently selected rows
+            var aSelectedIdxs = {$this->buildJsJqueryElement()}.jspreadsheet('getSelectedRows', true);
             var aVals = [];
-            aVals.push(value); 
+
+            aSelectedIdxs.forEach(function(iRowIdx){
+                aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+            })
+
             return aVals.join('{$delimiter}');
         }
 
-        // otherwise: return vals from currently selected rows
-        var aSelectedIdxs = $('#{$this->getId()}').jspreadsheet('getSelectedRows', true);
-        var aVals = [];
-
-        aSelectedIdxs.forEach(function(iRowIdx){
-            aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
-        })
-
-        return aVals.join('{$delimiter}');
+        // if spreadsheet is not loaded, return empty
+        return "";
+        
 })()
 JS;
         }
@@ -2230,7 +2323,7 @@ JS;
         $required = $this->getWidget() instanceof iCanBeRequired ? $this->getWidget()->isRequired() : false;
         $bRequiredJs = $required ? 'true' : 'false';
         return <<<JS
-
+        
 (function(jqExcel) {
     var bRequired = $bRequiredJs;
     if (jqExcel.length === 0) {
@@ -2239,7 +2332,7 @@ JS;
     jqExcel[0].exfWidget.validateAll();
     return jqExcel.find('.exf-spreadsheet-invalid').length === 0;
 })({$this->buildJsJqueryElement()})
-        
+
 JS;
     }
     
@@ -2248,7 +2341,7 @@ JS;
         $required = $this->getWidget() instanceof iCanBeRequired ? $this->getWidget()->isRequired() : false;
         $bRequiredJs = $required ? 'true' : 'false';
         return <<<JS
-        
+
 (function(jqExcel) {
     var bRequired = $bRequiredJs;
     if (jqExcel.length === 0) {
@@ -2280,7 +2373,7 @@ JS;
      * In classes, that use this trait, you can include this method like this:
      * 
      * ```
-     * public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+     * public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
      * {
      *     if (null !== $js = $this->buildJsCallFunctionOfJExcel($functionName, $parameters)) {
      *         return $js;
@@ -2294,7 +2387,7 @@ JS;
      * @param array $parameters
      * @return string|null
      */
-    protected function buildJsCallFunctionOfJExcel(string $functionName = null, array $parameters = []) : ?string
+    protected function buildJsCallFunctionOfJExcel(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : ?string
     {
         switch (true) {
             case $functionName === DataTable::FUNCTION_EMPTY:
