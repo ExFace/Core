@@ -245,6 +245,13 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
             default: 
                 throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
         }
+        
+        // Make sure, numeric ids do not group their digits like normal integers
+        $isNumericId = ($this->isUidForObject() || $this->isRelation()) && $this->data_type instanceof NumberDataType;
+        if ($isNumericId && ! ($this->custom_data_type_uxon && $this->custom_data_type_uxon->hasProperty('group_digits'))) {
+            $this->data_type->setGroupDigits(false);
+        }
+        
         return $this->data_type;
     }
     
