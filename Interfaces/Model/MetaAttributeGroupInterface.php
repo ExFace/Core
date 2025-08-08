@@ -26,6 +26,7 @@ interface MetaAttributeGroupInterface extends MetaAttributeListInterface
     const READABLE = '~READABLE';
     const COPYABLE = '~COPYABLE';
     const CUSTOM = '~CUSTOM';
+    const SYSTEM = '~SYSTEM';
     
     public function getAlias() : ?string;
     
@@ -66,4 +67,3 @@ interface MetaAttributeGroupInterface extends MetaAttributeListInterface
      */
     public function withExptendedObject(MetaObjectInterface $newObject) : MetaAttributeGroupInterface;
 }
-

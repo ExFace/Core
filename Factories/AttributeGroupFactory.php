@@ -127,6 +127,11 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                     return $invert XOR ($attr instanceof CustomAttribute);
                 });
                 break;
+            case MetaAttributeGroupInterface::SYSTEM:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert, $components) {
+                    return $invert XOR $attr->isSystem();
+                });
+                break;
         }
         
         return static::getAttributesByMagic($attributeList, $spells);
