@@ -1180,7 +1180,7 @@ JS;
         return <<<JS
 
             {$beforeJs}
-            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments(), $jsRequestData)}
+            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments(), $this->buildJsRequestDataCollector($action, $this->getInputElement(), 'requestData'))}
             {$afterJs}
 JS;
     }
