@@ -177,6 +177,7 @@ class OrderingBehavior extends AbstractBehavior
         
         // Fetch any missing columns.
         $this->fetchMissingColumns($eventSheet,$logbook);
+        $this->normalizeDataSheet($eventSheet);
 
         // Load old data for rows in event data.
         $loadedData = $this->createEmptyCopy($eventSheet, true, false);
@@ -193,7 +194,8 @@ class OrderingBehavior extends AbstractBehavior
         }
         $loadedGroupData->dataRead();
         $loadedData->addRows($loadedGroupData->getRows(), true);
-        
+        $this->normalizeDataSheet($loadedData);
+
         // If we are reacting to OnBeforeDelete, our work is done.
         if($event instanceof OnBeforeDeleteDataEvent) {
             // Cache data for next step.
@@ -279,6 +281,7 @@ class OrderingBehavior extends AbstractBehavior
         
         // Get datasheet.
         $eventSheet = $event->getDataSheet();
+        $this->normalizeDataSheet($eventSheet);
         $logbook->addDataSheet('InputData', $eventSheet);
         
         // Make sure it has a UID column.
@@ -377,13 +380,33 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
+     * Normalizes the following columns in the data sheet:
+     * - All parent attributes.
+     * - Order number attribute. 
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @return void
+     * @see OrderingBehavior::getOrderNumberAttributeAlias()
+     * @see OrderingBehavior::getParentAliases()
+     */
+    protected function normalizeDataSheet(DataSheetInterface $dataSheet) : void
+    {
+        $aliasesToNormalize = $this->getParentAliases();
+        $aliasesToNormalize[] = $this->getOrderNumberAttributeAlias();
+        
+        foreach ($aliasesToNormalize as $alias) {
+            $dataSheet->getColumns()->get($alias)->normalizeValues();
+        }
+    }
+
+    /**
      * Load any missing parent columns and merges their data into the event sheet.
      *
      * @param DataSheetInterface $eventSheet
      * @param BehaviorLogBook    $logBook
      * @return void
      */
-    function fetchMissingColumns(
+    private function fetchMissingColumns(
         DataSheetInterface $eventSheet,
         BehaviorLogBook $logBook): void
     {
@@ -399,10 +422,6 @@ class OrderingBehavior extends AbstractBehavior
                 $logBook->addLine($parentAlias . ' is missing in event data and will have to be loaded.');
                 $fetchSheet->getColumns()->addFromExpression($parentAlias);
             } else {
-                // If the column is present, we need to ensure its values have the correct datatype.
-                $col = $eventSheet->getColumns()->get($parentAlias);
-                $dataType = $col->getDataType();
-                $col->setValues(array_map(function ($val) use ($dataType) {return $dataType->parse($val);}, $col->getValues()));
                 $logBook->addLine($parentAlias . ' is already present in event data.');
             }
         }
