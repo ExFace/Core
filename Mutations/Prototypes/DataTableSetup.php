@@ -17,8 +17,10 @@ class DataTableSetup extends AbstractMutation
 {
     private array $columnRules = [];
     private ?UxonObject $columnUxon = null;
-    private array $filterRules = [];
-    private ?UxonObject $filterUxon = null;
+    private array $searchRules = [];
+    private ?UxonObject $searchUxon = null;
+    private array $sorterRules = [];
+    private ?UxonObject $sorterUxon = null;
 
     /**
      * @see MutationInterface::apply()
@@ -57,18 +59,34 @@ class DataTableSetup extends AbstractMutation
     }
 
     /**
-     * Setup for filters to modify
+     * Setup for advanced search filters to modify
      *
-     * @uxon-property filters
-     * @uxon-type \exface\Core\Mutations\MutationRules\DataColumnSetupRule[]
-     * @uxon-template [{"attribute_alias": "", "value": ""}]
+     * @uxon-property advanced_search
+     * @uxon-type \exface\Core\Mutations\MutationRules\FilterSetupRule[]
+     * @uxon-template [{"attribute_alias": "", "comparator": "", "value": "", "exclude": false}]
      *
      * @param UxonObject $uxonArray
      * @return $this
      */
-    protected function setFilters(UxonObject $uxonArray) : DataTableSetup
+    protected function setAdvancedSearch(UxonObject $uxonArray) : DataTableSetup
     {
-        $this->filterUxon = $uxonArray;
+        $this->searchUxon = $uxonArray;
+        return $this;
+    }
+
+    /**
+     * Setup for sorters to modify
+     *
+     * @uxon-property sorters
+     * @uxon-type \exface\Core\Mutations\MutationRules\SorterSetupRule[]
+     * @uxon-template [{"attribute_alias": "", "direction": ""}]
+     *
+     * @param UxonObject $uxonArray
+     * @return $this
+     */
+    protected function setSorters(UxonObject $uxonArray) : DataTableSetup
+    {
+        $this->sorterUxon = $uxonArray;
         return $this;
     }
 }
