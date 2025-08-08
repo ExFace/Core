@@ -11,9 +11,11 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileStreamInterface;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\NamedRange;
 use PhpOffice\PhpSpreadsheet\Shared\StringHelper;
+use PhpOffice\PhpSpreadsheet\Worksheet\Validations;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\DateDataType;
@@ -41,10 +43,11 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * 
  * ## Object data addresses
  * 
- * The meta object address should point to a worsheet within the document. It follows the excel reference format. Example:
+ * The meta object address should point to a worsheet within the document. It follows the excel reference format.
+ * Example:
  * 
- * - `path/from/installation/root/excel_file.xlsx` will access the default worksheet (the one, that is shown when opening
- * the file in Excel).
+ * - `path/from/installation/root/excel_file.xlsx` will access the default worksheet (the one, that is shown when
+ * opening the file in Excel).
  * - `path/from/installation/root/excel_file.xlsx[My sheet]` will access the sheet named `My sheet`
  * 
  * ### Data address properties on object-level
@@ -56,10 +59,10 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * 
  * Attributes of the meta objects can be
  * 
- * - cell ranges in a single column (e.g. `A1:A999`). Be sure to include enough rows for eventual modifications in the excel 
- * file! Don't worry about empty rows - only rows with values will actually be read!
- * - cell ranges in multiple columns (e.g. `A10:B20`) - all values will be read into a single data column row-by-row from 
- * left to right.
+ * - cell ranges in a single column (e.g. `A1:A999`). Be sure to include enough rows for eventual modifications in the
+ * excel  file! Don't worry about empty rows - only rows with values will actually be read!
+ * - cell ranges in multiple columns (e.g. `A10:B20`) - all values will be read into a single data column row-by-row
+ * from  left to right.
  * - single cell coordinates (e.g. `B3`) will add the value of the cell to each row - handy for reading header data for
  * a table.
  * - Any file attributes as described in `FileBuilder`
@@ -134,6 +137,7 @@ class ExcelBuilder extends FileBuilder
     }
 
     private $tempFiles = [];
+    private array $ranges = [];
     
     /**
      * 
@@ -259,6 +263,8 @@ class ExcelBuilder extends FileBuilder
         
         $lastRow = $worksheet->getHighestDataRow();
         $static_values = [];
+        $this->ranges = [];
+        
         foreach ($this->getAttributes() as $qpart) {
             $colKey = $qpart->getColumnKey();
             $address = $qpart->getDataAddress();
@@ -290,36 +296,28 @@ class ExcelBuilder extends FileBuilder
                     $static_values[$colKey] = $this->parseExcelValue($val, $attrType);
                     break;
                 case $this->isColumnName($address):
-                    $addressColName = trim($address, '[]');
-                    $rangeName = StringHelper::strToUpper($addressColName);
-                    if (! array_key_exists($rangeName, $spreadsheet->getNamedRanges())) {
-                        // Read the first row as header data to get the column names
-                        $headerRow = 1;
-                        $highestRow = $worksheet->getHighestRow();
-                        $highestColumn = $worksheet->getHighestColumn();
-                        $headerData = $worksheet->rangeToArray("A{$headerRow}:{$highestColumn}{$headerRow}", null, true, true, true)[1];
-
-                        // specif range
-                        foreach ($headerData as $columnLetter => $columnName) {
-                            if ($columnName === null) {
-                                continue;
-                            }
-                            $columnName = trim($columnName);
-                            if ($columnName === '') {
-                                continue;
-                            }
-                            // Define the range from the second row to the last row
-                            $range = "{$columnLetter}2:{$columnLetter}{$highestRow}";
-
-                            // Create a named range for each column name
-                            $spreadsheet->addNamedRange(new NamedRange($columnName, $worksheet, $range));
-                        }
-                    }
-
                     // read column of given column name
                     $row_nr = 0;
+
                     try {
-                        $range = $worksheet->namedRangeToArray($rangeName, null, true, $formatValues, true);
+                        try {
+                            $range = $this->addressToRange($address, $worksheet);
+                        } catch (\Throwable $e) {
+                            if(!$qpart->getAttribute()->isRequired()) {
+                                break;
+                            }
+
+                            throw $e;
+                        }
+                        
+                        $range = $this->rangeToArray(
+                            $worksheet, 
+                            $range, 
+                            null, 
+                            true, 
+                            $formatValues, 
+                            true
+                        );
                     } catch (\Throwable $e) {
                         throw new QueryBuilderException('Cannot read column "' . $address . '" from worksheet "' . $worksheet->getTitle() . '": ' . $e->getMessage(), null, $e);
                     }
@@ -348,6 +346,55 @@ class ExcelBuilder extends FileBuilder
         unset($reader);
 
         return $result_rows;
+    }
+
+    /**
+     * Converts a data address into an Excel range.
+     *
+     * @param string    $address
+     * @param Worksheet $worksheet
+     * @return string|null
+     */
+    protected function addressToRange(string $address, Worksheet $worksheet) : ?string
+    {
+        $rangeName = trim($address, '[]');
+        $rangeName = StringHelper::strToUpper($rangeName);
+        $range = $this->ranges[$rangeName];
+        
+        // Generate ranges.
+        if ($range !== null) {
+            return $range;
+        }
+        
+        // Read the first row as header data to get the column names
+        $headerRow = 1;
+        $highestRow = $worksheet->getHighestRow();
+        $highestColumn = $worksheet->getHighestColumn();
+        $headerData = $worksheet->rangeToArray("A{$headerRow}:{$highestColumn}{$headerRow}", null, true, true, true)[1];
+
+        foreach ($headerData as $columnLetter => $columnName) {
+            if ($columnName === null) {
+                continue;
+            }
+            $columnName = trim($columnName);
+            if ($columnName === '') {
+                continue;
+            }
+            // Define the range from the second row to the last row
+            $range = "{$columnLetter}2:{$columnLetter}{$highestRow}";
+
+            // Create a named range for each column name
+            $cellRange = ltrim(substr($range, (int) strrpos($range, '!')), '!');
+            $cellRange = str_replace('$', '', $cellRange);
+            $this->ranges[StringHelper::strToUpper($columnName)] = $cellRange;
+        }
+        
+        $result = $this->ranges[$rangeName];
+        if($result === null) {
+            throw new QueryBuilderException('Could not find range "' . $rangeName . '" in worksheet!');
+        }
+
+        return $result;
     }
 
     /**
@@ -397,7 +444,11 @@ class ExcelBuilder extends FileBuilder
                     break;
                 }
                 try {
-                    $parsed = $dataType::formatDateNormalized(Date::excelToDateTimeObject($value));
+                    $value = is_numeric($value) ? 
+                        Date::excelToDateTimeObject($value) :
+                        $dataType->cast($value, true);
+                    
+                    $parsed = $dataType::formatDateNormalized($value);
                 } catch (\Throwable $e) {
                     if (! ($e instanceof ExceptionInterface)) {
                         $e = new QueryBuilderException($e->getMessage(), null, $e);
@@ -461,12 +512,14 @@ class ExcelBuilder extends FileBuilder
             return $sheet->getCell($coordinate)->getValue();
         }
     }
-    
+
     /**
-     * 
+     *
      * @param Worksheet $sheet
-     * @param string $range
+     * @param string    $range
+     * @param bool      $formatValues
      * @return array
+     * @throws Exception
      */
     protected function getValuesOfRange(Worksheet $sheet, string $range, bool $formatValues = false) : array
     {
@@ -481,7 +534,8 @@ class ExcelBuilder extends FileBuilder
                 true            // Should the array be indexed by cell row and cell column
             );
         }
-        return $sheet->rangeToArray(
+        return $this->rangeToArray(
+            $sheet,
             $range,             // The worksheet range that we want to retrieve
             null,               // Value that should be returned for empty cells
             true,               // Should formulas be calculated (the equivalent of getCalculatedValue() for each cell)
@@ -489,21 +543,94 @@ class ExcelBuilder extends FileBuilder
             true                // Should the array be indexed by cell row and cell column
         );
     }
-    
+
     /**
-     * 
-     * @param Worksheet $sheet
-     * @param string $pRange
-     * @param mixed $nullValue
-     * @param boolean $calculateFormulas
-     * @param boolean $formatData
-     * @param boolean $returnCellRef
-     * 
-     * @return array|string
+     * Create array from a range of cells.
+     *
+     * @param mixed $nullValue Value returned in the array entry if a cell doesn't exist
+     * @param bool  $calculateFormulas Should formulas be calculated?
+     * @param bool  $formatData Should formatting be applied to cell values?
+     * @param bool  $returnCellRef False - Return a simple array of rows and columns indexed by number counting from
+     *     zero True - Return rows and columns indexed by their actual row and column IDs
+     * @param bool  $ignoreHidden False - Return values for rows/columns even if they are defined as hidden.
+     *                            True - Don't return values for rows/columns that are defined as hidden.
+     * @throws Exception
      */
-    protected function rangeToArrayUnmerged(Worksheet $sheet, $pRange, $nullValue = null, $calculateFormulas = true, $formatData = true, $returnCellRef = false)
+    public function rangeToArray(
+        Worksheet $worksheet,
+        string $range,
+        mixed $nullValue = null,
+        bool $calculateFormulas = true,
+        bool $formatData = true,
+        bool $returnCellRef = false,
+        bool $ignoreHidden = false
+    ): array|string {
+        $cellCollection = $worksheet->getCellCollection();
+        $range = Validations::validateCellOrCellRange($range);
+
+        $returnValue = [];
+        //    Identify the range that we need to extract from the worksheet
+        [$rangeStart, $rangeEnd] = Coordinate::rangeBoundaries($range);
+        $minCol = Coordinate::stringFromColumnIndex($rangeStart[0]);
+        $minRow = $rangeStart[1];
+        $maxCol = Coordinate::stringFromColumnIndex($rangeEnd[0]);
+        $maxRow = $rangeEnd[1];
+        ++$maxCol;
+        // Loop through rows
+        $r = -1;
+        for ($row = $minRow; $row <= $maxRow; ++$row) {
+            if (($ignoreHidden === true) && ($worksheet->getRowDimension($row)->getVisible() === false)) {
+                continue;
+            }
+            $rowRef = $returnCellRef ? $row : ++$r;
+            $c = -1;
+            // Loop through columns in the current row
+            for ($col = $minCol; $col !== $maxCol; ++$col) {
+                if (($ignoreHidden === true) && ($worksheet->getColumnDimension($col)->getVisible() === false)) {
+                    continue;
+                }
+                $columnRef = $returnCellRef ? $col : ++$c;
+                //    Using getCell() will create a new cell if it doesn't already exist. We don't want that to happen
+                //        so we test and retrieve directly against cellCollection
+                $cell = $cellCollection->get($col . $row);
+                $returnValue[$rowRef][$columnRef] = $nullValue;
+                if ($cell !== null) {
+                    $returnValue[$rowRef][$columnRef] = $this->getCellValue(
+                        $cell,
+                        $nullValue,
+                        $calculateFormulas,
+                        $formatData
+                    );
+                }
+            }
+        }
+
+        // Return
+        return $returnValue;
+    }
+
+    /**
+     *
+     * @param Worksheet  $sheet
+     * @param string     $pRange
+     * @param mixed|null $nullValue
+     * @param boolean    $calculateFormulas
+     * @param boolean    $formatData
+     * @param boolean    $returnCellRef
+     *
+     * @return array|string
+     * @throws Exception
+     */
+    protected function rangeToArrayUnmerged(
+        Worksheet $sheet,
+        string    $pRange,
+        mixed     $nullValue = null,
+        bool      $calculateFormulas = true,
+        bool      $formatData = true,
+        bool      $returnCellRef = false
+    ) : array|string
     {
-        // Returnvalue
+        // Return value
         $returnValue = [];
         //    Identify the range that we need to extract from the worksheet
         [$rangeStart, $rangeEnd] = Coordinate::rangeBoundaries($pRange);
@@ -512,7 +639,6 @@ class ExcelBuilder extends FileBuilder
         $maxCol = Coordinate::stringFromColumnIndex($rangeEnd[0]);
         $maxRow = $rangeEnd[1];
         $cellCollection = $sheet->getCellCollection();
-        $parent = $sheet->getParent();
         
         ++$maxCol;
         // Loop through rows
@@ -533,28 +659,13 @@ class ExcelBuilder extends FileBuilder
                         $mergeStart = Coordinate::rangeBoundaries($mergeRange)[0];
                         $cell = $sheet->getCellByColumnAndRow($mergeStart[0], $mergeStart[1]);
                     }
-                    if ($cell->getValue() !== null) {
-                        if ($cell->getValue() instanceof RichText) {
-                            $returnValue[$rRef][$cRef] = $cell->getValue()->getPlainText();
-                        } else {
-                            if ($calculateFormulas) {
-                                $returnValue[$rRef][$cRef] = $cell->getCalculatedValue();
-                            } else {
-                                $returnValue[$rRef][$cRef] = $cell->getValue();
-                            }
-                        }
-                        
-                        if ($formatData) {
-                            $style = $parent->getCellXfByIndex($cell->getXfIndex());
-                            $returnValue[$rRef][$cRef] = NumberFormat::toFormattedString(
-                                $returnValue[$rRef][$cRef],
-                                ($style && $style->getNumberFormat()) ? $style->getNumberFormat()->getFormatCode() : NumberFormat::FORMAT_GENERAL
-                                );
-                        }
-                    } else {
-                        // Cell holds a NULL
-                        $returnValue[$rRef][$cRef] = $nullValue;
-                    }
+                    
+                    $returnValue[$rRef][$cRef] = $this->getCellValue(
+                        $cell,
+                        $nullValue,
+                        $calculateFormulas,
+                        $formatData
+                    );
                 } else {
                     // Cell doesn't exist
                     $returnValue[$rRef][$cRef] = $nullValue;
@@ -564,6 +675,50 @@ class ExcelBuilder extends FileBuilder
         
         // Return
         return $returnValue;
+    }
+
+    /**
+     * Tries to get and format a cell value, according to the function parameters.
+     * 
+     * @param Cell       $cell
+     * @param mixed|null $nullValue
+     * @param bool       $calculateFormulas
+     * @param bool       $formatData
+     * @return mixed
+     * @throws \PhpOffice\PhpSpreadsheet\Calculation\Exception
+     */
+    protected function getCellValue(
+        Cell $cell,
+        mixed $nullValue = null,
+        bool $calculateFormulas = true,
+        bool $formatData = true,
+    ) : mixed
+    {
+        $value = $cell->getValue();
+        if ($value !== null) {
+            if ($value instanceof RichText) {
+                $result = $value->getPlainText();
+            } else {
+                if ($calculateFormulas) {
+                    $result = $cell->getCalculatedValue();
+                } else {
+                    $result = $value;
+                }
+            }
+
+            if ($formatData || Date::isDateTime($cell)) {
+                $style = $cell->getStyle();
+                $result = NumberFormat::toFormattedString(
+                    $result,
+                    $style->getNumberFormat() ? $style->getNumberFormat()->getFormatCode() : NumberFormat::FORMAT_GENERAL
+                );
+            }
+        } else {
+            // Cell holds a NULL
+            $result = $nullValue;
+        }
+        
+        return $result;
     }
     
     /**
