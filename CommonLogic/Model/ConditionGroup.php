@@ -731,7 +731,7 @@ class ConditionGroup implements ConditionGroupInterface
     public function evaluate(
         DataSheetInterface $data_sheet = null, 
         int $row_number = null,
-        bool $readMissingData = true
+        bool $readMissingData = false
     ) : bool
     {
         if($readMissingData && $data_sheet !== null) {
