@@ -394,11 +394,15 @@ class OrderingBehavior extends AbstractBehavior
         $fetchSheet = $this->createEmptyCopy($eventSheet, true, true);
         $sampleRow = $eventSheet->getRow();
         foreach ($this->getParentAliases() as $parentAlias) {
-            // If the column is not present in the event sheet, we need to fetch it.
             if (!key_exists($parentAlias, $sampleRow)) {
+                // If the column is not present in the event sheet, we need to fetch it.
                 $logBook->addLine($parentAlias . ' is missing in event data and will have to be loaded.');
                 $fetchSheet->getColumns()->addFromExpression($parentAlias);
             } else {
+                // If the column is present, we need to ensure its values have the correct datatype.
+                $col = $eventSheet->getColumns()->get($parentAlias);
+                $dataType = $col->getDataType();
+                $col->setValues(array_map(function ($val) use ($dataType) {return $dataType->parse($val);}, $col->getValues()));
                 $logBook->addLine($parentAlias . ' is already present in event data.');
             }
         }
