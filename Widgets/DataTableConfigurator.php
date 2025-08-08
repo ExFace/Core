@@ -13,8 +13,7 @@ use exface\Core\Factories\WidgetFactory;
  * In addition to the basic DataConfigurator which can be applied to any Data
  * widget, the DataTableConfigurator has a tab to control the order and visibility
  * of table columns.
- *
- * TODO the table column control tab is not available yet
+ * 
  * TODO the aggregations control tab is not available yet
  *
  * @author Andrej Kabachnik, Georg Bieger
@@ -201,14 +200,6 @@ class DataTableConfigurator extends DataConfigurator
      */
     protected function initSetupsTable(Tab $tab) : Tab
     {
-        /* TODO/FIXME:  -> the table doesnt update after changes (new, delete, updates); 
-                        -> this happens for both the JS functions, and the normal ones (like DeleteObject)
-                        -> chaining the action with a widgetRefresh breaks everything
-                        -> right now, the table must be refreshed via the refreh button (?)
-
-                        ->  Default button removes all defaults for the user (across all pages, page filter not working?)
-
-        */
         /* @var $table \exface\Core\Widgets\DataTableResponsive */
         $table = WidgetFactory::createFromUxonInParent($tab, new UxonObject([
             'widget_type' => 'DataTableResponsive',
@@ -232,7 +223,7 @@ class DataTableConfigurator extends DataConfigurator
                     'comparator' => ComparatorDataType::EQUALS,
                     'value' => $this->getDataWidget()->getId(),
                     'hidden' => true
-                ], /*[
+                ], [
                     'hidden' => true,
                     'condition_group' => [
                         'operator' => EXF_LOGICAL_OR,
@@ -255,31 +246,36 @@ class DataTableConfigurator extends DataConfigurator
                             ]
                         ]
                     ]
-                ]*/
+                ]
             ],
             'columns' => [
                 [
                     'attribute_alias' => 'NAME',
-                ],
-                [
+                ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
-                ], 
-                [
+                ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG'
-                ], 
-                [
+                ], [
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
                 ], [
                     'attribute_alias' => 'SETUP_UXON',
+                    'hidden' => true
+                ], [
+                    'attribute_alias' => 'WIDGET_SETUP_USER__UID',
+                    'hidden' => true
+                ], [
+                    'attribute_alias' => 'WIDGET_SETUP_USER__MODIFIED_ON',
                     'hidden' => true
                 ]
             ],
             'buttons' => [
                 [
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY'),
+                    'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY_HINT'),
                     'icon' => 'check-circle-o',
                     'visibility' => WidgetVisibilityDataType::PROMOTED,
+                    'bind_to_double_click' => true,
                     'action' => [
                         "input_rows_min" => 1,
                         "input_rows_max" => 1,
@@ -288,89 +284,49 @@ class DataTableConfigurator extends DataConfigurator
                         'function' => "apply_setup([#SETUP_UXON#])"
                     ]
 
-                ],
-                [
+                ], [
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE'),
+                    'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_HINT'),
                     'icon' => 'bookmark-o',
-                    'visibility' => WidgetVisibilityDataType::PROMOTED,
+                    // 'visibility' => WidgetVisibilityDataType::PROMOTED,
                     'action' => [
                         'alias' => "exface.Core.CallWidgetFunction",
                         'widget_id' => $this->getDataWidget()->getId(),
                         'function' => "save_setup"
                     ]
-                ],
-                /*[
-                    'caption' => 'Save Refresh Test',
-                    'action' => [
-                        "alias" => "exface.Core.ActionChain",
-                        "actions" => [
-                            [
-                                'alias' => "exface.Core.CallWidgetFunction",
-                                'widget_id' => $this->getDataWidget()->getId(),
-                                'function' => "save_setup"
-                            ],
-                            [
-                                'alias' => "exface.Core.CallWidgetFunction",
-                                'widget_id' => $this->getDataWidget()->getId(),
-                                'function' => "refresh"
-                            ]
-                        ]
-                    ]
-                ],*/
-                [
-                    'caption' => 'Favorit',
+                ], [
+                    // TODO Translate
+                    'caption' => 'Favorite',
+                    'hint' => 'Mark as favorite or vice versa',
                     'icon' => 'star',
+                    'hide_caption' => true,
                     'action' => [
-                        "alias" => "exface.Core.ActionChain",
+                        "alias" => "exface.Core.SaveData",
+                        "object_alias" => "exface.Core.WIDGET_SETUP_USER",
                         "input_rows_min" => 1,
                         "input_rows_max" => 1,
-                        "input_object_alias" => "exface.Core.WIDGET_SETUP",
-                        "actions" => [
-                            [
-                                "alias" => "exface.core.ReadData",
-                                "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                "input_mapper" => [
-                                    "from_object_alias" => "exface.Core.WIDGET_SETUP",
-                                    "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "column_to_column_mappings" => [
-                                        [
-                                        "from" => EXF_LOGICAL_NULL,
-                                        "to" => "WIDGET_SETUP"
-                                        ]
-                                    ],
-                                    "column_to_filter_mappings" => [
-                                        [
-                                            "from" => "UID",
-                                            "to" => "WIDGET_SETUP"
-                                        ],
-                                        [
-                                            "from" => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-                                            "to" => "USER",
-                                            "comparator" => ComparatorDataType::EQUALS
-                                        ]
-                                    ]
-                                ]
-                            ],
-                            [
-                                "alias" => "exface.core.UpdateData",
-                                "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                "input_mapper" => [
-                                    "from_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "column_to_column_mappings" => [
-                                        [
-                                            "from" => "=Not(FAVORITE_FLAG)",
-                                            "to" => "FAVORITE_FLAG"
-                                        ]
-                                    ]
+                        "input_mapper" => [
+                            "from_object_alias" => "exface.Core.WIDGET_SETUP",
+                            "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                            "column_to_column_mappings" => [
+                                 [
+                                    "from" => "WIDGET_SETUP_USER__UID",
+                                    "to" => "UID"
+                                ],[
+                                    "from" => "WIDGET_SETUP_USER__MODIFIED_ON",
+                                    "to" => "MODIFIED_ON"
+                                ],[
+                                    "from" => "=Not(WIDGET_SETUP_USER__FAVORITE_FLAG)",
+                                    "to" => "FAVORITE_FLAG"
                                 ]
                             ]
                         ]
                     ]
-                ],
-                [
+                ], [
+                    // TODO Translate
                     'caption' => 'Share',
                     'icon' => 'share',
+                    'hide_caption' => true,
                     'action' => [
                         "alias" => "exface.Core.ShowDialog",
                         "input_rows_min" => 1,
@@ -438,145 +394,29 @@ class DataTableConfigurator extends DataConfigurator
                             ]
                         ]
                     ]
-                ],
-                /*[
-                    'caption' => 'Default',
-                    'icon' => 'table',
-                    'action' => [
-                        "input_rows_min" => 1,
-                        "input_rows_max" => 1,
-                        "input_object_alias" => "exface.Core.WIDGET_SETUP",
-                        "alias" => "exface.Core.ActionChain",
-                        "use_input_data_of_action" => 0,
-                        "actions" => [
+                ], /*
+                    TODO Add an edit action for users, that will allow to edit the setup:
+                    - Allow to change the name
+                    - show a table with other users, that this setup is shared with (only if it is a private setup)
+                    - Button to delete a share
+                    - Button to add a new share (same as share Setup above)
+                    */
+                [
+                    'action_alias' => 'exface.Core.WidgetSetupEditForUsers',
+                    'hide_caption' => true,
+                    'disabled_if' => [
+                        'operator' => 'AND',
+                        'conditions' => [
                             [
-                                "alias" => "exface.core.ActionChain",
-                                "input_object_alias" => "exface.Core.WIDGET_SETUP",
-                                "actions" => [
-                                    [
-                                        "alias" => "exface.core.ReadData",
-                                        "object_alias" => "exface.Core.WIDGET_SETUP",
-                                        "input_mapper" => [
-                                            "from_object_alias" => "exface.Core.WIDGET_SETUP",
-                                            "to_object_alias" => "exface.Core.WIDGET_SETUP",
-                                            "column_to_filter_mappings" => [
-                                                [
-                                                    "from" => "UID",
-                                                    "to" => "WIDGET_ID",
-                                                    "comparator" => ComparatorDataType::EQUALS
-                                                ],
-                                                [
-                                                    "from" => "PAGE",
-                                                    "to" => "PAGE",
-                                                    "comparator" => ComparatorDataType::EQUALS
-                                                ]
-                                            ]
-                                        ]
-                                    ],
-                                    [
-                                    "alias" => "exface.core.ReadData",
-                                    "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "input_mappers" => [
-                                        [
-                                        "from_object_alias" => "exface.Core.WIDGET_SETUP",
-                                        "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "column_to_column_mappings" => [
-                                            [
-                                            "from" => EXF_LOGICAL_NULL,
-                                            "to" => "WIDGET_SETUP"
-                                            ]
-                                        ],
-                                        "column_to_filter_mappings" => [
-                                            [
-                                            "from" => "UID",
-                                            "to" => "WIDGET_SETUP",
-                                            "comparator" => ComparatorDataType::EQUALS
-                                            ],
-                                            [
-                                            "from" => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-                                            "to" => "USER",
-                                            "comparator" => ComparatorDataType::EQUALS
-                                            ]
-                                        ]
-                                        ]
-                                    ]
-                                    ],
-                                    [
-                                    "alias" => "exface.core.UpdateData",
-                                    "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "input_mapper" => [
-                                        "from_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "column_to_column_mappings" => [
-                                            [
-                                                "from" => false,
-                                                "to" => "DEFAULT_SETUP_FLAG"
-                                            ]
-                                        ]
-                                    ]
-                                    ]
-                                ]
-                                ],
-                                [
-                                "alias" => "exface.core.ActionChain",
-                                "input_object_alias" => "exface.Core.WIDGET_SETUP",
-                                "actions" => [
-                                    [
-                                    "alias" => "exface.core.ReadData",
-                                    "input_mappers" => [
-                                        [
-                                        "from_object_alias" => "exface.Core.WIDGET_SETUP",
-                                        "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "column_to_column_mappings" => [
-                                            [
-                                            "from" => EXF_LOGICAL_NULL,
-                                            "to" => "WIDGET_SETUP"
-                                            ]
-                                        ],
-                                        "column_to_filter_mappings" => [
-                                            [
-                                            "from" => "UID",
-                                            "to" => "WIDGET_SETUP"
-                                            ],
-                                            [
-                                            "from" => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-                                            "to" => "USER",
-                                            "comparator" => ComparatorDataType::EQUALS
-                                            ]
-                                        ]
-                                        ]
-                                    ],
-                                    "object_alias" => "exface.Core.WIDGET_SETUP_USER"
-                                    ],
-                                    [
-                                    "alias" => "exface.core.UpdateData",
-                                    "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "input_mapper" => [
-                                        "from_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "column_to_column_mappings" => [
-                                            [
-                                                "from" => true,
-                                                "to" => "DEFAULT_SETUP_FLAG"
-                                            ]
-                                        ]
-                                    ]
-                                    ]
-                                ]
+                                'value_left' => '=~input!VISIBILITY',
+                                'comparator' => ComparatorDataType::EQUALS_NOT,
+                                'value_right' => 'PRIVATE'
                             ]
                         ]
                     ]
-                ],*/
-                /*[
-                    'caption' => 'Manage',
-                    'icon' => 'pencil-square-o'
-                ]*/
-                [
-                    'icon' => 'undo',
-                    'action_alias' => 'exface.Core.RefreshWidget'
-                ],
-                [
+                ], [
                     'action_alias' => 'exface.Core.DeleteObject',
+                    'hide_caption' => true,
                     'disabled_if' => [
                         'operator' => 'AND',
                         'conditions' => [
