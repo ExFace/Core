@@ -301,9 +301,9 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
 
     /**
      * @inheritDoc
-     * @param bool                    $readMissingData
-     * Set to FALSE, if you don't want this condition to read missing data.
+     * @param bool $readMissingData
+     * Set to TRUE, if you want this condition group to read missing data.
      * @see ConditionGroupInterface::readMissingData()
      */
-    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null, bool $readMissingData = true): bool;
+    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null, bool $readMissingData = false): bool;
 }
