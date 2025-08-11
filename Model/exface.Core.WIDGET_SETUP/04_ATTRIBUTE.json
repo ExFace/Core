@@ -602,7 +602,7 @@
         {
             "_EXPORT_SUMMARY": "Visibility [VISIBILITY]",
             "CREATED_ON": "2025-06-30 13:02:07",
-            "MODIFIED_ON": "2025-06-30 13:03:47",
+            "MODIFIED_ON": "2025-08-08 14:12:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0b269a9d7cfacb269025041000001",
@@ -629,7 +629,7 @@
                 "// Multiline text delimited by `\n`",
                 "(CASE",
                 "  WHEN [#PRIVATE_FOR_USER#] IS NULL THEN 'PUBLIC'",
-                "  WHEN [#PRIVATE_FOR_USER#] = [#=User('UID')#] THEN 'PRIVATE'",
+                "  WHEN [#PRIVATE_FOR_USER#] = '[#=User('UID')#]' THEN 'PRIVATE'",
                 "  ELSE 'SHARED'",
                 "END)"
             ],
