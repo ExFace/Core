@@ -221,6 +221,8 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         $table->setUidColumnId($this->getValueColumnId());
         $table->setHeaderSortMultiple(false);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
+        // Disable widget setups to prevent recursion due to tables inside the setups table buttons
+        $table->setConfiguratorSetupsEnabled(false);
         $table->getPaginator()->setCountAllRows(false);
         
         // Now see if the user had already defined a table in UXON

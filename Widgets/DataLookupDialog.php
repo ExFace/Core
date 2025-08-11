@@ -64,6 +64,11 @@ class DataLookupDialog extends Dialog
             $data_table->setMultiSelect($this->getMultiSelect());
             $data_table->setMultiSelectSavedOnNavigation(true);
             $data_table->getPaginator()->setCountAllRows(false);
+            // Disabled setups for the lookup table to prevent recursively nested dialogs: the setups table has
+            // buttons, that include other tables, which in-turn might have setups. On the other hand, it is
+            // extremely unlikely, that people would save setups for lookup tables: after all, this would mean,
+            // that certain lookup dialogs are used really often, which is probably not a very good idea. 
+            $data_table->setConfiguratorSetupsEnabled(false);
             
             // If the table has no columns, determine them from the model
             if ($data_table->hasColumns() === false) {

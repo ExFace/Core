@@ -135,6 +135,8 @@ class Data
     private $quickSearchWidget = null;
     
     private $quickSearchEnabled = null;
+    
+    private $configuratorSetupsEnabled = null;
 
     // Widget functions
 
@@ -1485,5 +1487,32 @@ class Data
         // Objects used in the configurator - e.g. filters, sorters, etc.
         $objs = array_merge($objs, $this->getConfiguratorWidget()->getMetaObjectsEffectingThisWidget());
         return array_unique($objs);
+    }
+    
+    public function getConfiguratorSetupsEnabled() : bool
+    {
+        return $this->configuratorSetupsEnabled ?? true;
+    }
+
+    /**
+     * Set to FALSE to disable saving/loading widget setups for users
+     * 
+     * By default, user-side setup management is enabled for most data widgets. This means, a user can
+     * save and restore configurator settings if the current facades support this feature. Using this property
+     * you can explicitly disable setups for a single widget. 
+     * 
+     * This is the same as setting `setups_enabled` to FALSE in the `configurator_widget`.
+     * 
+     * @uxon-property configurator_setups_enabled
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setConfiguratorSetupsEnabled(bool $trueOrFalse) : Data
+    {
+        $this->configuratorSetupsEnabled = $trueOrFalse;
+        return $this;
     }
 }
