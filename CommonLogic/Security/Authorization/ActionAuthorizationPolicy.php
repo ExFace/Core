@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authorization;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\Model\ExistsCondition;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -309,15 +309,15 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
                     $inputData = $task->getInputData();
-                    $checkData = $inputData->copy();
 
-                    if ($action !== null && null !== $mapper = $action->getInputMapper($checkData->getMetaObject())) {
-                        $checkData = $mapper->map($checkData);
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
+                        $inputData = $mapper->map($inputData);
                     }
                     
                     // We need to collect and merge missing data for the policy AFTER applying input mappers,
                     // to ensure that we are working with the right metaobject.
-                    $checkData->merge($conditionGrp->readMissingData($checkData));
+                    $collector = DataCollector::fromConditionGroup($conditionGrp, $inputData->getMetaObject());
+                    $checkData = $collector->collectFrom($inputData)->getRequiredData();
                     
                     foreach ($checkData->getRows() as $rowIdx => $row) {
                         if ($conditionGrp->evaluate($checkData, $rowIdx, false) === false) {
