@@ -63,7 +63,6 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
-use exface\Core\Exceptions\DataSheets\DataSheetDuplicatesError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -796,6 +795,22 @@ class DataSheet implements DataSheetInterface
                 }
             }
             $this->setColumnValues($name, $vals, $totals);
+        }
+        
+        // HTML decode columns with Aggregators.
+        foreach ($this->getColumns() as $column) {
+            if(!$column->hasAggregator()) {
+                continue;
+            }
+            
+            if($column->getDataType() instanceof StringDataType) {
+                $column->setValues(array_map(
+                    function ($value) {
+                        return html_entity_decode($value);
+                    },
+                    $column->getValues()
+                ));
+            }
         }
         
         if (! $postprocessorSorters->isEmpty()) {
