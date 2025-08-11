@@ -735,7 +735,7 @@ class ConditionGroup implements ConditionGroupInterface
     ) : bool
     {
         if($readMissingData && $data_sheet !== null) {
-            $data_sheet = $this->readMissingData($data_sheet);
+            $data_sheet = $this->readRequiredData($data_sheet);
         }
         
         $op = $this->getOperator();
@@ -922,30 +922,30 @@ class ConditionGroup implements ConditionGroupInterface
      * @inheritDoc
      * @see ConditionGroupInterface::getRequiredExpressions()
      */
-    public function getRequiredExpressions(?MetaObjectInterface $object = null) : array
+    public function getRequiredExpressions(?MetaObjectInterface $object = null, bool $includeConstants = true) : array
     {
         $exprs = [];
         foreach ($this->getConditionsRecursive() as $cond) {
             $exprs = array_merge($exprs, $cond->getRequiredExpressions($object));
         }
+
+        if ($includeConstants === false) {
+            return array_filter($exprs, function ($expr) {
+                return ! $expr->isConstant() && ! $expr->isEmpty();
+            });
+        } 
         return $exprs;
     }
 
     /**
+     * // TODO Why is this public???
      * @inheritDoc
      * @see ConditionGroupInterface::readMissingData()
      */
-    public function readMissingData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface
+    protected function readRequiredData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface
     {
-        $collector = $this->dataCollector ?? new DataCollector($dataSheet->getMetaObject());
-        $requiredExpressions = $this->getRequiredExpressions();
-        
-        if($collector->getRequiredExpressions() !== $requiredExpressions) {
-            $collector->addExpressions($requiredExpressions);
-        }
-
+        $collector = $this->dataCollector ?? DataCollector::fromConditionGroup($this, $this->getBaseObject());
         $collector->collectFrom($dataSheet, $logBook);
-
         return $collector->getRequiredData();
     }
 }
