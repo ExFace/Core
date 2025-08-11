@@ -11,6 +11,7 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataCollectorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -51,6 +52,32 @@ class DataCollector implements DataCollectorInterface
     {
         $this->baseObject = $object;
         $this->workbench = $object->getWorkbench();
+    }
+
+    /**
+     * Returns a data collector instance, that includes all expressions to be read for the given condition group
+     * 
+     * The collector will include all non-constant expressions required to evaluate the condition group - that is
+     * all expressions, that need to be read from a data source or evaluated somehow. Constants or empty expressions
+     * will be ignored as they do not need to be read.
+     * 
+     * This is handy to quickly make sure, there is enough data to evaluate a condition group - e.g. for
+     * `DataSheet::extract()` or just condition checks.
+     * 
+     * @param ConditionGroupInterface $conditionGroup
+     * @param MetaObjectInterface $baseObject
+     * @return DataCollectorInterface
+     */
+    public static function fromConditionGroup(ConditionGroupInterface $conditionGroup, MetaObjectInterface $baseObject): DataCollectorInterface
+    {
+        $collector = new self($baseObject);
+        foreach($conditionGroup->getRequiredExpressions($baseObject) as $expr) {
+            if ($expr->isConstant() || $expr->isEmpty()) {
+                continue;
+            }
+            $collector->addExpression($expr);
+        }
+        return $collector;
     }
 
     /**
@@ -191,7 +218,7 @@ class DataCollector implements DataCollectorInterface
         $refreshed = false;
         foreach ($this->getRequiredExpressions() as $expr) {
             // Skip the column if it already exists in the from-sheet
-            if ($dataSheet->getColumns()->getByExpression($expr)){
+            if ($dataSheet->getColumns()->getByExpression($expr)) {
                 continue;
             }
             // Otherwise we need a separate data sheet to read the required data.
@@ -404,7 +431,9 @@ class DataCollector implements DataCollectorInterface
     public function addExpression($expressionOrString): DataCollectorInterface
     {
         $this->requiredExpressions = null;
-        $this->addedExpressions[] = $expressionOrString;
+        if (! in_array($expressionOrString, $this->addedExpressions,true)) {
+            $this->addedExpressions[] = $expressionOrString;
+        }
         return $this;
     }
 
@@ -416,6 +445,7 @@ class DataCollector implements DataCollectorInterface
     {
         $this->reset();
         $this->addedExpressions = array_merge($this->addedExpressions, $expressionsOrStrings);
+        $this->addedExpressions = array_unique($this->addedExpressions);
         return $this;
     }
 
@@ -426,7 +456,9 @@ class DataCollector implements DataCollectorInterface
     public function addAttribute(MetaAttributeInterface $attribute): DataCollectorInterface
     {
         $this->reset();
-        $this->addedAttributes[] = $attribute;
+        if (! in_array($attribute, $this->addedAttributes, true)) {
+            $this->addedAttributes[] = $attribute;
+        }
         return $this;
     }
 
@@ -437,7 +469,9 @@ class DataCollector implements DataCollectorInterface
     public function addAttributeAlias(string $alias): DataCollectorInterface
     {
         $this->reset();
-        $this->addedAttributeAliases[] = $alias;
+        if (! in_array($alias, $this->addedAttributeAliases, true)) {
+            $this->addedAttributeAliases[] = $alias;
+        }
         return $this;
     }
 
