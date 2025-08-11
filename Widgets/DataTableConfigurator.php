@@ -295,9 +295,8 @@ class DataTableConfigurator extends DataConfigurator
                         'function' => "save_setup"
                     ]
                 ], [
-                    // TODO Translate
-                    'caption' => 'Favorite',
-                    'hint' => 'Mark as favorite or vice versa',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE'),
+                    'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT'),
                     'icon' => 'star',
                     'hide_caption' => true,
                     'action' => [
@@ -323,8 +322,7 @@ class DataTableConfigurator extends DataConfigurator
                         ]
                     ]
                 ], [
-                    // TODO Translate
-                    'caption' => 'Share',
+                    'caption' => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_CAPTION"),
                     'icon' => 'share',
                     'hide_caption' => true,
                     'action' => [
@@ -337,11 +335,11 @@ class DataTableConfigurator extends DataConfigurator
                             "width" => 1,
                             "columns_in_grid" => 1,
                             "maximized" => false,
-                            "caption" => "Ansicht teilen",
+                            "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_DIALOG_TITLE"),
                             "widgets" => [
                                 [
                                     "widget_type" => "InputComboTable",
-                                    "caption" => "Nutzer",
+                                    "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_DIALOG_USER"),
                                     "table_object_alias" => "exface.Core.USER",
                                     "text_attribute_alias" => "FULL_NAME",
                                     "value_attribute_alias" => "UID",
@@ -350,11 +348,11 @@ class DataTableConfigurator extends DataConfigurator
                             ],
                             "buttons" => [
                             [
-                                "caption" => "Share",
+                                "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE"),
                                 "visibility" => "promoted",
                                 "align" => "opposite",
                                 "action" => [
-                                "result_message_text" => "Ansicht erfolgreich geteilt!",
+                                "result_message_text" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_SUCCESS"),
                                 "alias" => "exface.Core.ActionChain",
                                 "actions" => [
                                     // [
