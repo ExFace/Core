@@ -499,11 +499,25 @@ class ConditionGroup implements ConditionGroupInterface
                     }
                     $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $prop));
                 }
-            }
+            }            
         } catch (UxonParserError $e) {
             throw $e;
         } catch (\Throwable $e) {
             throw new UxonParserError($uxon, 'Cannot create condition group from UXON: ' . $e->getMessage(), null, $e);   
+        }
+
+        // Double-check, if there are any UXON properties, that were not processed here. If so, throw an error!
+        $processedProps = [
+            'operator',
+            'base_object_alias',
+            'object_alias',
+            'ignore_empty_values',
+            'conditions',
+            'nested_groups'
+        ];
+        $otherProps = array_diff(array_keys($uxon->toArray()), $processedProps);
+        if (! empty($otherProps)) {
+            throw new UxonParserError($uxon, 'Unknown UXON properties "' . implode('", "', $otherProps) . '" found for ConditionGroup');
         }
     }
     
