@@ -2,6 +2,9 @@
 
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
@@ -21,6 +24,8 @@ use exface\Core\Widgets\Parts\TextStencil;
  */
 trait ToastUIEditorTrait
 {
+    private $btnUserData = null; //TODO SR: New, Test it.
+
     /**
      * Creates a JS snippet that initializes a ToastUI markdown editor
      * instance and returns it, complete with toolbar and live reference hooks.
@@ -724,5 +729,22 @@ JS;
     {
         $html = '<div id="'.$this->getId().'" class="markdown-editor"></div>';
         return $html;
+    }
+
+    //TODO SR: New:
+    protected function addUserListFetchHiddenButton() : void
+    {
+        $btnUserDataUxon = new UxonObject([
+            'widget_type' => 'DataButton',
+            'visibility' => WidgetVisibilityDataType::HIDDEN,
+            'action' => [
+                'alias' => 'exface.Core.Autosuggest',
+                'script' => <<<JS
+
+JS
+            ]
+        ]);
+
+        //TODO SR: Try to implement the "InputButton" solution here.
     }
 }
