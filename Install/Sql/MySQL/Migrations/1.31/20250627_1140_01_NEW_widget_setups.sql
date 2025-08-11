@@ -1,7 +1,7 @@
 -- UP
 
 CREATE TABLE IF NOT EXISTS `exf_widget_setup` (
-                                                  `oid` binary(16) NOT NULL,
+    `oid` binary(16) NOT NULL,
     `created_on` datetime NOT NULL,
     `modified_on` datetime NOT NULL,
     `created_by_user_oid` binary(16) NOT NULL,
@@ -23,10 +23,10 @@ CREATE TABLE IF NOT EXISTS `exf_widget_setup` (
     KEY `FK_widget_setup_user` (`private_for_user_oid`),
     CONSTRAINT `FK_widget_setup_user` FOREIGN KEY (`private_for_user_oid`) REFERENCES `exf_user` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
     KEY `IX_page_user` (`page_oid`, `private_for_user_oid`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE IF NOT EXISTS `exf_widget_setup_user` (
-                                                       `oid` binary(16) NOT NULL,
+    `oid` binary(16) NOT NULL,
     `created_on` datetime NOT NULL,
     `modified_on` datetime NOT NULL,
     `created_by_user_oid` binary(16) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `exf_widget_setup_user` (
     UNIQUE KEY `Unique per setup and user` (`user_oid`,`widget_setup_oid`) USING BTREE,
     KEY `FK_widget_setup_user_setup` (`widget_setup_oid`),
     CONSTRAINT `FK_widget_setup_user_setup` FOREIGN KEY (`widget_setup_oid`) REFERENCES `exf_widget_setup` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC;
 
 -- DOWN
 -- Do not automatically drop tables to avoid data loss!
