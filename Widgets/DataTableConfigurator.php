@@ -208,17 +208,7 @@ class DataTableConfigurator extends DataConfigurator
             'paginate' => false,
             'configurator_setups_enabled' => false,
             'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'),
-            'filters' => [
-                // TODO remove this filter to allow public setups. However, currently this causes an SQL error
-                // as soon as a private setup is shared with at least one user. It seems apply_to_aggregates in
-                // the custom condition_group in the last filter is not used by the query builder
-                [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__USER__UID',
-                    'comparator' => ComparatorDataType::EQUALS,
-                    'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-                    'apply_to_aggregates' => true,
-                    'hidden' => true,
-                ], 
+            'filters' => [                
                 [
                     'attribute_alias' => 'PAGE',
                     'comparator' => ComparatorDataType::EQUALS,
@@ -234,7 +224,7 @@ class DataTableConfigurator extends DataConfigurator
                     'hidden' => true,
                     'condition_group' => [
                         'operator' => EXF_LOGICAL_OR,
-                        'conditons' => [
+                        'conditions' => [
                             [
                                 'expression' => 'PRIVATE_FOR_USER',
                                 'comparator' => ComparatorDataType::EQUALS,
