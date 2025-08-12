@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
@@ -46,14 +47,17 @@ abstract class DataColumnFactory extends AbstractStaticFactory
     public static function createFromUxon(DataSheetInterface $data_sheet, UxonObject $uxon)
     {
         switch (true) {
-            case null !== $exprString = $uxon->getProperty('expression'):
+            case '' !== $exprString = ($uxon->getProperty('expression') ?? ''):
                 break;
-            case null !== $exprString = $uxon->getProperty('attribute_alias'):
+            case '' !== $exprString = ($uxon->getProperty('attribute_alias') ?? ''):
                 break;
-            case null !== $exprString = $uxon->getProperty('formula');
+            case '' !== $exprString = ($uxon->getProperty('formula') ?? '');
                 break;
         }
-        if (null === $name = $uxon->getProperty('name')) {
+        if ('' === $name = ($uxon->getProperty('name') ?? '')) {
+            if ($exprString === null) {
+                throw new UxonParserError($uxon, 'Invalid data column UXON: ' . $uxon->toJson());
+            }
             $name = DataColumn::sanitizeColumnName($exprString);
         }
         $result = self::createFromString($data_sheet, $exprString, $name);

@@ -30,6 +30,7 @@ class DataTableConfigurator extends DataConfigurator
     private $aggregation_tab = null;
 
     private $tabSetups = null;
+    private $setupsDisabled = false;
     private $setupsUxon = null;
 
     /**
@@ -174,7 +175,7 @@ class DataTableConfigurator extends DataConfigurator
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION'));
         $tab->setIcon(Icons::OBJECT_GROUP);
-        // TODO reenable the tab once it has content
+        // TODO re-enable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
     }
@@ -184,7 +185,7 @@ class DataTableConfigurator extends DataConfigurator
      */
     public function getSetupsTab() : ?Tab
     {
-        if ($this->isDisabled()) {
+        if (! $this->hasSetups()) {
             $this->tabSetups->setHidden(true);
             return $this->tabSetups;
         }
@@ -204,14 +205,10 @@ class DataTableConfigurator extends DataConfigurator
         $table = WidgetFactory::createFromUxonInParent($tab, new UxonObject([
             'widget_type' => 'DataTableResponsive',
             'object_alias' => 'exface.Core.WIDGET_SETUP',
+            'paginate' => false,
+            'configurator_setups_enabled' => false,
             'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'),
-            'filters' => [
-                [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__USER__UID',
-                    'comparator' => ComparatorDataType::EQUALS,
-                    'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-                    'apply_to_aggregates' => true
-                ], 
+            'filters' => [                
                 [
                     'attribute_alias' => 'PAGE',
                     'comparator' => ComparatorDataType::EQUALS,
@@ -227,7 +224,7 @@ class DataTableConfigurator extends DataConfigurator
                     'hidden' => true,
                     'condition_group' => [
                         'operator' => EXF_LOGICAL_OR,
-                        'conditons' => [
+                        'conditions' => [
                             [
                                 'expression' => 'PRIVATE_FOR_USER',
                                 'comparator' => ComparatorDataType::EQUALS,
@@ -324,7 +321,7 @@ class DataTableConfigurator extends DataConfigurator
                     ]
                 ], [
                     // TODO Translate
-                    'caption' => 'Share',
+                    'caption' => 'Sharex',
                     'icon' => 'share',
                     'hide_caption' => true,
                     'action' => [
@@ -432,8 +429,6 @@ class DataTableConfigurator extends DataConfigurator
         ]));
         $table->setHideHelpButton(true);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
-        $table->setPaginate(false);
-        $table->getConfiguratorWidget()->setDisabled(true);
         $tab->addWidget($table);
         return $tab;
     }
@@ -442,5 +437,26 @@ class DataTableConfigurator extends DataConfigurator
     {
         $this->setupsUxon = $arrayOfSetups;
         return $this;
+    }
+
+    /**
+     * Set to FALSE to disable saving/loading widget setups entirely
+     * 
+     * @uxon-property setups_enabled
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setSetupsEnabled(bool $trueOrFalse) : DataTableConfigurator
+    {
+        $this->setupsDisabled = ! $trueOrFalse;
+        return $this;
+    }
+    
+    public function hasSetups() : bool
+    {
+        return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
     }
 }
