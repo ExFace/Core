@@ -797,22 +797,6 @@ class DataSheet implements DataSheetInterface
             $this->setColumnValues($name, $vals, $totals);
         }
         
-        // HTML decode columns with Aggregators.
-        foreach ($this->getColumns() as $column) {
-            if(!$column->hasAggregator()) {
-                continue;
-            }
-            
-            if($column->getDataType() instanceof StringDataType) {
-                $column->setValues(array_map(
-                    function ($value) {
-                        return html_entity_decode($value);
-                    },
-                    $column->getValues()
-                ));
-            }
-        }
-        
         if (! $postprocessorSorters->isEmpty()) {
             if ($this->isPaged() === true) {
                 throw new DataSheetReadError($this, 'Cannot sort by columns from different data sources when using pagination: either increase page length or filter data to fit on one page!');
