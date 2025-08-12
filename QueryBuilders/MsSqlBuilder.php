@@ -467,6 +467,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
         foreach ($this->getAttributes() as $qpart) {
             $colKey = $qpart->getColumnKey();
             $type = $qpart->getDataType();
+            
+            // Format dates.
             switch (true) {
                 case $type instanceof DateTimeDataType:
                 case $type instanceof DateDataType:
@@ -474,12 +476,26 @@ class MsSqlBuilder extends AbstractSqlBuilder
                         $val = $row[$colKey];
                         if ($val instanceof \DateTime) {
                             $val = $type::formatDateNormalized($val);
-                            $rows[$nr][$qpart->getColumnKey()] = $val;
+                            $rows[$nr][$colKey] = $val;
                         }
                     }
                     break;
             }
+
+            // Decode HTML entities.
+            if($qpart->hasAggregator()) {
+                $aggregator = $qpart->getAggregator()->__toString();
+                if( $aggregator === AggregatorFunctionsDataType::LIST_ALL || 
+                    $aggregator === AggregatorFunctionsDataType::LIST_DISTINCT
+                ) {
+                    foreach ($rows as $nr => $row) {
+                        $val = $row[$colKey];
+                        $rows[$nr][$colKey] = html_entity_decode($val);
+                    }
+                }
+            }
         }
+        
         return $rows;
     }
     
@@ -502,7 +518,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // buildSqlSelectSubselect() or buildSqlSelectGrouped() for subselects and regular
                 // columns a bit differently.
                 
-                // Make sure to cast any non-string things to nvarchar BEFORE they are concatennated
+                // Make sure to cast any non-string things to nvarchar BEFORE they are concatenated
                 if (! ($qpart->getAttribute()->getDataType() instanceof StringDataType)) {
                     $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
                 }
