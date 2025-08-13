@@ -67,9 +67,9 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Edit [WidgetSetupEditForUsers]",
             "CREATED_ON": "2025-08-08 15:11:58",
-            "MODIFIED_ON": "2025-08-08 15:11:58",
+            "MODIFIED_ON": "2025-08-13 10:32:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0854043e6831a8540025041000001",
             "OBJECT": "0x11f086ea436aa07486ea025041000001",
             "ACTION_PROTOTYPE": "exface/Core/Actions/ShowObjectEditDialog.php",
@@ -83,7 +83,46 @@
                     "height": "auto",
                     "widgets": [
                         {
-                            "attribute_alias": "NAME"
+                            "attribute_alias": "NAME",
+                            "hint": "Name of the current setup."
+                        },
+                        {
+                            "attribute_alias": "UID",
+                            "id": "selectedWidgetSetup",
+                            "hidden": true
+                        },
+                        {
+                            "widget_type": "DataTable",
+                            "object_alias": "exface.Core.WIDGET_SETUP_USER",
+                            "hide_caption": true,
+                            "//caption": "Setup Share List",
+                            "filters": [
+                                {
+                                    "attribute_alias": "WIDGET_SETUP",
+                                    "hidden": true
+                                },
+                                {
+                                    "attribute_alias": "USER",
+                                    "hidden": true,
+                                    "value": "=User('UID')",
+                                    "comparator": "!=="
+                                }
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": "USER__LABEL"
+                                },
+                                {
+                                    "attribute_alias": "CREATED_ON",
+                                    "caption": "Shared on"
+                                }
+                            ],
+                            "buttons": [
+                                {
+                                    "action_alias": "exface.Core.DeleteObject",
+                                    "visibility": "normal"
+                                }
+                            ]
                         }
                     ],
                     "buttons": [
@@ -91,6 +130,93 @@
                             "action_alias": "exface.Core.UpdateData",
                             "visibility": "promoted",
                             "align": "opposite"
+                        },
+                        {
+                            "hint": "Shares the setup with another new person",
+                            "caption": "Share",
+                            "align": "default",
+                            "action": {
+                                "alias": "exface.core.ActionChain",
+                                "actions": [
+                                    {
+                                        "alias": "exface.Core.WidgetSetupShareForUsers",
+                                        "object_alias": "exface.Core.WIDGET_SETUP"
+                                    },
+                                    {
+                                        "alias": "exface.core.UpdateData"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "Widget setup: Share [WidgetSetupShareForUsers]",
+            "CREATED_ON": "2025-08-12 11:50:22",
+            "MODIFIED_ON": "2025-08-13 10:28:42",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f0b59ac3940686b59a025041000001",
+            "OBJECT": "0x11f086ea436aa07486ea025041000001",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
+            "ALIAS": "WidgetSetupShareForUsers",
+            "NAME": "Share",
+            "SHORT_DESCRIPTION": "Share the setup with other users",
+            "CONFIG_UXON": {
+                "alias": "exface.core.ShowDialog",
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "exface.Core.WIDGET_SETUP",
+                "dialog": {
+                    "height": "auto",
+                    "width": 1,
+                    "columns_in_grid": 1,
+                    "maximized": false,
+                    "caption": "Share Setup",
+                    "widgets": [
+                        {
+                            "widget_type": "InputComboTable",
+                            "caption": "User",
+                            "table_object_alias": "exface.Core.USER",
+                            "text_attribute_alias": "FULL_NAME",
+                            "value_attribute_alias": "UID",
+                            "data_column_name": "_SharedUser"
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "Share",
+                            "visibility": "promoted",
+                            "align": "opposite",
+                            "action": {
+                                "alias": "exface.core.ActionChain",
+                                "result_message_text": "The Setup was shared successfully ",
+                                "actions": [
+                                    {
+                                        "alias": "exface.core.CreateData",
+                                        "object_alias": "exface.Core.WIDGET_SETUP_USER",
+                                        "input_mapper": {
+                                            "from_object_alias": "exface.Core.WIDGET_SETUP",
+                                            "to_object_alias": "exface.Core.WIDGET_SETUP_USER",
+                                            "column_to_column_mappings": [
+                                                {
+                                                    "from": "UID",
+                                                    "to": "WIDGET_SETUP"
+                                                },
+                                                {
+                                                    "from": "_SharedUser",
+                                                    "to": "USER"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }
