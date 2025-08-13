@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Factories\WidgetFactory;
 
@@ -274,9 +275,10 @@ class DataTableConfigurator extends DataConfigurator
                     'visibility' => WidgetVisibilityDataType::PROMOTED,
                     'bind_to_double_click' => true,
                     'action' => [
+                        'alias' => "exface.Core.CallWidgetFunction",
                         "input_rows_min" => 1,
                         "input_rows_max" => 1,
-                        'alias' => "exface.Core.CallWidgetFunction",
+                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
                         'widget_id' => $this->getDataWidget()->getId(),
                         'function' => "apply_setup([#SETUP_UXON#])"
                     ]
@@ -288,6 +290,7 @@ class DataTableConfigurator extends DataConfigurator
                     // 'visibility' => WidgetVisibilityDataType::PROMOTED,
                     'action' => [
                         'alias' => "exface.Core.CallWidgetFunction",
+                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
                         'widget_id' => $this->getDataWidget()->getId(),
                         'function' => "save_setup"
                     ]
@@ -298,6 +301,7 @@ class DataTableConfigurator extends DataConfigurator
                     'hide_caption' => true,
                     'action' => [
                         "alias" => "exface.Core.SaveData",
+                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
                         "object_alias" => "exface.Core.WIDGET_SETUP_USER",
                         "input_rows_min" => 1,
                         "input_rows_max" => 1,

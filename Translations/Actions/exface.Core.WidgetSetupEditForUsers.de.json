@@ -2,6 +2,7 @@
     "NAME": null,
     "SHORT_DESCRIPTION": null,
     "CONFIG_UXON.HINT.NAME_OF_THE_CURRENT_SETUP.": "Bezeichnung der aktuellen Ansicht",
+    "CONFIG_UXON.CAPTION.SHARED_WITH_USERS": "Ansicht geteilt mit Nutzern",
     "CONFIG_UXON.CAPTION.SHARED_ON": "Geteilt am",
     "CONFIG_UXON.HINT.SHARES_THE_SETUP_WITH_ANOTHER_NEW_PERSON": "Teilt diese Ansicht mit einer weiteren Person",
     "CONFIG_UXON.CAPTION.SHARE": "Teilen"

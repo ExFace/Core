@@ -67,9 +67,9 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Edit [WidgetSetupEditForUsers]",
             "CREATED_ON": "2025-08-08 15:11:58",
-            "MODIFIED_ON": "2025-08-13 10:32:26",
+            "MODIFIED_ON": "2025-08-13 14:28:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0854043e6831a8540025041000001",
             "OBJECT": "0x11f086ea436aa07486ea025041000001",
             "ACTION_PROTOTYPE": "exface/Core/Actions/ShowObjectEditDialog.php",
@@ -77,6 +77,8 @@
             "NAME": "Edit",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
+                "input_object_alias": "exface.Core.WIDGET_SETUP",
+                "offline_strategy": "online_only",
                 "dialog": {
                     "maximized": false,
                     "width": 1,
@@ -92,35 +94,42 @@
                             "hidden": true
                         },
                         {
-                            "widget_type": "DataTable",
-                            "object_alias": "exface.Core.WIDGET_SETUP_USER",
-                            "hide_caption": true,
-                            "//caption": "Setup Share List",
-                            "filters": [
+                            "widget_type": "WidgetGroup",
+                            "caption": "Shared with users",
+                            "widgets": [
                                 {
-                                    "attribute_alias": "WIDGET_SETUP",
-                                    "hidden": true
-                                },
-                                {
-                                    "attribute_alias": "USER",
-                                    "hidden": true,
-                                    "value": "=User('UID')",
-                                    "comparator": "!=="
-                                }
-                            ],
-                            "columns": [
-                                {
-                                    "attribute_alias": "USER__LABEL"
-                                },
-                                {
-                                    "attribute_alias": "CREATED_ON",
-                                    "caption": "Shared on"
-                                }
-                            ],
-                            "buttons": [
-                                {
-                                    "action_alias": "exface.Core.DeleteObject",
-                                    "visibility": "normal"
+                                    "widget_type": "DataTable",
+                                    "object_alias": "exface.Core.WIDGET_SETUP_USER",
+                                    "hide_caption": true,
+                                    "paginate": false,
+                                    "configurator_setups_enabled": false,
+                                    "filters": [
+                                        {
+                                            "attribute_alias": "WIDGET_SETUP",
+                                            "hidden": true
+                                        },
+                                        {
+                                            "attribute_alias": "USER",
+                                            "hidden": true,
+                                            "value": "=User('UID')",
+                                            "comparator": "!=="
+                                        }
+                                    ],
+                                    "columns": [
+                                        {
+                                            "attribute_alias": "USER__LABEL"
+                                        },
+                                        {
+                                            "attribute_alias": "CREATED_ON",
+                                            "caption": "Shared on"
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "action_alias": "exface.Core.DeleteObject",
+                                            "visibility": "normal"
+                                        }
+                                    ]
                                 }
                             ]
                         }
@@ -158,9 +167,9 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Share [WidgetSetupShareForUsers]",
             "CREATED_ON": "2025-08-12 11:50:22",
-            "MODIFIED_ON": "2025-08-13 10:28:42",
+            "MODIFIED_ON": "2025-08-13 14:25:33",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0b59ac3940686b59a025041000001",
             "OBJECT": "0x11f086ea436aa07486ea025041000001",
             "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
@@ -172,6 +181,7 @@
                 "input_rows_min": 1,
                 "input_rows_max": 1,
                 "input_object_alias": "exface.Core.WIDGET_SETUP",
+                "offline_strategy": "online_only",
                 "dialog": {
                     "height": "auto",
                     "width": 1,
