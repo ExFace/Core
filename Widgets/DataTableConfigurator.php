@@ -322,83 +322,10 @@ class DataTableConfigurator extends DataConfigurator
                         ]
                     ]
                 ], [
-                    'caption' => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_CAPTION"),
-                    'icon' => 'share',
                     'hide_caption' => true,
-                    'action' => [
-                        "alias" => "exface.Core.ShowDialog",
-                        "input_rows_min" => 1,
-                        "input_rows_max" => 1,
-                        "input_object_alias" => "exface.Core.WIDGET_SETUP",
-                        "dialog" => [
-                            "height" => "auto",
-                            "width" => 1,
-                            "columns_in_grid" => 1,
-                            "maximized" => false,
-                            "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_DIALOG_TITLE"),
-                            "widgets" => [
-                                [
-                                    "widget_type" => "InputComboTable",
-                                    "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_DIALOG_USER"),
-                                    "table_object_alias" => "exface.Core.USER",
-                                    "text_attribute_alias" => "FULL_NAME",
-                                    "value_attribute_alias" => "UID",
-                                    "data_column_name" => "_SharedUser"
-                                ]
-                            ],
-                            "buttons" => [
-                            [
-                                "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE"),
-                                "visibility" => "promoted",
-                                "align" => "opposite",
-                                "action" => [
-                                "result_message_text" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SHARE_SUCCESS"),
-                                "alias" => "exface.Core.ActionChain",
-                                "actions" => [
-                                    // [
-                                    //     // -> should sharing set private_for_user to null?
-                                    //     "alias" => "exface.Core.UpdateData",
-                                    //     "object_alias" => "exface.Core.WIDGET_SETUP",
-                                    //     "input_mapper" => [
-                                    //         "column_to_column_mappings" => [
-                                    //             [
-                                    //                 "from" => EXF_LOGICAL_NULL,
-                                    //                 "to" => "PRIVATE_FOR_USER"
-                                    //             ]
-                                    //         ]
-                                    //     ],
-                                    // ],
-                                    [
-                                    "alias" => "exface.Core.CreateData",
-                                    "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "input_mapper" => [
-                                        "from_object_alias" => "exface.Core.WIDGET_SETUP",
-                                        "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "column_to_column_mappings" => [
-                                            [
-                                                "from" => "UID",
-                                                "to" => "WIDGET_SETUP"
-                                            ],
-                                            [
-                                                "from" => "_SharedUser",
-                                                "to" => "USER"
-                                            ]
-                                        ]
-                                    ]
-                                    ]
-                                ]
-                                ]
-                            ]
-                            ]
-                        ]
-                    ]
-                ], /*
-                    TODO Add an edit action for users, that will allow to edit the setup:
-                    - Allow to change the name
-                    - show a table with other users, that this setup is shared with (only if it is a private setup)
-                    - Button to delete a share
-                    - Button to add a new share (same as share Setup above)
-                    */
+                    'icon' => 'share',
+                    'action_alias' => 'exface.Core.WidgetSetupShareForUsers',
+                ],
                 [
                     'action_alias' => 'exface.Core.WidgetSetupEditForUsers',
                     'hide_caption' => true,
