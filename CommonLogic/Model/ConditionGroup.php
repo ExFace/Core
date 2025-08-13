@@ -517,7 +517,7 @@ class ConditionGroup implements ConditionGroupInterface
         ];
         $otherProps = array_diff(array_keys($uxon->toArray()), $processedProps);
         if (! empty($otherProps)) {
-            throw new UxonParserError($uxon, 'Unknown UXON properties "' . implode('", "', $otherProps) . '" found for ConditionGroup');
+            throw new UxonParserError($uxon, 'Unknown UXON property "' . implode('", "', $otherProps) . '" found for ConditionGroup');
         }
     }
     
