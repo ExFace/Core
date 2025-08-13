@@ -1,7 +1,0 @@
--- UP
-
-ALTER TABLE `exf_page` ADD PRIMARY KEY (`oid`);
-
--- DOWN
-
-ALTER TABLE `exf_page` DROP PRIMARY KEY;
