@@ -87,7 +87,18 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
     public function buildJsFormatter($jsInput)
     {
         $formatQuoted = $this->escapeFormatString($this->getFormat());
-        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, {$formatQuoted}) : new Date({$jsInput}))), {$formatQuoted})";
+        return <<<JS
+(function (mInput) {
+    bParseRequired = isNaN(mInput) || {$this->getJsEmptyCheck('mInput')};  
+    return exfTools.date.format(
+        bParseRequired ? 
+                exfTools.date.parse(mInput, {$formatQuoted}) : 
+                new Date(mInput),
+        {$formatQuoted},
+        {$this->getJsEmptyText()}
+    );
+})({$jsInput})
+JS;
     }
 
     /**
@@ -316,5 +327,14 @@ JS;
     protected function escapeFormatString(string $format) : string
     {
         return json_encode($format, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * @inerhitDoc
+     * @see JsDataTypeFormatterInterface::getJsEmptyText()
+     */
+    public function getJsEmptyText(string $jsFallback = '', bool $encode = true): ?string
+    {
+        return AbstractJsDataTypeFormatter::getJsEmptyText('"Invalid Date"', $encode); 
     }
 }
