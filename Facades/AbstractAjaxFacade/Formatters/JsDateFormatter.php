@@ -328,13 +328,4 @@ JS;
     {
         return json_encode($format, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
-
-    /**
-     * @inerhitDoc
-     * @see JsDataTypeFormatterInterface::getJsEmptyText()
-     */
-    public function getJsEmptyText(string $jsFallback = '', bool $encode = true): ?string
-    {
-        return AbstractJsDataTypeFormatter::getJsEmptyText('"Invalid Date"', $encode); 
-    }
 }
