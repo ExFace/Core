@@ -2,10 +2,12 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Factories\WidgetFactory;
 
 /**
@@ -191,7 +193,11 @@ class DataTableConfigurator extends DataConfigurator
             return $this->tabSetups;
         }
         if ($this->tabSetups->isEmpty()) {
-            $this->initSetupsTable($this->tabSetups);
+            try {
+                $this->initSetupsTable($this->tabSetups);
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException(new WidgetLogicError($this->getDataWidget(), 'Error instantiating setups table. ' . $e->getMessage(), null, $e));
+            }
         }
         return $this->tabSetups;
     }
@@ -208,7 +214,7 @@ class DataTableConfigurator extends DataConfigurator
             'object_alias' => 'exface.Core.WIDGET_SETUP',
             'paginate' => false,
             'configurator_setups_enabled' => false,
-            'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'),
+            'hide_caption' => true,
             'filters' => [
                 [
                     'attribute_alias' => 'PAGE',
@@ -252,10 +258,11 @@ class DataTableConfigurator extends DataConfigurator
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
                 ], [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG'
-                ], [
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
+                ], [
+                    'attribute_alias' => 'DESCRIPTION',
+                    'nowrap' => false
                 ], [
                     'attribute_alias' => 'SETUP_UXON',
                     'hidden' => true
@@ -328,16 +335,14 @@ class DataTableConfigurator extends DataConfigurator
                     'action_alias' => 'exface.Core.WidgetSetupShareForUsers',
                 ],
                 [
-                    'action_alias' => 'exface.Core.WidgetSetupEditForUsers',
                     'hide_caption' => true,
-                    'disabled_if' => [
-                        'operator' => 'AND',
-                        'conditions' => [
-                            [
-                                'value_left' => '=~input!VISIBILITY',
-                                'comparator' => ComparatorDataType::EQUALS_NOT,
-                                'value_right' => 'PRIVATE'
-                            ]
+                    'action' => [
+                        'alias' => 'exface.Core.WidgetSetupEditForUsers',
+                        // Make sure to use system columns for prefill only. DO NOT use WIDGET_SETUP_USER__FAVORITE_FLAG
+                        // and similar because they will produce errors when trying to read missing data. These columns
+                        // only work here because of the user filter!
+                        'input_mapper' => [
+                            'inherit_columns' => DataSheetMapper::INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES
                         ]
                     ]
                 ], [
