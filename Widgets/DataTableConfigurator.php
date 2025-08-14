@@ -2,9 +2,12 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Factories\WidgetFactory;
 
 /**
@@ -30,6 +33,7 @@ class DataTableConfigurator extends DataConfigurator
     private $aggregation_tab = null;
 
     private $tabSetups = null;
+    private $setupsDisabled = false;
     private $setupsUxon = null;
 
     /**
@@ -174,7 +178,7 @@ class DataTableConfigurator extends DataConfigurator
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION'));
         $tab->setIcon(Icons::OBJECT_GROUP);
-        // TODO reenable the tab once it has content
+        // TODO re-enable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
     }
@@ -184,12 +188,16 @@ class DataTableConfigurator extends DataConfigurator
      */
     public function getSetupsTab() : ?Tab
     {
-        if ($this->isDisabled()) {
+        if (! $this->hasSetups()) {
             $this->tabSetups->setHidden(true);
             return $this->tabSetups;
         }
         if ($this->tabSetups->isEmpty()) {
-            $this->initSetupsTable($this->tabSetups);
+            try {
+                $this->initSetupsTable($this->tabSetups);
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException(new WidgetLogicError($this->getDataWidget(), 'Error instantiating setups table. ' . $e->getMessage(), null, $e));
+            }
         }
         return $this->tabSetups;
     }
@@ -204,14 +212,10 @@ class DataTableConfigurator extends DataConfigurator
         $table = WidgetFactory::createFromUxonInParent($tab, new UxonObject([
             'widget_type' => 'DataTableResponsive',
             'object_alias' => 'exface.Core.WIDGET_SETUP',
-            'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION'),
+            'paginate' => false,
+            'configurator_setups_enabled' => false,
+            'hide_caption' => true,
             'filters' => [
-                [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__USER__UID',
-                    'comparator' => ComparatorDataType::EQUALS,
-                    'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-                    'apply_to_aggregates' => true
-                ], 
                 [
                     'attribute_alias' => 'PAGE',
                     'comparator' => ComparatorDataType::EQUALS,
@@ -227,7 +231,7 @@ class DataTableConfigurator extends DataConfigurator
                     'hidden' => true,
                     'condition_group' => [
                         'operator' => EXF_LOGICAL_OR,
-                        'conditons' => [
+                        'conditions' => [
                             [
                                 'expression' => 'PRIVATE_FOR_USER',
                                 'comparator' => ComparatorDataType::EQUALS,
@@ -254,10 +258,11 @@ class DataTableConfigurator extends DataConfigurator
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
                 ], [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG'
-                ], [
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
+                ], [
+                    'attribute_alias' => 'DESCRIPTION',
+                    'nowrap' => false
                 ], [
                     'attribute_alias' => 'SETUP_UXON',
                     'hidden' => true
@@ -277,9 +282,10 @@ class DataTableConfigurator extends DataConfigurator
                     'visibility' => WidgetVisibilityDataType::PROMOTED,
                     'bind_to_double_click' => true,
                     'action' => [
+                        'alias' => "exface.Core.CallWidgetFunction",
                         "input_rows_min" => 1,
                         "input_rows_max" => 1,
-                        'alias' => "exface.Core.CallWidgetFunction",
+                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
                         'widget_id' => $this->getDataWidget()->getId(),
                         'function' => "apply_setup([#SETUP_UXON#])"
                     ]
@@ -291,17 +297,18 @@ class DataTableConfigurator extends DataConfigurator
                     // 'visibility' => WidgetVisibilityDataType::PROMOTED,
                     'action' => [
                         'alias' => "exface.Core.CallWidgetFunction",
+                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
                         'widget_id' => $this->getDataWidget()->getId(),
                         'function' => "save_setup"
                     ]
                 ], [
-                    // TODO Translate
-                    'caption' => 'Favorite',
-                    'hint' => 'Mark as favorite or vice versa',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE'),
+                    'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT'),
                     'icon' => 'star',
                     'hide_caption' => true,
                     'action' => [
                         "alias" => "exface.Core.SaveData",
+                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
                         "object_alias" => "exface.Core.WIDGET_SETUP_USER",
                         "input_rows_min" => 1,
                         "input_rows_max" => 1,
@@ -323,95 +330,19 @@ class DataTableConfigurator extends DataConfigurator
                         ]
                     ]
                 ], [
-                    // TODO Translate
-                    'caption' => 'Share',
+                    'hide_caption' => true,
                     'icon' => 'share',
+                    'action_alias' => 'exface.Core.WidgetSetupShareForUsers',
+                ],
+                [
                     'hide_caption' => true,
                     'action' => [
-                        "alias" => "exface.Core.ShowDialog",
-                        "input_rows_min" => 1,
-                        "input_rows_max" => 1,
-                        "input_object_alias" => "exface.Core.WIDGET_SETUP",
-                        "dialog" => [
-                            "height" => "auto",
-                            "width" => 1,
-                            "columns_in_grid" => 1,
-                            "maximized" => false,
-                            "caption" => "Ansicht teilen",
-                            "widgets" => [
-                                [
-                                    "widget_type" => "InputComboTable",
-                                    "caption" => "Nutzer",
-                                    "table_object_alias" => "exface.Core.USER",
-                                    "text_attribute_alias" => "FULL_NAME",
-                                    "value_attribute_alias" => "UID",
-                                    "data_column_name" => "_SharedUser"
-                                ]
-                            ],
-                            "buttons" => [
-                            [
-                                "caption" => "Share",
-                                "visibility" => "promoted",
-                                "align" => "opposite",
-                                "action" => [
-                                "result_message_text" => "Ansicht erfolgreich geteilt!",
-                                "alias" => "exface.Core.ActionChain",
-                                "actions" => [
-                                    // [
-                                    //     // -> should sharing set private_for_user to null?
-                                    //     "alias" => "exface.Core.UpdateData",
-                                    //     "object_alias" => "exface.Core.WIDGET_SETUP",
-                                    //     "input_mapper" => [
-                                    //         "column_to_column_mappings" => [
-                                    //             [
-                                    //                 "from" => EXF_LOGICAL_NULL,
-                                    //                 "to" => "PRIVATE_FOR_USER"
-                                    //             ]
-                                    //         ]
-                                    //     ],
-                                    // ],
-                                    [
-                                    "alias" => "exface.Core.CreateData",
-                                    "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                    "input_mapper" => [
-                                        "from_object_alias" => "exface.Core.WIDGET_SETUP",
-                                        "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                        "column_to_column_mappings" => [
-                                            [
-                                                "from" => "UID",
-                                                "to" => "WIDGET_SETUP"
-                                            ],
-                                            [
-                                                "from" => "_SharedUser",
-                                                "to" => "USER"
-                                            ]
-                                        ]
-                                    ]
-                                    ]
-                                ]
-                                ]
-                            ]
-                            ]
-                        ]
-                    ]
-                ], /*
-                    TODO Add an edit action for users, that will allow to edit the setup:
-                    - Allow to change the name
-                    - show a table with other users, that this setup is shared with (only if it is a private setup)
-                    - Button to delete a share
-                    - Button to add a new share (same as share Setup above)
-                    */
-                [
-                    'action_alias' => 'exface.Core.WidgetSetupEditForUsers',
-                    'hide_caption' => true,
-                    'disabled_if' => [
-                        'operator' => 'AND',
-                        'conditions' => [
-                            [
-                                'value_left' => '=~input!VISIBILITY',
-                                'comparator' => ComparatorDataType::EQUALS_NOT,
-                                'value_right' => 'PRIVATE'
-                            ]
+                        'alias' => 'exface.Core.WidgetSetupEditForUsers',
+                        // Make sure to use system columns for prefill only. DO NOT use WIDGET_SETUP_USER__FAVORITE_FLAG
+                        // and similar because they will produce errors when trying to read missing data. These columns
+                        // only work here because of the user filter!
+                        'input_mapper' => [
+                            'inherit_columns' => DataSheetMapper::INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES
                         ]
                     ]
                 ], [
@@ -432,8 +363,6 @@ class DataTableConfigurator extends DataConfigurator
         ]));
         $table->setHideHelpButton(true);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
-        $table->setPaginate(false);
-        $table->getConfiguratorWidget()->setDisabled(true);
         $tab->addWidget($table);
         return $tab;
     }
@@ -442,5 +371,26 @@ class DataTableConfigurator extends DataConfigurator
     {
         $this->setupsUxon = $arrayOfSetups;
         return $this;
+    }
+
+    /**
+     * Set to FALSE to disable saving/loading widget setups entirely
+     *
+     * @uxon-property setups_enabled
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setSetupsEnabled(bool $trueOrFalse) : DataTableConfigurator
+    {
+        $this->setupsDisabled = ! $trueOrFalse;
+        return $this;
+    }
+
+    public function hasSetups() : bool
+    {
+        return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
     }
 }

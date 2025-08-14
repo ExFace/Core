@@ -499,11 +499,25 @@ class ConditionGroup implements ConditionGroupInterface
                     }
                     $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $prop));
                 }
-            }
+            }            
         } catch (UxonParserError $e) {
             throw $e;
         } catch (\Throwable $e) {
             throw new UxonParserError($uxon, 'Cannot create condition group from UXON: ' . $e->getMessage(), null, $e);   
+        }
+
+        // Double-check, if there are any UXON properties, that were not processed here. If so, throw an error!
+        $processedProps = [
+            'operator',
+            'base_object_alias',
+            'object_alias',
+            'ignore_empty_values',
+            'conditions',
+            'nested_groups'
+        ];
+        $otherProps = array_diff(array_keys($uxon->toArray()), $processedProps);
+        if (! empty($otherProps)) {
+            throw new UxonParserError($uxon, 'Unknown UXON property "' . implode('", "', $otherProps) . '" found for ConditionGroup');
         }
     }
     
@@ -735,7 +749,7 @@ class ConditionGroup implements ConditionGroupInterface
     ) : bool
     {
         if($readMissingData && $data_sheet !== null) {
-            $data_sheet = $this->readMissingData($data_sheet);
+            $data_sheet = $this->readRequiredData($data_sheet);
         }
         
         $op = $this->getOperator();
@@ -922,30 +936,30 @@ class ConditionGroup implements ConditionGroupInterface
      * @inheritDoc
      * @see ConditionGroupInterface::getRequiredExpressions()
      */
-    public function getRequiredExpressions(?MetaObjectInterface $object = null) : array
+    public function getRequiredExpressions(?MetaObjectInterface $object = null, bool $includeConstants = true) : array
     {
         $exprs = [];
         foreach ($this->getConditionsRecursive() as $cond) {
             $exprs = array_merge($exprs, $cond->getRequiredExpressions($object));
         }
+
+        if ($includeConstants === false) {
+            return array_filter($exprs, function ($expr) {
+                return ! $expr->isConstant() && ! $expr->isEmpty();
+            });
+        } 
         return $exprs;
     }
 
     /**
+     * // TODO Why is this public???
      * @inheritDoc
      * @see ConditionGroupInterface::readMissingData()
      */
-    public function readMissingData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface
+    protected function readRequiredData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface
     {
-        $collector = $this->dataCollector ?? new DataCollector($dataSheet->getMetaObject());
-        $requiredExpressions = $this->getRequiredExpressions();
-        
-        if($collector->getRequiredExpressions() !== $requiredExpressions) {
-            $collector->addExpressions($requiredExpressions);
-        }
-
+        $collector = $this->dataCollector ?? DataCollector::fromConditionGroup($this, $this->getBaseObject());
         $collector->collectFrom($dataSheet, $logBook);
-
         return $collector->getRequiredData();
     }
 }

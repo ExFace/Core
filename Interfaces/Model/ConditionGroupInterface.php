@@ -287,19 +287,6 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function with(string $operator, ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
 
     /**
-     * Forces the condition group to load missing data. 
-     * 
-     * This happens automatically on `evaluate()`, anyway. But if you want to control the timing
-     * or read all data in one batch to improve performance this is the way to go. Remember to
-     * call `evaluate()` with `$readMissingData = FALSE` if you do this.
-     * 
-     * @param DataSheetInterface    $dataSheet
-     * @param LogBookInterface|null $logBook
-     * @return DataSheetInterface
-     */
-    public function readMissingData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface;
-
-    /**
      * @inheritDoc
      * @param bool $readMissingData
      * Set to TRUE, if you want this condition group to read missing data.
