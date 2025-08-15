@@ -188,7 +188,13 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
             if ($w instanceof UxonObject) {
                 // If we have a UXON or instantiated widget object, use the widget directly
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromUxon($page, $w, $this, $this->getTabWidgetType());
+                $widgetType = WidgetFactory::getWidgetType($this->getPage(), $w, $this, $this->getTabWidgetType());
+                
+                if($this->isWidgetTypeAllowed($widgetType)) {
+                    $widget = WidgetFactory::createFromUxon($page, $w, $this, $this->getTabWidgetType());
+                } else {
+                    $widget = $this->wrapInTab($w);
+                }
             } elseif ($w instanceof WidgetInterface){
                 $widget = $w;
             } else {
@@ -196,12 +202,8 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
                 $widgets[] = $w;
             }
             
-            // If the widget is not a Tab itslef, wrap it in a Tab. Otherwise add it directly to the result.
-            if (! $this->isWidgetAllowed($widget)) {
-                $widgets[] = $this->createTab($widget);
-            } else {
-                $widgets[] = $widget;
-            }
+            // If the widget is not a Tab itself, wrap it in a Tab. Otherwise, add it directly to the result.
+            $widgets[] = $widget;
         }
         
         // Now the resulting array consists of widgets and unknown items. Send it to the parent class. Widgets will get
@@ -223,22 +225,24 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
     /**
      * Creates a tab (but does not add it automatically!!!)
      *
-     * @param WidgetInterface $contents            
      * @return Tab
      */
-    public function createTab(WidgetInterface $contents = null) : Tab
+    public function createTab() : Tab
     {
         // Create an empty tab
-        $widget = $this->getPage()->createWidget($this->getTabWidgetType(), $this);
+        return $this->getPage()->createWidget($this->getTabWidgetType(), $this);
+    }
+    
+    public function wrapInTab(UxonObject $content) : Tab
+    {
+        $tab = $this->createTab();
+        $content = WidgetFactory::createFromUxon($this->getPage(), $content, $tab, $this->getTabWidgetType());
         
-        // If any contained widget is specified, add it to the tab an inherit some of it's attributes
-        if ($contents) {
-            $widget->addWidget($contents);
-            $widget->setMetaObject($contents->getMetaObject());
-            $widget->setCaption($contents->getCaption());
-        }
+        $tab->addWidget($content);
+        $tab->setMetaObject($content->getMetaObject());
+        $tab->setCaption($content->getCaption());
         
-        return $widget;
+        return $tab;
     }
 
     /**
@@ -264,7 +268,7 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
                 $tab->addWidget($child);
             }
         } else {
-            $tab = $this->createTab($widget);
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot add Widget "' . $widget->getId() . '". Widget type "Tab" expected, "' . $widget->getWidgetType() . '" given!');
         }
         return $this->addWidget($tab, $position);
     }
