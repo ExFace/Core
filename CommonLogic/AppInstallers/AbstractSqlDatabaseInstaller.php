@@ -1,8 +1,7 @@
 <?php
-
 namespace exface\Core\CommonLogic\AppInstallers;
 
-
+use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\AppExporterInterface;
 use exface\Core\CommonLogic\AppInstallers\Plugins\AbstractSqlInstallerPlugin;
@@ -50,6 +49,8 @@ use exface\Core\DataTypes\JsonDataType;
  * 
  * - `INSTALLER.SQLDATABASEINSTALLER.DISABLED` - set to TRUE to disable this installer
  * completely (e.g. if you wish to manage the database manually).
+ * - `INSTALLER.SQLDATABASEINSTALLER.COMPARE_SCHEMAS` - set to TRUE to compare the
+ * current SQL schema to a dump  
  * - `INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS` - array of migration names to
  * skip for this specific installation.
  * 
@@ -135,8 +136,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
         // TODO make schema compare work
 
-        if($this->getDataConnection()->getPrototypeSelector()->toString() === 'exface/Core/DataConnectors/MsSqlConnector.php'){
-            yield from $this->compareSchemas($source_absolute_path, $indent.$indent);
+        if($this->getConfigOption('COMPARE_SCHEMAS') === true){
+            yield from $this->compareSchemas($source_absolute_path, $indent . $indent);
         }
         
         return;
@@ -159,6 +160,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      */
     protected function compareSchemas(string $source_absolute_path, string $indent = '') : \Iterator
     {
+        if ($this->canDumpSchema() === false) {
+            yield $indent . 'SQL dumps currently not supported in ' . PhpClassDataType::findClassNameWithoutNamespace(self::class);
+            return;
+        }
         $sqlFolder = $this->getSqlFolderAbsolutePath($source_absolute_path);
         $schemaFile = $sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql';
         if(!file_exists($schemaFile)) {
@@ -187,6 +192,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      */
     protected function dumpSchema(string $destination_absolute_path, string $indent = '') : \Iterator
     {
+        if ($this->canDumpSchema() === false) {
+            yield $indent . 'SQL dumps currently not supported in ' . PhpClassDataType::findClassNameWithoutNamespace(self::class);
+            return;
+        }
         $sqlFolder = $this->getSqlFolderAbsolutePath($destination_absolute_path);
         $schema = $this->buildSqlSchema();
         if ($schema !== '') {
@@ -198,6 +207,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         }
     }
 
+    /**
+     * @return bool
+     */
+    protected function canDumpSchema() : bool
+    {
+        return false;
+    }
+
+    /**
+     * @return string
+     */
     protected function buildSqlSchema() : string
     {
         $connection = $this->getDataConnection();
@@ -316,7 +336,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      */
     public function backup(string $destination_absolute_path) : \Iterator
     {
-        yield from $this->dumpSchema($destination_absolute_path);
+        if ($this->getConfigOption('COMPARE_SCHEMAS') === true) {
+            yield from $this->dumpSchema($destination_absolute_path);
+        }
     }
     
     /**
@@ -325,7 +347,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      */
     public function exportModel() : \Iterator
     {
-         yield from $this->dumpSchema($this->getApp()->getDirectoryAbsolutePath());
+        if ($this->getConfigOption('COMPARE_SCHEMAS') === true){
+            yield from $this->dumpSchema($this->getApp()->getDirectoryAbsolutePath());
+        }
     }
     /**
      * Method to check if Database already exists, if not, needs to create it.
