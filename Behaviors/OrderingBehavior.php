@@ -395,7 +395,9 @@ class OrderingBehavior extends AbstractBehavior
         $aliasesToNormalize[] = $this->getOrderNumberAttributeAlias();
         
         foreach ($aliasesToNormalize as $alias) {
-            $dataSheet->getColumns()->get($alias)->normalizeValues();
+            if ($col = $dataSheet->getColumns()->get($alias)) {
+                $col->normalizeValues();
+            }            
         }
     }
 
