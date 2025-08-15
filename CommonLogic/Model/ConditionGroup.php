@@ -564,11 +564,16 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritdoc}
      * @see ConditionGroupInterface::removeCondition()
      */
-    public function removeCondition(ConditionInterface $condition) : ConditionGroupInterface
+    public function removeCondition(ConditionInterface $condition, bool $recursive = false) : ConditionGroupInterface
     {
         foreach ($this->getConditions() as $i => $cond) {
-            if ($cond == $condition) {
+            if ($cond === $condition) {
                 unset($this->conditions[$i]);
+            }
+        }
+        if ($recursive === true) {
+            foreach ($this->nested_groups as $group) {
+                $group->removeCondition($condition, $recursive);
             }
         }
         return $this;

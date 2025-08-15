@@ -201,12 +201,13 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function rebaseCustom(MetaObjectInterface $newObject, callable $conditionTransformer) : ConditionGroupInterface;
     
     /**
-     * Removes a given condition from this condition group (not from the nested groups!)
-     *
+     * Removes a given condition from this condition group - and from the nested groups if $recursive is TRUE
+     * 
      * @param ConditionInterface $condition
+     * @param bool $recursive
      * @return ConditionGroupInterface
      */
-    public function removeCondition(ConditionInterface $condition) : ConditionGroupInterface;
+    public function removeCondition(ConditionInterface $condition, bool $recursive = false) : ConditionGroupInterface;
     
     /**
      * Removes all conditions and nested groups from this condition group thus resetting it completely
