@@ -592,4 +592,8 @@ SQL;
       return $this->compareSchemasDetailed($schema1, $schema2);
     }
 
+    protected function canDumpSchema() : bool
+    {
+        return true;
+    }
 }
