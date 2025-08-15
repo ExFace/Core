@@ -197,12 +197,16 @@ function() {
                 var mVal = {$jsValue};
                 var sGranularity = '{$granularity}';
                 var sDateMax, sDateMin;
-                var valid = mVal === null || mVal === '' || mVal === undefined || exfTools.date.parse(mVal, {$formatQuoted}) !== null;
+                var bEmpty = mVal === null || mVal === '' || mVal === undefined;
+                var valid = bEmpty || exfTools.date.parse(mVal, {$formatQuoted}) !== null;
                 if (valid !== true) {
                     return false;
                 }
-                {$jsCompareMax}
-                {$jsCompareMin}
+                //only do the min max compare if the value is not empty as the required chac is done on its own
+                if (bEmpty === false) {
+	                {$jsCompareMax}
+	                {$jsCompareMin}
+                }
                 return valid;
             }()
             

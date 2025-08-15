@@ -65,7 +65,7 @@ class DataRowPlaceholders extends AbstractPlaceholderResolver
         foreach ($phs as $ph) {
             $expr = $this->stripPrefix($ph);
             $phSheet->getColumns()->addFromExpression($expr);
-            if (! $this->dataSheet->getColumns()->getByExpression($expr)) {
+            if ($needExtraData === false && ! $this->dataSheet->getColumns()->getByExpression($expr)) {
                 $needExtraData = true;
             }
         }

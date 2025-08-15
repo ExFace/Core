@@ -46,8 +46,6 @@ class Workbench implements WorkbenchInterface
 
     private $mm;
 
-    private $db;
-
     private $debugger;
 
     private $logger;
@@ -60,8 +58,6 @@ class Workbench implements WorkbenchInterface
     
     private $running_apps_selectors = [];
 
-    private $utils = null;
-
     private $event_manager = null;
 
     private $vendor_dir_path = null;
@@ -69,8 +65,6 @@ class Workbench implements WorkbenchInterface
     private $installation_path = null;
     
     private $installation_name = null;
-
-    private $request_params = null;
     
     private $security = null;
     

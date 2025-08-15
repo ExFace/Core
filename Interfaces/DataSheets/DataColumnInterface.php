@@ -452,4 +452,19 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return boolean
      */
     public function isWritable() : bool;
+
+    /**
+     * @return string
+     */
+    public function getValueListDelimiter() : string;
+
+    /**
+     * @return bool
+     */
+    public function hasValueLists() : bool;
+
+    /**
+     * @return DataColumnInterface
+     */
+    public function splitRowsWithValueLists() : DataColumnInterface;
 }

@@ -1155,4 +1155,14 @@ HTML;
         }
         return $html;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see HtmlPageFacadeInterface::buildUrlToWidget()
+     */
+    public function buildUrlToWidget(WidgetInterface $widget, DataSheetInterface $prefillData = null) : string
+    {
+        $page = $widget->getPage();
+        return $this->buildUrlToPage($page);
+    }
 }

@@ -1,30 +1,27 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\RelationCardinalityDataType;
-use exface\Core\DataTypes\UUIDDataType;
-use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Factories\MetaObjectFactory;
-use exface\Core\Factories\RelationPathFactory;
-use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\MetaAttributeOriginDataType;
 use exface\Core\DataTypes\MetaAttributeTypeDataType;
-use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\Interfaces\Model\ExpressionInterface;
-use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaObjectModelError;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Selectors\AttributeGroupSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use Throwable;
@@ -248,6 +245,13 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
             default: 
                 throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
         }
+        
+        // Make sure, numeric ids do not group their digits like normal integers
+        $isNumericId = ($this->isUidForObject() || $this->isRelation()) && $this->data_type instanceof NumberDataType;
+        if ($isNumericId && ! ($this->custom_data_type_uxon && $this->custom_data_type_uxon->hasProperty('group_digits'))) {
+            $this->data_type->setGroupDigits(false);
+        }
+        
         return $this->data_type;
     }
     
@@ -347,8 +351,17 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
-     * 
-     * {@inheritDoc}
+     * Formula to calculate data values of this attribute (instead or in addition to a data address)
+     *
+     * E.g. `=Concatenate(attribute1, attribute2)`.
+     *
+     * Normally used instead of a data address to add read-only attributes the data source cannot produce.
+     * In some cases a combination of a formula and a data address may be used to add specific formatting to a
+     * value (e.g. a data stored in some non-standard-format).
+     *
+     * @uxon-property calculation
+     * @uxon-type metamodel:formula
+     *
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCalculation()
      */
     public function setCalculation(string $expressionString) : MetaAttributeInterface
@@ -495,7 +508,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
      * The address in the data source - e.g. SQL for SQL data sources or parts of the URL for web services.
      * 
      * @uxon-property data_address
-     * @uxon-type metamodel:datatype
+     * @uxon-type string
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddress()
@@ -637,7 +650,14 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
-     * 
+     * Value or formula to be used if no data for this attribute is explicitly defined
+     *
+     * This expression will be used when no other value is given (e.g. inputs will be prefilled with this
+     * value). You can use attribute aliases, formulas or explicit values (the latter enclosed in quotes!).
+     *
+     * @uxon-property default_value
+     * @uxon-type metamodel:formula|string|number
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultValue()
      */
@@ -666,7 +686,15 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
-     * 
+     * A formula to calculate the value EVERY TIME this attribute is written (makes it impossible to change the attribute manually)
+     *
+     * This expression will always be evaluated, when the object is saved - eventually overwriting user
+     * input. This is handy for attributes like `last_update_time`, where a fixed value `=Now()` will
+     * automatically set the attribute to the time of saving.
+     *
+     * @uxon-property fixed_value
+     * @uxon-type metamodel:formula
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFixedValue()
      */
@@ -769,8 +797,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
+     * A description for the attribute to be used in tooltips, contextual help, etc.
      * 
-     * {@inheritDoc}
+     * @uxon-property short_description
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setShortDescription()
      */
     public function setShortDescription($value)
@@ -812,7 +843,12 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
-     * 
+     * Custom settings for this attribute in the selected data source of its object.
+     *
+     * @uxon-property data_address_properties
+     * @uxon-type object
+     * @uxon-template {"": ""}
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddressProperties()
      */
@@ -1214,6 +1250,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
     
     /**
+     * A default editor widget for this attribute
+     *
+     * @uxon-property default_editor_uxon
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-template {"widget_type": ""}
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultEditorUxon()

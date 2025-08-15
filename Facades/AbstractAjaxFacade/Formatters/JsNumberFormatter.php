@@ -222,10 +222,10 @@ JS;
         
         $checksOk = [];
         if ($type->getMin() !== null) {
-            $checksOk[] = "parseFloat(mVal) >= {$type->getMin()}";
+            $checksOk[] = "nVal >= {$type->getMin()}";
         }
         if ($type->getMax() !== null) {
-            $checksOk[] = "parseFloat(mVal) <= {$type->getMax()}";
+            $checksOk[] = "nVal <= {$type->getMax()}";
         }
         $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
         
@@ -233,6 +233,10 @@ JS;
         return <<<JS
 function(mVal) {
                 var bEmpty = (mVal === null || mVal === undefined || mVal.toString() === '' || mVal.toString() === $nullStr);
+                var nVal = {$this->buildJsFormatParser('mVal')};
+                if (isNaN(mVal)) {
+                    return false;
+                }
                 return (bEmpty || ($checksOkJs));
             }($jsValue)
 JS;

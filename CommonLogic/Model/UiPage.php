@@ -1,37 +1,37 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
-use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\CommonLogic\Translation\UxonTranslator;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Factories\SelectorFactory;
-use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
-use exface\Core\Factories\FacadeFactory;
+use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
+use exface\Core\Events\Widget\OnUiPageInitEvent;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Model\UiMenuItemInterface;
-use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Factories\FacadeFactory;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UserFactory;
-use exface\Core\Events\Widget\OnUiPageInitEvent;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
-use exface\Core\CommonLogic\Selectors\PWASelector;
-use exface\Core\CommonLogic\Translation\UxonTranslator;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -908,7 +908,7 @@ class UiPage implements UiPageInterface
     public function getContents()
     {
         if (is_null($this->contents) && ! is_null($this->contents_uxon)) {
-            $this->contents = $this->contents_uxon->toJson();
+            $this->contents = $this->contents_uxon->toJson(true);
         }
         
         return $this->contents;
@@ -950,7 +950,9 @@ class UiPage implements UiPageInterface
     public function setContents($contents)
     {
         $this->setDirty();
-        
+        $this->contents = null;
+        $this->contents_uxon = null;
+
         if (is_string($contents)) {
             $this->contents = trim($contents);
         } elseif ($contents instanceof UxonObject) {

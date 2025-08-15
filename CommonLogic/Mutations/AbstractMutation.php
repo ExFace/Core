@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
-abstract class AbstractMutation implements MutationInterface
+abstract class AbstractMutation implements MutationInterface, \Stringable
 {
     use ImportUxonObjectTrait;
 
@@ -26,6 +26,15 @@ abstract class AbstractMutation implements MutationInterface
         $this->workbench = $workbench;
         $this->uxon = $uxon;
         $this->importUxonObject($uxon);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see MutationInterface::isDisabled()
+     */
+    public function isDisabled(): bool
+    {
+        return $this->disabled;
     }
 
     /**
@@ -73,5 +82,13 @@ abstract class AbstractMutation implements MutationInterface
     public function exportUxonObject()
     {
         return $this->uxon;
+    }
+
+    /**
+     * @see \Stringable::__toString()
+     */
+    public function __toString() : string
+    {
+        return 'Mutation "' . $this->getName() . '"';
     }
 }

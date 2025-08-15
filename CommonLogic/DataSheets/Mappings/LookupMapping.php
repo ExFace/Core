@@ -319,7 +319,7 @@ class LookupMapping extends AbstractDataSheetMapping
             }
             
             // If row could not be matched to any lookup row, we might have to respond.
-            if(null === $toColVals[$i] ?? null) {
+            if(null === ($toColVals[$i] ?? null)) {
                 // If we do not have a lookup-value, that is perfectly fine if we did not have a
                 // from-value either.
                 if (! $isRequired && '' === trim($fromRowValsJoined)) {

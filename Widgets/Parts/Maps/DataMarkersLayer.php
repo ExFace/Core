@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\DataPointLayerTrait;
@@ -25,7 +27,8 @@ class DataMarkersLayer extends AbstractDataLayer
     LatLngWidgetLinkMapLayerInterface,
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface, 
-    EditableMapLayerInterface
+    EditableMapLayerInterface,
+    CustomProjectionMapLayerInterface
 {
     use DataPointLayerTrait {
         initDataWidget as initDataWidgetForPoints;
@@ -36,6 +39,8 @@ class DataMarkersLayer extends AbstractDataLayer
     use ColoredLayerTrait;
     
     use ValueLabeledLayerTrait;
+
+    use CustomProjectionLayerTrait;
 
     private $clustering = null;
     

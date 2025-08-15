@@ -344,10 +344,12 @@ interface AjaxFacadeElementInterface
     /**
      * Returns the JS code to call the specified widget function
      * 
-     * @param string $functionName
+     * @param string|null $functionName
+     * @param string[] $parameters
+     * @param string|null $jsRequestData
      * @return string
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string;
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string;
     
     /**
      * 

@@ -2,9 +2,10 @@
 namespace exface\Core\Interfaces\Mutations;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-interface AppliedMutationInterface
+interface AppliedMutationInterface extends iCanGenerateDebugWidgets
 {
     public function getMutation() : MutationInterface;
 

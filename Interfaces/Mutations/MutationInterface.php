@@ -12,5 +12,7 @@ interface MutationInterface extends WorkbenchDependantInterface, iCanBeConverted
 
     public function supports($subject) : bool;
 
+    public function isDisabled() : bool;
+
     public function setDisabled(bool $trueOrFalse) : MutationInterface;
 }

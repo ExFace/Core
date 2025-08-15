@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -993,18 +994,36 @@ abstract class AbstractWidget implements WidgetInterface
      */
     protected function getHintDebug() : string
     {
-        $hint = "\n\nDebug-hints:\n- Widget type: {$this->getWidgetType()}\n- Widget object: {$this->getMetaObject()->__toString()}";
+        $hint =       "\n"
+                    . "\nWidget debug:"
+                    . "\n- Widget type: {$this->getWidgetType()}"
+                    . "\n- Widget object: {$this->getMetaObject()->__toString()}";
+
+        // Simple widgets
         if ($this instanceof iShowSingleAttribute) {
             if ($this->isBoundToAttribute()) {
-                $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
+                $hint = $hint
+                    . "\n- Attribute alias: `{$this->getAttributeAlias()}`";
                 $attr = $this->getAttribute();
                 if ($attr instanceof CustomAttribute) {
-                    $hint .= "\n- Custom attribute from " . $attr->getSourceHint();
+                    $hint = $hint
+                    . "\n- Custom attribute from " . $attr->getSourceHint();
                 }
             }
             if ($this instanceof iHaveValue) {
-                $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
+                $hint = $hint
+                    . "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
             }
+        }
+
+        // Conditional properties
+        if (null !== $condProp = $this->getDisabledIf()) {
+            $hint = $hint
+                    . "\n- Disabled if: {$condProp->getConditionGroup()->__toString()}";
+        }
+        if (null !== $condProp = $this->getHiddenIf()) {
+            $hint = $hint
+                    . "\n- Hidden if: {$condProp->getConditionGroup()->__toString()}";
         }
         return $hint ?? '';
     }
@@ -1786,6 +1805,17 @@ MD;
     {
         $resolver = function(array $widgetUxon) use ($widget) {
             $resultUxon = [];
+
+            // If there are more properties than just `attribute_group_alias`, see if any
+            // of them include placeholders. We will replace those placeholders with data
+            // from the model of the attributes.
+            if (count ($widgetUxon) > 1) {
+                $json = JsonDataType::encodeJson($widgetUxon);
+                $phs = StringDataType::findPlaceholders($json);
+            } else {
+                $json = null;
+                $phs = [];
+            }
             
             $attrGrpAlias = $widgetUxon['attribute_group_alias'];
             $aggr = DataAggregation::getAggregatorFromAlias($widget->getWorkbench(), $attrGrpAlias);
@@ -1798,6 +1828,17 @@ MD;
                 if ($aggr) {
                     $attrAlias = DataAggregation::addAggregatorToAlias($attrAlias, $aggr);
                 }
+                
+                // If we have placeholders, replace them here for every attribute
+                // TODO add other attribute properties as paceholders?
+                if (! empty($phs)) {
+                    $attrJson = StringDataType::replacePlaceholders($json, [
+                        '~attribute:ALIAS' => $attrAlias,
+                        '~attribute:NAME' => $attr->getName()
+                    ]);
+                    $widgetUxon = JsonDataType::decodeJson($attrJson);
+                }
+                
                 $widgetUxon['attribute_alias'] = $attrAlias;
                 $resultUxon[] = $widgetUxon;
             }

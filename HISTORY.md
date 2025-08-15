@@ -1,6 +1,27 @@
 # Release history
 
-## 1.29 - in development
+## 1.30 - in developmept
+
+## 1.29 - 19.06.2025
+
+New features:
+
+- Mutation framework to selectively change things in other apps
+- `apply_if_exists` and `apply_if_not_exists` for action authorization policies
+- New formulas `=isActionAuthorized()`, `=ObjectName()`
+
+Improvements:
+
+- CustomAttributeDefinitionBehavior now supports placeholders in attribute models, making them even more flexible!
+- `hidden_if_access_denied` now can evaluate expected input data of Button widgets making it much more accurate. You can control its logic by using different values for this property: `to_action_for_button_input_data`, `to_action_generally`, etc. 
+- Further improved attribute list icons in object editor
+- Improved policy debug dialogs
+- DataTable `row_grouper` can now work with formulas and custom data columns
+- Debug tooltips for widgets now include all sorts of `_if` proerties
+
+Important fixes:
+
+- SingleWidget-snippets now working properly
 
 ## 1.28 - 13.05.2025
 

@@ -849,11 +849,11 @@ class FileBuilder extends AbstractQueryBuilder
         }
         $paginationApplied = $fullRead === false;
 
+        $result_rows = $this->applyFilters($result_rows);
         $totalCount = count($result_rows) + $offset;
-        if ($rowsTotal > $totalCount) {
+        if ($rowsTotal > $totalCount && ! $fullRead) {
             $totalCount = $rowsTotal;
         }
-        $result_rows = $this->applyFilters($result_rows);
         $result_rows = $this->applySorting($result_rows);
         $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
         if (! $paginationApplied) {

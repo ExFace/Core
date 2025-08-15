@@ -17,4 +17,9 @@ interface MutationPointInterface extends WorkbenchDependantInterface
      * @return AppliedMutationInterface[]
      */
     public function getMutationsApplied($subject) : array;
+
+    /**
+     * @return bool
+     */
+    public function isDisabled() : bool;
 }

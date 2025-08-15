@@ -280,6 +280,17 @@ class MetaObject implements MetaObjectInterface
         return $this->attributes;
     }
 
+    /**
+     * {@inheritdoc}
+     * @see MetaObjectInterface::addAttribute()
+     */
+    public function addAttribute(MetaAttributeInterface $attribute) : MetaObjectInterface
+    {
+        $this->getAttributes()->add($attribute, $attribute->getAlias());
+        $this->setAttributeCache($attribute->getAlias(), $attribute);
+        return $this;
+    }
+
     /**        
      * 
      * {@inheritdoc}

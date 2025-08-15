@@ -20,6 +20,10 @@ use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
  */
 interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface, \Stringable
 {
+    const MISSING_COLS_READ = 'read';
+    const MISSING_COLS_EMPTY = 'empty';
+    const MISSING_COLS_PASS = 'pass';
+    
     /**
      * Performs the check and returns a textual explanation for what has been checked or throws an exception if the check fails.
      *
@@ -38,7 +42,7 @@ interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantIn
      * @param DataSheetInterface $data
      * @return bool
      */
-    public function isViolatedIn(DataSheetInterface $data) : bool;
+    public function isViolatedIn(DataSheetInterface $data, ?LogBookInterface $logBook = null) : bool;
     
     /**
      * 
@@ -49,7 +53,7 @@ interface DataCheckInterface extends iCanBeConvertedToUxon, WorkbenchDependantIn
      * 
      * @return int[]
      */
-    public function findViolations(DataSheetInterface $data) : array;
+    public function findViolations(DataSheetInterface $data, ?LogBookInterface $logBook = null) : array;
     
     /**
      * 

@@ -17,6 +17,8 @@ class UxonSnippetParameter implements UxonSnippetParameterInterface
     private $description = null;
     private $required = false;
     private $type = null;
+    
+    private mixed $defaultValue = null;
 
     /**
      * 
@@ -31,13 +33,15 @@ class UxonSnippetParameter implements UxonSnippetParameterInterface
     }
 
     /**
-     * List of parameters to pass to the snippet
+     * The name of this parameter. 
      * 
-     * @uxon-property parameters
-     * @uxon-type object
-     * @uxon-template {"": ""}
+     * Use `[#TheNameYouChose#]` anywhere within the snippet to apply this parameter.
      * 
-     * @return array
+     * @uxon-property name
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return UxonSnippetParameterInterface
      */
     protected function setName(string $value) : UxonSnippetParameterInterface
     {
@@ -83,15 +87,52 @@ class UxonSnippetParameter implements UxonSnippetParameterInterface
         return $this->required;
     }
 
+    /**
+     * If TRUE, this parameter must be set, when using this snippet.
+     *
+     * @uxon-property required
+     * @uxon-type bool
+     */
     protected function setRequired(bool $value) : UxonSnippetParameterInterface
     {
         $this->required = $value;
         return $this;
     }
 
+    /**
+     * Set the datatype of this parameter.
+     * 
+     * @uxon-property type
+     * @uxon-type string
+     * 
+     * @param string $type
+     * @return UxonSnippetParameterInterface
+     */
     protected function setType(string $type) : UxonSnippetParameterInterface
     {
         $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getDefaultValue() : mixed
+    {
+        return $this->defaultValue;
+    }
+
+    /**
+     * Define a default value for this parameter.
+     * 
+     * @uxon-property default_value
+     * 
+     * @param mixed $value
+     * @return UxonSnippetParameterInterface
+     */
+    protected function setDefaultValue(mixed $value) : UxonSnippetParameterInterface
+    {
+        $this->defaultValue = $value;
         return $this;
     }
 
@@ -107,11 +148,14 @@ class UxonSnippetParameter implements UxonSnippetParameterInterface
 
     public function parseValue($val) : ?string
     {
-        if ($this->isRequired()) {
-            if ($val === null || $val === ''){
+        if ($val === null || $val === ''){
+            if ($this->isRequired()) {
                 throw new UxonSnippetMissingParameterError('Missing required parameter "' . $this->getName() . '" for snippet "' . $this->getSnippet()->getAliasWithNamespace() . '"');
+            } else {
+                $val = $this->getDefaultValue();
             }
         }
+        
         return $val;
     }
 }
