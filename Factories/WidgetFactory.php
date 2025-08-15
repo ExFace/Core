@@ -65,25 +65,22 @@ abstract class WidgetFactory extends AbstractStaticFactory
 
     /**
      * Creates a widget from a UXON description object.
-     * 
+     *
      * The main difference to create_widget() is, that the widget type will be
      * determined from the UXON description. If not given there, the
      * $fallback_widget_type will be used or, if not set, ExFace will attempt
      * to find a default widget type of the meta object or the attribute.
-     * 
-     * @param UiPageInterface $page
-     * @param UxonObject $uxon_object
-     * @param WidgetInterface $parent_widget
-     * @param string $fallback_widget_type
-     * 
-     * @throws UxonParserError
-     * 
+     *
+     * @param UiPageInterface      $page
+     * @param UxonObject           $uxon_object
+     * @param WidgetInterface|null $parent_widget
+     * @param null                 $fallback_widget_type
+     * @param bool                 $readonly
      * @return WidgetInterface
+     * @throws \Throwable
      */
     public static function createFromUxon(UiPageInterface $page, UxonObject $uxon_object, WidgetInterface $parent_widget = null, $fallback_widget_type = null, bool $readonly = false)
     {
-        $widget_type = null;
-        
         // If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
         if ($uxon_object->hasProperty('extend_widget')) {
             $inheriter = new WidgetInheriter($page, $uxon_object->getProperty('extend_widget'), $parent_widget);
@@ -92,69 +89,8 @@ abstract class WidgetFactory extends AbstractStaticFactory
             $uxon_object->unsetProperty('extend_widget');
         }
         
-        // See, if the widget type is specified in UXON directly
-        if ($uxon_object->hasProperty('widget_type')) {
-            $widget_type = $uxon_object->getProperty('widget_type');
-            if (! $widget_type) {
-                throw new UxonParserError($uxon_object, 'Empty widget_type field in UXON!');
-            }
-        }
+        $widget_type = self::getWidgetType($page, $uxon_object, $parent_widget, $fallback_widget_type, $readonly);
         
-        // If not, try to determine it from default widgets
-        // IDEA Perhaps, it will be handy to have this logic as a separate method. Not sure though, what it should accept and return...
-        if (! $widget_type) {
-            // If the UXON does not contain a widget type, use the fallback
-            // If there is no fallback, attempt to guess a widget type from the
-            // object or attribute the widget should represent.
-            if ($fallback_widget_type){
-                $widget_type = $fallback_widget_type;
-            } else {
-                // First of all, we need to figure out, which object the widget is representing
-                if ($uxon_object->hasProperty('object_alias')) {
-                    $objAlias = $uxon_object->getProperty('object_alias');
-                    if (! $objAlias) {
-                        throw new UxonParserError($uxon_object, 'Empty object_alias field in UXON!');
-                    }
-                    $obj = $page->getWorkbench()->model()->getObject($objAlias);
-                } elseif ($parent_widget) {
-                    $obj = $parent_widget->getMetaObject();
-                } else {
-                    throw new UxonParserError($uxon_object, 'Cannot find a meta object in UXON widget definition. Please specify an object_alias or a parent widget!');
-                }
-                // TODO Determine the object via parent_relation_alias, once this field is supported in UXON
-                
-                // Now, that we have an object, see if the widget config can be derived from an attribute_alias
-                // or a value_data_type. If so, get the respective default editor/display widget.
-                switch (true) {
-                    case $uxon_object->hasProperty('attribute_alias'):
-                        try {
-                            $attr = $obj->getAttribute($uxon_object->getProperty('attribute_alias'));
-                        } catch (MetaAttributeNotFoundError $e) {
-                            throw new UxonParserError($uxon_object, 'Cannot create an editor widget for attribute "' . $uxon_object->getProperty('attribute_alias') . '" of object ' . $obj->__toString() . '. Attribute not found!', null, $e);
-                        }
-                        if ($readonly === false) {
-                            $uxon_object = $attr->getDefaultEditorUxon()->extend($uxon_object);
-                        } else {
-                            $uxon_object = $attr->getDefaultDisplayUxon()->extend($uxon_object);
-                        }
-                        $widget_type = $uxon_object->getProperty('widget_type');
-                        break;
-                    case $uxon_object->hasProperty('value_data_type'):
-                        try {
-                            $dataType = DataTypeFactory::createFromUxon($obj->getWorkbench(), $uxon_object->getProperty('value_data_type'));
-                        } catch (DataTypeNotFoundError $e) {
-                            throw new UxonParserError($uxon_object, 'Cannot create an editor widget for data type `' . $uxon_object->getProperty('value_data_type')->toJson(false) . '` of object ' . $obj->__toString() . '. Data type not found!', null, $e);
-                        }
-                        if ($readonly === false) {
-                            $uxon_object = $dataType->getDefaultEditorUxon()->extend($uxon_object);
-                        } else {
-                            $uxon_object = $dataType->getDefaultDisplayUxon()->extend($uxon_object);
-                        }
-                        $widget_type = $uxon_object->getProperty('widget_type');
-                        break;
-                }
-            }
-        }
         try {
             $widget = static::create($page, $widget_type, $parent_widget);
             if (null !== $id_space = $uxon_object->getProperty('id_space')) {
@@ -183,6 +119,100 @@ abstract class WidgetFactory extends AbstractStaticFactory
         }
         
         return $widget;
+    }
+
+    /**
+     * Try to determine the widget type of a given UxonObject.
+     * 
+     * @param UiPageInterface      $page
+     * @param UxonObject           $uxonObject
+     * @param WidgetInterface|null $parentWidget
+     * @param string|null          $fallbackType
+     * @param bool                 $readOnly
+     * @return string|null
+     */
+    public static function getWidgetType(
+        UiPageInterface $page,
+        UxonObject $uxonObject, 
+        WidgetInterface $parentWidget = null, 
+        string $fallbackType = null,
+        bool $readOnly = false
+    ) : ?string
+    {
+        $widgetType = null;
+        
+        // See, if the widget type is specified in UXON directly
+        if ($uxonObject->hasProperty('widget_type')) {
+            $widgetType = $uxonObject->getProperty('widget_type');
+            
+            if (! $widgetType) {
+                throw new UxonParserError($uxonObject, 'Empty widget_type field in UXON!');
+            }
+            
+            return $widgetType;
+        }
+
+        // If the UXON does not contain a widget type, use the fallback
+        // If there is no fallback, attempt to guess a widget type from the
+        // object or attribute the widget should represent.
+        if ($fallbackType){
+            return $fallbackType;
+        } else {
+            // First of all, we need to figure out, which object the widget is representing
+            if ($uxonObject->hasProperty('object_alias')) {
+                $objAlias = $uxonObject->getProperty('object_alias');
+                
+                if (! $objAlias) {
+                    throw new UxonParserError($uxonObject, 'Empty object_alias field in UXON!');
+                }
+                
+                $obj = $page->getWorkbench()->model()->getObject($objAlias);
+            } elseif ($parentWidget) {
+                $obj = $parentWidget->getMetaObject();
+            } else {
+                throw new UxonParserError($uxonObject, 'Cannot find a meta object in UXON widget definition. Please specify an object_alias or a parent widget!');
+            }
+            // TODO Determine the object via parent_relation_alias, once this field is supported in UXON
+
+            // If not, try to determine it from default widgets
+            // IDEA Perhaps, it will be handy to have this logic as a separate method. Not sure though, what it should accept and return...
+            // Now, that we have an object, see if the widget config can be derived from an attribute_alias
+            // or a value_data_type. If so, get the respective default editor/display widget.
+            switch (true) {
+                case $uxonObject->hasProperty('attribute_alias'):
+                    try {
+                        $attr = $obj->getAttribute($uxonObject->getProperty('attribute_alias'));
+                    } catch (MetaAttributeNotFoundError $e) {
+                        throw new UxonParserError($uxonObject, 'Cannot create an editor widget for attribute "' . $uxonObject->getProperty('attribute_alias') . '" of object ' . $obj->__toString() . '. Attribute not found!', null, $e);
+                    }
+                    
+                    if ($readOnly === false) {
+                        $uxonObject = $attr->getDefaultEditorUxon()->extend($uxonObject);
+                    } else {
+                        $uxonObject = $attr->getDefaultDisplayUxon()->extend($uxonObject);
+                    }
+                    
+                    $widgetType = $uxonObject->getProperty('widget_type');
+                    break;
+                case $uxonObject->hasProperty('value_data_type'):
+                    try {
+                        $dataType = DataTypeFactory::createFromUxon($obj->getWorkbench(), $uxonObject->getProperty('value_data_type'));
+                    } catch (DataTypeNotFoundError $e) {
+                        throw new UxonParserError($uxonObject, 'Cannot create an editor widget for data type `' . $uxonObject->getProperty('value_data_type')->toJson(false) . '` of object ' . $obj->__toString() . '. Data type not found!', null, $e);
+                    }
+                    
+                    if ($readOnly === false) {
+                        $uxonObject = $dataType->getDefaultEditorUxon()->extend($uxonObject);
+                    } else {
+                        $uxonObject = $dataType->getDefaultDisplayUxon()->extend($uxonObject);
+                    }
+                    
+                    $widgetType = $uxonObject->getProperty('widget_type');
+                    break;
+            }
+        }
+        
+        return $widgetType;
     }
 
     protected static function searchForChildWidget(WidgetInterface $haystack, $widget_id)
