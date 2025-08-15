@@ -50,4 +50,35 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     {
         return $this->getDataType()->getWorkbench();
     }
+
+    /**
+     * @inerhitDoc 
+     * @see JsDataTypeFormatterInterface::getJsEmptyText()
+     */
+    public function getJsEmptyText(string $jsFallback = '', bool $encode = true) : ?string
+    {
+        $result = $this->getDataType()->getEmptyText(); 
+        
+        if($result === null) {
+            return $jsFallback;
+        }
+        
+        return $encode ? json_encode($result) : $result;
+    }
+
+    /**
+     * Returns an inline snippet that checks whether a variable with
+     * name `$jsVar` is empty.
+     * 
+     * ```
+     * ({$jsVar} === null || {$jsVar} === undefined || {$jsVar} === '')
+     * ```
+     * 
+     * @param string $jsVar
+     * @return string
+     */
+    protected function getJsEmptyCheck(string $jsVar) : string 
+    {
+        return "({$jsVar} === null || {$jsVar} === undefined || {$jsVar} === '')";
+    }
 }

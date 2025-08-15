@@ -33,7 +33,7 @@ class JsEnumFormatter extends AbstractJsDataTypeFormatter
         return <<<JS
     function(key) {
         var labels = {$valueLabelsJs};
-        return labels[key] !== undefined ? labels[key] : key;
+        return labels[key] !== undefined ? labels[key] : {$this->getJsEmptyText('key')};
     }({$jsInput})
 JS;
     }

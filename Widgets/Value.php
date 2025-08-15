@@ -383,6 +383,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                     break;
             }
         }
+        
+        $this->data_type->setEmptyText($this->empty_text);
         return $this->data_type;
     }
     

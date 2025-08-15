@@ -255,7 +255,7 @@
 				var aTime;
 				var sIntervalType, iIntervals;
 				
-				if (sDate === '' || sDate === null) {
+				if (sDate === '' || sDate === null || sDate == undefined) {
 					return null;
 				}
 				
@@ -430,14 +430,15 @@
 			},
 			
 			/**
-			 * Formats the given normalized date string or JS Date object according to the given ICU format
-			 * 
-			 * @param {string|Date} sDate
-			 * @param {string} [sICUFormat]
-			 * 
-			 * @return {string}
-			 */
-			format: function(sDate, sICUFormat) {
+             * Formats the given normalized date string or JS Date object according to the given ICU format
+             *
+             * @param {string|Date} sDate
+             * @param {string} [sICUFormat]
+             *
+             * @param sEmpty
+             * @return {string}
+             */
+			format: function(sDate, sICUFormat, sEmpty) {
 				if (sDate !== null && sDate !== undefined && sDate !== '') {
 					if (sICUFormat === undefined) {
 						return moment(sDate).format('L');
@@ -445,7 +446,7 @@
 						return moment(sDate).formatICU(sICUFormat);
 					}
 				}
-				return sDate;
+				return sEmpty !== undefined ? sEmpty : sDate;
 			},
 			
 			validate: function (sDate) {				
@@ -641,9 +642,9 @@
 		        return null;
 			},
 			
-			format: function(sTime, sICUFormat) {
+			format: function(sTime, sICUFormat, sEmpty) {
 				if (sTime === null || sTime === undefined || sTime === '') {
-					return sTime;	
+					return sEmpty !== undefined ? sEmpty : sTime;	
 				}
 				if (sICUFormat === undefined) {
 					return moment(new Date('1970-01-01 ' + sTime)).format('LTS');

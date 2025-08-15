@@ -16,7 +16,7 @@ class JsStringFormatter extends JsTransparentFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "($jsInput == null ? '' : $jsInput)";
+        return "($jsInput == null ? {$this->getJsEmptyText('""')} : $jsInput)";
     }
     
     /**
