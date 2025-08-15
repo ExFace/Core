@@ -152,7 +152,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 break;
             // Data column references
             case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
-                $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
+                $toSheet->getColumns()->addFromExpression($toExpr, null, $fromCol->getHidden())->setValues($fromCol->getValues(false));
                 break;
             // Data column references should not result in errors if the data sheet is completely empty
             // Otherwise input-mappers would always produce errors on empty input data!

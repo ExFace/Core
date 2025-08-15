@@ -35,7 +35,7 @@ class IfThenElse extends Formula
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run($condition = null, $then = null, $else = null): bool
+    public function run($condition = null, $then = null, $else = null)
     {
         if ($condition === null || $condition === '') {
             $switch = false;

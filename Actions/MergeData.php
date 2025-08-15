@@ -10,6 +10,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
+use GuzzleHttp\Promise\Create;
 
 /**
  * Merges input data with data in the data source(s).
@@ -87,5 +88,14 @@ class MergeData extends CreateData implements iCreateData, iUpdateData
     protected function isUpdateIfMatchingAttributes() : bool
     {
         return empty($this->updateIfMatchingAttributeAliases) === false;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see CreateData::willUpdateIfUidFound()
+     */
+    protected function willUpdateIfUidFound() : bool
+    {
+        return false;
     }
 }

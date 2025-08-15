@@ -321,10 +321,13 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      */
     public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface
     {
+        // Disable the container first (in case the children will check, if their parent is disabled)
+        $result = parent::setDisabled($trueOrFalseOrNull, $reason);
+        // Disable all children
         foreach ($this->getChildren() as $child) {
             $child->setDisabled($trueOrFalseOrNull, $reason);
         }
-        return parent::setDisabled($trueOrFalseOrNull, $reason);
+        return $result;
     }
 
     /**

@@ -2,6 +2,8 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by 
@@ -283,4 +285,12 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return ConditionGroupInterface
      */
     public function with(string $operator, ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
+
+    /**
+     * @inheritDoc
+     * @param bool $readMissingData
+     * Set to TRUE, if you want this condition group to read missing data.
+     * @see ConditionGroupInterface::readMissingData()
+     */
+    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null, bool $readMissingData = false): bool;
 }

@@ -369,7 +369,7 @@ class Console extends AbstractWidget
      */
     public function getCommandTimeout() : float
     {
-        return 600;
+        return $this->commandTimeout;
     }
     
     

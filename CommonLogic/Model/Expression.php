@@ -264,7 +264,7 @@ class Expression implements ExpressionInterface
      */
     public function isEmpty() : bool
     {
-        return $this->__toString() === null;
+        return ($this->__toString() ?? '') === '';
     }
     
     /**
@@ -654,7 +654,7 @@ class Expression implements ExpressionInterface
      */
     public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface
     {
-        if (null !== $link = ($this->widgetLinks[$sourceWidget->getPage()->getAliasWithNamespace()] ?? [])[$sourceWidget->getId()] ?? null) {
+        if (null !== $link = (($this->widgetLinks[$sourceWidget->getPage()->getAliasWithNamespace()] ?? [])[$sourceWidget->getId()] ?? null)) {
             return $link;
         }
         

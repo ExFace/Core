@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authorization;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\Model\ExistsCondition;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -309,19 +309,32 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
                     $inputData = $task->getInputData();
-                    if ($action !== null && null !== $mapper = $action->getInputMapper($task->getInputData())) {
+
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
                         $inputData = $mapper->map($inputData);
                     }
-                    if ($conditionGrp->evaluate($inputData) === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
-                    } else {
-                        $applied = true;
+                    
+                    // We need to collect and merge missing data for the policy AFTER applying input mappers,
+                    // to ensure that we are working with the right metaobject.
+                    $collector = DataCollector::fromConditionGroup($conditionGrp, $inputData->getMetaObject());
+                    $checkData = $collector->collectFrom($inputData)->getRequiredData();
+                    
+                    foreach ($checkData->getRows() as $rowIdx => $row) {
+                        if ($conditionGrp->evaluate($checkData, $rowIdx, false) === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
+                        }
                     }
+                    $applied = true;
                 } else {
-                    if ($conditionGrp->evaluate() === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
-                    } else {
-                        $applied = true;
+                    // TODO better to add something like $conditionGrp->isStatic() and check that here.
+                    try {
+                        if ($conditionGrp->evaluate() === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
+                        } else {
+                            $applied = true;
+                        }
+                    } catch (InvalidArgumentException $e) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` cannot be evaluated: ' . $e->getMessage());
                     }
                 }
             }
@@ -340,7 +353,10 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         $applied = true;
                     }
                 } else {
-                    return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Input data required for apply_if_exists, but not provided');
+                    // Not applicable without input data
+                    // In the beginning, we had an Indeterminate here, but that lead to false-permits if it happened
+                    // in permit-policies because it resulted in Indeterminate{P}
+                    return PermissionFactory::createNotApplicable($this, 'Input data missing for apply_if_exists');
                 }
             }
 
@@ -348,6 +364,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             if (null !== $condition = $this->getApplyIfNotExists()) {
                 if ($task && $task->hasInputData()) {
                     $inputData = $task->getInputData();
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
+                        $inputData = $mapper->map($inputData);
+                    }
                     if ($condition->evaluate($inputData)) {
                         return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data. ' . $condition->explain($inputData));
                     } else {
@@ -355,7 +374,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         $applied = true;
                     }
                 } else {
-                    return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Input data required for apply_if_not_exists, but not provided');
+                    // Not applicable without input data
+                    // See discussion at same place in apply_if_exists for details
+                    return PermissionFactory::createNotApplicable($this, 'Input data missing for apply_if_not_exists');
                 }
             }
             

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -36,10 +37,15 @@ trait PrefillValueTrait
      */
     protected function getPrefillExpression(DataSheetInterface $prefillData, MetaObjectInterface $widget_object, ?string $attributeAlias = null, ?string $dataColumnName = null, ?ExpressionInterface $formula = null) : ?string
     {
+        // What is the widget bound to? If explicitly bound to an attribute or a formula - use that.
         switch (true) {
             case $attributeAlias !== null: $exprString = $attributeAlias; break;
             case $formula !== null: $exprString = $formula->__toString(); break;
-            case $dataColumnName !== null: $exprString = $dataColumnName; break;
+        }
+        // However, if there is a DIFFERENT data_column_name or ONLY a data_column_name without another binding,
+        // use the data_column_name
+        if ($dataColumnName !== null && $exprString !== null && $dataColumnName !== DataColumn::sanitizeColumnName($exprString)) {
+            $exprString = $dataColumnName;
         }
         
         if ($exprString === null || $exprString === '') {

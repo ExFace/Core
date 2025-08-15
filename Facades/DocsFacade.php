@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades;
 
+use exface\Core\DataTypes\FilePathDataType;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
@@ -84,6 +85,7 @@ class DocsFacade extends AbstractHttpFacade
         if (! $baseRewriteRules->isEmpty()) {
             foreach ($baseRewriteRules->getPropertiesAll() as $pattern => $replace) {
                 $baseUrl = preg_replace($pattern, $replace, $baseUrl);
+                $this->docsPath = preg_replace($pattern, $replace, $this->docsPath);
             }
         }
         
@@ -195,6 +197,7 @@ class DocsFacade extends AbstractHttpFacade
         $htmlString = $this->addIdToFirstHeading($requestUri, $htmlString);
         $htmlString = $this->replaceHrefChapters($htmlString);
         $htmlString = $this->replaceHrefImages($htmlString);
+        $htmlString = $this->applyNoprint($htmlString);
 
         // Attach css and print function to end of html to style the printed document and to open print window when accessing the HTML
         $printString = 
@@ -304,6 +307,8 @@ class DocsFacade extends AbstractHttpFacade
      */
     protected function printLinkedPages(string $tempFilePath, array $linksArray) 
     {
+        $htmlString = '';
+        $linksArrayRecursive = [];
         foreach ($linksArray as $link) {
             // Only process links that are markdown files, are part of the same app documentation and have not been processed before
             if (str_ends_with($link, '.md') && str_starts_with($link, $this->docsPath) && !in_array($link, $this->processedLinks)) {
@@ -322,14 +327,19 @@ class DocsFacade extends AbstractHttpFacade
                 $htmlString = $this->replaceHrefChapters($htmlString);
                 $htmlString = $this->addIdToFirstHeading($link, $htmlString);
                 $htmlString = $this->replaceHrefImages($htmlString);
-                $htmlString = $this->addIdToImages($htmlString);
+                $htmlString = $this->addIdToImages($htmlString); 
+                $htmlString = $this->applyNoprint($htmlString);
+            } else {
+                $htmlString = PHP_EOL . '<!-- SKIPPED link ' . $link . ' because it seems external -->';
+            }
 
+            if ($htmlString) {
                 // Write the body content to the temporary file
                 file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
-                
-                if (!empty($linksArrayRecursive)) {
-                    $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
-                }
+            }
+
+            if (! empty($linksArrayRecursive)) {
+                $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
             }
         }
     }
@@ -395,7 +405,7 @@ class DocsFacade extends AbstractHttpFacade
          * The regex pattern makes sure that a user can add additional attributes like style in their html url definition.
          * E.g.: <a href="http://localhost/path/to/Image1.jpg" style="text-decoration:none; color:#000;">Image 1</a></li>
          */
-        $pattern = '/<a\s+[^>]*href="([^"]*\/[^\/]+\.(?:jpg|jpeg|png|gif|bmp|webp|svg))(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?".*?>(.*?)<\/a>/i';
+        $pattern = '/<a[^>]+href="([^"]+\.(?:png|jpe?g|gif|bmp|webp|svg|md)(?:#[^"]*)(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?)"[^>]*>(.*?)<\/a>/i';
 
         $matches = [];
         preg_match_all($pattern, $htmlString, $matches);
@@ -409,7 +419,13 @@ class DocsFacade extends AbstractHttpFacade
         $to = [];
         foreach ($matches[1] as $i => $url) {
             $from[] = '<a href="' . $url . '"';
-            $to[] = '<a href="#' . $this->getAnchor($url) . '"';
+            //if there is already an Id of the image use it
+            if (preg_match('/#(.+)$/', $url, $m)) {
+                $to[] = '<a href="#' . $m[1] . '"';
+            } 
+            else {
+                $to[] = '<a href="#' . $this->getAnchor($url) . '"';
+            }
         }
         
         return str_replace($from, $to, $htmlString);
@@ -507,10 +523,27 @@ class DocsFacade extends AbstractHttpFacade
         foreach ($links as $link) {
             $href = $link->getAttribute('href');
             if ($href) {
+                // Normalize links to make sure /Chapter1/index.md and /Chapter1/Subfolder/../index.md
+                // are not included multiple times due to the `..` iun the URL
+                $href = FilePathDataType::normalize($href);
                 $extractedLinks[] = $href;
             }
         } 
         return $extractedLinks;
     }
-    
+
+    /**
+     * comments out the section defined in between 
+     * <!-- noprint:start --> and
+     * <!-- noprint:end -->
+     * 
+     * @param string $html
+     * @return array|string|null
+     */
+    protected function applyNoprint(string $html) : string
+    {
+        $pattern = '/<!--\s*noprint:start\s*-->(.*?)<!--\s*noprint:end\s*-->/si';
+        $replacement = '<!--$section-->';
+        return preg_replace($pattern, $replacement, $html);
+    }
 }

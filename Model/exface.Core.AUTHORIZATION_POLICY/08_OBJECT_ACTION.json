@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Authorization Policy: Disable",
+            "_EXPORT_SUMMARY": "Authorization Policy: Disable [DisableAuthorizationPolicy]",
             "CREATED_ON": "2020-06-07 16:00:38",
             "MODIFIED_ON": "2024-10-14 12:40:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -103,7 +103,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Authorization Policy: Enable",
+            "_EXPORT_SUMMARY": "Authorization Policy: Enable [EnableAuthorizationPolicy]",
             "CREATED_ON": "2020-06-07 19:50:33",
             "MODIFIED_ON": "2024-10-14 12:41:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

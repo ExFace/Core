@@ -66,8 +66,11 @@ class ExistsCondition implements ConditionalExpressionInterface
 
         $collector = new DataCollector($dataSheet->getMetaObject());
         $collector->addExpressions($phs);
-        $inputData = $collector->collect($dataSheet);
-        $phsCols = $collector->getRequiredColumns($inputData);
+        $collector->setReadMissingData(true);
+        $collector->setIgnoreUnreadableColumns(false);
+        $collector->collectFrom($dataSheet);
+        $inputData = $collector->getRequiredData();
+        $phsCols = $collector->getRequiredColumns();
 
         if ($this->baseSheet === null) {
             $base = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->dataSheetUxon);

@@ -48,7 +48,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  * @author Andrej Kabachnik
  * 
  */
-class ConditionalPropertyCondition implements WidgetPartInterface
+class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
 {
     use ImportUxonObjectTrait;
     
@@ -288,5 +288,13 @@ class ConditionalPropertyCondition implements WidgetPartInterface
     public function hasLiveReference() : bool
     {
         return $this->getValueLeftExpression()->isReference() || $this->getValueRightExpression()->isReference();
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return $this->getValueLeftExpression()->__toString() . ' ' . $this->getComparator() . ' ' . $this->getValueRightExpression()->__toString();
     }
 }

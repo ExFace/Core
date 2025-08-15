@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
-use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Widgets\Parts\DataRowGrouper;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Widgets\Traits\DataTableTrait;
@@ -87,14 +87,15 @@ use exface\Core\Interfaces\Widgets\iCanBeDragAndDropSource;
  * - Set the `cell_widget` for a column to an active Input widget.
  *
  * @author Andrej Kabachnik
- *        
+ *
+ * @method \exface\Core\Widgets\DataTableConfigurator getConfiguratorWidget()
  */
 class DataTable extends Data implements 
-    iCanEditData, 
+    iCanEditData,
     iFillEntireContainer, 
     iSupportMultiSelect, 
-    iHaveContextMenu, 
-    iTakeInput, 
+    iHaveContextMenu,
+    iTakeInputAsDataSubsheet,
     iCanWrapText,
     iCanBeDragAndDropSource
 {
@@ -110,6 +111,10 @@ class DataTable extends Data implements
      */
     const FUNCTION_EMPTY = 'empty';
 
+    const FUNCTION_APPLY_SETUP = 'apply_setup';
+
+    const FUNCTION_SAVE_SETUP = 'save_setup';
+
     private $show_filter_row = null;
 
     private $show_row_numbers = false;
@@ -123,6 +128,8 @@ class DataTable extends Data implements
     private $multi_select_saved_on_nav = null;
 
     private $auto_row_height = true;
+    
+    private $auto_columnn_width = true;
 
     private $row_details_container = null;
 
@@ -414,7 +421,7 @@ class DataTable extends Data implements
      *
      * @return boolean
      */
-    public function getAutoRowHeight()
+    public function getAutoRowHeight() : bool
     {
         return $this->auto_row_height;
     }
@@ -430,9 +437,37 @@ class DataTable extends Data implements
      * @param boolean $value            
      * @return \exface\Core\Widgets\DataTable
      */
-    public function setAutoRowHeight($value)
+    public function setAutoRowHeight(bool $value)
     {
-        $this->auto_row_height = BooleanDataType::cast($value);
+        $this->auto_row_height = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function getAutoColumnWidth() : bool
+    {
+        return $this->auto_columnn_width;
+    }
+
+    /**
+     * Set to FALSE to prevent automatic width adjustment for columns.
+     * 
+     * The exact behavior of this depends on the facade used, but most facades will distribute columns
+     * evenly in this case. 
+     * 
+     * @uxon-property auto_column_width
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param boolean $value
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setAutoColumnWidth(bool $value)
+    {
+        $this->auto_columnn_width = $value;
         return $this;
     }
 

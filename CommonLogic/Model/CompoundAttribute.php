@@ -139,7 +139,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     public function splitCondition(ConditionInterface $condition) : ConditionGroupInterface
     {
         if ($condition->getExpression()->isMetaAttribute() === false || $condition->getExpression()->getAttribute()->is($this) === false) {
-            throw new InvalidArgumentException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ') from object "' . $this->getObject()->getAliasWithNamespace() . '": the condition is not based on this compound attribute!');
+            throw new InvalidArgumentException('Cannot split condition `' . $condition->toString() . '` for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ') from object "' . $this->getObject()->getAliasWithNamespace() . '": the condition is not based on this compound attribute!');
         }
         
         switch ($condition->getComparator()) {
@@ -204,7 +204,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
                 }
                 break;
             default:
-                throw new RuntimeException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getAliasWithRelationPath() . '" from object "' . $this->getObject()->getAliasWithNamespace() . '": a generic split is not possible for comparator "' . $condition->getComparator() . '"!');
+                throw new RuntimeException('Cannot split condition `' . $condition->toString() . '` for compound attribute "' . $this->getAliasWithRelationPath() . '" from object "' . $this->getObject()->getAliasWithNamespace() . '": a generic split is not possible for comparator "' . $condition->getComparator() . '"!');
         }
         
         return $group;
@@ -222,5 +222,23 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
             throw new MetaAttributeNotFoundError($this->getObject(), 'Component "' . $index . '" not found for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ') from object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $comp;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see Attribute::copy()
+     */
+    public function copy(bool $ignoreRelationPath = false) : self
+    {
+        $copy = parent::copy($ignoreRelationPath);
+        // Clear the cache for component attributes. Not clearing it has caused problems with compounds at the
+        // end of a relation path - the components actually need the same relation path, but after the compound
+        // was copied without clearing the component-cache, the components still had the old (or empty) relation path
+        // TODO this is actually not very elegant because it causes reading the metamodel DB - it would be way better
+        // to update the relation paths of components whenever the relation path of the compound is changed. But
+        // that was not possible easily because the relation path is constructed incremetntally in MetaObject::getAttribute().
+        // So there is no real "event" when the relation path of an attribute is final.
+        $copy->components = null;
+        return $copy;
     }
 }

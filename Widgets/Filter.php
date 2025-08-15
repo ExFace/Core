@@ -184,7 +184,7 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
+class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanPreloadData
 {
     use iHaveAttributeGroupTrait;
 
@@ -1141,11 +1141,12 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * default.
      * 
      * The following states of input widgets are available:
-     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
-     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
-     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     *
+     * - `display_only` = true - active (user can interact with the widget), but not considered as input for actions
+     * - `disabled` = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - `readonly` = true - inactive and not considered as action input (same as `display_only` + `disabled`)
      * 
-     * If a widget is readonly, will also get display-only and disabled automatically.
+     * If a widget is `readonly`, will also get `display-only` and `disabled` automatically.
      * 
      * @uxon-property display_only
      * @uxon-type boolean
@@ -1213,6 +1214,10 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * Filters with custom `condition_group` can be easily mixed with simple filters. In the resulting
      * condition group, the latter will yield conditions and the former will produce nested condition
      * groups.
+     *
+     * **NOTE:** just like regular filters, custom conditions with empty values will be ignored (the filter
+     * will not be applied at all instead of searching for empty values). If you want you filter to search
+     * for empty values explicitly, set `ignore_empty_values` for corresponding conditions.
      * 
      * ## Examples
      * 
@@ -1268,7 +1273,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * 
      * @uxon-property condition_group
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
-     * @uxon-template {"operator": "OR", "conditions": [{"expression": "", "value": "[#value#]", "comparator": "="}]}
+     * @uxon-template {"operator": "OR", "conditions": [{"expression": "", "value": "[#value#]", "comparator": "==", "ignore_empty_values": true}]}
      * 
      * @param UxonObject $uxon
      * @return Filter

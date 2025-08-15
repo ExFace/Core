@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -64,12 +66,14 @@ class QueryBuilderSchema extends UxonSchema
      * {@inheritdoc}
      * @see \exface\Core\Uxon\UxonSchema::getProperties()
      */
-    public function getProperties(string $prototypeClass) : array
+    public function getProperties(string $prototypeClass, UxonObject $uxon, array $path) : array
     {
         if ($this->getLevel() !== null) {
             $arr = [];
+            $level = strtolower($this->getLevel());
             foreach ($this->getPropertiesSheet($prototypeClass)->getRows() as $row) {
-                if (strtolower($row['TARGET']) === strtolower($this->getLevel())) {
+                $target = strtolower($row['TARGET'] ?? '');
+                if (! $target || $target === $level) {
                     $arr[] = $row['PROPERTY'];
                 }
             }
@@ -87,8 +91,25 @@ class QueryBuilderSchema extends UxonSchema
      * @inheritdoc 
      * @see UxonSchema::loadPropertiesSheet()
      */
-    protected function loadPropertiesSheet(string $prototypeClass, string $notationObjectAlias): DataSheetInterface
+    protected function loadPropertiesSheet(string $prototypeClass, string $aliasOfAnnotationObject = 'exface.Core.UXON_PROPERTY_ANNOTATION') : DataSheetInterface
     {
-        return parent::loadPropertiesSheet($prototypeClass, 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION');
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION');
+        $ds->getColumns()->addMultiple([
+            'PROPERTY',
+            'TYPE',
+            'TEMPLATE',
+            'DEFAULT',
+            'REQUIRED',
+            'TRANSLATABLE',
+            'TARGET' // Additional attribute for query builder annotations!!!
+        ]);
+        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
+        $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
+        try {
+            $ds->dataRead();
+        } catch (\Throwable $e) {
+            throw new RuntimeException('Cannot read UXON properties from file "' . $filepathRelative . '". ' . $e->getMessage(), null, $e);
+        }
+        return $ds;
     }
 }

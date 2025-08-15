@@ -63,7 +63,6 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
-use exface\Core\Exceptions\DataSheets\DataSheetDuplicatesError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -139,7 +138,7 @@ class DataSheet implements DataSheetInterface
 
     /**
      * 
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRows($rows)
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRows()
      */
     public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
     {
@@ -158,28 +157,46 @@ class DataSheet implements DataSheetInterface
     public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $index = null) : DataSheetInterface
     {
         if (! empty($row)) {
-            if ($merge_uid_dublicates === true && $this->hasUidColumn() === true && $uid = $row[$this->getUidColumn()->getName()]) {
-                $uid_row_nr = $this->getUidColumn()->findRowByValue($uid);
-                if ($uid_row_nr !== false) {
-                    $this->rows[$uid_row_nr] = array_merge($this->rows[$uid_row_nr], $row);
-                } else {
-                    if ($index === null || is_numeric($index) === false) {
-                        $this->rows[] = $row;
-                    } else {
-                        array_splice($this->rows, $index, 0, [$row]);
+            // Compare the keys of the row with column names. If there are row keys, that are NOT column names, we
+            // should do something!
+            // - We can assume, that the key is actually an expression, that produces a different column name, so
+            // we can check if the key matches the expression of any column.
+            // - We can add a new column if allowed by $auto_add_columns. But be careful: that column could actually
+            // also have a column name, that differs from the key if the latter has forbidden characters
+            $colExprMap = $this->getColumns()->getColumnsExpressions();
+            foreach (array_diff(array_keys($row), array_keys($colExprMap)) as $missingKey) {
+                // Check if there is column, where the expression matches the array key. If so, use that
+                if (false === $colName = array_search($missingKey, $colExprMap, true)) {
+                    // If the column does not exist, add it unless explicitly forbidden
+                    $colName = null;
+                    if ($auto_add_columns === true) {
+                        $col = $this->getColumns()->addFromExpression($missingKey);
+                        $colName = $col->getName();
                     }
                 }
+                // If a column is found, BUT its name is different from the key used in the row, change the key
+                // in the row!
+                if ($colName !== null && $colName !== $missingKey) {
+                    $row[$colName] = $row[$missingKey];
+                    unset($row[$missingKey]);
+                }
+            }
+
+            // Now actually add the row
+            // If we merge by UID and there is a duplicate, merge the existing UID row with the new one
+            if ($merge_uid_dublicates === true
+                && $this->hasUidColumn() === true
+                && (null !== $uid = $row[$this->getUidColumn()->getName()])
+                && (false !== $uid_row_nr = $this->getUidColumn()->findRowByValue($uid))
+            ) {
+                $this->rows[$uid_row_nr] = array_merge($this->rows[$uid_row_nr], $row);
             } else {
+                // If no $index provided, append at the end of the rows array - otherwise insert in the middle
                 if ($index === null || is_numeric($index) === false) {
                     $this->rows[] = $row;
                 } else {
                     array_splice($this->rows, $index, 0, [$row]);
                 }
-            }
-            
-            // ensure, that all columns used in the rows are present in the data sheet
-            if ($auto_add_columns === true) {
-                $this->getColumns()->addMultiple(array_keys((array) $row));
             }
             $this->setFresh(true);
         }
@@ -614,7 +631,7 @@ class DataSheet implements DataSheetInterface
             if ($attribute->hasCalculation()) {
                 foreach ($attribute->getCalculationExpression()->getRequiredAttributes() as $req) {
                     if (! $this->getColumn($req)) {
-                        $column = $this->getColumns()->addFromExpression($req, '', true);
+                        $column = $this->getColumns()->addFromExpression($req, null, true);
                         $this->dataReadAddColumnToQuery($column, $query);
                     }
                 }
@@ -3038,8 +3055,14 @@ class DataSheet implements DataSheetInterface
         if ($readMissingData === true) {
             // TODO #DataCollector needs to be used here instead of all the following logic
             foreach ($condGrp->getRequiredExpressions($this->getMetaObject()) as $expr) {
-                if (! $this->getColumns()->getByExpression($expr)) {
-                    $missingCols[] = $expr;
+                // IMPORTANT: only include treat attribute aliases as missing data! We do NOT need
+                // formulas as columns to evaluate the respective conditions - conditions will evaluate
+                // formulas on-the-fly. If added to $missingCols formulas will greatly increase probability
+                // of errors in data without UIDs!
+                foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                    if (! $this->getColumns()->getByExpression($attrAlias)) {
+                        $missingCols[] = $attrAlias;
+                    }
                 }
             }
             if (! empty($missingCols)) {

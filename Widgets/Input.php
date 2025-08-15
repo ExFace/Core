@@ -30,7 +30,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequired
+class Input extends Value implements iTakeInput, iHaveDefaultValue
 {
     /**
      * Focus the input
@@ -408,11 +408,11 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequir
      * 
      * The following states of input widgets are available:
      * 
-     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
-     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
-     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     * - `display_only` = true - active (user can interact with the widget), but not considered as input for actions
+     * - `disabled` = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - `readonly` = true - inactive and not considered as action input (same as `display_only` + `disabled`)
      * 
-     * If a widget is readonly, will also get display-only and disabled automatically.
+     * If a widget is `readonly`, will also get `display-only` and disabled automatically.
      * 
      * @uxon-property display_only
      * @uxon-type boolean
@@ -585,6 +585,27 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequir
     {
         $this->disableValidation = $value;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getHintDebug()
+     */
+    protected function getHintDebug() : string
+    {
+        $hint = parent::getHintDebug();
+
+        // Input-specific conditional properties
+        if (null !== $condProp = $this->getRequiredIf()) {
+            $hint = $hint
+                . "\n- Required if: {$condProp->getConditionGroup()->__toString()}";
+        }
+        if (null !== $condProp = $this->getInvalidIf()) {
+            $hint = $hint
+                . "\n- Invalid if: {$condProp->getConditionGroup()->__toString()}";
+        }
+
+        return $hint;
     }
 }
 ?>

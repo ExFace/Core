@@ -125,10 +125,6 @@ class MySqlBuilder extends AbstractSqlBuilder
         /* @var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
-            // First see, if the attribute has some kind of special data type (e.g. binary)
-            if ($this->isBinaryColumn($qpart)) {
-                $this->addBinaryColumn($qpart->getAlias());
-            }
             
             switch (true) {
                 // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
@@ -349,7 +345,7 @@ class MySqlBuilder extends AbstractSqlBuilder
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
         $sql_data_type = ($dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? null) === null ? null : mb_strtolower($dataAddressProps[static::DAP_SQL_DATA_TYPE]);
-        if ($sql_data_type === 'binary' && $data_type instanceof BinaryDataType) {
+        if ($sql_data_type === static::DAP_SQL_DATA_TYPE_BINARY && $data_type instanceof BinaryDataType) {
             $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
             switch ($data_type->getEncoding()) {
                 case BinaryDataType::ENCODING_BASE64:

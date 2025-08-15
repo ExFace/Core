@@ -26,3 +26,16 @@ This means, the SQL Server cannot be contacted. Try to disable SSL verification:
    }
 }
 ```
+
+## DB connection cannot be initialized without an error
+
+Sometimes we saw the connection initialization hanging indefinitely without any error. The reason is unknown, but it 
+happened only to the second connection beint initialized to the same DB - in particular, when multiple app installers
+were run one-after another.
+
+Specifically for the installers, you can try to force all installers to use the same workbench and, thus, the same
+DB connection by setting `COMPOSER.USE_NEW_WORKBENCH_FOR_EVERY_APP` to `false` in `axenox.PackageManager.config.
+json` in your config folder.
+
+On Linux systems, you can also try to set `ConnectionPooling` to `true` in the `connection_options` of the MS SQL
+connection config in the model.
