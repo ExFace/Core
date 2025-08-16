@@ -13,6 +13,7 @@ use exface\Core\DataTypes\DateTimeDataType;
 class InputDateTime extends InputDate
 {
     private $showSeconds = null;
+    private $defaultTime = null;
     
     /**
      * 
@@ -54,6 +55,32 @@ class InputDateTime extends InputDate
     public function setShowSeconds(bool $value) : InputDateTime
     {
         $this->showSeconds = $value;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDefaultTime() : ?string
+    {
+        return $this->defaultTime;
+    }
+
+    /**
+     * Sets the default time (hh.mm) for the date-time picker.
+     * If this property is not set, the current time is used instead.
+     * Example: "12:00"
+     *
+     * @uxon-property default_time
+     * @uxon-type string
+     * @uxon-default "12:00"
+     *
+     * @param string $time
+     * @return InputDateTime
+     */
+    public function setDefaultTime(string $time) : InputDateTime
+    {
+        $this->defaultTime = $time;
         return $this;
     }
 }
