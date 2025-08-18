@@ -123,7 +123,7 @@ class ShowDataImportDialog extends ShowDialog
         foreach ($dialog->getMetaObject()->getAttributes()->getRequired()->getEditable() as $attr) {
             if (! array_key_exists($attr->getAlias(), $colAttrs)) {
                 $colAttrs[$attr->getAlias()] = $attr;
-                $col = $importer->createColumnFromAttribute($attr);
+                $col = $importer->createColumnFromAttribute($attr, null, null, true);
                 $col->setEditable(true);
                 $importer->addColumn($col);
             }
