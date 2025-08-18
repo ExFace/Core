@@ -12,13 +12,13 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 /**
  * Tabbed container with one or more tabs.
  * 
- * The `Tabs` widget constis of nav-strip listing the names of all available tabs (usually at 
+ * The `Tabs` widget consists of nav-strip listing the names of all available tabs (usually at 
  * the top) and a large display area showing the current tab. 
  * 
  * Each tab is a `Tab` widget, that can contain any number of widgets. Every `Tab` should have 
  * a `caption` and may have an `icon` and a `hint`. These attributes along with `disabled`, `hidden`
  * etc. control the appearance of the nav-strip. Depending on the facade, the `visibility` property
- * can be used to emhasize certain tabs..
+ * can be used to emphasize certain tabs..
  * 
  * The first tab is visible (active) by default. You can also activate any other tab initially by
  * setting the `active_tab` property to the sequential number of the slide (starting with 0!).
