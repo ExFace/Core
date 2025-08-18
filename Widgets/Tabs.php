@@ -183,27 +183,37 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
      */
     public function setWidgets($widget_or_uxon_array)
     {
-        $widgets = array();
+        $widgets = [];
         foreach ($widget_or_uxon_array as $w) {
-            if ($w instanceof UxonObject) {
-                // If we have a UXON or instantiated widget object, use the widget directly
-                $page = $this->getPage();
-                $widgetType = WidgetFactory::getWidgetType($this->getPage(), $w, $this, $this->getTabWidgetType());
-                
-                if($this->isWidgetTypeAllowed($widgetType)) {
-                    $widget = WidgetFactory::createFromUxon($page, $w, $this, $this->getTabWidgetType());
-                } else {
-                    $widget = $this->wrapInTab($w);
-                }
-            } elseif ($w instanceof WidgetInterface){
-                $widget = $w;
-            } else {
+            // If we have a UXON or instantiated widget object, use the widget directly
+            switch (true) {
+                // If it's a UXON, use it to create a widget
+                case $w instanceof UxonObject:
+                    $page = $this->getPage();
+                    // See what widget type the factory will produce
+                    list($uxon, $widgetType) = WidgetFactory::getDefaults($this->getWorkbench(), $w, $this, $this->getTabWidgetType());
+                    // If it is an allowed child type, create a direct child.
+                    // If not, create a tab and instantiate the widget from the UXON inside the tab
+                    if($this->isWidgetTypeAllowed($widgetType)) {
+                        // Use WidgetFactory::create() instead of createFromUxon() to avoid any UXON processing, that
+                        // was already done by getDefaults() above. This is just to save unneeded iterations.
+                        $tab = WidgetFactory::create($page, $widgetType, $this, $uxon);
+                    } else {
+                        $tab = $this->createTab();
+                        $content = WidgetFactory::createFromUxonInParent($tab, $w);
+                        $tab->addWidget($content);
+                        $tab->setMetaObject($content->getMetaObject());
+                        $tab->setCaption($content->getCaption());
+                    }
+                    $widgets[] = $tab;
+                    break;
+                // If it is an already instantiated widget, use it directly
+                case $w instanceof WidgetInterface:
                 // If it is something else, just add it to the result and let the parent object deal with it
-                $widgets[] = $w;
+                default:
+                    $widgets[] = $w;
+                    break;
             }
-            
-            // If the widget is not a Tab itself, wrap it in a Tab. Otherwise, add it directly to the result.
-            $widgets[] = $widget;
         }
         
         // Now the resulting array consists of widgets and unknown items. Send it to the parent class. Widgets will get
@@ -231,18 +241,6 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
     {
         // Create an empty tab
         return $this->getPage()->createWidget($this->getTabWidgetType(), $this);
-    }
-    
-    public function wrapInTab(UxonObject $content) : Tab
-    {
-        $tab = $this->createTab();
-        $content = WidgetFactory::createFromUxon($this->getPage(), $content, $tab, $this->getTabWidgetType());
-        
-        $tab->addWidget($content);
-        $tab->setMetaObject($content->getMetaObject());
-        $tab->setCaption($content->getCaption());
-        
-        return $tab;
     }
 
     /**
