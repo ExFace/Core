@@ -7,6 +7,7 @@ use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Widgets\iCanBeEditable;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iShowData;
@@ -105,11 +106,12 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @see iHaveColumns::createColumnFromAttribute
      */
-    function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null) : DataColumn
+    public function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null, bool $editable = false) : DataColumn
     {
         // If the attribute is a relation and the related object has a label attribute, automatically use this LABEL
         // instead of the relation key to make it better understandable for humans.
-        if ($attribute->isRelation() === true) {
+        // But only do this for non-editable cells. For editable cells, we just take the default editor!
+        if ($attribute->isRelation() === true && $editable === false) {
             $relatedObj = $this->getMetaObject()->getRelatedObject($attribute->getAlias());
             if ($relatedObj->hasLabelAttribute() === true) {
                 // It is important to append __LABEL to the relation path (and not the actual alias of the
