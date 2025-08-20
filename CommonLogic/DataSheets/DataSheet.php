@@ -3441,14 +3441,33 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
      */
-    public function getSingleRow() : array
+    public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array
     {
         $cnt = $this->countRows();
         if ($cnt === 0) {
-            throw new DataNotFoundError($this, 'No data for "' . $this->getMetaObject()->__toString() . '" was found while expacting exaclty one row');
+            // TODO #translate
+            if ($errorOnNotFound !== null) {
+                $msg = StringDataType::replacePlaceholders($errorOnNotFound, [
+                    'filters' => $this->getFilters()->__toString()
+                ]);
+            } else {
+                $msg = 'No data for ' . $this->getMetaObject()->__toString() . ' was found while expacting exaclty one row for filter "' . $this->getFilters()->__toString() . '"';
+                if (! $this->getFilters()->isEmpty()) {
+                    $msg .= 'Using filters "' . $this->getFilters()->__toString() . '"';
+                }
+            }
+            throw new DataNotFoundError($this, $msg);
         }
         if ($cnt > 1) {
-            throw new DataNotFoundError($this, 'Found multiple data rows for "' . $this->getMetaObject()->__toString() . '" while expecting exaclty one row');
+            // TODO #translate
+            if ($errorOnMultiple !== null) {
+                $msg = StringDataType::replacePlaceholders($errorOnMultiple, [
+                    'filters' => $this->getFilters()->__toString()
+                ]);
+            } else {
+                $msg = 'Found multiple data rows for ' . $this->getMetaObject()->__toString() . ' while expecting exaclty one row for filter "' . $this->getFilters()->__toString() . '"';
+            }
+            throw new DataNotFoundError($this, $msg);
         }
         return $this->rows[0];
     }

@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\ConditionGroup;
+use exface\Core\Exceptions\DataSheets\DataNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
@@ -823,10 +824,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * 
      * Returns the row as an array: `[col1 => val1, col2 => val2, ...]`.
      * 
-     * This method a convenient replacement for row number checks.
+     * This method is a convenient replacement for row number checks.
      *
+     * @param string|null $errorOnNotFound
+     * @param string|null $errorOnMultiple
+     * 
      * @return array
-     * @throws InvalidOptionException if more then one row is within the datasheet
+     * 
+     * @throws DataNotFoundError if none or more then one row is within the datasheet
      */
-    public function getSingleRow() : array;
+    public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array;
 }
