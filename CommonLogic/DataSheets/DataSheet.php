@@ -6,6 +6,10 @@ use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\IntegerDataType;
+use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetListInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -304,7 +308,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::importRows()
      */
-    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true)
+    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true) : DataSheetInterface
     {
         if (! $this->getMetaObject()->is($other_sheet->getMetaObject()->getAliasWithNamespace())) {
             throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for compatible objects!', '6T5V1DR');
@@ -933,7 +937,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataSave()
      */
-    public function dataSave(DataTransactionInterface $transaction = null)
+    public function dataSave(DataTransactionInterface $transaction = null) : int
     {
         if ($this->hasUidColumn(false) === true) {
             return $this->dataUpdate(true, $transaction);
@@ -2094,7 +2098,7 @@ class DataSheet implements DataSheetInterface
      *
      * @return DataSheetList|DataSheetSubsheet[]
      */
-    public function getSubsheets()
+    public function getSubsheets() : DataSheetListInterface
     {
         return $this->subsheets;
     }
@@ -2108,17 +2112,15 @@ class DataSheet implements DataSheetInterface
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSorters()
      */
-    public function getSorters()
+    public function getSorters() : DataSorterListInterface
     {
         return $this->sorters;
     }
 
     /**
-     * Returns TRUE if the data sheet has at least one sorter and FALSE otherwise
-     *
-     * @return boolean
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::hasSorters()
      */
-    public function hasSorters()
+    public function hasSorters() : bool
     {
         if (! $this->getSorters()->isEmpty()) {
             return true;
@@ -2180,15 +2182,11 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Returns multiple rows of the data sheet as an array of associative array (e.g.
-     * [rownum => [col1 => val1, col2 => val2, ...] ])
-     * By default returns all rows. Use the arguments to select only a range of rows.
      *
-     * @param number $how_many            
-     * @param number $offset            
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRows()
      */
-    function getRows($how_many = 0, $offset = 0)
+    function getRows(int $how_many = 0, int $offset = 0) : array
     {
         $return = array();
         if ($how_many > 0 || $offset > 0) {
@@ -2220,13 +2218,11 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Returns the specified row as an associative array (e.g.
-     * [col1 => val1, col2 => val2, ...])
      *
-     * @param number $row_number            
-     * @return multitype:
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsByIndex()
      */
-    function getRow($row_number = 0)
+    function getRow(int $row_number = 0) : ?array
     {
         return $this->rows[$row_number];
     }
@@ -2238,9 +2234,9 @@ class DataSheet implements DataSheetInterface
      * @param string $column_name            
      * @param mixed $value            
      * @throws DataSheetColumnNotFoundError
-     * @return array
+     * @return array|null
      */
-    public function getRowByColumnValue($column_name, $value)
+    public function getRowByColumnValue(string $column_name, $value) : ?array
     {
         $column = $this->getColumn($column_name);
         if (! $column) {
@@ -2313,7 +2309,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getColumns()
      */
-    public function getColumns()
+    public function getColumns() : DataColumnListInterface
     {
         return $this->cols;
     }
@@ -2344,9 +2340,11 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * 
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRowsForColumn()
      */
-    public function removeRowsForColumn($column_name)
+    public function removeRowsForColumn(string $column_name) : DataSheetInterface
     {
         foreach (array_keys($this->getRows()) as $id) {
             unset($this->rows[$id][$column_name]);
@@ -2382,11 +2380,11 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Returns the data sheet column containing the UID values of the main object or false if the data sheet does not contain that column
      *
-     * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getUidColumn()
      */
-    public function getUidColumn()
+    public function getUidColumn() : ?DataColumnInterface
     {
         return $this->getColumns()->get($this->getUidColumnName());
     }
@@ -2419,7 +2417,7 @@ class DataSheet implements DataSheetInterface
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getMetaObject()
      */
-    public function getMetaObject()
+    public function getMetaObject() : MetaObjectInterface
     {
         return $this->meta_object;
     }
@@ -2429,17 +2427,17 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getAggregations()
      */
-    public function getAggregations()
+    public function getAggregations() : DataAggregationListInterface
     {
         return $this->aggregation_columns;
     }
 
     /**
-     * Returns TRUE if the data sheet has at least one aggregator and FALSE otherwise
      *
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::hasAggregations()
      */
-    public function hasAggregations()
+    public function hasAggregations() : bool
     {
         if (! $this->getAggregations()->isEmpty()) {
             return true;
@@ -2449,11 +2447,11 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Returns the root condition group with all filters of the data sheet
      *
-     * @return ConditionGroup
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::ConditionGroupInterface()
      */
-    public function getFilters()
+    public function getFilters() : ConditionGroupInterface
     {
         return $this->filters;
     }
@@ -2620,7 +2618,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRows()
      */
-    public function removeRows(array $rowIndexes = null)
+    public function removeRows(array $rowIndexes = null) : DataSheetInterface
     {
         if ($rowIndexes !== null) {
             $rowIndexes = array_unique($rowIndexes);
@@ -2651,7 +2649,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRowsByUid()
      */
-    public function removeRowsByUid($uid)
+    public function removeRowsByUid(string $uid) : DataSheetInterface
     {
         // Do nothing if there is no UID column
         if (! $this->getUidColumn()) {
@@ -2806,7 +2804,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::merge()
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true)
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true) : DataSheetInterface
     {
         // Ignore empty other sheets
         if ($other_sheet->isEmpty() && $other_sheet->getFilters()->isEmpty()) {
@@ -2913,7 +2911,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getUidColumnName()
      */
-    public function getUidColumnName()
+    public function getUidColumnName() : ?string
     {
         if (! $this->uid_column_name) {
             $this->uid_column_name = $this->getMetaObject()->getUidAttributeAlias();
@@ -2925,21 +2923,9 @@ class DataSheet implements DataSheetInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setUidColumnName()
-     */
-    public function setUidColumnName($value)
-    {
-        $this->uid_column_name = $value;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setUidColumn()
      */
-    public function setUidColumn(DataColumnInterface $column)
+    public function setUidColumn(DataColumnInterface $column) : DataSheetInterface
     {
         $this->uid_column_name = $column->getName();
         return $this;
@@ -2990,10 +2976,9 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataMarkInvalid()
      */
-    public function dataMarkInvalid()
+    public function dataMarkInvalid() : DataSheetInterface
     {
         $this->invalid_data_flag = true;
         return $this;
@@ -3019,7 +3004,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::hasColumTotals()
      */
-    public function hasColumTotals()
+    public function hasColumTotals() : bool
     {
         foreach ($this->getColumns() as $col){
             if ($col->hasTotals()){
@@ -3218,7 +3203,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDecrypted()
      */
-    public function getRowsDecrypted($how_many = 0, $offset = 0, string $secret = null) : array
+    public function getRowsDecrypted(int $how_many = 0, int $offset = 0, string $secret = null) : array
     {
         $encryptedRows = $this->getRows($how_many, $offset);
         if (empty($encryptedRows)) {
