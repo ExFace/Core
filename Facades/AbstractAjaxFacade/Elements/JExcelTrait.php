@@ -17,6 +17,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Widgets\DataSpreadSheet;
 use exface\Core\Widgets\DataImporter;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
+use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
@@ -122,6 +123,8 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
 trait JExcelTrait 
 {
     use JsConditionalPropertyTrait;
+    
+    private $onInitScripts = [];
     
     /**
      * @return void
@@ -281,275 +284,7 @@ JS;
             $rowNumberColNameJs = 'null';
         }
         
-        /* @var $col \exface\Core\Widgets\DataColumn */
-        foreach ($widget->getColumns() as $colIdx => $col) {
-            $cellWidget = $col->getCellWidget();
-            // If the values were formatted according to their data types in buildJsConvertDataToArray()
-            // parse them back here
-            if ($this->needsDataFormatting($col)) {
-                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
-                if (($cellWidget instanceof InputNumber) && ($formatter instanceof JsNumberFormatter)) {
-                    $formatter->setDecimalSeparator($cellWidget->getDecimalSeparator());
-                    $formatter->setThousandsSeparator($cellWidget->getThousandsSeparator());
-                }
-                $parserJs = 'function(value){ return ' . $formatter->buildJsFormatParser('value') . '}';
-                // For those cells, that do not have a specific editor, use the data type formatter
-                // to format the values before showing them and parse them back in buildJsConvertArrayToData()
-                $formatterJs = 'function(value){ return ' . $formatter->buildJsFormatter('value') . '}';
-            } else {
-                $parserJs = 'function(value){ return value; }';
-                $formatterJs = 'function(value){ return value; }';
-            }
-            
-            $validatorJs = '';
-            if (! $col->isHidden() && $col->isEditable()) {
-                $cellEl = $this->getFacade()->getElement($col->getCellWidget());
-                if ($cellEl->getWidget() instanceof Input) {
-                    $validatorJs = 'function(value){ return (' . $cellEl->buildJsValidator('value') . ') ? true : ' . $this->escapeString($cellEl->getValidationErrorText(), true, false) . ' }';
-                }
-            }
-            if (! $validatorJs) {
-                $validatorJs = 'function(value){return true}';
-            }
-            
-            $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
-            $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
-            
-            $conditionsJs = '';
-            
-            if ($condProp = $col->getDisabledIf()) {
-                // disabled-if conditions
-
-                // check for self-references
-                $hasSelfReference = false;
-                foreach ($condProp->getConditions() as $condition) {
-                    $expr = $condition->getValueLeftExpression();
-                    if ($expr->isReference()){
-                        $targetWidget = $expr->getWidgetLink($col->getCellWidget())->getTargetWidgetId();
-                        if ($targetWidget === $this->getWidget()->getId()) {
-                            $hasSelfReference = true;
-                            break;
-                        }
-                    }
-                }
-
-                // if it is self-referencing, apply conditions per cell
-                // otherwise apply to entire column
-                if ($hasSelfReference){
-                    $conditionsJs .= <<<JS
-                    
-                    oColOpts = oJExcel.options.columns[iColIdx];
-                    if (oColOpts !== undefined && oColOpts.type === 'checkbox'){
-                        // checkboxes need to be disabled, not set to readonly
-                        aCells.forEach(function(domCell, iRowIdx){
-                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
-
-                            {$this->buildJsConditionalProperty(
-                                $condProp, 
-                                "$(domCell).children('input').prop('disabled', true); ", 
-                                "$(domCell).children('input').prop('disabled', false);"
-                            )}
-                            
-                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
-                        });
-
-                    }
-                    else{
-                        // other column types can be set to readonly
-                        aCells.forEach(function(domCell, iRowIdx){
-                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
-
-                            {$this->buildJsConditionalProperty(
-                                $condProp, 
-                                "if (oWidget.hasChanged(iColIdx, iRowIdx)) { oWidget.restoreInitValue(iColIdx, iRowIdx); } domCell.classList.add('readonly'); ", 
-                                "domCell.classList.remove('readonly');"
-                            )}
-
-                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
-                        });
-                    }
-                    
-JS;
-
-                } else{
-                    $conditionsJs .= $this->buildJsConditionalProperty(
-                        $condProp, 
-                        "aCells.forEach(function(domCell, iRowIdx){
-                            if (oWidget.hasChanged(iColIdx, iRowIdx)) {
-                                oWidget.restoreInitValue(iColIdx, iRowIdx); 
-                            }
-                            domCell.classList.add('readonly');
-                        });", 
-                        "aCells.forEach(function(domCell){domCell.classList.remove('readonly')});"
-                    );
-                }
-                
-            }
-            if (($cellWidget instanceof Input) && $col->getCellWidget()->getRequiredIf()) {
-                // required-if conditions
-
-                if ($requiredIf = $col->getCellWidget()->getRequiredIf()) {
-                    
-                    // check for self-references
-                    $hasSelfReference = false;
-                    foreach ($requiredIf->getConditions() as $condition) {
-                        $expr = $condition->getValueLeftExpression();
-                        if ($expr->isReference()){
-                            $targetWidget = $expr->getWidgetLink($col->getCellWidget())->getTargetWidgetId();
-                            if ($targetWidget === $this->getWidget()->getId()) {
-                                $hasSelfReference = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if ($hasSelfReference){
-                        $conditionsJs .= <<<JS
-
-                            aCells.forEach(function(domCell, iRowIdx){
-                                // apply required only if cell is empty 
-                                // (and also not a checkbox, as they cannot/should not be required)
-                                if (domCell.innerHTML.trim() !== ''){
-                                    domCell.classList.remove('exf-spreadsheet-invalid', 'required-if');
-                                    return;
-                                }
-
-                                {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
-                                
-                                {$this->buildJsConditionalProperty(
-                                    $requiredIf, 
-                                    "domCell.classList.add('exf-spreadsheet-invalid', 'required-if'); ", 
-                                    "domCell.classList.remove('exf-spreadsheet-invalid', 'required-if');"
-                                )}
-                                
-                                {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
-                            });
-    JS;
-                    }
-                }
-            }
-            if ($conditionsJs) {
-                $conditionsJs = <<<JS
-
-                        var iColIdx = {$colIdx};
-                        var oJExcel = oWidget.getJExcel();
-                        var aCells = [];
-                        oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
-                            aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
-                        });
-                        $conditionsJs
-JS;
-            }
-
-            $lazyLoadingFlagJs = (($col->getCellWidget() instanceof InputComboTable) && $col->getCellWidget()->getLazyLoading()) ? 'true' : 'false';
-            $wasLazyLoaded = 'false';
-
-            // Update dropown values on action effects that might affect them
-            if ($col->getCellWidget() instanceof InputComboTable && $col->getCellWidget()->getAttribute()->isRelation()) {
-
-                // get affected objects
-                $colTable = $col->getCellWidget()->getTable();
-                foreach ($colTable->getMetaObjectsEffectingThisWidget() as $object) {
-                    if ($object->getAliasWithNamespace() !== null) {
-                        $effectedAliases[] = $object->getAliasWithNamespace();
-                    }
-                }
-                $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
-                $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
-
-                // js to remove old event listeners
-                // TODO: check in ui5
-                $removeDropdownRefreshListeners = <<<JS
-                       $( document ).off( '{$actionperformed}.{$this->getId()}' );
-JS;
-
-                // event listeners for action effects
-                $refreshDropdownJs .= <<<JS
-                        $( document ).on( '{$actionperformed}.{$this->getId()}', function( oEvent, oParams ) {
-                    
-                            var oEffect = {};
-                            var aUsedObjectAliases = {$effectedAliasesJs};
-                            var fnRefresh = function() {
-                                {$this->buildJsJqueryElement()}[0].exfWidget.refreshDropdown({$colIdx});
-                            };
-                        
-                            for (var i = 0; i < oParams.effects.length; i++) {
-                                oEffect = oParams.effects[i];
-                                if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-                                    // refresh immediately if directly affected or delayed if it is an indirect effect
-                                    if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
-                                        fnRefresh();
-                                    } else {
-                                        setTimeout(fnRefresh, 100);
-                                    }
-                                    return;
-                                }
-                            }
-                            
-                        });
-JS;
-
-            }
-
-            $lazyLoadingRequestJs = json_encode("");
-            $isRelation = false;
-            $dropdownLabel = '';
-            $dropdownId = '';
-
-            // request config for ajax request to refresh dropdown data 
-            if ($col->getCellWidget() instanceof InputComboTable && $col->getCellWidget()->getAttribute()->isRelation()) {
-                $cellWidget = $col->getCellWidget();
-
-                $lazyLoadingRequestOptions = [
-                    'action_alias' => $cellWidget->getLazyLoadingActionAlias(),
-                    'page_id' => $this->getPageId(),
-                    'element_id' => $cellWidget->getTable()->getId(),
-                    'object_id' => $cellWidget->getTable()->getMetaObject()->getId(),
-                    'headers' => ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : ''
-                ];
-                $lazyLoadingRequestJs = json_encode($lazyLoadingRequestOptions);
-
-                // get id and label names for dropdown formatting
-                $srcIdName = $col->getCellWidget()->getValueColumn()->getDataColumnName();
-                $srcLabelName = $col->getCellWidget()->getTextColumn()->getDataColumnName();
-
-                $dropdownLabel = $srcLabelName;
-                $dropdownId = $srcIdName;
-                $isRelation = true;
-            }
-
-            
-            $columnsJson .= <<<JS
-                "{$col->getDataColumnName()}": {
-                    dataColumnName: "{$col->getDataColumnName()}",
-                    caption: {$this->escapeString($col->getCaption(), true, false)},
-                    tooltip: {$this->escapeString($col->getHint() ?? '', true, false)},
-                    parser: {$parserJs},
-                    formatter: {$formatterJs},
-                    validator: {$validatorJs},
-                    hidden: {$hiddenFlagJs},
-                    lazyLoading: {$lazyLoadingFlagJs},
-                    wasLazyLoaded: {$wasLazyLoaded},
-                    requestConfig: {$lazyLoadingRequestJs},
-                    isRelation: {$this->escapeBool($isRelation)},
-                    isSelfReferencing: {$this->escapeBool($hasSelfReference ?? false)},
-                    dropdownIdField: {$this->escapeString($dropdownId)},
-                    dropdownLabelField: {$this->escapeString($dropdownLabel)},
-                    system: {$systemFlagJs},
-                    conditionize: function(oWidget){
-                        $conditionsJs
-                    }
-                }, 
-
-JS;       
-            // If there is a row_number_attribute_alias, double check if the same attribute is also used
-            // as a regular column. This does not make sense, as the row numbers cannot be explicitly edited.
-            // It is also a technical problem because 
-            if ($rowNumberCol !== null && $col !== $rowNumberCol && $col->getDataColumnName() === $rowNumberCol->getDataColumnName()) {
-                throw new WidgetConfigurationError($widget, 'Cannot use the row number column of a DataSpreadSheet as a regular column too!');
-            }
-        }
-        $columnsJson = '{' . $columnsJson . '}';
+        $columnsJson = $this->buildJsJExcelColumnModels($rowNumberCol);
         
         return <<<JS
 
@@ -935,6 +670,9 @@ JS;
         validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
             var mValidationResult;
             var oCol = this.getColumnModel(iCol);
+            var bRequired = oCol.checkRequired(iRow);
+            var bDisabled = $(cell).children('input').prop('disabled');
+            var bEmpty = false;
             if (mValue === '\u0000') {
                 mValue = '';
             }
@@ -942,9 +680,13 @@ JS;
             if (bParseValue === true) {
                 mValue = oCol.parser ? oCol.parser(mValue) : mValue;
             }
+            bEmpty = (mValue === '' || mValue === null || mValue === undefined);
 
             mValidationResult = this.validateValue(iCol, iRow, mValue);
-
+            if (mValidationResult === true && bRequired === true && bDisabled !== true && bEmpty) {
+                mValidationResult = {$this->escapeString($this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.INPUT.VALIDATION_REQUIRED'))};
+            }
+            
             if (this.hasChanged(iCol, iRow, mValue)) {
                 $(cell).addClass('exf-spreadsheet-change');
             } else {
@@ -953,7 +695,7 @@ JS;
             }
 
             // only remove invalid class if it is not explicitly set for required-if (in conditionize())
-            if (mValidationResult === true &&  !$(cell).hasClass('required-if')) {
+            if (mValidationResult === true) {
                 $(cell).removeClass('exf-spreadsheet-invalid');
                 cell.title = '';
             } else {
@@ -1203,13 +945,159 @@ JS;
     {$this->buildJsInitPlugins()}
     {$this->buildJsFixContextMenuPosition()}
 
-    // clear/add event listeners for dropdown data refresh
-    {$removeDropdownRefreshListeners}
-    {$refreshDropdownJs}
+    {$this->buildJsOnInitScript()}
+    
     // set loaded flag to allow onclick lazy loading for dropdowns
     {$this->buildJsJqueryElement()}[0].exfWidget.bLoaded = true;
 
 JS;
+    }
+    
+    protected function buildJsJExcelColumnModels(?DataColumn $rowNumberCol = null) : string
+    {
+        $widget = $this->getWidget();
+        /* @var $col \exface\Core\Widgets\DataColumn */
+        foreach ($widget->getColumns() as $colIdx => $col) {
+            $cellWidget = $col->getCellWidget();
+            // If the values were formatted according to their data types in buildJsConvertDataToArray()
+            // parse them back here
+            if ($this->needsDataFormatting($col)) {
+                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+                if (($cellWidget instanceof InputNumber) && ($formatter instanceof JsNumberFormatter)) {
+                    $formatter->setDecimalSeparator($cellWidget->getDecimalSeparator());
+                    $formatter->setThousandsSeparator($cellWidget->getThousandsSeparator());
+                }
+                $parserJs = 'function(value){ return ' . $formatter->buildJsFormatParser('value') . '}';
+                // For those cells, that do not have a specific editor, use the data type formatter
+                // to format the values before showing them and parse them back in buildJsConvertArrayToData()
+                $formatterJs = 'function(value){ return ' . $formatter->buildJsFormatter('value') . '}';
+            } else {
+                $parserJs = 'function(value){ return value; }';
+                $formatterJs = 'function(value){ return value; }';
+            }
+
+            $validatorJs = '';
+            if (! $col->isHidden() && $col->isEditable()) {
+                $cellEl = $this->getFacade()->getElement($cellWidget);
+                if ($cellWidget instanceof Input) {
+                    $validatorJs = <<<JS
+                        function(value){ 
+                            var bValid = {$cellEl->buildJsValidator('value')};
+                            var sInvalidHint = {$this->escapeString($cellEl->getValidationErrorText(), true, false)};
+                            return bValid ? true : sInvalidHint;
+                        }
+JS;
+                }
+            }
+            if (! $validatorJs) {
+                $validatorJs = 'function(value){return true}';
+            }
+
+            $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
+            $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
+
+            // Disabling conditions
+            $conditionsJs = '';
+            if (null !== $condProp = $col->getDisabledIf()) {
+                $conditionsJs .= $this->buildJsColumnDisabledIf($condProp, 'aCells');
+            }
+
+            // Required conditions
+            $requiredCheckerJs = '';
+            if ($cellWidget instanceof Input && ($condProp = $cellWidget->getRequiredIf())) {
+                $conditionsJs .= $this->buildJsColumnRequiredIf($condProp, 'oJExcel', 'aCells', 'iColIdx');
+                $requiredCheckerJs = <<<JS
+                    
+                        var oWidget = {$this->buildJsJqueryElement()}[0].exfWidget;
+                        var bRequired = false;
+                        oWidget.setValueGetterRow(iRowIdx);
+                        {$this->buildJsConditionalProperty($condProp, 'bRequired = true', 'bRequired = false')};
+                        oWidget.setValueGetterRow(null);
+                        return bRequired;
+JS;
+            } elseif ($cellWidget instanceof iCanBeRequired) {
+                $requiredCheckerJs = 'return' . $this->escapeBool($cellWidget->isRequired());
+            } else {
+                $requiredCheckerJs = 'return false;';
+            }
+
+            // Build condition script
+            if ('' !== trim($conditionsJs)) {
+                $conditionsJs = <<<JS
+
+                        var iColIdx = {$colIdx};
+                        var oJExcel = oWidget.getJExcel();
+                        var aCells = [];
+                        oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
+                            aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
+                        });
+                        $conditionsJs
+JS;
+            }
+
+            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && $cellWidget->getLazyLoading()) ? 'true' : 'false';
+            $wasLazyLoaded = 'false';
+
+            $lazyLoadingRequestJs = json_encode("");
+            $isRelation = false;
+            $dropdownLabel = '';
+            $dropdownId = '';
+
+            // request config for ajax request to refresh dropdown data 
+            if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation()) {
+
+                $lazyLoadingRequestOptions = [
+                    'action_alias' => $cellWidget->getLazyLoadingActionAlias(),
+                    'page_id' => $this->getPageId(),
+                    'element_id' => $cellWidget->getTable()->getId(),
+                    'object_id' => $cellWidget->getTable()->getMetaObject()->getId(),
+                    'headers' => ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : ''
+                ];
+                $lazyLoadingRequestJs = json_encode($lazyLoadingRequestOptions);
+
+                // get id and label names for dropdown formatting
+                $srcIdName = $cellWidget->getValueColumn()->getDataColumnName();
+                $srcLabelName = $cellWidget->getTextColumn()->getDataColumnName();
+
+                $dropdownLabel = $srcLabelName;
+                $dropdownId = $srcIdName;
+                $isRelation = true;
+            }
+
+            $columnsJson .= <<<JS
+                "{$col->getDataColumnName()}": {
+                    dataColumnName: "{$col->getDataColumnName()}",
+                    caption: {$this->escapeString($col->getCaption(), true, false)},
+                    tooltip: {$this->escapeString($col->getHint() ?? '', true, false)},
+                    parser: {$parserJs},
+                    formatter: {$formatterJs},
+                    validator: {$validatorJs},
+                    checkRequired: function(iRowIdx){
+                        {$requiredCheckerJs}
+                    },
+                    hidden: {$hiddenFlagJs},
+                    lazyLoading: {$lazyLoadingFlagJs},
+                    wasLazyLoaded: {$wasLazyLoaded},
+                    requestConfig: {$lazyLoadingRequestJs},
+                    isRelation: {$this->escapeBool($isRelation)},
+                    isSelfReferencing: {$this->escapeBool($hasSelfReference ?? false)},
+                    dropdownIdField: {$this->escapeString($dropdownId)},
+                    dropdownLabelField: {$this->escapeString($dropdownLabel)},
+                    system: {$systemFlagJs},
+                    conditionize: function(oWidget){
+                        $conditionsJs
+                    }
+                }, 
+
+JS;
+            // If there is a row_number_attribute_alias, double check if the same attribute is also used
+            // as a regular column. This does not make sense, as the row numbers cannot be explicitly edited.
+            // It is also a technical problem because 
+            if ($rowNumberCol !== null && $col !== $rowNumberCol && $col->getDataColumnName() === $rowNumberCol->getDataColumnName()) {
+                throw new WidgetConfigurationError($widget, 'Cannot use the row number column of a DataSpreadSheet as a regular column too!');
+            }
+        }
+        return '{' . $columnsJson . '}';
     }
     
     /**
@@ -1771,6 +1659,56 @@ JS;
                 throw new FacadeUnsupportedWidgetPropertyWarning('Lazy loading is not supported for this type of attribute in Jexcel.');
             }
         }
+
+        // Update dropdown values on action effects that might affect them
+        if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation()) {
+
+            // get affected objects
+            $colTable = $cellWidget->getTable();
+            foreach ($colTable->getMetaObjectsEffectingThisWidget() as $object) {
+                if ($object->getAliasWithNamespace() !== null) {
+                    $effectedAliases[] = $object->getAliasWithNamespace();
+                }
+            }
+            $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
+            $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+
+            // js to remove old event listeners
+            // TODO: check in ui5
+            $removeDropdownRefreshListeners = <<<JS
+
+                       $( document ).off( '{$actionperformed}.{$this->getId()}' );
+JS;
+            $this->addOnInitScript($removeDropdownRefreshListeners);
+
+            // event listeners for action effects
+            $refreshDropdownJs = <<<JS
+
+                        $( document ).on( '{$actionperformed}.{$this->getId()}', function( oEvent, oParams ) {
+                    
+                            var oEffect = {};
+                            var aUsedObjectAliases = {$effectedAliasesJs};
+                            var fnRefresh = function() {
+                                {$this->buildJsJqueryElement()}[0].exfWidget.refreshDropdown({$colIdx});
+                            };
+                        
+                            for (var i = 0; i < oParams.effects.length; i++) {
+                                oEffect = oParams.effects[i];
+                                if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
+                                    // refresh immediately if directly affected or delayed if it is an indirect effect
+                                    if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
+                                        fnRefresh();
+                                    } else {
+                                        setTimeout(fnRefresh, 100);
+                                    }
+                                    return;
+                                }
+                            }
+                            
+                        });
+JS;
+            $this->addOnInitScript($refreshDropdownJs);
+        }
         
         return "options: {newOptions: false}, source: {$srcJson}, {$filterJs}";
     }
@@ -2290,6 +2228,109 @@ JS;
 JS;
         }
     }
+    
+    protected function hasSelfReference(ConditionalProperty $condProp) : bool
+    {
+        foreach ($condProp->getConditions() as $condition) {
+            $expr = $condition->getValueLeftExpression();
+            if ($expr->isReference()) {
+                $targetWidget = $expr->getWidgetLink($condProp->getWidget())->getTargetWidgetId();
+                if ($targetWidget === $this->getWidget()->getId()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    protected function buildJsColumnRequiredIf(ConditionalProperty $requiredIf, string $oJExcelJs, string $aCellsJs = 'aCells', string $iColIdxJs) : string
+    {
+        $conditionsJs = '';
+        // check for self-references
+        $hasSelfReference = $this->hasSelfReference($requiredIf);
+
+        if ($hasSelfReference) {
+            $conditionsJs .= <<<JS
+
+                            {$aCellsJs}.forEach(function(domCell, iRowIdx){
+                                var oWidget = {$this->buildJsJqueryElement()}[0].exfWidget;
+                                var mVal, mValidationResult;
+                                // apply required only if cell is empty 
+                                // (and also not a checkbox, as they cannot/should not be required)
+                                if (domCell.innerHTML.trim() !== ''){
+                                    domCell.classList.remove('exf-spreadsheet-invalid', 'required-if');
+                                    return;
+                                }
+                                
+                                oWidget.validateCell(domCell, {$iColIdxJs}, iRowIdx, mVal);
+                                if (domCell.classList.contains('exf-spreadsheet-invalid')) {
+                                    domCell.classList.add('required-if');
+                                } else {
+                                    domCell.classList.remove('required-if');
+                                }
+                            });
+    JS;
+        }
+
+        return $conditionsJs;
+    }
+    
+    protected function buildJsColumnDisabledIf(ConditionalProperty $condProp, string $aCellsJs) {
+        $conditionsJs = '';
+
+        // if it is self-referencing, apply conditions per cell
+        // otherwise apply to entire column
+        if ($this->hasSelfReference($condProp)) {
+            $conditionsJs .= <<<JS
+                    
+                    var oColOpts = oJExcel.options.columns[iColIdx];
+                    if (oColOpts !== undefined && oColOpts.type === 'checkbox'){
+                        // checkboxes need to be disabled, not set to readonly
+                        {$aCellsJs}.forEach(function(domCell, iRowIdx){
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
+
+                            {$this->buildJsConditionalProperty(
+                                $condProp,
+                                "$(domCell).children('input').prop('disabled', true); ",
+                                "$(domCell).children('input').prop('disabled', false);"
+                            )}
+                            
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
+                        });
+
+                    } else {
+                        // other column types can be set to readonly
+                        {$aCellsJs}.forEach(function(domCell, iRowIdx){
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(iRowIdx);
+
+                            {$this->buildJsConditionalProperty(
+                                $condProp,
+                                "if (oWidget.hasChanged(iColIdx, iRowIdx)) { oWidget.restoreInitValue(iColIdx, iRowIdx); } domCell.classList.add('readonly'); ",
+                                "domCell.classList.remove('readonly');"
+                            )}
+
+                            {$this->buildJsJqueryElement()}[0].exfWidget.setValueGetterRow(null);
+                        });
+                    }
+                    
+JS;
+
+        } else {
+            // If no self-ref
+            $conditionsJs .= $this->buildJsConditionalProperty(
+                $condProp,
+                "{$aCellsJs}.forEach(function(domCell, iRowIdx){
+                            if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                                oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                            }
+                            domCell.classList.add('readonly');
+                        });",
+                "{$aCellsJs}.forEach(function(domCell){domCell.classList.remove('readonly')});"
+            );
+        }
+        
+        return $conditionsJs;
+    }
 
     /**
      * @return string
@@ -2447,5 +2488,17 @@ JS;
         })({$this->buildJsJqueryElement()}, $disableJs);
 
 JS;
+    }
+    
+    protected function addOnInitScript(string $js) : self
+    {
+        $this->onInitScripts[] = $js;
+        return $this;
+    }
+    
+    protected function buildJsOnInitScript() : string
+    {
+        $scripts = array_unique($this->onInitScripts);
+        return implode("\n", $scripts);
     }
 }
