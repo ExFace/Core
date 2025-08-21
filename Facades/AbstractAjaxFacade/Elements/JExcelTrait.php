@@ -1016,7 +1016,7 @@ JS;
                         return bRequired;
 JS;
             } elseif ($cellWidget instanceof iCanBeRequired) {
-                $requiredCheckerJs = 'return' . $this->escapeBool($cellWidget->isRequired());
+                $requiredCheckerJs = 'return ' . $this->escapeBool($cellWidget->isRequired());
             } else {
                 $requiredCheckerJs = 'return false;';
             }
