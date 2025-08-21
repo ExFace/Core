@@ -234,7 +234,7 @@ JS;
 function(mVal) {
                 var bEmpty = (mVal === null || mVal === undefined || mVal.toString() === '' || mVal.toString() === $nullStr);
                 var nVal = {$this->buildJsFormatParser('mVal')};
-                if (isNaN(mVal)) {
+                if (bEmpty === false && isNaN(nVal)) {
                     return false;
                 }
                 return (bEmpty || ($checksOkJs));
