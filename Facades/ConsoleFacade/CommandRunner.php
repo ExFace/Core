@@ -12,10 +12,10 @@ class CommandRunner
      * @param float $timeout
      * @return \Generator
      */
-    public static function runCliCommand(string $cmd, array $envVars = [], float $timeout = 60) : \Generator
+    public static function runCliCommand(string $cmd, array $envVars = [], float $timeout = 60, ?string $cwd = null) : \Generator
     {
         if (static::canUseSymfonyProcess()) {
-            $process = Process::fromShellCommandline($cmd, null, $envVars, null, $timeout);
+            $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
             $process->start();
             $generator = function ($process) {
                 foreach ($process as $output) {
