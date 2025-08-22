@@ -2234,8 +2234,8 @@ JS;
         foreach ($condProp->getConditions() as $condition) {
             $expr = $condition->getValueLeftExpression();
             if ($expr->isReference()) {
-                $targetWidget = $expr->getWidgetLink($condProp->getWidget())->getTargetWidgetId();
-                if ($targetWidget === $this->getWidget()->getId()) {
+                $targetWidget = $expr->getWidgetLink($condProp->getWidget())->getTargetWidget();
+                if ($targetWidget === $this->getWidget()) {
                     return true;
                 }
             }
