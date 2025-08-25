@@ -45,7 +45,7 @@ class CliTaskQueue extends SyncTaskQueue
         if (! $allowed){
             throw new QueueRuntimeError($this, 'Command "' . $command . '" not allowed in CLI queue "' . $this->getAliasWithNamespace() . '"!');
         }
-        $projectRoot = 'C:\\wamp\\www\\exface\\exface';
+        $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
         $timeout   = $task->getParameter('timeout');
         $result = new ResultMessageStream($task);
