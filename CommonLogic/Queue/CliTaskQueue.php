@@ -10,7 +10,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
- * Performs CLI command(s) from the task parameter `cmd` - similar to the WebConsolFacade.
+ * Performs CLI command(s) from the task parameter `cmd` - similar to the WebConsoleFacade.
  * 
  * @author Andrej Kabachnik
  *
@@ -51,7 +51,7 @@ class CliTaskQueue extends SyncTaskQueue
         $result = new ResultMessageStream($task);
         $result->setMessageStreamGenerator(
             [CommandRunner::class, 'runCliCommand'],
-            [$command, $envVars, $timeout, $projectRoot]
+            [$command, $envVars, $timeout, $projectRoot, false]
         );
         
         return $result;
