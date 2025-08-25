@@ -53,6 +53,7 @@ abstract class AbstractDataType implements DataTypeInterface
     private $value = null;
     
     private $sensitive = false;
+    private ?string $emptyText = null;
 
     public function __construct(DataTypeSelectorInterface $selector, $value = null, UxonObject $configuration = null)
     {
@@ -647,5 +648,24 @@ abstract class AbstractDataType implements DataTypeInterface
             return '';
         }
         return $val;
+    }
+
+    /**
+     * @inerhitDoc 
+     * @see DataTypeInterface::getEmptyText()
+     */
+    public function getEmptyText(): ?string
+    {
+        return $this->emptyText;
+    }
+
+    /**
+     * @inerhitDoc
+     * @see DataTypeInterface::setEmptyText()
+     */
+    public function setEmptyText(?string $emptyText): DataTypeInterface
+    {
+        $this->emptyText = $emptyText;
+        return $this;
     }
 }
