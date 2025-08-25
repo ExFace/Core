@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\CommonLogic\Queue;
 
+use exface\Core\CommonLogic\Tasks\ResultMessageStream;
+use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\Facades\ConsoleFacade\CommandRunner;
-use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Widgets\Console;
 
 /**
  * Performs CLI command(s) from the task parameter `cmd` - similar to the WebConsolFacade.
@@ -17,6 +17,8 @@ use exface\Core\Widgets\Console;
  */
 class CliTaskQueue extends SyncTaskQueue
 {
+    use TranslatablePropertyTrait;
+    
     private ?float $commandTimeout = null;
     private array $environmentVars = [];
     private array $environmentVarsInherit = [];
@@ -32,8 +34,9 @@ class CliTaskQueue extends SyncTaskQueue
         
         // Check if command allowed
         $allowed = FALSE;
+        $normalized = str_replace('\\', '/', $command);
         foreach ($this->getAllowedCommands() as $allowedCommand){
-            $match = preg_match($allowedCommand, $command);
+            $match = preg_match($allowedCommand, $normalized);
             if($match === 1){
                 $allowed = TRUE;
                 break;
@@ -42,10 +45,15 @@ class CliTaskQueue extends SyncTaskQueue
         if (! $allowed){
             throw new QueueRuntimeError($this, 'Command "' . $command . '" not allowed in CLI queue "' . $this->getAliasWithNamespace() . '"!');
         }
-        
+        $projectRoot = 'C:\\wamp\\www\\exface\\exface';
         $envVars = $this->buildEnvironmentVars();
-        $generator = CommandRunner::runCliCommand($command, $envVars, $this->getCommandTimeout());
-        $result = ResultFactory::createMessageStreamResult($task, $generator);
+        $timeout   = $task->getParameter('timeout');
+        $result = new ResultMessageStream($task);
+        $result->setMessageStreamGenerator(
+            [CommandRunner::class, 'runCliCommand'],
+            [$command, $envVars, $timeout, $projectRoot]
+        );
+        
         return $result;
     }
 
@@ -72,9 +80,9 @@ class CliTaskQueue extends SyncTaskQueue
      * @uxon-template [""]
      *
      * @param UxonObject $uxon
-     * @return Console
+     * @return CliTaskQueue
      */
-    public function setAllowedCommands(UxonObject $uxon) : Console
+    public function setAllowedCommands(UxonObject $uxon) : CliTaskQueue
     {
         $this->allowedCommands = $uxon->toArray();
         return $this;
@@ -89,9 +97,9 @@ class CliTaskQueue extends SyncTaskQueue
      * @uxon-default 600
      *
      * @param string $timeout
-     * @return Console
+     * @return CliTaskQueue
      */
-    public function setCommandTimeout(string $timeout) : Console
+    public function setCommandTimeout(string $timeout) : CliTaskQueue
     {
         $this->commandTimeout = floatval($timeout);
         return $this;
@@ -120,9 +128,9 @@ class CliTaskQueue extends SyncTaskQueue
      * @uxon-required true
      *
      * @param UxonObject $uxon
-     * @return Console
+     * @return CliTaskQueue
      */
-    public function setEnvironmentVars(UxonObject $uxon) : Console
+    public function setEnvironmentVars(UxonObject $uxon) : CliTaskQueue
     {
         foreach ($uxon->toArray() as $var => $val) {
             $this->environmentVars[$var] = $this->evaluatePropertyExpression($val);
@@ -152,9 +160,9 @@ class CliTaskQueue extends SyncTaskQueue
      * @uxon-template [""]
      *
      * @param UxonObject $uxon
-     * @return Console
+     * @return CliTaskQueue
      */
-    public function setEnvironmentVarsInherit(UxonObject $uxon) : Console
+    public function setEnvironmentVarsInherit(UxonObject $uxon) :CliTaskQueue
     {
         $this->environmentVarsInherit = $uxon->toArray();
         return $this;

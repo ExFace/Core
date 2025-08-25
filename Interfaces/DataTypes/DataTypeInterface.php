@@ -262,4 +262,19 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @return DataTypeInterface
      */
     public function setDefaultDisplayUxon(UxonObject $uxon) : DataTypeInterface;
+
+    /**
+     * A fallback value, to be used instead of any empty value (such as `null`).
+     * 
+     * @return string|null
+     */
+    public function getEmptyText() : ?string;
+
+    /**
+     * Set a fallback value, to be used instead of any empty value (such as `null`).
+     * 
+     * @param string|null $emptyText
+     * @return DataTypeInterface
+     */
+    public function setEmptyText(?string $emptyText) : DataTypeInterface;
 }
