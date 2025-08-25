@@ -35,6 +35,7 @@
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
 	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download bereit. Wenn es nicht automatisch startet, bitte <a href=\"%url%\" download>hier</a> klicken.",
+	"ACTION.DOWNLOADZIP.NAME": "Download ZIP",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
