@@ -23,43 +23,54 @@ class CommandRunner
         bool    $silent = true
     ) : \Generator {
         if (static::canUseSymfonyProcess()) {
-            $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
-            $process->start();
-            
-            // Stream output; only throw after completion if explicitly non-silent
-            $generator = function (Process $process, bool $silent) : \Generator {
-                // Keep copies because iterating over $process consumes incremental buffers
-                $stdout = '';
-                $stderr = '';
+            try {
+                $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
+                $process->start();
                 
-                foreach ($process as $type => $buffer) {
-                    if ($buffer !== '') {
-                        if ($type === Process::OUT) {
-                            $stdout .= $buffer;
-                        } else {
-                            $stderr .= $buffer;
+                // Stream output; only throw after completion if explicitly non-silent
+                $generator = function (Process $process, bool $silent) : \Generator {
+                    // Keep copies because iterating over $process consumes incremental buffers
+                    $stdout = '';
+                    $stderr = '';
+                    
+                    foreach ($process as $type => $buffer) {
+                        if ($buffer !== '') {
+                            if ($type === Process::OUT) {
+                                $stdout .= $buffer;
+                            } else {
+                                $stderr .= $buffer;
+                            }
+                            yield $buffer;
                         }
-                        yield $buffer;
                     }
+                    $process->wait(); // ensure completion
+                    
+                    // opt-in failure signaling
+                    if (!$process->isSuccessful()) {
+                        $exit = $process->getExitCode();
+                        // Avoid re-dumping full buffers (already streamed); keep a short summary
+                        $summary = trim($stdout . PHP_EOL . $stderr);
+                        $errorLine = '[error] Command failed (exit ' . $exit . ').';
+        
+                        // Emit the error line (so UI sees outputs first, then the error)
+                        yield $errorLine;
+        
+                        // If caller wants hard failure, throw AFTER emitting the error marker
+                        if (!$silent) {
+                            throw new \RuntimeException($errorLine . ($stderr !== '' ? $stderr : $summary));
+                        }
+                    }                
+                };
+            } 
+            catch (\Throwable $ex) 
+            {
+                error_log('[ProcessException] ' . $ex->getMessage());
+                yield '[error] [Exception] ' . $ex->getMessage();
+                if (!$silent) {
+                    throw $ex;
                 }
-                $process->wait(); // ensure completion
-                
-                // opt-in failure signaling
-                if (!$process->isSuccessful()) {
-                    $exit = $process->getExitCode();
-                    // Avoid re-dumping full buffers (already streamed); keep a short summary
-                    $summary = trim($stdout . PHP_EOL . $stderr);
-                    $errorLine = '[error] Command failed (exit ' . $exit . ').';
-    
-                    // Emit the error line (so UI sees outputs first, then the error)
-                    yield $errorLine;
-    
-                    // If caller wants hard failure, throw AFTER emitting the error marker
-                    if (!$silent) {
-                        throw new \RuntimeException($errorLine . ($stderr !== '' ? $stderr : $summary));
-                    }
-                }                
-            };
+                return 255; // generic failure
+            }
 
             return $generator($process, $silent);
         } else {
