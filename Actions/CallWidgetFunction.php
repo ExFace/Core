@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Button;
+use exface\Core\Factories\WidgetLinkFactory;
 
 /**
  * Activates a function of a select widget (see available functions in widget docs).
@@ -99,11 +100,21 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     public function getWidget(UiPageInterface $page): WidgetInterface
     {
         $id = $this->getWidgetId();
-        $idSpace = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
+        if (mb_substr($this->widgetId, 0, 1) === '~') {
+            if ($this->isDefinedInWidget()){
+                $link = WidgetLinkFactory::createFromWidget($this->getWidgetDefinedIn(), $this->widgetId);
+                return $link->getTargetWidget();
+            }
+        }
+
+        // TODO: fix id space handling for external id spaces 
+        // for example DataTableConfigurator -> WidgetSetup SaveButton needs to be able to find the related data-table (which is outside id space)
+        
+        /*$idSpace = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
         if ($idSpace === '' && $this->isDefinedInWidget()) {
             $idSpace = $this->getWidgetDefinedIn()->getIdSpace();
             return $page->getWidget(($idSpace ? $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR : '') . $id);
-        }
+        }*/
         return $page->getWidget($id); 
     }
 
