@@ -10,21 +10,71 @@ class CommandRunner
      * @param string $cmd
      * @param array $envVars
      * @param float $timeout
+     * @param string|null $cwd
+     * @param bool $silent
      * @return \Generator
+     * @throws \Throwable
      */
-    public static function runCliCommand(string $cmd, array $envVars = [], float $timeout = 60, ?string $cwd = null) : \Generator
-    {
+    public static function runCliCommand(
+        string  $cmd,
+        array   $envVars = [],
+        float   $timeout = 60,
+        ?string $cwd = null,
+        bool    $silent = true
+    ) : \Generator {
         if (static::canUseSymfonyProcess()) {
-            $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
-            $process->start();
-            $generator = function ($process) {
-                foreach ($process as $output) {
-                    yield $output;
+            try {
+                $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
+                $process->start();
+                
+                // Stream output; only throw after completion if explicitly non-silent
+                $generator = function (Process $process, bool $silent) : \Generator {
+                    // Keep copies because iterating over $process consumes incremental buffers
+                    $stdout = '';
+                    $stderr = '';
+                    
+                    foreach ($process as $type => $buffer) {
+                        if ($buffer !== '') {
+                            if ($type === Process::OUT) {
+                                $stdout .= $buffer;
+                            } else {
+                                $stderr .= $buffer;
+                            }
+                            yield $buffer;
+                        }
+                    }
+                    $process->wait(); // ensure completion
+                    
+                    // opt-in failure signaling
+                    if (!$process->isSuccessful()) {
+                        $exit = $process->getExitCode();
+                        // Avoid re-dumping full buffers (already streamed); keep a short summary
+                        $summary = trim($stdout . PHP_EOL . $stderr);
+                        $errorLine = '[error] Command failed (exit ' . $exit . ').';
+        
+                        // Emit the error line (so UI sees outputs first, then the error)
+                        yield $errorLine;
+        
+                        // If caller wants hard failure, throw AFTER emitting the error marker
+                        if (!$silent) {
+                            throw new \RuntimeException($errorLine . ($stderr !== '' ? $stderr : $summary));
+                        }
+                    }                
+                };
+            } 
+            catch (\Throwable $ex) 
+            {
+                error_log('[ProcessException] ' . $ex->getMessage());
+                yield '[error] [Exception] ' . $ex->getMessage();
+                if (!$silent) {
+                    throw $ex;
                 }
-            };
-            return $generator($process);
+                return 255; // generic failure
+            }
+
+            return $generator($process, $silent);
         } else {
-            $generator = function() use ($cmd, $envVars) {
+            $generator = function() use ($cmd, $envVars, $silent) {
                 // This workaround resulted from an issue with Microsoft IIS:
                 // `$process->start()` seems not to produce any output.
                 // See https://github.com/symfony/symfony/issues/24924
@@ -35,6 +85,15 @@ class CommandRunner
                 }
                 exec($cmd . ' 2>&1', $result, $code);
                 $resultStr = implode("\n", $result);
+                // If command failed, emit error line AFTER output
+                if ($code !== 0) {
+                    $errorLine = '[error] Command failed (exit ' . $code . ').';
+                    yield $errorLine;
+
+                    if (!$silent) {
+                        throw new \RuntimeException($errorLine . ($resultStr ? ' ' . trim($resultStr) : ''));
+                    }
+                }
                 yield $resultStr;
             };
             return $generator();
