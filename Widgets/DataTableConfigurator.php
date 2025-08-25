@@ -310,12 +310,13 @@ class DataTableConfigurator extends DataConfigurator
                                     "attribute_alias" => "NAME"
                                 ],
                                 [
-                                    "attribute_alias" => "DESCRIPTION"
+                                    "attribute_alias" => "DESCRIPTION",
+                                    "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_DESC_PLACEHOLDER")
                                 ]
                             ],
                             "buttons" => [
                                 [
-                                    "caption" => "Create new Setup",
+                                    "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_PROMPT_TITLE"),
                                     "visibility" => "promoted",
                                     "align" => "opposite",
                                     "action" => [
