@@ -73,6 +73,7 @@ class DownloadZip extends AbstractAction
     protected function init()
     {
         $this->setIcon(Icons::DOWNLOAD);
+        $this->setInputRowsMin(1);
     }
 
     /**
@@ -83,11 +84,6 @@ class DownloadZip extends AbstractAction
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $inputSheet = $this->getInputDataSheet($task);
-
-        if($inputSheet->countRows() === 0) {
-            return ResultFactory::createEmptyResult($task);
-        }
-        
         $object = $inputSheet->getMetaObject();
         $behavior = $this->findFileBehavior($object);
 
