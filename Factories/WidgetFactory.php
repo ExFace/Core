@@ -2,6 +2,7 @@
 namespace exface\Core\Factories;
 
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
@@ -111,6 +112,8 @@ abstract class WidgetFactory extends AbstractStaticFactory
         
         try {
             $widget = static::create($page, $widget_type, $parentWidget, $uxon);
+        } catch (WidgetPropertyUnknownError $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw new UxonParserError($uxon, 'Failed to create a widget from UXON! ' . $e->getMessage(), null, $e);
         }

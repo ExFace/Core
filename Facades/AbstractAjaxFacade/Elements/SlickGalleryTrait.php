@@ -471,12 +471,17 @@ JS;
                     throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
                 }
                 
+                // IMPORTANT: make sure to add the current filters to the subsheet, because otherwise data, that was
+                // not loaded due to filters will be lost when saving! Saving the subsheet will do dataReplaceByFilters()
+                // and if the filters are not passed here, ALL data related to the current head object UID will be
+                // replaced by whatever is currently shown.
                 return <<<JS
 (function(){
     var oData = ($('#{$this->getIdOfSlick()}').data('_exfData') || {});
+    var oConfiguratorData = {$this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter()};
     // Remove any keys, that are not in the columns of the widget
     oData.rows = (oData.rows || []).map(({ $colNamesList }) => ({ $colNamesList }));
-
+    oData.filters = oConfiguratorData.filters;
     return {
         oId: '{$dataObj->getId()}',
         rows: [
@@ -487,9 +492,6 @@ JS;
                     oData
                 )
             }
-        ],
-        filters: [
-        
         ]
     }
 })()

@@ -206,14 +206,20 @@ class Tracer extends Profiler
         ]);
 
         // ETL Steps
-        $event_manager->addListener(OnBeforeETLStepRun::getEventName(), [
-            $this,
-            'startETLStep'
-        ]);
-        $event_manager->addListener(OnAfterETLStepRun::getEventName(), [
-            $this,
-            'stopETLStep'
-        ]);
+        // FIXME hook up ETL stuff only if the ETL app is really installed?
+        // Maybe make a static event listener for OnBeforeTracerInit?
+        if (class_exists('\\axenox\\ETL\\Events\\Flow\\OnBeforeETLStepRun')) {
+            $event_manager->addListener(OnBeforeETLStepRun::getEventName(), [
+                $this,
+                'startETLStep'
+            ]);
+        }
+        if (class_exists('\\axenox\\ETL\\Events\\Flow\\OnAfterETLStepRun')) {
+            $event_manager->addListener(OnAfterETLStepRun::getEventName(), [
+                $this,
+                'stopETLStep'
+            ]);
+        }
         
         // Performance summary
         $event_manager->addListener(OnBeforeStopEvent::getEventName(), [

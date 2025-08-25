@@ -86,24 +86,29 @@ HTML;
         $tpl = json_encode($this->buildHtmlIndicator('exfph-val', 'exfph-text', 'exfph-color'));
         $semanticColors = ($this->getFacade() instanceof AbstractAjaxFacade) ? $this->getFacade()->getSemanticColors() : [];
         $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+        $jsEmptyText = $this->getFacade()->getDataTypeFormatter(
+            $this->getWidget()->getValueDataType()
+        )->getJsEmptyText(
+            'null'
+        );
         
         return <<<JS
 function() {
     var mValue = {$value_js};
     var sHtml = {$tpl};
-    var sColor = 'transparent';
     var sText = {$this->buildJsValueFormatter('mValue')};
     var oSemanticColors = $semanticColorsJs;
-
-    if (mValue === undefined || mValue === null) {
+    
+    if ((mValue === undefined || mValue === null) && ({$jsEmptyText} === null)) {
         return '';
     }
 
     if (sText === undefined || sText === null || sText === '') {
-        sText = '&nbsp;';
+        sText = {$jsEmptyText} !== null ? {$jsEmptyText} : '&nbsp;';
     }
- 
+    
     sColor = {$this->buildJsColorResolver('mValue')};
+    
     if (oSemanticColors[sColor] !== undefined) {
        sColor = oSemanticColors[sColor];
     }

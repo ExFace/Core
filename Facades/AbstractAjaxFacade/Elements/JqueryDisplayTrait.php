@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\Display;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
@@ -92,6 +93,22 @@ trait JqueryDisplayTrait {
      */
     public function buildJsValueDecorator($value_js)
     {
+        $dataType = $this->getWidget()->getValueDataType();
+        switch (true) {
+            case $dataType instanceof EnumDataTypeInterface:
+                $hints = $dataType->getValueHints();
+                $hintsJson = json_encode($hints);
+                if (! empty($hints)) {
+                    return <<<JS
+                        function(key) {
+                            var sLabel = {$this->buildJsValueFormatter('key')};
+                            var oHints = $hintsJson;
+                            return '<span title="' + oHints[key] + '">' + sLabel + '</span>';
+                        }({$value_js})
+JS;
+
+                }
+        }
         return $this->buildJsValueFormatter($value_js);
     }
     
