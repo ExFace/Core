@@ -89,7 +89,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         $formatQuoted = $this->escapeFormatString($this->getFormat());
         return <<<JS
 (function (mInput) {
-    bParseRequired = isNaN(mInput) || {$this->getJsEmptyCheck('mInput')};  
+    var bParseRequired = isNaN(mInput) || {$this->getJsEmptyCheck('mInput')};  
     return exfTools.date.format(
         bParseRequired ? 
                 exfTools.date.parse(mInput, {$formatQuoted}) : 
