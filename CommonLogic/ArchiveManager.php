@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use ZipArchive;
