@@ -256,7 +256,8 @@ class DataTableConfigurator extends DataConfigurator
                 [
                     'attribute_alias' => 'NAME',
                 ], [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
+                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG',
+                    'readonly' => true
                 ], [
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
@@ -271,9 +272,11 @@ class DataTableConfigurator extends DataConfigurator
                     'hidden' => true
                 ],[
                     'attribute_alias' => 'WIDGET_SETUP_USER__UID',
+                    'readonly' => true,
                     'hidden' => true
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__MODIFIED_ON',
+                    'readonly' => true,
                     'hidden' => true
                 ]
             ],
