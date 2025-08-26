@@ -180,13 +180,6 @@ abstract class Colors
     const BLACK = 'Black';
     
     /**
-     * Cache for getSemanticColors() etc.
-     * 
-     * @var array
-     */
-    protected static $cache = [];
-    
-    /**
      * Returns TRUE if the given HTML color is dark and FALSE otherwise.
      * 
      * @param string $color
@@ -404,28 +397,21 @@ abstract class Colors
      */
     public static function isSemantic(string $value) : bool
     {
-        return substr($value, 0, 1) === '~';
+        return mb_substr($value, 0, 1) === '~';
     }
     
     /**
      * Returns an array with semantic color names (e.g. ~ERROR)
-     * @return array
+     * 
+     * @return string[]
      */
     public static function getSemanticColors() : array
     {
-        $class = get_called_class();
-        if (!array_key_exists($class, static::$cache)) {
-            $reflection            = new \ReflectionClass($class);
-            foreach ($reflection->getConstants() as $color) {
-                if (! $color) {
-                    continue;
-                }
-                if (self::isSemantic($color) === true) {
-                    static::$cache[$class]['semantic'] = $reflection->getConstants();
-                }
-            }
-        }
-        
-        return static::$cache[$class]['semantic'];
+        return [
+            self::SEMANTIC_ERROR,
+            self::SEMANTIC_WARNING,
+            self::SEMANTIC_OK,
+            self::SEMANTIC_INFO
+        ];
     }
 }

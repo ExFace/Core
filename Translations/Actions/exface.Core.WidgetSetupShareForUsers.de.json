@@ -1,0 +1,8 @@
+{
+    "NAME": "Teilen",
+    "SHORT_DESCRIPTION": "Sicht mit anderem Nutzer teilen",
+    "CONFIG_UXON.CAPTION.SHARE_SETUP": "Ansicht teilen",
+    "CONFIG_UXON.CAPTION.USER": "Nutzer",
+    "CONFIG_UXON.CAPTION.SHARE": "Teilen",
+    "CONFIG_UXON.RESULT_MESSAGE_TEXT.THE_SETUP_WAS_SHARED_SUCCESSFULLY_": "Ansicht wurde erfolgreich geteilt"
+}

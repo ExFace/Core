@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authorization;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\Model\ExistsCondition;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -309,12 +309,18 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $conditionGrp = $this->getApplyIf($object);
                 if ($task !== null && $task->hasInputData()) {
                     $inputData = $task->getInputData();
-                    $dataForCondition = $conditionGrp->readMissingData($inputData);
-                    if ($action !== null && null !== $mapper = $action->getInputMapper($dataForCondition->getMetaObject())) {
-                        $dataForCondition = $mapper->map($dataForCondition);
+
+                    if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
+                        $inputData = $mapper->map($inputData);
                     }
-                    foreach ($dataForCondition->getRows() as $rowIdx => $row) {
-                        if ($conditionGrp->evaluate($dataForCondition, $rowIdx, false) === false) {
+                    
+                    // We need to collect and merge missing data for the policy AFTER applying input mappers,
+                    // to ensure that we are working with the right metaobject.
+                    $collector = DataCollector::fromConditionGroup($conditionGrp, $inputData->getMetaObject());
+                    $checkData = $collector->collectFrom($inputData)->getRequiredData();
+                    
+                    foreach ($checkData->getRows() as $rowIdx => $row) {
+                        if ($conditionGrp->evaluate($checkData, $rowIdx, false) === false) {
                             return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
                         }
                     }

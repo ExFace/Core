@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iAmCollapsible;
@@ -48,6 +51,7 @@ class WidgetConfigurator extends Tabs implements iConfigureWidgets, iAmCollapsib
     use iShowMessageListTrait;
     
     private $widget = null;
+    private ?bool $disabled = null;
     
     /**
      * 
@@ -74,5 +78,39 @@ class WidgetConfigurator extends Tabs implements iConfigureWidgets, iAmCollapsib
         $this->widget = $widget;
         return $this;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::setDisabled()
+     */
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface
+    {
+        // Need to override this method to prevent the container to auto-disable all children.
+        // Configurators are not regular containers and they are either there or not.
+        $this->disabled = $trueOrFalseOrNull;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::isDisabled()
+     */
+    public function isDisabled() : ?bool
+    {
+        // Need to override this method to prevent the container to auto-disable all children.
+        return $this->disabled;
+    }
+
+    /**
+     * Configurator widgets do not support `disabled_if` - a configurator is either active or not!
+     *
+     * Technically having a configurator largely effects the code generation for the configured widget, so
+     * it would be difficult to have on-the fly switching. And there is probably no real use case for it.
+     *
+     * @see AbstractWidget::setDisabledIf()
+     */
+    public function setDisabledIf(UxonObject $uxon): WidgetInterface
+    {
+        throw new WidgetConfigurationError($this, 'Configurator widgets do not support `disabled_if`');
+    }
 }
-?>

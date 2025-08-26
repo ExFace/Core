@@ -60,9 +60,9 @@ trait iHaveColumnsAndColumnGroupsTrait
      *
      * @see iHaveColumns::createColumnFromAttribute()
      */
-    public function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null) : DataColumn
+    public function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null, bool $editable = false) : DataColumn
     {
-        return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
+        return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden, $editable);
     }
     
     /**

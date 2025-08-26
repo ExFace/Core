@@ -84,10 +84,11 @@ interface iHaveColumns extends WidgetInterface
      * 
      * @param MetaAttributeInterface $attribute
      * @param string $caption
-     * @param bool $hidden
+     * @param bool|null $hidden
+     * @param bool $editable
      * @return DataColumn
      */
-    public function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null) : DataColumn;
+    public function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null, bool $editable = false) : DataColumn;
     
     /**
      * The column is not automatically added to the column group - use addColumn() explicitly!
