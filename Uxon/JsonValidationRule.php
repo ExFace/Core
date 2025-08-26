@@ -19,22 +19,22 @@ class JsonValidationRule
     private string $alias;
     private string $mode;
     private UxonObject $uxonPattern;
-    private string $messageCode;
     private bool $isCritical = false;
-    
+    private string $message;
+
     public function __construct(
         JsonDataType $dataType, 
         string $alias,
         string $mode, 
         UxonObject $uxonPattern, 
-        string $messageCode
+        string $message
     )
     {
         $this->jsonDataType = $dataType;
         $this->alias = $alias;
         $this->mode = $mode;
         $this->uxonPattern = $uxonPattern;
-        $this->messageCode = $messageCode;
+        $this->message = $message;
     }
     
     public function check(UxonObject $uxon, string $wildCard = self::JSON_WILDCARD) : void
@@ -54,8 +54,7 @@ class JsonValidationRule
         // If the check failed, throw an error.
         throw new DataTypeValidationError(
             $this->jsonDataType,
-            'UXON failed to pass validation rule "' . $this->alias . '".',
-            $this->messageCode
+            'UXON failed to pass validation rule "' . $this->alias . '". ' . $this->message,
         );
     }
     
@@ -123,5 +122,10 @@ class JsonValidationRule
         
         $property = trim($property);
         return $property === $wildCard;
+    }
+    
+    public function getMessage() : string
+    {
+        return $this->message;
     }
 }

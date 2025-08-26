@@ -292,14 +292,16 @@ JS;
         if ($widget->isMinimalistic()) {
             $uxonEditorOptions .= 'mainMenuBar: false, navigationBar: false,';
         }
-        
+
 	return <<<JS
 
     onError: {$this->buildJsOnErrorFunction()},
     mode: {$this->buildJsEditorModeDefault($isWidgetDisabled)},
     modes: {$this->buildJsEditorModes($isWidgetDisabled)},
     onModeChange: {$this->buildJsOnModeChangeFunction($uxonEditorId, $funcPrefix)},
-    onChangeJSON: {$this->buildJsOnChangeFunction($uxonEditorId, $funcPrefix)},
+    onChangeJSON: {$this->buildJsOnChangeFunction()},
+    validationRules: [{prototype:"A",pattern:"P"},{prototype:"B",pattern:"P"}],
+    onValidate: {$this->buildJsOnValidate($funcPrefix)},
     {$uxonEditorOptions}
 
 JS;
@@ -315,6 +317,52 @@ JS;
         return "function(json) { $fn }";
     }
     
+    protected function buildJsOnValidate(string $funcPrefix) : string
+    {
+        return <<<JS
+
+function (json) {
+    return new Promise(
+        function (resolve, reject) {
+            console.log("validate");
+            var pending = false;
+            if (pending === true) {
+               reject();
+            } else {
+                //editor._validationPending = true;
+                var uxon = JSON.stringify(json);
+                return {$funcPrefix}_performValidation(
+                    "", 
+                    uxon
+                ).then(
+                    function(json){    
+                        //editor._validationPending = false;
+                        if (json === undefined) {
+                            reject();
+                        }
+                        
+                        resolve();
+                        
+                        // return response data for further processing
+                        return json;
+                    }
+                ).catch(function(err){ 
+                    console.log("ERROR");
+                    //editor._autosuggestPending = false;
+                    console.warn("Failed to validate.", err);
+               });
+           }
+        })
+        .catch(function(err){
+            //editor._autosuggestPending = false;
+            console.warn("Failed to validate.", err);
+            return Promise.resolve([]);
+        });
+}
+JS;
+
+    }
+    
     protected function buildJsOnErrorFunction() : string
     {        
     return <<<JS
@@ -323,12 +371,14 @@ JS;
                         }
 JS;
     }
-    
+
     /**
      * Building the options for UXON editor including filter function and error handler
-     * 
-     * @param string $uxonSchema
-     * @param string $funcPrefix
+     *
+     * @param string             $editorIdJs
+     * @param string             $uxonSchema
+     * @param string             $funcPrefix
+     * @param WorkbenchInterface $workbench
      * @return string
      */
     protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, WorkbenchInterface $workbench) : string
@@ -352,7 +402,14 @@ JS;
 
 JS;
     }
-    
+
+    /**
+     * Generates an inline JS-Snippet containing auto-suggest configuration.
+     * 
+     * @param string $funcPrefix
+     * @param array  $trans
+     * @return string
+     */
     protected function buildJsAutoComplete(string $funcPrefix, array $trans) : string
     {
         return <<<JS
@@ -387,7 +444,7 @@ JS;
                 editor._autosuggestPending = true;
                 var uxon = JSON.stringify(editor.get());
                 return {$funcPrefix}_fetchAutosuggest(text, path, input, uxon)
-                .then(function(json){                                          
+                .then(function(json){    
                     editor._autosuggestPending = false;
                     if (json === undefined) {
                         reject();
@@ -421,7 +478,15 @@ JS;
 JS;
 
     }
-    
+
+    /**
+     * Creates an inline JS-Snippet for the onCreateMenu callback.
+     * 
+     * @param string $funcPrefix
+     * @param string $editorIdJs
+     * @param array  $trans
+     * @return string
+     */
     protected function buildJsOnCreateMenu(string $funcPrefix, string $editorIdJs, array $trans) : string
     {
         return <<<JS
@@ -624,7 +689,7 @@ function (items, node){
     }
     
     return items;
-},
+}
 JS;
 
     }
@@ -956,19 +1021,45 @@ CSS;
         	      body: formData, // body data type must match "Content-Type" header
         	   }
             )
-          	.then(function(response){
-                if (
-                    response
-                    && response.ok
-                    && response.status === 200
-                    && response.headers
-                    && ((response.headers.get('content-type') || '') === "application/json")
-                ) {
-                    return response.json();
-                } else {
-                    return Promise.reject({message: "{$trans['ERROR.MALFORMED_RESPONSE']}", response: response});
-                }
-            });
+          	.then({$funcPrefix}_validateResponse);
+        }
+        
+        function {$funcPrefix}_performValidation(path, uxon){
+            console.log("performValidation");
+            var formData = new URLSearchParams({
+        		action: 'exface.Core.UxonValidate',
+        		path: JSON.stringify(path),
+        		schema: {$uxonSchema},
+                prototype: {$rootPrototype},
+                object: {$rootObject},
+        		uxon: uxon
+        	});
+        	return fetch('{$ajaxUrl}',
+                {
+                    method: "POST",
+                    mode: "cors",
+                    cache: "no-cache",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+        	      body: formData, // body data type must match "Content-Type" header
+        	   }
+            )
+          	.then({$funcPrefix}_validateResponse);
+        }
+        
+        function {$funcPrefix}_validateResponse(response) {
+            if (
+                response
+                && response.ok
+                && response.status === 200
+                && response.headers
+                && ((response.headers.get('content-type') || '') === "application/json")
+            ) {
+                return response.json();
+            } else {
+                return Promise.reject({message: "{$trans['ERROR.MALFORMED_RESPONSE']}", response: response});
+            }
         }
         
         function {$funcPrefix}_openModal(
