@@ -107,14 +107,18 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
             }
         }
 
-        // TODO: fix id space handling for external id spaces 
-        // for example DataTableConfigurator -> WidgetSetup SaveButton needs to be able to find the related data-table (which is outside id space)
-        
-        /*$idSpace = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
+        // If the widget id in the link does not have an id space and the action is called from a button, assume,
+        // that we are in the id space of the button.
+        $idSpace = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
         if ($idSpace === '' && $this->isDefinedInWidget()) {
             $idSpace = $this->getWidgetDefinedIn()->getIdSpace();
-            return $page->getWidget(($idSpace ? $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR : '') . $id);
-        }*/
+            // Don't add the id space if the widget id in the action is a path already and it starts with the id space
+            // TODO we really need a way to tell, if an id string is a path or a manual id. We are only guessing
+            // all the time!
+            if ($idSpace !== '' && $idSpace !== null && false === StringDataType::startsWith($id, $idSpace)) {
+                $id = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
+            }
+        }
         return $page->getWidget($id); 
     }
 
