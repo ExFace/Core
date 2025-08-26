@@ -389,7 +389,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             }
             
             $task = $event->getTask();
-            $result = $this->getWorkbench()->handle($task);
+            $result = $this->performTask($task);
             
             // If the task is a stream, read it completely here to make sure all generators
             // are run. If they produce errors, they should be handled as task/action errors
@@ -415,5 +415,16 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $event->setResult($result);
         }
         return;
+    }
+
+    /**
+     * Perform the task - e.g. handle it via workbench by default.
+     * 
+     * @param TaskInterface $task
+     * @return ResultInterface
+     */
+    protected function performTask(TaskInterface $task) : ResultInterface
+    {
+        return $this->getWorkbench()->handle($task);
     }
 }

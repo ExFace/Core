@@ -622,6 +622,10 @@ class GenericTask implements TaskInterface
                 case 'widget_id':
                     $this->setWidgetIdTriggeredBy($val);
                     break;
+                case 'timeout':
+                case 'cmd':
+                    $this->setParameter($prop, $val);
+                    break;
             }
         }
         // Fall back to the default importer for all other properties
@@ -631,7 +635,7 @@ class GenericTask implements TaskInterface
             'action', 'action_alias',
             'page', 'page_selector', 'page_alias',
             'meta_object', 'object_alias',
-            'widget_id'
+            'widget_id', 'cmd', 'timeout'
         ]);
         return;
     }

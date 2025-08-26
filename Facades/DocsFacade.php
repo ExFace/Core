@@ -322,13 +322,13 @@ class DocsFacade extends AbstractHttpFacade
                 // Adds a page break before start of each markdown file to separate the chapters
                 $pageBreak = '<div style="page-break-before: always;">';
                 $htmlString = $pageBreak . $linkResponse->getBody()->__toString();
+                $htmlString = $this->applyNoprint($htmlString);
                 $linksArrayRecursive = $this->findLinksInHTML($htmlString);
                 
                 $htmlString = $this->replaceHrefChapters($htmlString);
                 $htmlString = $this->addIdToFirstHeading($link, $htmlString);
                 $htmlString = $this->replaceHrefImages($htmlString);
                 $htmlString = $this->addIdToImages($htmlString); 
-                $htmlString = $this->applyNoprint($htmlString);
             } else {
                 $htmlString = PHP_EOL . '<!-- SKIPPED link ' . $link . ' because it seems external -->';
             }

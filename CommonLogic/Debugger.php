@@ -53,10 +53,18 @@ class Debugger implements DebuggerInterface
         
         $this->setPrettifyErrors($config->getOption('DEBUG.PRETTIFY_ERRORS'));
         if ($config->getOption('DEBUG.TRACE') === true) {
-            $this->tracer = new Tracer($config->getWorkbench(), $this->workbenchStartTimeMs);
+            try {
+                $this->tracer = new Tracer($config->getWorkbench(), $this->workbenchStartTimeMs);
+            } catch (\Throwable $e) {
+                $logger->logException(new RuntimeException('Cannot start tracer! ' . $e->getMessage(), null, $e));
+            }
         }
         if ($config->getOption('DEBUG.INTERCEPT_COMMUNICATION') === true) {
-            $this->communicationInterceptor = new CommunicationInterceptor($config->getWorkbench());
+            try {
+                $this->communicationInterceptor = new CommunicationInterceptor($config->getWorkbench());
+            } catch (\Throwable $e) {
+                $logger->logException(new RuntimeException('Cannot start communication intercepter! ' . $e->getMessage(), null, $e));
+            }
         }
     }
 

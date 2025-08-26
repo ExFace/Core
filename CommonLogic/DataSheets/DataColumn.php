@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -25,6 +26,14 @@ use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 
+/**
+ * A column for a data sheet
+ * 
+ * In most cases a column will only require an `expression`. Alternatively you can use the more specific `formula` 
+ * (for a calculated column) or an `attribute_alias` (in case it is bound to data).
+ * 
+ * The `name` and `data_type` of the column will be determined automatically, but you can also overwrite them if needed.
+ */
 class DataColumn implements DataColumnInterface
 {
     const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_]';
@@ -205,9 +214,12 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * Mark the column as hidden
+     * 
+     * @uxon-property hidden
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setHidden()
      */
     public function setHidden($value)
@@ -255,9 +267,11 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * Alias of the data type for the column
+     * 
+     * @uxon-property data_type
+     * @uxon-type metamodel:datatype
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setDataType()
      */
     public function setDataType($data_type_or_string)
@@ -276,7 +290,6 @@ class DataColumn implements DataColumnInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getAttribute()
      */
     public function getAttribute()
@@ -514,17 +527,42 @@ class DataColumn implements DataColumnInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setHidden($uxon->getProperty('hidden'));
-        if ($uxon->hasProperty('data_type')) {
-            $this->setDataType($uxon->getProperty('data_type'));
+        if (null !== $val = $uxon->getProperty('name')) {
+            $this->setName($val);
         }
-        $this->setFormula($uxon->getProperty('formula'));
-        $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
+        if (null !== $val = $uxon->getProperty('expression')) {
+            $this->setExpression($val);
+        }
+        if (null !== $val = $uxon->getProperty('hidden')) {
+            $this->setHidden($val);
+        }
+        if (null !== $val = $uxon->getProperty('data_type')) {
+            $this->setDataType($val);
+        }
+        if (null !== $val = $uxon->getProperty('formula')) {
+            $this->setFormula($val);
+        }
+        if (null !== $val = $uxon->getProperty('attribute_alias')) {
+            $this->setAttributeAlias($val);
+        }
         if ($uxon->hasProperty('totals')) {
             foreach ($uxon->getProperty('totals') as $u) {
                 $total = DataColumnTotalsFactory::createFromUxon($this, $u);
                 $this->getTotals()->add($total);
             }
+        }
+        
+        $otherProps = array_diff(array_keys($uxon->toArray()), [
+            'name',
+            'expression',
+            'hidden',
+            'data_type',
+            'formula',
+            'attribute_alias',
+            'totals'
+        ]);
+        if (! empty($otherProps)) {
+            throw new UxonParserError($uxon, 'Unknown UXON property "' . implode('", "', $otherProps) . '" found for data column "' . $this->getName() . '"');
         }
     }
 

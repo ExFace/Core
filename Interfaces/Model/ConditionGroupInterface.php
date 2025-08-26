@@ -201,12 +201,13 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function rebaseCustom(MetaObjectInterface $newObject, callable $conditionTransformer) : ConditionGroupInterface;
     
     /**
-     * Removes a given condition from this condition group (not from the nested groups!)
-     *
+     * Removes a given condition from this condition group - and from the nested groups if $recursive is TRUE
+     * 
      * @param ConditionInterface $condition
+     * @param bool $recursive
      * @return ConditionGroupInterface
      */
-    public function removeCondition(ConditionInterface $condition) : ConditionGroupInterface;
+    public function removeCondition(ConditionInterface $condition, bool $recursive = false) : ConditionGroupInterface;
     
     /**
      * Removes all conditions and nested groups from this condition group thus resetting it completely
@@ -287,23 +288,10 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function with(string $operator, ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
 
     /**
-     * Forces the condition group to load missing data. 
-     * 
-     * This happens automatically on `evaluate()`, anyway. But if you want to control the timing
-     * or read all data in one batch to improve performance this is the way to go. Remember to
-     * call `evaluate()` with `$readMissingData = FALSE` if you do this.
-     * 
-     * @param DataSheetInterface    $dataSheet
-     * @param LogBookInterface|null $logBook
-     * @return DataSheetInterface
-     */
-    public function readMissingData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface;
-
-    /**
      * @inheritDoc
-     * @param bool                    $readMissingData
-     * Set to FALSE, if you don't want this condition to read missing data.
+     * @param bool $readMissingData
+     * Set to TRUE, if you want this condition group to read missing data.
      * @see ConditionGroupInterface::readMissingData()
      */
-    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null, bool $readMissingData = true): bool;
+    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null, bool $readMissingData = false): bool;
 }
