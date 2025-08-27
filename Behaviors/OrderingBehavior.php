@@ -2,6 +2,7 @@
 
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\DataSheets\DataSorterList;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Utils\LazyHierarchicalDataCache;
@@ -185,7 +186,6 @@ class OrderingBehavior extends AbstractBehavior
         $loadedData->setFilters(ConditionGroupFactory::createOR($loadedData->getMetaObject()));
         $loadedData->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn(), true);
         $loadedData->dataRead();
-        $this->normalizeDataSheet($loadedData);
 
         // Load data for groups present in event sheet.
         $changedGroups = $this->findChangedGroups($eventSheet, $loadedData);
@@ -196,8 +196,8 @@ class OrderingBehavior extends AbstractBehavior
             }
             $loadedGroupData->dataRead();
             $loadedData->addRows($loadedGroupData->getRows(), true);
-            $this->normalizeDataSheet($loadedData);
         }
+        $this->normalizeDataSheet($loadedData);
 
         // If we are reacting to OnBeforeDelete, our work is done.
         if($event instanceof OnBeforeDeleteDataEvent) {
@@ -223,7 +223,6 @@ class OrderingBehavior extends AbstractBehavior
             $eventSheet->setCellValue($uidAlias, $rowNr, $this->generateInternalId());
         }
 
-
         $logbook->addLine('Data successfully loaded from database.');
         $logbook->addDataSheet('LoadedData', $loadedData->copy());
         
@@ -235,7 +234,8 @@ class OrderingBehavior extends AbstractBehavior
             $loadedData, 
             $siblingCache, 
             false, 
-            $logbook);
+            $logbook
+        );
 
         if(empty($pendingChanges)) {
             $logbook->addLine('No changes pending for input data.');
@@ -419,35 +419,12 @@ class OrderingBehavior extends AbstractBehavior
         $logBook->addIndent(1);
         
         // Load missing parent columns.
-        $fetchSheet = $this->createEmptyCopy($eventSheet, true, true);
-        $sampleRow = $eventSheet->getRow();
-        
-        if(!key_exists($this->getOrderNumberAttributeAlias(), $sampleRow)) {
-            $fetchSheet->getColumns()->addFromExpression($this->getOrderNumberAttributeAlias());
-        }
-        
+        $dataCollector = new DataCollector($eventSheet->getMetaObject());
+        $dataCollector->addAttributeAlias($this->getOrderNumberAttributeAlias());
         foreach ($this->getParentAliases() as $parentAlias) {
-            if (!key_exists($parentAlias, $sampleRow)) {
-                // If the column is not present in the event sheet, we need to fetch it.
-                $logBook->addLine($parentAlias . ' is missing in event data and will have to be loaded.');
-                $fetchSheet->getColumns()->addFromExpression($parentAlias);
-            } else {
-                $logBook->addLine($parentAlias . ' is already present in event data.');
-            }
+            $dataCollector->addAttributeAlias($parentAlias);
         }
-        
-        // Load missing column data and merge it into the event sheet.
-        if ($fetchSheet->getColumns()->count() > 0) {
-            $fetchSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn(), true);
-            $fetchSheet->dataRead();
-            
-            $logBook->addLine('Successfully loaded missing data.');
-            $logBook->addDataSheet('Missing Data (loaded)', $fetchSheet);
-            
-            $eventSheet->joinLeft($fetchSheet, $eventSheet->getUidColumnName(), $fetchSheet->getUidColumnName());
-        } else {
-            $logBook->addLine('All required data is already present, no further loading necessary.');
-        }
+        $dataCollector->enrich($eventSheet->setFresh(true), $logBook);
         
         $logBook->addIndent(-1);
     }
@@ -493,7 +470,7 @@ class OrderingBehavior extends AbstractBehavior
             }
 
             // If the ordering number changed, we have to process this group.
-            if($eventRow[$orderNumberAlias] !== $loadedRow[$orderNumberAlias]) {
+            if($eventRow[$orderNumberAlias] != $loadedRow[$orderNumberAlias]) {
                 $changedGroups[] = $this->getParentsForRow($eventRow);
             }
         }
@@ -588,7 +565,8 @@ class OrderingBehavior extends AbstractBehavior
             $eventSheet,
             $loadedData, 
             $groupParents,
-            $uidAlias);
+            $uidAlias
+        );
         
         $allSiblingsSheet = $loadedSiblingsSheet->copy();
         $changedSiblingsSheet = $this->extractChangedSiblings(
@@ -795,7 +773,7 @@ class OrderingBehavior extends AbstractBehavior
             // If we have loaded data for this row, that matches in both ordering number
             // and group, we can assume that it did not change.
             if( $loadedRow !== null && 
-                $loadedRow[$oderNumberAlias] === $changedRow[$oderNumberAlias] &&
+                $loadedRow[$oderNumberAlias] == $changedRow[$oderNumberAlias] &&
                 $this->belongsToGroup($loadedRow, $parents)
             ) {
                 continue;
@@ -1119,7 +1097,7 @@ class OrderingBehavior extends AbstractBehavior
                     continue;
                 }
 
-                if ($parent === $parentToMatch) {
+                if ($parent == $parentToMatch) {
                     $matched = true;
                     $matchedIndices[] = $index;
                     break;
