@@ -87,7 +87,8 @@ use exface\Core\Interfaces\Widgets\iCanBeDragAndDropSource;
  * - Set the `cell_widget` for a column to an active Input widget.
  *
  * @author Andrej Kabachnik
- *        
+ *
+ * @method \exface\Core\Widgets\DataTableConfigurator getConfiguratorWidget()
  */
 class DataTable extends Data implements 
     iCanEditData,
@@ -109,6 +110,10 @@ class DataTable extends Data implements
      * @var string
      */
     const FUNCTION_EMPTY = 'empty';
+
+    const FUNCTION_APPLY_SETUP = 'apply_setup';
+
+    const FUNCTION_DUMP_SETUP = 'dump_setup';
 
     private $show_filter_row = null;
 
