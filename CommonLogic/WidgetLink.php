@@ -66,6 +66,7 @@ class WidgetLink implements WidgetLinkInterface
     private $targetPageAlias = null;
     private $targetPage = null;
     private $targetWidgetId = null;
+    private $targetWidgetIdWithSpace = null;
     private $targetWidget = null;
     private $targetColumnId = null;
     private $targetRowNumber = null;
@@ -120,7 +121,7 @@ class WidgetLink implements WidgetLinkInterface
             return false;
         }
         
-        $targetWidgetId = $link->getTargetWidgetId() ?? '';
+        $targetWidgetId = $link->targetWidgetId ?? '';
         if(! key_exists($targetWidgetId, self::$linkCache[$targetPageAlias])) {
             return  false;
         }
@@ -147,7 +148,7 @@ class WidgetLink implements WidgetLinkInterface
     private static function addLinkToCache(WidgetLinkInterface $link) : void
     {
         $targetPageAlias = $link->getOrLoadTargetPageAlias();
-        $targetWidgetId = $link->getTargetWidgetId() ?? '';
+        $targetWidgetId = $link->targetWidgetId ?? '';
         
         self::$linkCache[$targetPageAlias][$targetWidgetId][] = $link;
     }
@@ -183,7 +184,7 @@ class WidgetLink implements WidgetLinkInterface
     public static function getLinksOnPage(UiPageInterface $page) : array
     {
         $result = [];
-        $pageAlias = $page->getAlias() ?? '';
+        $pageAlias = $page->getAliasWithNamespace() ?? '';
         
         foreach (self::$linkCache[$pageAlias] as $linksPerWidget) {
             $result = array_merge($result, $linksPerWidget);
@@ -204,13 +205,24 @@ class WidgetLink implements WidgetLinkInterface
         $page = $widget->getPage();
         $pageAlias = $page !== null ? ($page->getAlias() ?? '') : '';
         $widgetId = $widget->getId() ?? '';
+        $result = [];
+
+        if(null === $linksPerId = (self::$linkCache[$pageAlias] ?? null)) {
+            return $result;
+        } 
         
-        if( key_exists($pageAlias, self::$linkCache) && 
-            key_exists($widgetId, self::$linkCache[$pageAlias])) {
-            return self::$linkCache[$pageAlias][$widgetId];
+        $idHit = $linksPerId[$widgetId] ?? null;
+        if ($idHit === null) {
+            foreach ($linksPerId as $links) {
+                foreach ($links as $link) {
+                    if ($widget === $link->getTargetWidget()) {
+                        $result[] = $link;
+                    }
+                }
+            }
         }
         
-        return [];
+        return $result;
     }
 
     /**
@@ -318,19 +330,22 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getTargetWidgetId() : string
     {
-        $targetSpace = $this->getTargetWidgetIdSpace();
-        if ($targetSpace !== '') {
-            $targetSpace .=  $this->getTargetPage()->getWidgetIdSpaceSeparator();
+        if ($this->targetWidgetIdWithSpace === null) {
+            $targetSpace = $this->getTargetWidgetIdSpace();
+            if ($targetSpace !== '') {
+                $targetSpace .= $this->getTargetPage()->getWidgetIdSpaceSeparator();
+            }
+            // If the target widget id already includes the correct id space, do not add it another
+            // time. Such double id spaces had caused rare problems with user-specified ids, that
+            // hat their id space already attached. These problems occurred in particular with
+            // ~input links, but should not happen anymore since ~input links will now explicitly
+            // cache the widget and not only its id.
+            if ($targetSpace !== '' && StringDataType::startsWith($this->targetWidgetId, $targetSpace)) {
+                $targetSpace = '';
+            }
+            $this->targetWidgetIdWithSpace = $targetSpace . $this->targetWidgetId;
         }
-        // If the target widget id already includes the correct id space, do not add it another
-        // time. Such double id spaces had caused rare problems with user-specified ids, that
-        // hat their id space already attached. These problems occurred in particular with
-        // ~input links, but should not happen anymore since ~input links will now explicitly
-        // cache the widget and not only its id.
-        if ($targetSpace !== '' && StringDataType::startsWith($this->targetWidgetId, $targetSpace)) {
-            $targetSpace = '';
-        }
-        return $targetSpace . $this->targetWidgetId;
+        return $this->targetWidgetIdWithSpace;
     }
 
     /**
@@ -408,6 +423,7 @@ class WidgetLink implements WidgetLinkInterface
         }
         
         $this->targetWidgetId = $value;
+        $this->targetWidgetIdWithSpace = null;
         return $this;
     }
 
@@ -452,7 +468,7 @@ class WidgetLink implements WidgetLinkInterface
     public function getOrLoadTargetPageAlias() : string
     {
         if($this->targetPageAlias === null) {
-            return $this->getTargetPage()->getAlias() ?? '';
+            return $this->getTargetPage()->getAliasWithNamespace() ?? '';
         }
         
         return $this->targetPageAlias;
