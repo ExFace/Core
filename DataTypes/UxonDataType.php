@@ -170,7 +170,7 @@ class UxonDataType extends JsonDataType implements iCanValidate
             $rules[] = new UxonObject([
                 'alias' => 'TEST',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
-                'pattern' => UxonObject::fromJson('{"tabs":[{"widget_type": "*"}]}'),
+                'json_paths' => ['$.tabs.*.widget_type.*'],
                 'message' => 'Cant use "widget_type" for definition of "Tab"!'
             ]);
         }
