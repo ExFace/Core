@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use JsonPath\JsonObject;
 
 class JsonValidationRule
 {
@@ -13,12 +14,11 @@ class JsonValidationRule
     
     const MODE_REQUIRE = 'require';
     const MODE_PROHIBIT = 'prohibit';
-    const JSON_WILDCARD = '*';
     
     private JsonDataType $jsonDataType;
     private string $alias;
     private string $mode;
-    private UxonObject $uxonPattern;
+    private array $jsonPaths = [];
     private bool $isCritical = false;
     private string $message;
 
@@ -26,14 +26,14 @@ class JsonValidationRule
         JsonDataType $dataType, 
         string $alias = '',
         string $mode = JsonValidationRule::MODE_PROHIBIT, 
-        UxonObject $uxonPattern = new UxonObject(), 
+        array $jsonPaths = [], 
         string $message = ''
     )
     {
         $this->jsonDataType = $dataType;
         $this->alias = $alias;
         $this->mode = $mode;
-        $this->uxonPattern = $uxonPattern;
+        $this->jsonPaths = $jsonPaths;
         $this->message = $message;
     }
     
@@ -45,20 +45,21 @@ class JsonValidationRule
         return $rule;
     }
     
-    public function check(UxonObject $uxon, string $wildCard = self::JSON_WILDCARD) : void
+    public function check(UxonObject $uxon) : void
     {
-        $patternApplies = $this->matchesPattern($uxon, $this->uxonPattern, $wildCard);
+        $matches = $this->findMatches($uxon);
+        $patternApplies = !empty($matches);
         
         // If the rules is REQUIRED to apply and does, the check succeeds.
         if($this->mode === self::MODE_REQUIRE && $patternApplies) {
             return;
         }
-        
+
         // If the rule is PROHIBITED and does not apply, the check succeeds.
         if($this->mode === self::MODE_PROHIBIT && !$patternApplies) {
             return;
         }
-        
+
         // If the check failed, throw an error.
         throw new DataTypeValidationError(
             $this->jsonDataType,
@@ -66,70 +67,30 @@ class JsonValidationRule
         );
     }
     
-    protected function matchesPattern(UxonObject $subject, UxonObject $pattern, string $wildCard) : bool
+    protected function findMatches(UxonObject $uxon) : array
     {
-        // TODO 2025-08-01 geb Use JSON Path?
-        foreach ($pattern->getPropertiesAll() as $patternPropName => $patternProp) {
-            // Wildcards have to be checked with OR.
-            if(is_numeric($patternPropName) || $this->isWildCard($patternPropName, $wildCard)) {
-                if($this->containsPattern($subject, $patternProp, $wildCard)) {
-                    continue;
-                } else {
-                    return false;
-                }
-            }
-            
-            $matchedProp = $subject->getProperty($patternPropName);
-            
-            // Property not found in tested UXON, pattern does not match.
-            if($matchedProp === null) {
-                return false;
-            }
-            
-            if($matchedProp instanceof UxonObject) {
-                $match = $this->matchesPattern($matchedProp, $patternProp, $wildCard);
-            } else {
-                $match = $this->isWildCard($patternProp, $wildCard) || $patternProp === $matchedProp;
-            }
-            
-            if(!$match){
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    
-    protected function containsPattern(UxonObject $subject, UxonObject $pattern, string $wildCard) : bool
-    {
-        $result = false;
+        $data = $uxon->toArray();
+        //$jsonObject = new JsonObject;
+        $jsonPath = new \JsonPath\JsonPath();
+        $results = [];
 
-        foreach ($subject as $subjectPropName => $subjectProp) {
-            if($subjectProp instanceof UxonObject) {
-                $result = $this->matchesPattern($subjectProp, $pattern, $wildCard);
-            } else {
-                $patternProp = $pattern->getProperty($subjectPropName);
-                if($patternProp !== null) {
-                    $result = self::isWildCard($patternProp, $wildCard) || $pattern === $subjectProp;
-                }
+        foreach ($this->jsonPaths as $path) {
+            try {
+                $matches = $jsonPath->find($data, $path);
+            } catch (\Throwable $exception) {
+                continue;
             }
 
-            if($result) {
+            // If at least one path failed to match, this rules does not apply.
+            if(!$matches) {
+                $results = [];
                 break;
             }
+
+            $results = array_merge($results, $matches);
         }
         
-        return $result;
-    }
-    
-    protected function isWildCard(mixed $property, string $wildCard) : bool
-    {
-        if(!is_string($property)) {
-            return false;
-        }
-        
-        $property = trim($property);
-        return $property === $wildCard;
+        return $results;
     }
     
     public function getMessage() : string
@@ -154,10 +115,17 @@ class JsonValidationRule
         $this->mode = $mode;
         return $this;
     }
-    
-    public function setPattern(UxonObject $pattern) : JsonValidationRule
+
+    /**
+     * @uxon-property json_paths
+     * @uxon-type string[]
+     *
+     * @param UxonObject $jsonPaths
+     * @return $this
+     */
+    public function setJsonPaths(UxonObject $jsonPaths) : JsonValidationRule
     {
-        $this->uxonPattern = $pattern;
+        $this->jsonPaths = $jsonPaths->toArray();
         return $this;
     }
 }
