@@ -319,6 +319,19 @@ JS;
     
     protected function buildJsOnValidate(string $funcPrefix) : string
     {
+        $val = <<<JS
+
+function (json) {
+    var errors = [];
+    console.log("HI");
+    errors.push({
+        path: ['tabs',0],
+        message: 'HEY'
+    });
+    return errors;
+}
+JS;
+
         return <<<JS
 
 function (json) {
@@ -335,13 +348,14 @@ function (json) {
                     "", 
                     uxon
                 ).then(
-                    function(json){    
+                    function(json){
+                        console.log('parse');
                         //editor._validationPending = false;
                         if (json === undefined) {
                             reject();
                         }
                         
-                        resolve();
+                        resolve(json);
                         
                         // return response data for further processing
                         return json;
