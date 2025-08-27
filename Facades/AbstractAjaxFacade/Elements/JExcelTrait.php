@@ -59,10 +59,11 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * - refreshConditionalProperties();
  * - convertArrayToData(aDataArray) : array
  * - convertDataToArray(aDataRows) : array
- * - setDisabled(bDisable)
- * - isDisabled()
+ * - setDisabled(bDisable) : bool
+ * - isDisabled() : bool
  * - success(data, textStatus, jqXHR)
  * - error(jqXHR, textStatus, errorThrown)
+ * - bLoaded: bool // true after all constructors ran
  * 
  * ### ColumnModel
  * 
@@ -1045,7 +1046,7 @@ JS;
 
             // request config for ajax request to refresh dropdown data 
             if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation()) {
-
+                
                 $lazyLoadingRequestOptions = [
                     'action_alias' => $cellWidget->getLazyLoadingActionAlias(),
                     'page_id' => $this->getPageId(),
@@ -1062,6 +1063,11 @@ JS;
                 $dropdownLabel = $srcLabelName;
                 $dropdownId = $srcIdName;
                 $isRelation = true;
+                
+                $relatedCols = $this->getRelationColumnDependants($col);
+                if (! empty($relatedCols)) {
+                    // TODO add to column model
+                }
             }
 
             $columnsJson .= <<<JS
@@ -2096,7 +2102,10 @@ JS;
     protected function buildJsOnUpdateApplyValuesFromWidgetLinks(string $oExcelElJs, string $iColJs, string $iRowJs) : string
     {
         $linkedColIdxsJs = '[';
+        $relationCols = [];
+        /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
+            // Look for columns with a widget link in the value of the cell widget
             $cellWidget = $col->getCellWidget();
             if ($cellWidget->hasValue() === false) {
                 continue;
@@ -2110,8 +2119,9 @@ JS;
                 $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter($link->getTargetColumnId())}, true);
 
 JS;
-            }    
+            } 
         }
+        
         $linkedColIdxsJs .= ']';
         return <<<JS
 
@@ -2500,5 +2510,34 @@ JS;
     {
         $scripts = array_unique($this->onInitScripts);
         return implode("\n", $scripts);
+    }
+
+    /**
+     * @param DataColumn $col
+     * @return DataColumn[]
+     */
+    protected function getRelationColumnDependants(DataColumn $relCol) : array
+    {
+        $widget = $this->getWidget();
+        $cols = [];
+        foreach ($widget->getColumns() as $colIdx => $col) {
+            if ($col->isBoundToAttribute() === true) {
+                // Relation: Leistungsverzeichns
+                // Affected column: Leistungsverzeichnis__BauwerksFlag
+                $attr = $col->getAttribute();
+                if ($attr->isRelated()) {
+                    $relPath = $attr->getRelationPath();
+                    if (StringDataType::startsWith($relPath->__toString(), $relCol->getAttribute()->getAliasWithRelationPath())) {
+                         $cols[] = $col;
+                        // TODO
+                        // When dropdown select happens, take the column value from the dropdown data and put it
+                        // into the dependent column on same row
+                        // Optional: Auto-add dependent columns to the table of the cell widget input combo table
+                    }
+                }
+
+            }
+        }
+        return $cols;
     }
 }
