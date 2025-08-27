@@ -24,10 +24,10 @@ class JsonValidationRule
 
     public function __construct(
         JsonDataType $dataType, 
-        string $alias,
-        string $mode, 
-        UxonObject $uxonPattern, 
-        string $message
+        string $alias = '',
+        string $mode = JsonValidationRule::MODE_PROHIBIT, 
+        UxonObject $uxonPattern = new UxonObject(), 
+        string $message = ''
     )
     {
         $this->jsonDataType = $dataType;
@@ -35,6 +35,14 @@ class JsonValidationRule
         $this->mode = $mode;
         $this->uxonPattern = $uxonPattern;
         $this->message = $message;
+    }
+    
+    public static function fromUxon(JsonDataType $dataType, UxonObject $uxon) : JsonValidationRule
+    {
+        $rule = new JsonValidationRule($dataType);
+        $rule->importUxonObject($uxon);
+        
+        return $rule;
     }
     
     public function check(UxonObject $uxon, string $wildCard = self::JSON_WILDCARD) : void
@@ -127,5 +135,29 @@ class JsonValidationRule
     public function getMessage() : string
     {
         return $this->message;
+    }
+    
+    public function setMessage(string $message) : JsonValidationRule
+    {
+        $this->message = $message;
+        return $this;
+    }
+    
+    public function setAlias(string $alias) : JsonValidationRule
+    {
+        $this->alias = $alias;
+        return $this;
+    }
+    
+    public function setMode(string $mode) : JsonValidationRule
+    {
+        $this->mode = $mode;
+        return $this;
+    }
+    
+    public function setPattern(UxonObject $pattern) : JsonValidationRule
+    {
+        $this->uxonPattern = $pattern;
+        return $this;
     }
 }

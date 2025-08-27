@@ -5,6 +5,9 @@ namespace exface\Core\Actions;
 use exface\Core\Actions\Traits\iProcessUxonTasksTrait;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\UxonDataType;
+use exface\Core\Exceptions\DataTypes\UxonValidationError;
+use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -21,7 +24,6 @@ class UxonValidate extends AbstractAction
     {
         $schemaBase = new UxonObject();
 
-        $path = $this->getParamPath($task);
         $uxon = $this->getParamUxon($task);
         $rootObject = $this->getRootObject($task);
 
@@ -30,16 +32,33 @@ class UxonValidate extends AbstractAction
         }
 
         $rootPrototypeClass = $this->getRootPrototypeClass($task);
-        $schema = $this->getSchema($task, $rootPrototypeClass);
 
         if (! $schemaBase->isEmpty()) {
             $uxon = $schemaBase->extend($uxon);
         }
+
+        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), UxonDataType::class);
+        $dataType->setSchema($this->getParamSchemaName($task));
+        $errors = $dataType->validate($uxon, $rootPrototypeClass);
         
-        $errors = [
-            
-        ];
+        return  ResultFactory::createJSONResult($task, $this->toEditorErrors($errors));
+    }
+
+    /**
+     * @param UxonValidationError[] $errors
+     * @return array
+     */
+    protected function toEditorErrors(array $errors) : array
+    {
+        $result = [];
         
-        return  ResultFactory::createJSONResult($task, $errors);
+        foreach ($errors as $error) {
+            $result[] = [
+                'path' => $error->getPath(),
+                'message' => $error->getMessage()
+            ];
+        }
+        
+        return $result;
     }
 }
