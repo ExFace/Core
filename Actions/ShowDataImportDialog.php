@@ -24,7 +24,6 @@ use exface\Core\Widgets\Message;
 class ShowDataImportDialog extends ShowDialog
 {
     private $targetWidgetId = null;
-    private $targetWidget = null;
     private $excludedAliases = [];
     private $updateIfMatchingAttributeAliases = [];
     
@@ -37,6 +36,8 @@ class ShowDataImportDialog extends ShowDialog
     {
         parent::init();
         $this->setIcon(Icons::UPLOAD);
+        $this->setPrefillWithInputData(false);
+        $this->setPrefillWithFilterContext(false);
     } 
 
     /**
@@ -122,7 +123,7 @@ class ShowDataImportDialog extends ShowDialog
         foreach ($dialog->getMetaObject()->getAttributes()->getRequired()->getEditable() as $attr) {
             if (! array_key_exists($attr->getAlias(), $colAttrs)) {
                 $colAttrs[$attr->getAlias()] = $attr;
-                $col = $importer->createColumnFromAttribute($attr);
+                $col = $importer->createColumnFromAttribute($attr, null, null, true);
                 $col->setEditable(true);
                 $importer->addColumn($col);
             }

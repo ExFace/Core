@@ -177,6 +177,7 @@ class OrderingBehavior extends AbstractBehavior
         
         // Fetch any missing columns.
         $this->fetchMissingColumns($eventSheet,$logbook);
+        $this->normalizeDataSheet($eventSheet);
 
         // Load old data for rows in event data.
         $loadedData = $this->createEmptyCopy($eventSheet, true, false);
@@ -184,16 +185,20 @@ class OrderingBehavior extends AbstractBehavior
         $loadedData->setFilters(ConditionGroupFactory::createOR($loadedData->getMetaObject()));
         $loadedData->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn(), true);
         $loadedData->dataRead();
+        $this->normalizeDataSheet($loadedData);
 
         // Load data for groups present in event sheet.
         $changedGroups = $this->findChangedGroups($eventSheet, $loadedData);
-        $loadedGroupData->setFilters(ConditionGroupFactory::createOR($loadedGroupData->getMetaObject()));
-        foreach ($changedGroups as $group) {
-            $this->addFiltersFromParentAliases($loadedGroupData, $group);
+        if(!empty($changedGroups)) {
+            $loadedGroupData->setFilters(ConditionGroupFactory::createOR($loadedGroupData->getMetaObject()));
+            foreach ($changedGroups as $group) {
+                $this->addFiltersFromParentAliases($loadedGroupData, $group);
+            }
+            $loadedGroupData->dataRead();
+            $loadedData->addRows($loadedGroupData->getRows(), true);
+            $this->normalizeDataSheet($loadedData);
         }
-        $loadedGroupData->dataRead();
-        $loadedData->addRows($loadedGroupData->getRows(), true);
-        
+
         // If we are reacting to OnBeforeDelete, our work is done.
         if($event instanceof OnBeforeDeleteDataEvent) {
             // Cache data for next step.
@@ -279,6 +284,7 @@ class OrderingBehavior extends AbstractBehavior
         
         // Get datasheet.
         $eventSheet = $event->getDataSheet();
+        $this->normalizeDataSheet($eventSheet);
         $logbook->addDataSheet('InputData', $eventSheet);
         
         // Make sure it has a UID column.
@@ -377,13 +383,35 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
+     * Normalizes the following columns in the data sheet:
+     * - All parent attributes.
+     * - Order number attribute. 
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @return void
+     * @see OrderingBehavior::getOrderNumberAttributeAlias()
+     * @see OrderingBehavior::getParentAliases()
+     */
+    protected function normalizeDataSheet(DataSheetInterface $dataSheet) : void
+    {
+        $aliasesToNormalize = $this->getParentAliases();
+        $aliasesToNormalize[] = $this->getOrderNumberAttributeAlias();
+        
+        foreach ($aliasesToNormalize as $alias) {
+            if ($col = $dataSheet->getColumns()->get($alias)) {
+                $col->normalizeValues();
+            }            
+        }
+    }
+
+    /**
      * Load any missing parent columns and merges their data into the event sheet.
      *
      * @param DataSheetInterface $eventSheet
      * @param BehaviorLogBook    $logBook
      * @return void
      */
-    function fetchMissingColumns(
+    private function fetchMissingColumns(
         DataSheetInterface $eventSheet,
         BehaviorLogBook $logBook): void
     {
@@ -393,16 +421,17 @@ class OrderingBehavior extends AbstractBehavior
         // Load missing parent columns.
         $fetchSheet = $this->createEmptyCopy($eventSheet, true, true);
         $sampleRow = $eventSheet->getRow();
+        
+        if(!key_exists($this->getOrderNumberAttributeAlias(), $sampleRow)) {
+            $fetchSheet->getColumns()->addFromExpression($this->getOrderNumberAttributeAlias());
+        }
+        
         foreach ($this->getParentAliases() as $parentAlias) {
             if (!key_exists($parentAlias, $sampleRow)) {
                 // If the column is not present in the event sheet, we need to fetch it.
                 $logBook->addLine($parentAlias . ' is missing in event data and will have to be loaded.');
                 $fetchSheet->getColumns()->addFromExpression($parentAlias);
             } else {
-                // If the column is present, we need to ensure its values have the correct datatype.
-                $col = $eventSheet->getColumns()->get($parentAlias);
-                $dataType = $col->getDataType();
-                $col->setValues(array_map(function ($val) use ($dataType) {return $dataType->parse($val);}, $col->getValues()));
                 $logBook->addLine($parentAlias . ' is already present in event data.');
             }
         }
@@ -434,25 +463,38 @@ class OrderingBehavior extends AbstractBehavior
     {
         $changedGroups = [];
         $uidAlias = $eventSheet->getUidColumnName();
+        $orderNumberAlias = $this->getOrderNumberAttributeAlias();
         
         foreach ($eventSheet->getRows() as $eventRow) {
-            $changedGroups[] = $this->getParentsForRow($eventRow);
-            
             $uid = $eventRow[$uidAlias];
+            $eventGroup = $this->getParentsForRow($eventRow);
+
+            // Empty UID means we have to process this group, because we cannot
+            // check for changes at this point.
             if($uid === null || $uid === "") {
+                $changedGroups[] = $eventGroup;
                 continue;
             }
-            
+
             $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $uid);
+            // If no loaded data exists, we must assume this entry is new
+            // and its group must be processed.
             if(empty($loadedRow)) {
+                $changedGroups[] = $eventGroup;
                 continue;
             }
-            
-            foreach ($this->getParentAliases() as $parentAlias) {
-                if($loadedRow[$parentAlias] != $eventRow[$parentAlias]) {
-                    $changedGroups[] = $this->getParentsForRow($loadedRow);
-                    break;
-                }
+
+            // If any of the parent aliases changed (i.e. the entry was moved to a different
+            // group) both groups must be updated.
+            if(!$this->belongsToGroup($loadedRow, $eventGroup)) {
+                $changedGroups[] = $this->getParentsForRow($loadedRow);
+                $changedGroups[] = $eventGroup;
+                continue;
+            }
+
+            // If the ordering number changed, we have to process this group.
+            if($eventRow[$orderNumberAlias] !== $loadedRow[$orderNumberAlias]) {
+                $changedGroups[] = $this->getParentsForRow($eventRow);
             }
         }
         
@@ -549,7 +591,13 @@ class OrderingBehavior extends AbstractBehavior
             $uidAlias);
         
         $allSiblingsSheet = $loadedSiblingsSheet->copy();
-        $changedSiblingsSheet = $this->extractChangedSiblings($eventSheet, $groupParents);
+        $changedSiblingsSheet = $this->extractChangedSiblings(
+            $eventSheet, 
+            $loadedSiblingsSheet,
+            $uidAlias,
+            $this->getOrderNumberAttributeAlias(),
+            $groupParents
+        );
 
         if($onDelete) {
             // On delete, all changed rows are deleted rows and must be removed from our sorting data.
@@ -720,19 +768,36 @@ class OrderingBehavior extends AbstractBehavior
 
     /**
      * Extracts all siblings from event data belonging to the given group that had their indices change.
-     * 
+     *
      * @param DataSheetInterface $eventData
+     * @param DataSheetInterface $loadedData
+     * @param string             $uidAlias
+     * @param string             $oderNumberAlias
      * @param array              $parents
      * @return DataSheetInterface
      */
     protected function extractChangedSiblings(
         DataSheetInterface $eventData, 
-        array              $parents) : DataSheetInterface
+        DataSheetInterface $loadedData,
+        string             $uidAlias,
+        string             $oderNumberAlias,
+        array              $parents
+    ) : DataSheetInterface
     {
         $changedSiblingsSheet = $this->createEmptyCopy($eventData, true, false);
         
         foreach ($eventData->getRows() as $changedRow) {
             if (!$this->belongsToGroup($changedRow, $parents)) {
+                continue;
+            }
+
+            $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $changedRow[$uidAlias]);
+            // If we have loaded data for this row, that matches in both ordering number
+            // and group, we can assume that it did not change.
+            if( $loadedRow !== null && 
+                $loadedRow[$oderNumberAlias] === $changedRow[$oderNumberAlias] &&
+                $this->belongsToGroup($loadedRow, $parents)
+            ) {
                 continue;
             }
 
