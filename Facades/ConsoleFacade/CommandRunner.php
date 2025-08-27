@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\ConsoleFacade;
 
+use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Process\Process;
 
 class CommandRunner
@@ -10,21 +11,52 @@ class CommandRunner
      * @param string $cmd
      * @param array $envVars
      * @param float $timeout
+     * @param string|null $cwd
+     * @param bool $silent
      * @return \Generator
+     * @throws \Throwable
      */
-    public static function runCliCommand(string $cmd, array $envVars = [], float $timeout = 60, ?string $cwd = null) : \Generator
-    {
+    public static function runCliCommand(
+        string  $cmd,
+        array   $envVars = [],
+        float   $timeout = 60,
+        ?string $cwd = null,
+        bool    $silent = true
+    ) : \Generator {
         if (static::canUseSymfonyProcess()) {
             $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
             $process->start();
-            $generator = function ($process) {
-                foreach ($process as $output) {
-                    yield $output;
+            
+            $generator = function (Process $process, bool $silent) : \Generator {
+                // Keep copies because iterating over $process consumes incremental buffers
+                $stdout = '';
+                $stderr = '';
+                
+                foreach ($process as $type => $buffer) {
+                    if ($buffer !== '') {
+                        if ($type === Process::OUT) {
+                            $stdout .= $buffer;
+                        } else {
+                            $stderr .= $buffer;
+                        }
+                        yield $buffer;
+                    }
                 }
+                $process->wait(); // ensure completion
+                
+                // opt-in failure signaling
+                if (! $process->isSuccessful()) {
+                    $exit = $process->getExitCode();    
+                    yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exit . '.';
+                    // If caller wants hard failure, throw AFTER emitting the error marker
+                    if (! $silent) {
+                        throw new RuntimeException('CLI command "' . $process->getCommandLine() . '" failed: ' . ($stderr !== '' ? $stderr : 'no error output'));
+                    }
+                }                
             };
-            return $generator($process);
+            return $generator($process, $silent);
         } else {
-            $generator = function() use ($cmd, $envVars) {
+            $generator = function() use ($cmd, $envVars, $silent) {
                 // This workaround resulted from an issue with Microsoft IIS:
                 // `$process->start()` seems not to produce any output.
                 // See https://github.com/symfony/symfony/issues/24924
@@ -35,6 +67,14 @@ class CommandRunner
                 }
                 exec($cmd . ' 2>&1', $result, $code);
                 $resultStr = implode("\n", $result);
+                // If command failed, emit error line AFTER output
+                if ($code !== 0) {
+                    yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
+                    // If caller wants hard failure, throw AFTER emitting the error marker
+                    if (! $silent) {
+                        throw new RuntimeException('CLI command "' . $cmd . '" failed: ' . ($stderr !== '' ? $stderr : 'no error output'));
+                    }
+                }
                 yield $resultStr;
             };
             return $generator();
