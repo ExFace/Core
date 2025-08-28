@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Queue;
 
+use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Events\Queue\OnQueueRunEvent;
@@ -41,6 +42,11 @@ class SyncTaskQueue extends AbstractInternalTaskQueue
     public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null, string $channel = null) : ResultInterface
     {
         $dataSheet = $this->enqueue($task, $topics, $producer, $messageId, $channel);
+        
+        // If the task was not enqueued (e.g. because of parallel tasks already running, return an empty result
+        if ($dataSheet->isEmpty()) {
+            return ResultFactory::createMessageResult($task, 'Task was already running - skipping!');
+        }
         
         $uid = $dataSheet->getUidColumn()->getValue(0);
         
