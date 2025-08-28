@@ -55,6 +55,8 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     
     private $errorLogLevel = null;
     
+    private bool $skipTaskIfAlreadyRunning = false;
+    
     /**
      * 
      * @param string $queueItemUid
@@ -163,6 +165,14 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     {
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $dataSheet->getColumns()->addFromUidAttribute();
+        
+        if ($this->willSkipTaskIfAlreadyRunning()) {
+            $parallelsSheet = $this->findParallelRuns($task, $producer);
+            if (! $parallelsSheet->isEmpty()) {
+                return $dataSheet;
+            }
+        }
+        
         if ($task->hasParameter('assignedOn')) {
             $assignedOn = $task->getParameter('assignedOn');
         } else {
@@ -297,6 +307,28 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         
         return $sheet;
     }
+
+    protected function findParallelRuns(TaskInterface $task, string $producer) : DataSheetInterface
+    {
+        $sheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
+        $sheet->getColumns()
+            ->addFromSystemAttributes()
+            ->addMultiple([
+                'STATUS',
+                'PARENT_ITEM',
+                'ENQUEUED_ON'
+            ]);
+        $sheet->getFilters()
+            ->addConditionFromString('PRODUCER', $producer, ComparatorDataType::EQUALS)
+            ->addConditionFromString('QUEUE', $this->getUid(), ComparatorDataType::EQUALS)
+            ->addConditionFromString('STATUS', QueuedTaskStateDataType::STATUS_INPROGRESS, ComparatorDataType::EQUALS)
+            ->addConditionFromString('TASK_UXON', $task->exportUxonObject()->toJson(), ComparatorDataType::EQUALS);
+
+        $sheet->getSorters()->addFromString('CREATED_ON', 'DESC');
+
+        $sheet->dataRead();
+        return $sheet;
+    }
     
     /**
      * 
@@ -426,5 +458,29 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     protected function performTask(TaskInterface $task) : ResultInterface
     {
         return $this->getWorkbench()->handle($task);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function willSkipTaskIfAlreadyRunning() : bool
+    {
+        return $this->skipTaskIfAlreadyRunning;
+    }
+
+    /**
+     * Set to TRUE to double-check if exactly this task is already running and prevent parallel launches
+     * 
+     * @uxon-property skip_task_if_already_running
+     * @uxon-type bool
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return TaskQueueInterface
+     */
+    protected function setSkipTaskIfAlreadyRunning(bool $trueOrFalse) : TaskQueueInterface
+    {
+        $this->skipTaskIfAlreadyRunning = $trueOrFalse;
+        return $this;
     }
 }
