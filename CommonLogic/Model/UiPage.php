@@ -246,10 +246,23 @@ class UiPage implements UiPageInterface
         $id_original = $id;
         $id_space = '';
         $parent_of_id_space = $parent;
-        while ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
+        while ($id_space_length = mb_strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
             $id_space = ($id_space ? $id_space . static::WIDGET_ID_SPACE_SEPARATOR : '' ) . substr($id, 0, $id_space_length);
-            $id = substr($id, $id_space_length + 1);
-            $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space);
+            $id = mb_substr($id, $id_space_length + 1);
+            // Get the parent of the id space unless the id space is an underscore (= root id space)
+            // Note: `.DataTable` and `_.DataTable` both reference the root id space!
+            if ($id_space === static::WIDGET_ID_SEPARATOR) {
+                $id_original = $id;
+                $id_space = '';
+            } else {
+                $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space);
+            }
+        }
+        // If the id space was there, but empty just remove the separator: e.g. `.DataTable` => `DataTable`
+        // Thus `DataTable` will have an is space length `false` and would mean "no id space given", while 
+        // `.DataTable` will have a length of `0` and would mean "root id space".
+        if ($id_space_length === 0) {
+            $id_original = mb_substr($id, 1);
         }
         
         return $this->getWidgetFromIdSpace($id_original, '', $parent_of_id_space);
@@ -337,6 +350,12 @@ class UiPage implements UiPageInterface
      */
     private function getWidgetFromIdSpace($id, $id_space, WidgetInterface $parent, $use_id_path = true)
     {
+        // There are two ways to reference the root id space explicitly: `.DataTable` and `_.DataTable`.
+        // Treat both as empty id space here
+        // TODO distinguish between no id space and root id space to speed up searching!
+        if ($id_space === self::WIDGET_ID_SEPARATOR) {
+            $id_space = '';
+        }
         $id_with_namespace = static::addIdSpace($id_space, $id);
         if ($widget = $this->widgets[$id_with_namespace]) {
             // FIXME Check if one of the ancestors of the widget really is the given parent.
