@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\TextMention;
 use exface\Core\Widgets\Parts\TextStencil;
 
 /**
@@ -23,6 +24,8 @@ class InputMarkdown extends InputText
     private bool $allowMentions = false;
     private array $stencils = [];
     private ?UxonObject $stencilsUxon = null;
+    private array $mentions = [];
+    private ?UxonObject $mentionsUxon = null;
     
     /**
      * Set the editor to a "Word-like" WYSIWYG mode or to raw markdown mode.
@@ -140,5 +143,47 @@ class InputMarkdown extends InputText
     {
         $this->stencilsUxon = $arrayOfUxons;
         return $this;
+    }
+
+    /**
+     * @return TextMention[]
+     */
+    public function getMentions() : array
+    {
+        if (empty($this->mentions) && $this->mentionsUxon !== null) {
+            foreach ($this->mentionsUxon->getPropertiesAll() as $uxon) {
+                $this->mentions[] = new TextMention($this, $uxon);
+            }
+        }
+        return $this->mentions;
+    }
+
+    /**
+     * Array of mentions (templates), that will be available through the toolbar of the editor
+     *
+     * @uxon-property mentions
+     * @uxon-type \exface\Core\Widgets\Parts\TextMention[]
+     * @uxon-template [{"caption": "", "hint": "", "autosuggest_object_alias": ""}]
+     *
+     * @param UxonObject $arrayOfUxons
+     * @return $this
+     */
+    protected function setMentions(UxonObject $arrayOfUxons) : InputMarkdown
+    {
+        $this->mentionsUxon = $arrayOfUxons;
+        return $this;
+    }
+    
+    public function getChildren(): \Iterator
+    {
+        yield from parent::getChildren();
+        foreach ($this->getMentions() as $mention) {
+            yield $mention->getAutosuggestButton();
+            /* TODO
+            if ($mention->hasClickAction()) {
+                yield $mention->getClickButton();
+            }
+            */
+        }
     }
 }
