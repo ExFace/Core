@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
@@ -432,8 +433,31 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                     $type->setPrecisionMax(3);
                 }
             }
+            
+            if ($cellWidget instanceof InputComboTable) {
+                foreach ($this->getDependentColumns($cellWidget->getAttribute()->getRelationPath()) as $dependant) {
+                    // Add dependant to the combos table
+                }
+            }
         }
         return $this->cellWidget;
+    }
+
+    /**
+     * 
+     * @param RelationPath $relPath
+     * @return DataColumn[]
+     */
+    public function getDependentColumns(RelationPath $relPath) : array
+    {
+        $cols = [];
+        foreach ($this->getDataWidget()->getColumns() as $col) {
+            if ($col === $this) {
+                continue;
+            }
+            // TODO find out if the column depends on this one
+        }
+        return $cols;
     }
 
     /**

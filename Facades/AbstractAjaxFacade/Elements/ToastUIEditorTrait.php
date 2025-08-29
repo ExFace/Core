@@ -8,6 +8,7 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
+use exface\Core\Widgets\Parts\TextMention;
 use exface\Core\Widgets\Parts\TextStencil;
 
 /**
@@ -407,7 +408,7 @@ JS;
 
     protected function buildJsCustomHtmlRenderers(): string
     {
-        if (!$this->getWidget() instanceof InputMarkdown) {
+        if (! $this->getWidget() instanceof InputMarkdown) {
             return '';
         }
         $inlineTagRenderersJs = '';
@@ -597,14 +598,14 @@ JS;
      */
     protected function getFullScreenToggleId() : string
     {
-        return $this->getId() . '_tuiFullScreenToggle';
+        return $this->getId().'_tuiFullScreenToggle';
     }
 
     /**
      *
      * @return string
      */
-    protected function buildJsMarkdownVar(): string
+    protected function buildJsMarkdownVar() : string
     {
         return "{$this->buildJsFunctionPrefix()}_editor";
     }
@@ -613,7 +614,7 @@ JS;
      *
      * @return string
      */
-    protected function buildJsMarkdownRemove(): string
+    protected function buildJsMarkdownRemove() : string
     {
         return "{$this->buildJsMarkdownVar()}.remove();";
     }
@@ -623,7 +624,7 @@ JS;
      * {@inheritDoc}
      * @see \exface\JEasyUIFacade\Facades\Elements\EuiInput::buildJsValueSetterMethod()
      */
-    public function buildJsValueSetter($value): string
+    public function buildJsValueSetter($value) : string
     {
         return <<<JS
         
@@ -666,9 +667,9 @@ JS;
      * @param string $value
      * @return string
      */
-    protected function buildJsImageDataSanitizer(string $value): string
+    protected function buildJsImageDataSanitizer(string $value) : string
     {
-        if ($this->getWidget()->getAllowImages()) {
+        if($this->getWidget()->getAllowImages()) {
             return '';
         }
         
@@ -725,26 +726,18 @@ JS;
      *
      * @return string
      */
-    protected function buildHtmlMarkdownEditor(): string
+    protected function buildHtmlMarkdownEditor() : string
     {
         $html = '<div id="'.$this->getId().'" class="markdown-editor"></div>';
         return $html;
     }
 
-    //TODO SR: New:
-    protected function addUserListFetchHiddenButton() : void
+    protected function buildJsMentionAustosuggest(TextMention $mention, string $filterValueJs) : string
     {
-        $btnUserDataUxon = new UxonObject([
-            'widget_type' => 'DataButton',
-            'visibility' => WidgetVisibilityDataType::HIDDEN,
-            'action' => [
-                'alias' => 'exface.Core.Autosuggest',
-                'script' => <<<JS
-
-JS
-            ]
-        ]);
-
-        //TODO SR: Try to implement the "InputButton" solution here.
+        $btn = $mention->getAutosuggestButton();
+        $btnEl = $this->getFacade()->getElement($btn);
+        $filterAttributeAlias = $mention->getAutosuggestFilterAttributeAlias();
+        $js = $btnEl->buildJsClickFunction($btn->getAction(), "{oId: '{$btn->getAction()->getMetaObject()->getId}', filters: {operator: 'AND', conditions: [{expression: '{$filterAttributeAlias}', comparator: '=', value: {$filterValueJs}}]}}");
+        return $js;
     }
 }
