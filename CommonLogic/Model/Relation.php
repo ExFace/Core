@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
@@ -650,6 +651,61 @@ class Relation implements MetaRelationInterface
         }
         
         return $uxon;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getAttributeDefinedIn()
+     */
+    public function getAttributeDefinedIn() : MetaAttributeInterface
+    {
+        $relAlias = $this->getAlias();
+        $startingWithLeft = false;
+        switch ($this->getType()->getValue()) {
+            case RelationTypeDataType::REGULAR:
+                $obj = $this->getLeftObject();
+                $startingWithLeft = true;
+                break;
+            case RelationTypeDataType::REVERSE:
+            default:
+                $obj = $this->getLeftObject();
+                break;
+        }
+        if ($obj->hasAttribute($relAlias)) {
+            $attr = $obj->getAttribute($this->getAlias());
+            if ($attr->isRelation() && $attr->getRelation() === $this->getAlias()) {
+                return $attr;
+            }
+        }
+
+        $obj = $startingWithLeft === true ? $this->getRightObject() : $this->getLeftObject();
+        $attr = $obj->getAttribute($this->getAlias());
+
+        if (! $attr->isRelation() || ! $attr->getRelation() === $this->getAlias()) {
+            throw new RuntimeException('Cannot find definition attribute for relation "' . $relAlias . '" between ' . $this->getLeftObject()->__toString() . ' and ' . $this->getRightObject()->__toString());
+        }
+        return $attr;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isDefinedInLeftObject()
+     */
+    public function isDefinedInLeftObject() : bool
+    {
+        return $this->getAttributeDefinedIn()->getObject() === $this->getLeftObject();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isDefinedInRightObject()
+     */
+    public function isDefinedInRightObject() : bool
+    {
+        return ! $this->isDefinedInLeftObject();
     }
 }
 ?>
