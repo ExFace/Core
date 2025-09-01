@@ -2,9 +2,6 @@
 
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
@@ -181,6 +178,7 @@ JS;
 
     protected function buildJsWidgetRule(): string
     {
+        //TODO SR: Das zu erkennende String des Mention Widgets wird per uxon festgelegt.
         $reMentionWidgetRule = '/\[([#@]\s?[^\]]+)\]\((.*?)\)/';
         $mentionWidgetCss = 'display: inline-block; padding: 4px 10px; background-color: #001580; color: white; text-decoration: none; border-radius: 9999px; font-size: 14px; font-family: sans-serif; font-weight: 600; white-space: nowrap;';
         return <<<JS
@@ -732,6 +730,8 @@ JS;
         return $html;
     }
 
+    //TODO SR: Test it and try to call the User List with it:
+    //TODO SR: Look at the TextMention and unse it in Uxon
     protected function buildJsMentionAustosuggest(TextMention $mention, string $filterValueJs) : string
     {
         $btn = $mention->getAutosuggestButton();
