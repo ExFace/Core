@@ -434,31 +434,67 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 }
             }
             
+            // if the cell widget is a combo table, check if other columns depend on values related to the combos object
+            // and add them to the table (if the are not in there already)
             if ($cellWidget instanceof InputComboTable) {
-                foreach ($this->getDependentColumns($cellWidget->getAttribute()->getRelationPath()) as $dependant) {
-                    // Add dependant to the combos table
+                foreach ($this->getDependentColumns($cellWidget->getAttributeAlias()) as $dependant) {
+                    if($dependant->isBoundToAttribute()) {
+
+                        $dependantExpression = $dependant->getExpression(); //example: RELATED_OBJ__NAME
+                        $dependantExpression->setMetaObject($dependant->getMetaObject());
+                        $currentObject = $this->getExpression()->getAttributeAlias(); // example: RELATED_OBJ
+                        $rebasedExpr = $dependantExpression->rebase($currentObject);
+
+                        // create a new column for the combo table
+                        $depCol = $cellWidget->getTable()->createColumnFromUxon(new UxonObject([
+                            'attribute_alias' => $rebasedExpr 
+                        ]));
+
+                        // only add the column if it is not already in the table
+                        if ($cellWidget->getTable()->getColumnByDataColumnName($depCol->getDataColumnName()) == null) {
+                            $cellWidget->getTable()->addColumn($depCol);
+                        }
+                    }
                 }
             }
         }
         return $this->cellWidget;
     }
 
+    
     /**
      * 
-     * @param RelationPath $relPath
+     * Returns an array of columns in the current data-widget that are dependent on the provided column.
+     * 
+     * @param string $relPath
      * @return DataColumn[]
      */
-    public function getDependentColumns(RelationPath $relPath) : array
+    public function getDependentColumns(string $relPath) : array
     {
         $cols = [];
         foreach ($this->getDataWidget()->getColumns() as $col) {
             if ($col === $this) {
                 continue;
             }
-            // TODO find out if the column depends on this one
+            if ($col->isBoundToAttribute() === true) {
+                // Example:
+                // Relation: Item
+                // Affected column: Item__Flag
+                $attr = $col->getAttribute();
+                if ($attr->isRelated()) {
+                    $depRelPath = $attr->getRelationPath()->__toString();
+                    $comp = $relPath;
+
+                    if (StringDataType::startsWith($depRelPath, $relPath)) {
+                        $cols[] = $col;
+                    }
+                }
+
+            }
         }
         return $cols;
     }
+
 
     /**
      * Returns TRUE if the column is editable and FALSE otherwise.
