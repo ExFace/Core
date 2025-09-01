@@ -581,6 +581,17 @@ class MsSqlBuilder extends AbstractSqlBuilder
                         }
                         $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAliasWithRelationPath(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
                     }
+                    // ... and if we know, that the rows have UIDs, add a UID filter to the subquery making sure,
+                    // it will always only return values matching the UID of the main query. Actually, this should 
+                    // mostly be the case anyway, but there were case with complex SQL_JOIN_ON configs, where the
+                    // subquery here returned basically ALL available rows and not only those matching the UID of
+                    // the main row.
+                    if ($this->getMainObject()->hasUidAttribute() && ! $this->isAggregated() && ! $this->isAggregatedToSingleRow()) {
+                        $uidAddress = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
+                        $dot = $this->getAliasDelim();
+                        $subq->addFilterWithCustomSql($this->getMainObject()->getUidAttributeAlias(), $this->getMainTableAlias() . $dot . $uidAddress);
+                    }
+                    // Now build the SQL for the subquery
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
                     $subSql = $subSqlFrom . StringDataType::substringAfter($subSql, $subSqlFrom);
