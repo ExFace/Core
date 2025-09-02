@@ -2396,6 +2396,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                                     $value .= ' AND ' . implode(' AND ', $valueNullChecks);
                                 }
                             }
+                            break;
                     }
                     break;
             }
