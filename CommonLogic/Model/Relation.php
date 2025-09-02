@@ -660,32 +660,11 @@ class Relation implements MetaRelationInterface
      */
     public function getAttributeDefinedIn() : MetaAttributeInterface
     {
-        $relAlias = $this->getAlias();
-        $startingWithLeft = false;
-        switch ($this->getType()->getValue()) {
-            case RelationTypeDataType::REGULAR:
-                $obj = $this->getLeftObject();
-                $startingWithLeft = true;
-                break;
-            case RelationTypeDataType::REVERSE:
-            default:
-                $obj = $this->getLeftObject();
-                break;
+        $attr = $this->getLeftKeyAttribute();
+        if ($attr->isRelation() === true && $attr->getRelation() === $this) {
+            return $attr;
         }
-        if ($obj->hasAttribute($relAlias)) {
-            $attr = $obj->getAttribute($this->getAlias());
-            if ($attr->isRelation() && $attr->getRelation() === $this->getAlias()) {
-                return $attr;
-            }
-        }
-
-        $obj = $startingWithLeft === true ? $this->getRightObject() : $this->getLeftObject();
-        $attr = $obj->getAttribute($this->getAlias());
-
-        if (! $attr->isRelation() || ! $attr->getRelation() === $this->getAlias()) {
-            throw new RuntimeException('Cannot find definition attribute for relation "' . $relAlias . '" between ' . $this->getLeftObject()->__toString() . ' and ' . $this->getRightObject()->__toString());
-        }
-        return $attr;
+        return $this->getRightKeyAttribute();
     }
 
     /**
@@ -708,4 +687,3 @@ class Relation implements MetaRelationInterface
         return ! $this->isDefinedInLeftObject();
     }
 }
-?>
