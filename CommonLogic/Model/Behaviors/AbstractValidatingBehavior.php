@@ -301,7 +301,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                     $check->check($checkSheet, $logbook);
                 } catch (DataCheckFailedError $exception) {
                     $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
-                    $error->appendError($exception, $iRow + 1, false);
+                    $error->appendError($exception, $iRow, false);
                 } catch (\Throwable $exception) {
                     $logbook->addSection('Data check error on row ' . $iRow);
                     $logbook->addLine('> ' . $exception->getMessage());
