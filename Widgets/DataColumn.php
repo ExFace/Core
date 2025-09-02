@@ -466,10 +466,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * 
      * Returns an array of columns in the current data-widget that are dependent on the provided column.
      * 
-     * @param string $relPath
+     * @param string $alias
      * @return DataColumn[]
      */
-    public function getDependentColumns(string $relPath) : array
+    public function getDependentColumns(string $alias) : array
     {
         $cols = [];
         foreach ($this->getDataWidget()->getColumns() as $col) {
@@ -483,9 +483,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 $attr = $col->getAttribute();
                 if ($attr->isRelated()) {
                     $depRelPath = $attr->getRelationPath()->__toString();
-                    $comp = $relPath;
 
-                    if (StringDataType::startsWith($depRelPath, $relPath)) {
+                    if (StringDataType::startsWith($depRelPath, $alias)) {
                         $cols[] = $col;
                     }
                 }
