@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use JsonPath\JsonObject;
+use JsonPath\JsonPath;
 
 class JsonValidationRule
 {
@@ -47,6 +48,7 @@ class JsonValidationRule
     
     public function check(UxonObject $uxon) : void
     {
+        // TODO component wise, to retrieve path
         $matches = $this->findMatches($uxon);
         $patternApplies = !empty($matches);
         
@@ -70,13 +72,13 @@ class JsonValidationRule
     protected function findMatches(UxonObject $uxon) : array
     {
         $data = $uxon->toArray();
-        //$jsonObject = new JsonObject;
-        $jsonPath = new \JsonPath\JsonPath();
+        $jsonObject = new JsonObject($data);
         $results = [];
 
         foreach ($this->jsonPaths as $path) {
             try {
-                $matches = $jsonPath->find($data, $path);
+                $matches = $jsonObject->getJsonObjects($path);
+                $jsonObject->set($path, 'TEST');
             } catch (\Throwable $exception) {
                 continue;
             }

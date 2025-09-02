@@ -58,8 +58,10 @@ class UxonDataType extends JsonDataType implements iCanValidate
                     $lastValidationObject
                 ) ?? $lastValidationObject;
             }
+            
+            $creationError = null;
         } catch (\Throwable $exception) {
-            $errors[] = new UxonValidationError(
+            $creationError = new UxonValidationError(
                 $path, 
                 'Invalid UXON.' . $exception->getMessage(), 
                 $exception instanceof ExceptionInterface ? $exception->getMessage() : '',
@@ -68,7 +70,7 @@ class UxonDataType extends JsonDataType implements iCanValidate
         }
 
         // Check validation rules.
-        foreach ($this->getValidationRules($prototypeClass) as $rule) {
+        /*foreach ($this->getValidationRules($prototypeClass) as $rule) {
             try {
                 $rule->check($uxon);
             } catch (DataTypeValidationError $error) {
@@ -79,9 +81,10 @@ class UxonDataType extends JsonDataType implements iCanValidate
                     $error
                 );
             }
-        }
+        }*/
 
         // Check nested UXONS.
+        $subErrors = [];
         foreach ($uxon->getPropertiesAll() as $prop => $val) {
             if (!$val instanceof UxonObject) {
                 continue;
@@ -96,7 +99,7 @@ class UxonDataType extends JsonDataType implements iCanValidate
 
             $subPath = $path;
             $subPath[] = $prop;
-            $subErrors = $this->validateUxonRecursive(
+            $result = $this->validateUxonRecursive(
                 $subPath,
                 $val,
                 $propSchema,
@@ -104,10 +107,14 @@ class UxonDataType extends JsonDataType implements iCanValidate
                 $page,
                 $validationObject ?? $lastValidationObject
             );
-            $errors = array_merge($errors, $subErrors);
+            $subErrors = array_merge($subErrors, $result);
         }
         
-        return $errors;
+        if($creationError && empty($subErrors)) {
+            $errors[] = $creationError;
+        }
+        
+        return array_merge($errors, $subErrors);
     }
 
     protected function createValidationObject(
@@ -170,7 +177,7 @@ class UxonDataType extends JsonDataType implements iCanValidate
             $rules[] = new UxonObject([
                 'alias' => 'TEST',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
-                'json_paths' => ['$.tabs.*.widget_type.*'],
+                'json_paths' => ['$.tabs.*.widget_type'],
                 'message' => 'Cant use "widget_type" for definition of "Tab"!'
             ]);
         }
