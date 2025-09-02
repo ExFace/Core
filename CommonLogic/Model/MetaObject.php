@@ -264,7 +264,7 @@ class MetaObject implements MetaObjectInterface
     {
         try {
             $this->getRelation($alias, $foreign_key_alias);
-        } catch (MetaRelationNotFoundError $e) {
+        } catch (MetaRelationNotFoundError|MetaRelationAliasAmbiguousError $e) {
             return false;
         }
         return true;
