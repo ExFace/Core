@@ -51,6 +51,8 @@ class Tracer extends Profiler
 {
     const FOLDER_NAME_TRACES = 'traces';
     
+    const DEFAULT_MAX_DURATION = 60;
+    
     private $logHandler = null;
     
     private $filePath = null;
@@ -75,11 +77,41 @@ class Tracer extends Profiler
         parent::__construct($workbench, $startOffsetMs);
         $this->registerLogHandlers();
         $this->registerEventHandlers();
-        $this->getWorkbench()->eventManager()->addListener(OnContextInitEvent::getEventName(), function(OnContextInitEvent $event){
-            if ($event->getContext() instanceof DebugContext) {
-                $event->getContext()->startTracing($this);
-            }
-        });
+        
+        $this->getWorkbench()->eventManager()->addListener(
+            OnContextInitEvent::getEventName(),
+            [$this, 'onContextInit']
+        );
+    }
+
+    /**
+     * Initializes this instance, once the parent context is ready.
+     * If the system has been tracing for longer than the configured limit,
+     * tracing will be stopped.
+     * 
+     * @param OnContextInitEvent $event
+     * @return void
+     */
+    public function onContextInit(OnContextInitEvent $event) : void
+    {
+        $context = $event->getContext();
+        if (!($context instanceof DebugContext)) {
+            return;
+        }
+
+        $traceCurrDuration = $context->getTraceDuration();
+        $config = $this->getWorkbench()->getConfig();
+        
+        $traceMaxDuration = $config->hasOption('DEBUG.TRACE_MAX_TIME_SECONDS') ?
+            $config->getOption('DEBUG.TRACE_MAX_TIME_SECONDS') : self::DEFAULT_MAX_DURATION;
+
+        // Max trace duration may not cancel tracing for the current request, but will prevent future
+        // requests from being traced.
+        if($traceCurrDuration === false || $traceCurrDuration >= $traceMaxDuration) {
+            $context->stopTracing();
+        } else {
+            $context->startTracing($this);
+        }
     }
     
     /**
