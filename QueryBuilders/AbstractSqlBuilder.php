@@ -46,6 +46,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Templates\Modifiers\IfNullModifier;
 
 /**
  * A query builder for generic SQL syntax.
@@ -2949,16 +2950,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $baseObj = $relation_path !== null ? $relation_path->getEndObject() : $this->getMainObject();
         foreach (StringDataType::findPlaceholders($data_address) as $ph) {
-            if (StringDataType::startsWith($ph, '=')) {
-                $formula = FormulaFactory::createFromString($this->getWorkbench(), $ph);
+            $phAlias = IfNullModifier::stripFilter($ph);
+            // TODO how to use the default value from the modifier here?
+            if (StringDataType::startsWith($phAlias, '=')) {
+                $formula = FormulaFactory::createFromString($this->getWorkbench(), $phAlias);
                 if ($formula->isStatic() === false) {
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": the used formula is not static! Only static formulas are supported in data address placeholders!');
                 }
                 $data_address = StringDataType::replacePlaceholder($data_address, $ph, $formula->evaluate());
                 continue;
             }
-            $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
-            $ph_attribute_alias = RelationPath::join($prefix, $ph);
+            $ph_has_relation = $baseObj->hasAttribute($phAlias) && ! $baseObj->getAttribute($phAlias)->getRelationPath()->isEmpty() ? true : false;                
+            $ph_attribute_alias = RelationPath::join($prefix, $phAlias);
             
             // If the placeholder is not part of the query already, create a new query part.
             if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {
@@ -3058,6 +3061,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                 case StringDataType::startsWith($ph, '~right:'):
                     $attrAlias = StringDataType::substringAfter($ph, '~right:');
+                    // TODO add support for modifiers here! Currently we just ignore them
+                    $attrAlias = IfNullModifier::stripFilter($attrAlias);
                     $relPath = $leftQuery !== $rightQuery ? null : RelationPathFactory::createForObject($relation->getLeftObject())->appendRelation($relation);
                     // If the placeholder is a RELATED attribute of the right object, we will need to JOIN all tables
                     // along the relation path. For example `[#~right:rel1__rel2__name#]` should produce this SQL:
@@ -3096,7 +3101,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     } else {
                         // If the right placeholder does not need relations, we do not need a subquery and can just
                         // use the regular placeholder replacer
-                        $attrAlias = StringDataType::substringAfter($ph, '~right:');
                         $phVals[$ph] = $rightQuery->replacePlaceholdersInSqlAddress(
                             '[#' . $attrAlias . '#]',
                             $relPath,
