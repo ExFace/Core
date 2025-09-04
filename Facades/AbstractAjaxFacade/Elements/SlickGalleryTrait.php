@@ -482,6 +482,9 @@ JS;
     // Remove any keys, that are not in the columns of the widget
     oData.rows = (oData.rows || []).map(({ $colNamesList }) => ({ $colNamesList }));
     oData.filters = oConfiguratorData.filters;
+    
+    {$this->buildJsFileNameDuplicateRenamer("oData")}
+  
     return {
         oId: '{$dataObj->getId()}',
         rows: [
@@ -516,7 +519,69 @@ JS;
 })()
 JS;
     }
-    
+
+    /**
+     * It checks all file names of given oData for duplicates
+     * and renames those that are found.
+     *
+     * @param string $oDataJs
+     * @return string
+     */
+    public function buildJsFileNameDuplicateRenamer(string $oDataJs) : string{
+        $fileStorageFieldName = $this->getWidget()->getUploader()->getFileContentAttribute()->getAliasWithRelationPath();
+
+        return <<<JS
+      
+            (function(oData) {
+              let aSeen = {};
+            
+              oData.rows.forEach( oRow => {
+              if (!oRow.Dateiname) return;
+              
+              const iDotIndex = oRow.Dateiname.lastIndexOf(".");
+              const sFileNameBase = iDotIndex >= 0 ? oRow.Dateiname.slice(0, iDotIndex) : oRow.Dateiname;
+              
+              // aSeen[sFileNameBase] is undefined, if the name was not seen yet.
+              // The Logic works because the new file uploads 
+              // comes after the old ones in the oData rows.
+              if (aSeen[sFileNameBase] === undefined) {
+                aSeen[sFileNameBase] = 0;
+              } else {
+                aSeen[sFileNameBase]++;
+              }
+              
+              // The fileStorageFieldName variable is only set with data for new file uploads. 
+              // And only new file uploads can be renamed.
+              if (oRow?.{$fileStorageFieldName} !== undefined
+              && oRow?.MimeType
+              && aSeen[sFileNameBase] > 0
+              ){
+                  const sFileExtension = "." + oRow.MimeType.split("/")[1] || "";
+                  if (oRow.Dateiname.toLowerCase().endsWith(sFileExtension)){
+                    oRow.Dateiname = createNewBaseName(sFileNameBase, sFileExtension);
+                  } else {
+                    oRow.Dateiname = createNewBaseName(oRow.Dateiname);
+                  }
+              }
+            });
+            
+            // This inner function checks if the new name is also already existing and, 
+            // if so, increases the counter number at the end of the file name.
+            // ecample: image -> image_1 || image.jpeg -> image_1.jpeg
+            function createNewBaseName(sFileNameBase, sFileExtension = "") {
+              let nameCounter = aSeen[sFileNameBase];
+              let sNewBaseName = sFileNameBase + "_" + nameCounter;
+                     
+              while (aSeen[sNewBaseName] !== undefined) {
+                nameCounter++;
+                sNewBaseName = sFileNameBase + "_" + nameCounter;
+              }
+              return sNewBaseName + sFileExtension;
+            }
+            })($oDataJs)      
+JS;
+    }
+
     protected function buildJsUrlForHttpFileFacade(string $oRowJs, string $widthJs = null, string $heightJs = null) : string
     {
         $widget = $this->getWidget();
