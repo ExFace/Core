@@ -3,9 +3,7 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
@@ -217,7 +215,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
         }
         // Core SELECT
-        $select = implode(', ', array_unique(array_filter($selects)));
+        $selects = array_unique(array_filter($selects));
+        if ($this->isSelectFirstColumnOnly()) {
+            $select = $selects[0];
+        } else {
+            $select = implode(', ', $selects);
+        }
         $select_comment = $select_comment ? "\n" . $select_comment : '';
         
         // Enrichment SELECT
@@ -231,7 +234,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
-        $useEnrichment = ($group_by && $where) || $this->getSelectDistinct();
+        $useEnrichment = ($group_by && $where) || $this->isSelectDistinct();
         
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
@@ -248,7 +251,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
         
-        $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+        $distinct = $this->isSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             $limitRows = $this->getLimit();
