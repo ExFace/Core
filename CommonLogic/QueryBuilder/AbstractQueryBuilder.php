@@ -383,8 +383,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         $qpart = new QueryPartAttribute($attribute_alias, $this);
         $this->aggregations[$attribute_alias] = $qpart;
-        // IDEA move this to the build_sql_query methods since we probably do not always need to add the attribute
-        $this->addAttribute($attribute_alias);
         return $qpart;
     }
 

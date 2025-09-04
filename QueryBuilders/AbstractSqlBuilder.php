@@ -446,6 +446,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     // Runtime vars
     private $select_distinct = false;
     
+    private $select_first_column_only = false;
+    
     private $query_id = null;
     
     private $subquery_counter = 0;
@@ -453,15 +455,42 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     private $customFilterSqlPredicates = [];
     
     private $dirtyFlag = false;
-    
-    public function getSelectDistinct()
+
+    /**
+     * @return bool
+     */
+    protected function isSelectDistinct() : bool
     {
         return $this->select_distinct;
     }
-    
-    public function setSelectDistinct($value)
+
+    /**
+     * @param bool $value
+     * @return $this
+     */
+    protected function setSelectDistinct(bool $value) : AbstractSqlBuilder
     {
         $this->select_distinct = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isSelectFirstColumnOnly() : bool
+    {
+        return $this->select_first_column_only;
+    }
+
+    /**
+     * Limit the SELECT to a single clause (required for some subselects!)
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setSelectFirstColumnOnly(bool $trueOrFalse) : AbstractSqlBuilder
+    {
+        $this->select_first_column_only = $trueOrFalse;
+        return $this;
     }
     
     abstract function buildSqlQuerySelect();
@@ -1586,6 +1615,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // the query is based on the first object after the reversed relation (CUSTOMER_CARD for the above example)
         $relq->setMainObject($rev_rel->getRightObject());
         $relq->setQueryId($this->getNextSubqueryId());
+        $relq->setSelectFirstColumnOnly(true);
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
@@ -2080,14 +2110,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $this->getOptimizedComparator($qpart);
-        $delimiter = $qpart->getValueListDelimiter();
-        
+
+        // The left side of the HAVING clause is the grouped select in contrast to the WHERE clauses
         $select = $this->buildSqlSelectGrouped($qpart);
         $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);
+        $customWhereAddress = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE_DATA_ADDRESS);
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
-        // doublecheck that the attribut is known
-        if (! ($select || $customWhereClause) || $val === '') {
+        $ignoreEmptyValues = !$qpart->getCondition() || $qpart->getCondition()->willIgnoreEmptyValues();
+
+        // If the attribute has no data address AND is a static calculation, generate a 
+        // static WHERE clause.
+        // See buildSqlWhereCondition() for details
+        if (empty($select) && empty($customWhereClause) && empty($customWhereAddress) && $attr->hasCalculation() && $attr->getCalculationExpression()->isStatic()) {
+            $staticVal = $attr->getCalculationExpression()->evaluate();
+            return $this->buildSqlWhereComparator($qpart, "'{$this->escapeString($staticVal)}'", $comp, $val, $rely_on_joins);
+        }
+        
+        // Doublecheck that the attribut is known
+        if (! ($select || $customWhereClause) || ($ignoreEmptyValues && $val === '')) {
             if ($val === '') {
                 $hint = ' (the value is empty)';
             } else {
@@ -3644,5 +3685,18 @@ SQL;
     {
         $sqlType = ($qpartOrAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '');
         return strcasecmp($sqlType, self::DAP_SQL_DATA_TYPE_BINARY) === 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractQueryBuilder::addAggregation()
+     */
+    public function addAggregation($attribute_alias)
+    {
+        $qpart = parent::addAggregation($attribute_alias);
+        if (! $this->isSubquery()) {
+            $this->addAttribute($attribute_alias);
+        }
+        return $qpart;
     }
 }

@@ -796,4 +796,18 @@ class ExcelBuilder extends FileBuilder
     {
         return true;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractQueryBuilder::addAggregation()
+     */
+    public function addAggregation($attribute_alias)
+    {
+        $qpart = parent::addAggregation($attribute_alias);
+        // Make sure, things we are aggregating over are read as aggregation will be applied in-memory after reading
+        if (! $this->getAttribute($attribute_alias)) {
+            $this->addAttribute($attribute_alias)->excludeFromResult(true);
+        }
+        return $qpart;
+    }
 }
