@@ -69,7 +69,7 @@ trait AliasSelectorTrait
     }
     
     /**
-     * Returns an array with alias parts (basically explode('.', $alias)).
+     * Returns an array with alias parts - by default explode('.', $alias), but override this to support other selectors.
      * 
      * @throws SelectorInvalidError
      * 
@@ -78,13 +78,24 @@ trait AliasSelectorTrait
     protected function split()
     {
         if ($this->splitParts === null) {
-            $string = $this->toString();
-            if (mb_substr($string, 0, 1) === '.' || mb_substr($string, -1) === '.') {
-                throw new SelectorInvalidError('"' . $string . '" is not a valid alias selector!');
-            }
-            $this->splitParts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string);
+            $this->splitParts = $this->splitAlias($this->toString());
         }
         return $this->splitParts;
+    }
+
+    /**
+     * Returns an array with alias parts (basically explode('.', $alias)).
+     *
+     * @return string[]
+     * 
+     * @throws SelectorInvalidError
+     */
+    protected function splitAlias(string $string) : array
+    {
+        if (mb_substr($string, 0, 1) === '.' || mb_substr($string, -1) === '.') {
+            throw new SelectorInvalidError('"' . $string . '" is not a valid alias selector!');
+        }
+        return explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string);
     }
     
     /**
