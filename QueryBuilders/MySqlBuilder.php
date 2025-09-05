@@ -199,7 +199,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         }
         $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
         
-        $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+        $distinct = $this->isSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             $limitRows = $this->getLimit();
@@ -210,7 +210,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             $limit = ' LIMIT ' . $limitRows . ' OFFSET ' . $this->getOffset();
         }
         
-        if ($this->isEnrichmentAllowed() && (($group_by && $where) || $this->getSelectDistinct())) {
+        if ($this->isEnrichmentAllowed() && (($group_by && $where) || $this->isSelectDistinct())) {
             $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
         } else {
             $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $order_by . $having . $limit;

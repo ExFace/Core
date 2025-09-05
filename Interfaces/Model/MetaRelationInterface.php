@@ -312,5 +312,35 @@ interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopie
      * @param \exface\Core\Interfaces\Model\MetaObjectInterface $newObject
      * @return \exface\Core\Interfaces\Model\MetaRelationInterface
      */
-    public function withExtendedObject(MetaObjectInterface $newObject) : MetaRelationInterface;   
+    public function withExtendedObject(MetaObjectInterface $newObject) : MetaRelationInterface;
+
+    /**
+     * Returns the attribute, that contains the definition of this relation
+     * 
+     * This attribute can belong either to the left or the right object of the relation. For example, a
+     * regular forward relation will be typically defined in a foreign key attribute of the left object, 
+     * while a reverse relation will mostly originate from an attribute of the right object - but that is
+     * not always the case! In a 1-to-1 relation, the original can be on both sides. Even a reverse relation
+     * can be defined on the left side with a custom compound attribute or a custom SQL_JOIN_ON address 
+     * property.
+     * 
+     * This method helps to determine the origin of the relation quickly.
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getAttributeDefinedIn() : MetaAttributeInterface;
+
+    /**
+     * Returns TRUE if the relation was defined in an attribute its left object
+     * 
+     * @return bool
+     */
+    public function isDefinedInLeftObject() : bool;
+
+    /**
+     * Returns TRUE if the relation was defined in an attribute its right object
+     * 
+     * @return bool
+     */
+    public function isDefinedInRightObject() : bool;
 }
