@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\Selectors\Traits;
 use exface\Core\Exceptions\Selectors\SelectorInvalidError;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Filemanager;
 
 /**
@@ -33,10 +32,7 @@ trait ResolvableNameSelectorTrait
             $string = $this->toString();
             switch (true) {
                 case $this->isAlias(): 
-                    if (mb_substr($string, 0, 1) === '.' || mb_substr($string, -1) === '.') {
-                        throw new SelectorInvalidError('"' . $string . '" is not a valid alias selector!');
-                    }
-                    $this->splitParts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string);
+                    $this->splitParts = $this->splitAlias($string);
                     break;
                 case $this->isFilepath():
                     $string = $this->getPathRelativeToVendorFolder();

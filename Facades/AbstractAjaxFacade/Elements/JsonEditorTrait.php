@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Widgets\InputUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
@@ -166,6 +167,17 @@ JS;
         
         $disabledJs = $this->getWidget()->isDisabled() ? 'true' : 'false';
         
+        $initVal = $this->getWidget()->getValueWithDefaults();
+        if ($initVal !== null && $initVal !== '') {
+            if (is_string($initVal)) {
+                try {
+                    $initJson = JsonDataType::decodeJson($initVal);
+                } catch (\Throwable $e) {
+                    $initVal = $this->escapeString($initVal, true, false);
+                }
+            }
+        }
+        
         // Note: for some reason the global variable and oEditor are not the same over
         // time and get decoupled somehow... That's why setDisabled() could not be attached
         // to oEditor and needed to be moved to the container.
@@ -175,8 +187,7 @@ JS;
                         { 
                             {$this->buildJsEditorOptions()}
                         },
-        
-                        {$this->getWidget()->getValueWithDefaults()}
+                        {$initVal}
                     );
                     var {$this::buildJsEditorGetter($uxonEditorId)} = oEditor;
         

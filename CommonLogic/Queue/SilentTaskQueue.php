@@ -23,6 +23,13 @@ class SilentTaskQueue extends AbstractInternalTaskQueue
     public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null, string $channel = null) : ResultInterface
     {
         try {
+            // Check, if the same task is already running
+            if ($this->willSkipTaskIfAlreadyRunning() === true) {
+                $parallelsSheet = $this->findParallelRuns($task, $producer);
+                if (! $parallelsSheet->isEmpty()) {
+                    return ResultFactory::createMessageResult($task, 'Task was already running - skipping!');
+                }
+            }
             $result = $this->getWorkbench()->handle($task);
         } catch (\Throwable $e) {
             if (! $e instanceof ExceptionInterface){
@@ -30,7 +37,9 @@ class SilentTaskQueue extends AbstractInternalTaskQueue
             }
             $this->getWorkbench()->getLogger()->logException($e);
             
+            // Enqueue the task in case of an error, so there is a bad log item for this error.
             $uid = $this->enqueue($task, $topics, $producer, $messageId, $channel)->getUidColumn()->getValue(0);
+            
             $this->saveError($uid, $e);
             
             $result = ResultFactory::createErrorResult($task, $e);
