@@ -59,10 +59,13 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * - refreshConditionalProperties();
  * - convertArrayToData(aDataArray) : array
  * - convertDataToArray(aDataRows) : array
- * - setDisabled(bDisable)
- * - isDisabled()
+ * - setDisabled(bDisable) : bool
+ * - isDisabled() : bool
+ * - refreshDropdown(iColIdx) : Promise
+ * - updateDependantColumns(iColIdx, iRowIdx, mValue) : void
  * - success(data, textStatus, jqXHR)
  * - error(jqXHR, textStatus, errorThrown)
+ * - bLoaded: bool // true after all constructors ran
  * 
  * ### ColumnModel
  * 
@@ -79,6 +82,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * - wasLazyLoaded: bool,
  * - requestConfig: Object,
  * - isRelation: bool,
+ * - relatedCols: array,
  * - isSelfReferencing: bool,
  * - dropdownIdField: string,
  * - dropdownLabelField: string,
@@ -404,6 +408,16 @@ JS;
             setTimeout(function(){
                 // Calculate footer
                 {$this->buildJsFixedFootersSpread()}
+
+    
+                // if a dropdown column is updated,
+                // check if there are related columns that should be updated too
+                let sColumnType = instance.jexcel.options.columns[col].type;
+                if (instance.exfWidget.bLoaded && sColumnType === 'autocomplete' && instance.exfWidget.getColumnModel(col).dependantCols.length > 0) { 
+                    
+                    // update the related cols
+                    instance.exfWidget.updateDependantColumns(col, row, value)
+                }
 
                 // refresh the conditional properties of spreadsheet onchange
                 // dont conditionize while lazy loading is in progress, otherwise disabled cells do not load data
@@ -824,7 +838,6 @@ JS;
 
             return aData;
         },
-
         setDisabled: function(bDisable) {
             var oWidget = this;
             var oJExcel = oWidget.getJExcel();
@@ -867,11 +880,9 @@ JS;
                 });
             });
         },
-
         isDisabled: function(){
             return this._disabled;
         },
-
         refreshDropdown(iColIdx) {
             return new Promise((resolve, reject) => { 
                 // load config and additional data for dropdown
@@ -939,6 +950,38 @@ JS;
                     }
                 })
             });
+        },
+        updateDependantColumns: function(iColIdx, iRowIdx, mValue) {
+            let oJExcel = this.getJExcel();
+            
+            // loop through each dependency/relation
+            for (let depColName of this.getColumnModel(iColIdx).dependantCols) {
+
+                // check if current dropdown source contains the relevant key for the relation
+                let sColRelationKey = depColName.replace(new RegExp('^' + this.getColumnModel(iColIdx).dataColumnName+'_'), '');
+                if (oJExcel.getColumnOptions(iColIdx).source.length > 0 && sColRelationKey in oJExcel.getColumnOptions(iColIdx).source[0]) {
+
+                    // if it does contain the key, then check if spreadsheet contains the relevant column 
+                    // and update the value in the current row
+                    let iDepColIdx = this.getColumnIndex(depColName);
+                    if (iDepColIdx !== -1) {
+
+                        // if new value is empty, clear the related field too
+                        if (mValue === ''){
+                            oJExcel.setValueFromCoords(iDepColIdx, iRowIdx, mValue, true); 
+                        }
+
+                        // find dropdown source of new selected value
+                        let oDropdownSrc = oJExcel.getColumnOptions(iColIdx).source.find(item => item.id == mValue);
+                        if (oDropdownSrc) {
+                            oJExcel.setValueFromCoords(iDepColIdx, iRowIdx, oDropdownSrc[sColRelationKey], true); 
+                        } 
+                    } 
+                }
+                else {
+                    console.warn('Relation key ' + sColRelationKey + ' not found in dropdown source');
+                }
+            }
         }
     };
     
@@ -1039,13 +1082,14 @@ JS;
             $wasLazyLoaded = 'false';
 
             $lazyLoadingRequestJs = json_encode("");
+            $jsRelatedCols = [];
             $isRelation = false;
             $dropdownLabel = '';
             $dropdownId = '';
 
             // request config for ajax request to refresh dropdown data 
             if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation()) {
-
+                
                 $lazyLoadingRequestOptions = [
                     'action_alias' => $cellWidget->getLazyLoadingActionAlias(),
                     'page_id' => $this->getPageId(),
@@ -1062,7 +1106,18 @@ JS;
                 $dropdownLabel = $srcLabelName;
                 $dropdownId = $srcIdName;
                 $isRelation = true;
+                
+                // get related columns (if any exist), and add them to the column model
+                // so they can be updated when the dropdown value changes
+                $relatedCols = $col->getDependentColumns($cellWidget->getAttributeAlias()); 
+                if (! empty($relatedCols)) {
+                    foreach ($relatedCols as $relCol) {
+                        $jsRelatedCols[] = $relCol->getDataColumnName();
+                    }
+                }
             }
+            
+            $jsRelatedColsJson = json_encode($jsRelatedCols);
 
             $columnsJson .= <<<JS
                 "{$col->getDataColumnName()}": {
@@ -1080,6 +1135,7 @@ JS;
                     wasLazyLoaded: {$wasLazyLoaded},
                     requestConfig: {$lazyLoadingRequestJs},
                     isRelation: {$this->escapeBool($isRelation)},
+                    dependantCols: {$jsRelatedColsJson},
                     isSelfReferencing: {$this->escapeBool($hasSelfReference ?? false)},
                     dropdownIdField: {$this->escapeString($dropdownId)},
                     dropdownLabelField: {$this->escapeString($dropdownLabel)},
@@ -1468,7 +1524,7 @@ JS;
             case $cellWidget instanceof InputSelect:
                 $type = 'autocomplete';
                 $align = EXF_ALIGN_LEFT;
-                $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget);
+                $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget, $col);
                 break;
             default:
                 return null;
@@ -1542,7 +1598,7 @@ JS;
      * @throws FacadeUnsupportedWidgetPropertyWarning
      * @return string
      */
-    protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget) : string
+    protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget, ?DataColumn $dataCol = null) : string
     {
         if ($cellWidget->isBoundToAttribute() === false) {
             throw new FacadeLogicError('TODO');
@@ -1554,7 +1610,8 @@ JS;
                 
                 if ($cellWidget instanceof InputComboTable) {
                     $srcSheet = $cellWidget->getOptionsDataSheet();
-                    
+                    $table = $cellWidget->getTable()->getColumns();
+
                     // See if the widget has additional filters
                     // If so, add any attributes required for them to the $srcSheet
                     $filters = $cellWidget->getFilters();
@@ -1688,8 +1745,13 @@ JS;
                     
                             var oEffect = {};
                             var aUsedObjectAliases = {$effectedAliasesJs};
+                            let iColIdx = {$this->buildJsJqueryElement()}[0].exfWidget.getColumnIndex('{$dataCol->getDataColumnName()}');
+                            if (iColIdx === -1) {
+                                return;
+                            }
+
                             var fnRefresh = function() {
-                                {$this->buildJsJqueryElement()}[0].exfWidget.refreshDropdown({$colIdx});
+                                {$this->buildJsJqueryElement()}[0].exfWidget.refreshDropdown(iColIdx);
                             };
                         
                             for (var i = 0; i < oParams.effects.length; i++) {
@@ -2096,7 +2158,9 @@ JS;
     protected function buildJsOnUpdateApplyValuesFromWidgetLinks(string $oExcelElJs, string $iColJs, string $iRowJs) : string
     {
         $linkedColIdxsJs = '[';
+        /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
+            // Look for columns with a widget link in the value of the cell widget
             $cellWidget = $col->getCellWidget();
             if ($cellWidget->hasValue() === false) {
                 continue;
@@ -2110,8 +2174,9 @@ JS;
                 $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter($link->getTargetColumnId())}, true);
 
 JS;
-            }    
+            } 
         }
+        
         $linkedColIdxsJs .= ']';
         return <<<JS
 
@@ -2501,4 +2566,5 @@ JS;
         $scripts = array_unique($this->onInitScripts);
         return implode("\n", $scripts);
     }
+
 }

@@ -40,7 +40,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
         // it is a relation and not a direct attribute. Concider the case of CUSTOMER<-CUSTOMER_CARD. If we filter CUSTOMERs over
         // CUSTOMER_CARD, it would look as if the CUSTOMER_CARD is an attribute of CUSTOMER. We need to detect this and transform
         // the filter into CUSTOMER_CARD__UID, which would clearly be a relation.
-        if ($this->getAttribute()->isRelation() && $this->getQuery()->getMainObject()->getRelation($alias)->isReverseRelation()) {
+        if ($this->getAttribute()->isRelation() && $this->getAttribute()->getRelation()->isReverseRelation()) {
             $attr = $this->getQuery()->getMainObject()->getAttribute(RelationPath::join($alias, $this->getAttribute()->getObject()->getUidAttributeAlias()));
             $this->setAttribute($attr);
         }

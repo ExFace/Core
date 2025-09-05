@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
@@ -651,5 +652,38 @@ class Relation implements MetaRelationInterface
         
         return $uxon;
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getAttributeDefinedIn()
+     */
+    public function getAttributeDefinedIn() : MetaAttributeInterface
+    {
+        $attr = $this->getLeftKeyAttribute();
+        if ($attr->isRelation() === true && $attr->getRelation() === $this) {
+            return $attr;
+        }
+        return $this->getRightKeyAttribute();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isDefinedInLeftObject()
+     */
+    public function isDefinedInLeftObject() : bool
+    {
+        return $this->getAttributeDefinedIn()->getObject() === $this->getLeftObject();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isDefinedInRightObject()
+     */
+    public function isDefinedInRightObject() : bool
+    {
+        return ! $this->isDefinedInLeftObject();
+    }
 }
-?>
