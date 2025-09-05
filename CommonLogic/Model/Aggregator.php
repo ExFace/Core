@@ -190,7 +190,9 @@ class Aggregator implements AggregatorInterface {
                 $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), IntegerDataType::class);
                 break;
             case AggregatorFunctionsDataType::MIN:
+            case AggregatorFunctionsDataType::MIN_OF:
             case AggregatorFunctionsDataType::MAX:
+            case AggregatorFunctionsDataType::MAX_OF:
                 $type = $aggregatedType->copy();
                 break;
             case AggregatorFunctionsDataType::LIST_ALL:
