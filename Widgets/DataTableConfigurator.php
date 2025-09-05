@@ -258,12 +258,18 @@ class DataTableConfigurator extends DataConfigurator
                     'attribute_alias' => 'NAME',
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
-                ], [
+                ],[
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
                 ], [
                     'attribute_alias' => 'DESCRIPTION',
                     'nowrap' => false
+                ], [
+                    'attribute_alias' => 'PAGE',
+                    'hidden' => true
+                ], [
+                    'attribute_alias' => 'WIDGET_ID',
+                    'hidden' => true
                 ], [
                     'attribute_alias' => 'SETUP_UXON',
                     'hidden' => true
