@@ -27,7 +27,7 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  *     "regex": "/#\d+/"
  *     "show_toolbar_button": false,
  *     "autosuggest_object_alias": "axenox.DevMan.ticket",
- *     "autosuggest_filter_attribute": "id",
+ *     "autosuggest_filter_attribute_alias": "id",
  *     "click_action": {
  *          "alias": "exface.Core.GoToPage",
  *          "page_alias": "axenox.DevMan.tickets"
@@ -50,7 +50,18 @@ class TextMention extends TextStencil
 {    
     private $autosuggestObjectAlias = null;
     private $autosuggestFilterAttributeAlias = null;
-    
+
+
+    /**
+     * TODO SR: Description
+     * TODO SR: Find the right uxon-type
+     *
+     * @uxon-property autosuggest_object_alias
+     * @uxon-type string
+     *
+     * @param string $alias
+     * @return $this
+     */
     protected function setAutosuggestObjectAlias(string $alias) : TextMention
     {
         $this->autosuggestObjectAlias = $alias;
@@ -60,6 +71,26 @@ class TextMention extends TextStencil
     public function getAutosuggestObject() : MetaObjectInterface
     {
         return MetaObjectFactory::createFromString($this->getWorkbench(), $this->autosuggestObjectAlias);
+    }
+
+    /**
+     * TODO SR: Write a description
+     *
+     * @uxon-property autosuggest_filter_attribute_alias
+     * @uxon-type string
+     *
+     * @param string $alias
+     * @return $this
+     */
+    protected function setAutosuggestFilterAttributeAlias(string $alias) : TextMention
+    {
+        $this->autosuggestFilterAttributeAlias = $alias;
+        return $this;
+    }
+
+    public function getAutosuggestFilterAttributeAlias() : string
+    {
+        return $this->autosuggestFilterAttributeAlias;
     }
     
     public function getAutosuggestActionUxon() : UxonObject
@@ -86,11 +117,13 @@ class TextMention extends TextStencil
     public function getAutosuggestButton() : iTriggerAction
     {
         $btn = WidgetFactory::createFromUxonInParent($this->getWidget(), new UxonObject([
+            'widget_type' => 'Button',
             'action' => $this->getAutosuggestActionUxon()->toArray()
         ]));
         return $btn;
     }
-    
+
+    //TODO SR: Check if this is still needed:
     public function getAutosuggestWidget() : InputCombo
     {
         $autosuggestObj = $this->getAutosuggestObject();
@@ -111,16 +144,5 @@ class TextMention extends TextStencil
         
         $widget = WidgetFactory::createFromUxonInParent($this->getWidget(), $uxon);
         return $widget;
-    }
-    
-    protected function setAutosuggestFilterAttributeAlias(string $alias) : TextMention
-    {
-        $this->autosuggestFilterAttributeAlias = $alias;
-        return $this;
-    }
-    
-    public function getAutosuggestFilterAttributeAlias() : string
-    {
-        return $this->autosuggestFilterAttributeAlias;
     }
 }

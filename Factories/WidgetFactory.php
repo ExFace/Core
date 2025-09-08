@@ -107,7 +107,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
             // Remove the extend widget property to prevent problems when importing UXON
             $uxon->unsetProperty('extend_widget');
         }
-        
+        //TODO SR: Hier kommt kein $widget_type zurück?
         list($uxon, $widget_type) = static::getDefaults($page->getWorkbench(), $uxon, $parentWidget, $fallbackWidgetType, $readonly);
         
         try {

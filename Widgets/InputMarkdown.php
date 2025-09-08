@@ -163,7 +163,7 @@ class InputMarkdown extends InputText
      *
      * @uxon-property mentions
      * @uxon-type \exface\Core\Widgets\Parts\TextMention[]
-     * @uxon-template [{"caption": "", "hint": "", "autosuggest_object_alias": ""}]
+     * @uxon-template [{"caption": "", "hint": "", "autosuggest_object_alias": "", "autosuggest_filter_attribute_alias": ""}]
      *
      * @param UxonObject $arrayOfUxons
      * @return $this
