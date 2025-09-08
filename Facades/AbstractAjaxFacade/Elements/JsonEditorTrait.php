@@ -191,6 +191,9 @@ JS;
                     var {$this::buildJsEditorGetter($uxonEditorId)} = oEditor;
                     
                     oEditor.expandAll();
+                    
+                    // Inject custom rendering logic.
+                    oEditor._renderValidationErrors = {$this->buildJsRenderValidationErrors()};
 
                     oEditor.container.setDisabled = function(bTrueOrFalse) {
                         var oEditor = {$this::buildJsEditorGetter($uxonEditorId)};
@@ -310,8 +313,8 @@ JS;
     modes: {$this->buildJsEditorModes($isWidgetDisabled)},
     onModeChange: {$this->buildJsOnModeChangeFunction($uxonEditorId, $funcPrefix)},
     onChangeJSON: {$this->buildJsOnChangeFunction()},
-    validationRules: [{prototype:"A",pattern:"P"},{prototype:"B",pattern:"P"}],
     onValidate: {$this->buildJsOnValidate($funcPrefix)},
+    onExpand: {$this->buildJsOnExpand()},
     {$uxonEditorOptions}
 
 JS;
@@ -326,7 +329,42 @@ JS;
         }
         return "function(json) { $fn }";
     }
-    
+
+    /**
+     * Returns in inline JS-Snippet that handles an `onExpand` event.
+     * 
+     * @return string
+     */
+    protected function buildJsOnExpand() : string
+    {
+        return <<<JS
+
+function (oEvent) {
+    var oEditor = {$this::buildJsEditorGetter($this->getId())};
+    // Update error indicators.
+    if (oEditor && oEditor.__cachedErrors !== undefined) {
+        if (oEditor.errorNodes) {
+            oEditor.errorNodes.forEach(function (node) {
+                node.setError(null);
+            });
+        } else {
+            oEditor.errorNodes = oEditor.__cachedErrors;
+        }
+        
+        var errorNodes = oEditor.__cachedErrors;
+        {$this->buildJsToggleValidationErrors('errorNodes')}
+    }
+}
+JS;
+
+    }
+
+    /**
+     * Returns in inline JS-Snippet that handles an `onValidate` event.
+     *
+     * @param string $funcPrefix
+     * @return string
+     */
     protected function buildJsOnValidate(string $funcPrefix) : string
     {
         return <<<JS
@@ -382,6 +420,94 @@ function (json) {
             return Promise.resolve([]);
         });
 }
+JS;
+
+    }
+
+    /**
+     * Returns in inline JS-Snippet that renders an array containing validation errors.
+     *
+     * @return string
+     */
+    protected function buildJsRenderValidationErrors() : string
+    {
+        return <<<JS
+
+function (errorNodes) {
+    // clear all current errors
+    if (this.errorNodes) {
+        this.errorNodes.forEach(function (node) {
+            node.setError(null);
+        });
+    }
+    
+    // render the new errors
+    var parentPairs = errorNodes.reduce(function (all, entry) {
+        return entry.node.findParents().filter(function (parent) {
+            return !all.some(function (pair) {
+                return pair[0] === parent;
+            });
+        }).map(function (parent) {
+            return [parent, entry.node];
+        }).concat(all);
+    }, []);
+    
+    // We cache the raw error nodes, so we can easily toggle their error indicators later.
+    errorNodes = this.__cachedErrors = parentPairs.map(function (pair) {
+        return {
+            node: pair[0],
+            child: pair[1],
+            error: {
+                message: pair[0].type === 'object' ? 
+                    'Contains invalid properties!' : 
+                    'Contains invalid items!' // array
+            }
+        };
+    }).concat(errorNodes);
+    
+    {$this->buildJsToggleValidationErrors('errorNodes')}
+    
+    this.errorNodes = errorNodes;
+}
+JS;
+
+    }
+
+    /**
+     * Returns a JS-snippet that remaps an array containing validation errors and 
+     * toggles rendering those errors, depending on the visibility of each node.
+     * 
+     * @param string $jsErrorNodes
+     * @return string
+     */
+    protected function buildJsToggleValidationErrors(string $jsErrorNodes) : string
+    {
+        return <<<JS
+
+// Reduce breadcrumbs.
+var aHidden = [];
+{$jsErrorNodes} = {$jsErrorNodes}.map(function setError(entry) {
+    var node = entry.node;
+    var child = entry.child;
+    
+    var bCollapsed = !node.expanded;
+    var bVisible = !aHidden.includes(node.parent);
+    var bEndPoint = child === undefined || child === null;
+    
+    if (bCollapsed || !bVisible) {
+        aHidden.push(node);
+    }
+    
+    // If the node is either an endpoint or collapsed but visible (i.e. a visual end-point)
+    // we should render the error indicator.
+    if((bCollapsed && bVisible) || bEndPoint)
+    {
+        // This call makes the little warning triangle appear in the editor.
+        node.setError(entry.error, entry.child);
+    }
+    
+    return entry.node;
+});
 JS;
 
     }
@@ -1048,7 +1174,6 @@ CSS;
         }
         
         function {$funcPrefix}_performValidation(path, uxon){
-            console.log("performValidation");
             var formData = new URLSearchParams({
         		action: 'exface.Core.UxonValidate',
         		path: JSON.stringify(path),
