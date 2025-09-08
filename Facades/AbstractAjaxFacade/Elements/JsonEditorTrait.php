@@ -6,7 +6,6 @@ use exface\Core\Widgets\InputUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
-use exface\Core\Widgets\Tab;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -190,7 +189,7 @@ JS;
                         {$initVal}
                     );
                     var {$this::buildJsEditorGetter($uxonEditorId)} = oEditor;
-        
+                    
                     oEditor.expandAll();
 
                     oEditor.container.setDisabled = function(bTrueOrFalse) {
@@ -330,38 +329,31 @@ JS;
     
     protected function buildJsOnValidate(string $funcPrefix) : string
     {
-        $val = <<<JS
-
-function (json) {
-    var errors = [];
-    console.log("HI");
-    errors.push({
-        path: ['tabs',0],
-        message: 'HEY'
-    });
-    return errors;
-}
-JS;
-
         return <<<JS
 
 function (json) {
     return new Promise(
         function (resolve, reject) {
-            console.log("validate");
-            var pending = false;
-            if (pending === true) {
-               reject();
+            var oEditor = {$this::buildJsEditorGetter($this->getId())};
+            if (oEditor !== undefined && 
+                oEditor._validationPending === true
+            ) {
+                reject();
             } else {
-                //editor._validationPending = true;
+                if (oEditor !== undefined) {
+                    oEditor._validationPending = true;
+                }
+                
                 var uxon = JSON.stringify(json);
                 return {$funcPrefix}_performValidation(
                     "", 
                     uxon
                 ).then(
                     function(json){
-                        console.log('parse');
-                        //editor._validationPending = false;
+                        if (oEditor !== undefined) {
+                            oEditor._validationPending = false;
+                        }
+                        
                         if (json === undefined) {
                             reject();
                         }
@@ -372,14 +364,20 @@ function (json) {
                         return json;
                     }
                 ).catch(function(err){ 
+                    if (oEditor !== undefined) {
+                        oEditor._validationPending = false;
+                    }
+                    
                     console.log("ERROR");
-                    //editor._autosuggestPending = false;
                     console.warn("Failed to validate.", err);
                });
            }
         })
         .catch(function(err){
-            //editor._autosuggestPending = false;
+            if (oEditor !== undefined) {
+                    oEditor._validationPending = false;
+            }
+            
             console.warn("Failed to validate.", err);
             return Promise.resolve([]);
         });

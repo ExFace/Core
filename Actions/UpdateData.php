@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Actions\iUpdateData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\iCanValidate;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;

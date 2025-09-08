@@ -11,6 +11,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\UxonSchemaInterface;
 
+/**
+ * This trait contains basic utilities for processing tasks that contain a UXON.
+ * Use it to ensure uniform parameter names and processing logic.
+ */
 trait iProcessUxonTasksTrait
 {
     protected function getParamUxon(TaskInterface $task) : UxonObject

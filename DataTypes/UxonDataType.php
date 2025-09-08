@@ -7,8 +7,8 @@ use exface\Core\Exceptions\DataTypes\UxonValidationError;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\Interfaces\iCanValidate;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -17,8 +17,27 @@ use exface\Core\Uxon\UxonSchema;
 use exface\Core\Uxon\WidgetSchema;
 use Psr\SimpleCache\InvalidArgumentException;
 
-class UxonDataType extends JsonDataType implements iCanValidate
+/**
+ * UXON specific implementation of the JSON-Datatype.
+ * 
+ * @see JsonDataType, DataTypeInterface
+ */
+class UxonDataType extends JsonDataType
 {
+    /**
+     * Validates a given UXON-Object or array or string representing a UXON and returns
+     * an array containing all issues encountered.
+     * 
+     * Validation is performed recursively, creating mock objects along the way. This may result
+     * in false positives, but should largely be representative.
+     * 
+     * TODO: If this feature proves successful, future revisions will be able to apply custom
+     * validation rules and have better guards against false positives.
+     * 
+     * @param mixed       $inputData
+     * @param string|null $rootPrototypeClass
+     * @return array
+     */
     public function validate(mixed $inputData, string $rootPrototypeClass = null): array
     {
         if(!$inputData instanceof UxonObject) {
@@ -35,6 +54,18 @@ class UxonDataType extends JsonDataType implements iCanValidate
         );
     }
 
+    /**
+     * Performs a recursive validation.
+     * 
+     * @param array                $path
+     * @param UxonObject           $uxon
+     * @param UxonSchemaInterface  $schema
+     * @param string|null          $prototypeClass
+     * @param UiPageInterface|null $page
+     * @param mixed|null           $lastValidationObject
+     * @return array
+     * @throws InvalidArgumentException
+     */
     protected function validateUxonRecursive(
         array $path,
         UxonObject $uxon,
@@ -48,7 +79,9 @@ class UxonDataType extends JsonDataType implements iCanValidate
         $prototypeClass = $prototypeClass ?? $schema->getPrototypeClass($uxon, []);
 
         try {
-            // Validate the UXON import.
+            // Validate the UXON import, by creating a mock object.
+            // TODO This causes a lot of false positives, maybe there is a better way.
+            // TODO Additionally, the errors are annotated to the parent, not the affected property.
             if(!$uxon->isArray(true)) {
                 $validationObject = $this->createValidationObject(
                     $schema,
@@ -70,7 +103,7 @@ class UxonDataType extends JsonDataType implements iCanValidate
         }
 
         // Check validation rules.
-        /*foreach ($this->getValidationRules($prototypeClass) as $rule) {
+        foreach ($this->getValidationRules($prototypeClass) as $rule) {
             try {
                 $rule->check($uxon);
             } catch (DataTypeValidationError $error) {
@@ -81,7 +114,7 @@ class UxonDataType extends JsonDataType implements iCanValidate
                     $error
                 );
             }
-        }*/
+        }
 
         // Check nested UXONS.
         $subErrors = [];
@@ -114,9 +147,22 @@ class UxonDataType extends JsonDataType implements iCanValidate
             $errors[] = $creationError;
         }
         
+        // TODO geb 2025-09: To disable breadcrumb rendering we have to modify the json-editor library. Its not
+        // TODO big change, nor does it create any dependencies, so it might be worth it. (treemode._renderValidationErrors).
         return array_merge($errors, $subErrors);
     }
 
+    /**
+     * Creates a mock object from a given UXON-Object, catching any errors encountered.
+     * 
+     * @param UxonSchemaInterface  $schema
+     * @param string               $class
+     * @param UxonObject           $uxon
+     * @param UiPageInterface|null $page
+     * @param mixed|null           $lastValidationObject
+     * @return mixed
+     * @throws \Throwable
+     */
     protected function createValidationObject(
         UxonSchemaInterface $schema,
         string              $class,
@@ -148,6 +194,9 @@ class UxonDataType extends JsonDataType implements iCanValidate
     }
 
     /**
+     * STUB TODO geb 2025-09-08 Validation rules will be added in a later revision.
+     * 
+     * 
      * @param string $key
      * @return JsonValidationRule[]
      * @throws InvalidArgumentException
@@ -156,13 +205,21 @@ class UxonDataType extends JsonDataType implements iCanValidate
     {
         $rules = [];
         
-        foreach ($this->loadValidationRuleUxons($key) as $uxon) {
+        // TODO Cache the fully instantiated rules and filter that cache.
+        /*foreach ($this->loadValidationRuleUxons($key) as $uxon) {
             $rules[] = JsonValidationRule::fromUxon($this, $uxon);
-        }
+        }*/
         
         return $rules;
     }
-    
+
+    /**
+     * Load validation rules. Either from cache or from the model.
+     * 
+     * @param string $key
+     * @return array
+     * @throws InvalidArgumentException
+     */
     protected function loadValidationRuleUxons(string $key) : array
     {
         // Try to load from cache.
@@ -172,13 +229,27 @@ class UxonDataType extends JsonDataType implements iCanValidate
             return $rules;
         }
 
-        // 2025-08-01 geb load via DataSheet
+        // TODO Load via DataSheet
         if($key === '\exface\Core\Widgets\Tabs') {
             $rules[] = new UxonObject([
-                'alias' => 'TEST',
+                'alias' => 'RecursionTest',
+                'mode' => JsonValidationRule::MODE_PROHIBIT,
+                'json_paths' => ["$..object_alias"],
+                'message' => 'Rec'
+            ]);
+            
+            $rules[] = new UxonObject([
+                'alias' => 'NoTabsWidgetType',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
                 'json_paths' => ['$.tabs.*.widget_type'],
                 'message' => 'Cant use "widget_type" for definition of "Tab"!'
+            ]);
+
+            $rules[] = new UxonObject([
+                'alias' => 'PregSplitTest',
+                'mode' => JsonValidationRule::MODE_PROHIBIT,
+                'json_paths' => ["$..*[?(@.category == 'fiction' and @.price < 10 or @.color == \"red\")].price..value.post.."],
+                'message' => '?'
             ]);
         }
 

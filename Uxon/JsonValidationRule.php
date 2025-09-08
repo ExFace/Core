@@ -7,12 +7,15 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use JsonPath\JsonObject;
-use JsonPath\JsonPath;
 
+/**
+ * PREVIEW
+ */
 class JsonValidationRule
 {
     use ImportUxonObjectTrait;
     
+    const JSON_PATH_SPLIT = '/\.(?![^\[\]]*\])(?=(?:[^\(\)]*\([^\(\)]*\))*[^\(\)]*$)/';
     const MODE_REQUIRE = 'require';
     const MODE_PROHIBIT = 'prohibit';
     
@@ -69,21 +72,22 @@ class JsonValidationRule
         );
     }
     
-    protected function findMatches(UxonObject $uxon) : array
+    protected function findMatches(UxonObject $uxon, bool $stopOnHit = false) : array
     {
         $data = $uxon->toArray();
         $jsonObject = new JsonObject($data);
         $results = [];
 
+        // TODO Traverse splits instead
         foreach ($this->jsonPaths as $path) {
             try {
                 $matches = $jsonObject->getJsonObjects($path);
-                $jsonObject->set($path, 'TEST');
+                //$jsonObject->set($path, 'TEST');
             } catch (\Throwable $exception) {
                 continue;
             }
 
-            // If at least one path failed to match, this rules does not apply.
+            // If this path did not produce any matches, the rule as a whole does not apply.
             if(!$matches) {
                 $results = [];
                 break;
@@ -127,7 +131,44 @@ class JsonValidationRule
      */
     public function setJsonPaths(UxonObject $jsonPaths) : JsonValidationRule
     {
+        // TODO Assign splits
+        foreach ($jsonPaths->toArray() as $jsonPath) {
+            $split = $this->splitJsonPath($jsonPath);
+        }
+        
         $this->jsonPaths = $jsonPaths->toArray();
         return $this;
+    }
+    
+    protected function splitJsonPath(string $jsonPath) : array
+    {
+        $result = [];
+        
+        $buildRecursion = false;
+        foreach (preg_split(self::JSON_PATH_SPLIT, $jsonPath) as $component) {
+            if($component === '$') {
+                continue;
+            }
+            
+            if($component === '') {
+                $buildRecursion = true;
+                continue;
+            }
+            
+            $root = '$.';
+            
+            if($buildRecursion) {
+                $root = '~' . $root;
+                $buildRecursion = false;
+            }
+            
+            $result[] = $root . $component;
+        }
+        
+        if($buildRecursion) {
+            $result[] = '$..*';
+        }
+        
+        return  $result;
     }
 }
