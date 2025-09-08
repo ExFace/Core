@@ -171,6 +171,7 @@ class UxonDataType extends JsonDataType
         mixed               $lastValidationObject = null
     ) : mixed
     {
+        // TODO implement all schema types (like actions and so on). Probably move the creation logic to the schema.
         switch (true) {
             case is_a($class, UiPageInterface::class, true):
                 $object = UiPageFactory::createFromUxon($this->getWorkbench(), $uxon);
