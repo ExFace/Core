@@ -140,6 +140,9 @@ JS;
             {$this->buildJsAddMentionTag()}
 
             {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
+            
+            //TODO SR: Das ist zum Test da:
+            {$this->buildJsMentionAutosuggestCall()}
 JS;
         }
 
@@ -465,6 +468,7 @@ JS;
     {
         $js = '';
         if ($this->getWidget() instanceof InputMarkdown) {
+            //TODO SR: Schau, ob das TextMention hier unter stencils gebracht werden kann
             foreach ($this->getWidget()->getStencils() as $stencil) {
                 switch (true) {
                     case $stencil instanceof HtmlTagStencil:
@@ -730,6 +734,32 @@ JS;
         return $html;
     }
 
+    //TODO SR: Versuche hier das TextMention zu rufen:
+    protected function buildJsMentionAutosuggestCall() : string
+    {
+        $js = '';
+        if ($this->getWidget() instanceof InputMarkdown) {
+            //TODO SR: Schau, ob das TextMention hier unter stencils gebracht werden kann
+            foreach ($this->getWidget()->getMentions() as $mention) {
+                switch (true) {
+                    case $mention instanceof TextMention:
+                        //TODO SR: Packe den Filterabruf evt. direkt in die untere Funktion ein
+                        $filterValue = $mention->getAutosuggestFilterAttributeAlias();
+                        $js .= $this->buildJsMentionAustosuggest($mention, $filterValue);
+                        break;
+                    default:
+                        // TODO add support for regular stencils - just insert them at cursor position
+                        throw new WidgetConfigurationError($this->getWidget(), 'Only TextMention currently supported');
+                        /*$js .= $this->buildJsToolbarItemForTextStencil($stencil);*/
+                        break;
+                }
+
+            }
+        }
+
+        return $js;
+    }
+
     //TODO SR: Test it and try to call the User List with it:
     //TODO SR: Look at the TextMention and unse it in Uxon
     protected function buildJsMentionAustosuggest(TextMention $mention, string $filterValueJs) : string
@@ -737,7 +767,10 @@ JS;
         $btn = $mention->getAutosuggestButton();
         $btnEl = $this->getFacade()->getElement($btn);
         $filterAttributeAlias = $mention->getAutosuggestFilterAttributeAlias();
-        $js = $btnEl->buildJsClickFunction($btn->getAction(), "{oId: '{$btn->getAction()->getMetaObject()->getId}', filters: {operator: 'AND', conditions: [{expression: '{$filterAttributeAlias}', comparator: '=', value: {$filterValueJs}}]}}");
+        $js = $btnEl->buildJsClickFunction(
+            $btn->getAction(),
+            "{oId: '{$btn->getAction()->getMetaObject()->getId}', filters: {operator: 'AND', conditions: [{expression: '{$filterAttributeAlias}', comparator: '=', value: {$filterValueJs}}]}}"
+        );
         return $js;
     }
 }
