@@ -530,19 +530,10 @@ JS;
     public function buildJsFileNameDuplicateRenamer(string $oDataJs) : string {
         $fileStorageFieldName = $this->getWidget()->getUploader()->getFileContentAttribute()->getAliasWithRelationPath();
 
-        $allowedFileExtensions = $this->getWidget()->getUploader()->getAllowedFileExtensions();
-        if (! empty($allowedFileExtensions)) {
-            $allowedFileExtensions = array_unique($allowedFileExtensions);
-            $allowedFileExtJs = mb_strtolower(json_encode($allowedFileExtensions));
-        } else {
-            $allowedFileExtJs = '[]';
-        }
-
         return <<<JS
       
             (function(oData) {
               let aNameCopysSeen = {};
-              let aAllowedFileExt = $allowedFileExtJs;
               
               // counts the names only for the old files:
               oData.rows.forEach(function(oRow) {
@@ -555,16 +546,15 @@ JS;
               // new uploads:
               oData.rows.forEach( oRow => {
                   if (oRow?.{$fileStorageFieldName} == undefined || !oRow.Dateiname) return;
-                  
                   const sFileName = oRow.Dateiname;
                   fillNameCopysSeenArray(aNameCopysSeen, sFileName);
                   
-                  if (aNameCopysSeen[sFileName] > 0){
+                  if (aNameCopysSeen[sFileName.toLowerCase()] > 0){
                     const iCurrentExtIndex = sFileName.lastIndexOf(".");
                     const sFileNameBase = iCurrentExtIndex >= 0 ? sFileName.slice(0, iCurrentExtIndex) : sFileName;
-                    const sCurrentExt = (/(?:\.([^.]+))?$/).exec((sFileName || '').toLowerCase())[1];
+                    const sCurrentExt = (/(?:\.([^.]+))?$/).exec((sFileName || ''))[1];
                     
-                    if (aAllowedFileExt.includes(sCurrentExt)) {
+                    if (sCurrentExt?.length > 0) {
                       oRow.Dateiname = createNewBaseName(sFileNameBase, sCurrentExt);
                     } else {
                       oRow.Dateiname = createNewBaseName(sFileName);
@@ -583,14 +573,14 @@ JS;
               function createNewBaseName(sFileNameBase, sFileExtension = "") {
                 let sDotFileExtension = sFileExtension ? "." + sFileExtension : "";
                 let sCurrentFileName = sFileNameBase + sDotFileExtension;
-                let nNameCounter = aNameCopysSeen[sCurrentFileName] ?? 0 ;
+                let nNameCounter = aNameCopysSeen[sCurrentFileName.toLowerCase()] ?? 0 ;
                 let sNewFileName = sFileNameBase + "_" + nNameCounter + sDotFileExtension;
                        
-                while (aNameCopysSeen[sNewFileName] !== undefined) {
+                while (aNameCopysSeen[sNewFileName.toLowerCase()] !== undefined) {
                   nNameCounter++;
                   sNewFileName = sFileNameBase + "_" + nNameCounter + sDotFileExtension;
                 }
-                aNameCopysSeen[sNewFileName] = 0;
+                aNameCopysSeen[sNewFileName.toLowerCase()] = 0;
                 return sNewFileName;
               }
               
@@ -602,11 +592,12 @@ JS;
               * @param sFileName
               */
               function fillNameCopysSeenArray(aNameCopysSeen, sFileName) {
-                // aNameCopysSeen[sFileName] is undefined, if the name was not seen yet.
-                if (aNameCopysSeen[sFileName] === undefined) {
-                  aNameCopysSeen[sFileName] = 0;
+                const sFileNameLowerCase = sFileName.toLowerCase();
+                // aNameCopysSeen[sFileNameLowerCase] is undefined, if the name was not seen yet.
+                if (aNameCopysSeen[sFileNameLowerCase] === undefined) {
+                  aNameCopysSeen[sFileNameLowerCase] = 0;
                 } else {
-                  aNameCopysSeen[sFileName]++;
+                  aNameCopysSeen[sFileNameLowerCase]++;
                 }
               }
             })($oDataJs)      
