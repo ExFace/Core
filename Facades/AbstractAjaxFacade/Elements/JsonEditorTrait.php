@@ -6,7 +6,6 @@ use exface\Core\Widgets\InputUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
-use exface\Core\Widgets\Tab;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -190,8 +189,11 @@ JS;
                         {$initVal}
                     );
                     var {$this::buildJsEditorGetter($uxonEditorId)} = oEditor;
-        
+                    
                     oEditor.expandAll();
+                    
+                    // Inject custom rendering logic.
+                    oEditor._renderValidationErrors = {$this->buildJsRenderValidationErrors()};
 
                     oEditor.container.setDisabled = function(bTrueOrFalse) {
                         var oEditor = {$this::buildJsEditorGetter($uxonEditorId)};
@@ -303,14 +305,16 @@ JS;
         if ($widget->isMinimalistic()) {
             $uxonEditorOptions .= 'mainMenuBar: false, navigationBar: false,';
         }
-        
+
 	return <<<JS
 
     onError: {$this->buildJsOnErrorFunction()},
     mode: {$this->buildJsEditorModeDefault($isWidgetDisabled)},
     modes: {$this->buildJsEditorModes($isWidgetDisabled)},
     onModeChange: {$this->buildJsOnModeChangeFunction($uxonEditorId, $funcPrefix)},
-    onChangeJSON: {$this->buildJsOnChangeFunction($uxonEditorId, $funcPrefix)},
+    onChangeJSON: {$this->buildJsOnChangeFunction()},
+    onValidate: {$this->buildJsOnValidate($funcPrefix)},
+    onExpand: {$this->buildJsOnExpand()},
     {$uxonEditorOptions}
 
 JS;
@@ -325,6 +329,188 @@ JS;
         }
         return "function(json) { $fn }";
     }
+
+    /**
+     * Returns in inline JS-Snippet that handles an `onExpand` event.
+     * 
+     * @return string
+     */
+    protected function buildJsOnExpand() : string
+    {
+        return <<<JS
+
+function (oEvent) {
+    var oEditor = {$this::buildJsEditorGetter($this->getId())};
+    // Update error indicators.
+    if (oEditor && oEditor.__cachedErrors !== undefined) {
+        if (oEditor.errorNodes) {
+            oEditor.errorNodes.forEach(function (node) {
+                node.setError(null);
+            });
+        } else {
+            oEditor.errorNodes = oEditor.__cachedErrors;
+        }
+        
+        var errorNodes = oEditor.__cachedErrors;
+        {$this->buildJsToggleValidationErrors('errorNodes')}
+    }
+}
+JS;
+
+    }
+
+    /**
+     * Returns in inline JS-Snippet that handles an `onValidate` event.
+     *
+     * @param string $funcPrefix
+     * @return string
+     */
+    protected function buildJsOnValidate(string $funcPrefix) : string
+    {
+        return <<<JS
+
+function (json) {
+    return new Promise(
+        function (resolve, reject) {
+            var oEditor = {$this::buildJsEditorGetter($this->getId())};
+            if (oEditor !== undefined && 
+                oEditor._validationPending === true
+            ) {
+                reject();
+            } else {
+                if (oEditor !== undefined) {
+                    oEditor._validationPending = true;
+                }
+                
+                var uxon = JSON.stringify(json);
+                return {$funcPrefix}_performValidation(
+                    "", 
+                    uxon
+                ).then(
+                    function(json){
+                        if (oEditor !== undefined) {
+                            oEditor._validationPending = false;
+                        }
+                        
+                        if (json === undefined) {
+                            reject();
+                        }
+                        
+                        resolve(json);
+                        
+                        // return response data for further processing
+                        return json;
+                    }
+                ).catch(function(err){ 
+                    if (oEditor !== undefined) {
+                        oEditor._validationPending = false;
+                    }
+                    
+                    console.log("ERROR");
+                    console.warn("Failed to validate.", err);
+               });
+           }
+        })
+        .catch(function(err){
+            if (oEditor !== undefined) {
+                    oEditor._validationPending = false;
+            }
+            
+            console.warn("Failed to validate.", err);
+            return Promise.resolve([]);
+        });
+}
+JS;
+
+    }
+
+    /**
+     * Returns in inline JS-Snippet that renders an array containing validation errors.
+     *
+     * @return string
+     */
+    protected function buildJsRenderValidationErrors() : string
+    {
+        return <<<JS
+
+function (errorNodes) {
+    // clear all current errors
+    if (this.errorNodes) {
+        this.errorNodes.forEach(function (node) {
+            node.setError(null);
+        });
+    }
+    
+    // render the new errors
+    var parentPairs = errorNodes.reduce(function (all, entry) {
+        return entry.node.findParents().filter(function (parent) {
+            return !all.some(function (pair) {
+                return pair[0] === parent;
+            });
+        }).map(function (parent) {
+            return [parent, entry.node];
+        }).concat(all);
+    }, []);
+    
+    // We cache the raw error nodes, so we can easily toggle their error indicators later.
+    errorNodes = this.__cachedErrors = parentPairs.map(function (pair) {
+        return {
+            node: pair[0],
+            child: pair[1],
+            error: {
+                message: pair[0].type === 'object' ? 
+                    'Contains invalid properties!' : 
+                    'Contains invalid items!' // array
+            }
+        };
+    }).concat(errorNodes);
+    
+    {$this->buildJsToggleValidationErrors('errorNodes')}
+    
+    this.errorNodes = errorNodes;
+}
+JS;
+
+    }
+
+    /**
+     * Returns a JS-snippet that remaps an array containing validation errors and 
+     * toggles rendering those errors, depending on the visibility of each node.
+     * 
+     * @param string $jsErrorNodes
+     * @return string
+     */
+    protected function buildJsToggleValidationErrors(string $jsErrorNodes) : string
+    {
+        return <<<JS
+
+// Reduce breadcrumbs.
+var aHidden = [];
+{$jsErrorNodes} = {$jsErrorNodes}.map(function setError(entry) {
+    var node = entry.node;
+    var child = entry.child;
+    
+    var bCollapsed = !node.expanded;
+    var bVisible = !aHidden.includes(node.parent);
+    var bEndPoint = child === undefined || child === null;
+    
+    if (bCollapsed || !bVisible) {
+        aHidden.push(node);
+    }
+    
+    // If the node is either an endpoint or collapsed but visible (i.e. a visual end-point)
+    // we should render the error indicator.
+    if((bCollapsed && bVisible) || bEndPoint)
+    {
+        // This call makes the little warning triangle appear in the editor.
+        node.setError(entry.error, entry.child);
+    }
+    
+    return entry.node;
+});
+JS;
+
+    }
     
     protected function buildJsOnErrorFunction() : string
     {        
@@ -334,12 +520,14 @@ JS;
                         }
 JS;
     }
-    
+
     /**
      * Building the options for UXON editor including filter function and error handler
-     * 
-     * @param string $uxonSchema
-     * @param string $funcPrefix
+     *
+     * @param string             $editorIdJs
+     * @param string             $uxonSchema
+     * @param string             $funcPrefix
+     * @param WorkbenchInterface $workbench
      * @return string
      */
     protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, WorkbenchInterface $workbench) : string
@@ -353,274 +541,306 @@ JS;
         }
         
         return <<<JS
+
                     name: $title,
                     enableTransform: false,
                     enableSort: false,
                     history: true,
-                    autocomplete: 
-                    {
-                        applyTo: ['value'],
-                        filter: function (token, match, config) {
-                            // remove leading space in token if not the only character
-                            if (  token.length > 1 && ( token.search(/^\s[^\s]/i) > -1 ) ) {
-                         		token = token.substr(1, token.length - 1);
-                            }
-                            
-                            //remove spaces in token if preceeded by double underscores
-                            if (  token.length > 3  && token.search(/\_\_\s/i) ) {
-                                token = token.substr(0, token.length - 1);
-                            } else if (!token.replace(/\s/g, '').length) {
-                                // return true if token consists of whitespace characters only
-                                return true;
-                            }
-                           return match.indexOf(token) > -1;
-                        },
-                
-                        getOptions:  function (text, path, input, editor) {
-                            return new Promise(function (resolve, reject) {
-                               var pathBase = path.length <= 1 ? '' : JSON.stringify(path.slice(-1));
-                               if (editor._autosuggestPending === true) {
-                                        if (editor._autosuggestLastResult && editor._autosuggestLastPath == pathBase) {
-                                            resolve({$funcPrefix}_filterAutosuggest(editor._autosuggestLastResult.values, text));
-                                        } else {
-                                            reject();
-                                        }
-                                } else {
-                                        editor._autosuggestPending = true;
-                                        var uxon = JSON.stringify(editor.get());
-                                        return {$funcPrefix}_fetchAutosuggest(text, path, input, uxon)
-                                        .then(function(json){                                          
-                                            editor._autosuggestPending = false;
-                                            if (json === undefined) {
-                                                reject();
-                                            }
-                                            
-                                            // Cache response data
-                                            editor._autosuggestLastPath = pathBase;
-                                            editor._autosuggestLastResult = json;
-                                            
-                                            // If there are values for the autosuggest, call resolve()
-                                            if (json.values !== undefined ){
-                                                resolve({$funcPrefix}_filterAutosuggest(json.values, text));
-                                            }
-                                            
-                                            // return response data for further processing
-                                            return json;
-                                        })
-                                       .catch(function(err){ 
-                                            editor._autosuggestPending = false;
-                                            console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GENERAL']}", err);
-                                       });
-                    	           }
-                                })
-                                .catch(function(err){
-                                    editor._autosuggestPending = false;
-                                    console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GETTING_OPTIONS']}", err);
-                                    return Promise.resolve([]);
-                                });
-                            }
-                        },
-                        onCreateMenu : function (items, node){
-                            var path = node.path;
-                            var rootNode = {$funcPrefix}_getNodeFromTarget( $('#' + {$editorIdJs} + ' .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly').get()[0]);
-                            var menuNode = path.length > 0 ? rootNode.findNodeByPath(node.path) : rootNode;
-
-                            var val = menuNode.getValue();
-                            var menuNodeType = {$funcPrefix}_getNodeType(menuNode);
-
-                            var editMenu;
-
-                            // Change append/insert behavoir
-                            // - Append/insert object will result in {"": ""} instead of an empty object
-                            // - Append/insert auto inside an array - also
-                            items.forEach(function(oItem){
-                                var fnClick = oItem.click;
-                                if (oItem.className === "jsoneditor-insert" && oItem.submenu) {        
-                                    var fnOnAppend = menuNode._onAppend;
-                                    var fnOnInsertBefore = menuNode._onInsertBefore;
-                                    var bAutoObject = (menuNode.parent && menuNode.parent.type === 'array');
-                                    menuNode._onAppend = function(field, value, type) {
-                                        if (value && typeof value === 'object' && JSON.stringify(value) === '{}') {
-                                            value = {"":""};
-                                        }
-                                        if (bAutoObject === true && ! value && type === 'auto') {
-                                            value = {"":""};
-                                            type = 'object';
-                                        }
-                                        fnOnAppend.call(menuNode, field, value, type);
-                                        {$funcPrefix}_focusFirstChildValue((menuNode.parent ? menuNode.parent : menuNode), true);
-                                    }
-                                    menuNode._onInsertBefore = function(field, value, type) {
-                                        if (value && typeof value === 'object' && JSON.stringify(value) === '{}') {
-                                            value = {"":""};
-                                        }
-                                        if (bAutoObject === true && ! value && type === 'auto') {
-                                            value = {"":""};
-                                            type = 'object';
-                                        }
-                                        fnOnInsertBefore.call(menuNode, field, value, type);
-                                        {$funcPrefix}_focusFirstChildValue((menuNode.parent ? menuNode.parent : menuNode), true);
-                                    }
-                                }
-                            });
-                            
-                            // Add preset button if applicable
-                            // ist objekt oder wert === leer                            
-                            if(menuNodeType === "object" || menuNodeType === "root" || (menuNodeType === 'array' && Array.isArray(val) && val.length === 0)) {
-                                items.unshift(
-                                {
-                                    text : "{$trans['PRESETS.TITLE']}",   // the text for the menu item
-                                    title : "{$trans['PRESETS.TITLE']}",  // the HTML title attribute
-                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-magic", // the css class name(s) for the menu item
-                                    click: function(){ 
-                                        return {$funcPrefix}_openPresetsModal(menuNode); 
-                                    }
-                                });
-                            }
-
-                            // Add details button if applicable
-                            if(menuNodeType === "object" || menuNodeType === "root") {
-                                items.unshift(
-                                {
-                                    text : "{$trans['DETAILS.TITLE']}",   // the text for the menu item
-                                    title : "{$trans['DETAILS.TITLE']}",  // the HTML title attribute
-                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-th-list", // the css class name(s) for the menu item
-                                    click: function(){ 
-                                        return {$funcPrefix}_openDetailsModal(menuNode); 
-                                    }
-                                });
-                            }
-
-                            // Add item to open model browser
-                            if (menuNode.type === 'auto' || menuNode.type === 'string') {
-                                items.push({
-                                    text: "{$trans['MODELBROWSER.TITLE']}",
-                                    title: "{$trans['MODELBROWSER.HINT']}",
-                                    className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-search" ,
-                                    click : function() { 
-                                        return {$funcPrefix}_openModelModal(menuNode); 
-                                    }
-                                });
-                            }
-
-                            // Add item to open larger editor for string nodes
-                            if (menuNode.type === 'auto' || menuNode.type === 'string') {
-                                items.push({
-                                    text: "{$trans['CONTEXT_MENU.EDITOR.TITLE']}",
-                                    title: "{$trans['CONTEXT_MENU.EDITOR.HINT']}",
-                                    className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-pencil" ,
-                                    click : function() { 
-                                        return {$funcPrefix}_openAceModal(menuNode); 
-                                    }
-                                });
-                            }
-                            
-                            // Add menu item for copying current JSON path always
-                        	items.push({
-                                text: "{$trans['JSON_PATH']}",   // the text for the menu item
-                                title: "{$trans['JSON_PATH']}",  // the HTML title attribute
-                                className: "jsoneditor-type-object active-button" ,     // the css class name(s) for the menu item
-                                click : function() { 
-                                    return {$funcPrefix}_openJsonPathViewModal(menuNode); 
-                                }
-                            });
-
-                            // Add clipboard-submenu
-                            editMenu = {
-                                text: "{$trans['CONTEXT_MENU.CLIPBOARD.TITLE']}",   // the text for the menu item
-                                title: "{$trans['CONTEXT_MENU.CLIPBOARD.TITLE']}",  // the HTML title attribute
-                                className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
-                                submenuTitle: "{$trans['CONTEXT_MENU.CLIPBOARD.HINT']}",
-                                submenu: [
-                                    {
-                                        text: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY']}",
-                                        title: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY_HINT']}",
-                                        className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-files-o",
-                                        click: function() {
-                                            exfTools.clipboard.copyText(JSON.stringify(menuNode.getValue()));
-                                        }
-                                    },
-                                    {
-                                        text: "{$trans['CONTEXT_MENU.CLIPBOARD.PASTE']}",
-                                        title: "{$trans['CONTEXT_MENU.CLIPBOARD.PASTE_HINT']}",
-                                        className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
-                                        click: function() {
-                                            var sPasted, oJson;
-                                            try {
-                                                sPasted = exfTools.clipboard.pasteText();
-                                                try {
-                                                    oJson = JSON.parse(sPasted);
-                                                } catch (e) {
-                                                    // ignore errors
-                                                }
-                                                menuNode.setValue((oJson || sPasted));
-                                            } catch (e) {
-                                                {$funcPrefix}_openPasteModal(menuNode);
-                                            }
-                                        }
-                                    }
-                                ]
-                            };
-                            items.push(editMenu);
-
-                            // Add clear button if applicable
-                            if(menuNodeType === "object" || menuNodeType === "root" || menuNodeType === "array") {
-                                items.push({
-                                    text : "{$trans['CONTEXT_MENU.CLEAR.TITLE']}",   // the text for the menu item
-                                    title : "{$trans['CONTEXT_MENU.CLEAR.HINT']}",  // the HTML title attribute
-                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-eraser",
-                                    click: function(){ 
-                                        switch (menuNodeType) {
-                                            case "root":
-                                                menuNode.editor.set({"":""});
-                                                break;
-                                            case "array":
-                                                menuNode.setValue([]);
-                                                break;
-                                            case "object":
-                                                menuNode.setValue({"":""});
-                                                break;
-                                        }
-                                    }
-                                });
-                            }
-
-                            // Add comment toggle button
-                            if(menuNodeType !== "array" && menuNode.type !== 'root') {
-                                items.push({
-                                    text : "{$trans['CONTEXT_MENU.COMMENT.TITLE']}",   // the text for the menu item
-                                    title : "{$trans['CONTEXT_MENU.COMMMENT.HINT']}",  // the HTML title attribute
-                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-quote-left",
-                                    click: function(){
-                                        var sFld;
-                                        switch (menuNodeType) {
-                                            case "object":
-                                                if (menuNode.childs[0].field === '/*' && menuNode.childs[menuNode.childs.length-1].field === '*/') {
-                                                    menuNode.removeChild(menuNode.childs[menuNode.childs.length-1]);
-                                                    menuNode.removeChild(menuNode.childs[0]);
-                                                } else {
-                                                    menuNode.childs[0]._onInsertBefore('/*', '');
-                                                    menuNode.childs[menuNode.childs.length-1]._onInsertAfter('*/', '');
-                                                }
-                                                break;
-                                            default:    
-                                                sFld = menuNode.getField();
-                                                if (sFld.substring(0, 2) === '//') {
-                                                    menuNode.setField(sFld.substring(2), menuNode.editable.field);
-                                                    menuNode.recreateDom();
-                                                } else {
-                                                    menuNode.setField('//' + sFld, menuNode.editable.field);
-                                                    menuNode.recreateDom();
-                                                }
-                                        }
-                                    }
-                                });
-                            }
-                            
-                            return items;
-                        }, // onCreateMenu
+                    autocomplete: {$this->buildJsAutoComplete($funcPrefix, $trans)},
+                    onCreateMenu : {$this->buildJsOnCreateMenu($funcPrefix, $editorIdJs, $trans)},
 
 JS;
+    }
+
+    /**
+     * Generates an inline JS-Snippet containing auto-suggest configuration.
+     * 
+     * @param string $funcPrefix
+     * @param array  $trans
+     * @return string
+     */
+    protected function buildJsAutoComplete(string $funcPrefix, array $trans) : string
+    {
+        return <<<JS
+
+{
+    applyTo: ['value'],
+    filter: function (token, match, config) {
+        // remove leading space in token if not the only character
+        if (  token.length > 1 && ( token.search(/^\s[^\s]/i) > -1 ) ) {
+            token = token.substr(1, token.length - 1);
+        }
+        
+        //remove spaces in token if preceeded by double underscores
+        if (  token.length > 3  && token.search(/\_\_\s/i) ) {
+            token = token.substr(0, token.length - 1);
+        } else if (!token.replace(/\s/g, '').length) {
+            // return true if token consists of whitespace characters only
+            return true;
+        }
+       return match.indexOf(token) > -1;
+    },
+    getOptions:  function (text, path, input, editor) {
+        return new Promise(function (resolve, reject) {
+           var pathBase = path.length <= 1 ? '' : JSON.stringify(path.slice(-1));
+           if (editor._autosuggestPending === true) {
+                    if (editor._autosuggestLastResult && editor._autosuggestLastPath == pathBase) {
+                        resolve({$funcPrefix}_filterAutosuggest(editor._autosuggestLastResult.values, text));
+                    } else {
+                        reject();
+                    }
+            } else {
+                editor._autosuggestPending = true;
+                var uxon = JSON.stringify(editor.get());
+                return {$funcPrefix}_fetchAutosuggest(text, path, input, uxon)
+                .then(function(json){    
+                    editor._autosuggestPending = false;
+                    if (json === undefined) {
+                        reject();
+                    }
+                    
+                    // Cache response data
+                    editor._autosuggestLastPath = pathBase;
+                    editor._autosuggestLastResult = json;
+                    
+                    // If there are values for the autosuggest, call resolve()
+                    if (json.values !== undefined ){
+                        resolve({$funcPrefix}_filterAutosuggest(json.values, text));
+                    }
+                    
+                    // return response data for further processing
+                    return json;
+                })
+               .catch(function(err){ 
+                    editor._autosuggestPending = false;
+                    console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GENERAL']}", err);
+               });
+           }
+        })
+        .catch(function(err){
+            editor._autosuggestPending = false;
+            console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GETTING_OPTIONS']}", err);
+            return Promise.resolve([]);
+        });
+    }
+}
+JS;
+
+    }
+
+    /**
+     * Creates an inline JS-Snippet for the onCreateMenu callback.
+     * 
+     * @param string $funcPrefix
+     * @param string $editorIdJs
+     * @param array  $trans
+     * @return string
+     */
+    protected function buildJsOnCreateMenu(string $funcPrefix, string $editorIdJs, array $trans) : string
+    {
+        return <<<JS
+
+function (items, node){
+    var path = node.path;
+    var rootNode = {$funcPrefix}_getNodeFromTarget( $('#' + {$editorIdJs} + ' .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly').get()[0]);
+    var menuNode = path.length > 0 ? rootNode.findNodeByPath(node.path) : rootNode;
+
+    var val = menuNode.getValue();
+    var menuNodeType = {$funcPrefix}_getNodeType(menuNode);
+
+    var editMenu;
+
+    // Change append/insert behavoir
+    // - Append/insert object will result in {"": ""} instead of an empty object
+    // - Append/insert auto inside an array - also
+    items.forEach(function(oItem){
+        var fnClick = oItem.click;
+        if (oItem.className === "jsoneditor-insert" && oItem.submenu) {        
+            var fnOnAppend = menuNode._onAppend;
+            var fnOnInsertBefore = menuNode._onInsertBefore;
+            var bAutoObject = (menuNode.parent && menuNode.parent.type === 'array');
+            menuNode._onAppend = function(field, value, type) {
+                if (value && typeof value === 'object' && JSON.stringify(value) === '{}') {
+                    value = {"":""};
+                }
+                if (bAutoObject === true && ! value && type === 'auto') {
+                    value = {"":""};
+                    type = 'object';
+                }
+                fnOnAppend.call(menuNode, field, value, type);
+                {$funcPrefix}_focusFirstChildValue((menuNode.parent ? menuNode.parent : menuNode), true);
+            }
+            menuNode._onInsertBefore = function(field, value, type) {
+                if (value && typeof value === 'object' && JSON.stringify(value) === '{}') {
+                    value = {"":""};
+                }
+                if (bAutoObject === true && ! value && type === 'auto') {
+                    value = {"":""};
+                    type = 'object';
+                }
+                fnOnInsertBefore.call(menuNode, field, value, type);
+                {$funcPrefix}_focusFirstChildValue((menuNode.parent ? menuNode.parent : menuNode), true);
+            }
+        }
+    });
+    
+    // Add preset button if applicable
+    // ist objekt oder wert === leer                            
+    if(menuNodeType === "object" || menuNodeType === "root" || (menuNodeType === 'array' && Array.isArray(val) && val.length === 0)) {
+        items.unshift(
+        {
+            text : "{$trans['PRESETS.TITLE']}",   // the text for the menu item
+            title : "{$trans['PRESETS.TITLE']}",  // the HTML title attribute
+            className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-magic", // the css class name(s) for the menu item
+            click: function(){ 
+                return {$funcPrefix}_openPresetsModal(menuNode); 
+            }
+        });
+    }
+
+    // Add details button if applicable
+    if(menuNodeType === "object" || menuNodeType === "root") {
+        items.unshift(
+        {
+            text : "{$trans['DETAILS.TITLE']}",   // the text for the menu item
+            title : "{$trans['DETAILS.TITLE']}",  // the HTML title attribute
+            className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-th-list", // the css class name(s) for the menu item
+            click: function(){ 
+                return {$funcPrefix}_openDetailsModal(menuNode); 
+            }
+        });
+    }
+
+    // Add item to open model browser
+    if (menuNode.type === 'auto' || menuNode.type === 'string') {
+        items.push({
+            text: "{$trans['MODELBROWSER.TITLE']}",
+            title: "{$trans['MODELBROWSER.HINT']}",
+            className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-search" ,
+            click : function() { 
+                return {$funcPrefix}_openModelModal(menuNode); 
+            }
+        });
+    }
+
+    // Add item to open larger editor for string nodes
+    if (menuNode.type === 'auto' || menuNode.type === 'string') {
+        items.push({
+            text: "{$trans['CONTEXT_MENU.EDITOR.TITLE']}",
+            title: "{$trans['CONTEXT_MENU.EDITOR.HINT']}",
+            className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-pencil" ,
+            click : function() { 
+                return {$funcPrefix}_openAceModal(menuNode); 
+            }
+        });
+    }
+    
+    // Add menu item for copying current JSON path always
+    items.push({
+        text: "{$trans['JSON_PATH']}",   // the text for the menu item
+        title: "{$trans['JSON_PATH']}",  // the HTML title attribute
+        className: "jsoneditor-type-object active-button" ,     // the css class name(s) for the menu item
+        click : function() { 
+            return {$funcPrefix}_openJsonPathViewModal(menuNode); 
+        }
+    });
+
+    // Add clipboard-submenu
+    editMenu = {
+        text: "{$trans['CONTEXT_MENU.CLIPBOARD.TITLE']}",   // the text for the menu item
+        title: "{$trans['CONTEXT_MENU.CLIPBOARD.TITLE']}",  // the HTML title attribute
+        className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
+        submenuTitle: "{$trans['CONTEXT_MENU.CLIPBOARD.HINT']}",
+        submenu: [
+            {
+                text: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY']}",
+                title: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY_HINT']}",
+                className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-files-o",
+                click: function() {
+                    exfTools.clipboard.copyText(JSON.stringify(menuNode.getValue()));
+                }
+            },
+            {
+                text: "{$trans['CONTEXT_MENU.CLIPBOARD.PASTE']}",
+                title: "{$trans['CONTEXT_MENU.CLIPBOARD.PASTE_HINT']}",
+                className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
+                click: function() {
+                    var sPasted, oJson;
+                    try {
+                        sPasted = exfTools.clipboard.pasteText();
+                        try {
+                            oJson = JSON.parse(sPasted);
+                        } catch (e) {
+                            // ignore errors
+                        }
+                        menuNode.setValue((oJson || sPasted));
+                    } catch (e) {
+                        {$funcPrefix}_openPasteModal(menuNode);
+                    }
+                }
+            }
+        ]
+    };
+    items.push(editMenu);
+
+    // Add clear button if applicable
+    if(menuNodeType === "object" || menuNodeType === "root" || menuNodeType === "array") {
+        items.push({
+            text : "{$trans['CONTEXT_MENU.CLEAR.TITLE']}",   // the text for the menu item
+            title : "{$trans['CONTEXT_MENU.CLEAR.HINT']}",  // the HTML title attribute
+            className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-eraser",
+            click: function(){ 
+                switch (menuNodeType) {
+                    case "root":
+                        menuNode.editor.set({"":""});
+                        break;
+                    case "array":
+                        menuNode.setValue([]);
+                        break;
+                    case "object":
+                        menuNode.setValue({"":""});
+                        break;
+                }
+            }
+        });
+    }
+
+    // Add comment toggle button
+    if(menuNodeType !== "array" && menuNode.type !== 'root') {
+        items.push({
+            text : "{$trans['CONTEXT_MENU.COMMENT.TITLE']}",   // the text for the menu item
+            title : "{$trans['CONTEXT_MENU.COMMMENT.HINT']}",  // the HTML title attribute
+            className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-quote-left",
+            click: function(){
+                var sFld;
+                switch (menuNodeType) {
+                    case "object":
+                        if (menuNode.childs[0].field === '/*' && menuNode.childs[menuNode.childs.length-1].field === '*/') {
+                            menuNode.removeChild(menuNode.childs[menuNode.childs.length-1]);
+                            menuNode.removeChild(menuNode.childs[0]);
+                        } else {
+                            menuNode.childs[0]._onInsertBefore('/*', '');
+                            menuNode.childs[menuNode.childs.length-1]._onInsertAfter('*/', '');
+                        }
+                        break;
+                    default:    
+                        sFld = menuNode.getField();
+                        if (sFld.substring(0, 2) === '//') {
+                            menuNode.setField(sFld.substring(2), menuNode.editable.field);
+                            menuNode.recreateDom();
+                        } else {
+                            menuNode.setField('//' + sFld, menuNode.editable.field);
+                            menuNode.recreateDom();
+                        }
+                }
+            }
+        });
+    }
+    
+    return items;
+}
+JS;
+
     }
             
     /**
@@ -950,19 +1170,44 @@ CSS;
         	      body: formData, // body data type must match "Content-Type" header
         	   }
             )
-          	.then(function(response){
-                if (
-                    response
-                    && response.ok
-                    && response.status === 200
-                    && response.headers
-                    && ((response.headers.get('content-type') || '') === "application/json")
-                ) {
-                    return response.json();
-                } else {
-                    return Promise.reject({message: "{$trans['ERROR.MALFORMED_RESPONSE']}", response: response});
-                }
-            });
+          	.then({$funcPrefix}_validateResponse);
+        }
+        
+        function {$funcPrefix}_performValidation(path, uxon){
+            var formData = new URLSearchParams({
+        		action: 'exface.Core.UxonValidate',
+        		path: JSON.stringify(path),
+        		schema: {$uxonSchema},
+                prototype: {$rootPrototype},
+                object: {$rootObject},
+        		uxon: uxon
+        	});
+        	return fetch('{$ajaxUrl}',
+                {
+                    method: "POST",
+                    mode: "cors",
+                    cache: "no-cache",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+        	      body: formData, // body data type must match "Content-Type" header
+        	   }
+            )
+          	.then({$funcPrefix}_validateResponse);
+        }
+        
+        function {$funcPrefix}_validateResponse(response) {
+            if (
+                response
+                && response.ok
+                && response.status === 200
+                && response.headers
+                && ((response.headers.get('content-type') || '') === "application/json")
+            ) {
+                return response.json();
+            } else {
+                return Promise.reject({message: "{$trans['ERROR.MALFORMED_RESPONSE']}", response: response});
+            }
         }
         
         function {$funcPrefix}_openModal(
