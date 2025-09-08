@@ -452,7 +452,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         try {
             $attributeDefinitionsSheet->dataRead();
         } catch (\Throwable $e) {
-            throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, null, $logBook);
+            throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e, $logBook);
         }
         
         $logBook->addLine('Found **' . $attributeDefinitionsSheet->countRows() . '** attributes');
