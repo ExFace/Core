@@ -40,6 +40,10 @@ use exface\Core\CommonLogic\AbstractAction;
  * The attachments are stored in a file system, but for every attachment there is also a `REPORT_ATTACHMENT` object
  * in the database, that hase a relation `REPORT` and also `FileAttachmentBehavior`, that links it to the actual files.
  * 
+ * **Note** the `refresh_data_after_mapping:true` below: this makes sure, data is always loaded after the filter mapping
+ * was applied. If not done so, the input-sheet of the action will be empty and will not be read, so there will be no
+ * download!
+ * 
  * ```
  *  {
  *      "alias": "exface.Core.DownloadZip",

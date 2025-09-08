@@ -120,6 +120,19 @@ class CustomAttribute extends Attribute
         $rightSelector = new MetaObjectSelector($this->getWorkbench(), $uxon->getProperty('related_object_alias'));
         $rightObj = MetaObjectFactory::createFromSelector($rightSelector);
         $rightObjUid = $rightSelector->isUid() ? $rightSelector->toString() : $rightObj->getId();
+
+        // See if we need a custom right-side key (if not, we will assume the UID of the right object)
+        $relatedKeyAttrSelector = $uxon->getProperty('related_object_key_attribute_alias');
+        $relatedKeyAttrId = null;
+        if ($relatedKeyAttrSelector !== null) {
+            if (mb_substr($relatedKeyAttrSelector, 0, 2) === '0x') {
+                $relatedKeyAttrId = $relatedKeyAttrSelector;
+            } else {
+                $relatedKeyAttrId = $rightObj->getAttribute($relatedKeyAttrSelector);
+            }
+        }
+        
+        // First create the forward relation
         $cardinality = $uxon->hasProperty('relation_cardinality') ? RelationCardinalityDataType::fromValue($workbench, $uxon->getProperty('relation_cardinality')) : RelationCardinalityDataType::N_TO_ONE($workbench);
         $rel = new Relation(
             $workbench,
@@ -130,7 +143,7 @@ class CustomAttribute extends Attribute
             $this->getObject(), //  left object
             $this, // left key attribute
             $rightObjUid, // right object UID
-            $uxon->getProperty('related_object_key_attribute_alias') // related object key attribute (UID will be used if not set)
+            $relatedKeyAttrId // related object key attribute (UID will be used if not set)
         );
         // Set other relation properteis
         if ($uxon->getProperty('delete_with_related_object') === true) {
@@ -152,7 +165,7 @@ class CustomAttribute extends Attribute
             $this->getObject()->getAlias(), // relation alias
             $this->getAlias(), // relation modifier: the alias of the right key attribute
             $rightObj, // left object
-            $uxon->getProperty('related_object_key_attribute_alias') ? $rightObj->getAttribute($uxon->getProperty('related_object_key_attribute_alias')) : $rightObj->getUidAttribute(), // left key in the main object
+            $relatedKeyAttrId ? $rightObj->getAttributes()->getByAttributeId($relatedKeyAttrId) : $rightObj->getUidAttribute(), // left key in the main object
             $this->getObject()->getId(), // right object UID
             $this->getId() // right object key attribute id
         );
