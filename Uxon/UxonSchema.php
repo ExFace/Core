@@ -218,7 +218,7 @@ class UxonSchema implements UxonSchemaInterface
      * @param array $path
      * @return UxonObject
      */
-    public function getPathTargetUxon(UxonObject $uxon, array $path) : UxonObject
+    protected function getPathTargetUxon(UxonObject $uxon, array $path) : UxonObject
     {
         $level = $uxon;
         foreach ($path as $step) {

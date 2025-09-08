@@ -5,6 +5,10 @@ namespace exface\Core\Exceptions\DataTypes;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
 
+/**
+ * A basic error, thrown during UXON validation, that contains a path pointing to the
+ * affected property.
+ */
 class UxonValidationError extends UnexpectedValueException
 {
     private array $path;
