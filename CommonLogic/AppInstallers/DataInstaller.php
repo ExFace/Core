@@ -144,6 +144,8 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     
     private $className = null;
     
+    private $uninstallCascading = true;
+    
     /**
      * 
      * @param SelectorInterface $selectorToInstall
@@ -480,10 +482,10 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                 $sheet->dataRead();
                 if ($sheet->hasUidColumn(true)) {
                     $sheet->getFilters()->removeAll();
-                    $counter += $sheet->dataDelete($transaction);
+                    $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
                 }
             } else {
-                $counter += $sheet->dataDelete($transaction);
+                $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
             }
         }
         unset($objects);
@@ -1302,5 +1304,16 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
         }
         return $array;
+    }
+    
+    public function setUninstallCascading(bool $trueOrFalse) : DataInstaller
+    {
+        $this->uninstallCascading = $trueOrFalse;
+        return $this;
+    }
+    
+    protected function willUninstallCascading() : bool
+    {
+        return $this->uninstallCascading;
     }
 }
