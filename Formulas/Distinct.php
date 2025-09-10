@@ -34,6 +34,9 @@ class Distinct extends \exface\Core\CommonLogic\Model\Formula
             throw new InvalidArgumentException('No string to process provided.');
         }
 
+        // remove all white spaces for a homogen sequence
+        $list = preg_replace('/\s+/','',$list);
+
         switch (true) {
          case str_contains($list, ','):
              $separator = ',';
