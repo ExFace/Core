@@ -36,6 +36,7 @@
 
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
 	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download ready. If it does not start automatically, click <a href=\"%url%\" download>here</a>.",
+	"ACTION.DOWNLOADFILE.RESULT_EMPTY": "'No valid file attachments found.'",
 	"ACTION.DOWNLOADZIP.NAME": "Download ZIP",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
