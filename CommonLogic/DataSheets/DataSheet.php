@@ -1058,7 +1058,7 @@ class DataSheet implements DataSheetInterface
         
         // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
         // Fire it after the create to be sure every row has UIDs now and are actually updates
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($update_ds, $transaction, $create_if_uid_not_found));
+        $eventBefore = $update_ds->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($update_ds, $transaction, $create_if_uid_not_found));
         if ($eventBefore->isPreventUpdate() === true) {
             // IDEA not sure, if it would be correct to fire OnUpdateData here?
             if ($commit && ! $transaction->isRolledBack()) {
@@ -1079,7 +1079,7 @@ class DataSheet implements DataSheetInterface
         $processed_relations = array();
         foreach ($update_ds->getColumns() as $col) {
             if (! $col->getAttribute()) {
-                // throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Cannot find attribute for data sheet column "' . $col->getName() . '"!');
+                // throw new MetaAttributeNotFoundError($update_ds->getMetaObject(), 'Cannot find attribute for data sheet column "' . $col->getName() . '"!');
                 continue;
             }
             
@@ -1213,7 +1213,7 @@ class DataSheet implements DataSheetInterface
                 if ($update_ds->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
                     $uid_column_alias = $rel_path;
                 } else {
-                    // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
+                    // $uid_column = $update_ds->getColumn($update_ds->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
                     throw new DataSheetWriteError($update_ds, 'Updating attributes from reverse relations ("' . $col->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
                 }
             } else {
