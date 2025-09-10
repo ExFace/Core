@@ -89,7 +89,7 @@ class DownloadZip extends AbstractAction
         $inputSheet = $this->getInputDataSheet($task);
         
         if($inputSheet->countRows() === 0) {
-            return ResultFactory::createMessageResult($task, 'No valid attachments found.');
+            return $this->createEmptyResult($task);
         }
         
         $object = $inputSheet->getMetaObject();
@@ -135,10 +135,20 @@ class DownloadZip extends AbstractAction
         $zip->close();
         
         if(!$zipHasContent) {
-            return ResultFactory::createMessageResult($task, 'No valid attachments found.');
+            return $this->createEmptyResult($task);
         }
         
         return ResultFactory::createDownloadResultFromFilePath($task, $zip->getFilePath());
+    }
+
+    /**
+     * @param TaskInterface $task
+     * @return ResultInterface
+     */
+    protected function createEmptyResult(TaskInterface $task) : ResultInterface
+    {
+        $msg = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_EMPTY');
+        return ResultFactory::createMessageResult($task, $msg);
     }
 
     /**
