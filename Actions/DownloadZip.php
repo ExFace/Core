@@ -89,7 +89,7 @@ class DownloadZip extends AbstractAction
         $inputSheet = $this->getInputDataSheet($task);
         
         if($inputSheet->countRows() === 0) {
-            return ResultFactory::createEmptyResult($task);
+            return ResultFactory::createMessageResult($task, 'No valid attachments found.');
         }
         
         $object = $inputSheet->getMetaObject();
@@ -121,11 +121,23 @@ class DownloadZip extends AbstractAction
         $zip = new ArchiveManager($this->getWorkbench(), $zipPath);
         
         // Add files to archive.
+        $zipHasContent = false;
         foreach ($inputSheet->getRows() as $row) {
-            $zip->addFileFromContent($row[$fileNameAlias], $row[$contentsAlias]);
+            $fileName = $row[$fileNameAlias];
+            $fileContent = $row[$contentsAlias];
+            
+            if($fileName !== null && $fileContent !== null) {
+                $zipHasContent = true;
+                $zip->addFileFromContent($row[$fileNameAlias], $row[$contentsAlias]);
+            }
         }
         
         $zip->close();
+        
+        if(!$zipHasContent) {
+            return ResultFactory::createMessageResult($task, 'No valid attachments found.');
+        }
+        
         return ResultFactory::createDownloadResultFromFilePath($task, $zip->getFilePath());
     }
 
