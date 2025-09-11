@@ -28,6 +28,17 @@ use exface\Core\Mutations\Prototypes\GenericUxonMutation;
  * ids must be unique within a page! However, you can explicitly control this behavior via
  * `keep_widget_id`.
  * 
+ * ## Overwriting properties of the inherited widget
+ * 
+ * You can overwrite any widget properties by simply defining them next to `extend_widget` in your
+ * widget configuration. However, this will only work well for direct properties, not those of
+ * child widgets, etc.
+ * 
+ * ## Applying mutations
+ * 
+ * A more flexible way to change the inherited configuration is to use `mutation`. This requires
+ * knowledge of the inherited structure, but allows to make well targeted modifications.
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -220,7 +231,10 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
         $this->keep_widget_id = $trueOrFalse;
         return $this;
     }
-    
+
+    /**
+     * @return bool
+     */
     protected function getKeepWidgetId() : bool
     {
         if ($this->keep_widget_id === null) {
@@ -241,7 +255,7 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
      *
      * @uxon-property add_mutation
      * @uxon-type \exface\Core\Mutations\Prototypes\GenericUxonMutation
-     * @uxon-template {"//": "Add Mutations for this extension."}
+     * @uxon-template {"change": {"$.json.path": "value"}}
      *
      * @param UxonObject $mutation Mutation uxon definition
      * @return WidgetInheriter
@@ -252,6 +266,9 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
         return $this;
     }
 
+    /**
+     * @return UxonObject
+     */
     public function getMutation(): UxonObject
     {
         return $this->mutation;
