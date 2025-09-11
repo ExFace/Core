@@ -5,6 +5,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Returns a distinct string from a given sequence as string.
+ * The string will also be stripped of whitespaces to ensure a homogene result.
  * 
  * If only one value is within the string, the value will be returned without any changes.
  * If multiple values are within the string, the string will be concatenated to contain only distinct values.
@@ -15,7 +16,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
  * - `=Distinct('12,12,12', ',')` -> returns '12'
  * - `=Distinct('12, 12, 12', ',')` -> returns '12'
  * - `=Distinct('12; 12; 12', ';')` -> returns '12'
- * - `=Distinct('12, 12, 3, 3', ',')` -> returns '12, 3'
+ * - `=Distinct('12, 12, 3, 3', ',')` -> returns '12,3'
  *
  * @author Miriam Seitz
  *        
