@@ -520,6 +520,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return false;
         }
         
+        // Disabled columns without conditions are obviously also not editable
+        if ($this->isDisabled() && $this->getDisabledIf() === null) {
+            return false;
+        }
+        
         // For attributes, see if the attribute should be editable
         if ($this->isBoundToAttribute()) {
             $attr = $this->getAttribute();
@@ -536,8 +541,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 // Also not editable if calculated and NOT bound to an attribute
                 return false;
             }
-            $cellWidget = $this->getCellWidget();
-            if ($cellWidget->getValueWidgetLink() !== null) {
+            if ($this->hasCustomCellWidget() && $this->getCellWidget()->getValueWidgetLink() !== null) {
                 return false;
             }
         }
@@ -549,6 +553,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         }
         
         return false;
+    }
+
+    /**
+     * Returns TRUE if the column has a cell_widget configuration
+     * 
+     * @return bool
+     */
+    protected function hasCustomCellWidget() : bool
+    {
+        return $this->cellWidgetUxon !== null;
     }
     
     /**
