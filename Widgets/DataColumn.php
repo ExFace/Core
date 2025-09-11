@@ -515,40 +515,40 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return $action->isAuthorized() === true;
         }
         
-        // Treat hidden columns as non-editable by default
-        if ($this->isHidden()) {
-            return false;
-        }
-        
-        // Disabled columns without conditions are obviously also not editable
-        if ($this->isDisabled() && $this->getDisabledIf() === null) {
-            return false;
-        }
-        
-        // For attributes, see if the attribute should be editable
-        if ($this->isBoundToAttribute()) {
-            $attr = $this->getAttribute();
-            // Not editable if attribute is not editable
-            if ($attr->isEditable() === false) {
-                return false;
-            }
-            // Not editable by default if attribute is related. If it should be, the user MUST set editable explicitly
-            if ($attr->isRelated()) {
-                return false;
-            }
-        } else {
-            if ($this->isCalculated()) {
-                // Also not editable if calculated and NOT bound to an attribute
-                return false;
-            }
-            if ($this->hasCustomCellWidget() && $this->getCellWidget()->getValueWidgetLink() !== null) {
-                return false;
-            }
-        }
-        
         // Otherwise inherit editable state from the enclosing column group
         $groupIsEditable = $this->getDataColumnGroup()->isEditable();
         if ($groupIsEditable === true) {
+
+            // IMPORTANT: cannot use $this->getCellWidget() in this method, because that would call it recursively!
+
+            // Treat hidden columns as non-editable by default
+            if ($this->isHidden()) {
+                return false;
+            }
+
+            // Disabled columns without conditions are obviously also not editable
+            if ($this->isDisabled() && $this->getDisabledIf() === null) {
+                return false;
+            }
+
+            // For attributes, see if the attribute should be editable
+            if ($this->isBoundToAttribute()) {
+                $attr = $this->getAttribute();
+                // Not editable if attribute is not editable
+                if ($attr->isEditable() === false) {
+                    return false;
+                }
+                // Not editable by default if attribute is related. If it should be, the user MUST set editable explicitly
+                if ($attr->isRelated()) {
+                    return false;
+                }
+            } else {
+                if ($this->isCalculated()) {
+                    // Also not editable if calculated and NOT bound to an attribute
+                    return false;
+                }
+            }
+            
             return true;
         }
         
@@ -576,8 +576,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * - If it is hidden, it is not editable by default
      * - If the column is bound to an attribute, it will be editable automatically unless the attribute is
      * not editable itself or the attribute is related (has a relation path)
-     * - Columns not bound to an attribute will be editable unless they are calculations or their value
-     * is bound to a widget link
+     * - Columns not bound to an attribute will be editable unless they are calculations
      * - Any column will not be editable of course, if the entire widget or at least the column group is
      * marked as non-editable.
      * 
