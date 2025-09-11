@@ -36,4 +36,10 @@ class UxonValidationError extends UnexpectedValueException
     {
         return $this->uxon;
     }
+    
+    public function getAffectedProperty() : ?string
+    {
+        $length = count($this->path);
+        return $length > 0 ? $this->path[$length - 1] : null;
+    }
 }

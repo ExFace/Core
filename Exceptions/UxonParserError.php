@@ -22,19 +22,27 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
 	}
 
     private $uxon = null;
+    private string|null $affectedProperty = null;
 
     /**
      *
-     * @param UxonObject $uxon            
-     * @param string $message            
-     * @param string $alias            
-     * @param \Throwable $previous            
+     * @param UxonObject  $uxon
+     * @param string      $message
+     * @param null        $alias
+     * @param null        $previous
+     * @param string|null $affectedProperty
      */
-    public function __construct(UxonObject $uxon, $message, $alias = null, $previous = null)
+    public function __construct(UxonObject $uxon, string $message, $alias = null, $previous = null, string $affectedProperty = null)
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->uxon = $uxon;
+        
+        if($affectedProperty === null && $previous instanceof UxonExceptionInterface) {
+            $affectedProperty = $previous->getAffectedProperty();
+        }
+        
+        $this->affectedProperty = $affectedProperty;
     }
 
     /**
@@ -69,5 +77,13 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
             $debug_widget->addTab($uxon_tab);
         }
         return $debug_widget;
+    }
+
+    /**
+     * @inerhitDoc 
+     */
+    public function getAffectedProperty(): ?string
+    {
+        return $this->affectedProperty;
     }
 }

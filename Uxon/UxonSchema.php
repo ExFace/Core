@@ -12,6 +12,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -153,7 +154,21 @@ class UxonSchema implements UxonSchemaInterface
         
         return $rootPrototypeClass;
     }
-    
+
+    /**
+     * @inheritDoc
+     * @see UxonSchemaInterface
+     */
+    public function createValidationObject(
+        UxonObject $uxon, 
+        string $prototype = null, 
+        UiPageInterface $page = null,
+        mixed $parent = null
+    ): mixed
+    {
+        return null;
+    }
+
     protected function getDefaultPrototypeClass() : string
     {
         return '';
