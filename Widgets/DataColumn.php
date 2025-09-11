@@ -1234,11 +1234,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getHint(bool $includeDebugInfo = true) : ?string
     {
+        $foundDebugContext = $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class);
         if ($this->customHint !== null) {
             $hint = $this->customHint;
             
             // Dev-hint
-            if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            if ($includeDebugInfo === true && $foundDebugContext === true) {
                 $hint = 
                 ($hint ? StringDataType::endSentence($hint) : '') 
                 . $this->getHintDebug();
@@ -1246,7 +1247,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return $hint;
         }
         $addition = '';
-        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+        if ($includeDebugInfo === true && $foundDebugContext === true && null !== $group = $this->getAttributeGroupAlias()) {
             $addition .= "\n- Attribute group: `{$group}`";
         } 
         return $this->getCellWidget()->getHint($includeDebugInfo) . $addition;

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Actions\Traits\iProcessUxonTasksTrait;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
@@ -54,63 +55,33 @@ use exface\Core\Uxon\QueryBuilderSchema;
  */
 class UxonAutosuggest extends AbstractAction
 {
+    use iProcessUxonTasksTrait;
+    
     const PARAM_TEXT = 'text';
-    const PARAM_PATH = 'path';
     const PARAM_TYPE = 'input';
-    const PARAM_UXON = 'uxon';
-    const PARAM_SCHEMA = 'schema';
-    const PARAM_OBJECT = 'object';
-    const PARAM_PROTOTYPE = 'prototype';
     
     const TYPE_FIELD = 'field';
-    const TYPE_VALUE = 'value';
     const TYPE_PRESET = 'preset';
     const TYPE_DETAILS = 'details';
     const TYPE_MODEL_BROWSER = 'modelbrowser';
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $options = [];
+        $schemaBase = new UxonObject();
         
         $currentText = $task->getParameter(self::PARAM_TEXT);
-        $path = json_decode($task->getParameter(self::PARAM_PATH), true);
+        $path = $this->getParamPath($task);
         $type = $task->getParameter(self::PARAM_TYPE);
-        $uxon = UxonObject::fromJson($task->getParameter(self::PARAM_UXON));
-        $schemaName = $task->getParameter(self::PARAM_SCHEMA);
-        $schemaBase = new UxonObject();
-        $rootObject = null;
-        $rootPrototypeClass = null;
+        $uxon = $this->getParamUxon($task);
+        $rootObject = $this->getRootObject($task);
         
-        if ($rootObjectSelector = $task->getParameter(self::PARAM_OBJECT)) {
-            try {
-                $rootObject = $this->getWorkbench()->model()->getObject($rootObjectSelector);
-                if (! $schemaBase->hasProperty('object_alias')) {
-                    $schemaBase->setProperty('object_alias', $rootObject->getAliasWithNamespace());
-                }
-            } catch (MetaObjectNotFoundError $e) {
-                $rootObject = null;  
-            }
+        if($rootObject) {
+            $schemaBase->setProperty('object_alias', $rootObject->getAliasWithNamespace());
         }
         
-        if ($rootPrototypeSelector = trim($task->getParameter(self::PARAM_PROTOTYPE))) {
-            if (StringDataType::endsWith($rootPrototypeSelector, '.php', false)) {
-                $rootPrototypeClass = str_replace("/", "\\", substr($rootPrototypeSelector, 0, -4));
-                $rootPrototypeClass = "\\" . ltrim($rootPrototypeClass, "\\");
-            } elseif (! $rootPrototypeSelector || $rootObjectSelector === 'null' || $rootObjectSelector === 'undefined') {
-                $rootPrototypeClass = null;
-            } else {
-                $rootPrototypeClass = $rootPrototypeSelector;
-            }
-        }
-        
-        // If we know the prototype class and that class has a UXON schema, use that schema
-        // instead of the one provided in the request. This is important in case the root
-        // prototype alread has it's own custom schema!
-        if ($rootPrototypeClass && is_subclass_of($rootPrototypeClass, iCanBeConvertedToUxon::class, true) && $rootPrototypeClass::getUxonSchemaClass()) {
-            $schemaName = '\\' . $rootPrototypeClass::getUxonSchemaClass();
-        }
-        $schema = UxonSchemaFactory::create($this->getWorkbench(), $schemaName);
-        
+        $rootPrototypeClass = $this->getRootPrototypeClass($task);
+        $schema = $this->getSchema($task, $rootPrototypeClass);
+
         if (! $schemaBase->isEmpty()) {
             $uxon = $schemaBase->extend($uxon);
         }

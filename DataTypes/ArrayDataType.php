@@ -235,4 +235,37 @@ class ArrayDataType extends AbstractDataType
 
         return null;
     }
+
+    /**
+     * Places the given value in the provided data at the position defined by an X-Path like expression
+     * 
+     * Examples:
+     * - `replaceViaXPath([], 'folder/file1', 'asdf')` => `["folder" => ["file1" => "asdf"]]`
+     * - `replaceViaXPath([], 'folder/file1', [])` => `["folder" => ["file1" => []]]`
+     * 
+     * @param array $data
+     * @param string $path
+     * @param mixed $value
+     * @return array
+     */
+    public static function replaceViaXPath(array $data, string $path, mixed $value): array
+    {
+        $keys = explode('/', trim($path, '/')); // split into parts
+        $ref =& $data; // reference to array so we can traverse and modify
+    
+        foreach ($keys as $i => $key) {
+            if ($i === count($keys) - 1) {
+                // last key: set value
+                $ref[$key] = $value;
+            } else {
+                // intermediate key: ensure it's an array
+                if (!isset($ref[$key]) || !is_array($ref[$key])) {
+                    $ref[$key] = [];
+                }
+                $ref =& $ref[$key]; // go deeper
+            }
+        }
+
+        return $data;
+    }
 }
