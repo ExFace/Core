@@ -29,7 +29,7 @@ class ObjectMutationPoint extends AbstractMutationPoint
         $applied = $point->applyMutations($target, $event->getObject());
 
         if (! empty($applied)) {
-            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, 'object ' . $event->getObject()->__toString()));
+            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($applied, 'object ' . $event->getObject()->__toString(), $point));
         }
     }
 }

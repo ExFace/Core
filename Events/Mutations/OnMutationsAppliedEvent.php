@@ -11,11 +11,11 @@ use exface\Core\Widgets\DebugMessage;
 
 class OnMutationsAppliedEvent extends AbstractEvent implements iCanGenerateDebugWidgets
 {
-    private MutationPointInterface $mutationPoint;
+    private ?MutationPointInterface $mutationPoint = null;
     private array $mutations;
     private string $subjectName;
 
-    public function __construct(MutationPointInterface $mutationPoint, array $mutationsApplied, string $subjectName)
+    public function __construct(array $mutationsApplied, string $subjectName, MutationPointInterface $mutationPoint)
     {
         $this->mutationPoint = $mutationPoint;
         $this->mutations = $mutationsApplied;
@@ -62,7 +62,10 @@ MD;
 
     }
 
-    public function getMutationPoint() : MutationPointInterface
+    /**
+     * @return MutationPointInterface|null
+     */
+    public function getMutationPoint() : ?MutationPointInterface
     {
         return $this->mutationPoint;
     }
