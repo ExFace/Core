@@ -1468,6 +1468,22 @@ JS;
     protected function buildJsJExcelColumns() : string
     {
         $columns = [];
+
+        // if percentual widths are provided, check that the total sum does not exceed 100%
+        // otherwise columns will be added but not visible 
+        $totalWidthPercentage = 0;
+        foreach ($this->getWidget()->getColumns() as $col) {
+            $width = $col->getWidth();
+            if ($width->isPercentual()){
+                $totalWidthPercentage += $width->getValue();
+            }
+        }
+
+        if ($totalWidthPercentage > 100){
+            throw new WidgetConfigurationError($this->getWidget(), 'When setting column widths as percentages in a DataSpreadsheet, the provided column widths should not exceed 100% when summed up.');
+        }
+
+
         foreach ($this->getWidget()->getColumns() as $col) {
             $columns[] = $this->buildJsJExcelColumn($col);
         }
