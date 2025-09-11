@@ -43,7 +43,8 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  *
  * - getJExcel() : Object
  * - getDom() : DomElement
- * - getDataLastLoaded() : array
+ * - getData() : array - returns the current array of data rows
+ * - getDataLastLoaded() : array - returns the array of data rows as received from the server or dataGetter.
  * - getColumnName(iColIdx) : string
  * - getColumnIndex(string colName) : int
  * - setValueGetterRow(iRow) : void
@@ -592,6 +593,9 @@ JS;
         },
         getDom: function(){
             return this._dom;
+        },
+        getData: function() {
+            return this.convertArrayToData(this.getJExcel().getData(false));
         },
         getDataLastLoaded: function(){
             return this._initData;
@@ -1989,7 +1993,8 @@ JS;
             var jqEl = {$this->buildJsJqueryElement()};
             var aRows;
             if (jqEl.length === 0) return {};
-            aRows = {$this->buildJsConvertArrayToData("jqEl.jspreadsheet('getData', false)")};
+            aRows = jqEl[0].exfWidget.getData();
+            
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
 
@@ -2241,19 +2246,18 @@ JS;
             // if target is the spreadsheet itself, get filter value from current spreadsheet row
             return <<<JS
 
-(function(){
-        var aAllRows = {$this->buildJsDataGetter()}.rows; 
+(function(oWidget){
+        var aAllRows = oWidget.getData(); 
         var aVals = [];
 
         if (aAllRows[y]['{$col->getDataColumnName()}'] === undefined) {
             console.warn('Column {$col->getDataColumnName()} does not exist in the current spreadsheet'); 
-        }
-        else {
+        } else {
             aVals.push(aAllRows[y]['{$col->getDataColumnName()}']); 
         }
 
         return aVals.join('{$delimiter}');
-})()
+})({$this->buildJsJqueryElement()}[0].exfWidget)
 JS;
         } else{
             // if filter target is not the spreadsheet itself, get values from selected indices
@@ -2264,7 +2268,7 @@ JS;
         if (oWidget === undefined) {
             return null;
         }
-        var aAllRows = {$this->buildJsDataGetter()}.rows; 
+        var aAllRows = oWidget.getData() || []; 
 
         // for disabled if and required-if: use current rowIdx saved in exfwidget 
         if (oWidget && oWidget.bLoaded === true){
@@ -2363,7 +2367,6 @@ JS;
         // otherwise apply to entire column
         if ($this->hasSelfReference($condProp)) {
             $conditionsJs .= <<<JS
-                    
                     var oColOpts = oJExcel.options.columns[iColIdx];
                     if (oColOpts !== undefined && oColOpts.type === 'checkbox'){
                         // checkboxes need to be disabled, not set to readonly
