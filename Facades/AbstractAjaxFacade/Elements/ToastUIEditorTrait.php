@@ -22,8 +22,6 @@ use exface\Core\Widgets\Parts\TextStencil;
  */
 trait ToastUIEditorTrait
 {
-    private $btnUserData = null; //TODO SR: New, Test it.
-
     /**
      * Creates a JS snippet that initializes a ToastUI markdown editor
      * instance and returns it, complete with toolbar and live reference hooks.
@@ -131,7 +129,7 @@ JS;
             $additionalWidgetsCode.= <<<JS
 
             // Mention widget code section:
-            {$this->buildJsCreateFilteredMentionWidget()}
+            {$this->buildJsMentionDataLoader()}
 
             {$this->buildJsMentionListener()}
 
@@ -141,8 +139,7 @@ JS;
 
             {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
             
-            //TODO SR: Das ist zum Test da:
-            {$this->buildJsMentionAutosuggestCall()}
+           
 JS;
         }
 
@@ -153,9 +150,12 @@ JS;
     {
         $globalVariablesJs = '';
 
+        //TODO SR: Die Abfrage nach "AllowMentions" ist nun veraltet und sollte rausgenommen werden.
+        //TODO SR: Frage dafür das neue TextMention Datentyp stattdessen ab.
         if ($this->getWidget()->getAllowMentions())
         {
             $globalVariablesJs.= <<<JS
+
                 // Mention global variables
                 let currentMentionWidget = null;
                 let lastLine = 0;
@@ -248,6 +248,8 @@ JS;
           lastCharPos = charPos;
           lastFilter = filter;
           
+          //TODO: Improve the data loading process. Try to load a limit number of data.
+          //TODO: Filter here if the last fetch got less values than the limit and if the filter string got bigger. 
           createFilteredMentionWidget(filter).then(widget => {
             currentMentionWidget = widget;
             ed.addWidget(currentMentionWidget, "bottom");
@@ -265,6 +267,7 @@ JS;
     protected function buildJsAddEventListenerToSpaceKeydownForMentionWidget(): string
     {
         return <<<JS
+
           /**
           * Listens to the space bar to convert the "#text" to "[#text]()"
           */
@@ -285,6 +288,7 @@ JS;
     protected function buildJsSelectMentionElement(): string
     {
         return <<<JS
+
           /**
           * It takes the name and URL from the item that was clicked on in the mention widget.
           * @param item
@@ -302,6 +306,7 @@ JS;
     protected function buildJsAddMentionTag(): string
     {
         return <<<JS
+
         /**
          *  It takes the name and URL
          *  and converts the "#text" on saved position to "[#text]()"
@@ -332,15 +337,20 @@ JS;
 JS;
     }
 
-    protected function buildJsCreateFilteredMentionWidget(): string
+    protected function buildJsCreateFilteredMentionWidget(TextMention $mention): string
     {
         $mentionMenuCss = 'position: absolute; padding: 4px 0; background: white; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,.15); border-radius: 6px; font-size: 14px; z-index: 100; min-width: 150px;';
         $mentionItemCss = 'padding: 4px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
         $mentionItemEmptyCss = 'color: gray; pointer-events: none;';
         $mentionMenuUl = 'list-style: none; margin: 0; padding: 0;';
 
+        $btn = $mention->getAutosuggestButton();
+        $filterAttributeAlias = $mention->getAutosuggestFilterAttributeAlias();
+        $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
+
         return <<<JS
-/**
+
+            /**
             * builds the list of suggested mentions.
             *
             * @param filter
@@ -355,27 +365,34 @@ JS;
             
                     $.ajax({
                         type: 'POST',
-                        url: 'http://localhost/exface/exface/api/jeasyui',
+                        url: '{$this->getAjaxUrl()}',
+                        {$headers}
                         data: {
-                            resource: 'exface.core.security',
-                            element: 'SplitHorizontal_SplitPanel02_SplitVertical_SplitPanel_DataTableResponsive_DataTableConfigurator_Tab_Filter_InputComboTable_DataTable',
-                            object: '0x31343400000000000000000000000000',
-                            action: 'exface.Core.Autosuggest',
-                            page: 1,
-                            rows: 20,
-                            q: searchQuery,
-                            'data[oId]': '0x31343400000000000000000000000000',
-                            'data[filters][operator]': 'AND',
-                            'data[filters][ignore_empty_values]': true,
-                            'data[filters][conditions][0][expression]': 'FULL_NAME',
-                            'data[filters][conditions][0][comparator]': '',
-                            'data[filters][conditions][0][value]': '',
-                            'data[filters][conditions][0][apply_to_aggregates]': true
+                          action: '{$btn->getAction()->getAliasWithNamespace()}',
+                          object: '{$btn->getMetaObject()->getId()}',
+                          resource: '{$btn->getPage()->getAliasWithNamespace()}',
+                          element: '{$btn->getId()}',
+                          data: {
+                            oId: '{$btn->getAction()->getMetaObject()->getId()}',
+                            columns: ['{$filterAttributeAlias}'], 
+                            filters: {
+                              operator: 'AND',
+                              conditions: [
+                                  {
+                                    expression: '{$filterAttributeAlias}',
+                                    comparator: '=',
+                                    value: searchQuery
+                                  }
+                              ]
+                            }
+                          }
                         },
                         success: function (response) {
-                            const mentionList = (response.rows || []).map(user => ({
-                                name: "@" + user.FULL_NAME,
-                                url: ""
+                          //TODO SR: Bau hier ein error handling ein, falls das response nicht das gewünschte Ergebniss liefert.
+                          //TODO SR: Es sollte von Uxon kommen, ob ein "@" oder "#" verwendet werden soll
+                            const mentionList = (response.rows || []).map(item => ({
+                                name: "@" + item.{$filterAttributeAlias},
+                                url: "" //TODO: Add here an clickAction from uxon.
                             }));
             
                             if (mentionList.length === 0) {
@@ -396,7 +413,8 @@ JS;
                             resolve(wrapper);
                         },
                         error: function () {
-                      console.log("Ajax Error");
+                            //TODO SR: Hier auch ein besseres error handling einbauen.
+                            console.log("Ajax Error");
                             wrapper.innerHTML = `<ul><li class="mention-item empty" style="{$mentionItemEmptyCss}">Fehler beim Laden</li></ul>`;
                             resolve(wrapper);
                         }
@@ -734,43 +752,23 @@ JS;
         return $html;
     }
 
-    //TODO SR: Versuche hier das TextMention zu rufen:
-    protected function buildJsMentionAutosuggestCall() : string
+    protected function buildJsMentionDataLoader() : string
     {
         $js = '';
         if ($this->getWidget() instanceof InputMarkdown) {
-            //TODO SR: Schau, ob das TextMention hier unter stencils gebracht werden kann
             foreach ($this->getWidget()->getMentions() as $mention) {
                 switch (true) {
                     case $mention instanceof TextMention:
-                        //TODO SR: Packe den Filterabruf evt. direkt in die untere Funktion ein
-                        $filterValue = $mention->getAutosuggestFilterAttributeAlias();
-                        $js .= $this->buildJsMentionAustosuggest($mention, $filterValue);
+                        $js .= $this->buildJsCreateFilteredMentionWidget($mention);
                         break;
                     default:
-                        // TODO add support for regular stencils - just insert them at cursor position
                         throw new WidgetConfigurationError($this->getWidget(), 'Only TextMention currently supported');
-                        /*$js .= $this->buildJsToolbarItemForTextStencil($stencil);*/
                         break;
                 }
-
             }
         }
 
         return $js;
     }
 
-    //TODO SR: Test it and try to call the User List with it:
-    //TODO SR: Look at the TextMention and unse it in Uxon
-    protected function buildJsMentionAustosuggest(TextMention $mention, string $filterValueJs) : string
-    {
-        $btn = $mention->getAutosuggestButton();
-        $btnEl = $this->getFacade()->getElement($btn);
-        $filterAttributeAlias = $mention->getAutosuggestFilterAttributeAlias();
-        $js = $btnEl->buildJsClickFunction(
-            $btn->getAction(),
-            "{oId: '{$btn->getAction()->getMetaObject()->getId}', filters: {operator: 'AND', conditions: [{expression: '{$filterAttributeAlias}', comparator: '=', value: {$filterValueJs}}]}}"
-        );
-        return $js;
-    }
 }

@@ -103,7 +103,7 @@ class InputMarkdown extends InputText
     /**
      * @return bool
      */
-    public function getAllowMentions() : bool
+    public function getAllowMentions() : bool //TODO SR: Das wird von "getMentions()" ersetzt und sollte nun ausgebaut werden.
     {
         return  $this->allowMentions;
     }
