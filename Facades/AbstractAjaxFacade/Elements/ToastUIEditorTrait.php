@@ -493,7 +493,7 @@ JS;
                         $js .= $this->buildJsToolbarItemForHtmlTagStencil($stencil);
                         break;
                     default:
-                        // TODO add support for regular stencils - just insert them at cursor position
+                        // TODO add support for regular stencils - just insert them at cursor position!
                         throw new WidgetConfigurationError($this->getWidget(), 'Only HtmlTag stencils currently supported');
                         /*$js .= $this->buildJsToolbarItemForTextStencil($stencil);*/
                         break;
