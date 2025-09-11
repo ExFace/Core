@@ -968,9 +968,7 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        
         // Check if the data source already contains rows with matching UIDs
-        // TODO do not update rows, that were created here. Currently they are created and immediately updated afterwards.
         if ($create_if_uid_not_found === true) {
             if ($uidCol = $this->getUidColumn()) {
                 // Find rows, that do not have a UID value
@@ -1015,6 +1013,17 @@ class DataSheet implements DataSheetInterface
                                 }
                             }
                         }
+
+                        $update_ds = $this->copy();
+                        // We remove all rows from the update sheet, that were created during this step,
+                        // to avoid duplicate transforms and unnecessary work.
+                        foreach ($create_ds->getUidColumn()->getValues() as $uid) {
+                            $update_ds->removeRowsByUid($uid);
+                        }
+
+                        if ($update_ds->isEmpty()) {
+                            return 0;
+                        }
                     } catch (DataSheetMissingRequiredValueError | DataSheetInvalidValueError $e) {
                         // If the create-operation failed due to missing values, we will need to
                         // tell the user where they are in the original sheet (as the user does not
@@ -1041,32 +1050,36 @@ class DataSheet implements DataSheetInterface
             } else {
                 throw new DataSheetWriteError($this, 'Creating rows from an update statement without a UID-column not supported yet!', '6T5VBHF');
             }
+        } 
+        
+        if($update_ds === null ) {
+            $update_ds = $this->copy();
         }
         
         // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
         // Fire it after the create to be sure every row has UIDs now and are actually updates
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
+        $eventBefore = $update_ds->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($update_ds, $transaction, $create_if_uid_not_found));
         if ($eventBefore->isPreventUpdate() === true) {
             // IDEA not sure, if it would be correct to fire OnUpdateData here?
             if ($commit && ! $transaction->isRolledBack()) {
                 $transaction->commit();
             }
-            return $this->countRows();
+            return $update_ds->countRows();
         }
         
         // After all preparation is done, check to see if there are any rows to update left
-        if ($this->isEmpty()) {
+        if ($update_ds->isEmpty()) {
             return 0;
         }
         
         // Create a query
-        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
+        $query = QueryBuilderFactory::createForObject($update_ds->getMetaObject());
         
         // Add columns with fixed values to the data sheet
         $processed_relations = array();
-        foreach ($this->getColumns() as $col) {
+        foreach ($update_ds->getColumns() as $col) {
             if (! $col->getAttribute()) {
-                // throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Cannot find attribute for data sheet column "' . $col->getName() . '"!');
+                // throw new MetaAttributeNotFoundError($update_ds->getMetaObject(), 'Cannot find attribute for data sheet column "' . $col->getName() . '"!');
                 continue;
             }
             
@@ -1099,8 +1112,8 @@ class DataSheet implements DataSheetInterface
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($fixedExpr = $attr->getFixedValue()) {
                     $alias_with_relation_path = RelationPath::join($rel_path, $attr->getAlias());
-                    if (! $fixedCol = $this->getColumn($alias_with_relation_path)) {
-                        $fixedCol = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
+                    if (! $fixedCol = $update_ds->getColumn($alias_with_relation_path)) {
+                        $fixedCol = $update_ds->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
                     } elseif ($fixedCol->getIgnoreFixedValues()) {
                         continue;
                     }
@@ -1111,7 +1124,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Add filters to the query
-        $query->setFiltersConditionGroup($this->getFilters());
+        $query->setFiltersConditionGroup($update_ds->getFilters());
         
         // Add values to the query
         // At this point, it is important to understand, that there are different types of update data sheets possible:
@@ -1120,9 +1133,9 @@ class DataSheet implements DataSheetInterface
         // - A data sheet with a single row and no UID column, where the values of that row should be saved to all object matching the filter
         // - A data sheet with a single row and a UID column, where the one row references multiple object explicitly selected by the user (the UID
         // column will have one cell with a list of UIDs in this case.
-        $sheetHasUidValues = $this->hasUidColumn(true);
+        $sheetHasUidValues = $update_ds->hasUidColumn(true);
         $relatedSheets = [];
-        foreach ($this->getColumns() as $col) {
+        foreach ($update_ds->getColumns() as $col) {
             if (! $col->getExpressionObj()->isMetaAttribute()) {
                 // Skip columns, that do not represent a meta attribute
                 continue;
@@ -1131,7 +1144,7 @@ class DataSheet implements DataSheetInterface
             $columnAttr = $col->getAttribute();
             switch (true) {
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
-                case $col->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
+                case $col->isWritable() === false && ($update_ds->hasUidColumn() === true && $col === $update_ds->getUidColumn()) === false:
                     continue 2;
                 // Update nested sheets - i.e. replace all rows in the data source, that are related to
                 // the each row of the main sheet with the nested rows here.
@@ -1141,7 +1154,7 @@ class DataSheet implements DataSheetInterface
                 // the column should go into a subsheet just like other related columns
                 // TODO this seems to work differently to dataCreate() - why?
                 case ($col->getDataType() instanceof DataSheetDataType) && $columnAttr->getRelationPath()->countRelations() <= 1:
-                    $this->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
+                    $update_ds->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
                     continue 2; 
                 // Update related columns, that the current query builder cannot write, as
                 // subsheets too. Similarly to dataCreate()
@@ -1161,14 +1174,14 @@ class DataSheet implements DataSheetInterface
                     }
                     // Now we are ready to create a subsheet and pass data to it
                     if (null === $relSheet = $relatedSheets[$relPath->toString()]) {
-                        $relSheet = DataSheetFactory::createSubsheet($this, $relPath->getEndObject(), $relPath->getRelationLast()->getRightKeyAttribute()->getAlias(), $relPath->getRelationFirst()->getLeftKeyAttribute()->getAlias(), $relPath);
+                        $relSheet = DataSheetFactory::createSubsheet($update_ds, $relPath->getEndObject(), $relPath->getRelationLast()->getRightKeyAttribute()->getAlias(), $relPath->getRelationFirst()->getLeftKeyAttribute()->getAlias(), $relPath);
                         $relatedSheets[$relPath->toString()] = $relSheet;
                     }
                     $relSheet->getColumns()->addFromExpression($relSheetAttrAlias)->setValues($col->getValues());
 
                     continue 2;               
                 // Skip columns with aggregate functions
-                case DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString()):
+                case DataAggregation::getAggregatorFromAlias($update_ds->getWorkbench(), $col->getExpressionObj()->toString()):
                     continue 2;
             }
             
@@ -1180,8 +1193,8 @@ class DataSheet implements DataSheetInterface
             }
             
             // Use the UID column as a filter to make sure, only these rows are affected
-            if ($columnAttr->getAliasWithRelationPath() === $this->getMetaObject()->getUidAttributeAlias()) {
-                $uidAttr = $this->getMetaObject()->getUidAttribute();
+            if ($columnAttr->getAliasWithRelationPath() === $update_ds->getMetaObject()->getUidAttributeAlias()) {
+                $uidAttr = $update_ds->getMetaObject()->getUidAttribute();
                 if (! $col->isEmpty(true)) {
                     $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($col->getValues(false))), EXF_COMPARATOR_IN);
                 }
@@ -1197,14 +1210,14 @@ class DataSheet implements DataSheetInterface
             // Add all other columns to values
             // First check, if the attribute belongs to a related object
             if ($rel_path = $columnAttr->getRelationPath()->toString()) {
-                if ($this->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
+                if ($update_ds->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
                     $uid_column_alias = $rel_path;
                 } else {
-                    // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
-                    throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $col->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
+                    // $uid_column = $update_ds->getColumn($update_ds->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
+                    throw new DataSheetWriteError($update_ds, 'Updating attributes from reverse relations ("' . $col->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
                 }
             } else {
-                $uid_column_alias = $this->getMetaObject()->getUidAttributeAlias();
+                $uid_column_alias = $update_ds->getMetaObject()->getUidAttributeAlias();
             }
             
             // Now we know, the column represents a direct attribute. So add it to the query
@@ -1218,12 +1231,12 @@ class DataSheet implements DataSheetInterface
                 // cloned, it will have exactly the same filters, order, etc. so we can be sure to fetch only those UIDs, that 
                 // should have been in the original sheet. Additionally we need to add a filter over the values of the original 
                 // UID column, in case the user had explicitly selected some of the rows of the original data set.
-                if (! $colObjectUidColumn = $this->getColumns()->getByExpression($uid_column_alias)) {
-                    $uid_data_sheet = $this->copy();
+                if (! $colObjectUidColumn = $update_ds->getColumns()->getByExpression($uid_column_alias)) {
+                    $uid_data_sheet = $update_ds->copy();
                     $uid_data_sheet->getColumns()->removeAll();
-                    $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
+                    $uid_data_sheet->getColumns()->addFromExpression($update_ds->getMetaObject()->getUidAttributeAlias());
                     $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
-                    $uid_data_sheet->getFilters()->addConditionFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $this->getUidColumn()->getValues()), EXF_COMPARATOR_IN);
+                    $uid_data_sheet->getFilters()->addConditionFromString($update_ds->getMetaObject()->getUidAttributeAlias(), implode($update_ds->getUidColumn()->getAttribute()->getValueListDelimiter(), $update_ds->getUidColumn()->getValues()), EXF_COMPARATOR_IN);
                     $uid_data_sheet->dataRead();
                     $colObjectUidColumn = $uid_data_sheet->getColumn($uid_column_alias);
                 }
@@ -1251,7 +1264,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Run the query
-        $connection = $this->getMetaObject()->getDataConnection();
+        $connection = $update_ds->getMetaObject()->getDataConnection();
         $transaction->addDataConnection($connection);
         try {
             $result = $query->update($connection);
@@ -1259,7 +1272,7 @@ class DataSheet implements DataSheetInterface
         } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
-            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
+            throw new DataSheetWriteError($update_ds, 'Data source error. ' . $e->getMessage(), null, $e);
         }
         
         // Handle subsheets with columns with relations
@@ -1267,7 +1280,7 @@ class DataSheet implements DataSheetInterface
             if ($relatedSheet->getMetaObject()->isWritable() === false) {
                 continue;
             }
-            $relatedSheet = $this->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
+            $relatedSheet = $update_ds->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
             $relatedSheet->dataUpdate($create_if_uid_not_found, $transaction);
             // TODO update data in the main sheet with values from the related sheet - only for those columns with
             // corresponding relation path. This would make the main sheet also get default values and values altered
@@ -1277,22 +1290,23 @@ class DataSheet implements DataSheetInterface
         }
         
         if ($result->getAllRowsCounter() !== null) {
-            $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+            $update_ds->setCounterForRowsInDataSource($result->getAllRowsCounter());
         } elseif ($result->hasMoreRows() === false) {
-            $this->setCounterForRowsInDataSource($this->countRows());
+            $update_ds->setCounterForRowsInDataSource($update_ds->countRows());
         }
-        
+
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
-        $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent(
-            $this, 
+        $update_ds->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent(
+            $update_ds, 
             $transaction,
             $counter
         ));
-        
+
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
         }
-        
+
+        $this->joinLeft($update_ds);
         return $counter;
     }
     
