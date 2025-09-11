@@ -28,7 +28,7 @@ class ObjectDefaultEditorMutationPoint extends AbstractMutationPoint
         $applied = $point->applyMutations($target, $event->getDefaultEditorUxon());
 
         if (! empty($applied)) {
-            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, 'default editor of ' . $event->getObject()->__toString()));
+            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($applied, 'default editor of ' . $event->getObject()->__toString(), $point));
         }
     }
 }

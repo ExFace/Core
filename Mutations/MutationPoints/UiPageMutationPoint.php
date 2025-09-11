@@ -35,7 +35,7 @@ class UiPageMutationPoint extends AbstractMutationPoint
 
         if (! empty($applied)) {
             $subjType = $menuItem instanceof UiPageInterface ? 'page' : 'menu item';
-            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, $subjType . ' "' . $menuItem->getAliasWithNamespace() . '"'));
+            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($applied, $subjType . ' "' . $menuItem->getAliasWithNamespace() . '"', $point));
         }
     }
 }
