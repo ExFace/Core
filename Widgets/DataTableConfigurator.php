@@ -258,7 +258,9 @@ class DataTableConfigurator extends DataConfigurator
                     'attribute_alias' => 'NAME',
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
-                ],[
+                ], [
+                    'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG'
+                ], [
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
                 ], [
@@ -459,5 +461,20 @@ class DataTableConfigurator extends DataConfigurator
     public function hasSetups() : bool
     {
         return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
+    }
+
+    /**
+     * Returns the ID of the setups table, or null if setups are disabled
+     *
+     * @return string|null
+     */
+    public function getSetupsTableId() : ?string
+    {
+        if (!$this->hasSetups()){
+            return null;
+        }
+        else{
+            return $this->getSetupsTab()->getWidgetFirst()->getId();
+        }
     }
 }
