@@ -269,7 +269,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public function createResponseForDonwload(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        $response = $response->withHeader('Content-Disposition', "attachment; filename=" . $fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', "attachment; filename=" . json_encode($fileInfo->getFilename(), JSON_UNESCAPED_UNICODE));
         return $response;
     }
     
@@ -281,7 +281,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     protected function createResponseForEmbedding(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        $response = $response->withHeader('Content-Disposition', 'inline; filename=' . $fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', 'inline; filename=' . json_encode($fileInfo->getFilename(), JSON_UNESCAPED_UNICODE));
         return $response;
     }
     
