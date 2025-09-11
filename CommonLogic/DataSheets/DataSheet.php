@@ -969,16 +969,19 @@ class DataSheet implements DataSheetInterface
         }
         
         // Check if the data source already contains rows with matching UIDs
+        $update_ds = null;
+        /* @var int[] $rowIdxsToCreate array of row indexes of $this, that are to be created instead of an update */
+        $rowIdxsToCreate = [];
         if ($create_if_uid_not_found === true) {
-            if ($uidCol = $this->getUidColumn()) {
+            if ($thisUidCol = $this->getUidColumn()) {
                 // Find rows, that do not have a UID value
-                $emptyUidRows = $uidCol->findRowsByValue('');
+                $emptyUidRows = $thisUidCol->findRowsByValue('');
                 // Create another data sheet selecting those UIDs currently present in the data source
                 $uid_check_ds = DataSheetFactory::createFromObject($this->getMetaObject());
-                $uid_check_ds->getColumns()->add($uidCol->copy());
-                $uid_check_ds->getFilters()->addConditionFromColumnValues($uidCol);
+                $uid_check_ds->getColumns()->add($thisUidCol->copy());
+                $uid_check_ds->getFilters()->addConditionFromColumnValues($thisUidCol);
                 $uid_check_ds->dataRead();
-                $missing_uids = $uidCol->diffValues($uid_check_ds->getUidColumn());
+                $missing_uids = $thisUidCol->diffValues($uid_check_ds->getUidColumn());
                 // Filter away empty UID values, because we already have the in $emptyUidRows
                 $missing_uids = array_filter($missing_uids);
                 if (! empty($missing_uids) || ! empty($emptyUidRows)) {
@@ -986,7 +989,9 @@ class DataSheet implements DataSheetInterface
                     $create_ds = $this->copy()->removeRows();
                     // For non-empty missing UIDs just add the entire row
                     foreach ($missing_uids as $missing_uid) {
-                        $create_ds->addRow($this->getRowByColumnValue($uidCol->getName(), $missing_uid));
+                        $missingUidIdx = $thisUidCol->findRowByValue($missing_uid);
+                        $rowIdxsToCreate[] = $missingUidIdx;;
+                        $create_ds->addRow($this->getRow($missingUidIdx));
                     }
                     // For rows with empty UIDs we will need to remember the index of
                     // each row, so we can update it with the created UID once we've received
@@ -996,9 +1001,10 @@ class DataSheet implements DataSheetInterface
                         // Since we may alread have rows in the $create_ds, that have non-empty
                         // UIDs, we need get the exact index of the inserted row (not just
                         // count them starting with 0) - that is the next index since rows
-                        // are allways numbered sequentially.
+                        // are always numbered sequentially.
                         $emptyUidRowsInCreateSheet[] = $create_ds->countRows();
-                        $create_ds->addRow($this->getRow($newRowNr));
+                        $rowIdxsToCreate[] = $newRowNr;
+                        $create_ds->addRow($this->getRow($newRowNr), false, false);
                     }
                     try {
                         $counter += $create_ds->dataCreate(false, $transaction);
@@ -1009,21 +1015,18 @@ class DataSheet implements DataSheetInterface
                         foreach ($create_ds->getColumns() as $create_col) {
                             if ($col = $this->getColumns()->getByExpression($create_col->getExpressionObj())) {
                                 foreach ($emptyUidRowsInCreateSheet as $i => $r) {
-                                    $col->setValue($emptyUidRows[$i], $create_col->getCellValue($r));
+                                    $col->setValue($emptyUidRows[$i], $create_col->getValue($r));
                                 }
                             }
                         }
 
                         $update_ds = $this->copy();
                         // We remove all rows from the update sheet, that were created during this step,
-                        // to avoid duplicate transforms and unnecessary work.
-                        foreach ($create_ds->getUidColumn()->getValues() as $uid) {
-                            $update_ds->removeRowsByUid($uid);
-                        }
-
-                        if ($update_ds->isEmpty()) {
-                            return 0;
-                        }
+                        // to avoid duplicate transforms and unnecessary work. Having freshly created rows
+                        // updated right away can also cause duplicates in the work of behaviors
+                        $update_ds->removeRows($rowIdxsToCreate);
+                        // TODO if there are no rows left for a real update, maybe exit here? Do we need the OnUpdate
+                        // in this case???
                     } catch (DataSheetMissingRequiredValueError | DataSheetInvalidValueError $e) {
                         // If the create-operation failed due to missing values, we will need to
                         // tell the user where they are in the original sheet (as the user does not
@@ -1053,7 +1056,10 @@ class DataSheet implements DataSheetInterface
         } 
         
         if($update_ds === null ) {
-            $update_ds = $this->copy();
+            $update_ds = $this;
+            $rowIdxsToUpdate = array_keys($this->getRows());
+        } else {
+            $rowIdxsToUpdate = array_diff(array_keys($this->getRows()), $rowIdxsToCreate);
         }
         
         // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
@@ -1114,6 +1120,9 @@ class DataSheet implements DataSheetInterface
                     $alias_with_relation_path = RelationPath::join($rel_path, $attr->getAlias());
                     if (! $fixedCol = $update_ds->getColumn($alias_with_relation_path)) {
                         $fixedCol = $update_ds->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
+                        if ($update_ds !== $this) {
+                            $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
+                        }
                     } elseif ($fixedCol->getIgnoreFixedValues()) {
                         continue;
                     }
@@ -1214,7 +1223,7 @@ class DataSheet implements DataSheetInterface
                     $uid_column_alias = $rel_path;
                 } else {
                     // $uid_column = $update_ds->getColumn($update_ds->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
-                    throw new DataSheetWriteError($update_ds, 'Updating attributes from reverse relations ("' . $col->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
+                    throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $col->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
                 }
             } else {
                 $uid_column_alias = $update_ds->getMetaObject()->getUidAttributeAlias();
@@ -1272,7 +1281,7 @@ class DataSheet implements DataSheetInterface
         } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
-            throw new DataSheetWriteError($update_ds, 'Data source error. ' . $e->getMessage(), null, $e);
+            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
         }
         
         // Handle subsheets with columns with relations
@@ -1289,10 +1298,11 @@ class DataSheet implements DataSheetInterface
             // columns of the related sheet too.
         }
         
-        if ($result->getAllRowsCounter() !== null) {
-            $update_ds->setCounterForRowsInDataSource($result->getAllRowsCounter());
+        // TODO use $counter from create?
+        if (null !== $allRowsCnt = $result->getAllRowsCounter()) {
+            $this->setCounterForRowsInDataSource($allRowsCnt);
         } elseif ($result->hasMoreRows() === false) {
-            $update_ds->setCounterForRowsInDataSource($update_ds->countRows());
+            $this->setCounterForRowsInDataSource($this->countRows());
         }
 
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
@@ -1306,7 +1316,24 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
 
-        $this->joinLeft($update_ds);
+        // If we separated update and created data we now need to put the really updated data back into the
+        // main data sheet.
+        if ($this !== $update_ds) {
+            // Double-check if some columns where added during the update operation
+            if ($update_ds->getColumns()->count() !== $this->getColumns()->count()) {
+                foreach ($update_ds->getColumns() as $col) {
+                    if (! $this->getColumns()->getByExpression($col->getExpressionObj())) {
+                        $this->getColumns()->addFromExpression($col->getExpressionObj());
+                    }
+                }
+            }
+            // Now place the rows from the update-sheet to the respective positions in the main sheet.
+            // We have saved these positions above while separating creates from updates
+            foreach ($rowIdxsToUpdate as $updateRowIdx => $thisRowIdx) {
+                $this->rows[$thisRowIdx] = $update_ds->getRow($updateRowIdx);
+            }
+        }
+        
         return $counter;
     }
     
