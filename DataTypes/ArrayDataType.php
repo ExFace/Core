@@ -268,4 +268,33 @@ class ArrayDataType extends AbstractDataType
 
         return $data;
     }
+
+    /**
+     * Moves an item of an array to another position shifting all other elements fruther down
+     * 
+     * @param $array
+     * @param $fromIndex
+     * @param $toIndex
+     * @return void
+     */
+    public static function moveElement(array $array, string $keyToMove, string $targetKey): array {
+        if (!isset($array[$keyToMove]) || !isset($array[$targetKey])) {
+            // Key doesn't exist, return original array
+            return $array;
+        }
+
+        $valueToMove = $array[$keyToMove];
+        unset($array[$keyToMove]); // Remove the element to move
+
+        $newArray = [];
+        foreach ($array as $key => $value) {
+            if ($key === $targetKey) {
+                // Insert the element before the target key
+                $newArray[$keyToMove] = $valueToMove;
+            }
+            $newArray[$key] = $value;
+        }
+
+        return $newArray;
+    }
 }
