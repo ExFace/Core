@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -922,11 +923,32 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
      */
     protected function getModelFileIndex(string $objectAlias) : ?int
     {
-        $idx = array_search($objectAlias, array_keys($this->dataDefs));
+        $idx = array_search($objectAlias, array_keys($this->dataDefs), true);
         if ($idx === false) {
             $idx = null;
         }
         return $idx;
+    }
+
+    /**
+     * Positions the given object at the provided index in the installer queue
+     * 
+     * Smaller indexes will be installed first! The initial order is the order of calling addDataXXX() methods.
+     * Changing the order may help prevent foreign key constraits errors when installing.
+     * 
+     * Data of the given object will be installed at position $idx. This means, all other data
+     * starting from the value of $idx will move to a greater index. Every index after $idx will
+     * be increased by one.
+     * 
+     * @param string $objectAlias
+     * @param int $idx
+     * @return $this
+     */
+    protected function setModelFileIndex(string $objectAlias, int $idx) : DataInstaller
+    {
+        $aliasToBeReplaced = array_keys($this->dataDefs)[$idx] ?? null;
+        $this->dataDefs = ArrayDataType::moveElement($this->dataDefs, $objectAlias, $aliasToBeReplaced);
+        return $this;
     }
     
     /**
@@ -963,7 +985,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             $baseUxon = $array[0];
             
             $objAlias = $baseUxon->getProperty('object_alias');
-            if ($objAlias === null || ! $this->isInstallableObject($objAlias)) {
+            if ($objAlias === null || ($this->hasInstallableObjects() && ! $this->isInstallableObject($objAlias))) {
                 $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $type . '": object not known to this installer!', ['installable_objects' => $this->dataDefs]);
                 continue;
             }
@@ -1315,5 +1337,10 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     protected function willUninstallCascading() : bool
     {
         return $this->uninstallCascading;
+    }
+    
+    protected function hasInstallableObjects() : bool
+    {
+        return ! empty($this->dataDefs);
     }
 }
