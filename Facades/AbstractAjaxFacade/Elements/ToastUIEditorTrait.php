@@ -129,14 +129,17 @@ JS;
             $additionalWidgetsCode.= <<<JS
 
             // Mention widget code section:
-            {$this->buildJsMentionDataLoader()}
-
-            {$this->buildJsMentionListener()}
-
+            
+            //TODO SR: Muss pro Mention gerufen werden:
+            {$this->buildJsMentionDataLoaderAndListener()}
+            
+            //TODO SR: Generell für alle Mentions?
             {$this->buildJsSelectMentionElement()}
-
+             
+             //TODO SR: Generell für alle Mentions.
             {$this->buildJsAddMentionTag()}
 
+            //TODO SR: Generell für alle Mentions.
             {$this->buildJsAddEventListenerToSpaceKeydownForMentionWidget()}
             
            
@@ -167,22 +170,39 @@ JS;
         return $globalVariablesJs;
     }
 
+
+    //TODO SR: das buildWidgetRule() sollte für mentions gerufen werden und $mention als argument bekommen.
+    //TODO SR: Es können aber auch später weitere WidgetRules dazu gefügt werden können, d.h. es muss erweiterbar bleiben
+    //TODO SR: Die buildJsWidgetRules() sollte das "buildJsMentionWidgetRule() rufen, falls ein Mention vorliegt.
     protected function buildJsWidgetRules(): string
     {
         $widgetRulesJs = '';
-        //TODO: Add uxon support here like in buildJsCustomHtmlRenderers and give it as an argument here:
-        $widgetRulesJs .= $this->buildJsWidgetRule();
-        return <<<JS
-        {
-          {$widgetRulesJs}
+        // You can add more widget rules here.
+        if ($this->getWidget() instanceof InputMarkdown) {
+            foreach ($this->getWidget()->getMentions() as $mention) {
+                switch (true) {
+                    case $mention instanceof TextMention:
+                        $widgetRulesJs .= '{' . $this->buildJsMentionWidgetRule($mention) . '},';
+                        break;
+                    default:
+                        throw new WidgetConfigurationError($this->getWidget(), 'Only TextMention currently supported');
+                }
+            }
         }
-JS;
+        //TODO SR: Prüfe, ob der Return hier geht, wenn man keine Rules angegeben hat.
+        return $widgetRulesJs;
     }
 
-    protected function buildJsWidgetRule(): string
+    protected function buildJsMentionWidgetRule(TextMention $mention): string
     {
         //TODO SR: Das zu erkennende String des Mention Widgets wird per uxon festgelegt.
-        $reMentionWidgetRule = '/\[([#@]\s?[^\]]+)\]\((.*?)\)/';
+        //$reMentionWidgetRule = '/\[([#@]\s?[^\]]+)\]\((.*?)\)/'; //TODO SR: Alt.
+        $reMentionWidgetRule =
+            '/\[('
+                . '[' . $mention->getAutosuggestActivationCharacter() . ']'
+                . $mention->getRegex()
+            . ')\]'
+            .'\((.*?)\)/';
         $mentionWidgetCss = 'display: inline-block; padding: 4px 10px; background-color: #001580; color: white; text-decoration: none; border-radius: 9999px; font-size: 14px; font-family: sans-serif; font-weight: 600; white-space: nowrap;';
         return <<<JS
       /**
@@ -215,9 +235,14 @@ JS;
 JS;
     }
 
-    protected function buildJsMentionListener(): string
+    //TODO SR: Wenn man mehrere Mentions hat, hören die beide auf "keyup" und überschreiben sich gegenseitig.
+    //TODO: Finde einen Weg, um das du beheben.
+    protected function buildJsMentionListener(TextMention $mention): string
     {
+        $activationCharacter = $mention->getAutosuggestActivationCharacter();
+
         return <<<JS
+
         ed.on("keyup", () => {
           let line = null;
           let charPos = null;
@@ -232,8 +257,10 @@ JS;
             // It takes the text from the start of the editor to the cursor.
             textBeforeCursor = ed.getSelectedText(0, charPos);
           }
-        
-          const match = textBeforeCursor.match(/[#@]\w*$/);
+          
+          //TODO SR: Bei mehreren Mention Widgets sollte die Logik hier überarbeitet werden:
+          // const match = textBeforeCursor.match(/[#@]\w*$/); //TODO SR: Alt
+          const match = textBeforeCursor.match(/[{$activationCharacter}]\w*$/);
           if (!match) {
             if (currentMentionWidget) {
               currentMentionWidget.remove();
@@ -346,6 +373,7 @@ JS;
 
         $btn = $mention->getAutosuggestButton();
         $filterAttributeAlias = $mention->getAutosuggestFilterAttributeAlias();
+        $activationCharacter = $mention->getAutosuggestActivationCharacter();
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
 
         return <<<JS
@@ -361,8 +389,10 @@ JS;
                     const wrapper = document.createElement("div");
                     wrapper.style.cssText = "{$mentionMenuCss}";
                     
-                    const searchQuery = filter.replace(/^[@#]/, "");
-            
+                    //const searchQuery = filter.replace(/^[@#]/, ""); //TODO SR: Alt
+                    const searchQuery = filter.replace(/^[{$activationCharacter}]/, "");
+                    
+                    //TODO SR: das "rows" muss ebenfalls per UXON Einstellbar sein.
                     $.ajax({
                         type: 'POST',
                         url: '{$this->getAjaxUrl()}',
@@ -372,6 +402,8 @@ JS;
                           object: '{$btn->getMetaObject()->getId()}',
                           resource: '{$btn->getPage()->getAliasWithNamespace()}',
                           element: '{$btn->getId()}',
+                          page: 1,
+                          rows: 10,
                           data: {
                             oId: '{$btn->getAction()->getMetaObject()->getId()}',
                             columns: ['{$filterAttributeAlias}'], 
@@ -390,8 +422,9 @@ JS;
                         success: function (response) {
                           //TODO SR: Bau hier ein error handling ein, falls das response nicht das gewünschte Ergebniss liefert.
                           //TODO SR: Es sollte von Uxon kommen, ob ein "@" oder "#" verwendet werden soll
+                          //TODO SR: Bennene das "name" zu was anderen um und schau, wo das "name" noch vorher verwendet wurde (es gibt eine funktion die item.name ruft)
                             const mentionList = (response.rows || []).map(item => ({
-                                name: "@" + item.{$filterAttributeAlias},
+                                name: "{$activationCharacter}" + item.{$filterAttributeAlias},
                                 url: "" //TODO: Add here an clickAction from uxon.
                             }));
             
@@ -752,7 +785,7 @@ JS;
         return $html;
     }
 
-    protected function buildJsMentionDataLoader() : string
+    protected function buildJsMentionDataLoaderAndListener() : string
     {
         $js = '';
         if ($this->getWidget() instanceof InputMarkdown) {
@@ -760,6 +793,7 @@ JS;
                 switch (true) {
                     case $mention instanceof TextMention:
                         $js .= $this->buildJsCreateFilteredMentionWidget($mention);
+                        $js .= $this->buildJsMentionListener($mention);
                         break;
                     default:
                         throw new WidgetConfigurationError($this->getWidget(), 'Only TextMention currently supported');
