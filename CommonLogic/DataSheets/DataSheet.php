@@ -1019,7 +1019,8 @@ class DataSheet implements DataSheetInterface
                                 }
                             }
                         }
-
+                        
+                        /* FIXME separate create and update cleanly!
                         $update_ds = $this->copy();
                         // We remove all rows from the update sheet, that were created during this step,
                         // to avoid duplicate transforms and unnecessary work. Having freshly created rows
@@ -1027,6 +1028,7 @@ class DataSheet implements DataSheetInterface
                         $update_ds->removeRows($rowIdxsToCreate);
                         // TODO if there are no rows left for a real update, maybe exit here? Do we need the OnUpdate
                         // in this case???
+                        */
                     } catch (DataSheetMissingRequiredValueError | DataSheetInvalidValueError $e) {
                         // If the create-operation failed due to missing values, we will need to
                         // tell the user where they are in the original sheet (as the user does not
@@ -1055,6 +1057,7 @@ class DataSheet implements DataSheetInterface
             }
         } 
         
+        // FIXME #update-create-separation currently $update_ds is not created, so it will always be $this
         if($update_ds === null ) {
             $update_ds = $this;
             $rowIdxsToUpdate = array_keys($this->getRows());
@@ -1318,6 +1321,7 @@ class DataSheet implements DataSheetInterface
 
         // If we separated update and created data we now need to put the really updated data back into the
         // main data sheet.
+        /* TODO #update-create-separation currently $this !== $update_ds is always false because $update_ds is never really created
         if ($this !== $update_ds) {
             // Double-check if some columns where added during the update operation
             if ($update_ds->getColumns()->count() !== $this->getColumns()->count()) {
@@ -1333,6 +1337,7 @@ class DataSheet implements DataSheetInterface
                 $this->rows[$thisRowIdx] = $update_ds->getRow($updateRowIdx);
             }
         }
+        */
         
         return $counter;
     }
