@@ -15,7 +15,7 @@ class OnMutationsAppliedEvent extends AbstractEvent implements iCanGenerateDebug
     private array $mutations;
     private string $subjectName;
 
-    public function __construct(array $mutationsApplied, string $subjectName, MutationPointInterface $mutationPoint)
+    public function __construct(array $mutationsApplied, string $subjectName, MutationPointInterface $mutationPoint = null)
     {
         $this->mutationPoint = $mutationPoint;
         $this->mutations = $mutationsApplied;
