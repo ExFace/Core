@@ -488,6 +488,7 @@ TEXT;
             }
             $tooltipData = <<<TEXT
 Type: {$type}
+Duration: {$this->formatMs($eventDur)}
 PHP class: {$phpClass}
 {$tooltipData}
 TEXT;
@@ -512,7 +513,7 @@ TEXT;
      */
     protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, string $category = null, string $tooltipData='') : string
     {
-        $durationText = $duration === null ? '' : $duration . ' ms';
+        $durationText = $this->formatMs($duration);
         $tooltipData = str_replace("\\n", "&#10;", json_encode(htmlspecialchars($tooltipData)));
         $cssClass = $category ?? '';
         return "<tr class=\"{$cssClass}\" title={$tooltipData}><td>{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
@@ -526,6 +527,27 @@ TEXT;
     protected function roundMs(float $milliseconds) : float
     {
         return round($milliseconds, $this->msDecimals);
+    }
+
+    /**
+     * Formats milliseconds as "x.xx ms" or "y.yy s" depending on the scale
+     * @param float|null $milliseconds
+     * @return string
+     */
+    protected function formatMs(?float $milliseconds) : string
+    {
+        switch (true) {
+            case $milliseconds === null:
+                $formatted = '';
+                break;
+            case $milliseconds > 1000:
+                $formatted = round($milliseconds / 1000, $this->msDecimals) . ' s';
+                break;
+            default:
+                $formatted = $this->roundMs($milliseconds) . ' ms';
+                break;
+        }
+        return $formatted;
     }
 
     protected function nowMs() : float
