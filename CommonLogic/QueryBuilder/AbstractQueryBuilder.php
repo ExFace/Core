@@ -474,10 +474,10 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         $qpart = new QueryPartValue($attribute_alias, $this);
         if (empty ($values)) {
-            throw new QueryBuilderException("Empty set of values passed for attribute \"{$attribute_alias}\" for an update operation");
+            throw new QueryBuilderException("Empty set of values passed for attribute \"{$attribute_alias}\" for an update of " . $this->getMainObject()->__toString());
         }
         if (! empty($uids_for_values) && count($values) !== count($uids_for_values)) {
-            throw new QueryBuilderException("Invalid values passed for attribute \"{$attribute_alias}\" for an update operation");
+            throw new QueryBuilderException("Cannot determine UIDs for values of attribute \"{$attribute_alias}\" for an update of {$this->getMainObject()->__toString()}: got " . count($values) . ' values and ' . count($uids_for_values) . ' UIDs');
         }
         $qpart->setValues($values);
         $qpart->setUids($uids_for_values);
