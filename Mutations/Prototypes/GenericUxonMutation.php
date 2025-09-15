@@ -138,13 +138,10 @@ class GenericUxonMutation extends AbstractMutation
         }
         // remove
         foreach ($this->remove as $jsonPath) {
-            // TODO commenting out instead of removed would probably be smarter as it will not
-            // change the length of array. We could also add a comment hint about this mutation
             $jsonObj->removeObject($jsonPath);
         }
 
         $subject->replace($jsonObj->getValue());
-
         $stateAfter = $subject->toJson(true);
         return new AppliedMutation($this, $subject, $stateBefore, $stateAfter);
     }
