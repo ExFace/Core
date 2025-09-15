@@ -50,6 +50,8 @@ class TextMention extends TextStencil
 {    
     private $autosuggestObjectAlias = null;
     private $autosuggestFilterAttributeAlias = null;
+    private $autosuggestActivationCharacter = null;
+    private $regex = null;
 
 
     /**
@@ -92,7 +94,55 @@ class TextMention extends TextStencil
     {
         return $this->autosuggestFilterAttributeAlias;
     }
-    
+
+    /**
+     * This character activates the mention widget, if typed into the editor.
+     *
+     * @uxon-property autosuggest_activation_character
+     * @uxon-type string
+     * @uxon-template @
+     *
+     * @param string $autosuggestActivationCharacter
+     * @return TextMention
+     */
+    protected function setAutosuggestActivationCharacter(string $autosuggestActivationCharacter) : TextMention
+    {
+        $this->autosuggestActivationCharacter = $autosuggestActivationCharacter;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAutosuggestActivationCharacter() : string
+    {
+        return $this->autosuggestActivationCharacter;
+    }
+
+    /**
+     * This regular expression is used to identify the searching string of mentions
+     * Example:
+     * - with the activation_character = "@" and regex = ".+": "@Max Mustermann"
+     * - with the activation_character = "#" and regex = "\d+": "#12345"
+     *
+     * @uxon-property regex
+     * @uxon-type string
+     * @uxon-template .+
+     *
+     * @param string $regex
+     * @return $this
+     */
+    protected function setRegex(string $regex) : TextMention
+    {
+        $this->regex = $regex;
+        return $this;
+    }
+
+    public function getRegex() : string
+    {
+        return $this->regex;
+    }
+
     public function getAutosuggestActionUxon() : UxonObject
     {
         $autosuggestObj = $this->getAutosuggestObject();
