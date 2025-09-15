@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
+use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -150,7 +152,11 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
         // Apply given mutations to the extending widget
         if ($this->mutation !== null) {
             $mutation = new GenericUxonMutation($this->workbench, $this->mutation);
-            $mutation->apply($widgetUxon);
+            $mutation->setName('Widget extension mutation');
+            $applied = $mutation->apply($widgetUxon);
+            // TODO: pageUxons don't have a name in itself, is there a way to get the page name here?
+            $extensionTargetName = $widgetUxon->getProperty('name') ?? $widgetUxon->getProperty('caption');
+            $this->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent([$applied], 'Widget extension mutation for UXON "' . $extensionTargetName . '"'));
         }
 
         return $widgetUxon;
