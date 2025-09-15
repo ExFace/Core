@@ -60,7 +60,7 @@ abstract class AbstractMutation implements MutationInterface, \Stringable
      * @param string $name
      * @return MutationInterface
      */
-    protected function setName(string $name) : MutationInterface
+    public function setName(string $name) : MutationInterface
     {
         $this->name = $name;
         return $this;
