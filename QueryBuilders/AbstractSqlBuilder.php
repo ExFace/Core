@@ -341,6 +341,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type boolean
      */
     const DAP_SQL_INSERT_UUID_OPTIMIZED = 'SQL_INSERT_UUID_OPTIMIZED';
+
+    /**
+     * Set to TRUE to make sure the query build will use the native auto-increment logic of the DB
+     * 
+     * @uxon-property SQL_INSERT_UUID_OPTIMIZED
+     * @uxon-target attribute
+     * @uxon-type boolean
+     */
+    const DAP_SQL_INSERT_AUTO_INCREMENT = 'SQL_INSERT_AUTO_INCREMENT';
     
     /**
      * Custom SQL for UPDATE statements to use instead of the value - typically some wrapper for the value. 
