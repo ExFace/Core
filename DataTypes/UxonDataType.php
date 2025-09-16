@@ -102,34 +102,29 @@ class UxonDataType extends JsonDataType
         $prototypeClass = $prototypeClass ?? $schema->getPrototypeClass($validationUxon, []);
         $validationObject = null;
         $affectedProperty = null;
-
-        // Copy the UXON, because it may be changed during object creation. 
-        // We need the original for proper error processing.
-        $creationUxon = $validationUxon->copy();
         
         try {
 
             // Validate the UXON import, by creating a mock object.
             // TODO This causes a lot of false positives, maybe there is a better way.
-            // TODO Additionally, the errors are annotated to the parent, not the affected property.
-            if(!$creationUxon->isArray(true)) {
+            if(!$validationUxon->isArray(true)) {
                 $validationObject = $this->createValidationObject(
                     $schema,
                     $prototypeClass,
-                    $creationUxon,
+                    $validationUxon,
                     $lastValidationObject
                 );
             }
             
             $creationError = null;
         } catch (Throwable $error) {
-            $creationError = $this->processCreationError($error, $baseUxon, $creationUxon, $path, $prototypeClass);
+            $creationError = $this->processCreationError($error, $baseUxon, $validationUxon, $path, $prototypeClass);
             $affectedProperty = $creationError->getAffectedProperty();
             
             // If the affected property is not a UXON object, we should render the error,
             // otherwise we should wait, to avoid redundant error messages. 
-            // If we encountered this error on the iteration, we store it in either case,
-            // because it is very accurate.
+            // We also render it, if we encountered it during the first iteration, because
+            // it is especially accurate.
             if($affectedProperty !== null || $path === []) {
                 $errors[] = $creationError;
                 $creationError = null;
@@ -152,10 +147,6 @@ class UxonDataType extends JsonDataType
                 
             }
         }
-
-        // Now we reassign the creation UXON, because we want to continue with the
-        // modified version for a more accurate validation.
-        $validationUxon = $creationUxon;
         
         // Check validation rules.
         foreach ($this->getValidationRules($prototypeClass) as $rule) {
