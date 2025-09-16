@@ -11,6 +11,8 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\Factories\ConditionFactory;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -941,5 +943,54 @@ CASE
     ELSE '{}'
 END 
 SQL;
+    }
+
+    /**
+     * MS SQL CREATE statements need some special treatment for IDENTITY columns
+     * 
+     * @see AbstractSqlBuilder::create()
+     */
+    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        $uidWritable = false;
+        if ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            $isIdentity =  (true === BooleanDataType::cast($uidAttr->getDataAddressProperty(static::DAP_SQL_IDENTITY_COLUMN)))
+                || (true === BooleanDataType::cast($uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_AUTO_INCREMENT)));
+
+            if ($isIdentity === true) {
+                $foundUidValues = false;
+                foreach ($this->getValues() as $qpart) {
+                    if ($qpart->getAttribute() === $uidAttr) {
+                        $uidQpart = $qpart;
+                        if (! empty(array_filter($qpart->getValues()))) {
+                            $foundUidValues = true;
+                        }
+                        break;
+                    }
+                }
+                $uidWritable = $uidAttr->isWritable();
+                if ($foundUidValues === true) {
+                    $beforeSQL = $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_BEFORE);
+                    $afterSQL = $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_BEFORE);
+                    if (! $beforeSQL && ! $afterSQL) {
+                        $table = $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE);
+                        $uidQpart->setDataAddressProperty(static::DAP_SQL_INSERT_BEFORE, "
+                            SET IDENTITY_INSERT {$table} ON;
+                        ");
+                        $uidQpart->setDataAddressProperty(static::DAP_SQL_INSERT_AFTER, "
+                            SET IDENTITY_INSERT {$table} OFF;
+                        ");
+                    }
+                } else {
+                    $uidAttr->setWritable(false);
+                }
+            }
+        }
+        $result = parent::create($data_connection);
+        if ($uidWritable === true) {
+            $uidAttr->setWritable(true);
+        }
+        return $result;
     }
 }
