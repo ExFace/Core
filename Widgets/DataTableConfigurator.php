@@ -255,11 +255,18 @@ class DataTableConfigurator extends DataConfigurator
             ],
             'columns' => [
                 [
+                    'data_column_name' => 'SETUP_APPLIED',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE'),
+                    'value' => '',
+                    'align' => 'Center',
+                    'readonly' => true,
+                    "cell_widget" => [
+                      "widget_type" => "Icon"
+                    ]
+                ], [
                     'attribute_alias' => 'NAME',
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
-                ], [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__DEFAULT_SETUP_FLAG'
                 ], [
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
