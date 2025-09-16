@@ -32,15 +32,17 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
      * @param null        $previous
      * @param string|null $affectedProperty
      */
-    public function __construct(UxonObject $uxon, string $message, $alias = null, $previous = null, string $affectedProperty = null)
+    public function __construct(
+        UxonObject $uxon, 
+        string $message, 
+        $alias = null, 
+        $previous = null, 
+        string $affectedProperty = null
+    )
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->uxon = $uxon;
-        
-        if($affectedProperty === null && $previous instanceof UxonExceptionInterface) {
-            $affectedProperty = $previous->getPath();
-        }
         
         $this->affectedProperty = $affectedProperty;
     }

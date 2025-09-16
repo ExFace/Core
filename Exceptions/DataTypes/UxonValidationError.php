@@ -27,16 +27,28 @@ class UxonValidationError extends UnexpectedValueException
         $this->uxon = $uxon;
     }
 
+    /**
+     * Returns a property path that points to the error location in the
+     * affected UXON.
+     * 
+     * @return array
+     */
     public function getPath() : array
     {
         return $this->path;
     }
-    
+
+    /**
+     * @return UxonObject|null
+     */
     public function getUxon() : ?UxonObject
     {
         return $this->uxon;
     }
-    
+
+    /**
+     * @return string|null
+     */
     public function getAffectedProperty() : ?string
     {
         $length = count($this->path);
