@@ -1,23 +1,24 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Exceptions\Widgets\WidgetFunctionUnknownError;
-use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Widgets\iShowDataColumn;
-use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
-use exface\Core\Interfaces\Widgets\iTakeInput;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
-use exface\Core\Interfaces\Widgets\iHaveIcon;
-use exface\Core\Interfaces\Widgets\iUseInputWidget;
-use exface\Core\Widgets\AbstractWidget;
+use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Widgets\WidgetFunctionUnknownError;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Widgets\AbstractWidget;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -432,36 +433,43 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     }
 
     /**
-     * Returns the width of the element in CSS notation (e.g.
-     * 100px)
-     *
-     * @return string
+     * Returns the width of the element in CSS notation (e.g. 100px)
+     * 
+     * @param WidgetDimension|null $width
+     * @return string|null
      */
-    public function getWidth()
+    public function getWidth(?WidgetDimension $width = null)
     {
-        $dimension = $this->getWidget()->getWidth();
-        if ($dimension->isRelative()) {
-            if (! $dimension->isMax()) {
-                $width = ($this->getWidthRelativeUnit() * $dimension->getValue()) . 'px';
-            } else {
-                $width = '100%';
-            }
-        } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
-            $width = $dimension->getValue();
-        } else {
-            $width = $this->buildCssWidthDefaultValue();
+        $dimension = $width ?? $this->getWidget()->getWidth();
+        switch (true) {
+            case $dimension->isMax():
+                $css = '100%';
+                break;
+            case $dimension->isRelative():
+                $css = ($this->getWidthRelativeUnit() * $dimension->getValue()) . 'px';
+                break;
+            case $dimension->isFacadeSpecific():
+            case $dimension->isPercentual():
+                $css = $dimension->getValue();
+                break;
+            case $dimension === $this->getWidget()->getWidth():
+                $css = $this->buildCssWidthDefaultValue();
+                break;
+            default:
+                $css = '';
         }
-        return $width;
+        return $css;
     }
     
     /**
      * Alias for getWidth() make it appear among the buildCssXXX methods.
-     *
+     * 
+     * @param WidgetDimension|null $width
      * @return string
      */
-    protected function buildCssWidth() : string
+    protected function buildCssWidth(?WidgetDimension $width = null) : string
     {
-        return $this->getWidth();
+        return $this->getWidth($width);
     }
     
     /**

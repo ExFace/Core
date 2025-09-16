@@ -1,6 +1,43 @@
 # Release history
 
-## 1.30 - in developmept
+## 1.31 - 18.09.2025
+
+New features:
+
+- Widget setups. Users can now save their setup for tables - columns, sorters, etc. (currently only in UI5 facade)
+- CLI task queue to run regular CLI commands, not just actions
+- Many new features for DataSpreadSheets based on JExcel
+  - If a related object is selected in a dropdown, all columns showing data from that relation are auto-updated
+  - Filters can now use widget links to other columns in the same spreadsheet: e.g. `=~data!OtherCol`
+  - Conditional properties `disabled_if` and `required_if` also support references to other columns
+- Data addresses in meta objects now support default values for placeholders: `[#MYATTR|?NA#]`.
+- Ability to apply `mutations` when using `extend_widget`
+- AI agents can now have multiple versions similarly to data flows
+- Action `DownloadZIP` to download multiple attachments in a ZIP archive
+- Formula `=Distinct()`
+
+Improvements:
+
+- Data type option `empty_text` now supported in most JS formatters
+- SelfUpdate action can now be run in containers, where PHP is not available globally
+- Task queues can now prevent parallel execution of the same task - see `skip_task_if_already_running`
+- Ability to use attribute data addresses in parameters of the `CallWebservice` action: `parameters_use_attributes`, `parameters_for_all_attributes`, etc.
+- Improvements for HTTP connectors: e.g. `timeout` option
+- Option `default_time` to change the time assumed when selecting a data in an `InputDateTime`
+
+## 1.30 - 07.08.2025
+
+New features:
+
+- SQL installers can now execute PHP plugins from inside SQL migrations
+
+Improvements:
+
+- Many improvements for the mutation framework
+- Option `auto_column_width` for table widgets
+- Improved handling of action effects in widgets, that produce subsheets
+- Added debug tooltips for conditional properties like `disabled_if` and `required_if`
+- Improved notes an tracking logic in OpenAPI based webserivces
 
 ## 1.29 - 19.06.2025
 

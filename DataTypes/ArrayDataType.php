@@ -235,4 +235,66 @@ class ArrayDataType extends AbstractDataType
 
         return null;
     }
+
+    /**
+     * Places the given value in the provided data at the position defined by an X-Path like expression
+     * 
+     * Examples:
+     * - `replaceViaXPath([], 'folder/file1', 'asdf')` => `["folder" => ["file1" => "asdf"]]`
+     * - `replaceViaXPath([], 'folder/file1', [])` => `["folder" => ["file1" => []]]`
+     * 
+     * @param array $data
+     * @param string $path
+     * @param mixed $value
+     * @return array
+     */
+    public static function replaceViaXPath(array $data, string $path, mixed $value): array
+    {
+        $keys = explode('/', trim($path, '/')); // split into parts
+        $ref =& $data; // reference to array so we can traverse and modify
+    
+        foreach ($keys as $i => $key) {
+            if ($i === count($keys) - 1) {
+                // last key: set value
+                $ref[$key] = $value;
+            } else {
+                // intermediate key: ensure it's an array
+                if (!isset($ref[$key]) || !is_array($ref[$key])) {
+                    $ref[$key] = [];
+                }
+                $ref =& $ref[$key]; // go deeper
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Moves an item of an array to another position shifting all other elements fruther down
+     * 
+     * @param $array
+     * @param $fromIndex
+     * @param $toIndex
+     * @return void
+     */
+    public static function moveElement(array $array, string $keyToMove, string $targetKey): array {
+        if (!isset($array[$keyToMove]) || !isset($array[$targetKey])) {
+            // Key doesn't exist, return original array
+            return $array;
+        }
+
+        $valueToMove = $array[$keyToMove];
+        unset($array[$keyToMove]); // Remove the element to move
+
+        $newArray = [];
+        foreach ($array as $key => $value) {
+            if ($key === $targetKey) {
+                // Insert the element before the target key
+                $newArray[$keyToMove] = $valueToMove;
+            }
+            $newArray[$key] = $value;
+        }
+
+        return $newArray;
+    }
 }

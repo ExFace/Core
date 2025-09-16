@@ -144,15 +144,8 @@ class WebConsoleFacade extends AbstractHttpFacade
                 $stream = new IteratorStream($console->getOutputGenerator($cmd));
                 break;
             default:
-                $envVars = [];
-                if (! empty($inheritVars = $widget->getEnvironmentVarsInherit())) {
-                    foreach (getenv() as $var => $val) {
-                        if (in_array($var, $inheritVars)) {
-                            $envVars[$var] = $val;
-                        }
-                    }
-                }
-                $envVars = array_merge($envVars, $widget->getEnvironmentVars());
+                $envVars = $this->buildEnvironmentVars($widget);
+                
                 
                 $generator = CommandRunner::runCliCommand($cmd, $envVars, $widget->getCommandTimeout());
                 $stream = new IteratorStream($generator);
@@ -172,6 +165,24 @@ class WebConsoleFacade extends AbstractHttpFacade
         $response = new Response(200, $headers, $stream);
         
         return $response;
+    }
+
+    /**
+     * @param Console $widget
+     * @return array
+     */
+    protected function buildEnvironmentVars(Console $widget) : array
+    {
+        $envVars = [];
+        if (! empty($inheritVars = $widget->getEnvironmentVarsInherit())) {
+            foreach (getenv() as $var => $val) {
+                if (in_array($var, $inheritVars)) {
+                    $envVars[$var] = $val;
+                }
+            }
+        }
+        $envVars = array_merge($envVars, $widget->getEnvironmentVars());
+        return $envVars;
     }
     
     /**

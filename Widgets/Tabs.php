@@ -12,13 +12,13 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 /**
  * Tabbed container with one or more tabs.
  * 
- * The `Tabs` widget constis of nav-strip listing the names of all available tabs (usually at 
+ * The `Tabs` widget consists of nav-strip listing the names of all available tabs (usually at 
  * the top) and a large display area showing the current tab. 
  * 
  * Each tab is a `Tab` widget, that can contain any number of widgets. Every `Tab` should have 
  * a `caption` and may have an `icon` and a `hint`. These attributes along with `disabled`, `hidden`
  * etc. control the appearance of the nav-strip. Depending on the facade, the `visibility` property
- * can be used to emhasize certain tabs..
+ * can be used to emphasize certain tabs..
  * 
  * The first tab is visible (active) by default. You can also activate any other tab initially by
  * setting the `active_tab` property to the sequential number of the slide (starting with 0!).
@@ -183,24 +183,36 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
      */
     public function setWidgets($widget_or_uxon_array)
     {
-        $widgets = array();
+        $widgets = [];
         foreach ($widget_or_uxon_array as $w) {
-            if ($w instanceof UxonObject) {
-                // If we have a UXON or instantiated widget object, use the widget directly
-                $page = $this->getPage();
-                $widget = WidgetFactory::createFromUxon($page, $w, $this, $this->getTabWidgetType());
-            } elseif ($w instanceof WidgetInterface){
-                $widget = $w;
-            } else {
+            // If we have a UXON or instantiated widget object, use the widget directly
+            switch (true) {
+                // If it's a UXON, use it to create a widget
+                case $w instanceof UxonObject:
+                    $page = $this->getPage();
+                    // See what widget type the factory will produce
+                    list($uxon, $widgetType) = WidgetFactory::getDefaults($this->getWorkbench(), $w, $this, $this->getTabWidgetType());
+                    // If it is an allowed child type, create a direct child.
+                    // If not, create a tab and instantiate the widget from the UXON inside the tab
+                    if($this->isWidgetTypeAllowed($widgetType)) {
+                        // Use WidgetFactory::create() instead of createFromUxon() to avoid any UXON processing, that
+                        // was already done by getDefaults() above. This is just to save unneeded iterations.
+                        $tab = WidgetFactory::create($page, $widgetType, $this, $uxon);
+                    } else {
+                        $tab = $this->createTab();
+                        $content = WidgetFactory::createFromUxonInParent($tab, $w);
+                        $tab->addWidget($content);
+                        $tab->setMetaObject($content->getMetaObject());
+                        $tab->setCaption($content->getCaption());
+                    }
+                    $widgets[] = $tab;
+                    break;
+                // If it is an already instantiated widget, use it directly
+                case $w instanceof WidgetInterface:
                 // If it is something else, just add it to the result and let the parent object deal with it
-                $widgets[] = $w;
-            }
-            
-            // If the widget is not a Tab itslef, wrap it in a Tab. Otherwise add it directly to the result.
-            if (! $this->isWidgetAllowed($widget)) {
-                $widgets[] = $this->createTab($widget);
-            } else {
-                $widgets[] = $widget;
+                default:
+                    $widgets[] = $w;
+                    break;
             }
         }
         
@@ -223,22 +235,12 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
     /**
      * Creates a tab (but does not add it automatically!!!)
      *
-     * @param WidgetInterface $contents            
      * @return Tab
      */
-    public function createTab(WidgetInterface $contents = null) : Tab
+    public function createTab() : Tab
     {
         // Create an empty tab
-        $widget = $this->getPage()->createWidget($this->getTabWidgetType(), $this);
-        
-        // If any contained widget is specified, add it to the tab an inherit some of it's attributes
-        if ($contents) {
-            $widget->addWidget($contents);
-            $widget->setMetaObject($contents->getMetaObject());
-            $widget->setCaption($contents->getCaption());
-        }
-        
-        return $widget;
+        return $this->getPage()->createWidget($this->getTabWidgetType(), $this);
     }
 
     /**
@@ -264,7 +266,7 @@ class Tabs extends Container implements iFillEntireContainer, iContainTypedWidge
                 $tab->addWidget($child);
             }
         } else {
-            $tab = $this->createTab($widget);
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot add Widget "' . $widget->getId() . '". Widget type "Tab" expected, "' . $widget->getWidgetType() . '" given!');
         }
         return $this->addWidget($tab, $position);
     }

@@ -28,7 +28,7 @@ class ObjectBehaviorMutationPoint extends AbstractMutationPoint
         $applied = $point->applyMutations($target, $event->getUxon());
 
         if (! empty($applied)) {
-            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, 'behavior "' . $event->getUxon()->getProperty('name') . '"'));
+            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($applied, 'behavior "' . $event->getUxon()->getProperty('name') . '"', $point));
         }
     }
 }

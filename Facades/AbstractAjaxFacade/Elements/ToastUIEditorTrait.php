@@ -5,6 +5,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
+use exface\Core\Widgets\Parts\TextMention;
 use exface\Core\Widgets\Parts\TextStencil;
 
 /**
@@ -416,5 +417,14 @@ JS;
     {
         $html = '<div id="'.$this->getId().'" class="markdown-editor"></div>';
         return $html;
+    }
+    
+    protected function buildJsMentionAustosuggest(TextMention $mention, string $filterValueJs) : string
+    {
+        $btn = $mention->getAutosuggestButton();
+        $btnEl = $this->getFacade()->getElement($btn);
+        $filterAttributeAlias = $mention->getAutosuggestFilterAttributeAlias();
+        $js = $btnEl->buildJsClickFunction($btn->getAction(), "{oId: '{$btn->getAction()->getMetaObject()->getId}', filters: {operator: 'AND', conditions: [{expression: '{$filterAttributeAlias}', comparator: '=', value: {$filterValueJs}}]}}");
+        return $js;
     }
 }

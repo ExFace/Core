@@ -201,12 +201,13 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function rebaseCustom(MetaObjectInterface $newObject, callable $conditionTransformer) : ConditionGroupInterface;
     
     /**
-     * Removes a given condition from this condition group (not from the nested groups!)
-     *
+     * Removes a given condition from this condition group - and from the nested groups if $recursive is TRUE
+     * 
      * @param ConditionInterface $condition
+     * @param bool $recursive
      * @return ConditionGroupInterface
      */
-    public function removeCondition(ConditionInterface $condition) : ConditionGroupInterface;
+    public function removeCondition(ConditionInterface $condition, bool $recursive = false) : ConditionGroupInterface;
     
     /**
      * Removes all conditions and nested groups from this condition group thus resetting it completely
@@ -285,19 +286,6 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return ConditionGroupInterface
      */
     public function with(string $operator, ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
-
-    /**
-     * Forces the condition group to load missing data. 
-     * 
-     * This happens automatically on `evaluate()`, anyway. But if you want to control the timing
-     * or read all data in one batch to improve performance this is the way to go. Remember to
-     * call `evaluate()` with `$readMissingData = FALSE` if you do this.
-     * 
-     * @param DataSheetInterface    $dataSheet
-     * @param LogBookInterface|null $logBook
-     * @return DataSheetInterface
-     */
-    public function readMissingData(DataSheetInterface $dataSheet, ?LogBookInterface $logBook = null) : DataSheetInterface;
 
     /**
      * @inheritDoc
