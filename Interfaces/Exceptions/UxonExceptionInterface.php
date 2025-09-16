@@ -22,7 +22,7 @@ Interface UxonExceptionInterface
     public function getUxon();
 
     /**
-     * @return string|null
+     * @return array
      */
-    public function getAffectedProperty() : ?string;
+    public function getPath() : array;
 }

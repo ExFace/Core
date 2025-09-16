@@ -13,7 +13,6 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Uxon\JsonValidationRule;
 use exface\Core\Uxon\UxonSchema;
-use exface\Core\Widgets\Button;
 use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
 
@@ -69,6 +68,7 @@ class UxonDataType extends JsonDataType
         return $this->validateUxonRecursive(
             [],
             $inputData,
+            $inputData->copy(),
             $schema,
             $inputData->getProperty(self::PRP_OBJECT_ALIAS),
             $rootPrototypeClass,
@@ -79,7 +79,8 @@ class UxonDataType extends JsonDataType
      * Performs a recursive validation.
      *
      * @param array               $path
-     * @param UxonObject          $uxon
+     * @param UxonObject          $baseUxon
+     * @param UxonObject          $validationUxon
      * @param UxonSchemaInterface $schema
      * @param string|null         $objectAlias
      * @param string|null         $prototypeClass
@@ -88,40 +89,48 @@ class UxonDataType extends JsonDataType
      * @throws InvalidArgumentException
      */
     protected function validateUxonRecursive(
-        array $path,
-        UxonObject $uxon,
+        array               $path,
+        UxonObject          $baseUxon,
+        UxonObject          $validationUxon,
         UxonSchemaInterface $schema,
-        string $objectAlias = null,
-        string $prototypeClass = null,
-        mixed $lastValidationObject = null
+        string              $objectAlias = null,
+        string              $prototypeClass = null,
+        mixed               $lastValidationObject = null
     ) : array
     {
         $errors = [];
-        $prototypeClass = $prototypeClass ?? $schema->getPrototypeClass($uxon, []);
+        $prototypeClass = $prototypeClass ?? $schema->getPrototypeClass($validationUxon, []);
         $validationObject = null;
         $affectedProperty = null;
 
+        // Copy the UXON, because it may be changed during object creation. 
+        // We need the original for proper error processing.
+        $creationUxon = $validationUxon->copy();
+        
         try {
+
             // Validate the UXON import, by creating a mock object.
             // TODO This causes a lot of false positives, maybe there is a better way.
             // TODO Additionally, the errors are annotated to the parent, not the affected property.
-            if(!$uxon->isArray(true)) {
+            if(!$creationUxon->isArray(true)) {
                 $validationObject = $this->createValidationObject(
                     $schema,
                     $prototypeClass,
-                    $uxon->copy(),
+                    $creationUxon,
                     $lastValidationObject
                 );
             }
             
             $creationError = null;
         } catch (Throwable $error) {
-            $creationError = $this->processCreationError($error, $uxon, $path, $prototypeClass);
+            $creationError = $this->processCreationError($error, $baseUxon, $creationUxon, $path, $prototypeClass);
             $affectedProperty = $creationError->getAffectedProperty();
             
             // If the affected property is not a UXON object, we should render the error,
-            // otherwise we should wait, to avoid redundant error messages.
-            if($affectedProperty !== null) {
+            // otherwise we should wait, to avoid redundant error messages. 
+            // If we encountered this error on the iteration, we store it in either case,
+            // because it is very accurate.
+            if($affectedProperty !== null || $path === []) {
                 $errors[] = $creationError;
                 $creationError = null;
             }
@@ -129,8 +138,8 @@ class UxonDataType extends JsonDataType
             // Try to create an empty validation object to improve accuracy of child validations.
             try {
                 $emptyUxon = UxonObject::fromArray([self::PRP_OBJECT_ALIAS => $objectAlias]);
-                if($uxon->hasProperty('attribute_alias')) {
-                    $emptyUxon->setProperty('attribute_alias', $uxon->getProperty('attribute_alias'));
+                if($validationUxon->hasProperty('attribute_alias')) {
+                    $emptyUxon->setProperty('attribute_alias', $validationUxon->getProperty('attribute_alias'));
                 }
                 
                 $validationObject = $this->createValidationObject(
@@ -144,10 +153,14 @@ class UxonDataType extends JsonDataType
             }
         }
 
+        // Now we reassign the creation UXON, because we want to continue with the
+        // modified version for a more accurate validation.
+        $validationUxon = $creationUxon;
+        
         // Check validation rules.
         foreach ($this->getValidationRules($prototypeClass) as $rule) {
             try {
-                $rule->check($uxon);
+                $rule->check($validationUxon);
             } catch (DataTypeValidationError $error) {
                 $errors[] = new UxonValidationError(
                     $path,
@@ -160,7 +173,7 @@ class UxonDataType extends JsonDataType
 
         // Check nested UXONS.
         $subErrors = [];
-        foreach ($uxon->getPropertiesAll() as $prop => $val) {
+        foreach ($validationUxon->getPropertiesAll() as $prop => $val) {
             if($affectedProperty !== null && $prop === $affectedProperty) {
                 continue;
             }
@@ -169,7 +182,7 @@ class UxonDataType extends JsonDataType
                 continue;
             }
 
-            $prototype = $schema->getPrototypeClass($uxon, [$prop, ' '], $prototypeClass);
+            $prototype = $schema->getPrototypeClass($validationUxon, [$prop, ' '], $prototypeClass);
             if ($schema instanceof UxonSchema) {
                 $propSchema = $schema->getSchemaForClass($prototype);
             } else {
@@ -187,6 +200,7 @@ class UxonDataType extends JsonDataType
             $subPath[] = $prop;
             $result = $this->validateUxonRecursive(
                 $subPath,
+                $baseUxon,
                 $val,
                 $propSchema,
                 $objectAlias,
@@ -200,32 +214,28 @@ class UxonDataType extends JsonDataType
             $errors[] = $creationError;
         }
         
-        // TODO geb 2025-09: To disable breadcrumb rendering we have to modify the json-editor library. Its not
-        // TODO big change, nor does it create any dependencies, so it might be worth it. (treemode._renderValidationErrors).
         return array_merge($errors, $subErrors);
     }
-    
+
+    /**
+     * Processes an error thrown whenever a validation object was created.
+     * 
+     * @param Throwable  $error
+     * @param UxonObject $baseUxon
+     * @param UxonObject $creationUxon
+     * @param array      $path
+     * @param string     $prototype
+     * @return UxonValidationError
+     */
     protected function processCreationError(
-        Throwable $error, 
-        UxonObject $uxon, 
-        array $path, 
-        string $prototype
+        Throwable  $error, 
+        UxonObject $baseUxon,
+        UxonObject $creationUxon, 
+        array      $path, 
+        string     $prototype
     ) : UxonValidationError
     {
-        $property = null;
-        $previous = $error->getPrevious();
-        
-        if($previous instanceof UxonExceptionInterface) {
-            $property = $this->getAffectedProperty($uxon, $previous, $prototype);
-        } 
-        
-        if ($property === null && $error instanceof UxonExceptionInterface) {
-            $property = $this->getAffectedProperty($uxon, $error, $prototype);
-        }
-        
-        if($property !== null) {
-            $path[] = $property;
-        }
+        $path = $this->getErrorPath($baseUxon, $error, $path);
         
         return new UxonValidationError(
             $path,
@@ -234,16 +244,69 @@ class UxonDataType extends JsonDataType
             $error
         );
     }
-    
-    protected function getAffectedProperty(UxonObject $uxon, UxonExceptionInterface $error, string $prototype) : ?string
+
+    /**
+     * Renders an error path from an error.
+     * 
+     * @param UxonObject $uxon
+     * @param Throwable  $error
+     * @param array      $recursionPath
+     * @return array
+     */
+    protected function getErrorPath(UxonObject $uxon, Throwable $error, array $recursionPath) : array
     {
-        switch (true) {
-            case is_a($prototype, Button::class, true):
-                $property = $error->getAffectedProperty();
-                $baseProperty = 'action_' . $property;
-                return $uxon->hasProperty($baseProperty) ? $baseProperty : $property;
-            default:
-                return $error->getAffectedProperty();
+        $errorPath = $this->getBaseError($error)->getPath();
+
+        if (empty($errorPath)) {
+            return $recursionPath;
+        }
+
+        $countRecPath = count($recursionPath);
+        $currentPath = $errorPath;
+        $currentCount = count($errorPath);
+        $switched = false;
+        $result = [];
+
+        for ($i = 0; $i < $currentCount; $i++) {
+            $propName = $currentPath[$i];
+            
+            if( !$uxon instanceof UxonObject ||
+                !$uxon->hasProperty($propName)
+            ) {
+                if($i < $countRecPath && !$switched) {
+                    $i -= 1;
+                    $switched = true;
+                    $currentPath = $recursionPath;
+                    $currentCount = $countRecPath;
+                    continue;
+                } else {
+                    return $result;
+                }
+            }
+            
+            $uxon = $uxon->getProperty($propName);
+            $result[] = $propName;
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Get the lowest instance of `UxonExceptionInterface` from a chain of errors.
+     * 
+     * @param Throwable $error
+     * @return UxonExceptionInterface|null
+     */
+    protected function getBaseError(Throwable $error) : ?UxonExceptionInterface
+    {
+        $previous = $error->getPrevious();
+        if($previous === null) {
+            return $error instanceof UxonExceptionInterface ?
+                $error : null;
+        } else {
+            $result = $this->getBaseError($previous);
+            return $result ===  null && $error instanceof UxonExceptionInterface ?
+                $error : $result;
         }
     }
 
