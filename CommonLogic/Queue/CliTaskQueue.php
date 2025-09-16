@@ -30,30 +30,45 @@ class CliTaskQueue extends SyncTaskQueue
      */
     protected function performTask(TaskInterface $task) : ResultInterface
     {
-        $command = $task->getParameter('cmd');
-        
-        // Check if command allowed
-        $allowed = FALSE;
-        $normalized = str_replace('\\', '/', $command);
-        foreach ($this->getAllowedCommands() as $allowedCommand){
-            $match = preg_match($allowedCommand, $normalized);
-            if($match === 1){
-                $allowed = TRUE;
-                break;
-            }
+        $commands = $task->getParameter('cmd');
+
+        // Normalize to array
+        if (!is_array($commands)) {
+            $commands = $commands->toArray();
         }
-        if (! $allowed){
-            throw new QueueRuntimeError($this, 'Command "' . $command . '" not allowed in CLI queue "' . $this->getAliasWithNamespace() . '"!');
-        }
+
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout   = $task->getParameter('timeout');
+        $timeout = $task->getParameter('timeout');
         $result = new ResultMessageStream($task);
-        $result->setMessageStreamGenerator(
-            [CommandRunner::class, 'runCliCommand'],
-            [$command, $envVars, $timeout, $projectRoot, false]
-        );
-        
+
+        // Store each command's outputs
+        $allOutputs = [];
+
+        foreach ($commands as $command) {
+            // Check if command allowed
+            $allowed = FALSE;
+            $normalized = str_replace('\\', '/', $command);
+            foreach ($this->getAllowedCommands() as $allowedCommand){
+                $match = preg_match($allowedCommand, $normalized);
+                if($match === 1){
+                    $allowed = TRUE;
+                    break;
+                }
+            }
+            if (! $allowed){
+                throw new QueueRuntimeError($this, 'Command "' . $command . '" not allowed in CLI queue "' . $this->getAliasWithNamespace() . '"!');
+            }
+
+            // Run each command and collect the output
+            foreach (CommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false) as $output) {
+                $allOutputs[] = $output;
+            }
+        }
+
+        // Set all outputs as message in result
+        $result->setMessage(implode(PHP_EOL, $allOutputs));
+
         return $result;
     }
 
