@@ -109,9 +109,12 @@ class UxonObject implements \IteratorAggregate
 
     private $snippetResolver = null;
     
-    public function __construct(array $properties = [])
+    private array $path = [];
+    
+    public function __construct(array $properties = [], array $path = [])
     {
         $this->array = $this->stripComments($properties);
+        $this->path = $path;
     }
     
     /**
@@ -248,7 +251,9 @@ class UxonObject implements \IteratorAggregate
             $cache = $this->childUxons[$name] ?? null;
             if (null === $cache) {
                 $val = $this->resolveSnippetsInArray($val);
-                $cache = $this->childUxons[$name] = new self($val);
+                $path = $this->path;
+                $path[] = $name;
+                $cache = $this->childUxons[$name] = new self($val, $path);
             } 
             return $cache;
         }
@@ -532,10 +537,11 @@ class UxonObject implements \IteratorAggregate
     }
 
     /**
-     * Finds public setter methods in the given class mathing properties of this UXON object and calls them for each property.
+     * Finds public setter methods in the given class mathing properties of this UXON object and calls them for each
+     * property.
      *
-     * NOTE: this only works with public setters as private and protected methods cannot be called from the UXON object. To
-     * work with non-public setters use the ImportUxonObjectTrait in your enitity!
+     * NOTE: this only works with public setters as private and protected methods cannot be called from the UXON
+     * object. To work with non-public setters use the ImportUxonObjectTrait in your enitity!
      *
      * @param object $target_class_instance            
      * @throws UxonMapError
@@ -656,5 +662,17 @@ class UxonObject implements \IteratorAggregate
         $this->array = $data;
         $this->childUxons = [];
         return $this;
+    }
+
+    /**
+     * Returns a path containing property-names that lead to this UXON. 
+     * This path is valid for any UXON this instance was derived from, 
+     * provided that the path nodes were not modified along the way.
+     * 
+     * @return array
+     */
+    public function getPath() : array
+    {
+        return $this->path;
     }
 }
