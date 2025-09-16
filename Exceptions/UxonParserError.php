@@ -39,7 +39,7 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
         $this->uxon = $uxon;
         
         if($affectedProperty === null && $previous instanceof UxonExceptionInterface) {
-            $affectedProperty = $previous->getAffectedProperty();
+            $affectedProperty = $previous->getPath();
         }
         
         $this->affectedProperty = $affectedProperty;
@@ -81,9 +81,16 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
 
     /**
      * @inerhitDoc 
+     * @see UxonExceptionInterface::getPath()
      */
-    public function getAffectedProperty(): ?string
+    public function getPath(): array
     {
-        return $this->affectedProperty;
+        $path = $this->uxon?->getPath() ?? [];
+        
+        if($this->affectedProperty !== null) {
+            $path[] = $this->affectedProperty;
+        }
+        
+        return $path;
     }
 }
