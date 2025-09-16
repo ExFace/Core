@@ -82,9 +82,11 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
                     $updSheet->dataUpdate();
                     
                     $actionUxon = UxonObject::fromJson($row['ACTION_UXON'] ?? '');
-                    $actionSelector = $actionUxon->getProperty('alias');
                     $taskUxon = UxonObject::fromJson($row['TASK_UXON'] ?? '');
-                    $taskUxon->setProperty('action', $actionSelector);
+                    if (!empty($row['ACTION_UXON'])) {
+                        $actionSelector = $actionUxon->getProperty('alias');
+                        $taskUxon->setProperty('action', $actionSelector);
+                    }
                     $task = new ScheduledTask($this->getWorkbench(), $taskUxon, $row['UID']);
                     $result = $router->handle($task, explode(',', $row['QUEUE_TOPICS']), $row['UID'], UUIDDataType::generateShortId(8, $rowNo), 'Scheduler');
                     if ($result instanceof ResultError) {

@@ -17,6 +17,10 @@ use exface\Core\Events\DataConnection\OnQueryEvent;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\ConfigPlaceholders;
+use exface\Core\Templates\Placeholders\EnvironmentVariablePlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Uxon\ConnectionSchema;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
@@ -70,6 +74,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     
     private $uxon = null;
     
+    private ?BracketHashStringTemplateRenderer $templateRenderer = null;
+    
     /**
      *
      * @deprecated Use DataConnectionFactory instead!
@@ -81,6 +87,26 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         if ($config !== null) {
             $this->importUxonObject($config);
         }
+    }
+
+    /**
+     * @return BracketHashStringTemplateRenderer
+     */
+    protected function getTemplateRenderer() : BracketHashStringTemplateRenderer
+    {
+        if($this->templateRenderer !== null) {
+            return $this->templateRenderer;
+        }
+        
+        $workbench = $this->getWorkbench();
+        $result = new BracketHashStringTemplateRenderer($workbench);
+        
+        // Add placeholders.
+        $result->addPlaceholder(new EnvironmentVariablePlaceholders());
+        $result->addPlaceholder(new ConfigPlaceholders($workbench));
+        $result->addPlaceholder(new FormulaPlaceholders($workbench));
+
+        return $this->templateRenderer = $result;
     }
     
     /**
@@ -218,12 +244,17 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     public function importUxonObject(UxonObject $uxon)
     {
         try {
+            // Render placeholders.
+            $json = $uxon->toJson();
+            $json = $this->getTemplateRenderer()->render($json);
+            $uxon = UxonObject::fromJson($json, CASE_LOWER);
+            
+            // Import UXON.
             $this->uxon = $uxon;
-            return $this->importUxonViaTrait($uxon);
+            $this->importUxonViaTrait($uxon);
         } catch (UxonMapError $e) {
             throw new DataConnectionConfigurationError($this, 'Invalid data connection configuration: ' . $e->getMessage(), '6T4F41P', $e);
         }
-        return;
     }
 
     /**
@@ -289,9 +320,13 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         if ((null !== $tz = $this->getTimeZone()) && $query->getTimeZone() === null) {
             $query->setTimeZone($tz);
         }
-        $result = $this->performQuery($query);
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnQueryEvent($this, $query));
+        try {
+            $result = $this->performQuery($query);
+            $this->getWorkbench()->eventManager()->dispatch(new OnQueryEvent($this, $query));
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnQueryEvent($this, $query));
+            throw $e;
+        }
         return $result;
     }
 

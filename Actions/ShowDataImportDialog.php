@@ -24,7 +24,6 @@ use exface\Core\Widgets\Message;
 class ShowDataImportDialog extends ShowDialog
 {
     private $targetWidgetId = null;
-    private $targetWidget = null;
     private $excludedAliases = [];
     private $updateIfMatchingAttributeAliases = [];
     
@@ -37,6 +36,8 @@ class ShowDataImportDialog extends ShowDialog
     {
         parent::init();
         $this->setIcon(Icons::UPLOAD);
+        $this->setPrefillWithInputData(false);
+        $this->setPrefillWithFilterContext(false);
     } 
 
     /**

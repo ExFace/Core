@@ -129,6 +129,7 @@ class MetaModelInstaller extends DataInstaller
         $this->addDataOfObject('exface.Core.MUTATION_SET', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.MUTATION', 'CREATED_ON', 'MUTATION_SET__APP');
         $this->addDataOfObject('exface.Core.PERMALINK', 'CREATED_ON', 'APP', [], '[#OBJECT__ALIAS_WITH_NS#]/29_PERMALINK.json');
+        $this->addDataOfObject('exface.Core.WIDGET_SETUP', 'CREATED_ON', 'APP');
     }
     
     /**

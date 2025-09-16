@@ -90,5 +90,19 @@ class PolicyCombiningAlgorithmDataType extends StringDataType implements EnumDat
         return $this->labels;
     }
 
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValueHints()
+     */
+    public function getValueHints() : array
+    {
+        return [
+            static::DENY_OVERRIDES => 'The deny overrides combining algorithm is intended for those cases where a deny decision should have priority over a permit decision.',
+            static::PERMIT_OVERRIDES => 'The permit overrides combining algorithm is intended for those cases where a permit decision should have priority over a deny decision.',
+            static::PERMIT_UNLESS_DENY => 'The “Permit-unless-deny” combining algorithm is intended for those cases where a deny decision should have priority over a permit decision, and an “Indeterminate” or “NotApplicable” must never be the result. It is particularly useful at the top level in a policy structure to ensure that a PDP will always return a definite “Permit” or “Deny” result.',
+            static::DENY_UNLESS_PERMIT => 'The “Deny-unless-permit” combining algorithm is intended for those cases where a permit decision should have priority over a deny decision, and an “Indeterminate” or “NotApplicable” must never be the result. It is particularly useful at the top level in a policy structure to ensure that a PDP will always return a definite “Permit” or “Deny” result.',
+        ];
+    }
 }
 ?>

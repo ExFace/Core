@@ -264,7 +264,7 @@ class Expression implements ExpressionInterface
      */
     public function isEmpty() : bool
     {
-        return $this->__toString() === null;
+        return ($this->__toString() ?? '') === '';
     }
     
     /**

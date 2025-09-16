@@ -8,6 +8,7 @@ use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
 use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -51,6 +52,8 @@ class Tracer extends Profiler
 {
     const FOLDER_NAME_TRACES = 'traces';
     
+    const DEFAULT_MAX_DURATION = 60;
+    
     private $logHandler = null;
     
     private $filePath = null;
@@ -75,11 +78,41 @@ class Tracer extends Profiler
         parent::__construct($workbench, $startOffsetMs);
         $this->registerLogHandlers();
         $this->registerEventHandlers();
-        $this->getWorkbench()->eventManager()->addListener(OnContextInitEvent::getEventName(), function(OnContextInitEvent $event){
-            if ($event->getContext() instanceof DebugContext) {
-                $event->getContext()->startTracing($this);
-            }
-        });
+        
+        $this->getWorkbench()->eventManager()->addListener(
+            OnContextInitEvent::getEventName(),
+            [$this, 'onContextInit']
+        );
+    }
+
+    /**
+     * Initializes this instance, once the parent context is ready.
+     * If the system has been tracing for longer than the configured limit,
+     * tracing will be stopped.
+     * 
+     * @param OnContextInitEvent $event
+     * @return void
+     */
+    public function onContextInit(OnContextInitEvent $event) : void
+    {
+        $context = $event->getContext();
+        if (!($context instanceof DebugContext)) {
+            return;
+        }
+
+        $traceCurrDuration = $context->getTraceDuration();
+        $config = $this->getWorkbench()->getConfig();
+        
+        $traceMaxDuration = $config->hasOption('DEBUG.TRACE_MAX_TIME_SECONDS') ?
+            $config->getOption('DEBUG.TRACE_MAX_TIME_SECONDS') : self::DEFAULT_MAX_DURATION;
+
+        // Max trace duration may not cancel tracing for the current request, but will prevent future
+        // requests from being traced.
+        if($traceCurrDuration === false || $traceCurrDuration >= $traceMaxDuration) {
+            $context->stopTracing();
+        } else {
+            $context->startTracing($this);
+        }
     }
     
     /**
@@ -206,14 +239,20 @@ class Tracer extends Profiler
         ]);
 
         // ETL Steps
-        $event_manager->addListener(OnBeforeETLStepRun::getEventName(), [
-            $this,
-            'startETLStep'
-        ]);
-        $event_manager->addListener(OnAfterETLStepRun::getEventName(), [
-            $this,
-            'stopETLStep'
-        ]);
+        // FIXME hook up ETL stuff only if the ETL app is really installed?
+        // Maybe make a static event listener for OnBeforeTracerInit?
+        if (class_exists('\\axenox\\ETL\\Events\\Flow\\OnBeforeETLStepRun')) {
+            $event_manager->addListener(OnBeforeETLStepRun::getEventName(), [
+                $this,
+                'startETLStep'
+            ]);
+        }
+        if (class_exists('\\axenox\\ETL\\Events\\Flow\\OnAfterETLStepRun')) {
+            $event_manager->addListener(OnAfterETLStepRun::getEventName(), [
+                $this,
+                'stopETLStep'
+            ]);
+        }
         
         // Performance summary
         $event_manager->addListener(OnBeforeStopEvent::getEventName(), [
@@ -279,7 +318,13 @@ class Tracer extends Profiler
                 $name .= ': ' . $this->sanitizeLapName($event->getQuery()->toString(false));
                 break;
             case $event instanceof ActionEventInterface:
-                $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+                $action = $event->getAction();
+                $name = 'Action "' . $action->getAliasWithNamespace() . '"';
+                try {
+                    $name .= ' on ' . $action->getMetaObject()->getAliasWithNamespace();
+                } catch (ActionObjectNotSpecifiedError $e) {
+                    // Leave the name as-is for actions, that do not have an object
+                }
                 break;
             case $event instanceof CommunicationMessageEventInterface:
                 $name = 'Communication message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';

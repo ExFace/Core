@@ -66,4 +66,16 @@ interface JsDataTypeFormatterInterface
     public function buildJsFormatParser($jsInput);
     
     public function buildJsValidator(string $jsValue) : string;
+
+    /**
+     * Returns an inline JS snippet that contains a fallback value for empty values (such as `null`).
+     *
+     * @param string $jsFallback
+     * If the underlying `DataType` does not have an empty text, this JS snippet will be returned instead.
+     * @param bool   $encode
+     * Set to FALSE if you DON'T want the return value to be encoded (i.e. escaped and enquoted).
+     * @return string|null
+     * @see DataTypeInterface::getEmptyText()
+     */
+    public function getJsEmptyText(string $jsFallback, bool $encode = true) : ?string;
 }
