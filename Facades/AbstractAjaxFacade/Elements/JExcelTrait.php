@@ -478,9 +478,50 @@ JS;
             var iXEnd = iXStart;
             var oColOpts = {};
 
-            el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
-                aPastedData.push(aRow[0].split("\\t"));
+            // Issue: in csv, umatched double quotes treat everything after it as a string (until the next quotes), breaking the parsing logic here
+            // see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/helpers.js#L102
+            // paste event itself apparently ALSO uses parseCSV -> so they need to be replaced or escaped before 
+            // paste function: (see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/copyPaste.js#L221)
+
+            // people had similar issues with Jexcel before:
+            // https://github.com/jspreadsheet/ce/issues/1139
+            // https://github.com/jspreadsheet/ce/issues/176 (exactly the same use case/issue)
+            // this works as a workaround, but might cause other issues?
+            //  data = data.replace(/"{1,3}/g, '″');
+
+            // OLD PARSING
+            // el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
+            //     aPastedData.push(aRow[0].split("\\t"));
+            // });
+
+            let aPreprocessedData = [];
+
+            // preprocess data to allow singular double quotation marks in cells
+            // split input by new line 
+            data.split("\\n").forEach(function(line){
+                
+                // skip empty lines and trim line endings 
+                if (line.trim() === '') return; 
+                line = line.trimEnd();
+
+                // split input by tab and trim each cell
+                let cells = line.split("\\t").map(function(cell) {
+                    cell = cell.trim();
+
+                    // if the cell contains an uneven number of quotation marks,
+                    // assume it is wanted and escape them by wrapping the cell in double quotes
+                    // - csv standard: https://stackoverflow.com/questions/17808511/how-to-properly-escape-a-double-quote-in-csv
+                    let quoteCount = (cell.match(/"/g) || []).length;
+                    if (quoteCount % 2 === 1) {
+                        cell = '"' + cell.replace(/"/g, '""') + '"';
+                    }
+
+                    return cell;
+                });
+
+                aPastedData.push(cells);
             });
+
             iXEnd = iXStart + aPastedData[0].length;
 
             for (var i = iXStart; i <= iXEnd; i++) {
