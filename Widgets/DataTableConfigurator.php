@@ -255,6 +255,15 @@ class DataTableConfigurator extends DataConfigurator
             ],
             'columns' => [
                 [
+                    'data_column_name' => 'SETUP_APPLIED',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE'),
+                    'value' => '',
+                    'align' => 'Center',
+                    'readonly' => true,
+                    "cell_widget" => [
+                      "widget_type" => "Icon"
+                    ]
+                ], [
                     'attribute_alias' => 'NAME',
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
@@ -264,6 +273,12 @@ class DataTableConfigurator extends DataConfigurator
                 ], [
                     'attribute_alias' => 'DESCRIPTION',
                     'nowrap' => false
+                ], [
+                    'attribute_alias' => 'PAGE',
+                    'hidden' => true
+                ], [
+                    'attribute_alias' => 'WIDGET_ID',
+                    'hidden' => true
                 ], [
                     'attribute_alias' => 'SETUP_UXON',
                     'hidden' => true
@@ -453,5 +468,20 @@ class DataTableConfigurator extends DataConfigurator
     public function hasSetups() : bool
     {
         return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
+    }
+
+    /**
+     * Returns the ID of the setups table, or null if setups are disabled
+     *
+     * @return string|null
+     */
+    public function getSetupsTableId() : ?string
+    {
+        if (!$this->hasSetups()){
+            return null;
+        }
+        else{
+            return $this->getSetupsTab()->getWidgetFirst()->getId();
+        }
     }
 }
