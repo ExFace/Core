@@ -46,6 +46,10 @@ class UxonValidate extends AbstractAction
             $uxon = $this->getParamUxon($task);
             $rootObject = $this->getRootObject($task);
 
+            if($uxon->isEmpty()) {
+                return ResultFactory::createJSONResult($task, []);
+            }
+            
             if($rootObject) {
                 $schemaBase->setProperty('object_alias', $rootObject->getAliasWithNamespace());
             }

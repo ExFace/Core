@@ -1,10 +1,14 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Selectors\WidgetSelector;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\UxonSchemaInterface;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Widgets\Container;
@@ -64,7 +68,32 @@ class WidgetSchema extends UxonSchema
         
         return $name;
     }
-    
+
+    /**
+     * @inheritDoc
+     * @see UxonSchemaInterface
+     */
+    public function createValidationObject(
+        UxonObject $uxon,
+        string $prototype = null,
+        UiPageInterface $page = null,
+        mixed $parent = null,
+    ): WidgetInterface|null
+    {
+        $prototype = $prototype ?? $this->getPrototypeClass($uxon, []);
+        if(!is_a($prototype, WidgetInterface::class, true)) {
+            return null;
+        }
+
+        if($page === null) {
+            $page = UiPageFactory::createEmpty($this->getWorkbench());
+        }
+
+        $parent = $parent instanceof WidgetInterface ? $parent : null;
+        $widgetType = StringDataType::substringAfter($prototype, '\\', false, false, true);
+        return WidgetFactory::createFromUxon($page, $uxon, $parent, $widgetType);
+    }
+
     /**
      * 
      * @param string $widgetType
