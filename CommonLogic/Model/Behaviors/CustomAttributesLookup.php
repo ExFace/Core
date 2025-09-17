@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\RelationPathFactory;
@@ -25,18 +26,19 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
     private ?MetaObjectInterface $lookupObject = null;
 
     private ?string $relationStringToBehaviorObject = null;
-
     private ?MetaRelationPathInterface $relationToBehaviorObject = null;
 
-    private $valueLookupUxon = null;
+    private $valuesSheetLookupUxon = null;
 
     private $valueAttributeAliasColumnAlias = null;
-
     private $valueContentColumnAlias = null;
 
     private $additionalColumns = null;
-
     private $additionalColumnsUxon = null;
+    
+    private bool $multipleValuesExpected = true;
+    private ?string $multipleValuesDelimiter = null;
+    private ?string $multipleValuesAggregator = null;
 
     /**
      * 
@@ -138,7 +140,7 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
      */
     protected function setValuesDataSheet(UxonObject $uxon) : CustomAttributesLookup
     {
-        $this->valueLookupUxon = $uxon;
+        $this->valuesSheetLookupUxon = $uxon;
         return $this;
     }
 
@@ -148,7 +150,7 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
      */
     public function getValuesDataSheetUxon() : ?UxonObject
     {
-        return $this->valueLookupUxon;
+        return $this->valuesSheetLookupUxon;
     }
 
     /**
@@ -293,5 +295,74 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
             $uxon->setProperty('values_data_sheet', $val);
         }
         return $uxon;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isMultipleValuesExpected() : bool
+    {
+        return $this->multipleValuesExpected;
+    }
+
+    /**
+     * Set to FALSE to simplify lookup logic if every row will only get a single lookup value
+     * 
+     * @uxon-property multiple_values_expected
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setMultipleValuesExpected(bool $trueOrFalse) : CustomAttributesLookup
+    {
+        $this->multipleValuesExpected = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getMultipleValuesDelimiter() : ?string
+    {
+        return $this->multipleValuesDelimiter;
+    }
+
+    /**
+     * Custom separator to use in case multiple lookup values are found for a data row
+     * 
+     * @uxon-property multiple_values_delimiter
+     * @uxon-type string
+     * 
+     * @param string|null $delimiter
+     * @return $this
+     */
+    protected function setMultipleValuesDelimiter(?string $delimiter) : CustomAttributesLookup
+    {
+        $this->multipleValuesDelimiter = $delimiter;
+        return $this;
+    }
+    
+    public function getMultipleValuesAggregator() : ?string
+    {
+        return $this->multipleValuesAggregator ?? AggregatorFunctionsDataType::LIST_DISTINCT;
+    }
+
+    /**
+     * Aggregate function to apply to lookup values if multiple_values_expected is true
+     * 
+     * @uxon-property multiple_values_aggregator
+     * @uxon-type metamodel:aggregator
+     * @uxon-default LIST_DISTINCT
+     * 
+     * @param string|null $aggregator
+     * @return $this
+     */
+    protected function setMultipleValuesAggregator(?string $aggregator) : CustomAttributesLookup
+    {
+        $this->multipleValuesAggregator = $aggregator;
+        return $this;
     }
 }

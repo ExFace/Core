@@ -35,6 +35,8 @@
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
 	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download bereit. Wenn es nicht automatisch startet, bitte <a href=\"%url%\" download>hier</a> klicken.",
+	"ACTION.DOWNLOADFILE.RESULT_EMPTY": "Keine validen Datei-Anhänge gefunden.",
+	"ACTION.DOWNLOADZIP.NAME": "Download ZIP",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
@@ -450,8 +452,9 @@
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE": "Ansicht aktualisieren",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT": "Überschreibt die aktuell ausgewählte Ansicht mit der aktuellen Konfiguration der Tabelle",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_SUCCESS": "Ansicht wurde erfolgreich gespeichert",
-  	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE": "Favorit",
-  	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT": "Als Favorit markieren oder umgekehrt",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE": "Favorit",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE": "Aktiv",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT": "Als Favorit markieren oder umgekehrt",
  	"WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION": "Gruppierung",
 
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Schließen",

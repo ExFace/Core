@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
  *
@@ -22,7 +23,12 @@ trait HtmlColorIndicatorTrait
      * @param string $src
      * @return string
      */
-    protected function buildHtmlIndicator($value = null, string $text = null, string $color = null) : string
+    protected function buildHtmlIndicator(
+        $value = null,
+        string $text = null,
+        string $hint = null,
+        string $color = null
+    ) : string
     {
         $widget = $this->getWidget();
         $style = 'box-sizing: border-box;';
@@ -56,15 +62,15 @@ trait HtmlColorIndicatorTrait
         }
         
         $color = $color ?? 'transparent';
-        
-        $output = <<<HTML
 
-<div id="{$this->getId()}" class="exf-colorindicator" style="{$style}">
-    {$text}
-</div>
+        $title = $hint ? "title= \"{$hint}\"" : '';
 
+        return <<<HTML
+
+            <div id="{$this->getId()}" class="exf-colorindicator" {$title} style="{$style}">
+                {$text}
+            </div>
 HTML;
-        return $output;
     }
     
     /**
@@ -83,27 +89,40 @@ HTML;
      */
     public function buildJsValueDecorator($value_js)
     {
-        $tpl = json_encode($this->buildHtmlIndicator('exfph-val', 'exfph-text', 'exfph-color'));
+        $tpl = json_encode(
+            $this->buildHtmlIndicator('exfph-val', 'exfph-text', 'exfph-hint', 'exfph-color')
+        );
         $semanticColors = ($this->getFacade() instanceof AbstractAjaxFacade) ? $this->getFacade()->getSemanticColors() : [];
         $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+        $dataType = $this->getWidget()->getValueDataType();
+        $jsEmptyText = $this->getFacade()->getDataTypeFormatter($dataType)->getJsEmptyText('null');
+        $hintsJson = "{}";
+
+        if ($dataType instanceof EnumDataTypeInterface) {
+            $hints = $dataType->getValueHints();
+            $hintsJson = json_encode($hints);
+        }
         
         return <<<JS
 function() {
     var mValue = {$value_js};
     var sHtml = {$tpl};
-    var sColor = 'transparent';
     var sText = {$this->buildJsValueFormatter('mValue')};
     var oSemanticColors = $semanticColorsJs;
-
-    if (mValue === undefined || mValue === null) {
+    let oHints = $hintsJson;
+    
+    if ((mValue === undefined || mValue === null) && ({$jsEmptyText} === null)) {
         return '';
     }
 
+    let sHint = oHints[mValue] ? oHints[mValue] : '';
+
     if (sText === undefined || sText === null || sText === '') {
-        sText = '&nbsp;';
+        sText = {$jsEmptyText} !== null ? {$jsEmptyText} : '&nbsp;';
     }
- 
+    
     sColor = {$this->buildJsColorResolver('mValue')};
+    
     if (oSemanticColors[sColor] !== undefined) {
        sColor = oSemanticColors[sColor];
     }
@@ -111,7 +130,8 @@ function() {
     return sHtml
         .replace(/exfph-mValue/g, mValue)
         .replace("exfph-color", sColor)
-        .replace(/exfph-text/g, sText);
+        .replace(/exfph-text/g, sText)
+        .replace(/exfph-hint/g, sHint);
 }()
 JS;
     }

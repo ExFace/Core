@@ -333,7 +333,7 @@ trait iPrefillWidgetTrait
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
                 foreach ($context_conditions as $condition) {
                     $condStr = $condition->toString();
-                    $log = 'Found condition "' . $condStr . '" - ';
+                    $log = 'Found condition `' . $condStr . '` - ';
                     /*
                      * if ($widget && $condition->getExpression()->getMetaObject()->getId() == $widgetObj->getId()){
                      * // If the expressions belong to the same object, as the one being displayed, use them as filters

@@ -8,6 +8,8 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\QueryBuilders\AbstractSqlBuilder;
+use exface\Core\QueryBuilders\MsSqlBuilder;
 
 class MsSqlModelBuilder extends AbstractSqlModelBuilder
 {
@@ -100,10 +102,11 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
             // Add custom data address settings
             $addrProps = new UxonObject();
             if (stripos($type, 'binary') !== false || stripos($type, 'blob') !== false) {
-                $addrProps->setProperty('SQL_DATA_TYPE', 'binary');
+                $addrProps->setProperty(AbstractSqlBuilder::DAP_SQL_DATA_TYPE, AbstractSqlBuilder::DAP_SQL_DATA_TYPE_BINARY);
             }
             if ($isIdentity === true) {
-                $addrProps->setProperty('SQL_IDENTITY_COLUMN', true);
+                $addrProps->setProperty(AbstractSqlBuilder::DAP_SQL_INSERT_AUTO_INCREMENT, true);
+                $addrProps->setProperty(MsSqlBuilder::DAP_SQL_IDENTITY_COLUMN, true);
             }
             if (! $addrProps->isEmpty()) {
                 $row['DATA_ADDRESS_PROPS'] = $addrProps->toJson();

@@ -27,7 +27,7 @@ class ObjectActionMutationPoint extends AbstractMutationPoint
         $applied = $point->applyMutations($target, $event->getUxon());
 
         if (! empty($applied)) {
-            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($point, $applied, 'action "' . $event->getActionAliasWithNamespace() . '"'));
+            $point->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent($applied, 'action "' . $event->getActionAliasWithNamespace() . '"', $point));
         }
     }
 }

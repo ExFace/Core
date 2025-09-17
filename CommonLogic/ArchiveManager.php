@@ -56,11 +56,25 @@ class ArchiveManager implements WorkbenchDependantInterface
         $this->archive->close();
         return $this;
     }
-
+    
     public function addFile($path, $subfolder = '')
     {
         $name = pathinfo($path, PATHINFO_BASENAME);
         $this->archive->addFile($path, ($subfolder === '' ? $name : $subfolder . '/' . $name));
+        return $this;
+    }
+
+    /**
+     * Add a file directly to the archive, by passing a filename (with extension) and a content
+     * string.
+     * 
+     * @param string $fileName
+     * @param string $content
+     * @return $this
+     */
+    public function addFileFromContent(string $fileName, string $content) : ArchiveManager
+    {
+        $this->archive->addFromString($fileName, $content);
         return $this;
     }
 

@@ -46,6 +46,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Templates\Modifiers\IfNullModifier;
 
 /**
  * A query builder for generic SQL syntax.
@@ -340,6 +341,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type boolean
      */
     const DAP_SQL_INSERT_UUID_OPTIMIZED = 'SQL_INSERT_UUID_OPTIMIZED';
+
+    /**
+     * Set to TRUE to make sure the query build will use the native auto-increment logic of the DB
+     * 
+     * @uxon-property SQL_INSERT_UUID_OPTIMIZED
+     * @uxon-target attribute
+     * @uxon-type boolean
+     */
+    const DAP_SQL_INSERT_AUTO_INCREMENT = 'SQL_INSERT_AUTO_INCREMENT';
     
     /**
      * Custom SQL for UPDATE statements to use instead of the value - typically some wrapper for the value. 
@@ -445,6 +455,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     // Runtime vars
     private $select_distinct = false;
     
+    private $select_first_column_only = false;
+    
     private $query_id = null;
     
     private $subquery_counter = 0;
@@ -452,15 +464,42 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     private $customFilterSqlPredicates = [];
     
     private $dirtyFlag = false;
-    
-    public function getSelectDistinct()
+
+    /**
+     * @return bool
+     */
+    protected function isSelectDistinct() : bool
     {
         return $this->select_distinct;
     }
-    
-    public function setSelectDistinct($value)
+
+    /**
+     * @param bool $value
+     * @return $this
+     */
+    protected function setSelectDistinct(bool $value) : AbstractSqlBuilder
     {
         $this->select_distinct = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isSelectFirstColumnOnly() : bool
+    {
+        return $this->select_first_column_only;
+    }
+
+    /**
+     * Limit the SELECT to a single clause (required for some subselects!)
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setSelectFirstColumnOnly(bool $trueOrFalse) : AbstractSqlBuilder
+    {
+        $this->select_first_column_only = $trueOrFalse;
+        return $this;
     }
     
     abstract function buildSqlQuerySelect();
@@ -1585,6 +1624,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // the query is based on the first object after the reversed relation (CUSTOMER_CARD for the above example)
         $relq->setMainObject($rev_rel->getRightObject());
         $relq->setQueryId($this->getNextSubqueryId());
+        $relq->setSelectFirstColumnOnly(true);
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
@@ -1633,7 +1673,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // This only makes sense, if we have a reference to the parent query (= the $select_from parameter is set)
         if ($select_from) {
             $rightKeyAttribute = $rev_rel->getRightKeyAttribute();
-            $customJoinOn = $rightKeyAttribute->getDataAddressProperty(self::DAP_SQL_JOIN_ON);
+            $customJoinOn = $rev_rel->getAttributeDefinedIn()->getDataAddressProperty(self::DAP_SQL_JOIN_ON);
             if (! $reg_rel_path->isEmpty()) {
                 // attach to the related object key of the last regular relation before the reverse one
                 $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::join($reg_rel_path->toString(), $rev_rel->getLeftKeyAttribute()->getAlias()));
@@ -1642,31 +1682,34 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $junction_attribute = $rev_rel->getLeftKeyAttribute();
             } 
             
-            // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
-            // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
+            // The junction filter needs to be an EQUALS, since we want to compare by SQL "=" to whatever we define
+            // without any quotes. 
+            $junctionQpart = null;
             if ($rightKeyAttribute instanceof CompoundAttributeInterface) {
-                // If it's a compound attribute, we need filter query parts for every compound
-                if (! $junction_attribute instanceof CompoundAttributeInterface) {
-                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": Relations with compound attributes as keys only supported in SQL query builders if both keys are compounds!');
-                }
-                if (count($rightKeyAttribute->getComponents()) !== count($junction_attribute->getComponents())) {
-                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": the compound attribute keys on both sides have different number of components!');
-                }
-                foreach ($rightKeyAttribute->getComponents() as $compIdx => $rightKeyComp) {
-                    $relq->addFilterWithCustomSql($rightKeyComp->getAttribute()->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute->getComponent($compIdx)->getAttribute(), $select_from), EXF_COMPARATOR_EQUALS);
+                // Add multiple filters for compound components unless we have a custom SQL_JOIN_ON. If so, do not
+                // do anything here - it will be rendered later.
+                if (! $customJoinOn ) {
+                    // If it's a compound attribute, we need filter query parts for every compound
+                    if (!$junction_attribute instanceof CompoundAttributeInterface) {
+                        throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '". Relation "' . $rev_rel->getAlias() . '" of ' . $rev_rel->getLeftObject()->__toString() . ' to ' . $rev_rel->getRightObject()->__toString() . ' has a compound key on the right (' . $rightKeyAttribute->getAlias() . '), but not on the left side (' . $junction_attribute->getAlias() . ')!');
+                    }
+                    if (count($rightKeyAttribute->getComponents()) !== count($junction_attribute->getComponents())) {
+                        throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '". Relation "' . $rev_rel->getAlias() . '" of ' . $rev_rel->getLeftObject()->__toString() . ' to ' . $rev_rel->getRightObject()->__toString() . ' has compound keys on both sides, but they have a different number of components!');
+                    }
+                    foreach ($rightKeyAttribute->getComponents() as $compIdx => $rightKeyComp) {
+                        $relq->addFilterWithCustomSql($rightKeyComp->getAttribute()->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute->getComponent($compIdx)->getAttribute(), $select_from), ComparatorDataType::EQUALS);
+                    }
                 }
             } else {
                 if (! $this->buildSqlDataAddress($junction_attribute) && ! $customJoinOn) {
                     throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": one of the relation key attributes has neither a data address nor an SQL_JOIN_ON custom address property!');
                 }
-                $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute, $select_from), EXF_COMPARATOR_EQUALS);
+                $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute, $select_from), ComparatorDataType::EQUALS);
             }
-            
+
+            // If it's a custom JOIN, add it here
             if ($customJoinOn) {
-                if (! $junctionQpart) {
-                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": custom JOINs via SQL_JOIN_ON only supported for regular key attributes (no compounds, etc.)!');
-                }
-                // If it's a custom JOIN, calculate it here
+                // Replace placeholders
                 $customJoinOn = $this->replacePlaceholdersInSqlJoin(
                     $customJoinOn,
                     $relq->getMainTableAlias(),
@@ -1674,7 +1717,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $rev_rel,
                     $relq
                 );
-                $junctionQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
+                // If we have found a junction already, give it a custom SQL_WHERE
+                if ($junctionQpart) {
+                    $junctionQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
+                } else {
+                    // If there is no junction - e.g. a compound key with a custom SQL_JOIN_ON, just use the
+                    // custom JOIN.
+                    $relq->addFilterSql($customJoinOn);
+                }
             }
         }
         
@@ -2069,14 +2119,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $this->getOptimizedComparator($qpart);
-        $delimiter = $qpart->getValueListDelimiter();
-        
+
+        // The left side of the HAVING clause is the grouped select in contrast to the WHERE clauses
         $select = $this->buildSqlSelectGrouped($qpart);
         $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);
+        $customWhereAddress = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE_DATA_ADDRESS);
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
-        // doublecheck that the attribut is known
-        if (! ($select || $customWhereClause) || $val === '') {
+        $ignoreEmptyValues = !$qpart->getCondition() || $qpart->getCondition()->willIgnoreEmptyValues();
+
+        // If the attribute has no data address AND is a static calculation, generate a 
+        // static WHERE clause.
+        // See buildSqlWhereCondition() for details
+        if (empty($select) && empty($customWhereClause) && empty($customWhereAddress) && $attr->hasCalculation() && $attr->getCalculationExpression()->isStatic()) {
+            $staticVal = $attr->getCalculationExpression()->evaluate();
+            return $this->buildSqlWhereComparator($qpart, "'{$this->escapeString($staticVal)}'", $comp, $val, $rely_on_joins);
+        }
+        
+        // Doublecheck that the attribut is known
+        if (! ($select || $customWhereClause) || ($ignoreEmptyValues && $val === '')) {
             if ($val === '') {
                 $hint = ' (the value is empty)';
             } else {
@@ -2119,11 +2180,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         foreach ($qpart->getFilters() as $qpart_fltr) {
             switch (true) {
-                case $qpart_fltr->isCompound() === true:
+                // Turn a compound filter into a filter group unless it has a custom SQL_WHERE
+                case $qpart_fltr->isCompound() === true && ! $qpart_fltr->getDataAddressProperty(self::DAP_SQL_WHERE):
                     if ($grp_string = $this->buildSqlWhere($qpart_fltr->getCompoundFilterGroup(), $rely_on_joins)) {
                         $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
                     }
                     break;
+                // Render all other filters regularly and append them if they produce any SQL
                 case $fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins):
                     $where .= "\n" . $this->buildSqlComment("buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100, false, true) . ", " . $rely_on_joins . ")")
                            . "\n " . ($where ? $op . " " : '') . $fltr_string;
@@ -2135,6 +2198,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($grp_string = $this->buildSqlWhere($qpart_grp, $rely_on_joins)) {
                 $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
             }
+        }
+        
+        // Add custom SQL WHERE predicates at top level if there are any.
+        if (! empty($this->customFilterSqlPredicates) && $qpart === $this->getFilters()) {
+            $where = ($where ? '(' . $where  . ') AND ' : '') . $this->buildSqlWhereCustomPredicates();
         }
         
         return $where;
@@ -2379,6 +2447,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                                     $value .= ' AND ' . implode(' AND ', $valueNullChecks);
                                 }
                             }
+                            break;
                     }
                     break;
             }
@@ -2644,7 +2713,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Handle SQL_JOIN_ON if it is defined for the right attribute (i.e. if we would join our left table to our right table,
             // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
             // the subselect.
-            if ($customJoinOn = $start_rel->getRightKeyAttribute()->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
+            if ($customJoinOn = $start_rel->getAttributeDefinedIn()->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
                 $customJoinOn = $this->replacePlaceholdersInSqlJoin(
                     $customJoinOn,
                     $relq->getMainTableAlias(),
@@ -2931,16 +3000,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $baseObj = $relation_path !== null ? $relation_path->getEndObject() : $this->getMainObject();
         foreach (StringDataType::findPlaceholders($data_address) as $ph) {
-            if (StringDataType::startsWith($ph, '=')) {
-                $formula = FormulaFactory::createFromString($this->getWorkbench(), $ph);
+            $phAlias = IfNullModifier::stripFilter($ph);
+            // TODO how to use the default value from the modifier here?
+            if (StringDataType::startsWith($phAlias, '=')) {
+                $formula = FormulaFactory::createFromString($this->getWorkbench(), $phAlias);
                 if ($formula->isStatic() === false) {
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": the used formula is not static! Only static formulas are supported in data address placeholders!');
                 }
                 $data_address = StringDataType::replacePlaceholder($data_address, $ph, $formula->evaluate());
                 continue;
             }
-            $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
-            $ph_attribute_alias = RelationPath::join($prefix, $ph);
+            $ph_has_relation = $baseObj->hasAttribute($phAlias) && ! $baseObj->getAttribute($phAlias)->getRelationPath()->isEmpty() ? true : false;                
+            $ph_attribute_alias = RelationPath::join($prefix, $phAlias);
             
             // If the placeholder is not part of the query already, create a new query part.
             if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {
@@ -3010,6 +3081,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $leftTableAlias = $leftTableAlias ?? $leftQuery->getShortAlias($relation->getLeftObject()->getAlias() . $leftQuery->getQueryId());
         $rightTableAlias = $rightTableAlias ?? $rightQuery->getShortAlias($relation->getRightObject()->getAlias() . $rightQuery->getQueryId());
         
+        // Switch left and right side if a reverse relation is actually defined on its left side!
+        // Indeed, in the JOIN we always look from left to right. However, all the SQL customization properties
+        // are part of the attribute, that defines the relation, so we need to look for that attribute regardless
+        // of whether it is on the left or right side of the relation. On the other hand, when a designer writes
+        // the custom SQL JOIN, he or she looks from the side of the attribute being edited. So if an attribute
+        // on the left object defines a reverse relation, the designers "left" would be actually the "right" side
+        // from the point of view of the query builder here.
+        // Note, that the placeholder logic below shouldn't be affected by this mirroring because it is bound to
+        // the sides of the JOIN itself and not to the orientation of the relation.
+        $mirror = $relation->isReverseRelation() && $relation->isDefinedInLeftObject();
+        if ($mirror) {
+            $sqlJoin = str_replace('~left', '~tmp', $sqlJoin);
+            $sqlJoin = str_replace('~right', '~left', $sqlJoin);
+            $sqlJoin = str_replace('~tmp', '~right', $sqlJoin);
+        }
+        
         $phs = StringDataType::findPlaceholders($sqlJoin);
         $phVals = [];
         foreach ($phs as $ph) {
@@ -3024,6 +3111,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                 case StringDataType::startsWith($ph, '~right:'):
                     $attrAlias = StringDataType::substringAfter($ph, '~right:');
+                    // TODO add support for modifiers here! Currently we just ignore them
+                    $attrAlias = IfNullModifier::stripFilter($attrAlias);
                     $relPath = $leftQuery !== $rightQuery ? null : RelationPathFactory::createForObject($relation->getLeftObject())->appendRelation($relation);
                     // If the placeholder is a RELATED attribute of the right object, we will need to JOIN all tables
                     // along the relation path. For example `[#~right:rel1__rel2__name#]` should produce this SQL:
@@ -3062,7 +3151,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     } else {
                         // If the right placeholder does not need relations, we do not need a subquery and can just
                         // use the regular placeholder replacer
-                        $attrAlias = StringDataType::substringAfter($ph, '~right:');
                         $phVals[$ph] = $rightQuery->replacePlaceholdersInSqlAddress(
                             '[#' . $attrAlias . '#]',
                             $relPath,
@@ -3138,11 +3226,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $qpart->setValueIsDataAddress(true);
         return $qpart;
     }
-    
+
+    /**
+     * Add a custom WHERE predicate to be added via AND to the auto-generated ones
+     * 
+     * @param string $sqlPredicate
+     * @return $this
+     */
     protected function addFilterSql(string $sqlPredicate) : AbstractSqlBuilder
     {
         $this->customFilterSqlPredicates[] = $sqlPredicate;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    protected function buildSqlWhereCustomPredicates() : string
+    {
+        return implode(' AND ', $this->customFilterSqlPredicates);
     }
     
     /**
@@ -3592,5 +3694,18 @@ SQL;
     {
         $sqlType = ($qpartOrAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '');
         return strcasecmp($sqlType, self::DAP_SQL_DATA_TYPE_BINARY) === 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractQueryBuilder::addAggregation()
+     */
+    public function addAggregation($attribute_alias)
+    {
+        $qpart = parent::addAggregation($attribute_alias);
+        if (! $this->isSubquery()) {
+            $this->addAttribute($attribute_alias);
+        }
+        return $qpart;
     }
 }
