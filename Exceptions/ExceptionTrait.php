@@ -126,6 +126,9 @@ trait ExceptionTrait {
                         ->setAttributeAlias('DESCRIPTION')
                         ->setWidth(WidgetDimension::MAX)
                         ->setHideCaption(true)
+                        ->setOpenLinksIn('popup')
+                        ->setOpenLinksInPopupWidth(1200)
+                        ->setOpenLinksInPopupHeight(800)
                         ->setValue($msgModel->getDescription());
                     $error_tab->addWidget($error_descr);
                 } catch (\Throwable $e) {
