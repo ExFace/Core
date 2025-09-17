@@ -43,6 +43,10 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
                 $log .= "`{$toExpr->__toString()} {$comparator} {$value}`.";
                 $toSheet->getFilters()->addConditionFromExpression($toExpr, $value, $comparator);
                 break;
+            // If not enough data, but explicitly configured to ignore it, exit here
+            case $this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType()):
+                if ($logbook !== null) $logbook->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
+                return $toSheet;
             default:
                 if ($fromExpr->isMetaAttribute()) {
                     throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-filter mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');

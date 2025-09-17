@@ -3,30 +3,36 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\UUIDDataType;
-use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Factories\RelationPathFactory;
-use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\Interfaces\Model\ExpressionInterface;
-use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\DataTypes\MetaAttributeOriginDataType;
+use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaObjectModelError;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Selectors\AttributeGroupSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use Throwable;
 
 /**
- * 
+ * A regular meta object attribute
+ *
  * @author Andrej Kabachnik
  *
  */
-class Attribute implements MetaAttributeInterface
+class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
 {
     use ImportUxonObjectTrait;
     
@@ -45,9 +51,9 @@ class Attribute implements MetaAttributeInterface
 
     private $data_address_properties;
 
-    private $data_type_selector;
+    private $data_type_selector = null;
 
-    private $data_type;
+    private $data_type = null;
 
     private $calculationString = null;
     
@@ -116,6 +122,8 @@ class Attribute implements MetaAttributeInterface
     // Properties NOT to be dublicated on copy()
     /** @var Model */
     private $object;
+
+    private $attributeType = MetaAttributeTypeDataType::GENERATED;
 
     public function __construct(MetaObjectInterface $object, string $name, string $alias)
     {
@@ -212,35 +220,67 @@ class Attribute implements MetaAttributeInterface
      */
     public function getDataType()
     {
-        if ($this->data_type === null && is_string($this->data_type_selector) === true){
-            try {
-                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type_selector)->copy();
-                $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
-            } catch (\Throwable $e) {
-                throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
-            }
+        switch (true) {
+            case $this->data_type !== null:
+                return $this->data_type;
+            case $this->data_type_selector !== null:
+                try {
+                    if ($this->data_type_selector instanceof DataTypeSelectorInterface) {
+                        $this->data_type = DataTypeFactory::createFromSelector($this->data_type_selector)->copy();
+                    } else {
+                        $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type_selector)->copy();
+                    }
+                    $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
+                } catch (\Throwable $e) {
+                    throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+                }
+                break;
+            case $this->custom_data_type_uxon !== null:
+                try {
+                    $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->getCustomDataTypeUxon());
+                } catch (\Throwable $e) {
+                    throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+                }
+                break;
+            default: 
+                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
         }
+        
+        // Make sure, numeric ids do not group their digits like normal integers
+        $isNumericId = ($this->isUidForObject() || $this->isRelation()) && $this->data_type instanceof NumberDataType;
+        if ($isNumericId && ! ($this->custom_data_type_uxon && $this->custom_data_type_uxon->hasProperty('group_digits'))) {
+            $this->data_type->setGroupDigits(false);
+        }
+        
         return $this->data_type;
     }
     
     /**
+     * The data type of the attribute
+     *
+     * @uxon-property data_type
+     * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
+     * @uxon-template {"alias": ""}
      * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataType()
      */
-    public function setDataType($instance_or_resolvable_string)
+    public function setDataType($instanceOrSelectorOrUxon)
     {
         switch (true) {
-            case is_string($instance_or_resolvable_string):
-                $this->data_type_selector = $instance_or_resolvable_string;
+            case is_string($instanceOrSelectorOrUxon):
+            case $instanceOrSelectorOrUxon instanceof DataTypeSelectorInterface:
+                $this->data_type_selector = $instanceOrSelectorOrUxon;
                 $this->data_type = null;
                 break;
-            case $instance_or_resolvable_string instanceof DataTypeInterface:
-                $this->data_type_selector = $instance_or_resolvable_string->getAliasWithNamespace();
-                $this->data_type = $instance_or_resolvable_string;
+            case $instanceOrSelectorOrUxon instanceof DataTypeInterface:
+                $this->data_type_selector = $instanceOrSelectorOrUxon->getAliasWithNamespace();
+                $this->data_type = $instanceOrSelectorOrUxon;
+                break;
+            case $instanceOrSelectorOrUxon instanceof UxonObject:
+                $this->setCustomDataTypeUxon($instanceOrSelectorOrUxon);
                 break;
             default: 
-                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
+                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": expecting selector, a valid UXON or a data type class instance - received "' . gettype($instanceOrSelectorOrUxon) . '"!');
         }
         return $this;
     }
@@ -256,6 +296,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to a positive number to make this attribute appear in data widgets if no columns are specified explicitly.
+     * 
      * @uxon-property default_display_order
      * @uxon-type integer
      * 
@@ -278,6 +320,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE to make this attribute editable in the UI and FALSE to hide it from editors by default
+     * 
      * @uxon-property editable
      * @uxon-type boolean
      * 
@@ -307,8 +351,17 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
-     * 
-     * {@inheritDoc}
+     * Formula to calculate data values of this attribute (instead or in addition to a data address)
+     *
+     * E.g. `=Concatenate(attribute1, attribute2)`.
+     *
+     * Normally used instead of a data address to add read-only attributes the data source cannot produce.
+     * In some cases a combination of a formula and a data address may be used to add specific formatting to a
+     * value (e.g. a data stored in some non-standard-format).
+     *
+     * @uxon-property calculation
+     * @uxon-type metamodel:formula
+     *
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCalculation()
      */
     public function setCalculation(string $expressionString) : MetaAttributeInterface
@@ -333,6 +386,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE to mark this attribute as hidden
+     * 
      * @uxon-property hidden
      * @uxon-type boolean
      * 
@@ -375,6 +430,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to FALSE to explicitly forbid reading this attribute or to TRUE to explicitly allow it
+     * 
      * @uxon-property readable
      * @uxon-type boolean
      * 
@@ -398,6 +455,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to FALSE to explicitly forbid writing this attribute or to TRUE to explicitly allow it
+     * 
      * @uxon-property writable
      * @uxon-type boolean
      * 
@@ -421,8 +480,11 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE to mark the attribute as required (not nullable)
+     * 
      * @uxon-property required
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setRequired()
@@ -443,9 +505,10 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * The address in the data source - e.g. SQL for SQL data sources or parts of the URL for web services.
      * 
-     * @uxon-property data_type
-     * @uxon-type metamodel:datatype
+     * @uxon-property data_address
+     * @uxon-type string
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddress()
@@ -587,7 +650,14 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
-     * 
+     * Value or formula to be used if no data for this attribute is explicitly defined
+     *
+     * This expression will be used when no other value is given (e.g. inputs will be prefilled with this
+     * value). You can use attribute aliases, formulas or explicit values (the latter enclosed in quotes!).
+     *
+     * @uxon-property default_value
+     * @uxon-type metamodel:formula|string|number
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultValue()
      */
@@ -616,7 +686,15 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
-     * 
+     * A formula to calculate the value EVERY TIME this attribute is written (makes it impossible to change the attribute manually)
+     *
+     * This expression will always be evaluated, when the object is saved - eventually overwriting user
+     * input. This is handy for attributes like `last_update_time`, where a fixed value `=Now()` will
+     * automatically set the attribute to the time of saving.
+     *
+     * @uxon-property fixed_value
+     * @uxon-type metamodel:formula
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFixedValue()
      */
@@ -665,9 +743,11 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Direction of default soring if this attribute is one of the default sorting attributes of the object.
+     * 
      * @uxon-property default_sorter_dir
-     * @uxon-type string
-     * @uxon-template "ASC"
+     * @uxon-type [ASC,DESC]
+     * @uxon-template ASC
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()
@@ -717,8 +797,11 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * A description for the attribute to be used in tooltips, contextual help, etc.
      * 
-     * {@inheritDoc}
+     * @uxon-property short_description
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setShortDescription()
      */
     public function setShortDescription($value)
@@ -760,7 +843,12 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
-     * 
+     * Custom settings for this attribute in the selected data source of its object.
+     *
+     * @uxon-property data_address_properties
+     * @uxon-type object
+     * @uxon-template {"": ""}
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddressProperties()
      */
@@ -936,8 +1024,10 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * When aggregating use this aggregator by default for this attribute (if no aggregator is defined explicitly)
+     * 
      * @uxon-property default_aggregate_function
-     * @uxon-type string
+     * @uxon-type metamodel:aggregator
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultAggregateFunction()
@@ -962,6 +1052,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE/FALSE to allow/forbid sorting over this attribute
+     * 
      * @uxon-property sortable
      * @uxon-type boolean
      * 
@@ -985,6 +1077,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE/FALSE to allow/forbid filtering over this attribute
+     * 
      * @uxon-property filterable
      * @uxon-type boolean
      * 
@@ -1008,6 +1102,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to TRUE/FALSE to allow/forbid aggregating over this attribute
+     * 
      * @uxon-property aggregatable
      * @uxon-type boolean
      * 
@@ -1031,9 +1127,11 @@ class Attribute implements MetaAttributeInterface
     }
     
     /**
+     * Separator character to use when listing multiple values of this attribute
+     * 
      * @uxon-property value_list_delimiter
      * @uxon-type string
-     * @uxon-template ","
+     * @uxon-default ,
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setValueListDelimiter()
@@ -1152,6 +1250,11 @@ class Attribute implements MetaAttributeInterface
     }
     
     /**
+     * A default editor widget for this attribute
+     *
+     * @uxon-property default_editor_uxon
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-template {"widget_type": ""}
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultEditorUxon()
@@ -1240,7 +1343,7 @@ class Attribute implements MetaAttributeInterface
      * Default display widget to use for this attribute
      * 
      * @uxon-property default_display_widget
-     * @uxon-type \exface\Core\Widgets\Value
+     * @uxon-type \exface\Core\Widgets\Display
      * @uxon-template {"widget_type": ""}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
@@ -1272,6 +1375,8 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Set to FALSE to skip this attribute when copying an instance of its objects
+     * 
      * @uxon-property copyable
      * @uxon-type boolean
      * 
@@ -1301,7 +1406,7 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
-     * Place this attribute into one or more attribute groups
+     * A list of group aliases, this attribute belongs to.
      * 
      * @uxon-property groups
      * @uxon-type metamodel:attribute_group[]
@@ -1317,5 +1422,58 @@ class Attribute implements MetaAttributeInterface
             $obj->getAttributeGroup($alias)->add($this);
         }
         return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setType()
+     */
+    public function setType(string $attrType) : MetaAttributeInterface
+    {
+        try {
+            $this->attributeType = MetaAttributeTypeDataType::cast($attrType);
+        } catch (Throwable $e) {
+            throw new MetaObjectModelError($this->getObject(), 'Invalid attribute type "' . $attrType . '" provided for ' . $this->__toString());
+        }
+        
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getType()
+     */
+    public function getType() : string
+    {
+        return $this->attributeType;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getOrigin()
+     */
+    public function getOrigin() : int
+    {
+        return $this->isInherited() ? MetaAttributeOriginDataType::INHERITED_ATTRIBUTE : MetaAttributeOriginDataType::DIRECT_ATTRIBUTE;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject([
+            'alias' => $this->getAliasWithRelationPath(),
+            'name' => $this->getName(),
+            'data_address' => $this->getDataAddress()
+        ]);
+
+        // TODO add other UXON properties here
+
+        return $uxon;
     }
 }

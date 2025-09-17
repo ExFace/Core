@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\ConfirmationWidgetTrait;

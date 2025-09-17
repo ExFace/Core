@@ -1,17 +1,18 @@
 <?php
 namespace exface\Core\Uxon;
 
-use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\CommonLogic\Uxon\UxonSnippetCall;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
-use exface\Core\Factories\UxonSnippetFactory;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -153,7 +154,21 @@ class UxonSchema implements UxonSchemaInterface
         
         return $rootPrototypeClass;
     }
-    
+
+    /**
+     * @inheritDoc
+     * @see UxonSchemaInterface
+     */
+    public function createValidationObject(
+        UxonObject $uxon, 
+        string $prototype = null, 
+        UiPageInterface $page = null,
+        mixed $parent = null
+    ): mixed
+    {
+        return null;
+    }
+
     protected function getDefaultPrototypeClass() : string
     {
         return '';
@@ -293,26 +308,51 @@ class UxonSchema implements UxonSchemaInterface
         if ($cache = $this->getCache($prototypeClass, 'properties')) {
             return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
         }
+
+        try {
+            $ds = $this->loadPropertiesSheet($prototypeClass);
+            $this->prototypePropCache[$prototypeClass] = $ds;
+            $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
+            $logHint = $e instanceof ExceptionInterface ? ' See Log-ID ' . $e->getId() : ' See logs for details';
+            $ds->addRow([
+                'PROPERTY' => '// ERROR: cannot read prototype annotations!' . $logHint
+            ]);
+        }
         
-        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
+        return $ds;
+    }
+
+    /**
+     * Loads a data sheet containing all the uxon-properties contained in the prototype class via the
+     * specified notation object.
+     * 
+     * NOTE: This function ALWAYS performs a DataSheetInterface::dataRead()!
+     * 
+     * @param string $prototypeClass
+     * @param string $aliasOfAnnotationObject
+     * @return DataSheetInterface
+     */
+    protected function loadPropertiesSheet(string $prototypeClass, string $aliasOfAnnotationObject = 'exface.Core.UXON_PROPERTY_ANNOTATION') : DataSheetInterface
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $aliasOfAnnotationObject);
         $ds->getColumns()->addMultiple([
-            'PROPERTY', 
-            'TYPE', 
-            'TEMPLATE', 
+            'PROPERTY',
+            'TYPE',
+            'TEMPLATE',
             'DEFAULT',
             'REQUIRED',
             'TRANSLATABLE'
         ]);
+        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
         try {
             $ds->dataRead();
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-            // TODO
+            throw new RuntimeException('Cannot read UXON properties from file "' . $filepathRelative . '". ' . $e->getMessage(), null, $e);
         }
-        $this->prototypePropCache[$prototypeClass] = $ds;
-        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
         
         return $ds;
     }
@@ -516,7 +556,7 @@ class UxonSchema implements UxonSchemaInterface
                 }
                 break;
             case strcasecmp($type, 'metamodel:attribute_group') === 0 && $object !== null:
-                $options = $this->getAttributeGroupsForObject($object);
+                $options = $this->getMetamodelAttributeGroupAliases($object, $search);
                 break;
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
@@ -650,11 +690,15 @@ class UxonSchema implements UxonSchemaInterface
         }
         // Reverse relations and 1-to-1 relations coming from other objects are not attributes, 
         // so we need to add them here manually
-        foreach ($object->getRelations() as $rel) {
-            $val = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
-            if (! in_array($val, $value_relations)) {
-                $values[] = $val; 
+        try {
+            foreach ($object->getRelations() as $rel) {
+                $val = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
+                if (! in_array($val, $value_relations)) {
+                    $values[] = $val; 
+                }
             }
+        } catch (\Exception $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
         }
         
         // Sort attributes and reverse relations alphabetically.
@@ -675,29 +719,49 @@ class UxonSchema implements UxonSchemaInterface
     }
 
     /**
-     * Collects all attribute groups available for a given meta-object.
+     * Collects all attribute groups available for a given meta-object with respect to the provided relaiton path
+     * (search).
+     * 
+     * Works similarly to getAttributeAliases()
      * 
      * @param MetaObjectInterface $object
-     * @return array
+     * @param string|null $search
+     * @return string[]
      */
-    protected function getAttributeGroupsForObject(MetaObjectInterface $object) : array
+    protected function getMetamodelAttributeGroupAliases(MetaObjectInterface $object, string $search = null) : array
     {
-        $aliases = [];
+        // See if $search contains an relation path
+        $rels = $search !== null ? (RelationPath::relationPathParse($search) ?? []) : [];
+        $search = array_pop($rels) ?? '';
+        $relPath = null;
+        if (! empty($rels)) {
+            $relPath = implode(RelationPath::RELATION_SEPARATOR, $rels);
+            $object = $object->getRelatedObject($relPath);
+        }
 
+        // Get the built-in groups
         try {
             $refl = new ReflectionClass(MetaAttributeGroupInterface::class);
-            $aliases = $refl->getConstants();
+            $aliases = array_values($refl->getConstants());
         } catch (Throwable $e) {
             // TODO
         } 
-
+        // Get explicitly defined groups
         foreach ($object->getAttributeGroups() as $group) {
             $aliases[] = $group->getAliasWithNamespace();
         }
 
-        sort($aliases);
-        
-        return $aliases;
+        // Add relations from the current object        
+        $relations = $this->getMetamodelRelationAliases($object, $search, true);
+        $aliases = array_merge($aliases, $relations);
+
+        // Prefix all the groups with the relaiton path if needed
+        $values = [];
+        foreach ($aliases as $alias) {
+            $values[] = ($relPath === null ? '' : $relPath . RelationPath::getRelationSeparator()) . $alias;
+        }
+
+        return $values;
     }
     
     /**
@@ -707,14 +771,17 @@ class UxonSchema implements UxonSchemaInterface
      * @param string $search
      * @return array
      */
-    protected function getMetamodelRelationAliases(MetaObjectInterface $object, string $search = null) : array
+    protected function getMetamodelRelationAliases(MetaObjectInterface $object, string $search = null, bool $withTrailingSeparator = false) : array
     {
         $attrAliases = $this->getMetamodelAttributeAliases($object, $search);
         $relAliases = [];
         $relSep = RelationPath::getRelationSeparator();
         foreach ($attrAliases as $alias) {
             if (true === StringDataType::endsWith($alias, $relSep)) {
-                $relAliases[] = StringDataType::substringBefore($alias, $relSep, $alias, false, true);  
+                if ($withTrailingSeparator === false) {
+                    $alias = StringDataType::substringBefore($alias, $relSep, $alias, false, true);
+                }
+                $relAliases[] = $alias;
             } 
         }
         return $relAliases;

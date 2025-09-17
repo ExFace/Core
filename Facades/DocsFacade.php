@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades;
 
+use exface\Core\DataTypes\FilePathDataType;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
@@ -36,11 +37,25 @@ class DocsFacade extends AbstractHttpFacade
 
     const URL_PARAM_RENDER_PRINT = 'print';
 
-    const URL_PARAM_RENDER_LOGO = 'logo';
+    const URL_PARAM_RENDER_CHAPTER = 'chapter';
 
     const URL_PARAM_FILE_NAME = 'fileName';
 
-    const URL_PARAM_RENDER_CHAPTER = 'chapter';
+    const URL_PARAM_RENDER_LOGO_PATH = 'logoPath';
+
+    const URL_PARAM_HEADER_TITLE = 'headerTitle';
+
+    const URL_PARAM_MARGIN_RIGHT = 'marginRight';
+
+    const URL_PARAM_MARGIN_LEFT = 'marginLeft';
+    
+    private $logoPath = null;
+
+    private $headerTitle = null;
+
+    private $marginRight = null;
+    
+    private $marginLeft = null;
     
     private $processedLinks = [];
     private $processedLinksKey = 0;
@@ -70,6 +85,7 @@ class DocsFacade extends AbstractHttpFacade
         if (! $baseRewriteRules->isEmpty()) {
             foreach ($baseRewriteRules->getPropertiesAll() as $pattern => $replace) {
                 $baseUrl = preg_replace($pattern, $replace, $baseUrl);
+                $this->docsPath = preg_replace($pattern, $replace, $this->docsPath);
             }
         }
         
@@ -95,7 +111,10 @@ class DocsFacade extends AbstractHttpFacade
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
                 $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));       
                 $response = $handler->handle($request);
-                $logoPath = $request->getQueryParams()[self::URL_PARAM_RENDER_LOGO];
+                $this->logoPath = $request->getQueryParams()[self::URL_PARAM_RENDER_LOGO_PATH];
+                $this->headerTitle = $request->getQueryParams()[self::URL_PARAM_HEADER_TITLE];
+                $this->marginRight = $request->getQueryParams()[self::URL_PARAM_MARGIN_RIGHT];
+                $this->marginLeft = $request->getQueryParams()[self::URL_PARAM_MARGIN_LEFT];
                 $htmlString = $response->getBody()->__toString();
 
                 // Set the title and file name for the PDF
@@ -106,13 +125,13 @@ class DocsFacade extends AbstractHttpFacade
                     $htmlString
                 );
 
-                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString(), $logoPath);
+                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString());
 
                 $response = new Response(200, [], $htmlString);
                 $response = $response->withHeader('Content-Type', 'text/html');
                 break;
                 
-            // If the page is to be rendered as a chapter, used a different template
+            // If the page is to be rendered as a chapter, use a different template
             // TODO move the whole printing logic to a middleware
             case ($request->getQueryParams()[self::URL_PARAM_RENDER] === self::URL_PARAM_RENDER_CHAPTER):
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/templatePDF.html']);
@@ -167,7 +186,7 @@ class DocsFacade extends AbstractHttpFacade
      * @param string $logoPath
      * @return string
      */
-    protected function printCombinedPages(string $htmlString, string $requestUri, ?string $logoPath) : string
+    protected function printCombinedPages(string $htmlString, string $requestUri) : string
     {
         // Find all links in first document page
         $linksArray = $this->findLinksInHtml($htmlString);
@@ -178,15 +197,12 @@ class DocsFacade extends AbstractHttpFacade
         $htmlString = $this->addIdToFirstHeading($requestUri, $htmlString);
         $htmlString = $this->replaceHrefChapters($htmlString);
         $htmlString = $this->replaceHrefImages($htmlString);
+        $htmlString = $this->applyNoprint($htmlString);
 
-        // Attach print function to end of html to show print window when accessing the HTML
-        // Also add an arrow as a header element to jump back to the first page in the PDF
+        // Attach css and print function to end of html to style the printed document and to open print window when accessing the HTML
         $printString = 
         '<style>
             @media print {
-                body {
-                    margin: 2cm;
-                }
             
                 header {
                     position: fixed;
@@ -202,28 +218,64 @@ class DocsFacade extends AbstractHttpFacade
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    z-index: 1000;
                 }
 
                 header img {
+                    position: fixed;
                     height: 0.5cm;
+                    top: 0;
+                    right: 0;
                     padding: 0;
                 }
 
                 header a {
+                    position: fixed;   
+                    top: 0;            
+                    left: 0;           
+                    padding: 0;
                     font-size: 16px;
+                    z-index: 9999;     
+                }
+
+            @page {';
+
+                // Only set custom right and left margins to control the distance between right and left page borders and content of the page 
+                // if a $rightMargin and $leftMargin has been given via query params
+                if ($this->marginRight !== null) {
+                    $printString .= 
+                        'margin-right: ' . $this->marginRight . 'cm;';
+                }
+
+                if ($this->marginLeft !== null) {
+                    $printString .= 
+                        'margin-left: ' . $this->marginLeft . 'cm;';
+                }
+
+                /* Add page counter to footer */
+                $printString .=
+                '@bottom-center {
+                    content: counter(page);
+                    font-size: 0.8em;
+                    color: #666;
+                }
+                /* Add project name to header */
+                @top-center {
+                    content: "' . $this->headerTitle . '";
+                    font-size: 0.8em;
+                    color: #666;
                 }
             }
         </style>
             
         <header>
+            <!-- Add an up-arrow to every page to be able to jump back to page 1 of the document -->
             <a href="#' . $this->getAnchor($requestUri) . '">↑</a>';
 
             // Only add a logo if a $logoPath has been given via query param
-            if ($logoPath !== null) {
+            if ($this->logoPath !== null) {
                 $printString .= 
-                    '<div class="logo-container">
-                        <img src="placeholder/path/' . $logoPath .  '" alt="Logo">
-                    </div>';
+                    '<img src="' . $this->logoPath .  '" alt="Logo">';
             }
 
     $printString .= 
@@ -255,6 +307,8 @@ class DocsFacade extends AbstractHttpFacade
      */
     protected function printLinkedPages(string $tempFilePath, array $linksArray) 
     {
+        $htmlString = '';
+        $linksArrayRecursive = [];
         foreach ($linksArray as $link) {
             // Only process links that are markdown files, are part of the same app documentation and have not been processed before
             if (str_ends_with($link, '.md') && str_starts_with($link, $this->docsPath) && !in_array($link, $this->processedLinks)) {
@@ -268,19 +322,24 @@ class DocsFacade extends AbstractHttpFacade
                 // Adds a page break before start of each markdown file to separate the chapters
                 $pageBreak = '<div style="page-break-before: always;">';
                 $htmlString = $pageBreak . $linkResponse->getBody()->__toString();
+                $htmlString = $this->applyNoprint($htmlString);
                 $linksArrayRecursive = $this->findLinksInHTML($htmlString);
                 
                 $htmlString = $this->replaceHrefChapters($htmlString);
                 $htmlString = $this->addIdToFirstHeading($link, $htmlString);
                 $htmlString = $this->replaceHrefImages($htmlString);
-                $htmlString = $this->addIdToImages($htmlString);
+                $htmlString = $this->addIdToImages($htmlString); 
+            } else {
+                $htmlString = PHP_EOL . '<!-- SKIPPED link ' . $link . ' because it seems external -->';
+            }
 
+            if ($htmlString) {
                 // Write the body content to the temporary file
                 file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
-                
-                if (!empty($linksArrayRecursive)) {
-                    $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
-                }
+            }
+
+            if (! empty($linksArrayRecursive)) {
+                $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
             }
         }
     }
@@ -346,7 +405,7 @@ class DocsFacade extends AbstractHttpFacade
          * The regex pattern makes sure that a user can add additional attributes like style in their html url definition.
          * E.g.: <a href="http://localhost/path/to/Image1.jpg" style="text-decoration:none; color:#000;">Image 1</a></li>
          */
-        $pattern = '/<a\s+[^>]*href="([^"]*\/[^\/]+\.(?:jpg|jpeg|png|gif|bmp|webp|svg))(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?".*?>(.*?)<\/a>/i';
+        $pattern = '/<a[^>]+href="([^"]+\.(?:png|jpe?g|gif|bmp|webp|svg|md)(?:#[^"]*)(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?)"[^>]*>(.*?)<\/a>/i';
 
         $matches = [];
         preg_match_all($pattern, $htmlString, $matches);
@@ -360,7 +419,13 @@ class DocsFacade extends AbstractHttpFacade
         $to = [];
         foreach ($matches[1] as $i => $url) {
             $from[] = '<a href="' . $url . '"';
-            $to[] = '<a href="#' . $this->getAnchor($url) . '"';
+            //if there is already an Id of the image use it
+            if (preg_match('/#(.+)$/', $url, $m)) {
+                $to[] = '<a href="#' . $m[1] . '"';
+            } 
+            else {
+                $to[] = '<a href="#' . $this->getAnchor($url) . '"';
+            }
         }
         
         return str_replace($from, $to, $htmlString);
@@ -458,10 +523,27 @@ class DocsFacade extends AbstractHttpFacade
         foreach ($links as $link) {
             $href = $link->getAttribute('href');
             if ($href) {
+                // Normalize links to make sure /Chapter1/index.md and /Chapter1/Subfolder/../index.md
+                // are not included multiple times due to the `..` iun the URL
+                $href = FilePathDataType::normalize($href);
                 $extractedLinks[] = $href;
             }
         } 
         return $extractedLinks;
     }
-    
+
+    /**
+     * comments out the section defined in between 
+     * <!-- noprint:start --> and
+     * <!-- noprint:end -->
+     * 
+     * @param string $html
+     * @return array|string|null
+     */
+    protected function applyNoprint(string $html) : string
+    {
+        $pattern = '/<!--\s*noprint:start\s*-->(.*?)<!--\s*noprint:end\s*-->/si';
+        $replacement = '<!--$section-->';
+        return preg_replace($pattern, $replacement, $html);
+    }
 }

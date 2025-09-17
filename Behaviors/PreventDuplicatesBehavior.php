@@ -25,7 +25,9 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPoint;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use Throwable;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
@@ -45,6 +47,12 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
  * You can customize the error message by setting `duplicate_error_code` (to load a message from
  * the messages model) or `duplicate_error_text` to specify a custom text directly without creating
  * a message in the metamodel.
+ * 
+ * ## Data authorization policies are ignored
+ * 
+ * When reading potential duplicates this behavior will ignore data authorization policies. This
+ * ensures, that even if users are only allowed to see subsets of data, duplicate checks still
+ * work globally!
  * 
  * ## Effects on data and other behaviors
  * 
@@ -306,7 +314,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
-        if (in_array($eventSheet, $this->ignoreDataSheets)) {
+        if (in_array($eventSheet, $this->ignoreDataSheets, true)) {
             return;
         }
         
@@ -441,6 +449,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (! $updateSheet->hasUidColumn()) {
             $uidCol = $updateSheet->getColumns()->addFromUidAttribute();
             $uidColName = $uidCol->getName();
+        } else {
+            $uidCol = $updateSheet->getUidColumn();
+            $uidColName = $uidCol->getName();
         }
         $duplRowNos = $matcher->getMatchedRowIndexes();
         $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: row number(s) ' . implode(', ', $duplRowNos));
@@ -459,16 +470,18 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_DATA_SOURCE);
             if (! empty($matches)) {
                 if (count($matches) > 1) {
-                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source!', null, null, $logbook);
+                    $firstMatch = reset($matches);
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source for row ' . $firstMatch->getMatchedPointer()->getRowNumber() + 1 . '!', null, null, $logbook);
                 }
-                $match = $matches[0] ?? null;
+                $match = $matches[0];
                 if($match->hasUid()) {
                     // If the event row does not have a UID value, it was intended to be created.
                     // But since there is a duplicate, it is now an update. In this case, we need
                     // to inherit system attributes from the duplicate! The UID is required to
                     // perform the update, but other things like the timestamp from the TimestampingBehavior
                     // should also be overwritten by values from the duplicate to be updated.
-                    if (null === $row[$uidColName] ?? null) {
+                    // NOTE: treat NULL and '' as empty here, not just NULL alone!
+                    if ('' === ($row[$uidColName] ?? '')) {
                         $matchedRow = $match->getMatchedRow();
                         foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
                             $row[$systemAttr->getAlias()] = $matchedRow[$systemAttr->getAlias()];
@@ -478,7 +491,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     $updateSheetRowIdxToEventRowIdx[] = $duplRowNo;
                     $rowsHandled[] = $duplRowNo;
                 } else {
-                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!', null, null, $logbook);
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate for row ' . $match->getMatchedPointer()->getRowNumber() + 1 . ' was found, but it has no UID, so it cannot be updated!', null, null, $logbook);
                 }
             }
             
@@ -613,7 +626,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 $logbook->addLine($attr->getAliasWithRelationPath(), 1);
                 $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);
             }
-            $missingAttrSheet->dataRead();
+            $missingAttrSheet = $this->readBypassingDataAuthorization($missingAttrSheet);
             $logbook->addLine('Read ' . $missingAttrSheet->countRows() . ' rows to get values of missing attributes', 1);
             
             $uidColName = $eventSheet->getUidColumnName();
@@ -639,6 +652,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
                 if ($mainSheet->getColumns()->getByExpression($cond->getExpression())) {
                     $customConditionsFilters->addCondition($cond);
+                } else {
+                    $logbook->addLine('Ignoring condition: ´'  . $customConditionsFilters->__toString() . '´ in `compare_with_conditions` because required column is NOT part of event data sheet!');
                 }
             }
             $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $customConditionsFilters->__toString());
@@ -711,7 +726,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $checkSheet->getFilters()->addNestedGroup($orFilterGroup);        
         
         // Read the data with the applied filters
-        $checkSheet->dataRead();
+        $checkSheet = $this->readBypassingDataAuthorization($checkSheet);
         
         $logbook->addDataSheet('Data in data source', $checkSheet);
         
@@ -730,6 +745,39 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $matcher->addMatcher($dataSourceMatcher);
         
         return $matcher;
+    }
+
+    /**
+     * Reads the given data sheet without applying data authorization policies
+     * 
+     * This is important for the PreventDuplicatesBehavior because duplicates must be prevented even if the
+     * current user is not allowed to see all the data! The behavior must throw an error even if the
+     * user would not see the potential duplicate if reading the data regularly.
+     * 
+     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $dataSheet
+     * @return DataSheetInterface
+     */
+    protected function readBypassingDataAuthorization(DataSheetInterface $dataSheet) : DataSheetInterface
+    {
+        if ($this->getWorkbench()->isInstalled() === false) {
+            return $dataSheet;
+        }
+        try {
+            $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        } catch (throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $dataSheet;
+        }
+        $wasDisabled = $dataAP->isDisabled();
+        $dataAP->setDisabled(true);
+        try {
+            $dataSheet->dataRead();
+        } catch (Throwable $e) {
+            throw $e;
+        } finally {
+            $dataAP->setDisabled($wasDisabled);
+        }
+        return $dataSheet;
     }
     
     /**

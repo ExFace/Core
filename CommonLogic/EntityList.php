@@ -152,7 +152,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      */
     public function remove($entity)
     {
-        if ($key = array_search($entity, $this->content_array, true)) {
+        if (false !== $key = array_search($entity, $this->content_array, true)) {
             $this->removeByKey($key);
         }
         return $this;
@@ -194,6 +194,11 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
     public function get($key)
     {
         return $this->content_array[$key] ?? null;
+    }
+
+    public function has($key) : bool
+    {
+        return array_key_exists($key, $this->content_array);
     }
 
     /**

@@ -6,8 +6,7 @@ use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonSyntaxError;
-use exface\Core\Factories\UxonSnippetFactory;
-use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
+
 /**
  * This is a container for any UXON configuration.
  * 
@@ -110,9 +109,12 @@ class UxonObject implements \IteratorAggregate
 
     private $snippetResolver = null;
     
-    public function __construct(array $properties = [])
+    private array $path = [];
+    
+    public function __construct(array $properties = [], array $path = [])
     {
         $this->array = $this->stripComments($properties);
+        $this->path = $path;
     }
     
     /**
@@ -249,7 +251,9 @@ class UxonObject implements \IteratorAggregate
             $cache = $this->childUxons[$name] ?? null;
             if (null === $cache) {
                 $val = $this->resolveSnippetsInArray($val);
-                $cache = $this->childUxons[$name] = new self($val);
+                $path = $this->path;
+                $path[] = $name;
+                $cache = $this->childUxons[$name] = new self($val, $path);
             } 
             return $cache;
         }
@@ -266,13 +270,15 @@ class UxonObject implements \IteratorAggregate
         $isAssoc = false;
         $arraySnippets = [];
         $snippetResolver = $this->snippetResolver;
-        // Object snippets
+        // Snippets inside the object itself are definitely object-snippets
         if (null !== ($val[self::PROPERTY_SNIPPET] ?? null)) {
             $isAssoc = true;
             if ($snippetResolver !== null) {
                 $val = $snippetResolver($val);
             } 
         }
+        // Snippets in array elements can be either array snippets (= yield multiple array elements) or object
+        // snippets (= replace this particular element)
         foreach ($val as $valKey => $valInner) {
             if (! is_numeric($valKey)) {
                 $isAssoc = true;
@@ -281,7 +287,18 @@ class UxonObject implements \IteratorAggregate
             if (is_array($valInner)) {
                 if (null !== ($valInner[self::PROPERTY_SNIPPET] ?? null)) {
                     if ($snippetResolver !== null) {
-                        $arraySnippets[$valKey] = $snippetResolver($valInner)->toArray();
+                        // Resolve the snippet
+                        /* @var $resolvedUxon \exface\Core\CommonLogic\UxonObject */
+                        $resolvedUxon= $snippetResolver($valInner);
+                        // If the result is a sequential array - it was an array snippet, otherwise it
+                        // obviously was an object-snippet
+                        if ($resolvedUxon->isArray()) {
+                            // Save array snippets in a temporary structure. We will insert them into the
+                            // array later
+                            $arraySnippets[$valKey] = $resolvedUxon->toArray();
+                        } else {
+                            $val[$valKey] = $resolvedUxon->toArray();
+                        }
                     }
                 } elseif ($this->snippetsAdded !== null){
                     foreach ($this->snippetsAdded as $snipKey => $snipFunc) {
@@ -294,6 +311,9 @@ class UxonObject implements \IteratorAggregate
                 break;
             }
         }
+
+        // Now insert all the array snippet results if we are currently working on an array and
+        // there were array snippets found.
         if ($isAssoc === false && ! empty($arraySnippets)) {
             // $arraySnippets will have the structure of [valKey => `replacement`] where replacement
             // will typically be an array, so we will replace a single item with multiple
@@ -517,10 +537,11 @@ class UxonObject implements \IteratorAggregate
     }
 
     /**
-     * Finds public setter methods in the given class mathing properties of this UXON object and calls them for each property.
+     * Finds public setter methods in the given class mathing properties of this UXON object and calls them for each
+     * property.
      *
-     * NOTE: this only works with public setters as private and protected methods cannot be called from the UXON object. To
-     * work with non-public setters use the ImportUxonObjectTrait in your enitity!
+     * NOTE: this only works with public setters as private and protected methods cannot be called from the UXON
+     * object. To work with non-public setters use the ImportUxonObjectTrait in your enitity!
      *
      * @param object $target_class_instance            
      * @throws UxonMapError
@@ -634,5 +655,24 @@ class UxonObject implements \IteratorAggregate
     {
         $this->snippetResolver = $callback;
         return $this;
+    }
+
+    public function replace(array $data) : UxonObject
+    {
+        $this->array = $data;
+        $this->childUxons = [];
+        return $this;
+    }
+
+    /**
+     * Returns a path containing property-names that lead to this UXON. 
+     * This path is valid for any UXON this instance was derived from, 
+     * provided that the path nodes were not modified along the way.
+     * 
+     * @return array
+     */
+    public function getPath() : array
+    {
+        return $this->path;
     }
 }

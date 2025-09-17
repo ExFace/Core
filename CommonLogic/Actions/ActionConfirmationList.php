@@ -186,12 +186,9 @@ class ActionConfirmationList extends EntityList implements ActionConfirmationLis
      */
     public function createConfirmation(UxonObject $uxon) : ConfirmationWidgetInterface
     {
-        if (! $uxon->hasProperty('button_continue')) {
-            $uxon->setProperty('button_continue', new UxonObject([
-                'caption' => $this->getAction()->getName()
-            ]));
-        }
-        return WidgetFactory::createFromUxonInParent($this->getAction()->getWidgetDefinedIn(), $uxon, 'ConfirmationMessage');
+        $confirmation = WidgetFactory::createFromUxonInParent($this->getAction()->getWidgetDefinedIn(), $uxon, 'ConfirmationMessage');
+        $confirmation->setAction($this->getAction());
+        return $confirmation;
     }
 
     /**

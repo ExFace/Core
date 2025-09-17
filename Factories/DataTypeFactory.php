@@ -137,8 +137,8 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
         $alias = $uxon->getProperty('alias');
         
         if (! $alias) {
-            throw new DataTypeNotFoundError('Cannot create data type from UXON: missing alias!');
-        }
+                throw new DataTypeNotFoundError('Cannot create data type from UXON: missing alias!');
+            }
         
         $selector = new DataTypeSelector($workbench, $alias);
         $type = static::create($selector);

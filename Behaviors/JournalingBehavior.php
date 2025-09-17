@@ -8,11 +8,38 @@ use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Actions\CreateData;
+use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 
 /**
- * Automatically creates entries in a "journal" object when things change in the main object
+ * Automatically creates entries in a "journal" object when things change in the main object.
+ * 
+ * Journal entries can contain any information from the original object, so you can save important
+ * information from the time when the journal was written. For example, you can save the 
+ * value of the state of the main object in every journal entry.
+ * 
+ * Journal entries are created upon creation of the behaviors object and on every update on it.
+ * You can change this logic to write entries only if at least one of the listed "important"
+ * attributes change using `save_if_attributes_change`. You can also skip the initial entry
+ * by turning off `save_on_create`.
+ * 
+ * ## Transaction handling
+ * 
+ * Journal entries are written within the same transaction as the original operation. This means,
+ * if something goes wrong and the original object will not be saved, there will also be no
+ * journal entries. 
+ * 
+ * However, this also means, that any errors occurring while saving journal entries will prevent
+ * the original operation too!
+ * 
+ * ## Permissions and data authorization
+ * 
+ * This behavior will bypass data authoriaztion policies by default. This ensures, that journaling
+ * entries are properly written even if the current user does not have access to the journal object
+ * or can only see subsets of its data.
+ * 
+ * If for any reason this is unwanted, use `bypass_data_authorization_point` to change this behavior.
  * 
  * ## Examples
  * 
@@ -44,15 +71,15 @@ use exface\Core\Events\DataSheet\OnCreateDataEvent;
  */
 class JournalingBehavior extends AbstractBehavior
 {    
-    private $callActionBehavior = null;
-    
+    use ICanBypassDataAuthorizationTrait;
+
     private $journalRelationAlias = null;
     
     private $journalRelation = null;
     
     private $saveIfAttributesChange = [];
     
-    private $saveAttributesMappingsUxon = [];
+    private $saveAttributesMappingsUxon = null;
     
     private $saveOnCreate = true;
     
@@ -74,6 +101,7 @@ class JournalingBehavior extends AbstractBehavior
                 "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                 "event_alias" => OnUpdateDataEvent::getEventName(),
                 "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
+                "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint() ?? true,
                 "action" => [
                     "alias" => CreateData::class,
                     "object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
@@ -103,6 +131,7 @@ class JournalingBehavior extends AbstractBehavior
                     "name" => $this->getName() . ' (autom. generated from ' . $this->getAlias() . ')',
                     "event_alias" => OnCreateDataEvent::getEventName(),
                     "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
+                    "bypass_data_authorization_point" => $this->willBypassDataAuthorizationPoint() ?? true,
                     "action" => [
                         "alias" => CreateData::class,
                         "object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
@@ -131,6 +160,9 @@ class JournalingBehavior extends AbstractBehavior
     {
         if ($this->onUpdateBehavior !== null) {
             $this->onUpdateBehavior->disable();
+        }
+        if ($this->onCreateBehavior !== null) {
+            $this->onCreateBehavior->disable();
         }
         return $this;
     }

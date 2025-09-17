@@ -1,9 +1,11 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Value;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\DataTypes\StringDataType;
+use Throwable;
 
 /**
  * This trait makes it easy to implement live references in jQuery based widgets.
@@ -111,10 +113,12 @@ JS;
     {
         $linked_element = null;
         if ($link = $this->getWidget()->getCalculationWidgetLink()) {
-            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+            try {
+                $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+            } catch (Throwable $e) {
+                throw new WidgetConfigurationError($this->getWidget(), 'Cannot register live reference for widget. ' . $e->getMessage(), null, $e);
+            }
         }
         return $linked_element;
     }
-
 }
-?>

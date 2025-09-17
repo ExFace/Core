@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
+use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Interfaces\Widgets\PrefillModelInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\DataSheets\DataPointerInterface;
@@ -91,7 +93,8 @@ class PrefillModel implements PrefillModelInterface
         if (! ($widget->getParent() instanceof iTriggerAction)) {
             return $widget;   
         }
-        
+
+        $workbench = $widget->getWorkbench();
         $button = $widget->getParent();
         // Make sure, the task has page and widget selectors (they are not set automatically, for routed URLs)
         $task->setPageSelector($button->getPage()->getSelector());
@@ -119,7 +122,7 @@ class PrefillModel implements PrefillModelInterface
             }
         }
         
-        $eventMgr = $widget->getWorkbench()->eventManager();
+        $eventMgr = $workbench->eventManager();
         $eventHandlersToRemove = [];
         
         if (($action instanceof iShowWidget) && ($action->getPrefillWithInputData() || $action->getPrefillWithPrefillData() || $action->getPrefillWithFilterContext())) {
@@ -147,7 +150,7 @@ class PrefillModel implements PrefillModelInterface
                 $this->addBindingPointer($event->getWidget(), $event->getPropertyName(), $event->getPrefillValuePointer());
             };
             $eventHandlersToRemove[OnPrefillChangePropertyEvent::getEventName()] = $prefillAppliedHandler;
-            $widget->getWorkbench()->eventManager()->addListener(OnPrefillChangePropertyEvent::getEventName(), $prefillAppliedHandler);
+            $workbench->eventManager()->addListener(OnPrefillChangePropertyEvent::getEventName(), $prefillAppliedHandler);
             
             // Listen to the OnBeforePrefill event and empty data before prefilling the action's widget
             // to make sure there are no hard-coded values! This is important because we added a dummy
@@ -178,6 +181,15 @@ class PrefillModel implements PrefillModelInterface
             };
             $eventHandlersToRemove[OnBeforeActionInputValidatedEvent::getEventName()] = $disableInputChecksHandler;
             $eventMgr->addListener(OnBeforeActionInputValidatedEvent::getEventName(), $disableInputChecksHandler);
+            // Also make sure any input mapper checks are disabled because otherwise the dummy data will
+            // cause them to fail.
+            foreach ($action->getInputMappers() as $mapper) {
+                foreach ($mapper->getMappings() as $mapping) {
+                    if ($mapping instanceof DataCheckMapping) {
+                        $mapping->disable(true);
+                    }
+                }   
+            }
                     
             // Undo any mappings of the dummy data: Listen to OnActionInputValidated to make sure, the input data 
             // of the action always has dummy data - even if it was modified by input mappers or anything else.
@@ -209,7 +221,18 @@ class PrefillModel implements PrefillModelInterface
         
         // Handle the modified task
         try {
-            $result = $widget->getWorkbench()->handle($task);
+            $wasDisabled = null;
+            if ($workbench->isInstalled()) {
+                $actionAP = $workbench->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+                $wasDisabled = $actionAP->isDisabled();
+                if (! $wasDisabled) {
+                    $actionAP->setDisabled(true);
+                }
+            }
+            $result = $workbench->handle($task);
+            if ($wasDisabled === false) {
+                $actionAP->setDisabled($wasDisabled);
+            }
             if ($result instanceof ResultWidgetInterface) {
                 $widget = $result->getWidget();
             }
@@ -225,8 +248,11 @@ class PrefillModel implements PrefillModelInterface
         
         return $widget;
     }
-    
-    protected function getExpectedInputWidget() : WidgetInterface
+
+    /**
+     * @return WidgetInterface|null
+     */
+    protected function getExpectedInputWidget() : ?WidgetInterface
     {
         // TODO what if the button has has a custom `input_widget_id`?
         $widgetToPrefill = $this->getWidget();
@@ -235,7 +261,11 @@ class PrefillModel implements PrefillModelInterface
         }
         return null;
     }
-    
+
+    /**
+     * @param WidgetInterface|null $inputWidget
+     * @return DataSheetInterface|null
+     */
     public function getExpectedInputData(WidgetInterface $inputWidget = null) : ?DataSheetInterface
     {
         $inputWidget = $inputWidget ?? $this->getExpectedInputWidget();
@@ -299,9 +329,15 @@ class PrefillModel implements PrefillModelInterface
             // the prefill sheet will have our values and may have other columns with NULL
             // values.
             if ($eventSheet->getMetaObject()->isExactly($dataSheet->getMetaObject()) === true) {
-                $row = $dataSheet->getRow(0);
-                foreach ($eventSheet->getRow(0) as $fld => $val) {
-                    if ($val !== null && $val !== $row[$fld]) {
+                $dummyRow = $dataSheet->getRow(0);
+                $eventRow = $eventSheet->getRow(0);
+                // Ignore any empty sheets (because our dummy is not empty :)
+                if ($eventRow === null) {
+                    return;
+                }
+                // Ignore sheets, that have other values, than our dummy
+                foreach ($eventRow as $fld => $val) {
+                    if ($val !== null && $val !== $dummyRow[$fld]) {
                         return;
                     }
                 }

@@ -44,6 +44,8 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function isFormula() : bool;
     
     /**
+     * Returns TRUE if the expression is a simple number, string or boolean (but an empty expression is NOT a constant!)
+     * 
      * @return boolean
      */
     public function isConstant() : bool;
@@ -52,6 +54,13 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function isString() : bool;
     
     public function isNumber() : bool;
+
+    /**
+     * Returns true if the type of this expression could not be determined
+     * 
+     * @return bool
+     */
+    public function isUnknownType() : bool;
     
     /**
      * Returns TRUE if the expression can be evaluated without a data context and FALSE otherwise: 

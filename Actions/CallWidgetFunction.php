@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Button;
+use exface\Core\Factories\WidgetLinkFactory;
 
 /**
  * Activates a function of a select widget (see available functions in widget docs).
@@ -22,12 +23,10 @@ use exface\Core\Widgets\Button;
  */
 class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
 {
-
-    private $widgetId = null;
-
-    private $funcName = null;
-    
-    private $funcArgs = [];
+    private ?string $widgetId = null;
+    private ?string $widgetIdSpace = null;
+    private ?string $funcName = null;
+    private array $funcArgs = [];
 
     /**
      * 
@@ -102,12 +101,34 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     public function getWidget(UiPageInterface $page): WidgetInterface
     {
         $id = $this->getWidgetId();
-        $idSpace = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
-        if ($idSpace === '' && $this->isDefinedInWidget()) {
-            $idSpace = $this->getWidgetDefinedIn()->getIdSpace();
-            return $page->getWidget(($idSpace ? $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR : '') . $id);
+        if (mb_substr($this->widgetId, 0, 1) === '~') {
+            if ($this->isDefinedInWidget()){
+                $link = WidgetLinkFactory::createFromWidget($this->getWidgetDefinedIn(), $this->widgetId);
+                return $link->getTargetWidget();
+            }
         }
-        return $id;
+
+        // If the widget id in the link does not have an id space and the action is called from a button, assume,
+        // that we are in the id space of the button.
+        $idSpaceOfLink = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, null, false, true);
+        if ($idSpaceOfLink === null && ($this->getWidgetIdSpace() !== null || $this->isDefinedInWidget())) {
+            $idSpaceOfAction = $this->getWidgetIdSpace() ?? $this->getWidgetDefinedIn()->getIdSpace();
+            // Don't add the id space if the widget id in the action is a path already and it starts with the id space
+            // TODO we really need a way to tell, if an id string is a path or a manual id. We are only guessing
+            // all the time!
+            switch (true) {
+                // No id space to set - forget it!
+                case $idSpaceOfAction === null:
+                    break;
+                // Root id space - add it explicitly to speed up searching
+                case $idSpaceOfAction === '' || $idSpaceOfAction === $page->getWidgetIdSpaceSeparator():
+                // Otherwise add the id space unless the id actually starts with it
+                case false === StringDataType::startsWith($id, $idSpaceOfAction):
+                    $id = $idSpaceOfAction . $page->getWidgetIdSpaceSeparator() . $id;
+                    break;
+            }
+        }
+        return $page->getWidget($id); 
     }
 
     /**
@@ -145,9 +166,9 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     {
         $name = parent::getName();
         if ($name == $this->translate('NAME') && $this->isButtonPress()) {
-            $this->name = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getCaption();
+            $name = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getCaption();
         }
-        return $this->name;
+        return $name;
     }
     
     /**
@@ -171,9 +192,9 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     {
         $hint = parent::getHint();
         if ($hint === null && $this->isButtonPress()) {
-            $this->hint = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getHint();
+            $hint = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getHint();
         }
-        return $this->hint;
+        return $hint;
     }
     
     /**
@@ -185,8 +206,30 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     {
         $icon = parent::getIcon();
         if ($icon === Icons::MOUSE_POINTER && $this->isButtonPress()) {
-            $this->icon = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getIcon();
+            $icon = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getIcon();
         }
-        return $this->icon;
+        return $icon;
+    }
+    
+    protected function getWidgetIdSpace() : ?string
+    {
+        return $this->widgetIdSpace;
+    }
+
+    /**
+     * The id space to search for the widget_id if it does not have a space explicitly defined
+     * 
+     * If not set, the id space of the button triggering the action will be used automatically.
+     * 
+     * To use the root id space of the page, set this property to an empty string or an underscore
+     * (`_`).
+     * 
+     * @param string $value
+     * @return $this
+     */
+    protected function setWidgetIdSpace(string $value) : CallWidgetFunction
+    {
+        $this->widgetIdSpace = $value;
+        return $this;
     }
 }

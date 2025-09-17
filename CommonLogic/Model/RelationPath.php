@@ -214,7 +214,7 @@ class RelationPath implements MetaRelationPathInterface
         $depth = intval($depth);
         
         $sep = self::RELATION_SEPARATOR;
-        if (strpos($alias, $sep) === false) {
+        if (mb_strpos($alias, $sep) === false) {
             return null;
         } else {
             if ($depth) {
@@ -385,6 +385,18 @@ class RelationPath implements MetaRelationPathInterface
         return $output;
     }
 
+    public static function slice(string $path, int $pos = 1) : ?array
+    {      
+        if (mb_strpos($path, self::RELATION_SEPARATOR) === false) {
+            return null;
+        }  
+        $rels = explode(self::RELATION_SEPARATOR, $path);
+        return [
+            implode(self::RELATION_SEPARATOR, array_slice($rels, 0, $pos)),
+            implode(self::RELATION_SEPARATOR, array_slice($rels, $pos))
+        ];            
+    }
+
     /**
      * Copies the relation path keeping the start object, but copying all relations
      *
@@ -429,7 +441,7 @@ class RelationPath implements MetaRelationPathInterface
      */
     public function getIterator() : Traversable
     {
-        return $this->relations;
+        return new \ArrayIterator($this->relations);
     }
 
     /**

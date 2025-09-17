@@ -32,6 +32,8 @@ trait CustomProjectionLayerTrait
      * The projection to be used - e.g. `EPSG:25832` or `EPSG:3857` - or empty for autodetection.
      *
      * See https://epsg.io/ for more information about projections and their definitions.
+     * 
+     * The default projection is `EPSG:4326` (also known as `WGS 84`).
      *
      * Example:
      *

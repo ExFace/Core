@@ -555,7 +555,7 @@
         {
             "_EXPORT_SUMMARY": "Model entity [OBJECT_TYPE]",
             "CREATED_ON": "2024-05-06 17:02:52",
-            "MODIFIED_ON": "2024-05-13 10:38:29",
+            "MODIFIED_ON": "2025-05-20 18:02:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef8320b6504f268320025041000001",
@@ -610,7 +610,9 @@
                     "exf_communication_channel": "Communication channel",
                     "exf_communication_template": "Communication template",
                     "exf_data_connection": "Data connection",
-                    "exf_scheduler": "Scheduler"
+                    "exf_scheduler": "Scheduler",
+                    "exf_uxon_snippet": "UXON snippet",
+                    "exf_mutation": "Mutation"
                 }
             }
         }

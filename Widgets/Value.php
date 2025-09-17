@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToCalculation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -48,7 +49,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * @author Andrej Kabachnik
  *
  */
-class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators
+class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators, iCanBeBoundToCalculation
 {
     use AttributeCaptionTrait;
     use iHaveAttributeGroupTrait;
@@ -57,6 +58,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     private $attribute_alias = null;
     
     private $data_type = null;
+
+    private $data_type_custom_uxon = null;
     
     private $aggregate_function = null;
     
@@ -106,8 +109,15 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function setAttributeAlias($value)
     {
+        // Do not do anything if the attribute alias does not change
+        if ($this->attribute_alias === $value) {
+            return $this;
+        }
+        // If the attribute alias actually does change, reset the possible cached data type
+        if ($this->attribute_alias !== null) {
+            $this->data_type = null;
+        }
         $this->attribute_alias = $value;
-        $this->data_type = null;
         return $this;
     }
     
@@ -141,7 +151,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                  $data_sheet->getColumns()->addFromExpression($prefillExpr, $columnName, $this->isHidden());
              }
          } elseif ($this->isBoundToDataColumn() || $this->isBoundToAttribute()) {
-             $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName());
+             $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName(), $this->getCalculationExpression());
              // FIXME #unknown-column-types currently need to double-check column type here because
              // of issues with columns with aggregators. E.g. an attribute column `MY_ATTR:SUM`
              // will match an unknown column `MY_ATTR_SUM`, which may or may not be
@@ -341,12 +351,20 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         if ($this->data_type === null) {
             $expr = $this->getValueExpression();
             switch (true) {
+                // If we have a value_data_type set in the UXON, use that
+                case $this->data_type_custom_uxon !== null:
+                    $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->data_type_custom_uxon);
+                    break;
+                // If we have a value AND that is an attribute or a formula, get the data type from the expression
                 case $expr && ! $expr->isEmpty() && ! $expr->isConstant() && ! $expr->isReference():
                     $this->data_type = $expr->getDataType();
                     break;
+                // If we don't have a value, but the widget is bound to an attribute, take the data type of the attribute
                 case $this->isBoundToAttribute():
-                    $this->data_type = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject())->getDataType();
+                    $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
+                    $this->data_type = $expr->getDataType();
                     break;
+                // If we have the value set to a widget link, use the data type of the link target
                 case $expr && $expr->isReference():                    
                     $target = $expr->getWidgetLink($this)->getTargetWidget();
                     if ($target instanceof iHaveValue && $expr->getWidgetLink($this)->getTargetColumnId() === null) {
@@ -355,14 +373,18 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                         $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
                     }
                     break;
+                // If we have a value set and non of the above worked, use the type of the value
                 case $expr:
                     $this->data_type = $expr->getDataType();
                     break;
+                // Final fallback is the base data type
                 default:
                     $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
                     break;
             }
         }
+        
+        $this->data_type->setEmptyText($this->empty_text);
         return $this->data_type;
     }
     
@@ -384,13 +406,13 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         switch (true) {
             case $data_type_or_string instanceof UxonObject:
-                $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $data_type_or_string);
+                $this->data_type_custom_uxon = $data_type_or_string;
                 break;
             case $data_type_or_string instanceof DataTypeInterface:
                 $this->data_type = $data_type_or_string;
                 break;
             case is_string($data_type_or_string):
-                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_string);
+                $this->data_type_custom_uxon = new UxonObject(['alias' => $data_type_or_string]);
                 break;
             default:
                 throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');
@@ -479,12 +501,21 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getDataColumnName()
     {
         if ($this->data_column_name === null) {
+            // If bound to attribute, take the sanitized attribute alias
             if ($this->isBoundToAttribute()) {
                 $this->data_column_name = DataColumn::sanitizeColumnName($this->getAttributeAlias());
-            } elseif ($this->hasValue()) {
+            } // Otherwise see if there is a value expression and take that if it is not a widget link
+            elseif ($this->hasValue()) {
                 $expr = $this->getValueExpression();
                 if ($expr && ! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
-                    $this->data_column_name = DataColumn::sanitizeColumnName($expr->toString());
+                    $this->data_column_name = DataColumn::sanitizeColumnName($expr->__toString());
+                }
+            }
+            // If neither of the above helped, see if we are bound to a calculation and use that if it is
+            // a formula or a static expression
+            if (null !== $calcExpr = $this->getCalculationExpression()) {
+                if ($calcExpr->isFormula() && !$calcExpr->isStatic()) {
+                    $this->data_column_name = DataColumn::sanitizeColumnName($calcExpr->__toString());
                 }
             }
         }
@@ -702,10 +733,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * @uxon-property calculation
      * @uxon-type metamodel:expression
      *
-     * @param string $expression
-     * @return DataColumn
+     * @see iCanBeBoundToCalculation::setCalculation()
      */
-    public function setCalculation(string $expression) : Value
+    public function setCalculation(string $expression) : iCanBeBoundToCalculation
     {
         $this->calculationLink = null;
         $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
@@ -714,7 +744,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     /**
      *
-     * @return bool
+     * @see iCanBeBoundToCalculation::isCalculated()
      */
     public function isCalculated() : bool
     {
@@ -723,7 +753,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     /**
      *
-     * @return ExpressionInterface|NULL
+     * @see iCanBeBoundToCalculation::getCalculationExpression()
      */
     public function getCalculationExpression() : ?ExpressionInterface
     {
@@ -767,5 +797,30 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             }
         }
         return $this;
+    }
+
+    /**
+     * Value widgets are affected by their own object and any objects in the relation path
+     * if the value belongs to a relation attribute.
+     * 
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        // Objects used in columns
+        
+        if ($this->isBoundToAttribute()) {
+            $attr = $this->getAttribute();
+            $relPath = $attr->getRelationPath();
+            if (! $relPath->isEmpty()) {
+                foreach ($relPath->getRelations() as $rel) {
+                    $objs[] = $rel->getLeftObject();
+                    $objs[] = $rel->getRightObject();
+                }
+            }
+        }
+        return array_unique($objs);
     }
 }

@@ -1,8 +1,102 @@
 # Release history
 
-## 1.27 - in development
+## 1.31 - 18.09.2025
+
+New features:
+
+- Widget setups. Users can now save their setup for tables - columns, sorters, etc. (currently only in UI5 facade)
+- CLI task queue to run regular CLI commands, not just actions
+- Many new features for DataSpreadSheets based on JExcel
+  - If a related object is selected in a dropdown, all columns showing data from that relation are auto-updated
+  - Filters can now use widget links to other columns in the same spreadsheet: e.g. `=~data!OtherCol`
+  - Conditional properties `disabled_if` and `required_if` also support references to other columns
+- Data addresses in meta objects now support default values for placeholders: `[#MYATTR|?NA#]`.
+- Ability to apply `mutations` when using `extend_widget`
+- AI agents can now have multiple versions similarly to data flows
+- Action `DownloadZIP` to download multiple attachments in a ZIP archive
+- Formula `=Distinct()`
+
+Improvements:
+
+- Data type option `empty_text` now supported in most JS formatters
+- SelfUpdate action can now be run in containers, where PHP is not available globally
+- Task queues can now prevent parallel execution of the same task - see `skip_task_if_already_running`
+- Ability to use attribute data addresses in parameters of the `CallWebservice` action: `parameters_use_attributes`, `parameters_for_all_attributes`, etc.
+- Improvements for HTTP connectors: e.g. `timeout` option
+- Option `default_time` to change the time assumed when selecting a data in an `InputDateTime`
+
+## 1.30 - 07.08.2025
+
+New features:
+
+- SQL installers can now execute PHP plugins from inside SQL migrations
+
+Improvements:
+
+- Many improvements for the mutation framework
+- Option `auto_column_width` for table widgets
+- Improved handling of action effects in widgets, that produce subsheets
+- Added debug tooltips for conditional properties like `disabled_if` and `required_if`
+- Improved notes an tracking logic in OpenAPI based webserivces
+
+## 1.29 - 19.06.2025
+
+New features:
+
+- Mutation framework to selectively change things in other apps
+- `apply_if_exists` and `apply_if_not_exists` for action authorization policies
+- New formulas `=isActionAuthorized()`, `=ObjectName()`
+
+Improvements:
+
+- CustomAttributeDefinitionBehavior now supports placeholders in attribute models, making them even more flexible!
+- `hidden_if_access_denied` now can evaluate expected input data of Button widgets making it much more accurate. You can control its logic by using different values for this property: `to_action_for_button_input_data`, `to_action_generally`, etc. 
+- Further improved attribute list icons in object editor
+- Improved policy debug dialogs
+- DataTable `row_grouper` can now work with formulas and custom data columns
+- Debug tooltips for widgets now include all sorts of `_if` proerties
+
+Important fixes:
+
+- SingleWidget-snippets now working properly
+
+## 1.28 - 13.05.2025
+
+New features:
+
+- Flow notes now give an overview of key facts when a data flow is run - see [axenox.ETL](https://github.com/axenox/ETL/).
+- Redesigned attribute tab in object editor to show all attributes and not only direct attributes of the object. Now inherited and generated/custom attributes are visible in all in the same place.
+- Attributes produced by the `CustomAttributesJsonBehavior` now can have custom SQL in their data addresses - they support `@SQL` dialect tags.
+- Attribute groups in widgets can now be used with aggregators: e.g. `"attribute_group_alias": "ORDER_POS__~DEFAULT_DISPLAY:LIST_DISTINCT"`.
+- New formulas `=EnumLookup()` and `=JsonExtract()`
+
+Improvements
+
+- Improved `unpivot_mappings`
+	- Added option `from_columns_calculation` to transpose columns dynamically without knowing their names
+	- Added option ` ignore_if_missing_from_column`
+- Improved rendering of DialogHeader widgets in [JEasyUI facade](https://github.com/exface/jEasyUIFacade/)
+
+## 1.27 - 20.04.2025
+
+New features:
 
 - Automated testing via [axenox.BDT](https://github.com/axenox/BDT/) app
+- UXON snippets to create reusable bits of UXON models for widgets, actions, etc.
+- Generic excel paste-action `exface.Core.ShowDataImportDialog`
+- `UneditableBehavior` to prevent changes on objects on certain conditions
+- `lookup_mappings` to look up UIDs of objects in input mappers, etc.
+- `column_to_json_mappings` and `json_to_rows_mappings` for data mappers
+- Ability to add mappers to the output of export actions via `export_mapper`
+
+Improvements
+
+- Greatly improved web services in [axenox.ETL](https://github.com/axenox/ETL/) to simplify creation of OpenAPI import services
+- All filters have `multi_select` enabled now by default
+- In-app notifications are now automatically deleted after a configurable time period
+- Improved server traces list in DebugContext with better filters
+- Attribute groups now can be accessed via relation path: e.g. `RELATED_OBJECT__~editable`.
+- Many improvements for custom attributes
 
 ## 1.26 - 18.03.2025
 

@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\Communication\Messages\AnnouncementMessage;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Events\Workbench\OnCleanUpEvent;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -45,6 +47,12 @@ class NotificationContext extends AbstractContext
     private $announcementsSheet = null;
     
     private $counter = null;
+
+    public function __construct(ContextSelectorInterface $selector)
+    {
+        parent::__construct($selector);
+        $selector->getWorkbench()->eventManager()->addListener(OnCleanUpEvent::getEventName(), [$this, 'onCleanupRemoveOldNotifications']);
+    }
     
     /**
      * The object basket context resides in the window scope by default.
@@ -616,5 +624,24 @@ class NotificationContext extends AbstractContext
         }
         
         return $notification;
+    }
+
+    /**
+     * Removes all notifications older than the numer of days configured in CONTEXTS.NOTIFICATIONCONTEXT.DELETE_NOTIFICATIONS_AFTER_DAYS
+     * 
+     * @param \exface\Core\Events\Workbench\OnCleanUpEvent $event
+     * @return void
+     */
+    public function onCleanupRemoveOldNotifications(OnCleanUpEvent $event)
+    {
+        $daysBack = $event->getWorkbench()->getConfig()->getOption('CONTEXTS.NOTIFICATIONCONTEXT.DELETE_NOTIFICATIONS_AFTER_DAYS');
+        if ($daysBack <= 0) {
+            return;
+        }
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.NOTIFICATION');
+        $ds->getFilters()->addConditionFromString('CREATED_ON', DateDataType::parseRelativeDate((-1) * $daysBack), ComparatorDataType::LESS_THAN);
+        $cnt = $ds->dataDelete();
+        $event->addResultMessage('Cleaned up ' . $cnt . ' notifications older than ' . $daysBack . ' days.');
+        return;
     }
 }

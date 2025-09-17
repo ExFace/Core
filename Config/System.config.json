@@ -21,6 +21,8 @@
     
 	"CACHE.ENABLED": true,
 	"CACHE.USE_APCU": false,
+
+	"CONTEXTS.NOTIFICATIONCONTEXT.DELETE_NOTIFICATIONS_AFTER_DAYS": "90",
 	
 	"DEBUG.PHP_ERROR_REPORTING": "E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED",
     "DEBUG.LIVE_CLASS_AUTOLOADER": true,
@@ -31,11 +33,13 @@
    	"DEBUG.LOG_LEVEL_AUTHORIZATION_DENIED": "ERROR",
    	"DEBUG.LOG_LEVEL_AUTHORIZATION_DENIED_ANONYMOUS": "DEBUG",
     "DEBUG.TRACE": false,
+	"DEBUG.TRACE_MAX_TIME_SECONDS": "60",
     "DEBUG.MAX_DAYS_TO_KEEP": "4",
     "DEBUG.INTERCEPT_COMMUNICATION": false,
     "DEBUG.INTERCEPT_AND_SEND_TO_USERS": "",
     "DEBUG.INTERCEPT_AND_SEND_TO_USER_ROLES": "",
     "DEBUG.SQL_FORMATTING_MAX_CHARS": 20000,
+	"DEBUG.AUTOMATIC_UXON_VALIDATION": true,
     
     "LOG.MINIMUM_LEVEL_TO_LOG": "debug",
     "LOG.MAX_DAYS_TO_KEEP": "14",
@@ -91,19 +95,24 @@
     
     "EVENTS.STATIC_LISTENERS": {
     	"exface.Core.Model.OnMetaObjectLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel"
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectMutationPoint::onObjectLoadedApplyMutations"
     	],
     	"exface.Core.Model.OnBeforeMetaObjectActionLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
-    	],
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectActionMutationPoint::onActionLoadedApplyMutations"
+		],
         "exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded": [
-            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onBehaviorLoadedTranslateModel"
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onBehaviorLoadedTranslateModel",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectBehaviorMutationPoint::onBehaviorLoadedApplyMutations"
         ],
     	"exface.Core.Model.OnUiMenuItemLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate"
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate",
+			"\\exface\\Core\\Mutations\\MutationPoints\\UiPageMutationPoint::onUiMenuItemLoadedApplyMutations"
     	],
     	"exface.Core.Model.OnBeforeDefaultObjectEditorInit": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate"
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate",
+			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
     	],
     	"exface.Core.Model.OnMessageLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
@@ -209,5 +218,7 @@
 		"Access-Control-Expose-Headers": ""
 	},
 	
-    "INSTALLER.SERVER_INSTALLER.CLASS": ""
+    "INSTALLER.SERVER_INSTALLER.CLASS": "",
+
+	"MUTATIONS.ENABLED": false
 }

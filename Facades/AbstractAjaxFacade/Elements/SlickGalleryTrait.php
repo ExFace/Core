@@ -471,12 +471,20 @@ JS;
                     throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
                 }
                 
+                // IMPORTANT: make sure to add the current filters to the subsheet, because otherwise data, that was
+                // not loaded due to filters will be lost when saving! Saving the subsheet will do dataReplaceByFilters()
+                // and if the filters are not passed here, ALL data related to the current head object UID will be
+                // replaced by whatever is currently shown.
                 return <<<JS
 (function(){
     var oData = ($('#{$this->getIdOfSlick()}').data('_exfData') || {});
+    var oConfiguratorData = {$this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter()};
     // Remove any keys, that are not in the columns of the widget
     oData.rows = (oData.rows || []).map(({ $colNamesList }) => ({ $colNamesList }));
-
+    oData.filters = oConfiguratorData.filters;
+    
+    {$this->buildJsFileNameDuplicateRenamer("oData")}
+    
     return {
         oId: '{$dataObj->getId()}',
         rows: [
@@ -487,9 +495,6 @@ JS;
                     oData
                 )
             }
-        ],
-        filters: [
-        
         ]
     }
 })()
@@ -514,7 +519,91 @@ JS;
 })()
 JS;
     }
-    
+
+    /**
+     * It checks all file names of given oData for duplicates
+     * and renames those that are found.
+     *
+     * @param string $oDataJs
+     * @return string
+     */
+    public function buildJsFileNameDuplicateRenamer(string $oDataJs) : string {
+        $fileStorageFieldName = $this->getWidget()->getUploader()->getFileContentAttribute()->getAliasWithRelationPath();
+
+        return <<<JS
+      
+            (function(oData) {
+              let aNameCopysSeen = {};
+              
+              // counts the names only for the old files:
+              oData.rows.forEach(function(oRow) {
+                // The fileStorageFieldName variable is only set with data for new file uploads. 
+                // And only new file uploads can be renamed.
+                if (oRow?.{$fileStorageFieldName} !== undefined || !oRow.Dateiname) return;
+                  fillNameCopysSeenArray(aNameCopysSeen, oRow.Dateiname);
+              });
+              
+              // new uploads:
+              oData.rows.forEach( oRow => {
+                  if (oRow?.{$fileStorageFieldName} == undefined || !oRow.Dateiname) return;
+                  const sFileName = oRow.Dateiname;
+                  fillNameCopysSeenArray(aNameCopysSeen, sFileName);
+                  
+                  if (aNameCopysSeen[sFileName.toLowerCase()] > 0){
+                    const iCurrentExtIndex = sFileName.lastIndexOf(".");
+                    const sFileNameBase = iCurrentExtIndex >= 0 ? sFileName.slice(0, iCurrentExtIndex) : sFileName;
+                    const sCurrentExt = (/(?:\.([^.]+))?$/).exec((sFileName || ''))[1];
+                    
+                    if (sCurrentExt?.length > 0) {
+                      oRow.Dateiname = createNewBaseName(sFileNameBase, sCurrentExt);
+                    } else {
+                      oRow.Dateiname = createNewBaseName(sFileName);
+                    }
+                  }
+              });
+            
+              /** 
+              * This inner function checks if the new name is also already existing and, 
+              * if so, increases the counter number at the end of the file name.
+              * ecample: image -> image_1 || image.jpeg -> image_1.jpeg
+              * @param sFileNameBase
+              * @param sFileExtension
+              * @returns {string}
+              */
+              function createNewBaseName(sFileNameBase, sFileExtension = "") {
+                let sDotFileExtension = sFileExtension ? "." + sFileExtension : "";
+                let sCurrentFileName = sFileNameBase + sDotFileExtension;
+                let nNameCounter = aNameCopysSeen[sCurrentFileName.toLowerCase()] ?? 0 ;
+                let sNewFileName = sFileNameBase + "_" + nNameCounter + sDotFileExtension;
+                       
+                while (aNameCopysSeen[sNewFileName.toLowerCase()] !== undefined) {
+                  nNameCounter++;
+                  sNewFileName = sFileNameBase + "_" + nNameCounter + sDotFileExtension;
+                }
+                aNameCopysSeen[sNewFileName.toLowerCase()] = 0;
+                return sNewFileName;
+              }
+              
+              /**
+              * This inner function fills the aNameCopysSeen array, 
+              * witch stores the number of times a given file name has been seen.
+              * 
+              * @param aNameCopysSeen
+              * @param sFileName
+              */
+              function fillNameCopysSeenArray(aNameCopysSeen, sFileName) {
+                const sFileNameLowerCase = sFileName.toLowerCase();
+                // aNameCopysSeen[sFileNameLowerCase] is undefined, if the name was not seen yet.
+                if (aNameCopysSeen[sFileNameLowerCase] === undefined) {
+                  aNameCopysSeen[sFileNameLowerCase] = 0;
+                } else {
+                  aNameCopysSeen[sFileNameLowerCase]++;
+                }
+              }
+            })($oDataJs)      
+JS;
+    }
+
     protected function buildJsUrlForHttpFileFacade(string $oRowJs, string $widthJs = null, string $heightJs = null) : string
     {
         $widget = $this->getWidget();

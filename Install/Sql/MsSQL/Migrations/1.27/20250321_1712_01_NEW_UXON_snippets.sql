@@ -1,5 +1,6 @@
 -- UP
 
+IF OBJECT_ID ('dbo.exf_uxon_snippet', N'U') IS NULL
 CREATE TABLE dbo.exf_uxon_snippet (
     oid BINARY(16) NOT NULL,
     created_on DATETIME NOT NULL,

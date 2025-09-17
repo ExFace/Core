@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -89,8 +90,9 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
  *
  * @author Andrej Kabachnik
  */
-class InputSelect extends Input implements iSupportMultiSelect
+class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
 {
+    private $value_set = null;
 
     private $value_text = '';
 
@@ -159,10 +161,9 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::getMultiSelect()
      */
-    public function getMultiSelect()
+    public function getMultiSelect() : bool
     {
         return $this->getMultipleValuesAllowed();
     }
@@ -176,9 +177,16 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
      */
-    public function setMultiSelect($value)
+    public function setMultiSelect(bool $value) : iSupportMultiSelect
     {
-        return $this->setMultipleValuesAllowed(\exface\Core\DataTypes\BooleanDataType::cast($value));
+        $prev = $this->getMultiSelect();
+        $this->setMultipleValuesAllowed($value);
+        // If the original value set was a list, it will be handled differently depending
+        // on the multi-select state. So re-set the value if multi-select changes!
+        if ($value !== $prev && $this->value_set !== null) {
+            $this->setValue($this->value_set);
+        }
+        return $this;
     }
     
     /**
@@ -647,12 +655,16 @@ class InputSelect extends Input implements iSupportMultiSelect
         if (empty($values)) {
             return $this;
         }
-        
-        if ($this->getMultiSelect()) {
+
+        // with the new logic for automatic multi_Select we should not distinguish here anymore if multi_select is allowed or not
+        // just parse the values from the array as a string with multi select delimiter to the setValue function, it will take care of the rest.
+        /*if ($this->getMultiSelect()) {
             $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values), $parseStringsAsExpressions);
         } else {
             $this->setValue(reset($values), $parseStringsAsExpressions);
-        }
+        }*/
+
+        $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values), $parseStringsAsExpressions);
         return $this;
     }
 
@@ -1170,15 +1182,20 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
-        if ($this->getMultiSelect() === true) {
-            if (is_array($value)) {
-                $delim = $this->getMultipleValuesDelimiter();
-                $value = implode($delim, $value);
-            }
-        } else {
-            if (mb_strpos($value ?? '', $this->getMultiSelectValueDelimiter()) > 0 && ! $this->hasOption($value)) {
-                $firstVal = explode($this->getMultiSelectValueDelimiter(), $value)[0];
-                return parent::setValue($firstVal, $parseStringAsExpression);
+        // See if scalar values are delimited lists. Only do it for scalars, not for formulas
+        // or references
+        if (is_string($value) && Expression::detectCalculation($value) === false) {
+            $this->value_set = $value;
+            $delim = $this->getMultipleValuesDelimiter();
+            if ($this->getMultiSelect() === true) {
+                if (is_array($value)) {
+                    $value = implode($delim, $value);
+                }
+            } else {
+                if (mb_strpos($value ?? '', $delim) > 0 && ! $this->hasOption($value)) {
+                    $firstVal = explode($delim, $value)[0];
+                    return parent::setValue($firstVal, $parseStringAsExpression);
+                }
             }
         }
         return parent::setValue($value, $parseStringAsExpression);

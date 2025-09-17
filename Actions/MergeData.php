@@ -10,6 +10,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
+use GuzzleHttp\Promise\Create;
 
 /**
  * Merges input data with data in the data source(s).
@@ -65,19 +66,16 @@ class MergeData extends CreateData implements iCreateData, iUpdateData
     /**
      * If values in these attibutes are found in the data source, the corresponding rows will be updated instead of a create.
      * 
-     * If an existing item of the to-object with exact the same values in all of these attributes
-     * is found, the step will perform an update and will not create a new item.
-     * 
-     * **NOTE:** this will overwrite data in all the attributes affected by the `mapper`.
+     * **NOTE:** in case of an update this will overwrite data in all the attributes included in the data sheet.
      *
      * @uxon-property update_if_matching_attributes
      * @uxon-type metamodel:attribute[]
      * @uxon-template [""]
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
-     * @return CreateData
+     * @return MergeData
      */
-    protected function setUpdateIfMatchingAttributes(UxonObject $uxon) : CreateData
+    protected function setUpdateIfMatchingAttributes(UxonObject $uxon) : MergeData
     {
         $this->updateIfMatchingAttributeAliases = $uxon->toArray();
         return $this;
@@ -90,5 +88,14 @@ class MergeData extends CreateData implements iCreateData, iUpdateData
     protected function isUpdateIfMatchingAttributes() : bool
     {
         return empty($this->updateIfMatchingAttributeAliases) === false;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see CreateData::willUpdateIfUidFound()
+     */
+    protected function willUpdateIfUidFound() : bool
+    {
+        return false;
     }
 }

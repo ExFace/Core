@@ -92,7 +92,8 @@ class RowFilterMapping extends AbstractDataSheetMapping
             default:
                 throw new DataMappingConfigurationError($this, 'Invalid data mapping configuration: "' . $this->getApplyTo() . '" is not a valid value for `mode`');
         }
-        if ($logbook !== null) $logbook->addLine("Found **{$diffSheet->countRows()} rows** matching conditions. Will apply mode `{$this->getMode()}`.");
+
+        if ($logbook !== null) $logbook->addLine("Found **{$diffSheet->countRows()} rows** matching conditions. Will apply mode `{$this->getMode()}`.", 1);
         
         if ($this->getApplyTo() === self::APPLY_TO_TO_SHEET) {
             $toSheet = $diffSheet;

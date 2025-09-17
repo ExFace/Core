@@ -18,6 +18,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\DataTypes\PhpClassDataType;
+use Throwable;
 
 /**
  *
@@ -44,6 +45,54 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $name = null;
     
     protected bool $isInProgress = false;
+
+    /**
+     * Disable this behavior type for the specified object.
+     * 
+     * @param MetaObjectInterface $object
+     * @return bool Returns TRUE, if this behavior type was found AND
+     * disabled on the specified object and FALSE otherwise.
+     */
+    public static function disableForObject(MetaObjectInterface $object) : bool
+    {
+        $class = get_called_class();
+        foreach($object->getBehaviors() as $behavior) {
+            if($behavior instanceof ($class)) {
+                if(!$behavior->isDisabled()) {
+                    $behavior->disable();
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Enable this behavior type for the specified object.
+     *
+     * @param MetaObjectInterface $object
+     * @return bool Returns TRUE, if this behavior type was found AND
+     * enabled on the specified object and FALSE otherwise.
+     */
+    public static function enableForObject(MetaObjectInterface $object) : bool
+    {
+        $class = get_called_class();
+        foreach($object->getBehaviors() as $behavior) {
+            if($behavior instanceof ($class)) {
+                if($behavior->isDisabled()) {
+                    $behavior->enable();
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
     
     public function isInProgress() : bool
     {
@@ -80,6 +129,18 @@ abstract class AbstractBehavior implements BehaviorInterface
         $this->object = $object;
         $this->selector = $selector;
         $this->appSelectorOrString = $appSelectorOrString;
+    }
+
+    /**
+     * When destorying a behavior, make sure to unregister all event listeners first
+     */
+    public function __destruct()
+    {
+        try {
+            $this->disable();
+        } catch (Throwable $e) {
+            // Ignore errors
+        }
     }
 
     /**

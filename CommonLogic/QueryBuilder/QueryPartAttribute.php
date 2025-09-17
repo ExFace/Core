@@ -111,7 +111,10 @@ class QueryPartAttribute extends QueryPart
      */
     public function getDataAddressProperties() : array
     {
-        return $this->getAttribute()->getDataAddressProperties()->toArray();
+        return array_merge(
+            $this->getAttribute()->getDataAddressProperties()->toArray(),
+            $this->dataAddressProperties
+        );
     }
 
     /**

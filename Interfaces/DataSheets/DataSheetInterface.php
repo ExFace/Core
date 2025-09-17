@@ -2,6 +2,9 @@
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\ConditionGroup;
+use exface\Core\Exceptions\DataSheets\DataNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
@@ -13,10 +16,9 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
-use Symfony\Component\Console\Exception\InvalidOptionException;
 
 /**
- * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
+ * Internal data representation - a row-based table with filters, sorters, aggregators, etc.
  * 
  * ## Structure
  * 
@@ -72,10 +74,11 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * $merge_uid_dublicates is TRUE, given rows with UIDs already present in the sheet, will overwrite 
      * old rows instead of being added at the end of the sheet.
      *
-     * @see import_rows() for an easy way of adding rows from another data sheet
-     *     
-     * @param array $rows            
-     * @param boolean $merge_uid_dublicates            
+     * @see importRows() for an easy way of adding rows from another data sheet
+     * 
+     * @param array[] $rows
+     * @param bool $merge_uid_dublicates
+     * @param bool $auto_add_columns
      * @return DataSheetInterface
      */
     public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
@@ -93,10 +96,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * starting from that position. Row numbers, that are out of the sequence will be ignored: e.g. if
      * you try to add a row at position 2 to an empty sheet, it will be added at position 0, becase 2 is 
      * not a valid sequential position in this case.
-     *
-     * @param array $row            
-     * @param boolean $merge_uid_dublicates            
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     * 
+     * @param array $row
+     * @param bool $merge_uid_dublicates
+     * @param bool $auto_add_columns
+     * @param int|null $position
+     * @return DataSheetInterface
      */
     public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $position = null) : DataSheetInterface;
 
@@ -108,23 +113,24 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * This would be especially effective if there is nothing to join...
      *
      * @param DataSheetInterface $otherSheet
-     * @param string $leftKeyColName
-     * @param string $rightKeyColName
+     * @param string|null $leftKeyColName
+     * @param string|null $rightKeyColName
      * @param string $relationPath
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     * @return DataSheetInterface
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
+    public function joinLeft(DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
 
     /**
      * Imports data from matching columns of the given sheet.
      * If the given sheet has the same columns, as this one, their
      * values will be copied to this sheet. If this sheet has columns with formulas, they will get calculated
      * for the imported rows if `calculateFormulas` is `true`.
-     *
-     * @param DataSheetInterface $other_sheet            
+     * 
+     * @param DataSheetInterface $other_sheet
+     * @param bool $calculateFormulas
      * @return DataSheetInterface
      */
-    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas);
+    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas) : DataSheetInterface;
 
     /**
      * Returns the values a column of the data sheet as an array
@@ -144,9 +150,9 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * via $totals_values in the same manner. This is usefull when applying data functions to columns.
      * NOTE: if the data sheet does not contain a column with the given name, it will be added automatically.
      *
-     * @param string column_name
-     * @param mixed|array column_values
-     * @param mixed|array totals_values
+     * @param string $column_name
+     * @param mixed|array $column_values
+     * @param mixed|array|null $totals_values
      * @return DataSheetInterface
      */
     public function setColumnValues(string $column_name, $column_values, $totals_values = null) : DataSheetInterface;
@@ -180,8 +186,8 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Populates the data sheet with actual data from the respecitve data sources.
      * Returns the number of rows created in the sheet.
      *
-     * @param int offset
-     * @param int limit
+     * @param int|null $offset
+     * @param int|null $limit
      * 
      * @triggers \exface\Core\Events\DataSheet\OnBeforeReadDataEvent
      * @triggers \exface\Core\Events\DataSheet\OnReadDataEvent
@@ -284,10 +290,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * By default id does an update, creating new rows only if the data
      * does not contain an object uid for the corresponding row.
      *
-     * @param DataTransactionInterface $transaction            
+     * @param DataTransactionInterface|null $transaction            
      * @return integer
      */
-    public function dataSave(DataTransactionInterface $transaction = null);
+    public function dataSave(DataTransactionInterface $transaction = null) : int;
 
     /**
      * Updates data sources of all objects in the data sheet with the current values.
@@ -298,7 +304,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      * 
      * @param bool $create_if_uid_not_found            
-     * @param DataTransactionInterface $transaction  
+     * @param DataTransactionInterface|null $transaction  
      *           
      * @triggers \exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent
      * @triggers \exface\Core\Events\DataSheet\OnUpdateDataEvent
@@ -323,7 +329,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * 
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
-     * @param DataTransactionInterface $transaction            
+     * @param DataTransactionInterface|null $transaction            
      * @param bool $delete_redundant_rows
      * @param bool $update_by_uid_ignoring_filters
      *             
@@ -343,7 +349,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
      * @param bool $update_if_uid_found            
-     * @param DataTransactionInterface $transaction  
+     * @param DataTransactionInterface|null $transaction  
      *           
      * @triggers \exface\Core\Events\DataSheet\OnBeforeCreateDataEvent
      * @triggers \exface\Core\Events\DataSheet\OnCreateDataEvent
@@ -358,7 +364,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
-     * @param DataTransactionInterface $transaction
+     * @param DataTransactionInterface|null $transaction
      * @param bool $cascading
      *          
      * @triggers \exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent
@@ -370,39 +376,39 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      *
-     * @return DataSheetList
+     * @return DataSheetListInterface
      */
-    public function getSubsheets();
+    public function getSubsheets() : DataSheetListInterface;
 
     /**
      * Returns an array of data sorters
      *
      * @return DataSorterListInterface|DataSorterInterface[]
      */
-    public function getSorters();
+    public function getSorters() : DataSorterListInterface;
 
     /**
      * Returns TRUE if the data sheet has at least one sorter and FALSE otherwise
      *
-     * @return boolean
+     * @return bool
      */
-    public function hasSorters();
+    public function hasSorters() : bool;
 
     /**
      * Returns multiple rows of the data sheet as an array of associative array (e.g.
      * [rownum => [col1 => val1, col2 => val2, ...] ])
      * By default returns all rows. Use the arguments to select only a range of rows.
      *
-     * @param number $how_many            
-     * @param number $offset            
-     * @return array
+     * @param int $how_many            
+     * @param int $offset            
+     * @return array[]
      */
-    public function getRows($how_many = 0, $offset = 0);
+    public function getRows(int $how_many = 0, int $offset = 0) : array;
 
     /**
      * 
      * @param array $indexes
-     * @return void
+     * @return array[]
      */
     public function getRowsByIndex(array $indexes) : array;
     
@@ -426,9 +432,9 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * [col1 => val1, col2 => val2, ...])
      *
      * @param number $row_number
-     * @return multitype:
+     * @return array|null
      */
-    public function getRow($row_number = 0);
+    public function getRow(int $row_number = 0) : ?array;
 
     /**
      * Returns the first row, that contains a given value in the specified column.
@@ -437,9 +443,9 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param string $column_name            
      * @param mixed $value            
      * @throws DataSheetColumnNotFoundError
-     * @return array
+     * @return array|null
      */
-    public function getRowByColumnValue($column_name, $value);
+    public function getRowByColumnValue(string $column_name, $value) : ?array;
 
     /**
      * Returns the rows containing column totals as assotiative arrays (similar to regular `getRows()`).
@@ -472,14 +478,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * @return DataColumnInterface[]|DataColumnListInterface
      */
-    public function getColumns();
+    public function getColumns() : DataColumnListInterface;
 
     /**
      * Returns the data sheet column containing the UID values of the main object or false if the data sheet does not contain that column
      *
-     * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
+     * @return DataColumnInterface|null
      */
-    public function getUidColumn();
+    public function getUidColumn() : ?DataColumnInterface;
     
     /**
      * Returns TRUE if the sheet has a UID column optionally checking for non-empty values and FALSE otherwise.
@@ -497,27 +503,27 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * @return MetaObjectInterface
      */
-    public function getMetaObject();
+    public function getMetaObject() : MetaObjectInterface;
 
     /**
      *
      * @return DataAggregationListInterface|DataAggregationInterface[]
      */
-    public function getAggregations();
+    public function getAggregations() : DataAggregationListInterface;
 
     /**
      * Returns TRUE if the data sheet has at least one aggregator and FALSE otherwise
      *
-     * @return boolean
+     * @return bool
      */
-    public function hasAggregations();
+    public function hasAggregations() : bool;
 
     /**
      * Returns the root condition group with all filters of the data sheet
      *
-     * @return ConditionGroup
+     * @return ConditionGroupInterface
      */
-    public function getFilters();
+    public function getFilters() : ConditionGroupInterface;
 
     /**
      * Replaces all filters of the data sheet by the given condition group
@@ -532,7 +538,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param int[]|NULL $rowIndexes
      * @return DataSheetInterface
      */
-    public function removeRows(array $rowIndexes = null);
+    public function removeRows(array $rowIndexes = null) : DataSheetInterface;
 
     /**
      * Removes a single row of the data sheet.
@@ -564,10 +570,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * 
      * NOTE: this will reindex remaining rows in the data sheet!
      *
-     * @param string $instance_uid
+     * @param string $uid
      * @return DataSheetInterface
      */
-    public function removeRowsByUid($uid);
+    public function removeRowsByUid(string $uid) : DataSheetInterface;
 
     /**
      * Removes all rows from the specified column.
@@ -577,7 +583,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param string $column_name            
      * @return DataSheetInterface
      */
-    public function removeRowsForColumn($column_name);
+    public function removeRowsForColumn(string $column_name) : DataSheetInterface;
     
     /**
      * Removes duplicate rows only leaving the first occurrence.
@@ -666,10 +672,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * 
      * If $overwriteValues=true, values of the other sheet will overwrite those of identical columns in 
      * the current sheet - otherwise current sheet values will prevale!
-     *
-     * @param DataSheetInterface $other_sheet            
+     * 
+     * @param DataSheetInterface $other_sheet
+     * @param bool $overwriteValues
+     * @param bool $addColumns
+     * @return DataSheetInterface
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true);
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true) : DataSheetInterface;
 
     public function getMetaObjectRelationPath(MetaObjectInterface $related_object);
 
@@ -679,29 +688,22 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * have separate columns, filters, aggregations, etc.
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     * @see iCanBeCopied::copy()
      */
     public function copy() : self;
 
     /**
      *
-     * @return string
+     * @return string|null
      */
-    public function getUidColumnName();
-
-    /**
-     *
-     * @param string $value            
-     * @return DataSheetInterface
-     */
-    public function setUidColumnName($value);
+    public function getUidColumnName() : ?string;
 
     /**
      *
      * @param DataColumnInterface $column            
      * @return DataSheetInterface
      */
-    public function setUidColumn(DataColumnInterface $column);
+    public function setUidColumn(DataColumnInterface $column) : DataSheetInterface;
 
     /**
      * Returns TRUE if all data in this sheet passes all validation schecks and FALSE otherwise.
@@ -721,23 +723,32 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * 
      * @return DataSheetInterface
      */
-    public function dataMarkInvalid();
+    public function dataMarkInvalid() : DataSheetInterface;
     
     /**
      * Returns TRUE if at least one column has a footer and FALSE otherwise.
      * 
-     * @return boolean
+     * @return bool
      */
-    public function hasColumTotals();
+    public function hasColumTotals() : bool;
     
     /**
      * Returns a new data sheet with the same columns, but only containing rows, that match the given filter
      * 
-     * @param ConditionalExpressionInterface $condition
+     * @param ConditionalExpressionInterface $filter
      * @param bool $readMissingData
      * @return DataSheetInterface
      */
     public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
+
+    /**
+     * Returns the indexes of rows matching the given conditions (starting with 0)
+     *
+     * @param ConditionalExpressionInterface $conditionOrGroup
+     * @param bool $readMissingData
+     * @return int[]
+     */
+    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array;
     
     /**
      * Returns a copy of this data sheet, that only contains system columns
@@ -753,7 +764,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * important for ceratain data types like dates or numbers. This behavior can be explicitly
      * disabled by passing `$normalizeValues = false` to the method.
      * 
-     * @param DataSorterListInterface $sorters
+     * @param DataSorterListInterface|null $sorters
      * @param bool $normalizeValues
      * @return DataSheetInterface
      */
@@ -765,7 +776,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * NOTE: Both sheets must have a UID column!
      *
      * @param DataSheetInterface $otherSheet
-     * @throws \exface\Core\Exceptions\DataSheets\DataSheetRuntimeError
+     * @throws DataSheetRuntimeError
      * @return DataSheetInterface
      */
     public function sortLike(DataSheetInterface $otherSheet) : DataSheetInterface;
@@ -783,9 +794,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     /**
      * Returns rows from the data sheet. Encrypted values are returned decrypted.
      * 
-     * @return array
+     * @param int $how_many
+     * @param int $offset
+     * @param string|null $secret
+     * @return array[]
      */
-    public function getRowsDecrypted($how_many = 0, $offset = 0) : array;
+    public function getRowsDecrypted(int $how_many = 0, int $offset = 0, string $secret = null) : array;
     
     /**
      * Returns TRUE if automatic sorting according to the metamodel is to be used and FALSE otherwise.
@@ -814,10 +828,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * 
      * Returns the row as an array: `[col1 => val1, col2 => val2, ...]`.
      * 
-     * This method a convenient replacement for row number checks.
+     * This method is a convenient replacement for row number checks.
      *
+     * @param string|null $errorOnNotFound
+     * @param string|null $errorOnMultiple
+     * 
      * @return array
-     * @throws InvalidOptionException if more then one row is within the datasheet
+     * 
+     * @throws DataNotFoundError if none or more then one row is within the datasheet
      */
-    public function getSingleRow() : array;
+    public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array;
 }

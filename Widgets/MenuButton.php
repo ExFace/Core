@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iHaveMenu;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Factories\WidgetFactory;
@@ -226,5 +227,29 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     {
         $this->getMenu()->setButtonsDisabledIfInputInvalid($value);
         return parent::setDisabledIfInputInvalid($value);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
+    {
+        $data_sheet = parent::prepareDataSheetToRead($data_sheet);
+        $this->getMenu()->prepareDataSheetToPrefill($data_sheet);
+        return $data_sheet;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    {
+        $data_sheet = parent::prepareDataSheetToRead($data_sheet);
+        $this->getMenu()->prepareDataSheetToRead($data_sheet);
+        return $data_sheet;
     }
 }

@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Notification: Mark Read",
+            "_EXPORT_SUMMARY": "Notification: Mark Read [NotificationRead]",
             "CREATED_ON": "2023-04-11 14:32:00",
             "MODIFIED_ON": "2024-05-16 13:04:13",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -96,7 +96,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Notification: Mark Unread",
+            "_EXPORT_SUMMARY": "Notification: Mark Unread [NotificationUnread]",
             "CREATED_ON": "2023-04-12 12:56:23",
             "MODIFIED_ON": "2023-09-15 14:33:49",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
@@ -127,7 +127,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "Notification: Mark All Read",
+            "_EXPORT_SUMMARY": "Notification: Mark All Read [NotificationAllRead]",
             "CREATED_ON": "2023-04-18 15:32:01",
             "MODIFIED_ON": "2024-05-17 23:02:55",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",

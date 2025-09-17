@@ -67,7 +67,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         
         $fullSpell = array_shift($spells);
         $fullSpell = explode(':', $fullSpell);
-        $spell = mb_trim($fullSpell[0]);
+        $spell = trim($fullSpell[0]);
         
         $components = count($fullSpell) ? $fullSpell[1] : "";
         $components = empty($components) ? [] : explode(',', $components);
@@ -125,6 +125,11 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
             case MetaAttributeGroupInterface::CUSTOM:
                 $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert, $components) {
                     return $invert XOR ($attr instanceof CustomAttribute);
+                });
+                break;
+            case MetaAttributeGroupInterface::SYSTEM:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert, $components) {
+                    return $invert XOR $attr->isSystem();
                 });
                 break;
         }

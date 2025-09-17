@@ -14,20 +14,65 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         }
         $markdown = file_get_contents($filePathAbsolute);
 		$phs = $this->getPlaceholders($markdown);
-        $vals = $this->getPlaceholderValues(array_keys($phs));
+        $vals = $this->getPlaceholderValues($phs);
         
         foreach ($phs as $ph => $phData) {
-            $val = $phData['comment'] . PHP_EOL . $vals[$ph] . PHP_EOL . '<!-- EIF ' . $phData['name'] . ' -->';
-            $regex = '/' . preg_quote($phData['comment'] ?? '', '/') . '[\r\n.]*<!-- EOF ' . $phData['name'] . ' -->/';
-            $matches = [];
-            preg_match_all($regex, $markdown, $matches);
-            foreach ($matches as $match) {
-                $markdown = str_replace($match[0] ?? '', $val, $markdown);
-            }
+            $startTag = $phData['comment'];
+            $endTag = '<!-- END ' . $phData['key'] . ' -->';
+
+            $options = [];
+            parse_str($phData['options'], $options);
+    
+            $markdown = $this->replaceAtOffset($markdown, $startTag, $endTag, $vals[$ph] ?? '', $phData['offset'], $phData['key'], $options['noprint'] ?? '');
         }
 
         return $markdown;
 	}
+    
+    function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName, string $noprint): string
+    {
+        if ($offset > strlen($markdown)) {
+        	return $markdown;
+        }
+        
+        $startPos = strpos($markdown, $startTag, $offset);
+        if ($startPos === false) {
+            return $markdown; 
+        }
+
+        $endPos = strpos($markdown, $endTag, $startPos);
+        if ($endPos === false) {
+            return $markdown;
+        }
+
+        $endPos += strlen($endTag);
+
+        if ($placeholderName === 'ImageRef') {
+            $newBlock = $startTag . $this->checkPrintStatus($replacement, $noprint) . $endTag;
+        }
+        else {
+            $newBlock = $startTag . PHP_EOL . $this->checkPrintStatus($replacement, $noprint) . PHP_EOL . $endTag;
+        }
+
+        return substr_replace($markdown, $newBlock, $startPos, $endPos - $startPos);
+    }
+
+    /**
+     * Checks noprint option to put noprint tags in the document
+     * 
+     * @param string $content
+     * @param string $noprint
+     * @return string
+     */
+    protected function checkPrintStatus(string $content, string $noprint) : string
+    {
+        if (!empty($noprint) && $noprint === 'true') {
+            $content = '<!-- noprint:start -->' . PHP_EOL
+                     . $content . PHP_EOL
+                     . '<!-- noprint:end -->';
+        }
+        return $content;
+    }
 
 	public function exportUxonObject()
 	{
@@ -37,21 +82,24 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     protected function getPlaceholders(string $tpl) : array
     {
         // Regex to extract the comment block (e.g., <!-- ... -->)
-        $regex = '/<!-- BOF (([a-zA-Z0-9_]+):?\s*(.*)) -->/';
+        $regex = '/<!--\s*BEGIN\s+((\w+)(?::([^\s]*))?)\s*-->/i';
         $matches = [
             // 0 => full match
             // 1 => placeholder with options
             // 2 => placeholder name
             // 3 => placeholder options
         ];
-        preg_match_all($regex, $tpl, $matches);
+        preg_match_all($regex, $tpl, $matches, PREG_OFFSET_CAPTURE);
 
         $phs = [];
-        foreach ($matches as $match) {
-            $phs[$match[1]] = [
-                'name' => $match[2],
-                'options' => $match[3],
-                'comment' => $match[0]
+        foreach ($matches[0] as $i => $match) {
+            [$fullMatch, $offset] = $match;
+            $phs[] = [
+                'key' => $matches[2][$i][0],
+                'name' => $matches[1][$i][0],
+                'options' => trim($matches[3][$i][0]),
+                'comment' => $fullMatch,
+                'offset' => $offset
             ];
         }
         return $phs;
@@ -65,20 +113,25 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
     protected function getPlaceholderValues(array $placeholders) : array
     {
         $phVals = [];
-        
-        // Resolve regular placeholders
+
+        // Let each resolver handle the full placeholder list and return values indexed by their original positions
         foreach ($this->getPlaceholderResolvers() as $resolver) {
-            $phVals = array_merge($phVals, $resolver->resolve($placeholders));
-        }
-        
-        // If there are still missing placeholders, either reinsert them or raise an error
-        if (count($phVals) < count($placeholders)) {
-            $missingPhs = array_diff($placeholders, array_keys($phVals));
-            foreach ($missingPhs as $ph) {
-                $phVals[$ph] = '[#' . $ph . '#]';
+            $resolved = $resolver->resolve($placeholders);
+            foreach ($resolved as $i => $val) {
+                $phVals[$i] = $val;
             }
         }
         
+        // Find placeholders that were not resolved by any resolver
+        $placeholderIndexes = array_keys($placeholders);
+        $missingIndexes = array_diff($placeholderIndexes, array_keys($phVals));
+        
+        // Assign fallback value for missing placeholders
+        foreach ($missingIndexes as $i) {
+            $ph = $placeholders[$i];
+            $phVals[$i] = '[#' . ($ph['key'] ?? $ph['name']) . '#]';
+        }
+
         return $phVals;
     }
 }

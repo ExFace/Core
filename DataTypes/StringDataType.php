@@ -26,6 +26,8 @@ class StringDataType extends AbstractDataType
     
     private $regexValidator = null;
 
+    private $emptyAsNULL = false;
+
     /**
      * @return string|null
      */
@@ -36,6 +38,16 @@ class StringDataType extends AbstractDataType
 
     /**
      * Defines a regular expression to validate values of this data type.
+     * 
+     * Example:
+     * 
+     * ```
+     * {
+     *  "validator_regex": "/^..[+]...$/",
+     *  "validation_error_text": "The value must be formatted as follows: xx+xxx (e.g. `Ab+123`)!"
+     * }
+     * 
+     * ```
      * 
      * Use regular expressions compatible with PHP preg_match(). A good
      * tool to create and test regular expressions can be found here:
@@ -230,7 +242,7 @@ class StringDataType extends AbstractDataType
         $value = parent::parse($string);
         
         if ($this->isValueEmpty($value)) {
-            return $value;
+            return $this->getForceNullForEmptyValues() ? null : $value;
         }
         
         // validate length
@@ -352,6 +364,9 @@ class StringDataType extends AbstractDataType
      */
     public static function findPlaceholders($string)
     {
+        if ($string === null) {
+            return [];
+        }
         $placeholders = array();
         preg_match_all("/\[#([^#]+)#\]/", $string, $placeholders);
         return is_array($placeholders[1]) ? $placeholders[1] : array();
@@ -751,5 +766,33 @@ class StringDataType extends AbstractDataType
         $matches = [];
         preg_match('/\R/', $str, $matches);
         return array_unique($matches);
+    }
+
+    /**
+     * Set to TRUE to ensure empty values are always saved as NULL in data sources
+     * 
+     * By default, empty values are saved as-is: the way they are provided by actions,
+     * widgets, etc. They might be empty strings (`""`) or `NULL`.
+     * 
+     * @uxon-property force_null_for_empty_values
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return StringDataType
+     */
+    protected function setForceNullForEmptyValues(bool $trueOrFalse) : StringDataType
+    {
+        $this->emptyAsNULL = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function getForceNullForEmptyValues() : bool
+    {
+        return $this->emptyAsNULL;
     }
 }

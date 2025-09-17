@@ -1,12 +1,14 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
+use exface\Core\Interfaces\WidgetInterface;
+
 /**
  *
  * @author Andrej Kabachnik
  *        
  */
-interface iSupportMultiSelect extends iHaveValues
+interface iSupportMultiSelect extends WidgetInterface
 {
 
     /**
@@ -14,12 +16,13 @@ interface iSupportMultiSelect extends iHaveValues
      *
      * @return boolean
      */
-    public function getMultiSelect();
+    public function getMultiSelect() : bool;
 
     /**
      * Set to TRUE to enable multiselect for this widget.
      *
-     * @param boolean $value            
+     * @param boolean $value    
+     * @return iSupportMultiSelect        
      */
-    public function setMultiSelect($value);
+    public function setMultiSelect(bool $value) : iSupportMultiSelect;
 }

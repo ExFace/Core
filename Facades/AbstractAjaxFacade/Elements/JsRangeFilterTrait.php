@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\Model\MetaObject;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Widgets\InlineGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
@@ -39,6 +41,7 @@ trait JsRangeFilterTrait
             $filterFromUxon = new UxonObject([
                 'widget_type' => 'Filter',
                 'hide_caption' => true,
+                'required' => $widget->isRequired(),
                 'input_widget' => $inputUxon
             ]);
             $filterFromUxon->setProperty('comparator', $widget->getComparatorFrom());
@@ -77,13 +80,13 @@ trait JsRangeFilterTrait
      *
      * @param string|null $valueJs
      */
-    public function buildJsConditionGetter($valueJs = null)
+    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null)
     {
         $conditions = [];
         foreach ($this->getWidgetInlineGroup()->getWidgets() as $filter) {
             $filterEl = $this->getFacade()->getElement($filter);
             if (method_exists($filterEl, 'buildJsConditionGetter') === true) {
-                $conditions[] = $filterEl->buildJsConditionGetter($valueJs);
+                $conditions[] = $filterEl->buildJsConditionGetter($valueJs, $baseObject);
             }
         }
         return implode(',', $conditions);
@@ -149,6 +152,43 @@ JS;
     }
     
     /**
+     * Since the range filter is a group of two filters, we need to validate both of them.
+     * @param mixed $valJs
+     * @return string
+     */
+    public function buildJsValidator(?string $valJs = null) : string
+    {
+        $widget = $this->getWidget();
+        $aValidatorScripts = [];
+        foreach ($this->getWidgetInlineGroup()->getWidgets() as $w) {
+            $aValidatorScripts[] = $this->getFacade()->getElement($w)->buildJsValidator();
+        }
+        $validatorJS = implode('&&', $aValidatorScripts);
+        $constraintsJs = '';
+        if ($widget->isRequired() === true) {
+            $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
+        }
+        
+        $valJs = $valJs ?? $this->buildJsValueGetter();
+        if ($constraintsJs !== '') {
+            return <<<JS
+
+                    (
+                    (function(val){
+                    	console.log('Ich bin hier');
+                        var bConstraintsOK = true;
+                        $constraintsJs;
+                        return bConstraintsOK;
+                    })($valJs) 
+                    && {$validatorJS}
+                    )
+JS;
+        } else {
+            return $validatorJS;
+        }
+    }
+    
+    /**
      * There is no value getter method for this class, because the logic of the value getter
      * (see above) cannot be easily packed into a single method to be called on the control.
      * 
@@ -167,17 +207,17 @@ JS;
      * @param array $parameters
      * @return string
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
     {
         $widget = $this->getWidget();
         if ($widget->hasFunction($functionName, false)) {
-            return parent::buildJsCallFunction($functionName, $parameters);
+            return parent::buildJsCallFunction($functionName, $parameters, $jsRequestData);
         }
         
         $js = '';
         foreach ($this->getWidgetInlineGroup()->getWidgets() as $child) {
             if ($child->hasFunction($functionName)) {
-                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);
+                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters, $jsRequestData);
             }
         }
         

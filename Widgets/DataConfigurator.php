@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
@@ -30,16 +29,44 @@ use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
  */
 class DataConfigurator extends WidgetConfigurator implements iHaveFilters
 {    
-    private $filter_tab = null;
+    private $tabFilters = null;
     
-    private $sorter_tab = null;
+    private $tabSorters = null;
 
     protected function init() : void
     {
         parent::init();
+        $this->initTabs();
         $this->getWorkbench()->eventManager()->dispatch(new OnDataConfiguratorInitEvent($this, $this->getMetaObject()));
     }
 
+    /**
+     * Initializes configurator tabs
+     * 
+     * This will mostly create empty tabs. Their contents will be added later either while parsing the widget config
+     * (e.g. for filters) or when the tab is really accessed. 
+     * 
+     * It is important to initialize the tabs at the right point in time: right after the constructor, but before
+     * the OnDataConfiguratorInitEvent, whose listeners might already access the tabs.
+     * 
+     * @return void
+     */
+    protected function initTabs() : void
+    {
+        $tab = $this->createTab();
+        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION'), false);
+        $tab->setIcon(Icons::FILTER);
+        $this->tabFilters = $tab;
+        $this->addTab($this->tabFilters);
+        
+        $tab = $this->createTab();
+        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION'), false);
+        $tab->setIcon(Icons::SORT);
+        // TODO re-enable the tab once it has content
+        $tab->setDisabled(true);
+        $this->tabSorters = $tab;
+        $this->addTab($this->tabSorters);
+    }
 
     /**
      * {@inheritDoc}
@@ -101,25 +128,20 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * for all columns.
      *
      * Example:
+     * 
+     * ```
      *  {
      *      "object_alias": "ORDER_POSITION"
      *      "filters": [
-     *          {
-     *              "attribute_alias": "ORDER"
-     *          },
-     *          {
-     *              "attribute_alias": "CUSTOMER__CLASS"
-     *          },
-     *          {
-     *              "attribute_alias": "ORDER__ORDER_POSITION__VALUE:SUM",
-     *              "caption": "Order total"
-     *          },
-     *          {
-     *              "attribute_alias": "VALUE",
-     *              "widget_type": "InputNumberSlider"
-     *          }
+     *          {"attribute_alias": "ORDER"},
+     *          {"attribute_alias": "ORDER__DATE", "widget_type": "RangeFilter"},
+     *          {"attribute_alias": "ORDER__CUSTOMER__CLASS"},
+     *          {"attribute_alias": "ORDER__ORDER_POSITION__VALUE:SUM", "caption": "Order total"},
+     *          {"attribute_group_alias": "ORDER__~DEFAULT_DISPLAY"}
      *      ]
      *  }
+     * 
+     * ```
      *  
      * @uxon-property filters
      * @uxon-type exface\Core\Widgets\Filter[]
@@ -278,24 +300,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function getFilterTab()
     {
-        if (is_null($this->filter_tab)){
-            $this->filter_tab = $this->createFilterTab();
-            $this->addTab($this->filter_tab, 0);
-        }
-        return $this->filter_tab;
-    }
-    
-    /**
-     * Creates an empty filter tab and returns it (without adding to the Tabs widget!)
-     * 
-     * @return Tab
-     */
-    protected function createFilterTab()
-    {
-        $tab = $this->createTab();
-        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION'), false);
-        $tab->setIcon(Icons::FILTER);
-        return $tab;
+        return $this->tabFilters;
     }
     
     /**
@@ -305,26 +310,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function getSorterTab()
     {
-        if (is_null($this->sorter_tab)){
-            $this->sorter_tab = $this->createSorterTab();
-            $this->addTab($this->sorter_tab, 1);
+        if ($this->tabSorters->isEmpty()){
+            // TODO init sorter tab
         }
-        return $this->sorter_tab;
-    }
-    
-    /**
-     * Creates an empty sorter tab and returns it (without adding to the Tabs widget!)
-     *
-     * @return Tab
-     */
-    protected function createSorterTab()
-    {
-        $tab = $this->createTab();
-        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION'), false);
-        $tab->setIcon(Icons::SORT);
-        // TODO reenable the tab once it has content
-        $tab->setDisabled(true);
-        return $tab;
+        return $this->tabSorters;
     }
     
     /**
@@ -486,10 +475,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function getWidgets(callable $filter_callback = null)
     {
-        if (is_null($this->filter_tab)){
+        if (is_null($this->tabFilters)){
             $this->getFilterTab();
         }
-        if (is_null($this->sorter_tab)){
+        if (is_null($this->tabSorters)){
             $this->getSorterTab();
         }
         return parent::getWidgets($filter_callback);

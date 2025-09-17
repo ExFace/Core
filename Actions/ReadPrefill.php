@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -76,6 +77,18 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // But if the button calls an object action from the meta model, that has checks/mappers
         // defined, they will not be part of the imported UXON and need to be added manually here.
         if (null !== $showWidgetAction = $this->getPrefillTriggerAction($task)) {
+            // Make sure, the original ShowWidget action is authorized with the current set of data.
+            // This is important to prevent reading prefill data for things, that the user actually cannot
+            // open due to policies applying to ShowWidget/Dialog actions, that cause the prefill.
+            if ($this->getWorkbench()->isInstalled()) {
+                try {
+                    $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+                } catch (throwable $e) {
+                    $this->getWorkbench()->getLogger()->logException($e);
+                }
+                $actionAP->authorize($showWidgetAction, $task);
+            }
+
             // Inherit all checks
             // IDEA should we only get checks, that are different from those alread in the prefill action?
             foreach ($showWidgetAction->getInputChecks() as $check) {
@@ -138,9 +151,9 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             // IDEA are there other ways to load more data, than use UID-filters?
             $canLoadMoreData = $mainSheet->hasUidColumn(true);
             
-            if ($mainSheet->isEmpty()) {
+            if ($mainSheet->isEmpty() && $targetWidget !== null) {
                 $logBook->addLine('Did not find any prefill data till now - use filter context only.');
-                $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $mainSheet, $task, $logBook);
+                $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $task, $logBook, $mainSheet);
                 $canLoadMoreData = false;
             } else {
                 if ($mainSheet->hasUidColumn(true)) {
@@ -206,7 +219,9 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             });
             
             // Do the prefill to trigger the events
-            $targetWidget->prefill($mainSheet);
+            if ($targetWidget !== null) {
+                $targetWidget->prefill($mainSheet);
+            }
             // If there are $defaults, place the respective values in every empty cell of the data
             // columns used by widgets with default values
             $logBook->addLine('Found ' . count($defaults) . ' default values.');
@@ -240,13 +255,17 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         
         // Fire the event, log it to make it appear in the tracer
         $logBook->addDataSheet('Final prefill', $mainSheet);
-        $event = new OnPrefillDataLoadedEvent(
-            $targetWidget,
-            $mainSheet,
-            $this,
-            $logBook
-        );
-        $this->getWorkbench()->EventManager()->dispatch($event);
+        if ($targetWidget !== null) {
+            $event = new OnPrefillDataLoadedEvent(
+                $targetWidget,
+                $mainSheet,
+                $this,
+                $logBook
+            );
+            $this->getWorkbench()->EventManager()->dispatch($event);
+        } else {
+            $logBook->addLine('No prefill event triggered as no target widget was found!');
+        }
         
         // Send back the result
         $result = ResultFactory::createDataResult($task, $mainSheet);

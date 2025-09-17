@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 16:22:54",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2024-03-01 11:07:34",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2025-06-04 17:35:10",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.AUTHORIZATION_POINT",
@@ -263,16 +263,19 @@
                                 "attribute_alias": "TARGET_PAGE_GROUP__LABEL"
                             },
                             {
-                                "attribute_alias": "TARGET_OBJECT__LABEL"
+                                "attribute_alias": "TARGET_OBJECT__ALIAS_WITH_NS",
+                                "caption": "Object"
                             },
                             {
                                 "attribute_alias": "TARGET_ACTION_PROTOTYPE__LABEL"
                             },
                             {
-                                "attribute_alias": "TARGET_ACTION_MODEL__LABEL"
+                                "attribute_alias": "TARGET_ACTION_MODEL__ALIAS",
+                                "caption": "Action"
                             },
                             {
-                                "attribute_alias": "TARGET_APP__LABEL"
+                                "attribute_alias": "TARGET_APP__ALIAS",
+                                "caption": "Target app"
                             },
                             {
                                 "attribute_alias": "TARGET_FACADE__LABEL"

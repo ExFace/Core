@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
@@ -46,7 +45,7 @@ trait iSupportLazyLoadingTrait {
      */
     public function setLazyLoading(bool $value) : iSupportLazyLoading
     {
-        $this->lazy_loading = BooleanDataType::cast($value);
+        $this->lazy_loading = $value;
         return $this;
     }
     
@@ -84,9 +83,10 @@ trait iSupportLazyLoadingTrait {
      * @uxon-property lazy_loading_group_id
      * @uxon-type string
      * 
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
+     * @param string $value
+     * @return \exface\Core\Interfaces\Widgets\iSupportLazyLoading
      */
-    public function setLazyLoadingGroupId(string $value) : iSupportLazyLoading
+    protected function setLazyLoadingGroupId(string $value) : iSupportLazyLoading
     {
         $this->lazy_loading_group_id = $value;
         return $this;
@@ -118,7 +118,9 @@ trait iSupportLazyLoadingTrait {
      * @uxon-type \exface\Core\CommonLogic\AbstractAction
      * @uxon-template {"alias": ""}
      * 
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @throws \exface\Core\Exceptions\Widgets\WidgetLogicError
+     * @return \exface\Core\Interfaces\Widgets\iSupportLazyLoading
      */
     public function setLazyLoadingAction(UxonObject $uxon) : iSupportLazyLoading
     {
@@ -173,7 +175,21 @@ trait iSupportLazyLoadingTrait {
      */
     public function getAction()
     {
-        if ($this->getLazyLoading() === false) {
+        /* There is some uncertainity about when to return null here. If null is returned,
+         * the lazy loading action _cannot_ be called from a facade via task, because tasks
+         * will ask their widgets if they really can trigger such actions - see 
+         * `GenericTask::getAction()`. Sometimes it is important to get the lazy loading data
+         * even if lazy loading is off. For example, non-lazy InputComboTable might need to
+         * refresh their data when it is effected by an action or with a prefill. This is
+         * particularly important in AJAX facades with view caching like UI5: since non-lazy
+         * data is part of the view, it would be cached forever even if the underlying data
+         * is changed.
+         * 
+         * Right now, the lazy loading action is always available unless lazy loading is off
+         * AND the action's object is not readable.
+         */ 
+        $action = $this->getLazyLoadingAction();
+        if ($this->getLazyLoading() === false && ($action === null || $action->getMetaObject()->isReadable() === false)) {
             return null;
         }
         return $this->getLazyLoadingAction();

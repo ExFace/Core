@@ -1,16 +1,28 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Placeholders;
 
-use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
-class SubPageListResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
+class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
+    const OPTION_DEPTH = "depth";
+
+    const OPTION_LIST_TYPE = "list-type";
+
+    const LIST_TYPE_NONE = "none";
+
+    const LIST_TYPE_BULLET = "bullet";
+
     private $pagePath = null;
+    private $optionDefaults = [
+        self::OPTION_LIST_TYPE => self::LIST_TYPE_BULLET,
+    ];
 
     public function __construct(string $pagePathAbsolute, string $prefix = 'SubPageList:') {
         $this->pagePath = $pagePathAbsolute;
+        $this->rootPath = FilePathDataType::normalize(FilePathDataType::findFolderPath($pagePathAbsolute)) . '/';
         $this->setPrefix($prefix);
     }
 
@@ -21,89 +33,110 @@ class SubPageListResolver extends AbstractPlaceholderResolver implements Placeho
      */
     public function resolve(array $placeholders) : array
     {
-        $vals = [];
-        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
-            $options = $this->stripPrefix($placeholder);
-            $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
-            $markdownStructure = $this->generateMarkdownList($rootDirectory);
-            $val = $this->renderMarkdownList($markdownStructure);
-            $vals[$placeholder] = $val;
+        $vals = [];                
+        $names = array_map(fn($ph) => $ph['name'], $placeholders);
+        $filteredNames = $this->filterPlaceholders($names);
+        foreach ($placeholders as $i => $placeholder) {
+            if (in_array($placeholder['name'], $filteredNames)) {
+                $options = $placeholder['options'];
+                parse_str($options, $optionsArray);
+                $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
+                $markdownStructure = $this->generateMarkdownList($rootDirectory, $this->getOption('depth',$optionsArray));
+                $val = $this->renderMarkdownList($markdownStructure, $this->getOption('list-type',$optionsArray), $this->getOption('depth',$optionsArray));
+                $vals[$i] = $val;
+            }
         }
         return $vals;
     }
 
-    protected function getTopHeading($filePath) {
-        $content = file_get_contents($filePath);
-        if (preg_match('/^#\s+(.*)$/m', $content, $matches)) {
-            return trim($matches[1]);
+    protected function getOption(string $optionName, array $callValues)
+    {
+        $value = $callValues[$optionName] ?? null;
+        $default = $this->optionDefaults[$optionName] ?? null;
+        if ($optionName == self::OPTION_LIST_TYPE) {
+            // validation
         }
-        return basename($filePath);
+        if($optionName == self::OPTION_DEPTH) {
+            $value = (int)$value;
+        }
+        return $value ?? $default;
     }
     
-    protected function generateMarkdownList($directory) {
-        $items = [];
-        $files = scandir($directory);
+    protected function generateMarkdownList(string $directory, int $maxDepth) : array 
+    {
+        $rawList = $this->scanMarkdownDirectory($directory, $maxDepth);
     
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..') {
-                continue;
-            }
+        $convert = function(array $items) use (&$convert): array {
+            $result = [];
     
-            $filePath = $directory . DIRECTORY_SEPARATOR . $file;
-    
-            if (is_dir($filePath)) {
-                $folderIndex = $filePath . DIRECTORY_SEPARATOR . 'index.md';
-                $folderTitle = ucfirst($file); // Default folder name as title
-                if (file_exists($folderIndex)) {
-                    $folderTitle = $this->getTopHeading($folderIndex);
-                    $items[] = [
-                        'title' => $folderTitle,
-                        'link' => $folderIndex,
-                        'is_dir' => true,
-                        'children' => $this->generateMarkdownList($filePath),
+            foreach ($items as $item) {
+                if ($item['type'] === 'file') {
+                    $result[] = [
+                        'title' => $item['title'],
+                        'link' => $item['link'],
+                        'is_dir' => false,
+                        'children' => [],
                     ];
-                } else {
-                    $items[] = [
-                        'title' => $folderTitle,
-                        'link' => null,
+                } elseif ($item['type'] === 'directory') {
+                    $result[] = [
+                        'title' => $item['title'],
+                        'link' => $item['link'],
                         'is_dir' => true,
-                        'children' => $this->generateMarkdownList($filePath),
+                        'children' => $convert($item['children']),
                     ];
                 }
-            } elseif (pathinfo($filePath, PATHINFO_EXTENSION) === 'md') {
-                $items[] = [
-                    'title' => $this->getTopHeading($filePath),
-                    'link' => $filePath,
-                    'is_dir' => false,
-                    'children' => [],
-                ];
             }
-        }
+            
+            return $result;
+        };
     
-        usort($items, function ($a, $b) {
-            return strcmp(basename($a['link'] ?? $a['title']), basename($b['link'] ?? $b['title']));
-        });
-    
-        return $items;
+        return $convert($rawList);
     }
     
-    function renderMarkdownList($items, $level = 0) {
+    
+    function renderMarkdownList($items, $listType, $depth, $level = 0) {
         $output = '';
-        $indent = str_repeat('  ', $level);
-    
-        foreach ($items as $item) {
-            $output .= $indent . '- ';
-            if ($item['link']) {
-                $output .= '[' . $item['title'] . '](' . $item['link'] . ')';
-            } else {
-                $output .= $item['title'];
-            }
-            $output .= "\n";
-            if (!empty($item['children'])) {
-                $output .= $this->renderMarkdownList($item['children'], $level + 1);
-            }
+        $listStyle = '';
+
+        if ($level === 0) {
+            $output .= '<div class="list-wrapper">' . "\n";
         }
-    
+
+        if ($level === $depth) {
+            return $output;
+        }
+        $indent = 20 * $level;
+
+        switch ($listType) {
+            case self::LIST_TYPE_NONE:
+                $listStyle = " style=\"list-style-type: none; padding-left: 0; margin-left: {$indent}px;\"";
+                break;
+            default:
+                $listStyle = '';
+                break;
+        }
+
+        $output .= "<ul$listStyle>\n";
+        foreach ($items as $item) {
+            $output .= "<li>";
+
+            if (!empty($item['link'])) {
+                $output .= '<a href="' . htmlspecialchars($item['link']) . '">' . htmlspecialchars($item['title']) . '</a>';
+            } else {
+                $output .= htmlspecialchars($item['title']);
+            }
+
+            if (!empty($item['children'])) {
+                $output .= $this->renderMarkdownList($item['children'], $listType, $depth, $level + 1);
+            }
+
+            $output .= "</li>\n";
+        }
+        $output .= "</ul>\n";
+
+        if ($level === 0) {
+            $output .= '</div>' . "\n";
+        }
         return $output;
     }
 }

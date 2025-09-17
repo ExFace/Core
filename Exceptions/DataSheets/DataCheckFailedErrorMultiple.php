@@ -3,15 +3,24 @@
 namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Exceptions\DataSheetValueExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\TranslationInterface;
 
 /**
  * Can combine any number of `DataCheckFailedError` instances, grouping them by their messages to present a unified
  * coherent error message.
+ *
+ * TODO Make this exception implement DataSheetValueExceptionInterface. Make sure, all inner exceptions target
+ * the same data sheet.
+ * TODO create a MultiExceptionInterface and use it here and in AuthenticationFailedMultiError
+ *
+ * @author Georg Bieger, Andrej Kabachnik
  */
 class DataCheckFailedErrorMultiple extends UnexpectedValueException
 {
+    use DataSheetValueExceptionTrait;
+
     private const KEY_ERRORS = 'errors';
     private const KEY_ROWS = 'affectedRows';
     
@@ -32,19 +41,25 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      * @var array
      */
     protected array $errorGroups = [];
-
     private string $baseMessage = '';
-
     private ?TranslationInterface $translator;
-
+    private int $startingRowNr;
+    
     /**
      * @inheritDoc
      */
-    public function __construct($message, $alias = null, $previous = null, TranslationInterface $translator = null)
+    public function __construct(
+        $message, 
+        $alias = null, 
+        $previous = null, 
+        TranslationInterface $translator = null,
+        $startingRowNr = 1
+    )
     {
         parent::__construct($message, $alias, $previous);
         $this->baseMessage = $message;
         $this->translator = $translator;
+        $this->startingRowNr = $startingRowNr;
     }
 
     /**
@@ -119,6 +134,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
             if(empty($affectedRows = $this->getAffectedRowsForGroup($errorMessage))){
                 $updatedMessage .= $errorMessage;
             } else {
+                $affectedRows = array_map(fn($value): int => $value + $this->getStartingRowNumber(), $affectedRows);
                 $affectedRows = implode(', ', $affectedRows);
                 $updatedMessage .= $trsLine . ' (' . $affectedRows . '): ' . $errorMessage;
             }
@@ -146,7 +162,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      * @param string $message
      * @param array $value
      */
-    public function setAffectedRowsForGroup(string $message, array $value) : void
+    protected function setAffectedRowsForGroup(string $message, array $value) : void
     {
         $this->errorGroups[$message][self::KEY_ROWS] = $value;
     }
@@ -168,7 +184,7 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
      * @param string $message
      * @param array $value
      */
-    public function setErrorForGroup(string $message, array $value) : void
+    protected function setErrorForGroup(string $message, array $value) : void
     {
         $this->errorGroups[$message][self::KEY_ERRORS] = $value;
     }
@@ -185,5 +201,49 @@ class DataCheckFailedErrorMultiple extends UnexpectedValueException
         }
         
         return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllRowNumbers() : array
+    {
+        $result = [];
+
+        foreach ($this->errorGroups as $errorGroup) {
+            $result = array_merge($result, $errorGroup[self::KEY_ROWS]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Any line output will be counted starting from this number.
+     * 
+     * @return int
+     */
+    public function getStartingRowNumber() : int
+    {
+        return $this->startingRowNr;
+    }
+
+    /**
+     * @inheritDoc
+     * @see DataSheetValueExceptionInterface::getRowIndexes()
+     */
+    public function getRowIndexes(): ?array
+    {
+        $idxs = [];
+        foreach ($this->getAllErrors() as $error) {
+            if(($errorIdxs = $error->getRowIndexes()) !== null) {
+                $idxs = array_merge($idxs, $errorIdxs);
+            }
+        }
+        if (empty($idxs)) {
+            return null;
+        }
+        $idxs = array_unique($idxs);
+        sort($idxs);
+        return $idxs;
     }
 }

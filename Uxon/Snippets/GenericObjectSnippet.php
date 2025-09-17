@@ -4,6 +4,9 @@ namespace exface\Core\Uxon\Snippets;
 use exface\Core\CommonLogic\Uxon\AbstractUxonSnippet;
 use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 
+/**
+ * // FIXME Usage unclear
+ */
 class GenericObjectSnippet extends AbstractUxonSnippet
 {
     /**

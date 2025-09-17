@@ -69,7 +69,7 @@ class CommentBehavior extends AbstractBehavior
     /**
      * Alias of the attribute, that represents the date of creation
      * 
-     * @uxon-property comment_created_date_attribute_alias
+     * @uxon-property comment_created_date_attribute
      * @uxon-type metamodel:attribute
      * @uxon-required true
      * 
@@ -94,7 +94,7 @@ class CommentBehavior extends AbstractBehavior
     /**
      * Alias of the attribute, that represents the comment as a text
      * 
-     * @uxon-property comment_content_attribute_alias
+     * @uxon-property comment_content_attribute
      * @uxon-type metamodel:attribute
      * @uxon-required true
      * 
@@ -119,7 +119,7 @@ class CommentBehavior extends AbstractBehavior
     /**
      * Alias of the attribute, that represents the date of modification
      * 
-     * @uxon-property comment_edited_date_attribute_alias
+     * @uxon-property comment_edited_date_attribute
      * @uxon-type metamodel:attribute
      * @uxon-required true
      * 
@@ -144,7 +144,7 @@ class CommentBehavior extends AbstractBehavior
     /**
      * Alias of the attribute, that represents the Author Full Name
      *
-     * @uxon-property comment_author_attribute_alias
+     * @uxon-property comment_author_attribute
      * @uxon-type metamodel:attribute
      * @uxon-required true
      *
@@ -163,13 +163,16 @@ class CommentBehavior extends AbstractBehavior
      */
     public function getCommentIdAttribute() : ?MetaAttributeInterface
     {
+        if ($this->commentIdAttributeAlias === null && $this->getObject()->hasUidAttribute()) {
+            $this->commentIdAttributeAlias = $this->getObject()->getUidAttributeAlias();
+        }
         return $this->getObject()->getAttribute($this->commentIdAttributeAlias);
     }
     
     /**
      * Alias of the attribute, that represents the UID of the comment
      *
-     * @uxon-property comment_id_attribute_alias
+     * @uxon-property comment_id_attribute
      * @uxon-type metamodel:attribute
      * @uxon-required true
      *
@@ -194,7 +197,7 @@ class CommentBehavior extends AbstractBehavior
     /**
      * Alias of the attribute, that represents the UID of the author
      *
-     * @uxon-property comment_author_id_attribute_alias
+     * @uxon-property comment_author_id_attribute
      * @uxon-type metamodel:attribute
      * @uxon-required true
      *
@@ -205,8 +208,7 @@ class CommentBehavior extends AbstractBehavior
     {
         $this->commentAuthorIdAttributeAlias = $value;
         return $this;
-    }
-    
+    } 
     
     /**
      * 

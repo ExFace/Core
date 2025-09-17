@@ -11,12 +11,9 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
-use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
-use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
 use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 use exface\Core\Widgets\Parts\Charts\PieChartSeries;
-use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
@@ -1108,5 +1105,17 @@ class Chart extends AbstractWidget implements
         }
         
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Main object
+        $objs = parent::getMetaObjectsEffectingThisWidget();
+        $objs = array_merge($objs, $this->getData()->getMetaObjectsEffectingThisWidget());
+        return array_unique($objs);
     }
 }

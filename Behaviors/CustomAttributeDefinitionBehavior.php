@@ -6,12 +6,14 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\IntegerDataType;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
@@ -33,32 +35,59 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Identifies its object as master data for custom attribute definitions.
+ * Makes this object define custom attributes to be attached to another object in addition to its regular attributes. 
  * 
- * In addition to regular attributes of meta objects defined in the model, the workbench can create 
- * so-called "custom attributes" from master data inside an app. The definitions of such attributes
- * can be stored in a SQL table or any other data source. This behavior explains the workbench, how
- * to load and "understand" these attributes.
+ * For example, if you have a list of products and you want your users to define additional attributes for every 
+ * product category, you will need a list of possible attributes per category and a place to store their values. 
+ * This will require multiple behaviors working together:
  * 
- * Custom attribute definitions will be stored on the object of this behavior, 
- * while type models can be defined in the `type_models` property of this behavior (see "Type Models").
+ * - An **attribute definition behavior** (this one) needs to be attached to the meta object representing the 
+ * list of possible attributes
+ * - An **attribute storage behavior** needs to be attached to the object, that will receive the attributes - i.e. 
+ * to the product-object in our example. 
  * 
- * ## Custom Attribute Definitions
+ * Here is how the definition-behavior might look like:
  * 
- * Each custom attribute is defined by exactly one data item of the object of this behavior. The data of this
- * object will contain all the configuraton for the attribute: its name, alias, data address and a lot more.
- * Each of these properties can be either loaded from the data source (i.e. they being the value of an attribute)
- * or configured in one of the so-called attribute type models. 
+ * ```
+ * {
+ * 	"name_attribute": "NAME", 
+ * 	"alias_attribute": "ALIAS", 
+ * 	"required_attribute": "REQUIRED_FLAG",
+ *  "type_attribute": "TYPE"
+ * }
  * 
- * Here is a list of what you can store in your data source and load by configuring the corresponding attribute 
- * in this beahvior:
+ * ```
+ * 
+ * It will generate an attribute from every data row of the definition-object. The attributes will get their names 
+ * from the `NAME` attribute of the definition-object, the alias from `ALIAS` and will be required if the `REQUIRED_FLAG` 
+ * checkbox is set. The `TYPE` widget of the editor widget for attribute definitions will be automatically turned into
+ * an `InputSelect` letting the user pick one of the standard types: text, date, number, etc. - see dedicated chapter below.
+ * 
+ * Here is another example: in a quality assurance app, you will attach every QA report to on or even multiple things like
+ * product properties, packaging, manufacturing process, etc. You could create a custom attribute for every type of allocation 
+ * for the report-object, so that in a list of reports users will immediately see, what it is related to. These will be custom 
+ * attributes too, but they will all look similar and will not be explicitly defined as such by users - instead, you just 
+ * attach a definition behavior to the existing allocation type object and tell we system to create attributes from it. 
+ * 
+ * ```
+ * {
+ * 	"name_attribute": "NAME"
+ * }
+ * 
+ * ```
+ * 
+ * As you can see, we just generate properties of attributes from available data - there is much less configuration. 
+ * 
+ * ## Attribute model
+ * 
+ * In case you need users to add new attributes explicitly (like in our product-example) you need to decide, which 
+ * aspects of the attributes they can control and give your definition-object corresponding attributes. 
+ * 
+ * Here is what you can let users define:
  * 
  * - **Name** (`name_attribute`): The display name of the custom attribute.
  * - **Alias** (`alias_attribute`): The attribute alias for the custom attribute.
- * - **Data address** (`data_address_attribute`): The data address is used to generate the data address and the
- * technical alias  of the custom attribute. Make sure it matches whatever storage behavior you are using. For example
- * if the data of the attributes is to be loaded from JSON via `CustomAttributesJsonBehavior`, the data address should 
- * be a valid JSON path. 
+ * - **Data address** (`data_address_attribute`): The data address is used to generate the data address and the technical alias  of the custom attribute. Make sure it matches whatever storage behavior you are using. For example, if the data of the attributes is to be loaded from JSON via `CustomAttributesJsonBehavior`, the data address should be a valid JSON path. 
  * - **Type** of the attribute (`type_attribute`): This is more than just a data type - it is a preconfigured model
  * of the attribute, that could even include relations, data address properties and other things. You can provide a
  * set of valid type model in this behavior via `type_models`. 
@@ -73,27 +102,34 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
  * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
- * ## Attribute types and type models
+ * ## Types models
  * 
- * Type models are special templates that simplify the creation of new custom attributes. They automatically configure
- * the properties of a custom attribute, meaning users won't have to know any technical details. When creating  a new
- * custom attribute they simply assign a type model to it, which then takes care of everything else.  They can choose
- * from all type models configured in the `type_models` property, as well as some basic default type models, such as
- * "Date", "Time", "Text" and "Number".
+ * If you need to let users pick from different attribute types, you can define multiple so-called "type models".
+ * There are built-in type models for the most important data types: "Date", "Time", "Text" and "Number". 
  * 
- * You can extend these basic type models with your own. Simply add a new entry to the `type_models` property. 
- * Type models can inherit from any other type model. You can assign a parent by entering it in the `inherits`
- * property.  The type model will then use the property value of its parent, unless you defined a value for it. If you
- * do not specify a valid parent, your type model will inherit from a default configuration.
+ * However, type models are more than just data types - they are preconfigured models for the entire attribute. You can 
+ * can set any attribute property in the type model: default display or editor widgets, relations configurations,
+ * readable/writable flags - everything! 
  * 
- * ### Default settings
+ * When a user creates a custom attribute and you have `type_attribute` set in the behavior config, the user will
+ * need to pick a type from an automatically generated list. Users cannot control all the mighty attribute configuration
+ * explicitly - they can only pick your preconfigured types. This makes it much easier to create custom attributes as
+ * there is not much to know about how the workbench works in the background.
  * 
- * If you do not define any custom, there will be some default types available automatically:
+ * You can define as many type models as many as you like. Type models can even use use inheritance: you can specify 
+ * another type model in the `inherits` property and change it selectively. By default all type models inherit from
+ * the `attribute_defaults`.
  * 
- * If you have no type selector in your definition object at all, all attributes will have the same default type. That
- * default attribute model is mostly provided by the specific custom attributes behavior, that you use. E.g. the
- * `CustomAttributesJsonBehavior` will have writable attributes while `CustomAttribtuesLookupBehavior` will have
- * non-writable ones. However, you can still customize the default settings: 
+ * ### Default attribute model
+ * 
+ * There is always a default attribute model. You can modify it using `attribute_defaults`. All type models will inherit
+ * from it.
+ * 
+ * If you have no `type_attribute` in your config at all, all attributes will have the same default model. Most
+ * storage-behaviors provide their own default models. For example, the `CustomAttributesJsonBehavior` will have 
+ * writable attributes while `CustomAttribtuesLookupBehavior` will have non-writable ones. 
+ * 
+ * Only change the default model if you know what you are doing. Here is what you can change: 
  * 
  * ```
  * {
@@ -126,30 +162,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * attributes that use it. The most useful way however, is to manually edit what groups a custom attribute belongs
  * to, by changing the values stored in `groups_attribute`. While creating or editing a custom attribute, all
  * available groups will be displayed in a  dropdown multi-select.
- * 
- * ## Setup
- * 
- * To enable custom attributes for your app, a decent amount of setup is required:
- * 
- * 1. Create a new table for your app, that has the following properties. It will be used to store the custom attribute definitions:
- * 
- *      - It must have all the default columns of your app.
- *      - It should have a matching column for: name (varchar), storage_key (varchar), type_model (varchar),groups (varchar), hint (varchar), required (tinyint) and optionally owner_object_id (binary(16)).
- * 
- * 2. Create a new MetaObject with matching attributes. If you have a column for `owner_object`, make sure that its attribute has a relation to `exface.Core.OBJECT`!
- * 
- * 3. Add a new `CustomAttributeDefinitionBehavior` and configure it to your needs.
- * 
- * 4. Create a simple page that allows you to create and edit your custom attribute definitions.
- * 
- * 5. For each object that want to have access to these definitions, add a CustomAttributeJsonBehavior and
- * configure it as needed. 
- * 
- * 6. Each of those objects needs an attribute, where the actual JSON data will be stored and of course the underlying
- * data source needs a matching column as well (usually varchar(max)).
- * 
- * 7. You can now use any custom attributes, that you have created via the page mentioned in step 4 (see "Using Custom
- * Attributes").
  * 
  * ## Using Custom Attributes
  * 
@@ -187,65 +199,14 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *      "widget_type": "DataTable",
  *      "object_alias": "some.object.Alias",
  *      "filters": [
- *          {"attribute_group_alias": "~CUSTOM"
+ *          {"attribute_group_alias": "~CUSTOM"}
  *      ],
  *      "columns": [
- *          {"attribute_group_alias": "~REQUIRED~!Custom"},
- *          {"attribute_alias": "Item"},
- *          {"attribute_group_alias": "~REQUIRED~CUSTOM:!Company B,Company C"}
+ *          {"attribute_group_alias": "~REQUIRED~!CUSTOM"},
+ *          {"attribute_alias": "MYATTR"},
+ *          {"attribute_group_alias": "~my.App.IMPORTANT_CUSTOM_ATTRS"}
  *      ]
  *  }
- * 
- * ```
- * 
- * ## Examples
- * 
- * ### Behavior Configuration
- * 
- * ```
- * 
- *  {
- *      "relation_to_owner_object": "owner_alias",
- *      "name_attribute": "name",
- *      "hint_attribute": "hint",
- *      "data_address_attribute": "storage_key",
- *      "type_attribute": "type_model",
- *      "required_attribute": "required",
- *      "groups_attribute": "groups",
- *      "type_models": {
- *          "INHERITS_DEFAULT": {
- *              "inherits": "",
- *              "required": true,
- *              "copyable": false
- *          },
- *          "INHERITS_TIME": {
- *              "inherits": "Time",
- *              "hidden": true,
- *              "editable": false
- *          },
- *          "INHERITS_ABOVE": {
- *               "inherits": "INHERITS_TIME"
- *           }
- *      }
- * }
- * 
- * ```
- * 
- * ## Code Usage
- * 
- * See `CustomAttributeJsonBehavior`:
- * 
- * ```
- * 
- *  $definitionBehavior = $definitionObject->getBehaviors()->findBehavior(CustomAttributeDefinitionBehavior::class);
- *  if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
- *      $msg = 'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!'; throw new BehaviorRuntimeError( $this, $msg, null, null, $logBook);
- *  }
- * 
- *  $customAttributes = $definitionBehavior->addAttributesToObject(
- *      $this->getObject(),
- *      $this,
- *      $logBook);
  * 
  * ```
  * 
@@ -436,7 +397,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $attributeDefinitionsSheet->getColumns()->addFromExpression($groupsAlias);
         }
         if (null !== $filtersUxon = $this->getFiltersUxon()) {
-            $attributeDefinitionsSheet->setFilters(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject()));
+            $conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject());
+            if(empty($attributeDefinitionsSheet->getFilters())) {
+                $attributeDefinitionsSheet->setFilters($conditionGroup);
+            } else {
+                $attributeDefinitionsSheet->getFilters()->addNestedGroup($conditionGroup);
+            }
         }
         if (null !== $sortersUxon = $this->getSortersUxon()) {
             $attributeDefinitionsSheet->getSorters()->importUxonObject($sortersUxon);
@@ -446,39 +412,58 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
         }
         
-        $targetObjectId = $targetObject->getId();
-        if($ownerIdAlias = $this->getRelationPathToOwnerObject()) {
-            $logBook->addLine('Loading only definitions that match "' . $targetObjectId . '" in "' . $ownerIdAlias . '" of "' . $this->getObject()->getAliasWithNamespace() . '".');
-            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerIdAlias, $targetObjectId);
+        if($ownerRelAlias = $this->getRelationPathToOwnerObject()) {
+            $ownerRel = $attributeDefinitionsSheet->getMetaObject()->getRelation($ownerRelAlias);
+            if (! $ownerRel->getRightObject()->is('exface.Core.OBJECT')) {
+                throw new BehaviorRuntimeError($this, 'Cannot use relation "`"' . $ownerRelAlias . '" as object-filter for custom attributes because it does not point to the core object "exface.Core.OBJECT"!', null, null, $logBook);
+            }
+            switch ($ownerRel->getRightKeyAttribute()->getAlias()) {
+                case 'ALIAS_WITH_NS':
+                    $targetFilterVal = $targetObject->getAliasWithNamespace();
+                    break;
+                case 'UID':
+                    $targetFilterVal = $targetObject->getId();
+                    break;
+                default:
+                    throw new BehaviorRuntimeError($this, 'Cannot use relation "`"' . $ownerRelAlias . '" as object-filter for custom attributes because it neither points to a meta object UID nor to its namespaced alias', null, null, $logBook);
+            }
+            $attributeDefinitionsSheet->getFilters()->addConditionFromString($ownerRelAlias, $targetFilterVal);
+            $logBook->addLine('Loading attribute definitions that match `' . $attributeDefinitionsSheet->getFilters()->__toString() . '` from "' . $this->getObject()->getAliasWithNamespace() . '".');
         } else {
-            $logBook->addLine('No value was set for "relation_to_owner_object". Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+            $logBook->addLine('Property `relation_to_owner_object` not set. Loading ALL definitions from "' . $this->getObject()->getAliasWithNamespace() . '".');
+        }
+
+        $attrDefaults = $this->getAttributeDefaults($definition);
+        $attrDefaultsJson = JsonDataType::encodeJson($attrDefaults);
+        $typePhs = StringDataType::findPlaceholders($attrDefaultsJson);
+        $typeModelsJson = JsonDataType::encodeJson($this->getTypeModelsAll());
+        $typePhs = array_merge($typePhs, StringDataType::findPlaceholders($typeModelsJson));
+        foreach ($typePhs as $ph) {
+            switch (true) {
+                case $attributeDefinitionsSheet->getColumns()->getByExpression($ph):
+                    continue 2;
+                case $attributeDefinitionsSheet->getMetaObject()->hasAttribute($ph):
+                case Expression::detectFormula($ph):
+                    $attributeDefinitionsSheet->getColumns()->addFromExpression($ph);
+                    break;
+            }
+        }
+
+        try {
+            $attributeDefinitionsSheet->dataRead();
+        } catch (\Throwable $e) {
+            throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e, $logBook);
         }
         
-        $attributeDefinitionsSheet->dataRead();
-        
-        $logBook->addLine('Attribute definitions loaded successfully.');
+        $logBook->addLine('Found **' . $attributeDefinitionsSheet->countRows() . '** attributes');
         $logBook->addDataSheet('Attribute Definitions', $attributeDefinitionsSheet);
         $logBook->addIndent(-1);
-        $logBook->addLine('Adding custom attributes to "' . $targetObjectId . '"...');
+        $logBook->addLine('Adding custom attributes to ' . $targetObject->__toString() . '...');
         $logBook->addIndent(1);
-        
-        $attrDefaults = $this->getAttributeDefaults($definition);
-        $typePlaceholderFlags = [];
+
         foreach ($attributeDefinitionsSheet->getRows() as $definitionRow) {
             $name = $definitionRow[$nameAlias];
             $alias = null;
-
-            if ($this->hasAttributeTypeModels() === true) {
-                // TODO how to use the definition defaults in case of predefined type models?
-                $typeKey = $definitionRow[$typeAlias];
-                if(! $typeModel = $this->getTypeModel($typeKey)) {
-                    throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null , null, $logBook);
-                }
-                $typeModel = array_merge($attrDefaults, $typeModel);
-            } else {
-                $typeKey = null;
-                $typeModel = $attrDefaults;
-            }
             
             if ($aliasAlias !== null) {
                 $alias = $definitionRow[$aliasAlias];
@@ -495,32 +480,41 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $alias = $this->getAliasFromName($name);
             }
             
+            // Instantiate a new custom attribute
             $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageBehavior());
             $attr->setDataAddress($address);
-            $attr->setDataType($typeModel[self::KEY_DATA_TYPE]);
-            
+
+            if ($this->hasAttributeTypeModels() === true) {
+                $typeKey = $definitionRow[$typeAlias];
+                if (! $typeModel = $this->getTypeModel($typeKey)) {
+                    throw new BehaviorRuntimeError($this, 'Error while loading custom attribute "' . $name . '": Type model "' . $typeKey . '" not found! Check "' . $this->getAliasWithNamespace() . '" on object "' . $this->getObject()->getAliasWithNamespace() . '" for available type models.', null, null, $logBook);
+                }
+                $typeModel = array_merge($attrDefaults, $typeModel);
+            } else {
+                $typeKey = null;
+                $typeModel = $attrDefaults;
+            }
+
+
             // Remove properties from the template that should not be applied to the attribute.
-            unset($typeModel[self::KEY_DATA_TYPE]);
             unset($typeModel[self::KEY_INHERITS_FROM]);
             unset($typeModel[$nameAlias]);
+
             // Apply the template.
             if (! empty($typeModel)) {
-                $typeModelUxon = new UxonObject($typeModel);
                 // See if there are any placeholders and replace them. Need to replace them
                 // every time because the replacement values are different for every attribute
-                if (false !== ($typePlaceholderFlags[$typeKey] ?? true)) {
-                    $typeModelJson = $typeModelUxon->toJson();
-                    $typeModelJsonReplaced = StringDataType::replacePlaceholders($typeModelJson, [
-                        self::PLACEHOLDER_ALIAS => $attr->getAlias(),
-                        self::PLACEHOLDER_NAME => $attr->getName()
-                    ]);
-                    $typeModelUxon = UxonObject::fromJson($typeModelJsonReplaced);
-                    // Check, if there was anything replaced and remember this for every type key.
-                    // If there was nothing to replace, we don't need to parse the string anymore!
-                    $typePlaceholderFlags[$typeKey] = ($typeModelJson !== $typeModelJsonReplaced);
+                if (! empty($typePhs)) {
+                    $typeModelStr = JsonDataType::encodeJson($typeModel);
+                    $typePhVals = $definitionRow;
+                    $typePhVals[self::PLACEHOLDER_ALIAS] = $attr->getAlias();
+                    $typePhVals[self::PLACEHOLDER_NAME] = $attr->getName();
+                    $typeModelStr = StringDataType::replacePlaceholders($typeModelStr, $typePhVals);
+                    $typeModel = JsonDataType::decodeJson($typeModelStr);
                 }
-                $attr->importUxonObject($typeModelUxon);
+                $attr->importUxonObject(new UxonObject($typeModel));
             }
+
             // Set values that were not stored in the template.
             if ($hintAlias !== null) {
                 $attr->setShortDescription($definitionRow[$hintAlias]);
@@ -528,7 +522,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             if ($requiredAlias !== null) {
                 $attr->setRequired($definitionRow[$requiredAlias]);
             }
-            
+            // Add attribute groups
             if($groupsAlias !== null) {
                 $delimiter = $this->getObject()->getAttribute($groupsAlias)->getValueListDelimiter();
                 $groups = explode($delimiter, $definitionRow[$groupsAlias] ?? '');
@@ -541,12 +535,12 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 }
             }
             
-            $targetObject->getAttributes()->add($attr);
+            // Attach the attribute to the object
+            $targetObject->addAttribute($attr);
             $attrs[] = $attr;
             $logBook->addLine('Added "' . $attr->getAlias() . '" with data address "' . $attr->getDataAddress() . '" of type "' . $typeKey . '(' . $attr->getDataType()->getAliasWithNamespace() . ')".');
         }
-        //$this->registerWidgetModifications($attrs);
-        
+
         $logBook->addIndent(-1);
 
         return $attrs;
@@ -599,6 +593,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
         }
         $aliases = array_unique($aliases);
+        // If array_unique() produces gaps, the array is recognized as an asscociative array
+        // from this point on. This makes trouble: for example, the InputSelect widget
+        // produced for the default editor interprets it as key-value pairs and not
+        // as a simple list of values. To avoid this, reindex the array here.
+        $aliases = array_values($aliases);
         return $aliases;
     }
     
@@ -635,11 +634,28 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * When creating a new custom attribute, users must assign a type model to it. They can choose 
      * from all type models configured in the `type_models` property, as well as some basic default 
      * type models, such as "DATE", "TIME", "TEXT" and "NUMBER".
+     *
+     * You can set set any UXON properties of an attribute here - including complex ones
+     * like `data_type`, `relation`, etc. Use placeholders to include data of the
+     * definition-object. This way, you are free to make any parts of the resulting
+     * custom attributes controllable from the definition - not only those explicitly
+     * supported by `xxx_attribute` properties of this behavior.
+     *
+     * The following placeholders can be used in the attribute model:
+     *
+     * - `[#~custom_attribute_alias#]`
+     * - `[#~custom_attribute_name#]`
+     * - `[#<attribute_alias_of_definition_object>#]`
+     * - `[#=Formula()#]`
      * 
      * @uxon-property type_models
      * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute[]
      * @uxon-template {"":{"inherits":"","data_type":"exface.Core.String","readable":true,"writable":true,"copyable":true,"editable":true,"required":false,"hidden":false,"sortable":true,"filterable":true,"aggregatable":true,"default_aggregate_function":"","default_sorter_dir":"ASC","value_list_delimiter":",","default_display_order":""}}
-     * 
+     *
+     * @uxon-placeholder [#~custom_attribute_name#]
+     * @uxon-placeholder [#~custom_attribute_alias#]
+     * @uxon-placeholder [#<metamodel:attribute>#]
+     *
      * @param UxonObject $uxon
      * @return $this
      */
@@ -1003,12 +1019,15 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             ],
             'Number' => [
                 self::KEY_DATA_TYPE => NumberDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputNumber"]
             ],
             'Integer' => [
                 self::KEY_DATA_TYPE => IntegerDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputNumber"]
             ],
             'Boolean' => [
                 self::KEY_DATA_TYPE => BooleanDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputCheckBox"]
             ],
             'Date' => [
                 self::KEY_DATA_TYPE => DateDataType::class,
@@ -1020,6 +1039,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             ],
             'Time' => [
                 self::KEY_DATA_TYPE => TimeDataType::class,
+                "default_editor_uxon" => ["widget_type" => "InputTime"]
             ]
         ];
     }
@@ -1048,12 +1068,29 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * Change the default properties of attributes to be created
+     * Set the default properties of attributes to be created
+     *
+     * You can set set any UXON properties of an attribute here - including complex ones
+     * like `data_type`, `relation`, etc. Use placeholders to include data of the
+     * definition-object. This way, you are free to make any parts of the resulting
+     * custom attributes controllable from the definition - not only those explicitly
+     * supported by `xxx_attribute` properties of this behavior.
+     *
+     * The following placeholders can be used in the attribute model:
+     *
+     * - `[#~custom_attribute_alias#]`
+     * - `[#~custom_attribute_name#]`
+     * - `[#<attribute_alias_of_definition_object>#]`
+     * - `[#=Formula()#]`
      * 
      * @uxon-property attribute_defaults
-     * @uxon-type \exface\Core\CommoLogic\Model\Attribute
+     * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute
      * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable": false, "value_list_delimiter": ","}
-     * 
+     *
+     * @uxon-placeholder [#~custom_attribute_name#]
+     * @uxon-placeholder [#~custom_attribute_alias#]
+     * @uxon-placeholder [#<metamodel:attribute>#]
+     *
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributeDefinitionBehavior
      */

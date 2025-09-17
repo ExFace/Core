@@ -46,6 +46,8 @@ class ActionEffect implements ActionEffectInterface
     private $effectedObject = null;
     
     private $effectedObjectRelationPath = null;
+
+    private $savesData = null;
     
     /**
      * 
@@ -183,7 +185,33 @@ class ActionEffect implements ActionEffectInterface
         } else {
             $uxon->setProperty('effected_object', $this->getEffectedObject()->getAliasWithNamespace());
         }
+        if (null !== $val = $this->willHandleChanges()) {
+            $uxon->setProperty('handles_changes', $val);
+        }
         return $uxon;
+    }
+
+    /**
+     * Set to TRUE to make widgets assume, that this action will save their changes or to FALSE to explicitly ignore this action
+     *
+     * @uxon-property handles_changes
+     * @uxon-type boolean
+     *
+     * @param bool $trueOrFalse
+     * @return ActionEffectInterface
+     */
+    protected function setHandlesChanges(bool $trueOrFalse) : ActionEffectInterface
+    {
+        $this->savesData = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function willHandleChanges() : ?bool
+    {
+        return $this->savesData;
     }
     
     /**

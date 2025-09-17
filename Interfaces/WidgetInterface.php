@@ -161,6 +161,31 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function getMetaObject();
 
     /**
+     * Returns an array with all objects, that will have significant effect on this widget.
+     * 
+     * It is important for a widget to know, changes to which affect its inner state - e.g. make
+     * its prefill data obsolete. Facades should then decide, what to do - e.g. refresh the widget,
+     * show a warning, etc.
+     * 
+     * This feature goes hand-in-hand with action effects - see ActionInterface::getEffects(). An
+     * action knows, which objects it will effect and a widget knows, if these objects will effect
+     * its current state.
+     * 
+     * This method will only return objects, that have "significant" effects, requiring some
+     * reaction. For example, if a container has children with lazy loading, their object should
+     * not be in this list because these widget will be able to take care of their changes
+     * themselves - their contents is not the business of the container.
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionEffectInterface
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffects()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasEffectOn()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffectsOn()
+     * 
+     * @return MetaObjectInterface[]
+     */
+    public function getMetaObjectsEffectingThisWidget() : array;
+
+    /**
      * Sets the given object as the new base object for this widget
      *
      * @param MetaObjectInterface $object            
@@ -291,6 +316,17 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function hasParent();
 
     /**
+     * Returns all parent widgets matching the given filter callback.
+     *
+     * The $filter function must have the following signature: `function(WidgetInterface $parent) : bool`
+     *
+     * @param callable $filter
+     * @param int|null $maxResults
+     * @return WidgetInterface[]
+     */
+    public function getParents(callable $filter, ?int $maxResults = null) : array;
+
+    /**
      * Sets the parent widget
      *
      * @param WidgetInterface $widget            
@@ -416,10 +452,14 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     /**
      * Returns an iterator over all children of the current widget including with their children,
      * childrens children, etc. as a flat array of widgets
+     * 
+     * If provided, depth limits the number of recursion levels.
      *
+     * @param int|NULL $depth
+     * 
      * @return WidgetInterface[]
      */
-    public function getChildrenRecursive() : \Iterator;
+    public function getChildrenRecursive(?int $depth = null) : \Iterator;
     
     /**
      * Returns true if current widget has at least one child and FALSE otherwise.
@@ -459,6 +499,4 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return bool
      */
     public function hasFunction(string $functionName) : bool;
-
-    
 }

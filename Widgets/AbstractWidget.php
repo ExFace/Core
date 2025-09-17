@@ -2,7 +2,9 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -19,7 +21,6 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
@@ -39,7 +40,8 @@ use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Translation\TranslationsArray;
 use exface\Core\Interfaces\Widgets\iHaveValue;
-use function Sabre\Event\Loop\instance;
+use Throwable;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * Base class for facade elements in AJAX facades using jQuery
@@ -250,6 +252,11 @@ abstract class AbstractWidget implements WidgetInterface
             return $this->importUxonObjectDefault($uxon);
         } catch (UxonMapError $e) {
             throw new WidgetPropertyUnknownError($this, 'Unknown UXON property found for widget "' . $this->getWidgetType() . '": ' . $e->getMessage(), '6UNTXJE', $e);
+        } catch (Throwable $e) {
+            if (! $e instanceof WidgetExceptionInterface) {
+                throw new WidgetConfigurationError($this, 'Cannot initialize widget "' . $this->getWidgetType() . '"! ' . $e->getMessage(), null, $e);
+            }
+            throw $e;
         }
         return;
     }
@@ -471,7 +478,7 @@ abstract class AbstractWidget implements WidgetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WidgetInterface::getChildrenRecursive()
      */
-    public function getChildrenRecursive() : \Iterator
+    public function getChildrenRecursive(?int $depth = null) : \Iterator
     {
         // Use a generator here because widgets with lot's of children (e.g. large editor dialogs)
         // will need to instantiate ALL their children first if we use an array. This is useless,
@@ -482,9 +489,12 @@ abstract class AbstractWidget implements WidgetInterface
         foreach ($this->getChildren() as $child) {
             yield $child;
         }
-        
+        // Stop recursion if depth is reached
+        if ($depth === 0) {
+            return;
+        }
         foreach ($this->getChildren() as $child) {
-            yield from $child->getChildrenRecursive();
+            yield from $child->getChildrenRecursive($depth !== null ? ($depth - 1) : null);
             // Excplicitly continue - otherwise the foreach will break after the first yield from
             continue;
         }
@@ -984,18 +994,36 @@ abstract class AbstractWidget implements WidgetInterface
      */
     protected function getHintDebug() : string
     {
-        $hint = "\n\nDebug-hints:\n- Widget type: {$this->getWidgetType()}\n- Widget object: {$this->getMetaObject()->__toString()}";
+        $hint =       "\n"
+                    . "\nWidget debug:"
+                    . "\n- Widget type: {$this->getWidgetType()}"
+                    . "\n- Widget object: {$this->getMetaObject()->__toString()}";
+
+        // Simple widgets
         if ($this instanceof iShowSingleAttribute) {
             if ($this->isBoundToAttribute()) {
-                $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
+                $hint = $hint
+                    . "\n- Attribute alias: `{$this->getAttributeAlias()}`";
                 $attr = $this->getAttribute();
                 if ($attr instanceof CustomAttribute) {
-                    $hint .= "\n- Custom attribute from " . $attr->getSourceHint();
+                    $hint = $hint
+                    . "\n- Custom attribute from " . $attr->getSourceHint();
                 }
             }
             if ($this instanceof iHaveValue) {
-                $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
+                $hint = $hint
+                    . "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
             }
+        }
+
+        // Conditional properties
+        if (null !== $condProp = $this->getDisabledIf()) {
+            $hint = $hint
+                    . "\n- Disabled if: {$condProp->getConditionGroup()->__toString()}";
+        }
+        if (null !== $condProp = $this->getHiddenIf()) {
+            $hint = $hint
+                    . "\n- Hidden if: {$condProp->getConditionGroup()->__toString()}";
         }
         return $hint ?? '';
     }
@@ -1447,6 +1475,26 @@ abstract class AbstractWidget implements WidgetInterface
         
         return $this->disabled_if;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see WidgetInterface::getParents()
+     */
+    public function getParents(callable $filter, ?int $maxResults = null) : array
+    {
+        $results = [];
+        $parent = $this->getParent();
+        while ($parent !== null) {
+            if ($filter($parent) === true) {
+                $results[] = $parent;
+            }
+            if ($maxResults !== null && count($results) >= $maxResults) {
+                break;
+            }
+            $parent = $parent->getParent();
+        }
+        return $results;
+    }
     
     /**
      * Returns the closest parent widget which implements the passed class or interface.
@@ -1757,10 +1805,41 @@ MD;
     {
         $resolver = function(array $widgetUxon) use ($widget) {
             $resultUxon = [];
+
+            // If there are more properties than just `attribute_group_alias`, see if any
+            // of them include placeholders. We will replace those placeholders with data
+            // from the model of the attributes.
+            if (count ($widgetUxon) > 1) {
+                $json = JsonDataType::encodeJson($widgetUxon);
+                $phs = StringDataType::findPlaceholders($json);
+            } else {
+                $json = null;
+                $phs = [];
+            }
             
-            $attrGrp = $widget->getMetaObject()->getAttributeGroup($widgetUxon['attribute_group_alias']);
+            $attrGrpAlias = $widgetUxon['attribute_group_alias'];
+            $aggr = DataAggregation::getAggregatorFromAlias($widget->getWorkbench(), $attrGrpAlias);
+            if ($aggr) {
+                $attrGrpAlias = DataAggregation::stripAggregator($attrGrpAlias);
+            }
+            $attrGrp = $widget->getMetaObject()->getAttributeGroup($attrGrpAlias);
             foreach ($attrGrp->getAttributes() as $attr) {
-                $widgetUxon['attribute_alias'] = $attr->getAliasWithRelationPath();
+                $attrAlias = $attr->getAliasWithRelationPath();
+                if ($aggr) {
+                    $attrAlias = DataAggregation::addAggregatorToAlias($attrAlias, $aggr);
+                }
+                
+                // If we have placeholders, replace them here for every attribute
+                // TODO add other attribute properties as paceholders?
+                if (! empty($phs)) {
+                    $attrJson = StringDataType::replacePlaceholders($json, [
+                        '~attribute:ALIAS' => $attrAlias,
+                        '~attribute:NAME' => $attr->getName()
+                    ]);
+                    $widgetUxon = JsonDataType::decodeJson($attrJson);
+                }
+                
+                $widgetUxon['attribute_alias'] = $attrAlias;
                 $resultUxon[] = $widgetUxon;
             }
             
@@ -1768,5 +1847,15 @@ MD;
         };
         
         $uxon->addSnippet('attribute_group_alias', $resolver);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        return [$this->getMetaObject()];
     }
 }

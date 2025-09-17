@@ -156,11 +156,35 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * }
  * 
  * ```
+ * 
+ * ### Filter with a custom condition group based on widget links
+ * 
+ * ```
+ * {
+ *   "hidden": true,
+ *   "condition_group": {
+ *     "operator": "OR",
+ *     "conditions": [
+ *       {
+ *         "expression": "relation1",
+ *         "comparator": "==",
+ *         "value": "=WidgetId1"
+ *       },
+ *       {
+ *         "expression": "relation2",
+ *         "comparator": "==",
+ *         "value": "=WidgetId2"
+ *       }
+ *     ]
+ *   }
+ * }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
+class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanPreloadData
 {
     use iHaveAttributeGroupTrait;
 
@@ -1117,11 +1141,12 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * default.
      * 
      * The following states of input widgets are available:
-     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
-     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
-     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     *
+     * - `display_only` = true - active (user can interact with the widget), but not considered as input for actions
+     * - `disabled` = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - `readonly` = true - inactive and not considered as action input (same as `display_only` + `disabled`)
      * 
-     * If a widget is readonly, will also get display-only and disabled automatically.
+     * If a widget is `readonly`, will also get `display-only` and `disabled` automatically.
      * 
      * @uxon-property display_only
      * @uxon-type boolean
@@ -1178,13 +1203,21 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     /**
      * A custom condition group to apply instead of simply comparing attribute_alias to value.
      * 
-     * The condition group can include any conditions or even nested groups. The value of the filter
-     * widget can be used in the conditions by setting their `value` to the placeholder `[#value#]`.
-     * Static values can be used too!
+     * The condition group can include any conditions or even nested groups. Condition can use the
+     * following expressions for their `value`:
+     * 
+     * - `[#value#]` - this special placeholder will be replaced by the current value of the filters
+     * `input_widget`. 
+     * - static formulas like `=User()`
+     * - widget links like `=WidgetId1` or `=TableId!ATTRIBUTE_ALIAS`
      * 
      * Filters with custom `condition_group` can be easily mixed with simple filters. In the resulting
      * condition group, the latter will yield conditions and the former will produce nested condition
      * groups.
+     *
+     * **NOTE:** just like regular filters, custom conditions with empty values will be ignored (the filter
+     * will not be applied at all instead of searching for empty values). If you want you filter to search
+     * for empty values explicitly, set `ignore_empty_values` for corresponding conditions.
      * 
      * ## Examples
      * 
@@ -1196,16 +1229,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *   "condition_group": {
      *     "operator": "OR",
      *     "conditions": [
-     *       {
-     *         "expression": "attr1",
-     *         "comparator": "=",
-     *         "value": "[#value#]"
-     *       },
-     *       {
-     *         "expression": "attr2",
-     *         "comparator": "=",
-     *         "value": "[#value#]"
-     *       }
+     *       {"expression": "attr1", "comparator": "=", "value": "[#value#]"},
+     *       {"expression": "attr2", "comparator": "=", "value": "[#value#]"}
      *     ]
      *   }
      * }
@@ -1222,16 +1247,24 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *   "condition_group": {
      *     "operator": "OR",
      *     "conditions": [
-     *       {
-     *         "expression": "attr1",
-     *         "comparator": "=",
-     *         "value": "[#value#]"
-     *       },
-     *       {
-     *         "expression": "visible_flag",
-     *         "comparator": "==",
-     *         "value": "1"
-     *       }
+     *       {"expression": "attr1", "comparator": "=", "value": "[#value#]"},
+     *       {"expression": "visible_flag", "comparator": "==", "value": "1"}
+     *     ]
+     *   }
+     * }
+     * 
+     * ```
+     * 
+     * ### Using linked widgets
+     * 
+     * ```
+     * {
+     *   "hidden": true,
+     *   "condition_group": {
+     *     "operator": "OR",
+     *     "conditions": [
+     *       {"expression": "relation1", "comparator": "==", "value": "=WidgetId1"},
+     *       {"expression": "relation2", "comparator": "==", "value": "=WidgetId2"}
      *     ]
      *   }
      * }
@@ -1240,7 +1273,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * 
      * @uxon-property condition_group
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
-     * @uxon-template {"operator": "OR", "conditions": [{"expression": "", "value": "[#value#]", "comparator": "="}]}
+     * @uxon-template {"operator": "OR", "conditions": [{"expression": "", "value": "[#value#]", "comparator": "==", "ignore_empty_values": true}]}
      * 
      * @param UxonObject $uxon
      * @return Filter
@@ -1541,5 +1574,24 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     protected function getInputWidgetDefaultForMultiSelect() : bool
     {
         return $this->multiSelect ?? true;
+    }
+
+    /**
+     * Filters are affected by the same objects as their input widget, but if the filter
+     * points to a relation, the related object also effects the filter!
+     * 
+     * @see AbstractWidget::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        // Effecting objects from the input widget will contain its object as well as any
+        // objects along the relation path used.
+        $objs = $this->getInputWidget()->getMetaObjectsEffectingThisWidget();
+        // Additionally, if a filter points to a relation-attribute, it will be effected
+        // by changes to the target object too.
+        if ((null !== $attr = $this->getAttribute()) && $attr->isRelation()) {
+            $objs[] = $attr->getRelation()->getRightObject();   
+        }
+        return array_unique($objs);
     }
 }

@@ -195,7 +195,7 @@
         {
             "_EXPORT_SUMMARY": "Simple master data table",
             "CREATED_ON": "2019-09-03 15:26:41",
-            "MODIFIED_ON": "2020-11-24 10:10:38",
+            "MODIFIED_ON": "2025-04-03 21:55:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ce5f241fc2d5ad7fe4b318306b9a",
@@ -212,6 +212,9 @@
                     }
                 ],
                 "buttons": [
+                    {
+                        "action_alias": "exface.Core.ShowDataImportDialog"
+                    },
                     {
                         "action_alias": "exface.Core.ShowObjectCreateDialog"
                     },

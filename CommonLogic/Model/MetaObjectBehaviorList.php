@@ -146,10 +146,13 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\BehaviorListInterface::disableTemporarily()
      */
-    public function disableTemporarily(bool $trueOrFalse) : BehaviorListInterface
+    public function disableTemporarily(bool $trueOrFalse, string $onlyForPrototypeClass = null) : BehaviorListInterface
     {
         if ($trueOrFalse === true) {
             foreach ($this->getAll() as $behavior) {
+                if ($onlyForPrototypeClass !== null && ! is_a($behavior, $onlyForPrototypeClass, true)) {
+                    continue;
+                }
                 $this->disabledStates[] = [
                     'behavior' => $behavior, 
                     'state' => $behavior->isDisabled()

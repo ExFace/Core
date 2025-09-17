@@ -35,6 +35,8 @@
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
 	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download bereit. Wenn es nicht automatisch startet, bitte <a href=\"%url%\" download>hier</a> klicken.",
+	"ACTION.DOWNLOADFILE.RESULT_EMPTY": "Keine validen Datei-Anhänge gefunden.",
+	"ACTION.DOWNLOADZIP.NAME": "Download ZIP",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
@@ -89,6 +91,7 @@
 	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Ein neues Fenster/Tab wird geöffnet!",
 
 	"ACTION.SHOWDATAIMPORTDIALOG.NAME": "Daten importieren",
+	"ACTION.SHOWDATAIMPORTDIALOG.MESSAGE_EMPTY": "Kein importierbaren Spalten/Attribute gefunden!",
 
 	"ACTION.SHOWMASSEDITDIALOG.NAME": "Massenbearbeitung",
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",
@@ -213,6 +216,8 @@
 	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Ungültiger Wert für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
 	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\" von \"%object%\"!",
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
+	"DATASHEET.ERROR.LOOKUP_FAILED": "Der Wert %values% wurde nicht als \"%lookup_object%\" erkannt!|Die Werte %values% wurden nicht als \"%lookup_object%\" erkannt!",
+	"DATASHEET.ERROR.AFFECTED_ROWS": "Betroffene Zeile(n): %row_numbers%",
 	
 	"DATATYPE.VALIDATION.MUST": "Muss",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
@@ -234,6 +239,13 @@
 	"GLOBAL.MODEL.ACTION": "Aktion",
     "GLOBAL.MODEL.ACTIONS": "Aktionen",
     "GLOBAL.MODEL.ATTRIBUTES": "Attribute",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.DATA": "Data",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.COMPOUND": "Compound",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.CALCULATED": "Calculated",
+	"GLOBAL.MODEL.ATTRIBUTE_TYPE.GENERATED": "Generated",
+	"GLOBAL.MODEL.ATTRIBUTE_ORIGIN.DIRECT_ATTRIBUTE": "Eigene Attribute",
+	"GLOBAL.MODEL.ATTRIBUTE_ORIGIN.INHERITED_ATTRIBUTE": "Geerbte Attribute",
+	"GLOBAL.MODEL.ATTRIBUTE_ORIGIN.CUSTOM_ATTRIBUTE": "Zusatzattribute",
     "GLOBAL.MODEL.BEHAVIORS": "Behaviors",
     "GLOBAL.MODEL.CONNECTIONS": "Verbindungen",
     "GLOBAL.MODEL.DATA_SOURCES": "Datenquellen",
@@ -423,10 +435,27 @@
 	"WIDGET.DATA.DISCARD_INPUT": "Eingaben verwerfen",
 	"WIDGET.DATA.DISCARD_INPUT.TEXT": "Achtung: durch Nachladen der Daten gehen alle ungespeicherten Änderungen in der Tabelle verloren!",
 	
-    "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
-    "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",
-    "WIDGET.DATACONFIGURATOR.COLUMN_TAB_CAPTION": "Spalten",
-    "WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION": "Gruppierung",
+  "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
+  "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",
+  "WIDGET.DATACONFIGURATOR.COLUMN_TAB_CAPTION": "Spalten",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_CAPTION": "Gespeicherte Sichten",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY": "Sichtbarkeit",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY": "Anwenden",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY_HINT": "Überschreibt die aktuelle Konfiguration der Tabelle durch die gespeicherte Ansicht",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY_SUCCESS": "Ansicht wurde angewandt",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_PROMPT_TITLE": "Ansicht speichern",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_PLACEHOLDER": "Name der Ansicht",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_DESC_PLACEHOLDER": "Beschreibung",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_MISSING": "Bitte einen Namen für die Ansicht angeben",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE": "Akt. Ansicht speichern",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_HINT": "Speichert aktuelle Konfiguration der Tabelle als neue Ansicht",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE": "Ansicht aktualisieren",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT": "Überschreibt die aktuell ausgewählte Ansicht mit der aktuellen Konfiguration der Tabelle",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_SUCCESS": "Ansicht wurde erfolgreich gespeichert",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE": "Favorit",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE": "Aktiv",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT": "Als Favorit markieren oder umgekehrt",
+ 	"WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION": "Gruppierung",
 
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Schließen",
 	"WIDGET.DIALOG.HEADER": "Kopf-Bereich",
@@ -538,5 +567,8 @@
 	"ERROR.OBJECT_CAPTION": "Objekt \"%name%\"",
 	"ERROR.SUPPORT_HINT_WITH_EMAIL": "Bitte geben Sie bei Anfragen an den <a href=\"mailto:%support_mail%?subject=Support%20request%20%system_name%:%20%log_id%\">Support</a> stets die LOG-Nummer an: \"%log_id%\"!",
 	"ERROR.SUPPORT_HINT": "Bitte geben Sie bei Anfragen an den Support stets die LOG-Nummer an: \"%log_id%\"!",
-	"WARNING.CAPTION": "Warnung"
+	"WARNING.CAPTION": "Warnung",
+
+	"ROW.SINGULAR": "Zeile",
+	"ROW.PLURAL": "Zeilen"
 }

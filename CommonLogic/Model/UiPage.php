@@ -1,38 +1,37 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
-use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\CommonLogic\Translation\UxonTranslator;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Factories\SelectorFactory;
-use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
-use exface\Core\Factories\FacadeFactory;
+use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
+use exface\Core\Events\Widget\OnUiPageInitEvent;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Model\UiMenuItemInterface;
-use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Factories\FacadeFactory;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UserFactory;
-use exface\Core\Events\Widget\OnUiPageInitEvent;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
-use exface\Core\CommonLogic\Selectors\PWASelector;
-use exface\Core\CommonLogic\Translation\UxonTranslator;
-use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -47,7 +46,7 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
  * @author Andrej Kabachnik
  *
  */
-class UiPage implements UiPageInterface, iHaveIcon
+class UiPage implements UiPageInterface
 {
     use ImportUxonObjectTrait;
     
@@ -57,7 +56,7 @@ class UiPage implements UiPageInterface, iHaveIcon
 
     const WIDGET_ID_SPACE_SEPARATOR = '.';
 
-    private $widgets = array();
+    private $widgets = [];
 
     private $facadeSelector = null;
     
@@ -176,33 +175,27 @@ class UiPage implements UiPageInterface, iHaveIcon
     }
 
     /**
-     * Returns the UXON representation of the contents (or an empty UXON object if there is no contents
-     * or the contents is not UXON).
-     * 
-     * NOTE: This method will return an empty UXON object even if the page has some other type of contents
-     * (e.g. HTML). Do not use this method to get the contents in general, use getContents() instead. This
-     * method is only legitim if you know, the page has UXON content.
-     * 
-     * @return UxonObject
+     * {@inheritDoc}
+     * @see UiPageInterface::getContentsUxon()
      */
-    public function getContentsUxon()
+    public function getContentsUxon() : UxonObject
     {
-        if (is_null($this->contents_uxon)) {
-            if (! is_null($this->contents)) {
-                $contents = $this->getContents();
-                if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
+        if (null === $this->contents_uxon) {
+            if (null !== $this->contents) {
+                $contents = trim($this->getContents());
+                if (mb_substr($contents, 0, 1) == '{' && mb_substr($contents, - 1) == '}') {
                     $uxon = UxonObject::fromAnything($contents);
                     if ($this->hasApp()) {
                         (new UxonTranslator($this->getApp()->getTranslator()))->translateUxonProperties($uxon, 'Pages/' . $this->getAliasWithNamespace(), 'CONTENT');
                     }
-                } else {
-                    $uxon = new UxonObject();
                 }
-            } else {
-                $uxon = new UxonObject();
             }
         } else {
             $uxon = $this->contents_uxon;
+        }
+
+        if ($uxon === null) {
+            $uxon = new UxonObject();
         }
         
         return $uxon;
@@ -253,10 +246,23 @@ class UiPage implements UiPageInterface, iHaveIcon
         $id_original = $id;
         $id_space = '';
         $parent_of_id_space = $parent;
-        while ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
+        while ($id_space_length = mb_strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
             $id_space = ($id_space ? $id_space . static::WIDGET_ID_SPACE_SEPARATOR : '' ) . substr($id, 0, $id_space_length);
-            $id = substr($id, $id_space_length + 1);
-            $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space);
+            $id = mb_substr($id, $id_space_length + 1);
+            // Get the parent of the id space unless the id space is an underscore (= root id space)
+            // Note: `.DataTable` and `_.DataTable` both reference the root id space!
+            if ($id_space === static::WIDGET_ID_SEPARATOR) {
+                $id_original = $id;
+                $id_space = '';
+            } else {
+                $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space);
+            }
+        }
+        // If the id space was there, but empty just remove the separator: e.g. `.DataTable` => `DataTable`
+        // Thus `DataTable` will have an is space length `false` and would mean "no id space given", while 
+        // `.DataTable` will have a length of `0` and would mean "root id space".
+        if ($id_space_length === 0) {
+            $id_original = mb_substr($id, 1);
         }
         
         return $this->getWidgetFromIdSpace($id_original, '', $parent_of_id_space);
@@ -344,21 +350,30 @@ class UiPage implements UiPageInterface, iHaveIcon
      */
     private function getWidgetFromIdSpace($id, $id_space, WidgetInterface $parent, $use_id_path = true)
     {
+        // There are two ways to reference the root id space explicitly: `.DataTable` and `_.DataTable`.
+        // Treat both as empty id space here
+        // TODO distinguish between no id space and root id space to speed up searching!
+        if ($id_space === self::WIDGET_ID_SEPARATOR) {
+            $id_space = '';
+        }
         $id_with_namespace = static::addIdSpace($id_space, $id);
         if ($widget = $this->widgets[$id_with_namespace]) {
-            // FIXME Check if one of the ancestors of the widget really is the given parent. Although this should always
-            // be the case, but better doublecheck ist.
+            // FIXME Check if one of the ancestors of the widget really is the given parent.
+            // Although this should always be the case, but better double check it.
             return $widget;
         }
         
         $parentId = $parent->getId();
+        $parentIdGenerated = $parent->getIdAutogenerated();
         // If the parent has a user-defined id, it will be accessible by both: autogenerated and
         // user-defined id.
-        if ($id === $parentId || $id === $parent->getIdAutogenerated()) {
+        if ($id === $parentId || $id === $parentIdGenerated) {
             return $parent;
         }
+        $parentIdSep = $parentId .self::WIDGET_ID_SEPARATOR;
+        $parentIdGeneratedSep = $parentIdGenerated . self::WIDGET_ID_SEPARATOR;
         
-        if (StringDataType::startsWith($id_space, $parentId . self::WIDGET_ID_SEPARATOR)) {
+        if (StringDataType::startsWith($id_space, $parentIdSep) || StringDataType::startsWith($id_space, $parentIdGeneratedSep)) {
             $id_space_root = $this->getWidget($id_space, $parent);
             return $this->getWidgetFromIdSpace($id, $id_space, $id_space_root);
         }
@@ -366,36 +381,37 @@ class UiPage implements UiPageInterface, iHaveIcon
         // See if the id searched for has an id space
         $subjIdSpace = StringDataType::substringBefore($id_with_namespace, self::WIDGET_ID_SPACE_SEPARATOR, false, false, true);
         if ($subjIdSpace) {
-            $subjIdInSpace = substr($id_with_namespace, (strlen($subjIdSpace) + 1));
+            $subjIdInSpace = mb_substr($id_with_namespace, (mb_strlen($subjIdSpace) + 1));
         }
         
-        $id_is_path = StringDataType::startsWith($id_with_namespace, $parentId . self::WIDGET_ID_SEPARATOR);
+        $id_is_path = StringDataType::startsWith($id_with_namespace, $parentIdSep) || StringDataType::startsWith($id_with_namespace, $parentIdGeneratedSep);
         // TODO not sure, if matching id spaces should be treated as $id_is_path too... No real-life examples found!
-        //            || ($parent->getIdSpace() === $subjIdSpace && StringDataType::startsWith($subjIdInSpace, $parentId . self::WIDGET_ID_SPACE_SEPARATOR));
+        // If so, add another OR: || ($parent->getIdSpace() === $subjIdSpace && StringDataType::startsWith($subjIdInSpace, $parentIdSep));
         
+        $parentIdSpace = $parent->getIdSpace();
         foreach ($parent->getChildren() as $child) {
-            $child_id = $child->getId();
+            $childId = $child->getId();
             // Since the autogenerated id does not contain user-provided ids anymore since 16.09.2022 
             // (see generateWidgetId()), we need to check if the id we search for matches each childs 
             // id OR its autogenerated id.
-            $child_id_path = $child->getIdAutogenerated();
-            if ($child_id === $id_with_namespace || $child_id_path === $id_with_namespace) {
+            $childIdGenerated = $child->getIdAutogenerated();
+            if ($childId === $id_with_namespace || $childIdGenerated === $id_with_namespace) {
                 return $child;
-            } elseif ($subjIdSpace && $child->getIdSpace() === $subjIdSpace && ($subjIdInSpace === $child_id || $subjIdInSpace === $child_id_path)) {
+            } elseif ($subjIdSpace && $child->getIdSpace() === $subjIdSpace && ($subjIdInSpace === $childId || $subjIdInSpace === $childIdGenerated)) {
                 return $child;
             } else {
-                $subjIdStartsWithChildId = StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR) || StringDataType::startsWith($id_with_namespace, $child_id_path . self::WIDGET_ID_SEPARATOR);
+                $subjIdStartsWithChildId = StringDataType::startsWith($id_with_namespace, $childId . self::WIDGET_ID_SEPARATOR) || StringDataType::startsWith($id_with_namespace, $childIdGenerated . self::WIDGET_ID_SEPARATOR);
                 
-                // If the subject id has an id space and we are in that id space, than it is
+                // If the subject id has an id space, and we are in that id space, then it is
                 // obvious, that searching in widgets, that have a different id space makes
                 // no sense. Here we check if the child has a different id space and simply
                 // continue with the next child in this case.
                 // NOTE: there have been cases, where a widget has a chained id space, but only
-                // part of it inside the actual id. It seem, this has something to do with the
+                // part of it inside the actual id. It seems, this has something to do with the
                 // fact, that only user-defined ids include the id space really. This is why we
                 // check, if the searched id start with the child id here additionally - in these
                 // strange cases, the parent id space is longer, than that of the searched id.
-                if ($subjIdSpace && $parent->getIdSpace() === $subjIdSpace && ! $subjIdStartsWithChildId) {
+                if ($subjIdSpace && $parentIdSpace === $subjIdSpace && ! $subjIdStartsWithChildId) {
                     if ($child->getIdSpace() !== $subjIdSpace) {
                         continue;
                     }
@@ -404,14 +420,14 @@ class UiPage implements UiPageInterface, iHaveIcon
                 if (! $use_id_path || ! $id_is_path || $subjIdStartsWithChildId) {
                     // If we are looking for a non-path id or the path includes the id of the child, look within the child
                     try {
-                        // Note, the child may deside itself, whe
+                        // Note, the child may decide itself, whe
                         return $this->getWidgetFromIdSpace($id, $id_space, $child);
                     } catch (WidgetNotFoundError $e) {
                         // Catching the error means, we did not find the widget in this branch.
                         
                         if ($id_is_path) {
                             // If we had a path-match, this probably means, that the widget was moved (see example 4 in
-                            // the method-docblock). In this case, the path in it's id does not match the real path anymore.
+                            // the method-docblock). In this case, the path in its id does not match the real path anymore.
                             // However, since this mostly happens when widgets get moved around within their parent, we
                             // try a deep search within the child, that matched the id-path, first. This will help in
                             // example 4 too, as the widget was just moved one level up the tree.
@@ -421,17 +437,17 @@ class UiPage implements UiPageInterface, iHaveIcon
                                 // after searching the child DT_TB_BG_BT2 of widget DT_TB_BG. DT_TB_BG_BT2 itself
                                 // seems to match the path, but none of it's direct children do. Now we tell the
                                 // DT_TB_BG_BT2 to treat the id as a non-path. This will make it pass the search
-                                // to every child of DT_TB_BG_BT2. These will search regularly though, so stargin
+                                // to every child of DT_TB_BG_BT2. These will search regularly though, so starting
                                 // from DT_TB_BG_BT2_DT the path-idea will work again.
                                 return $this->getWidgetFromIdSpace($id, $id_space, $child, false);
                             } catch (WidgetNotFoundError $ed) {
-                                // If the deep-search fails too, we know, the widget was moved somewehere else (example 5)
+                                // If the deep-search fails too, we know, the widget was moved somewhere else (example 5)
                                 // or the really does not exist. In this case, we stop looking through children (no other
                                 // children will match the path anyway).
                                 break;
                             }
                         } else {
-                            // For non-path ids just continue with the next child as we do not know, where the id might be.
+                            // For non-path ids just continue with the next child as we do not know where the id might be.
                             continue;
                         }
                     }
@@ -449,8 +465,6 @@ class UiPage implements UiPageInterface, iHaveIcon
         // TODO We still need some kind of fallback for example 5 here!
         
         throw new WidgetNotFoundError('Widget "' . $id . '" not found in id space "' . $id_space . '" within parent "' . $parent->getId() . '" on page "' . $this->getAliasWithNamespace() . '"!');
-        
-        return;
     }
 
     private static function addIdSpace($id_space, $id)
@@ -917,7 +931,7 @@ class UiPage implements UiPageInterface, iHaveIcon
     public function getContents()
     {
         if (is_null($this->contents) && ! is_null($this->contents_uxon)) {
-            $this->contents = $this->contents_uxon->toJson();
+            $this->contents = $this->contents_uxon->toJson(true);
         }
         
         return $this->contents;
@@ -959,7 +973,9 @@ class UiPage implements UiPageInterface, iHaveIcon
     public function setContents($contents)
     {
         $this->setDirty();
-        
+        $this->contents = null;
+        $this->contents_uxon = null;
+
         if (is_string($contents)) {
             $this->contents = trim($contents);
         } elseif ($contents instanceof UxonObject) {

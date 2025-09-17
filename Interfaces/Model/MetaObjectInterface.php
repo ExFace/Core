@@ -77,6 +77,14 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return MetaAttributeListInterface|Attribute[]
      */
     public function getAttributes();
+
+    /**
+     * Adds the given attribute to this object
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return MetaObjectInterface
+     */
+    public function addAttribute(MetaAttributeInterface $attribute) : MetaObjectInterface;
     
     /**
      * Returns an attribute matching the given attribute alias.
@@ -402,10 +410,6 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     public function getDefaultSorters();
     
     public function getModel() : ModelInterface;
-    
-    public function getAppId();
-    
-    public function setAppId($value);
     
     public function getShortDescription();
     

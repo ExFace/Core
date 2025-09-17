@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
-use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -40,7 +40,7 @@ use exface\Core\Interfaces\Widgets\iCanEditData;
  * @author Andrej Kabachnik
  *
  */
-class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, iCanEditData, iCanWrapText
+class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAsDataSubsheet, iCanEditData, iCanWrapText
 {
     use EditableTableTrait;
     use DataTableTrait;

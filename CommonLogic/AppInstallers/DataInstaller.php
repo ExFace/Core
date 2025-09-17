@@ -2,6 +2,8 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Behaviors\ValidatingBehavior;
+use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -29,6 +31,7 @@ use exface\Core\Events\Installer\OnAppBackupEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\DateDataType;
+use Throwable;
 
 /**
  * Saves all data of selected objects, that is related to the an app, in a subfolder of the app.
@@ -141,6 +144,8 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     private $filenameIndexStart = 0;
     
     private $className = null;
+    
+    private $uninstallCascading = true;
     
     /**
      * 
@@ -331,7 +336,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
      */
     public function exportModel() : \Iterator
     {
+        // Disable mutations to make sure mutated object names, etc. are not exported
+        $mutationsEnabled = $this->getWorkbench()->getConfig()->getOption('MUTATIONS.ENABLED');
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', false);
+        }
+
         yield from $this->backup($this->getApp()->getDirectoryAbsolutePath());
+
+        // Re-enable mutations
+        if ($mutationsEnabled === true) {
+            $this->getWorkbench()->getConfig()->setOption('MUTATIONS.ENABLED', true);
+        }
     }
     
     /**
@@ -388,7 +404,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         $tmpPath = $this->getTempFolderPath($dataFolderPath);
         if ($tmpPath !== null && is_dir($tmpPath)) {
             Filemanager::deleteDir($tmpPath);
-            yield $this->getOutputIndentation() . 'Cleaned up temporary folders';
+            yield $this->getOutputIndentation() . 'Cleaned up temporary folders' . PHP_EOL;
         }
         return;
     }
@@ -467,10 +483,10 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                 $sheet->dataRead();
                 if ($sheet->hasUidColumn(true)) {
                     $sheet->getFilters()->removeAll();
-                    $counter += $sheet->dataDelete($transaction);
+                    $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
                 }
             } else {
-                $counter += $sheet->dataDelete($transaction);
+                $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
             }
         }
         unset($objects);
@@ -800,7 +816,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     protected function createModelSheet(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataSheetInterface
     {
         $cacheKey = $objectSelector . '::' . ($appRelationAttribute ?? '') . '::' . $sorterAttribute . '::' . implode(',', $excludeAttributeAliases);
-        if (null === $ds = $this->dataSheets[$cacheKey] ?? null) {
+        if (null === $ds = ($this->dataSheets[$cacheKey] ?? null)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
             $ds->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
             if ($ds->getMetaObject()->hasUidAttribute()) {
@@ -814,7 +830,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
                 
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
+                // Ignore explicitly excluded attribtues
                 if (in_array($attr->getAlias(), $excludeAttributeAliases)){
+                    continue;
+                }
+                // Ignore custom attributes created at runtime. We never know, if they will be known to a different
+                // system with a different set of apps. Apart from that, their contents will definitely be available
+                // at some real attribute - that is where they will get exported.
+                // For example, exporting custom attribute caused issues with mutations because attributes for mutation
+                // targets were exported in addition to the JSON attribute holding them all - when imported, this led
+                // to mutations being created with null-values for every unused target in the JSON, witch broke the
+                // search for mutations in the SqlModelLoader.
+                if ($attr instanceof CustomAttribute) {
                     continue;
                 }
                 $ds->getColumns()->addFromExpression($attr->getAlias());
@@ -896,11 +923,32 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
      */
     protected function getModelFileIndex(string $objectAlias) : ?int
     {
-        $idx = array_search($objectAlias, array_keys($this->dataDefs));
+        $idx = array_search($objectAlias, array_keys($this->dataDefs), true);
         if ($idx === false) {
             $idx = null;
         }
         return $idx;
+    }
+
+    /**
+     * Positions the given object at the provided index in the installer queue
+     * 
+     * Smaller indexes will be installed first! The initial order is the order of calling addDataXXX() methods.
+     * Changing the order may help prevent foreign key constraits errors when installing.
+     * 
+     * Data of the given object will be installed at position $idx. This means, all other data
+     * starting from the value of $idx will move to a greater index. Every index after $idx will
+     * be increased by one.
+     * 
+     * @param string $objectAlias
+     * @param int $idx
+     * @return $this
+     */
+    protected function setModelFileIndex(string $objectAlias, int $idx) : DataInstaller
+    {
+        $aliasToBeReplaced = array_keys($this->dataDefs)[$idx] ?? null;
+        $this->dataDefs = ArrayDataType::moveElement($this->dataDefs, $objectAlias, $aliasToBeReplaced);
+        return $this;
     }
     
     /**
@@ -937,8 +985,8 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             $baseUxon = $array[0];
             
             $objAlias = $baseUxon->getProperty('object_alias');
-            if ($objAlias === null || ! $this->isInstallableObject($objAlias)) {
-                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $type . '": object not known to this installer!');
+            if ($objAlias === null || ($this->hasInstallableObjects() && ! $this->isInstallableObject($objAlias))) {
+                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $type . '": object not known to this installer!', ['installable_objects' => $this->dataDefs]);
                 continue;
             }
             
@@ -971,7 +1019,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                 // increase readability of diffs. Need to transform them back to strings here.
                 // The check for JsonDataType is a fix upgrading older installations where the
                 // UxonDataType was not a PHP class yet.
-                $dataType = $col->getDataType();
+                try {
+                    $dataType = $col->getDataType();
+                } catch (Throwable $e) {
+                    // If anything goes wrong, just skip this particular column. There may be
+                    // issues when installing core data with column, that have data types new
+                    // to the current installation.
+                    $this->getWorkbench()->getLogger()->logException(
+                        new InstallerRuntimeError($this, 'Error reading column "' . $col->getName() . '" for "' . $type . '". ' . $e->getMessage(), null, $e),
+                        LoggerInterface::WARNING
+                    );
+                    continue;
+                }
                 $colName = $col->getName();
                 switch (true) {
                     case $dataType instanceof EncryptedDataType:
@@ -1267,5 +1326,21 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
         }
         return $array;
+    }
+    
+    public function setUninstallCascading(bool $trueOrFalse) : DataInstaller
+    {
+        $this->uninstallCascading = $trueOrFalse;
+        return $this;
+    }
+    
+    protected function willUninstallCascading() : bool
+    {
+        return $this->uninstallCascading;
+    }
+    
+    protected function hasInstallableObjects() : bool
+    {
+        return ! empty($this->dataDefs);
     }
 }

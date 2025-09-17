@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\DataTypes\ListDataType;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
@@ -132,7 +133,11 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     public function buildJs(\exface\Core\Widgets\AbstractWidget $widget)
     {
         $instance = $this->getElement($widget);
-        return $instance->buildJs();
+        try {
+            return $instance->buildJs();
+        } catch (\Throwable $e) {
+            throw new WidgetLogicError($widget, 'Cannot render widget JavaScript! ' . $e->getMessage(), null, $e);
+        }
     }
 
     /**
@@ -143,7 +148,11 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     public function buildHtml(WidgetInterface $widget)
     {
         $instance = $this->getElement($widget);
-        return $instance->buildHtml();
+        try {
+            return $instance->buildHtml();
+        } catch (\Throwable $e) {
+            throw new WidgetLogicError($widget, 'Cannot render widget HTML! ' . $e->getMessage(), null, $e);
+        }
     }
 
     /**
@@ -499,7 +508,7 @@ HTML;
                 
                 if ($result->isDownload()) {
                     $json = [
-                        "success" => $result->getMessage() ? $result->getMessage() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]),
+                        "success" => $result->getMessage() ? $result->getMessage() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $uri]),
                         "download" => $uri->__toString()
                     ];
                 } else {
@@ -762,7 +771,7 @@ HTML;
             // and throw the original exception wrapped in a notice about the failed prettification
             $this->getWorkbench()->getLogger()->logException($e);
             $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
+            throw new RuntimeException(StringDataType::endSentence($exception->getMessage()) . ' Failed to create error report widget. ' . StringDataType::endSentence($e->getMessage()) . ' See ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details!', null, $exception);
         }
         
         return $body;
@@ -1145,5 +1154,15 @@ HTML;
             $html .= "<script src=$script></script>\n";
         }
         return $html;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see HtmlPageFacadeInterface::buildUrlToWidget()
+     */
+    public function buildUrlToWidget(WidgetInterface $widget, DataSheetInterface $prefillData = null) : string
+    {
+        $page = $widget->getPage();
+        return $this->buildUrlToPage($page);
     }
 }

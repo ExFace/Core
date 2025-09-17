@@ -38,4 +38,13 @@ class PolicyEffectDataType extends StringDataType implements EnumDataTypeInterfa
         
         return $this->labels;
     }
+
+    //TODO: improve the hint texts:
+    public function getValueHints() : array
+    {
+        return [
+            static::PERMIT => 'Permits the access',
+            static::DENY => 'Denies the access',
+        ];
+    }
 }
