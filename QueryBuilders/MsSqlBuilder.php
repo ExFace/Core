@@ -3,7 +3,9 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
@@ -637,6 +639,18 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return $subselect;
     }
+    
+    protected function requiresForXML(QueryPartAttribute $qpart) : bool
+    {
+        if ($qpart->hasAggregator()) {
+            $aggr = $qpart->getAggregator();
+            $aggrFunc = $aggr->getFunction()->__toString();
+            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     protected function buildSqlWhereSubquery(QueryPartFilter $qpart, $rely_on_joins = true)
     {
@@ -648,31 +662,136 @@ class MsSqlBuilder extends AbstractSqlBuilder
         // The workaround simply removes the aggregator from the filter in this case. It produces different
         // results - e.g. the filter value cannot contain a delimited list, but only a single value. But it works
         // for a lot of cases - in particular for table columns with a filter in the header.
-        if ($qpart->hasAggregator()) {
-            $aggr = $qpart->getAggregator();
-            $aggrFunc = $aggr->getFunction()->__toString();
-            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
-                $relPath = $qpart->getAttribute()->getRelationPath();
-                $revRelCnt = 0;
-                foreach ($relPath->getRelations() as $rel) {
-                    if ($rel->isReverseRelation()) {
-                        $revRelCnt++;
-                    }
+        if ($this->requiresForXML($qpart)) {
+            $relPath = $qpart->getAttribute()->getRelationPath();
+            $revRelCnt = 0;
+            foreach ($relPath->getRelations() as $rel) {
+                if ($rel->isReverseRelation()) {
+                    $revRelCnt++;
                 }
-                if ($revRelCnt > 1) {
-                    $alias = DataAggregation::stripAggregator($qpart->getAlias());
-                    $condUxon = $qpart->getCondition()->exportUxonObject();
-                    $condAlias = $condUxon->getProperty('expression');
-                    $condUxon->setProperty('expression', DataAggregation::stripAggregator($condAlias));
-                    $condNoAggr = ConditionFactory::createFromUxon($this->getWorkbench(), $condUxon);
-                    $qpartNoAggr = new QueryPartFilter($alias, $this, $condNoAggr);
-                    return parent::buildSqlWhereSubquery($qpartNoAggr, $rely_on_joins);
-                }
+            }
+            if ($revRelCnt > 1) {
+                $alias = DataAggregation::stripAggregator($qpart->getAlias());
+                $condUxon = $qpart->getCondition()->exportUxonObject();
+                $condAlias = $condUxon->getProperty('expression');
+                $condUxon->setProperty('expression', DataAggregation::stripAggregator($condAlias));
+                $condNoAggr = ConditionFactory::createFromUxon($this->getWorkbench(), $condUxon);
+                $qpartNoAggr = new QueryPartFilter($alias, $this, $condNoAggr);
+                return parent::buildSqlWhereSubquery($qpartNoAggr, $rely_on_joins);
             }
         }
         
         // In all other cases, use the default SQL builder logic
         return parent::buildSqlWhereSubquery($qpart, $rely_on_joins);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::buildSqlHavingCondition()
+     */
+    protected function buildSqlHavingCondition(QueryPartFilter $qpart, $rely_on_joins = true)
+    {
+        if ($this->requiresForXML($qpart)) {
+            // The query part belongs in the WHERE-clause if it does not have an aggregator
+            if (! $this->checkFilterBelongsInHavingClause($qpart, $rely_on_joins)) {
+                return '';
+            }
+
+            $val = $qpart->getCompareValue();
+            $attr = $qpart->getAttribute();
+            $comp = $this->getOptimizedComparator($qpart);
+
+            // The left side of the HAVING clause is the grouped select in contrast to the WHERE clauses
+            $select = $this->buildSqlSelectGrouped($qpart);
+            $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);
+            $customWhereAddress = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE_DATA_ADDRESS);
+            $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
+            $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
+            $ignoreEmptyValues = !$qpart->getCondition() || $qpart->getCondition()->willIgnoreEmptyValues();
+
+            // If the attribute has no data address AND is a static calculation, generate a 
+            // static WHERE clause.
+            // See buildSqlWhereCondition() for details
+            if (empty($select) && empty($customWhereClause) && empty($customWhereAddress) && $attr->hasCalculation() && $attr->getCalculationExpression()->isStatic()) {
+                $staticVal = $attr->getCalculationExpression()->evaluate();
+                return $this->buildSqlWhereComparator($qpart, "'{$this->escapeString($staticVal)}'", $comp, $val, $rely_on_joins);
+            }
+
+            // Doublecheck that the attribut is known
+            if (! ($select || $customWhereClause) || ($ignoreEmptyValues && $val === '')) {
+                if ($val === '') {
+                    $hint = ' (the value is empty)';
+                } else {
+                    $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
+                }
+                throw new QueryBuilderException('Illegal SQL HAVING clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
+            }
+
+            // build the HAVING clause
+            if ($customWhereClause) {
+                // check if it has an explicit where clause. If not try to filter based on the select clause
+                $output = $this->replacePlaceholdersInSqlAddress($customWhereClause, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias, '~value' => $val], $table_alias);
+            } else {
+                // Determine, what we are going to compare to the value: a subquery or a column
+                if ($this->isSqlStatement($this->buildSqlDataAddress($attr))) {
+                    $subj = $this->replacePlaceholdersInSqlAddress($select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
+                } else {
+                    $subj = $select;
+                }
+                /*
+                $subj .= <<<SQL
+
+            FROM 
+              tra.BaubesprechungPosition AS BaubesprechungPosition2 
+            WHERE 
+              
+              BaubesprechungPosition2.BaubesprechungId = (Baubesprechung.Id) FOR XML PATH(''), 
+              TYPE
+          ) AS VARCHAR(max)
+        ), 
+        1, 
+        2, 
+        ''
+      )
+SQL;*/
+                // 
+                $subq = new self($this->getSelector());
+                $subq->setQueryId($this->getNextSubqueryId() + $this->getQueryId());
+                $subq->setMainObject($this->getMainObject());
+                $subqSelectPart = $subq->addAttribute($this->getMainObject()->getUidAttributeAlias());
+                // The subquery must get all filters of the original query (since it is based on the same object)...
+                // $subq->setFilters($this->getFilters());
+                
+                // ... and if we know, that the rows have UIDs, add a UID filter to the subquery making sure,
+                // it will always only return values matching the UID of the main query. Actually, this should 
+                // mostly be the case anyway, but there were case with complex SQL_JOIN_ON configs, where the
+                // subquery here returned basically ALL available rows and not only those matching the UID of
+                // the main row.
+                if ($this->getMainObject()->hasUidAttribute()) {
+                    $uidAddress = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
+                    $dot = $this->getAliasDelim();
+                    $subq->addFilterWithCustomSql($this->getMainObject()->getUidAttributeAlias(), $this->getMainTableAlias() . $dot . $uidAddress);
+                }
+                // Now build the SQL for the subquery
+                $subSql = $subq->buildSqlQuerySelect();
+                $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
+                $subSqlSelect = StringDataType::substringBefore($subSql, $subSqlFrom);
+                $subSql = mb_substr($subSql, mb_strlen($subSqlSelect));
+
+                $aggregator = $qpart->getAggregator();
+                $args = $aggregator->getArguments();
+                $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
+                $delimLength = strlen($delim);
+                
+                $sql = $subj . ' ' . $subSql . " FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, $delimLength, '')";
+
+
+                // Do the actual comparing
+                $output = $this->buildSqlWhereComparator($qpart, $sql, $comp, $val, $rely_on_joins);
+            }
+            return $output;
+        }
+        return parent::buildsqlHavingCondition($qpart, $rely_on_joins);
     }
     
     /**
