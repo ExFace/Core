@@ -431,7 +431,7 @@ class NumberDataType extends AbstractDataType
      */
     public function getEmptyFormat() : string
     {
-        return $this->emptyFormat ?? '';
+        return $this->emptyFormat ?? $this->getEmptyText() ?? '';
     }
     
     /**

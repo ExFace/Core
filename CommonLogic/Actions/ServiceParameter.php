@@ -170,6 +170,10 @@ class ServiceParameter implements ServiceParameterInterface
     
     /**
      * Set to TRUE to mark the parameter as empty.
+     * 
+     * This will render the parameter, but it will be empty - whereas if it is just not defined, it will not be
+     * rendered. This is mainly important for webservice or remote function calls rendered from parameter 
+     * definitions and not from templates with placeholders.
      *
      * @uxon-property empty
      * @uxon-type boolean

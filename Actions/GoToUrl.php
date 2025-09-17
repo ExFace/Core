@@ -233,7 +233,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
     /**
      * Id of the Browser widget, that should be used to open the URL
      * 
-     * @uxon-propert open_in_browser_widget
+     * @uxon-property open_in_browser_widget
      * @uxon-type uxon:$..id
      * 
      * @param string $value

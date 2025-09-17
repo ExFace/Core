@@ -3,7 +3,6 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
@@ -13,6 +12,8 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\Factories\ConditionFactory;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -217,7 +218,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
         }
         // Core SELECT
-        $select = implode(', ', array_unique(array_filter($selects)));
+        $selects = array_unique(array_filter($selects));
+        if ($this->isSelectFirstColumnOnly()) {
+            $select = $selects[0];
+        } else {
+            $select = implode(', ', $selects);
+        }
         $select_comment = $select_comment ? "\n" . $select_comment : '';
         
         // Enrichment SELECT
@@ -231,7 +237,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
-        $useEnrichment = ($group_by && $where) || $this->getSelectDistinct();
+        $useEnrichment = ($group_by && $where) || $this->isSelectDistinct();
         
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
@@ -248,7 +254,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
         
-        $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+        $distinct = $this->isSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             $limitRows = $this->getLimit();
@@ -581,6 +587,17 @@ class MsSqlBuilder extends AbstractSqlBuilder
                         }
                         $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAliasWithRelationPath(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
                     }
+                    // ... and if we know, that the rows have UIDs, add a UID filter to the subquery making sure,
+                    // it will always only return values matching the UID of the main query. Actually, this should 
+                    // mostly be the case anyway, but there were case with complex SQL_JOIN_ON configs, where the
+                    // subquery here returned basically ALL available rows and not only those matching the UID of
+                    // the main row.
+                    if ($this->getMainObject()->hasUidAttribute() && ! $this->isAggregated() && ! $this->isAggregatedToSingleRow()) {
+                        $uidAddress = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
+                        $dot = $this->getAliasDelim();
+                        $subq->addFilterWithCustomSql($this->getMainObject()->getUidAttributeAlias(), $this->getMainTableAlias() . $dot . $uidAddress);
+                    }
+                    // Now build the SQL for the subquery
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
                     $subSql = $subSqlFrom . StringDataType::substringAfter($subSql, $subSqlFrom);
@@ -927,5 +944,54 @@ CASE
     ELSE '{}'
 END 
 SQL;
+    }
+
+    /**
+     * MS SQL CREATE statements need some special treatment for IDENTITY columns
+     * 
+     * @see AbstractSqlBuilder::create()
+     */
+    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        $uidWritable = false;
+        if ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            $isIdentity =  (true === BooleanDataType::cast($uidAttr->getDataAddressProperty(static::DAP_SQL_IDENTITY_COLUMN)))
+                || (true === BooleanDataType::cast($uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_AUTO_INCREMENT)));
+
+            if ($isIdentity === true) {
+                $foundUidValues = false;
+                foreach ($this->getValues() as $qpart) {
+                    if ($qpart->getAttribute() === $uidAttr) {
+                        $uidQpart = $qpart;
+                        if (! empty(array_filter($qpart->getValues()))) {
+                            $foundUidValues = true;
+                        }
+                        break;
+                    }
+                }
+                $uidWritable = $uidAttr->isWritable();
+                if ($foundUidValues === true) {
+                    $beforeSQL = $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_BEFORE);
+                    $afterSQL = $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_BEFORE);
+                    if (! $beforeSQL && ! $afterSQL) {
+                        $table = $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE);
+                        $uidQpart->setDataAddressProperty(static::DAP_SQL_INSERT_BEFORE, "
+                            SET IDENTITY_INSERT {$table} ON;
+                        ");
+                        $uidQpart->setDataAddressProperty(static::DAP_SQL_INSERT_AFTER, "
+                            SET IDENTITY_INSERT {$table} OFF;
+                        ");
+                    }
+                } else {
+                    $uidAttr->setWritable(false);
+                }
+            }
+        }
+        $result = parent::create($data_connection);
+        if ($uidWritable === true) {
+            $uidAttr->setWritable(true);
+        }
+        return $result;
     }
 }

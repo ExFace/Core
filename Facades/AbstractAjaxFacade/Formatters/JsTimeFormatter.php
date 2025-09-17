@@ -57,7 +57,16 @@ class JsTimeFormatter extends JsDateFormatter
     public function buildJsFormatter($jsInput)
     {
         $jsFormat = $this->escapeFormatString($this->getFormat());
-        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput}, {$jsFormat})), {$jsFormat})";
+        return <<<JS
+exfTools.time.format(
+    exfTools.time.parse(
+        {$jsInput}, 
+        {$jsFormat}
+    ),
+    {$jsFormat},
+    {$this->getJsEmptyText()}
+)
+JS;
     }
     
      /**
