@@ -4,6 +4,7 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
