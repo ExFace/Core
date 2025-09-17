@@ -449,8 +449,11 @@
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_MISSING": "Bitte einen Namen für die Ansicht angeben",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE": "Akt. Ansicht speichern",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_HINT": "Speichert aktuelle Konfiguration der Tabelle als neue Ansicht",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE": "Ansicht aktualisieren",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT": "Überschreibt die aktuell ausgewählte Ansicht mit der aktuellen Konfiguration der Tabelle",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_SUCCESS": "Ansicht wurde erfolgreich gespeichert",
   "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE": "Favorit",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE": "Aktiv",
   "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT": "Als Favorit markieren oder umgekehrt",
  	"WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION": "Gruppierung",
 

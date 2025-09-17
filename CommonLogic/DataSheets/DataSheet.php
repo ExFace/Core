@@ -982,7 +982,7 @@ class DataSheet implements DataSheetInterface
                 $uid_check_ds->getFilters()->addConditionFromColumnValues($thisUidCol);
                 $uid_check_ds->dataRead();
                 $missing_uids = $thisUidCol->diffValues($uid_check_ds->getUidColumn());
-                // Filter away empty UID values, because we already have the in $emptyUidRows
+                // Filter away empty UID values, because we already have them in $emptyUidRows
                 $missing_uids = array_filter($missing_uids);
                 if (! empty($missing_uids) || ! empty($emptyUidRows)) {
                     // Create a separated data sheet for the new rows
@@ -990,21 +990,21 @@ class DataSheet implements DataSheetInterface
                     // For non-empty missing UIDs just add the entire row
                     foreach ($missing_uids as $missing_uid) {
                         $missingUidIdx = $thisUidCol->findRowByValue($missing_uid);
-                        $rowIdxsToCreate[] = $missingUidIdx;;
+                        $rowIdxsToCreate[] = $missingUidIdx;
                         $create_ds->addRow($this->getRow($missingUidIdx));
                     }
                     // For rows with empty UIDs we will need to remember the index of
                     // each row, so we can update it with the created UID once we've received
                     // them back from the data source.
                     $emptyUidRowsInCreateSheet = [];
-                    foreach ($emptyUidRows as $newRowNr) {
-                        // Since we may alread have rows in the $create_ds, that have non-empty
+                    foreach ($emptyUidRows as $emptyUidIdx) {
+                        // Since we may already have rows in the $create_ds, that have non-empty
                         // UIDs, we need get the exact index of the inserted row (not just
                         // count them starting with 0) - that is the next index since rows
                         // are always numbered sequentially.
                         $emptyUidRowsInCreateSheet[] = $create_ds->countRows();
-                        $rowIdxsToCreate[] = $newRowNr;
-                        $create_ds->addRow($this->getRow($newRowNr), false, false);
+                        $rowIdxsToCreate[] = $emptyUidIdx;
+                        $create_ds->addRow($this->getRow($emptyUidIdx), false, false);
                     }
                     try {
                         $counter += $create_ds->dataCreate(false, $transaction);
@@ -1017,10 +1017,25 @@ class DataSheet implements DataSheetInterface
                                 foreach ($emptyUidRowsInCreateSheet as $i => $r) {
                                     $col->setValue($emptyUidRows[$i], $create_col->getValue($r));
                                 }
+                                // Also make sure to update all subsheets in the original data after the respective
+                                // rows were created because these subsheets also received UIDs. Otherwise, if another
+                                // update is done on the original sheet, subsheet rows will be treated as new ones
+                                // and will be recreated. This has caused problems with file attachments, that have
+                                // the attachment table UIDs in their file paths - recreating the attachment rows
+                                // lead to saving files multiple times or to orphans if the FileAttachmentBehavior
+                                // was configured to not actually delete the files.
+                                // TODO wouldn't it actually be better to update ALL values in the original sheet?
+                                // Right now it is only done if the UID was empty or the column is a subsheet. But
+                                // why???
+                                if ($col->getDataType() instanceof DataSheetDataType) {
+                                    foreach ($create_col->getValues() as $createdIdx => $value) {
+                                        $col->setValue($rowIdxsToCreate[$createdIdx], $value);
+                                    }
+                                }
                             }
                         }
                         
-                        /* FIXME separate create and update cleanly!
+                        /* FIXME #update-create-separation make separate $update_ds. See DevMan #
                         $update_ds = $this->copy();
                         // We remove all rows from the update sheet, that were created during this step,
                         // to avoid duplicate transforms and unnecessary work. Having freshly created rows

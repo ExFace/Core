@@ -146,8 +146,8 @@ JS;
         
         if ($widget instanceof InputUxon) {
             $uxonInitScripts = <<<JS
-
                     {$this->buildJsEditorAddHelpButton()}
+                    
                     setTimeout(function(){
                         $("#{$this->getId()} + .uxoneditor-preset-hint a").click( function(){
                             var rootNode = {$this->buildJsFunctionPrefix()}_getNodeFromTarget(
@@ -393,8 +393,12 @@ function (json) {
                         }
                         
                         if (json === undefined) {
+                            {$this->buildJsToggleErrorWarning()}
                             reject();
                         }
+                        
+                        var baseError = json[0];
+                        {$this->buildJsToggleErrorWarning('baseError')}
                         
                         resolve(json);
                         
@@ -1335,6 +1339,37 @@ CSS;
             });
         }
         
+        function {$funcPrefix}_toggleErrorWarning($, editorId, error) {
+            var button = $('#' + editorId + '_warning').remove();
+            
+            if(error === undefined || error === null || error === "") {
+                return;
+            }
+             
+            var warning = $(
+                '<button id="' + editorId +'_warning" title="ERROR - Click for details." style="background: transparent; color:#F3B316;"><i ' +
+                'class="fa fa-exclamation-triangle" style="font-size: 22px"></i></button>'
+            );
+           
+            $('#' + editorId + ' .jsoneditor-menu .jsoneditor-search').before(warning);
+            
+            var pathHtml = error.path.length === 0 ? '' :
+                '<p><b>Path:</b> ' + error.path.join(' . ') + '</p>';
+            var contentHtml = 
+                '<div>' + 
+                    pathHtml +
+                    '<p><b>Error:</b> ' + error.message + '</p>' + 
+                '</div>';
+            warning.click(function() {
+                return {$funcPrefix}_openModal(
+                    "Warning",
+                    contentHtml,
+                    false,
+                    "jsoneditor-modal"
+                );
+            });
+        }
+        
         function {$funcPrefix}_getJsonPathViewContent(){
             var jsonPathViewContent =
                 '<div>' +
@@ -2260,6 +2295,28 @@ JS;
     public static function buildJsFunctionNameAddHelpButton(string $funcPrefix) : string
     {
         return $funcPrefix . '_addHelpButton';
+    }
+
+    /**
+     * Returns a JS function call that toggles an error warning in the toolbar.
+     * 
+     * NOTE: If `$varErrorJs` is NULL or evaluates to `null` in JS the
+     * warning is turned OFF. If it evaluates to an object with properties
+     * `path` and `message`, the warning is turned ON.
+     * 
+     * @param string|null $varErrorJs
+     * @return string
+     */
+    public function buildJsToggleErrorWarning(string $varErrorJs = null) : string
+    {
+        return <<<JS
+
+{$this->buildJsFunctionPrefix()}_toggleErrorWarning(
+    $,
+    "{$this->getId()}",
+    $varErrorJs
+)
+JS;
     }
     
     /**
