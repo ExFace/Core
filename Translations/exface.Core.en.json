@@ -220,6 +220,9 @@
 	"DATASHEET.ERROR.LOOKUP_FAILED": "Could not find value %values% in \"%lookup_object%\"!|Could not find values %values% in \"%lookup_object%\"!",
 	"DATASHEET.ERROR.AFFECTED_ROWS": "Affected row(s): %row_numbers%",
 	
+    "DATATYPE.DATE.ERROR_INVALID_VALUE": "Invalid date/time value: \"%value%\"",
+    "DATATYPE.NUMBER.ERROR_INVALID_VALUE": "Value \"%value%\" is not a number",
+  
 	"DATATYPE.VALIDATION.MUST": "Must",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "have %condition% characters",
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "match the pattern %regex%",

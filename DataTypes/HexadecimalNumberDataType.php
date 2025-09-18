@@ -51,7 +51,7 @@ class HexadecimalNumberDataType extends NumberDataType
         try {
             $number = parent::parse($string);
         } catch (\Throwable $e) {
-            throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
+            throw $this->createValidationParseError($string, null,null, $e->getCode(), $e);
         }
         
         /* TODO
