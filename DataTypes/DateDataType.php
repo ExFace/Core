@@ -110,7 +110,7 @@ class DateDataType extends AbstractDataType
                     break;
                 // Numeric values, that are neither relative nor short dates, must be invalid!
                 case is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE:
-                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1');
+                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $string);
                     break;
             }        
             
@@ -131,7 +131,7 @@ class DateDataType extends AbstractDataType
             $tz = $fromTimeZone !== null ? new \DateTimeZone($fromTimeZone) : null;
             $dateTime = new \DateTime($string, $tz);
         } catch (\Exception $e) {
-            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
+            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e, $string);
         }
         
         if ($tz !== null) {
@@ -833,5 +833,15 @@ class DateDataType extends AbstractDataType
     {
         $value = static::cast($value);
         return strtotime($value);
+    }
+
+    public function getValidationErrorReason($value) : ?string
+    {
+        $customText = parent::getValidationErrorReason($value);
+        if (! $customText) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+            $customText = $translator->translate('DATATYPE.DATE.ERROR_INVALID_VALUE', ['%value%' => $value]);
+        }
+        return $customText;
     }
 }

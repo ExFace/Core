@@ -79,7 +79,7 @@ class FilePathDataType extends StringDataType
         
         if ($ext = $this->getExtension()) {
             if (strcasecmp($ext, static::findExtension($value)) !== 0) {
-                throw new DataTypeValidationError($this, 'Invalid value "' . $value . '" for file path: extension "' . static::findExtension($value) . '" does not match required extension "' . $ext . '"!');
+                throw new DataTypeValidationError($this, 'Invalid value "' . $value . '" for file path: extension "' . static::findExtension($value) . '" does not match required extension "' . $ext . '"!', null, null, $value);
             }
         }
         
