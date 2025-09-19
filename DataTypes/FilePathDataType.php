@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\Exceptions\FileNotFoundError;
 use Webmozart\PathUtil\Path;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
@@ -15,6 +16,8 @@ class FilePathDataType extends StringDataType
     private $basePath = null;
     
     private $extension = null;
+    
+    private static $cachedPaths = [];
     
     /**
      *
@@ -363,5 +366,86 @@ class FilePathDataType extends StringDataType
     public static function isPattern(string $pathWithWildcards) : bool
     {
         return strpos($pathWithWildcards, '*') !== false || strpos($pathWithWildcards, '?') !== false;
+    }
+
+    /**
+     * Find the correct case-sensitive path for a given input.
+     *
+     * @param string $path         Input path (may have wrong case in parts).
+     * @param string $base         Base directory to resolve from.
+     * @param string $dirSeparator Directory separator (default DIRECTORY_SEPARATOR).
+     *
+     * @return string|null         Correctly cased path, or null if not found.
+     */
+    public static function findPathCaseInsensitive(
+        string $path,
+        string $base,
+        string $dirSeparator = DIRECTORY_SEPARATOR,
+        bool $trustFilesystem = true
+    ): string 
+    {
+        $cacheKey = mb_strtolower($path);
+        if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
+            return $cache;
+        }
+        // Normalize separators
+        $path = str_replace(['/', '\\'], $dirSeparator, $path);
+        $base = rtrim(str_replace(['/', '\\'], $dirSeparator, $base), $dirSeparator);
+        
+        if ($trustFilesystem === true && file_exists($base . $dirSeparator . $path)) {
+            static::$cachedPaths[$cacheKey] = $path;
+            return $path;
+        }
+        
+        // Break path into parts
+        $parts = array_filter(explode($dirSeparator, $path), 'strlen');
+
+        $current = $base;
+
+        foreach ($parts as $part) {
+            $cacheKey = $current . $dirSeparator . mb_strtolower($part);
+
+            if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
+                // Use cached value
+                $current = $cache;
+                continue;
+            }
+
+            if (!is_dir($current) && !is_file($current)) {
+                throw new FileNotFoundError(
+                    'Cannot find case insensitive path "' . $path . '" in "' . $base .
+                    '": the latter does not exist!'
+                );
+            }
+
+            $entries = @scandir($current);
+            if ($entries === false) {
+                throw new FileNotFoundError(
+                    'Cannot find case insensitive path "' . $path . '" in "' . $base .
+                    '": cannot read "' . $current . '"'
+                );
+            }
+
+            $found = null;
+            foreach ($entries as $entry) {
+                if (strcasecmp($entry, $part) === 0) {
+                    $found = $entry;
+                    break;
+                }
+            }
+
+            if ($found === null) {
+                throw new FileNotFoundError(
+                    'Cannot find case insensitive path "' . $path . '" in "' . $base .
+                    '": cannot find "' . $part . '" in "' . $current . '"'
+                );
+            }
+
+            $current .= $dirSeparator . $found;
+            static::$cachedPaths[$cacheKey] = $current;
+        }
+        
+        static::$cachedPaths[mb_strtolower($path)] = $current;
+        return $current;
     }
 }
