@@ -116,8 +116,8 @@ class PhpFilePathDataType extends FilePathDataType
                 self::$cachedAppFolders[mb_strtoupper($appFolder)] = $appFolderReal;
                 $appFolder = $appFolderReal;
             }
-            $relPath = $dirSep . $appFolderReal . StringDataType::substringAfter($relPath, $appFolder);
-            $absPath = $vendorFolder . $relPath;
+            $relPath = FilePathDataType::findPathCaseInsensitive($relPath, $vendorFolder, $dirSep);
+            $absPath = $vendorFolder . $dirSep . $relPath;
             $folderPath = FilePathDataType::findFolderPath($relPath);
         }
 

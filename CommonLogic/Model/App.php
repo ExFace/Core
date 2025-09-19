@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\Selectors\FormulaSelector;
+use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
@@ -570,8 +572,17 @@ class App implements AppInterface
                 $componentAlias = substr($string, (strlen($appAlias)+1));
                 $subfolder = $this->getPrototypeClassSubNamespace($selector);
                 $classSuffix = $this->getPrototypeClassSuffix($selector);
-                $string = $appAlias . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $subfolder . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $componentAlias . $classSuffix;
-                return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
+                $class = str_replace(
+                    AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, 
+                    ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, 
+                    $appAlias
+                        . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR 
+                        . $subfolder 
+                        . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR 
+                        . $componentAlias 
+                        . $classSuffix
+                );
+                return $class;
         }
     }
     
@@ -718,6 +729,23 @@ class App implements AppInterface
                     $this->selector_cache[$selectorString][$selectorClass] = ['selector' => $selector, 'instance' => $instance];
                     return true;
                 } else {
+                    // Double-chek if it is a path, but incorrect case, for formula selectors because formulas
+                    // are ofthe written UPPERCASED.
+                    if ($selectorClass === FormulaSelector::class) {
+                        try {
+                            $path = str_replace(
+                                    ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR,
+                                    FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR,
+                                    $class
+                                ) . '.' . FileSelectorInterface::PHP_FILE_EXTENSION;
+                            $path = FilePathDataType::findPathCaseInsensitive($path, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
+                            $class = PhpFilePathDataType::findClassInVendorFile($this->getWorkbench(), $path);
+                            $this->selector_cache[$selectorString][$selectorClass] = ['selector' => $selector, 'class' => $class];
+                            return true;
+                        } catch (FileNotFoundError $e) {
+                            return false;
+                        }
+                    }
                     return false;
                 }
             }
