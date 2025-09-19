@@ -555,26 +555,7 @@ class App implements AppInterface
                 return $string;
             case $selector->isFilepath():
                 // If the selector is a path, we need to get the class from the file.
-                $string = Filemanager::pathNormalize($string, FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
-                $vendorFolder = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToVendorFolder());
-                
-                if (StringDataType::startsWith($string, $vendorFolder)) {
-                    $relPath = substr($string, strlen($vendorFolder));
-                    $absPath = $string;
-                } else {
-                    $relPath = $string;
-                    $absPath = FilePathDataType::join([$vendorFolder, $relPath]);
-                }
-                
-                // We can be sure, the class name is the file name exactly
-                $className = FilePathDataType::findFileName($relPath);
-                // The namespace can be different, than the file path, so get it 
-                // directly from the path. Of course, we could fetch the entire class
-                // name from the file, but this is way slower because it requires
-                // tokenizing.
-                $namespace = PhpFilePathDataType::findNamespaceOfFile($absPath);
-                $class = $namespace . '\\' . $className;
-                
+                $class = PhpFilePathDataType::findClassInVendorFile($this->getWorkbench(), $string);                
                 return $class;
             case ($selector instanceof AliasSelectorInterface) && $selector->isAlias():
                 // If the selector is an alias, we should see, if it matches this app.
