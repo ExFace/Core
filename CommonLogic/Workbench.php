@@ -452,9 +452,9 @@ class Workbench implements WorkbenchInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchInterface::getAppFolder()
      */
-    public function getAppFolder(AppSelectorInterface $selector) : string 
+    public function getAppFolder(AppSelectorInterface|string $selector) : string 
     {
-        $alias = $selector->getAppAlias();
+        $alias = is_string($selector) ? $selector : $selector->getAppAlias();
         $pathInVendor = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $alias);
         $pathInVendorLC = mb_strtolower($pathInVendor);
         $pathToVendor = $this->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR;
