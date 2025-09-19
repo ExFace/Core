@@ -33,8 +33,18 @@ class CliTaskQueue extends SyncTaskQueue
         $commands = $task->getParameter('cmd');
 
         // Normalize to array
-        if (!is_array($commands)) {
-            $commands = $commands->toArray();
+        switch (true) {
+            case is_string($commands):
+                $commands = [$commands];
+                break;
+            case $commands instanceof UxonObject:
+                $commands = $commands->toArray();
+                break;
+            case is_array($commands):
+                // do nothing - everything is fine
+                break;
+            default:
+                throw new QueueRuntimeError($this, 'Cannot get command from `cmd` parameter of queued task: expecting array or string, got ' . gettype($commands));
         }
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
