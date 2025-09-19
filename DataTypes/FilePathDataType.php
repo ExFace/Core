@@ -384,13 +384,15 @@ class FilePathDataType extends StringDataType
         bool $trustFilesystem = true
     ): string 
     {
-        $cacheKey = mb_strtolower($path);
-        if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
-            return $cache;
-        }
         // Normalize separators
-        $path = str_replace(['/', '\\'], $dirSeparator, $path);
         $base = rtrim(str_replace(['/', '\\'], $dirSeparator, $base), $dirSeparator);
+        $path = str_replace(['/', '\\'], $dirSeparator, $path);
+        $cacheKey = mb_strtolower($base . $dirSeparator . $path);
+        
+        // Check cache. The cache uses absolute paths as keys and contains 
+        if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
+            return StringDataType::substringAfter($base . $dirSeparator, $cache);
+        }
         
         if ($trustFilesystem === true && file_exists($base . $dirSeparator . $path)) {
             static::$cachedPaths[$cacheKey] = $path;
@@ -401,9 +403,9 @@ class FilePathDataType extends StringDataType
         $parts = array_filter(explode($dirSeparator, $path), 'strlen');
 
         $current = $base;
-
+        $cacheBase = mb_strtolower($current . $dirSeparator);
         foreach ($parts as $part) {
-            $cacheKey = $current . $dirSeparator . mb_strtolower($part);
+            $cacheKey = $cacheBase . mb_strtolower($part);
 
             if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
                 // Use cached value
@@ -411,7 +413,7 @@ class FilePathDataType extends StringDataType
                 continue;
             }
 
-            if (!is_dir($current) && !is_file($current)) {
+            if (! is_dir($current) && ! is_file($current)) {
                 throw new FileNotFoundError(
                     'Cannot find case insensitive path "' . $path . '" in "' . $base .
                     '": the latter does not exist!'
@@ -428,6 +430,10 @@ class FilePathDataType extends StringDataType
 
             $found = null;
             foreach ($entries as $entry) {
+                if (mb_substr($entry, 0, 1) === '.') {
+                    continue;
+                }
+                static::$cachedPaths[$cacheBase . mb_strtolower($entry)] = $current . $dirSeparator . $entry;
                 if (strcasecmp($entry, $part) === 0) {
                     $found = $entry;
                     break;
@@ -442,10 +448,11 @@ class FilePathDataType extends StringDataType
             }
 
             $current .= $dirSeparator . $found;
+            $cacheBase .= mb_strtolower($found) . $dirSeparator;
             static::$cachedPaths[$cacheKey] = $current;
         }
         
-        static::$cachedPaths[mb_strtolower($path)] = $current;
-        return $current;
+        static::$cachedPaths[mb_strtolower($base . $dirSeparator . $path)] = $current;
+        return StringDataType::substringAfter($base . $dirSeparator, $current);
     }
 }
