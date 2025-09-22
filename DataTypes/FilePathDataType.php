@@ -391,7 +391,11 @@ class FilePathDataType extends StringDataType
         
         // Check cache. The cache uses absolute paths as keys and contains 
         if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
-            return StringDataType::substringAfter($base . $dirSeparator, $cache);
+            $cacheRel = StringDataType::substringAfter($cache, $base . $dirSeparator, null);
+            if (! $cacheRel) {
+                throw new FileNotFoundError('Cannot find case-insensitive path for "' . $path . '". Found "' . $cache . '" but, it does not seem to match the requested base dir "' . $base . $dirSeparator . '"');
+            }
+            return $cacheRel;
         }
         
         if ($trustFilesystem === true && file_exists($base . $dirSeparator . $path)) {
@@ -453,6 +457,10 @@ class FilePathDataType extends StringDataType
         }
         
         static::$cachedPaths[mb_strtolower($base . $dirSeparator . $path)] = $current;
-        return StringDataType::substringAfter($current, $base . $dirSeparator, $current);
+        $currentRel = StringDataType::substringAfter($current, $base . $dirSeparator, $current);
+        if (! $currentRel) {
+            throw new FileNotFoundError('Cannot find case-insensitive path for "' . $path . '". Found "' . $current . '" but, it does not seem to match the requested base dir "' . $base . $dirSeparator . '"');
+        }
+        return $currentRel;
     }
 }

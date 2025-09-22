@@ -59,6 +59,7 @@ class PhpFilePathDataType extends FilePathDataType
     public static function findClassInVendorFile(WorkbenchInterface $workbench, string $pathRelOrAbs) : string
     {
         $triedClasses = [];
+        $triedPaths = [];
         $dirSep = FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR;
         $string = Filemanager::pathNormalize($pathRelOrAbs, $dirSep);
         $vendorFolder = Filemanager::pathNormalize($workbench->filemanager()->getPathToVendorFolder(), $dirSep);
@@ -72,13 +73,17 @@ class PhpFilePathDataType extends FilePathDataType
             $relPath = $dirSep . ltrim($string, $dirSep);
             $absPath = $vendorFolder . $relPath;
         }
+        $triedPaths[] = $relPath;
         
         // Look in cache first
         if (null !== $cache = (static::$cachedFileClasses[mb_strtoupper($relPath)] ?? null)) {
             return $cache;
         }
 
-        // We can be sure, the class name is the file name exactly
+        // In most cases, we can be sure, the class name is the file name exactly.
+        // TODO this will not work reliably with classes typed by users: formulas, class-propertiesin
+        // UXON configurations, etc. Maybe it is better to call FilePathDataType::findPathCaseInsensitive
+        // right away without all these extra checks?
         $className = FilePathDataType::findFileName($relPath);
         // But the folder path can have case differences - especially in the composer package part (first two levels)
         $folderPath = FilePathDataType::findFolderPath($relPath);
@@ -105,6 +110,8 @@ class PhpFilePathDataType extends FilePathDataType
             if (class_exists($class)) {
                 static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
                 return $class;
+            } else {
+                $triedClasses[] = $class;
             }
         }
 
@@ -116,6 +123,7 @@ class PhpFilePathDataType extends FilePathDataType
                 self::$cachedAppFolders[mb_strtoupper($appFolder)] = $appFolderReal;
             }
             $relPath = FilePathDataType::findPathCaseInsensitive($relPath, $vendorFolder, $dirSep);
+            $triedPaths[] = $relPath;
             $absPath = $vendorFolder . $dirSep . $relPath;
             $folderPath = FilePathDataType::findFolderPath($relPath);
         }
@@ -141,7 +149,7 @@ class PhpFilePathDataType extends FilePathDataType
         } catch (\Throwable $e) {
             // Just keep $e here for the final exception below
         }
-        throw new FileNotFoundError('Cannot load class from "' . $pathRelOrAbs . '". Tried "' . implode('", "', $triedClasses) . '".', null, $e);
+        throw new FileNotFoundError('Cannot load class from "' . $pathRelOrAbs . '". Tried classes "' . implode('", "', $triedClasses) . '"; tried files "' . implode('", "', $triedPaths) . '".', null, $e);
     }
     
     /**
