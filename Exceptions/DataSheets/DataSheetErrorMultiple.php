@@ -72,7 +72,7 @@ class DataSheetErrorMultiple extends UnexpectedValueException
     }
 
     /**
-     * Merges two instances of `DataCheckFailedErrorMultiple`.
+     * Merges two instances of `DataSheetErrorMultiple`.
      *
      * @param DataSheetErrorMultiple $other
      * @param bool                   $updateMessage
@@ -265,6 +265,8 @@ class DataSheetErrorMultiple extends UnexpectedValueException
     }
 
     /**
+     * Count the total number of errors collected among all groups.
+     * 
      * @return int
      */
     public function countErrors() : int
