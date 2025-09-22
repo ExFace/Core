@@ -688,6 +688,7 @@ class StringDataType extends AbstractDataType
             case '.':
             case '?':
             case '!':
+            case ':':
                 return $text;
         }
         
