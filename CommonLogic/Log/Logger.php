@@ -195,9 +195,9 @@ class Logger implements LoggerInterface
                         if (count($this->handlers) > 1) {
                             unset($this->handlers[$i]);
                             $this->setLogging(false);
-                            $this->logException(new RuntimeException('Log handler error (handler ' . $i . ' disabled now): ' . $e->getMessage(), null, $e));
+                            $this->logException(new RuntimeException('Log handler error (handler ' . $i . ' disabled now): ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine(), null, $e));
                         } else {
-                            LoggerFactory::createPhpErrorLogLogger()->alert('Log handler error: ' . $e->getMessage(), ['exception' => $e]);
+                            LoggerFactory::createPhpErrorLogLogger()->alert('Log handler error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine(), ['exception' => $e]);
                         }
                     } catch (\Throwable $ee) {
                         // Log both errors to PHP error log if regular logging fails
