@@ -11,7 +11,8 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
-use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Exceptions\DataSheets\DataSheetErrorMultiple;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -177,8 +178,8 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
 
     protected function processValidationResult(
         DataSheetEventInterface $event, 
-        ?DataCheckFailedErrorMultiple $result, 
-        BehaviorLogBook $logbook): void
+        ?DataSheetErrorMultiple $result, 
+        BehaviorLogBook         $logbook): void
     {
         $transaction = $this->clearPreviousChecklistItems($event, $logbook);
 
@@ -189,7 +190,12 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
         
         $outputSheets = [];
         foreach ($result->getAllErrors() as $error) {
+            if(!$error instanceof DataCheckFailedError) {
+                continue;
+            }
+            
             $check = $error->getCheck();
+            
             if(!$check instanceof DataCheckWithOutputData) {
                 continue;
             }
