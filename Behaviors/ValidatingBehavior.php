@@ -165,6 +165,10 @@ class ValidatingBehavior extends AbstractValidatingBehavior
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     * @see AbstractValidatingBehavior::processValidationResult()
+     */
     protected function processValidationResult(
         DataSheetEventInterface $event, 
         ?DataSheetErrorMultiple $result, 

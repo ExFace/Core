@@ -6,8 +6,6 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractValidatingBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
-use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
@@ -175,7 +173,10 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
         return $dataCheckList;
     }
 
-
+    /**
+     * @inheritDoc
+     * @see AbstractValidatingBehavior::processValidationResult()
+     */
     protected function processValidationResult(
         DataSheetEventInterface $event, 
         ?DataSheetErrorMultiple $result, 
