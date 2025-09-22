@@ -453,6 +453,6 @@ class FilePathDataType extends StringDataType
         }
         
         static::$cachedPaths[mb_strtolower($base . $dirSeparator . $path)] = $current;
-        return StringDataType::substringAfter($base . $dirSeparator, $current);
+        return StringDataType::substringAfter($current, $base . $dirSeparator, $current);
     }
 }
