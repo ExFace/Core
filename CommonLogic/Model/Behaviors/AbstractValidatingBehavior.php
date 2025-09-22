@@ -7,11 +7,9 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Exceptions\DataSheets\DataSheetErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
-use exface\Core\Exceptions\DataSheets\DataCheckRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Events\DataChangeEventInterface;
@@ -198,7 +196,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                     $oldData,
                     $newDataPerUid,
                     $logbook);
-            } catch (DataCheckFailedErrorMultiple $exception) {
+            } catch (DataSheetErrorMultiple $exception) {
                 $logbook->addLine('At least one data check applied to the input data:');
                 $logbook->addException($exception);
                 if(!$error) {
@@ -227,12 +225,12 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
      * While the class name suggests error handling, you should view these objects as neutral data containers
      * that you can process any way you like.
      *
-     * @param DataSheetEventInterface           $event
-     * @param DataCheckFailedErrorMultiple|null $result
-     * @param BehaviorLogBook                   $logbook
+     * @param DataSheetEventInterface     $event
+     * @param DataSheetErrorMultiple|null $result
+     * @param BehaviorLogBook             $logbook
      * @return void
      */
-    protected abstract function processValidationResult(DataSheetEventInterface $event, ?DataCheckFailedErrorMultiple $result, BehaviorLogBook $logbook) : void;
+    protected abstract function processValidationResult(DataSheetEventInterface $event, ?DataSheetErrorMultiple $result, BehaviorLogBook $logbook) : void;
 
     /**
      * @param EventInterface  $event
@@ -300,7 +298,7 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                 try {
                     $check->check($checkSheet, $logbook);
                 } catch (DataCheckFailedError $exception) {
-                    $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
+                    $error = $error ?? new DataSheetErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
                     $error->appendError($exception, $iRow, false);
                 } catch (\Throwable $exception) {
                     $logbook->addSection('Data check error on row ' . $iRow);
