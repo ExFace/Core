@@ -4,7 +4,6 @@ namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\DataSheetValueExceptionInterface;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\TranslationInterface;
 
@@ -274,7 +273,7 @@ class DataSheetErrorMultiple extends UnexpectedValueException
         $count = 0;
         
         foreach ($this->errorGroups as $errorGroup) {
-            $count += count($errorGroup);
+            $count += count($errorGroup[self::KEY_ERRORS]);
         }
         
         return $count;
