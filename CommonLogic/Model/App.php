@@ -33,7 +33,6 @@ use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
-use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
@@ -657,6 +656,7 @@ class App implements AppInterface
         if ((! array_key_exists($selectorString, $this->selector_cache)) || (! array_key_exists($selectorClass, $this->selector_cache[$selectorString]))) {
             // has() will cache the class
             $has = false;
+            // FilePathDataType::findPathCaseInsensitive('exface/Core/Formulas/USER.php', $this->getWorkbench()->filemanager()->getPathToVendorFolder(), '/', false);
             if ($selector !== null) {
                 $has = $this->has($selector);
             } else {
@@ -750,7 +750,7 @@ class App implements AppInterface
                 }
             }
         } catch(\Throwable $e) {
-            throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': cannot load prototype class!', null, $e);
+            throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': cannot load prototype class for selector "' . $selectorString . '" of class "' . $selectorClass . '"!', null, $e);
         }
         
         return false;

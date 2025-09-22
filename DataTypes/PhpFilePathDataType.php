@@ -114,7 +114,6 @@ class PhpFilePathDataType extends FilePathDataType
             if (null === $appFolderReal = (self::$cachedAppFolders[mb_strtoupper($appFolder)] ?? null)) {
                 $appFolderReal = $workbench->getAppFolder($appVendor . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $appAlias);
                 self::$cachedAppFolders[mb_strtoupper($appFolder)] = $appFolderReal;
-                $appFolder = $appFolderReal;
             }
             $relPath = FilePathDataType::findPathCaseInsensitive($relPath, $vendorFolder, $dirSep);
             $absPath = $vendorFolder . $dirSep . $relPath;
@@ -130,19 +129,19 @@ class PhpFilePathDataType extends FilePathDataType
             $namespace = PhpFilePathDataType::findNamespaceOfFile($absPath);
             static::$cachedNamespaces[mb_strtoupper($folderPath)] = $namespace;
             $class = $namespace . '\\' . $className;
+            $triedClasses[] = $class;
             if (class_exists($class)) {
                 static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
-                return $class;
             } else {
+                $class = static::findClassInFile($absPath);
                 $triedClasses[] = $class;
+                static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
             }
-            $class = static::findClassInFile($absPath);
-            static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
             return $class;
         } catch (\Throwable $e) {
             // Just keep $e here for the final exception below
         }
-        throw new FileNotFoundError('Cannot load class from "' . $pathRelOrAbs . '". Tried ' . implode(', ', $triedClasses) . '.', null, $e);
+        throw new FileNotFoundError('Cannot load class from "' . $pathRelOrAbs . '". Tried "' . implode('", "', $triedClasses) . '".', null, $e);
     }
     
     /**
@@ -238,8 +237,16 @@ class PhpFilePathDataType extends FilePathDataType
      */
     public static function findNamespaceOfFile(string $absolute_path) : ?string
     {
-        if (! file_exists($absolute_path) && ! is_dir($absolute_path)) {
+        if (! file_exists($absolute_path)) {
             throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - file not found!');
+            return null;
+        }
+        if (is_dir($absolute_path)) {
+            throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - it is a directory!');
+            return null;
+        }
+        if (is_link($absolute_path)) {
+            throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - it is a symlink!');
             return null;
         }
         $ns = NULL;
