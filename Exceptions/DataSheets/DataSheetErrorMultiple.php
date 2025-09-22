@@ -94,14 +94,14 @@ class DataSheetErrorMultiple extends UnexpectedValueException
     /**
      * Append a new error to this collection.
      *
-     * @param ExceptionInterface $error
-     * @param int $rowIndex
+     * @param \Throwable $error
+     * @param int        $rowIndex
      * Optional index of the datasheet row where the appended error occurred. Values smaller than 0 will be ignored.
-     * @param bool $updateMessage
+     * @param bool       $updateMessage
      * If set to TRUE the error message will be updated with the new data.
      * @return void
      */
-    public function appendError(ExceptionInterface $error, int $rowIndex = -1, bool $updateMessage = true) : void
+    public function appendError(\Throwable $error, int $rowIndex = -1, bool $updateMessage = true) : void
     {
         $message = $error->getMessage();
 
@@ -202,7 +202,7 @@ class DataSheetErrorMultiple extends UnexpectedValueException
     }
     
     /**
-     * @return ExceptionInterface[]
+     * @return \Throwable[]
      */
     public function getAllErrors(array &$affectedRows = []) : array
     {
