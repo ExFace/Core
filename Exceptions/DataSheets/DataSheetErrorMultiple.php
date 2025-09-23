@@ -208,7 +208,7 @@ class DataSheetErrorMultiple extends UnexpectedValueException
         $result = [];
         
         foreach ($this->errorGroups as $errorGroup) {
-            $result = array_merge($result, $errorGroup[self::KEY_ERRORS]);
+            $result = array_merge($result, $errorGroup[self::KEY_ERRORS] ?? []);
             $affectedRows = array_merge($affectedRows, $errorGroup[self::KEY_ROWS] ?? []);
         }
         
