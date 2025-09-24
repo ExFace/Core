@@ -220,6 +220,9 @@
 	"DATASHEET.ERROR.LOOKUP_FAILED": "Could not find value %values% in \"%lookup_object%\"!|Could not find values %values% in \"%lookup_object%\"!",
 	"DATASHEET.ERROR.AFFECTED_ROWS": "Affected row(s): %row_numbers%",
 	
+    "DATATYPE.DATE.ERROR_INVALID_VALUE": "Invalid date/time value: \"%value%\"",
+    "DATATYPE.NUMBER.ERROR_INVALID_VALUE": "Value \"%value%\" is not a number",
+  
 	"DATATYPE.VALIDATION.MUST": "Must",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "have %condition% characters",
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "match the pattern %regex%",
@@ -461,8 +464,11 @@
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_MISSING": "Please enter a setup name",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE": "Save current view",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_HINT": "Saves the current configuration of the table as a new view",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE": "Update View",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT": "Updates the selected view with the current configuration of the table",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_SUCCESS": "Setup was saved successfully",
   "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE": "Favorite",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE": "Active",
   "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT": "Mark as favorite or vice versa",
 	"WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION": "Grouping",
 	

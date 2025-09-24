@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\DataTypes;
 
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Exceptions\ValueExceptionInterface;
 
 /**
  * Exception thrown if a value does not fit a data type's model.
@@ -16,20 +17,31 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  * @author Andrej Kabachnik
  *        
  */
-class DataTypeValidationError extends RangeException
+class DataTypeValidationError extends RangeException implements ValueExceptionInterface
 {
     use DataTypeExceptionTrait;
+    
+    private $value = null;
     
     /**
      *
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface::__construct()
      */
-    public function __construct(DataTypeInterface $dataType, $message, $alias = null, $previous = null)
+    public function __construct(DataTypeInterface $dataType, $message, $alias = null, $previous = null, $value = null)
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setDataType($dataType);
+        $this->value = $value;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getValue()
+    {
+        return $this->value;
     }
     
     /**

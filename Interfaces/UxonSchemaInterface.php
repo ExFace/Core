@@ -3,6 +3,7 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 interface UxonSchemaInterface extends WorkbenchDependantInterface
 {   
@@ -35,6 +36,24 @@ interface UxonSchemaInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string;
+
+    /**
+     * Creates a mock object from a given UXON for validation purposes.
+     * 
+     * NOTE: This method does not handle any exceptions.
+     * 
+     * @param UxonObject           $uxon
+     * @param string|null          $prototype
+     * @param UiPageInterface|null $page
+     * @param mixed|null           $parent
+     * @return mixed
+     */
+    public function createValidationObject(
+        UxonObject $uxon, 
+        string $prototype = null,
+        UiPageInterface $page = null,
+        mixed $parent = null
+    ) : mixed;
     
     /**
      * Returns the value of an inheritable property from the point of view of the end of the given path.

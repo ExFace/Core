@@ -7,7 +7,10 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\UxonSchemaInterface;
 
 /**
  * UXON-schema class for actions.
@@ -49,7 +52,25 @@ class ActionSchema extends UxonSchema
         
         return $name;
     }
-    
+
+    /**
+     * @inheritDoc
+     * @see UxonSchemaInterface
+     */
+    public function createValidationObject(
+        UxonObject $uxon,
+        string $prototype = null,
+        UiPageInterface $page = null,
+        mixed $parent = null
+    ): ActionInterface|null
+    {
+        if(!$uxon->hasProperty('alias') || empty($uxon->getProperty('alias'))) {
+            $uxon->setProperty('alias', $prototype);
+        }
+        
+        return ActionFactory::createFromUxon($this->getWorkbench(), $uxon);
+    }
+
     /**
      * Returns the prototype class for a given action selector (e.g. alias).
      *

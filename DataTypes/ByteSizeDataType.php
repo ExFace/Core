@@ -78,12 +78,18 @@ class ByteSizeDataType extends NumberDataType
     public static function formatWithScale($number, int $decimals = null, int $scaleType = self::SCALE_TYPE_MB) : string
     {
         $number = parent::cast($number);
-                
+
         $k = 1024;
         $sizes = [
             self::SCALE_TYPE_MB => ['', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
             self::SCALE_TYPE_M => ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
         ];
+
+        // log(x) is only defined for x > 0.
+        if($number <= 0) {
+            return '0 ' . $sizes[self::SCALE_TYPE_MB][1];
+        }
+        
         $i = floor(log($number) / log($k));
         $numberScaled = ($number / pow($k, $i));
         if ($decimals === null) {

@@ -28,6 +28,8 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 {
     const LAP_START = 'start';
     const LAP_STOP = 'stop';
+    const LAP_MEM_START = 'memoryStart';
+    const LAP_MEM_STOP = 'memoryStop';
     const LAP_NAME = 'name';
     const LAP_CATEGORY = 'category';
     const LAP_SUBJECT = 'subject';
@@ -65,20 +67,23 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         $this->startMs = $startMs > 0 ? $startMs : $this->nowMs();
         return $this;
     }
-    
+
     /**
      * Starts the time for the given object and returns a generated lap id
-     * 
-     * @param mixed $subject
+     *
+     * @param mixed       $subject
+     * @param string|null $name
+     * @param string|null $category
      * @return int
      */
     public function start($subject, string $name = null, string $category = null) : int
     {
         $lapId = $this->getLapId($subject);
-        $this->lapData[$lapId][] = [
+        $this->lapData[$lapId] = [
             self::LAP_NAME => $name,
             self::LAP_CATEGORY => $category,
             self::LAP_START => $this->nowMs(),
+            self::LAP_MEM_START => memory_get_usage(true),
             self::LAP_SUBJECT => $subject
         ];
         return $lapId;
@@ -94,9 +99,9 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     {
         $lapId = $this->getLapId($subject);
         if (null !== $data = $this->lapData[$lapId]) {
-            $lastIdx = count($data)-1;
-            $this->lapData[$lapId][$lastIdx][self::LAP_STOP] = $now = $this->nowMs();
-            return $this->roundMs($now - $data[$lastIdx][self::LAP_START]);
+            $data[self::LAP_STOP] = $now = $this->nowMs();
+            $data[self::LAP_MEM_STOP] = memory_get_usage(true);
+            return $this->roundMs($now - $data[self::LAP_START]);
         }
         return null;
     }
@@ -107,7 +112,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * @param mixed $subject
      * @return float|null
      */
-    public function getDuration($subject = null) : ?float
+    public function getDurationMs($subject = null) : ?float
     {
         if ($subject === null) {
             return $this->getDurationTotal();
@@ -116,9 +121,32 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
             return null;
         }
         $data = $this->getLapData($subject);
-        $stop = $data[self::LAP_STOP] ?? null;
         $start = $data[self::LAP_START] ?? null;
+        $stop = $data[self::LAP_STOP] ?? $this->nowMs();
         return $start === null || $stop === null ? null : $this->roundMs($stop - $start);
+    }
+
+    /**
+     * Returns the total memory usage in BYTES for a given subject or NULL if no lap was started for 
+     * that subject yet.
+     * 
+     * NOTE: The memory usage is determined with `memory_get_usage(true)`, which, while accurate, cannot
+     * track memory usage per class. So the returned value is the total memory allocated by the application,
+     * since the lap was started.
+     * 
+     * @param mixed $subject
+     * @return float|null
+     */
+    public function getMemoryUsageBytes(mixed $subject) : ?float
+    {
+        $data = $this->getLapData($subject);
+        if($data === null) {
+            return null;
+        }
+        
+        $start = $data[self::LAP_MEM_START];
+        $stop = $data[self::LAP_MEM_STOP] ?? memory_get_usage(true);
+        return $start !== null ? $stop - $start : null;
     }
     
     /**
@@ -488,6 +516,7 @@ TEXT;
             }
             $tooltipData = <<<TEXT
 Type: {$type}
+Duration: {$this->formatMs($eventDur)}
 PHP class: {$phpClass}
 {$tooltipData}
 TEXT;
@@ -512,7 +541,7 @@ TEXT;
      */
     protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, string $category = null, string $tooltipData='') : string
     {
-        $durationText = $duration === null ? '' : $duration . ' ms';
+        $durationText = $this->formatMs($duration);
         $tooltipData = str_replace("\\n", "&#10;", json_encode(htmlspecialchars($tooltipData)));
         $cssClass = $category ?? '';
         return "<tr class=\"{$cssClass}\" title={$tooltipData}><td>{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
@@ -526,6 +555,27 @@ TEXT;
     protected function roundMs(float $milliseconds) : float
     {
         return round($milliseconds, $this->msDecimals);
+    }
+
+    /**
+     * Formats milliseconds as "x.xx ms" or "y.yy s" depending on the scale
+     * @param float|null $milliseconds
+     * @return string
+     */
+    protected function formatMs(?float $milliseconds) : string
+    {
+        switch (true) {
+            case $milliseconds === null:
+                $formatted = '';
+                break;
+            case $milliseconds > 1000:
+                $formatted = round($milliseconds / 1000, $this->msDecimals) . ' s';
+                break;
+            default:
+                $formatted = $this->roundMs($milliseconds) . ' ms';
+                break;
+        }
+        return $formatted;
     }
 
     protected function nowMs() : float

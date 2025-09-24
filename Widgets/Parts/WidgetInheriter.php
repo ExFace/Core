@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
+use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -14,6 +16,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Mutations\Prototypes\GenericUxonMutation;
 
 /**
  * Allows a widget to inherit the configuration of another widget.
@@ -26,6 +29,17 @@ use exface\Core\Exceptions\UxonParserError;
  * has an `id` property in it's configuration), that id will not be inherited because widget
  * ids must be unique within a page! However, you can explicitly control this behavior via
  * `keep_widget_id`.
+ * 
+ * ## Overwriting properties of the inherited widget
+ * 
+ * You can overwrite any widget properties by simply defining them next to `extend_widget` in your
+ * widget configuration. However, this will only work well for direct properties, not those of
+ * child widgets, etc.
+ * 
+ * ## Applying mutations
+ * 
+ * A more flexible way to change the inherited configuration is to use `mutation`. This requires
+ * knowledge of the inherited structure, but allows to make well targeted modifications.
  * 
  * @author Andrej Kabachnik
  *
@@ -49,7 +63,9 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
     private $inheritFromWidgetId = null;
     
     private $keep_widget_id = null;
-    
+
+    private ?UxonObject $mutation = null;
+
     /**
      * 
      * @param UiPageInterface $page
@@ -129,8 +145,21 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
         if ($this->getKeepWidgetId() === false) {
             $baseUxon->unsetProperty('id');
         }
+
         // Extend the linked object by the original one. Thus any properties of the original uxon will override those from the linked widget
-        return $baseUxon->extend($extendingUxon);
+        $widgetUxon = $baseUxon->extend($extendingUxon);
+
+        // Apply given mutations to the extending widget
+        if ($this->mutation !== null) {
+            $mutation = new GenericUxonMutation($this->workbench, $this->mutation);
+            $mutation->setName('Widget extension mutation');
+            $applied = $mutation->apply($widgetUxon);
+            // TODO: pageUxons don't have a name in itself, is there a way to get the page name here?
+            $extensionTargetName = $widgetUxon->getProperty('name') ?? $widgetUxon->getProperty('caption');
+            $this->getWorkbench()->eventManager()->dispatch(new OnMutationsAppliedEvent([$applied], 'Widget extension mutation for UXON "' . $extensionTargetName . '"'));
+        }
+
+        return $widgetUxon;
     }
     
     /**
@@ -208,7 +237,10 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
         $this->keep_widget_id = $trueOrFalse;
         return $this;
     }
-    
+
+    /**
+     * @return bool
+     */
     protected function getKeepWidgetId() : bool
     {
         if ($this->keep_widget_id === null) {
@@ -222,5 +254,29 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
             }
         }
         return $this->keep_widget_id;
+    }
+
+    /**
+     * Add a mutation that will be applied to the new widget after inheriting its uxon from the original widget.
+     *
+     * @uxon-property add_mutation
+     * @uxon-type \exface\Core\Mutations\Prototypes\GenericUxonMutation
+     * @uxon-template {"change": {"$.json.path": "value"}}
+     *
+     * @param UxonObject $mutation Mutation uxon definition
+     * @return WidgetInheriter
+     */
+    public function setAddMutation(UxonObject $mutation): WidgetInheriter
+    {
+        $this->mutation = $mutation;
+        return $this;
+    }
+
+    /**
+     * @return UxonObject
+     */
+    public function getMutation(): UxonObject
+    {
+        return $this->mutation;
     }
 }
