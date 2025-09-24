@@ -43,7 +43,8 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  *
  * - getJExcel() : Object
  * - getDom() : DomElement
- * - getDataLastLoaded() : array
+ * - getData() : array - returns the current array of data rows
+ * - getDataLastLoaded() : array - returns the array of data rows as received from the server or dataGetter.
  * - getColumnName(iColIdx) : string
  * - getColumnIndex(string colName) : int
  * - setValueGetterRow(iRow) : void
@@ -477,9 +478,50 @@ JS;
             var iXEnd = iXStart;
             var oColOpts = {};
 
-            el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
-                aPastedData.push(aRow[0].split("\\t"));
+            // Issue: in csv, umatched double quotes treat everything after it as a string (until the next quotes), breaking the parsing logic here
+            // see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/helpers.js#L102
+            // paste event itself apparently ALSO uses parseCSV -> so they need to be replaced or escaped before 
+            // paste function: (see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/copyPaste.js#L221)
+
+            // people had similar issues with Jexcel before:
+            // https://github.com/jspreadsheet/ce/issues/1139
+            // https://github.com/jspreadsheet/ce/issues/176 (exactly the same use case/issue)
+            // this works as a workaround, but might cause other issues?
+            //  data = data.replace(/"{1,3}/g, '″');
+
+            // OLD PARSING
+            // el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
+            //     aPastedData.push(aRow[0].split("\\t"));
+            // });
+
+            let aPreprocessedData = [];
+
+            // preprocess data to allow singular double quotation marks in cells
+            // split input by new line 
+            data.split("\\n").forEach(function(line){
+                
+                // skip empty lines and trim line endings 
+                if (line.trim() === '') return; 
+                line = line.trimEnd();
+
+                // split input by tab and trim each cell
+                let cells = line.split("\\t").map(function(cell) {
+                    cell = cell.trim();
+
+                    // if the cell contains an uneven number of quotation marks,
+                    // assume it is wanted and escape them by wrapping the cell in double quotes
+                    // - csv standard: https://stackoverflow.com/questions/17808511/how-to-properly-escape-a-double-quote-in-csv
+                    let quoteCount = (cell.match(/"/g) || []).length;
+                    if (quoteCount % 2 === 1) {
+                        cell = '"' + cell.replace(/"/g, '""') + '"';
+                    }
+
+                    return cell;
+                });
+
+                aPastedData.push(cells);
             });
+
             iXEnd = iXStart + aPastedData[0].length;
 
             for (var i = iXStart; i <= iXEnd; i++) {
@@ -592,6 +634,9 @@ JS;
         },
         getDom: function(){
             return this._dom;
+        },
+        getData: function() {
+            return this.convertArrayToData(this.getJExcel().getData(false));
         },
         getDataLastLoaded: function(){
             return this._initData;
@@ -1989,7 +2034,8 @@ JS;
             var jqEl = {$this->buildJsJqueryElement()};
             var aRows;
             if (jqEl.length === 0) return {};
-            aRows = {$this->buildJsConvertArrayToData("jqEl.jspreadsheet('getData', false)")};
+            aRows = jqEl[0].exfWidget.getData();
+            
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
 
@@ -2241,19 +2287,18 @@ JS;
             // if target is the spreadsheet itself, get filter value from current spreadsheet row
             return <<<JS
 
-(function(){
-        var aAllRows = {$this->buildJsDataGetter()}.rows; 
+(function(oWidget){
+        var aAllRows = oWidget.getData(); 
         var aVals = [];
 
         if (aAllRows[y]['{$col->getDataColumnName()}'] === undefined) {
             console.warn('Column {$col->getDataColumnName()} does not exist in the current spreadsheet'); 
-        }
-        else {
+        } else {
             aVals.push(aAllRows[y]['{$col->getDataColumnName()}']); 
         }
 
         return aVals.join('{$delimiter}');
-})()
+})({$this->buildJsJqueryElement()}[0].exfWidget)
 JS;
         } else{
             // if filter target is not the spreadsheet itself, get values from selected indices
@@ -2264,7 +2309,7 @@ JS;
         if (oWidget === undefined) {
             return null;
         }
-        var aAllRows = {$this->buildJsDataGetter()}.rows; 
+        var aAllRows = oWidget.getData() || []; 
 
         // for disabled if and required-if: use current rowIdx saved in exfwidget 
         if (oWidget && oWidget.bLoaded === true){
@@ -2363,7 +2408,6 @@ JS;
         // otherwise apply to entire column
         if ($this->hasSelfReference($condProp)) {
             $conditionsJs .= <<<JS
-                    
                     var oColOpts = oJExcel.options.columns[iColIdx];
                     if (oColOpts !== undefined && oColOpts.type === 'checkbox'){
                         // checkboxes need to be disabled, not set to readonly

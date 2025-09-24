@@ -53,14 +53,14 @@ class BinaryDataType extends AbstractDataType
         switch ($this->getEncoding()) {
             case self::ENCODING_BASE64:
                 if (base64_decode($string, true) === false) {
-                    throw new DataTypeValidationError($this, 'Invalid base64 string!');
+                    throw new DataTypeValidationError($this, 'Invalid base64 string!', null, null, $string);
                 }
                 break;
             case self::ENCODING_HEX:
                 return HexadecimalNumberDataType::cast($string);
             case self::ENCODING_BINARY:
                 if (is_numeric($string) === false) {
-                    throw new DataTypeValidationError($this, 'Invalid binary string!');
+                    throw new DataTypeValidationError($this, 'Invalid binary string!', null, null, $string);
                 }
                 break;
         }
@@ -72,7 +72,7 @@ class BinaryDataType extends AbstractDataType
             if (! $this->isSensitiveData()) {
                 $excValue = '"' . StringDataType::truncate($string, 60, false, false, true) . '" (' . $length . ')';
             }
-            throw $this->createValidationError('The size of the binary ' . $excValue . ' is larger, than the maximum for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
+            throw $this->createValidationRuleError($excValue, 'The size of the binary ' . $excValue . ' is larger, than the maximum for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getMaxSizeInMB() . ')!', false);
         }
         return $string;
     }

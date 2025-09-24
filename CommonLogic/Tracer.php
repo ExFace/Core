@@ -8,6 +8,7 @@ use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
 use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -317,7 +318,13 @@ class Tracer extends Profiler
                 $name .= ': ' . $this->sanitizeLapName($event->getQuery()->toString(false));
                 break;
             case $event instanceof ActionEventInterface:
-                $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+                $action = $event->getAction();
+                $name = 'Action "' . $action->getAliasWithNamespace() . '"';
+                try {
+                    $name .= ' on ' . $action->getMetaObject()->getAliasWithNamespace();
+                } catch (ActionObjectNotSpecifiedError $e) {
+                    // Leave the name as-is for actions, that do not have an object
+                }
                 break;
             case $event instanceof CommunicationMessageEventInterface:
                 $name = 'Communication message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';

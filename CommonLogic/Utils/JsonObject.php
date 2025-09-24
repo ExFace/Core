@@ -83,7 +83,10 @@ class JsonObject extends \JsonPath\JsonObject
                 list($resultsInParent, $_) = JsonPath::get($array, '$[' . $index . ']');
                 foreach ($resultsInParent as $target) {
                     $i = array_search($target, $array, true);
+                    // this will also remove the index and turn the array into an associative array (e.g. new keys would be "1", "3", "4")
                     unset($parents[$p][$i]);
+                    // restore sequential indices
+                    $parents[$p] = array_values($parents[$p]);
                 }
             }
         } else {

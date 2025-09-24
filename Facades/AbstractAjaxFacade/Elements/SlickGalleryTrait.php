@@ -484,7 +484,7 @@ JS;
     oData.filters = oConfiguratorData.filters;
     
     {$this->buildJsFileNameDuplicateRenamer("oData")}
-  
+    
     return {
         oId: '{$dataObj->getId()}',
         rows: [

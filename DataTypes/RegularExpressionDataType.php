@@ -50,7 +50,7 @@ class RegularExpressionDataType extends StringDataType
         }
         
         if ($this->getDelimitersRequired() && static::isRegex($string, $this->getDelimiters()) === false) {
-            throw new DataTypeValidationError($this, 'Not a valid regular expression: "' . $string . '"');
+            throw new DataTypeValidationError($this, 'Not a valid regular expression: "' . $string . '"', null, null, $string);
         }
         
         return $string;

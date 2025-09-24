@@ -161,7 +161,7 @@ trait EnumDynamicDataTypeTrait {
         }
         
         if (false === $valueInArray) {
-            throw $this->createValidationError('Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGN2H6');
+            throw $this->createValidationParseError($string, 'Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', false, '6XGN2H6');
         }
         
         return $value;

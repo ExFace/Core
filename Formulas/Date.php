@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
@@ -68,11 +69,19 @@ class Date extends Formula
         $dataType = $this->getDataType();
         $dataType->setFormat($formatTo);
         
-        if ($formatFrom !== null) {
-            $phpDate = DateDataType::castFromFormat($date, $formatFrom, $dataType->getLocale(), true);
-        } else {
-            $phpDate = $dataType::castToPhpDate($date);
+        // Parse the given value
+        try {
+            if ($formatFrom !== null) {
+                $phpDate = DateDataType::castFromFormat($date, $formatFrom, $dataType->getLocale(), true);
+            } else {
+                $phpDate = $dataType::castToPhpDate($date);
+            }
+        } catch (\Throwable $e) {
+            // Wrap casting errors in parser errors because they are more informative
+            $badValue = $e->getValue() ?? $date;
+            throw $dataType->createValidationParseError($badValue, null, null, null, $e);
         }
+        
         try {
             return $dataType->formatDate($phpDate);
         } catch (DataTypeCastingError $e) {

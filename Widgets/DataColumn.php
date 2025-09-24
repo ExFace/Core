@@ -515,16 +515,54 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return $action->isAuthorized() === true;
         }
         
+        // Otherwise inherit editable state from the enclosing column group
         $groupIsEditable = $this->getDataColumnGroup()->isEditable();
         if ($groupIsEditable === true) {
-            if ($this->isBoundToAttribute()) {
-                return $this->getAttribute()->isEditable();
-            } else {
-                return true;
+
+            // IMPORTANT: cannot use $this->getCellWidget() in this method, because that would call it recursively!
+
+            // Treat hidden columns as non-editable by default
+            if ($this->isHidden()) {
+                return false;
             }
+
+            // Disabled columns without conditions are obviously also not editable
+            if ($this->isDisabled() && $this->getDisabledIf() === null) {
+                return false;
+            }
+
+            // For attributes, see if the attribute should be editable
+            if ($this->isBoundToAttribute()) {
+                $attr = $this->getAttribute();
+                // Not editable if attribute is not editable
+                if ($attr->isEditable() === false) {
+                    return false;
+                }
+                // Not editable by default if attribute is related. If it should be, the user MUST set editable explicitly
+                if ($attr->isRelated()) {
+                    return false;
+                }
+            } else {
+                if ($this->isCalculated()) {
+                    // Also not editable if calculated and NOT bound to an attribute
+                    return false;
+                }
+            }
+            
+            return true;
         }
         
         return false;
+    }
+
+    /**
+     * Returns TRUE if the column has a cell_widget configuration
+     * 
+     * @return bool
+     */
+    protected function hasCustomCellWidget() : bool
+    {
+        return $this->cellWidgetUxon !== null;
     }
     
     /**
@@ -533,7 +571,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * In particular, this will make the default editor of an attribute be used
      * as cell widget (instead of the default display widget).
      * 
-     * If not set explicitly, the editable state of the column group will be inherited.
+     * If not set explicitly, the column will try to guess if it should be editable automatically:
+     * 
+     * - If it is hidden, it is not editable by default
+     * - If the column is bound to an attribute, it will be editable automatically unless the attribute is
+     * not editable itself or the attribute is related (has a relation path)
+     * - Columns not bound to an attribute will be editable unless they are calculations
+     * - Any column will not be editable of course, if the entire widget or at least the column group is
+     * marked as non-editable.
      * 
      * Explicitly definig an active editor as the cell widget will also set the
      * column editable automatically.

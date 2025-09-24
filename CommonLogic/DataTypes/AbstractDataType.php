@@ -45,10 +45,9 @@ abstract class AbstractDataType implements DataTypeInterface
     private $defaultDisplayUxon = null;
     
     private $validationErrorCode = null;
-    
     private $validationErrorText = null;
-    
     private $validationErrorMessage = null;
+    private $validationErrorReason = null;
     
     private $value = null;
     
@@ -203,7 +202,7 @@ abstract class AbstractDataType implements DataTypeInterface
         try {
             return static::cast($value);
         } catch (\Throwable $e) {
-            throw $this->createValidationError($e->getMessage(), null, $e);
+            throw $this->createValidationParseError($value, null, null, null, $e);
         }
     }
     
@@ -217,10 +216,38 @@ abstract class AbstractDataType implements DataTypeInterface
      * 
      * @return \exface\Core\Exceptions\DataTypes\DataTypeValidationError
      */
-    protected function createValidationError(string $message, string $code = null, \Throwable $previous = null) : DataTypeValidationError
+    protected function createValidationRuleError($value, ?string $message = null, ?bool $showMessageToUsers = null, ?string $code = null, \Throwable $previous = null) : DataTypeValidationError
+    {
+        // TODO add a custom default text here indicating, that the value is does not match the rules
+        return $this->createValidationParseError($value, $message, $showMessageToUsers, $code, $previous);
+    }
+    
+    public function createValidationParseError($value, ?string $message = null, ?bool $showMessageToUsers = null, ?string $code = null, \Throwable $previous = null) : DataTypeValidationError
     {
         $code = $this->getValidationErrorCode() ? $this->getValidationErrorCode() : $code;
-        return new DataTypeValidationError($this, $message, $code, $previous);
+        if ($message && $showMessageToUsers) {
+            return (new DataTypeValidationError($this, $message, $code, $previous, $value))->setUseExceptionMessageAsTitle(true);
+        } 
+        if (! $message) {
+            $reasonText = $this->getValidationErrorReason($value);
+            switch (true) {
+                case $reasonText !== null:
+                    $message = $reasonText;
+                    $showMessageToUsers = true;
+                    break;
+                case $previous !== null:
+                    $message = $previous->getMessage();
+                    break;
+                default:
+                    $message = 'Invalid value "' . $value . '" for data type "' . $this->getAliasWithNamespace() . '"';
+            }
+        }
+        $e = new DataTypeValidationError($this, $message, $code, $previous, $value);
+        if ($showMessageToUsers) {
+            $e->setUseExceptionMessageAsTitle(true);
+        }
+        
+        return $e;
     }
 
     /**
@@ -520,6 +547,32 @@ abstract class AbstractDataType implements DataTypeInterface
         $this->validationErrorText = $string;
         return $this;
     }
+
+    /**
+     * @return string|null
+     */
+    protected function getValidationErrorText() : ?string
+    {
+        return $this->validationErrorText;
+    }
+
+    /**
+     * @param $value
+     * @return DataTypeInterface
+     */
+    protected function setValidationErrorReason($value) : DataTypeInterface
+    {
+        $this->validationErrorReason = $value;
+        return $this;
+    }
+
+    public function getValidationErrorReason($value) : ?string
+    {
+        if ($this->validationErrorReason !== null && $value !== null) {
+            return StringDataType::replacePlaceholders($this->validationErrorReason, ['value' => $value]);
+        }
+        return $this->validationErrorReason;
+    }
     
     /**
      * 
@@ -531,8 +584,8 @@ abstract class AbstractDataType implements DataTypeInterface
         if ($this->validationErrorMessage === null) {
             if ($this->validationErrorCode !== null) {
                 $this->validationErrorMessage = MessageFactory::createFromCode($this->getWorkbench(), $this->validationErrorCode);
-            } elseif ($this->validationErrorText !== null) {
-                $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $this->validationErrorText);
+            } elseif (null !== $errorText = $this->getValidationErrorText()) {
+                $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $errorText);
             } elseif ('' !== $generatedMessage = $this->getValidationDescription()) {
                 $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $generatedMessage);
             }

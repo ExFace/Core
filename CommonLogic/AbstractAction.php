@@ -1933,6 +1933,8 @@ abstract class AbstractAction implements ActionInterface
     /**
      * Make the action ask for confirmation when its button is pressed
      * 
+     * Set to FALSE to disable built-in confirmations (e.g. for an `exface.Core.DeleteObject`).
+     * 
      * @uxon-property confirmation_for_action
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
      * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
@@ -1970,6 +1972,8 @@ abstract class AbstractAction implements ActionInterface
 
     /**
      * Make the action warn the user if it is to be performed when unsaved changes are still visible
+     * 
+     * Set to FALSE to disable built-in confirmations.
      * 
      * @uxon-property confirmation_for_unsaved_data
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
