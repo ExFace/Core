@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Exceptions\DataSheets\DataSheetErrorMultiple;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 
@@ -165,10 +165,14 @@ class ValidatingBehavior extends AbstractValidatingBehavior
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     * @see AbstractValidatingBehavior::processValidationResult()
+     */
     protected function processValidationResult(
         DataSheetEventInterface $event, 
-        ?DataCheckFailedErrorMultiple $result, 
-        BehaviorLogBook $logbook): void
+        ?DataSheetErrorMultiple $result, 
+        BehaviorLogBook         $logbook): void
     {
         if(!$result) {
             $logbook->addLine('The data did not match any of the data checks.');
