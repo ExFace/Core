@@ -77,7 +77,7 @@ class CoreInstaller extends AbstractAppInstaller
             $content = <<<PHP
 <?php 
 error_reporting(E_ALL & ~E_NOTICE);
-require_once('vendor/exface/Core/index.php');
+require_once('vendor/exface/core/index.php');
 ?>
 PHP;
             try {
