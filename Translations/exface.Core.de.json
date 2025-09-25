@@ -470,6 +470,9 @@
 	"WIDGET.TEXT.STYLE_ITALIC": "Kursiv",
 	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Durchgestrichen",
 
+  "WIDGET.TEXTMENTION.COLLISION": "Mention Widget Kollision: Die aktuelle Eingabe hat mehrere Mention-Widgets mit folgenden Aktivierungszeichen gleichzeitig aktiviert:",
+  "WIDGET.TEXTMENTION.AJAX_CALL_ERROR": "Die Daten konnten nicht geladen werden. Weitere Informationen finden Sie in den Logs.",
+
 	"WIDGET.UXONEDITOR.HELP": "Hilfe",
 	"WIDGET.UXONEDITOR.JSON_PATH": "JSON-Pfad",
 	"WIDGET.UXONEDITOR.JSON_PATH_HINT": "JSON-Pfad zu diesem Knoten",
@@ -564,6 +567,7 @@
 	"ERROR.ECHARTS.AXIS_NO_DATA": "Keine Daten erhalten für Achse",
 
 	"ERROR.CAPTION": "Fehler",
+  "ERROR.No_RESULTS": "Keine Treffer",
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
