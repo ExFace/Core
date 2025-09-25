@@ -133,11 +133,11 @@ class InputMarkdown extends InputText
     }
 
     /**
-     * Array of mentions (templates), that will be available through the toolbar of the editor
+     * An array of mentions, it is a widget that can automatically suggest values for a given object and insert them as mention tags in Markdown.
      *
      * @uxon-property mentions
      * @uxon-type \exface\Core\Widgets\Parts\TextMention[]
-     * @uxon-template [{"caption": "", "hint": "", "autosuggest_object_alias": ""}]
+     * @uxon-template [{"caption": "", "hint": "", "autosuggest_object_alias": "", "autosuggest_filter_attribute_alias": "", "tag_prefix": "", "autosuggest_max_number_of_rows": "", "tag_color": "", "tag_text_regex": ""}]
      *
      * @param UxonObject $arrayOfUxons
      * @return $this
