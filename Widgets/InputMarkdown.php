@@ -137,7 +137,7 @@ class InputMarkdown extends InputText
      *
      * @uxon-property mentions
      * @uxon-type \exface\Core\Widgets\Parts\TextMention[]
-     * @uxon-template [{"caption": "", "hint": "", "autosuggest_object_alias": "", "autosuggest_filter_attribute_alias": "", "tag_prefix": "", "autosuggest_max_number_of_rows": "", "tag_color": "", "tag_text_regex": ""}]
+     * @uxon-template [{"caption": "", "tag_prefix": "", "tag_text_regex": "%.*%i", "tag_color": "", "autosuggest_object_alias": "", "autosuggest_filter_attribute_alias": ""}]
      *
      * @param UxonObject $arrayOfUxons
      * @return $this

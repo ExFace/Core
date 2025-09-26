@@ -212,7 +212,7 @@ JS;
 
     protected function buildJsMentionWidgetRule(TextMention $mention): string
     {
-        $tagColor = $mention->getTagColor();
+        $tagColor = ($mention->getTagColor() ?? $this->getFacade()->getConfig()->getOption('WIDGET.INPUTMARKDOWN.TAG_COLOR_DEFAULT')) ?? '#001580';
         $reMentionWidgetRule =
             '/\[('
                 . $mention->getTagPrefix()
@@ -268,11 +268,12 @@ JS;
                 
                 $btn = $mention->getAutosuggestButton();
                 $tagTextRegex = json_encode($mention->getTagTextRegex());
+                $pageSize = ($mention->getAutosuggestMaxNumberOfRows() ?? $this->getFacade()->getConfig()->getOption('WIDGET.INPUTMARKDOWN.TAG_AUTOSUGGEST_PAGE_SIZE')) ?? 10;
                 $mentionsDataJs .= <<<JS
                  {
                    tagPrefix: {$this->escapeString($mention->getTagPrefix())},
                    filterAttributeAlias: {$this->escapeString($mention->getAutosuggestFilterAttributeAlias())},
-                   maxNumberOfRows:  {$mention->getAutosuggestMaxNumberOfRows()},
+                   maxNumberOfRows:  {$pageSize},
                    tagTextRegex: {$tagTextRegex},
                    tagTextAttribute: {$this->escapeString($mention->getTagTextAttribute())},
                    

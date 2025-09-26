@@ -21,7 +21,6 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
 /**
  * Configuration for a mention tag or hash tag in a text editor
  * 
- * 
  * Mention Widget Dokumentation:
  * For example, DevMan Tickets (autosuggest_object_alias) mention fetch can be activated by typing 
  * the "#" character (tag_prefix) into the editor (see the example uxon below).
@@ -36,7 +35,7 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  * If the input after the tag prefix matches one of the mentions, but the table fetch does not succeed, 
  * the input will still be transformed into a mention tag but without any press actions included.
  * 
- *  If the "tag_text_attribute" is not given, the results of the "autosuggest_filter_attribute_alias" will be taken and pasted to the text editor instead.
+ * If the "tag_text_attribute" is not given, the results of the "autosuggest_filter_attribute_alias" will be taken and pasted to the text editor instead.
  * 
  * ```
  *  {
@@ -52,9 +51,10 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  *  }
  * 
  * ```
+ * 
  * Example 2: User mention:
  * ```
- *  {
+ * {
  *      "caption": "user mentions",
  *      "hint": "user mentions hint",
  *      "tag_prefix": "@",
@@ -63,7 +63,8 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  *      "tag_text_regex": ".*",
  *      "autosuggest_object_alias": "exface.Core.USER",
  *      "autosuggest_filter_attribute_alias": "FULL_NAME",
- *  }
+ * }
+ * 
  * ```
  * 
  * 
@@ -88,14 +89,14 @@ class TextMention extends TextStencil
     private $tagPrefix = null;
     private $autosuggestMaxNumberOfRows = null;
     private $tagTextRegex = null;
-    private $tagColor = '#001580';
+    private $tagColor = null;
 
 
     /**
      * It specifies the object where the mention widgets should get the data from.
      *
      * @uxon-property autosuggest_object_alias
-     * @uxon-type metamodel:attribute
+     * @uxon-type metamodel:object
      *
      * @param string $alias
      * @return $this
