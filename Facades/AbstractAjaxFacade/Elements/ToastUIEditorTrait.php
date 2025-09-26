@@ -16,6 +16,15 @@ use exface\Core\Widgets\Parts\TextStencil;
  * - Viewer: `buildJsMarkdownInitViewer()`
  *
  * Only ever initialize one version per widget.
+ * 
+ * ## Usage
+ * 
+ * Add the following options to the config of the facade:
+ * 
+ * ```
+ * "WIDGET.INPUTMARKDOWN.TAG_COLOR_DEFAULT": "#001580",
+ * "WIDGET.INPUTMARKDOWN.TAG_AUTOSUGGEST_PAGE_SIZE": 10,
+ * ```
  *
  * @see UI5InputMarkdown
  * @see EuiInputMarkdown
