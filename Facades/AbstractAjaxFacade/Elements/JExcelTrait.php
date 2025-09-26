@@ -261,7 +261,7 @@ JS;
     {
         return <<<JS
 
-<div id="{$this->getId()}"></div>
+<div id="{$this->getId()}" class="{$this->buildCssWidgetClass()}"></div>
 
 JS;
     }
