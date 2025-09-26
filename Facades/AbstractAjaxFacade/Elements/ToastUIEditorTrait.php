@@ -436,7 +436,7 @@ JS;
               
               //TODO: in case of "#6" if "6" and "16" got fetched and the user press "space", the "#6" here will be saved, 
               // but without the items (url). This may get an error in the future, if url support will be introduced.
-               ed.exfWidget.addMentionTag(oMentionModel,null, null);
+               ed.exfWidget.addMentionTag(oMentionModel,null);
             }
           }
 JS;
