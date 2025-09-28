@@ -176,8 +176,8 @@
 	},
 	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": [
 		"npm-asset/dexie/dist/dexie.min.js",
-    	"exface/Core/Facades/AbstractPWAFacade/sw_tools.js",
-    	"exface/Core/Facades/AbstractPWAFacade/exfPWA.js"
+    	"exface/core/Facades/AbstractPWAFacade/sw_tools.js",
+    	"exface/core/Facades/AbstractPWAFacade/exfPWA.js"
     ],
     
     "FACADES.HTTPTASKFACADE.ALLOW_HTTP_BASIC_AUTH": true,
