@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\Behaviors\OrderingBehavior;
 use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\ArrayDataType;
@@ -258,41 +259,46 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     {
         $obj = $data_sheet->getMetaObject();
         
-        // Disable timestamping behavior because it will prevent multiple installations of the same
-        // model since the first install will set the update timestamp to something later than the
-        // timestamp saved in the model files
-        foreach ($obj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
-            $behavior->disable();
-            // Make sure to explicitly disable fixed values on update-columns
-            if ($behavior->hasUpdatedOnAttribute()) {
-                if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedOnAttribute())) {
-                    $col->setIgnoreFixedValues(true);
-                }
-            }
-            if ($behavior->hasUpdatedByAttribute()) {
-                if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedByAttribute())) {
-                    $col->setIgnoreFixedValues(true);
-                }
-            }
+        foreach ($obj->getBehaviors() as $behavior) {
+            switch (true) {
+                // Disable timestamping behavior because it will prevent multiple installations of the same
+                // model since the first install will set the update timestamp to something later than the
+                // timestamp saved in the model files
+                case $behavior instanceof TimeStampingBehavior:
+                    $behavior->disable();
+                    // Make sure to explicitly disable fixed values on update-columns
+                    if ($behavior->hasUpdatedOnAttribute()) {
+                        if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedOnAttribute())) {
+                            $col->setIgnoreFixedValues(true);
+                        }
+                    }
+                    if ($behavior->hasUpdatedByAttribute()) {
+                        if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedByAttribute())) {
+                            $col->setIgnoreFixedValues(true);
+                        }
+                    }
+                    break;
+                // Prevent duplicates behavior
+                /*case $behavior instanceof PreventDuplicatesBehavior:
+                    $behavior->disable();
+                    break;*/
+                // ValidatingBehavior - if older model do not pass validation rules, they still need to be installed
+                // to be fixed!!!
+                case $behavior instanceof ValidatingBehavior:
+                    $behavior->disable();
+                    break;
+                // Disable model validation because it would instantiate all objects when the object sheet is being saved,
+                // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
+                // at this point.
+                case $behavior instanceof ModelValidatingBehavior:
+                    $behavior->disable();
+                    break;
+                // OrderingBehavior was also reported to interfere with data installers
+                case $behavior instanceof OrderingBehavior:
+                    $behavior->disable();
+                    break;
         }
         
-        // Prevent duplicates behavior
-        /*foreach ($obj->getBehaviors()->getByPrototypeClass(PreventDuplicatesBehavior::class) as $behavior) {
-            $behavior->disable();
-        }*/
-
-        // ValidatingBehavior - if older model do not pass validation rules, they still need to be installd
-        // to be fixed!!!
-        foreach ($obj->getBehaviors()->getByPrototypeClass(ValidatingBehavior::class) as $behavior) {
-            $behavior->disable();
-        }
-        
-        // Disable model validation because it would instantiate all objects when the object sheet is being saved,
-        // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
-        // at this point.
-        foreach ($obj->getBehaviors()->getByPrototypeClass(ModelValidatingBehavior::class) as $behavior) {
-            $behavior->disable();
-        }
         return $this;
     }
 
