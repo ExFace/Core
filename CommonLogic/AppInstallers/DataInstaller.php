@@ -297,6 +297,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                 case $behavior instanceof OrderingBehavior:
                     $behavior->disable();
                     break;
+            }
         }
         
         return $this;
