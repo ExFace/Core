@@ -435,14 +435,17 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 
             // If the combo represents a relation pointing to the prefill object directly, just make sure,
             // the prefill data includes the key attribute
-            case $this->isRelation() && $this->getRelation()->getRightObject()->is($sheetObj):
+            case $this->isRelation() 
+            && $this->getRelation()->getRightObject()->is($sheetObj):
                 $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
                 break;
             
             // If the combo knows its relation to its parent (e.g. a multi-select combo used to create tags
             // or other simple mappings via subsheet) AND the prefill data is based on the object of the
             // parent widget, than we know the relation exactly. 
-            case (null !== $relPathFromParent = $this->getObjectRelationPathFromParent()) && $data_sheet->getMetaObject()->is($relPathFromParent->getStartObject()):
+            case $this->isBoundToAttribute() 
+            && (null !== $relPathFromParent = $this->getObjectRelationPathFromParent()) 
+            && $data_sheet->getMetaObject()->is($relPathFromParent->getStartObject()):
                 $attrAlias = RelationPath::join($relPathFromParent->__toString(), $this->getAttributeAlias());
                 if ($this->getMultiSelect() === true && $relPathFromParent->containsReverseRelations()) {
                     $aggregator = new Aggregator(
