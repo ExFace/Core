@@ -246,7 +246,7 @@ class UxonDataType extends JsonDataType
      */
     protected function getErrorPath(UxonObject $uxon, Throwable $error, array $recursionPath) : array
     {
-        $errorPath = $this->getBaseError($error)->getPath();
+        $errorPath = $this->getBaseError($error)?->getPath();
 
         if (empty($errorPath)) {
             return $recursionPath;
