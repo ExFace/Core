@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\Exceptions\Facades\HttpBadRequestError;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -38,8 +39,6 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 class FacadeResolverMiddleware implements MiddlewareInterface
 {
     private $workbench = null;
-    
-    private $pageAttributeAlias = null;
     
     /**
      * 
@@ -79,7 +78,8 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                 if ($page->getWidgetRoot()) {
                     $request = $request->withAttribute(HttpTask::REQUEST_ATTRIBUTE_NAME_WIDGET, $page->getWidgetRoot()->getId());
                 }
-            } catch (FacadeRoutingError $ePage) {
+            } catch (UiPageNotFoundError $ePage) {
+                $eRequest = new HttpBadRequestError($request, 'No route can be found for URL "' . $request->getUri()->getPath() . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!', null, $ePage);
                 $logLevel = null;
                 $uri = $request->getUri()->__toString();
                 switch (true) {
@@ -88,10 +88,13 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                     case StringDataType::endsWith($uri, 'map.js', false):
                         $logLevel = LoggerInterface::NOTICE;
                         break;
+                    default:
+                        $logLevel = LoggerInterface::ERROR;
+                        break;
                 }
                 $this->workbench->getLogger()
-                    ->logException($ePage, $logLevel);
-                return new Response(404, [], $ePage->getMessage());
+                    ->logException($eRequest, $logLevel);
+                return new Response(404, [], $eRequest->getMessage());
             }
         }
         
@@ -108,7 +111,7 @@ class FacadeResolverMiddleware implements MiddlewareInterface
      * Searches for UI pages with aliases matching the URI
      * 
      * @param UriInterface $uri
-     * @throws FacadeRoutingError
+     * @throws UiPageNotFoundError
      * @return UiPageInterface
      */
     protected function getPageFromUri(UriInterface $uri) : UiPageInterface
@@ -119,14 +122,10 @@ class FacadeResolverMiddleware implements MiddlewareInterface
         // Remove the file extension
         $aliasFromUrl = StringDataType::substringBefore($aliasFromUrl, '.', $aliasFromUrl, false, true);
         
-        try {
-            if ($aliasFromUrl === '') {
-                return $this->workbench->getSecurity()->getAuthenticatedUser()->getStartPage();
-            } else {
-                return UiPageFactory::createFromModel($this->workbench, $aliasFromUrl);
-            }
-        } catch (UiPageNotFoundError $e) {            
-            throw new FacadeRoutingError('No route can be found for URL "' . $uri->getPath() . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!', null, $e);
+        if ($aliasFromUrl === '') {
+            return $this->workbench->getSecurity()->getAuthenticatedUser()->getStartPage();
+        } else {
+            return UiPageFactory::createFromModel($this->workbench, $aliasFromUrl);
         }
     }
     
