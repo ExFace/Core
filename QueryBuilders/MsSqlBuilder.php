@@ -714,7 +714,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                    // Escape MS SQL strings with `N'text'` - the N makes it UNICODE compatible!
+                    $value = $value === null ? 'NULL' : "N'{$this->escapeString($value)}'";
                 }
                 break;
             case $data_type instanceof DateTimeDataType:
