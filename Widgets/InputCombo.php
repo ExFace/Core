@@ -61,7 +61,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     protected function getLazyLoadingActionUxonDefault() : UxonObject
     {
         return new UxonObject([
-           "alias" => "exface.Core.AutoSuggest" 
+           "alias" => "exface.Core.Autosuggest" 
         ]);
     }
     
