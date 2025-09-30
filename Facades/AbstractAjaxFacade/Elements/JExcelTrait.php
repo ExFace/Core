@@ -261,7 +261,7 @@ JS;
     {
         return <<<JS
 
-<div id="{$this->getId()}"></div>
+<div id="{$this->getId()}" class="{$this->buildCssWidgetClass()}"></div>
 
 JS;
     }
@@ -1806,13 +1806,18 @@ JS;
                     
                             var oEffect = {};
                             var aUsedObjectAliases = {$effectedAliasesJs};
-                            let iColIdx = {$this->buildJsJqueryElement()}[0].exfWidget.getColumnIndex('{$dataCol->getDataColumnName()}');
+                            var oDomEl = {$this->buildJsJqueryElement()}[0];
+                            if (oDomEl === undefined) {
+                                return;
+                            }
+                            var oWidget = oDomEl.exfWidget;
+                            let iColIdx = oWidget.getColumnIndex('{$dataCol->getDataColumnName()}');
                             if (iColIdx === -1) {
                                 return;
                             }
 
                             var fnRefresh = function() {
-                                {$this->buildJsJqueryElement()}[0].exfWidget.refreshDropdown(iColIdx);
+                                oWidget.refreshDropdown(iColIdx);
                             };
                         
                             for (var i = 0; i < oParams.effects.length; i++) {

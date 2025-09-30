@@ -497,7 +497,7 @@ class MetaObject implements MetaObjectInterface
         
         // Inherit data address
         $this->setDataAddress($parent->getDataAddress());
-        $this->setDataAddressProperties($parent->getDataAddressProperties());
+        $this->setDataAddressProperties($parent->getDataAddressProperties()->copy());
         // The inheriting object will only be readable/writable if it is marked as such itself
         // and the parent is readable or writable respectively.
         if ($this->isReadable() === true && $parent->isReadable() === false){

@@ -44,12 +44,12 @@ The following setting are recommended in the `php.ini` file in your PHP director
 
 ### DEV environments
 
-- `error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED`
+- `error_reporting = E_ALL & ~E_WARNING & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED`
 - `display_errors = On`
 
 ### PROD environments
 
-- `error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED`
+- `error_reporting = E_ALL & ~E_WARNING & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED`
 - `display_errors = Off`
 - `zend.exception_ignore_args = On` - do not show function parameters in traces to make sure no passwords are shown/logged
 - `expose_php = Off` - hide PHP and its version from generic server responses
