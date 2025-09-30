@@ -62,7 +62,12 @@ trait ToastUIEditorTrait
                     $editorOptions,
                     {$this->buildJsToolbarItems($widget)}
                     events: {
-                        change: function(){
+                        change: function(sMode){
+                            var oEditor = {$this->buildJsMarkdownVar()};
+                            if (oEditor._exfIgnoreChanges === true) {
+                                return;
+                            }
+                            
                             {$this->getOnChangeScript()} 
                         }    
                     },
@@ -71,7 +76,7 @@ trait ToastUIEditorTrait
                     },
                     widgetRules: [
                         {$this->buildJsWidgetRules()}
-                        ],
+                    ],
                 });
                 
                 {$this->buildJsAdditionalWidgetsCode()}
@@ -949,19 +954,18 @@ JS;
             var oEditor = {$this->buildJsMarkdownVar()};
             if (oEditor) {
                 if (oEditor.getMarkdown !== undefined) {
-                    if(oEditor.isMarkdownMode()) {
-                      value = oEditor.getMarkdown();
-                    } else {
+                    value = oEditor.getMarkdown();
+                    if(! oEditor.isMarkdownMode() && value && value.includes('\\$\\\$widget')) {
                       // ToastUi widgets in WYSIWYG mode like "[@Andrej]()" are saved as "\$\$widget0 [@Andrej])$$"
                       // Bevor save, we have to get rid of the "\$\$widget0 .. $$" wrapper. 
                       // To do so, we switch here to "Markdown" editor mode, write the Markdown to the value, 
                       // and then switch back to the last-used mode.
                       const currentMode = oEditor.mode;
+                      oEditor._exfIgnoreChanges = true;
                       oEditor.changeMode("markdown",true);
-                  
                       value = oEditor.getMarkdown();
-                      
                       oEditor.changeMode(currentMode,true);
+                      oEditor._exfIgnoreChanges = false;
                     }
                 } else if (oEditor._lastSetValue !== undefined) {
                     value = oEditor._lastSetValue;
