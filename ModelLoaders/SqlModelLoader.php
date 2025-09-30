@@ -290,16 +290,18 @@ SQL;
             // See if the data source has a base object. If so, double-check 
             // - that it was not already inherited by the parent object (should not inherit twice as this would register all behaviors twice too!) 
             // - that base inheritance is not turned off for this particular object 
+            // In any case DO NOT register inherited behaviors just yet - wait until object properties
+            // and attributes are overridden.
             $baseObject = null;
             if ($row['base_object_oid'] && $row['base_object_oid'] !== $object->getId() && ! ($parent && $parent->isExtendedFrom($row['base_object_oid'])) && ($row['inherit_data_source_base_object'] ?? 1)) {
                 $baseObject = $this->getModel()->getObject($row['base_object_oid']);
-                $object->extendFromObject($baseObject);
+                $object->extendFromObject($baseObject, false);
             }
             // Now that we handled the base object, we can extend from the explicit parent.
             // Still double check if it's the same object in case the user accidently specified
             // the same object as base and parent in the metamodel.
             if ($parent !== null && $parent !== $baseObject) {
-                $object->extendFromObject($parent);
+                $object->extendFromObject($parent, false);
             }
 
             // Once we have extended from all parents, any calls to `$object->getAttribute()` will start
@@ -536,8 +538,13 @@ SQL;
                 }
             }
         }
-
-        // Load behaviors if needed
+        
+        // Register inherited behaviors here since all modifications are complete now
+        foreach ($object->getBehaviors() as $behavior) {
+            $behavior->register();
+        }
+        
+        // Load own behaviors if needed
         if ($load_behaviors) {
             $query = $this->getDataConnection()->runSql("
                 /* Load behaviors */
