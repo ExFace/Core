@@ -10,6 +10,8 @@
 - [Securing sensitive files and folders](Securing_installation_folders.md) in your installation via server-side access restrictions
 - [Securing web facades](Securing_web_facades.md) by setting correct HTTP headers, etc.
 - [Technical documentation](../developer_docs/Security/index.md)
+- Secure connections to data sources
+  - [Securing SQL databases](Secure_data_sources/Securing_SQL_databases.md)
 
 ## Overview
 
