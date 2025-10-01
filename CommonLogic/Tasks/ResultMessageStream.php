@@ -86,11 +86,21 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
     {
         $message = parent::getMessage();
         if ($this->generatorWasRun === false) {
-            foreach ($this->getMessageStreamGenerator() as $line) {
-                $message .= $line . "\n";
-            }
+            $message .= $this->runGenerator();
             $this->setMessage($message);
         }
         return $message;
+    }
+    
+    protected function runGenerator() : string
+    {
+        if ($this->generatorWasRun === false) {
+            $output = '';
+            foreach ($this->getMessageStreamGenerator() as $line) {
+                $output .= $line . "\n";
+            }
+            $this->generatorResult = $output;
+        }
+        return $this->generatorResult;
     }
 }
