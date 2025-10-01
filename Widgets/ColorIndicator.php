@@ -349,6 +349,9 @@ class ColorIndicator extends Display implements iHaveColor, iHaveHintScale
         $binding = $this->getColorBinding();
         $dataType = $binding->getDataType();
         switch (true) {
+            case $dataType === null:
+                $scale = [];
+                break;
             case $dataType instanceof NumberEnumDataType:
                 $scale = $dataType->toArray();
                 break;
