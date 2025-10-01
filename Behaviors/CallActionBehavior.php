@@ -6,6 +6,8 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -148,6 +150,10 @@ class CallActionBehavior extends AbstractBehavior
     
     private $commitBeforeAction = false;
     
+    private ?string $inputDataEventAlias = null;
+    private ?UxonObject $inputDataMapperUxon = null;
+    private array $inputDataFromEvents = [];
+    
     /**
      *
      * {@inheritDoc}
@@ -163,6 +169,10 @@ class CallActionBehavior extends AbstractBehavior
         
         foreach ($this->getEventAliases() as $event) {
             $this->getWorkbench()->eventManager()->addListener($event, [$this, 'onEventCallAction'], $this->getPriority());
+        }
+
+        if (null !== $event = $this->getInputDataEventAlias()) {
+            $this->getWorkbench()->eventManager()->addListener($event, [$this, 'onEventSaveInputData'], $this->getPriority());
         }
 
         return $this;
@@ -181,6 +191,10 @@ class CallActionBehavior extends AbstractBehavior
 
         if ($this->hasRestrictionOnAttributeChange()) {
             $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
+        }
+
+        if (null !== $event = $this->getInputDataEventAlias()) {
+            $this->getWorkbench()->eventManager()->removeListener($event, [$this, 'onEventSaveInputData']);
         }
         
         return $this;
@@ -328,7 +342,7 @@ class CallActionBehavior extends AbstractBehavior
 		}
         
         $logbook->addDataSheet('Event data', $eventSheet);
-        $logbook->addLine('Found input data for object ' . $eventSheet->getMetaObject()->__toString());
+        $logbook->addLine('Found event data for object ' . $eventSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
@@ -336,6 +350,17 @@ class CallActionBehavior extends AbstractBehavior
             $logbook->addLine('**Skipped** because of `only_if_attributes_change`');
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
+        }
+        
+        if (null !== $inputEvent = $this->getInputDataEventAlias()) {
+            $inputSheet = $this->getInputDataFromEvent($inputEvent);
+            if ($inputSheet === null) {
+                $inputSheet = $eventSheet;
+            } else {
+                $logbook->addLine('Found input data from foreign event `' . $inputEvent . '` for object ' . $eventSheet->getMetaObject()->__toString());
+            }
+        } else {
+            $inputSheet = $eventSheet;
         }
         
         $logbook->addLine('Option `event_prevent_default` is `' . $this->getEventPreventDefault() . '`');
@@ -349,14 +374,12 @@ class CallActionBehavior extends AbstractBehavior
             if ($this->hasRestrictionConditions()) {
                 $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
                 $logbook->addLine($this->getOnlyIfDataMatchesConditions()->__toString());
-                $inputSheet = $eventSheet->extract($this->getOnlyIfDataMatchesConditions(), true);
+                $inputSheet = $inputSheet->extract($this->getOnlyIfDataMatchesConditions(), true);
                 if ($inputSheet->isEmpty()) {
                     $logbook->addLine('**Skipped** because of `only_if_data_matches_conditions`');
                     $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
                     return;
                 }
-            } else {
-                $inputSheet = $eventSheet;
             }
             
             // Now perform the action
@@ -502,6 +525,40 @@ class CallActionBehavior extends AbstractBehavior
         }
     }
     
+    public function onEventSaveInputData(DataSheetEventInterface $event) : void
+    {
+        if ($this->isDisabled()) {
+            return;
+        }
+
+        if ($this->isHandling === true) {
+            return;
+        }
+
+        $eventSheet = $event->getDataSheet();
+
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
+        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
+        $ignoreKey = array_search($eventSheet, $this->ignoreDataSheets, true);
+        if ($ignoreKey !== false && null !== $logbook = ($this->ignoreLogbooks[$ignoreKey] ?? null)) {
+            $logbook->addSection('Proceeding with event' . $event::getEventName());
+        } else {
+            $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        }
+        
+        $mapperUxon = $this->getInputDataMapperUxon();
+        if ($mapperUxon !== null) {
+            $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $mapperUxon, $eventSheet->getMetaObject(), $this->getAction()->getMetaObject());
+            $inputSheet = $mapper->map($eventSheet, null, $logbook);
+        }
+        
+        $this->inputDataFromEvents[$event::getEventName()] = $inputSheet;
+    }
+    
     /**
      * 
      * @return string[]
@@ -642,6 +699,63 @@ class CallActionBehavior extends AbstractBehavior
     protected function setEventPreventDefault(string $value) : CallActionBehavior
     {
         $this->eventPreventDefault = $value;
+        return $this;
+    }
+    
+    protected function getInputDataFromEvent(string $eventAlias) : ?DataSheetInterface
+    {
+        return $this->inputDataFromEvents[$eventAlias] ?? null;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getInputDataEventAlias() : string
+    {
+        return $this->inputDataEventAlias;
+    }
+
+    /**
+     * Get the input data for the action from this event
+     *
+     * Technically, any type of data event selector will do - e.g.:
+     *  - `exface.Core.DataSheet.OnBeforeDeleteData`
+     *  - `\exface\Core\Events\DataSheet\OnBeforeDeleteData`
+     *  - `OnBeforeDeleteData::class` (in PHP)
+     *
+     * @uxon-property input_data_event_alias
+     * @uxon-type metamodel:event
+     * 
+     * @param string $value
+     * @return $this
+     */
+    protected function setInputDataEventAlias(string $value) : CallActionBehavior
+    {
+        $this->inputDataEventAlias = $value;
+        return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    protected function getInputDataMapperUxon() : ?UxonObject
+    {
+        return $this->inputDataMapperUxon;
+    }
+
+    /**
+     * A mapper to apply to the input data before passing it to the action
+     *
+     * @uxon-property input_data_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
+     * 
+     * @param UxonObject|null $mapper
+     * @return $this
+     */
+    protected function setInputDataMapper(?UxonObject $mapper) : CallActionBehavior
+    {
+        $this->inputDataMapperUxon = $mapper;
         return $this;
     }
 }
