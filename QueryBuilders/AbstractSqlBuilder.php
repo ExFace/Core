@@ -2954,6 +2954,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function appendCustomWhere($original_where_statement, $custom_statement, $table_alias = null, $operator = 'AND')
     {
         $table_alias = $table_alias ?? $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+        // TODO cannot use [#attribute#] placeholders here - their alias is not properly set without knowing the
+        // relaion path
         $customWhere = $this->replacePlaceholdersInSqlAddress($custom_statement, null, ['~alias' => $table_alias]);
         return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . $customWhere;
     }
