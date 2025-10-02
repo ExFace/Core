@@ -1027,7 +1027,7 @@ class DataSheet implements DataSheetInterface
                                 // TODO wouldn't it actually be better to update ALL values in the original sheet?
                                 // Right now it is only done if the UID was empty or the column is a subsheet. But
                                 // why???
-                                if ($col->getDataType() instanceof DataSheetDataType) {
+                                if ($col->isNestedData()) {
                                     foreach ($create_col->getValues() as $createdIdx => $value) {
                                         $col->setValue($rowIdxsToCreate[$createdIdx], $value);
                                     }
@@ -1119,7 +1119,7 @@ class DataSheet implements DataSheetInterface
             
             // If there is a relation path, but the column contains subsheets, it's data will
             // be treated in the subsheet, so we don't need to process it here.
-            if ($col->getDataType() instanceof DataSheetDataType) {
+            if ($col->isNestedData()) {
                 continue;
             }
             
@@ -1180,7 +1180,7 @@ class DataSheet implements DataSheetInterface
                 // Here we need to check, if it really is only one relation - if more,
                 // the column should go into a subsheet just like other related columns
                 // TODO this seems to work differently to dataCreate() - why?
-                case ($col->getDataType() instanceof DataSheetDataType) && $columnAttr->getRelationPath()->countRelations() <= 1:
+                case $col->isNestedData() && $columnAttr->getRelationPath()->countRelations() <= 1:
                     $update_ds->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
                     continue 2; 
                 // Update related columns, that the current query builder cannot write, as
@@ -1407,7 +1407,7 @@ class DataSheet implements DataSheetInterface
     {
         $counter = 0;
         
-        if (! ($column->getDataType() instanceof DataSheetDataType)) {
+        if (! $column->isNestedData()) {
             throw new InvalidArgumentException('Cannot update nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
         }
         
@@ -1492,7 +1492,7 @@ class DataSheet implements DataSheetInterface
                             // IDEA Theoretically we could check, if the related filter will be a foreign filter
                             // and only exclude it then. It is not quite clear, if we really need to filter over
                             // relatded data - if it helps or not.
-                            if ($col->getAttribute()->isFilterable() && ! $col->getAttribute()->isRelated() && ! ($col->getDataType() instanceof DataSheetDataType)) {
+                            if ($col->getAttribute()->isFilterable() && ! $col->getAttribute()->isRelated() && ! $col->isNestedData()) {
                                 $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
                             }
                         }
@@ -1726,7 +1726,7 @@ class DataSheet implements DataSheetInterface
                 // If the column contains nested data, its attribute alias is a relation. So we only need a subsheet
                 // if the relation path has more than one relation in it (otherwise it would be regular nested data).
                 // Regular related data always goes into a subsheet
-                if ($column->getDataType() instanceof DataSheetDataType) {
+                if ($column->isNestedData()) {
                     $relPath = $columnAttr->getRelationPath()->getSubpath(0, -1);
                     // If it is regular nested data, put it into the $nestedSheetCols array and skip the rest for
                     // this column.
@@ -1757,7 +1757,7 @@ class DataSheet implements DataSheetInterface
             
             // if the column contains nested data sheets, we will need to save them after we
             // created the data for the main sheet - so skip them here.
-            if ($column->getDataType() instanceof DataSheetDataType) {
+            if ($column->isNestedData()) {
                 $nestedSheetCols[] = $column;
                 continue;
             } 
@@ -1874,7 +1874,7 @@ class DataSheet implements DataSheetInterface
         $thisObj = $this->getMetaObject();
         $counter = 0;
         
-        if (! ($column->getDataType() instanceof DataSheetDataType)) {
+        if (! $column->isNestedData()) {
             throw new InvalidArgumentException('Cannot create nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
         }
         

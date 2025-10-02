@@ -495,6 +495,16 @@ class DataColumn implements DataColumnInterface
     }
     
     /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isNestedData()
+     */
+    public function isNestedData() : bool
+    {
+        return $this->getDataType() instanceof DataSheetDataType;
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isFormula()

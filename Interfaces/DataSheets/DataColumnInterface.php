@@ -379,6 +379,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return boolean
      */
     public function isAttribute() : bool;
+
+    /**
+     * Returns TRUE if the column contains nested data sheets (e.g. data of child objects)
+     * 
+     * @return bool
+     */
+    public function isNestedData() : bool;
     
     /**
      * 
