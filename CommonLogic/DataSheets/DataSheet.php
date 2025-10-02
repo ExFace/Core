@@ -1459,6 +1459,15 @@ class DataSheet implements DataSheetInterface
             }
             $relNestedSheetCol->setValues($relThisKeyVal);
             
+            // If the nested sheet does not have a UID column, or it is completely empty we should still check, if
+            // the data source already has corresponding rows - read all of them and try to match the contents against
+            // the subsheet data at hand. If they match, give the subsheet row the UID.
+            // TODO this is known to cause problems with subsheets of object with FileAttachmentBehavior (e.g. a
+            // ImageGallery with instant_upload:false. The subsheet contains the FILE__CONTENTS column and the
+            // logic below attempts to filter for it. But attachments will mostly save their files to a path
+            // containing the UID or another identifier of the attachment, so when there is no UID in the attachment
+            // subsheet, there is also not file path. The filter leads to a full-scan of the base path then which
+            // is useless and very slow. Maybe we should 
             if (! $nestedSheet->hasUidColumn(true) && $nestedSheet->getMetaObject()->hasUidAttribute()) {
                 // If the nested sheet has data, try to find the corresponding UID values in the data source
                 if (! $nestedSheet->isEmpty() && $nestedSheet->getMetaObject()->isReadable()) {
@@ -1469,8 +1478,6 @@ class DataSheet implements DataSheetInterface
                     
                     // Make a copy of the nested sheet
                     $nestedUidSheet = $nestedSheet->copy();
-                    // Add the UID column
-                    $nestedUidSheet->getColumns()->addFromUidAttribute();
                     // Add filters for every column in the original nested sheet
                     foreach ($nestedSheet->getColumns() as $col) {
                         // Skip the column with the relation to the main heet because we
@@ -1478,8 +1485,16 @@ class DataSheet implements DataSheetInterface
                         if ($relNestedSheetCol === $col) {
                             continue;
                         }
-                        if ($col->isAttribute() && $col->getAttribute()->isFilterable() && ! ($col->getDataType() instanceof DataSheetDataType)) {
-                            $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        if ($col->isAttribute()) {
+                            // Filter the UID-lookup sheet using values of all filterable columns unless they are
+                            // relations. Relations might produce foreign filters, that often lead to unexpected
+                            // issues or just performance drops. See explanation above.
+                            // IDEA Theoretically we could check, if the related filter will be a foreign filter
+                            // and only exclude it then. It is not quite clear, if we really need to filter over
+                            // relatded data - if it helps or not.
+                            if ($col->getAttribute()->isFilterable() && ! $col->getAttribute()->isRelated() && ! ($col->getDataType() instanceof DataSheetDataType)) {
+                                $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                            }
                         }
                     }
                     // Read the data
