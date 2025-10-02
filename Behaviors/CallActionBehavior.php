@@ -710,7 +710,7 @@ class CallActionBehavior extends AbstractBehavior
     /**
      * @return string
      */
-    protected function getInputDataEventAlias() : string
+    protected function getInputDataEventAlias() : ?string
     {
         return $this->inputDataEventAlias;
     }
