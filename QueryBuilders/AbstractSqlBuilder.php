@@ -786,6 +786,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $before_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
             $after_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
             $column = $attrAddress ? $attrAddress : $attrInsertAddress;
+            $dataType = $qpart->getDataType();
             if ((! $column || $this->isSqlStatement($column)) && ! $custom_insert_sql) {
                 continue;
             }
@@ -818,7 +819,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             
             foreach ($qpart->getValues() as $row => $value) {
                 try {
-                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
+                    $valueSql = $this->prepareInputValue($value, $dataType, $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . StringDataType::truncate($value, 100, false), null, $e);
                 }
@@ -826,14 +827,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If the value is to be put into a JSON inside a column, store the prepared value in a separate
                 // array for later use and skip further processing for this value.
                 if ($columnIsJson === true) {
-                    if ($value === "''") {
-                        $value = null;
+                    if ($dataType::isValueEmpty($value)) {
+                        $valueSql = 'null';
                     }
-                    $valuesForJsonCols[$row][$column][$jsonPath] = $value;
+                    $valuesForJsonCols[$row][$column][$jsonPath] = $valueSql;
                     continue;
                 }
 
-                $phs = array_merge(['~alias' => $mainObj->getAlias(), '~value' => $value], $rowPlaceholders[$row]);
+                $phs = array_merge(['~alias' => $mainObj->getAlias(), '~value' => $valueSql], $rowPlaceholders[$row]);
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     // NOTE: if you just write some kind of generator here, it
@@ -843,7 +844,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // INSERT_SQL must include something like IF('[#~value#]'!=''...)
                     $insert_sql = $this->replacePlaceholdersInSqlAddress($custom_insert_sql, null, $phs, $mainObj->getAlias());
                 } else {
-                    $insert_sql = $value;
+                    $insert_sql = $valueSql;
                 }
 
                 $values[$row][$column] = $insert_sql;
@@ -1104,6 +1105,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $subqueries_qparts = array();
         foreach ($this->getValues() as $qpart) {
             $attr = $qpart->getAttribute();
+            $dataType = $qpart->getDataType();
             if ($attr->getRelationPath()->toString()) {
                 $subqueries_qparts[] = $qpart;
                 continue;
@@ -1135,7 +1137,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $values = $qpart->getValues();
                 $value = reset($values);
                 try {
-                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
+                    $valueSql = $this->prepareInputValue($value, $dataType, $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                 }
@@ -1146,9 +1148,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 } else {
                     if($this->isJsonDataAddress($column)) {
                         list($column, $jsonPath) = $this->parseJsonDataAddress($column);
-                        $jsonColumnsByFilter[$column][$jsonPath] = $value;
+                        // Remove the JSON property if the value is empty!
+                        if ($dataType::isValueEmpty($value)) {
+                            $valueSql = 'null';
+                        }
+                        $jsonColumnsByFilter[$column][$jsonPath] = $valueSql;
                     } else {
-                        $updates_by_filter[] = $column . ' = ' . $value;
+                        $updates_by_filter[] = $column . ' = ' . $valueSql;
                     }
                 }
             } else {
@@ -1166,7 +1172,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
                 foreach ($qpart->getValues() as $row_nr => $value) {
                     try {
-                        $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
+                        $valueSql = $this->prepareInputValue($value, $dataType, $qpart->getDataAddressProperties());
                     } catch (\Throwable $e) {
                         throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row_nr . ' of SQL UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                     }
@@ -1187,13 +1193,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
                         if($this->isJsonDataAddress($column)) {
                             // Remove the JSON property if the value is empty!
-                            if ($value === "''" || $value === 'null') {
-                                $value = null;
+                            if ($dataType::isValueEmpty($value)) {
+                                $valueSql = 'null';
                             }
                             list($jsonColumn, $jsonPath) = $this->parseJsonDataAddress($column);
-                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$jsonColumn][$jsonPath] = $value;
+                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$jsonColumn][$jsonPath] = $valueSql;
                         } else {
-                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
+                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $valueSql;
                         }
                     }
                 }
