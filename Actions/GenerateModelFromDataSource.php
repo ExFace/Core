@@ -3,6 +3,8 @@ namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -42,6 +44,7 @@ class GenerateModelFromDataSource extends AbstractAction implements iModifyData
         
         $obj_col = $input_data->getColumns()->getByExpression('OBJECT');
         $data_src_col = $input_data->getColumns()->getByExpression('DATA_SOURCE');
+        
         $message = '';
         $created = 0;
         $skipped = 0;
@@ -50,6 +53,13 @@ class GenerateModelFromDataSource extends AbstractAction implements iModifyData
             foreach ($input_data->getRows() as $row){
                 $data_source = $this->getWorkbench()->data()->getDataSource($row[$data_src_col->getName()]);
                 $model_builder = $data_source->getConnection()->getModelBuilder();
+                $config = $row['BUILDER_CONFIG_UXON'];
+                if ($config) {
+                    $configArray = JsonDataType::decodeJson($config);
+                    $configArray = array_filter($configArray);
+                    $configUxon = new UxonObject($configArray);
+                    $model_builder->importUxonObject($configUxon);
+                }
                 
                 $created_ds = $model_builder->generateAttributesForObject($this->getWorkbench()->model()->getObject($row['OBJECT']), $row['OBJECT_DATA_ADDRESS_MASK'] ?? '');
                 $created += $created_ds->countRows();
@@ -57,6 +67,7 @@ class GenerateModelFromDataSource extends AbstractAction implements iModifyData
             }
             
             $message .= 'Created ' . $created . ' attributes, ' . $skipped . ' skipped as duplicates.';
+            $message .= $model_builder->getLogbook()->__toString();
             
         } elseif ($data_src_col && ! $data_src_col->isEmpty()) {
             

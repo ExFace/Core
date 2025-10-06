@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\ModelBuilders;
 
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataSources\ModelBuilderInterface;
@@ -104,6 +106,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      */
     protected function generateAttributes(MetaObjectInterface $meta_object, DataTransactionInterface $transaction = null) : DataSheetInterface
     {
+        $logbook = $this->getLogbook();
         $result_data_sheet = DataSheetFactory::createFromObjectIdOrAlias($meta_object->getWorkbench(), 'exface.Core.ATTRIBUTE');
         
         $imported_rows = $this->getAttributeDataFromTableColumns($meta_object, $meta_object->getDataAddress());
@@ -120,6 +123,12 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         
         if (! $result_data_sheet->isEmpty()) {
             $result_data_sheet->dataCreate(false, $transaction);
+        }
+        
+        if ($this->willUpdateAttributes()) {
+            $this->getLogbook()->addLine('Updating attributes')->addIndent(+1);
+            $this->updateAttributesForObject($meta_object, $transaction, $logbook);
+            $this->getLogbook()->addIndent(-1);
         }
         
         $result_data_sheet->setCounterForRowsInDataSource(count($imported_rows));
@@ -179,11 +188,74 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             }
         }
         
+        if ($this->willUpdateAttributes()) {
+            foreach ($imported_rows as $row) {
+                $object = $app->getWorkbench()->model()->getObjectByAlias($row['ALIAS'], $app->getAliasWithNamespace());
+                $this->updateAttributesForObject($object, $transaction);
+            }
+        }
+        
         $transaction->commit();
         
         $newObjectsSheet->setCounterForRowsInDataSource(count($imported_rows));
         
         return $newObjectsSheet;
+    }
+    
+    protected function updateAttributesForObject(MetaObjectInterface $object, DataTransactionInterface $transaction = null, LogBookInterface $logbook = null) : DataSheetInterface
+    {
+        $attrRowsFromSource = $this->getAttributeDataFromTableColumns($object, $object->getDataAddress());
+        if ($this->willUpdateDataTypeConfigs()) {
+            $oldAttrsSheet = DataSheetFactory::createFromObjectIdOrAlias($object->getWorkbench(), 'exface.Core.ATTRIBUTE');
+            $oldAttrsSheet->getColumns()->addFromSystemAttributes();
+            $oldAttrsSheet->getFilters()->addConditionFromString('OBJECT', $object->getId(), ComparatorDataType::EQUALS);
+            $updateAttrsSheet = $oldAttrsSheet->copy();
+            $oldAttrsSheet->getColumns()->addMultiple([
+                'ALIAS',
+                'DATA_ADDRESS',
+                'CUSTOM_DATA_TYPE'
+            ]);
+            $oldAttrsSheet->dataRead();
+            foreach ($attrRowsFromSource as $freshRow) {
+                $attrAddress = $freshRow['DATA_ADDRESS'];
+                $oldRowIdxs = $oldAttrsSheet->findRowsByValues(['DATA_ADDRESS' => $attrAddress]);
+                foreach ($oldRowIdxs as $oldRowIdx) {
+                    $oldRow = $oldAttrsSheet->getRow($oldRowIdx);
+                    $newDataTypeJson = $freshRow['CUSTOM_DATA_TYPE'];
+                    if ($newDataTypeJson) {
+                        $newDataTypeUxon = UxonObject::fromJson($newDataTypeJson);
+                    } else {
+                        continue;
+                    }
+                    $oldDataTypeJson = $oldRow['CUSTOM_DATA_TYPE'];
+                    if ($oldDataTypeJson) {
+                        $oldDataTypeUxon = UxonObject::fromJson($oldDataTypeJson);
+                    }
+                    if ($newDataTypeUxon && !$newDataTypeUxon->isEmpty()) {
+                        $updateDataTypeUxon = $oldDataTypeUxon ?? new UxonObject();
+                        $foundChanges = false;
+                        foreach ($this->getUpdateAttributeDataTypeProperties() as $propName) {
+                            if ($newDataTypeUxon->hasProperty($propName)) {
+                                $updateDataTypeUxon->setProperty($propName, $newDataTypeUxon->getproperty($propName));
+                                $logbook->addLine('Updated `' . $oldRow['ALIAS'] . '`: ' . $propName . ' `' . $oldDataTypeUxon->getproperty($propName) . '` => `' . $newDataTypeUxon->getproperty($propName) . '`');
+                                $foundChanges = true;
+                            }
+                        }
+                        if ($foundChanges) {
+                            $updatedRow = $oldRow;
+                            unset($updatedRow['DATA_ADDRESS']);
+                            unset($updatedRow['ALIAS']);
+                            $updatedRow['CUSTOM_DATA_TYPE'] = $updateDataTypeUxon->toJson();
+                            $updateAttrsSheet->addRow($updatedRow);
+                        }
+                    }
+                }
+            }
+            if (! $updateAttrsSheet->isEmpty()) {
+                $updateAttrsSheet->dataUpdate(false, $transaction);
+            }
+        }
+        return $updateAttrsSheet;
     }
     
     /**

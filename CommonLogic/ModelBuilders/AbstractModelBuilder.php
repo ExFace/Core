@@ -1,7 +1,11 @@
 <?php
 namespace exface\Core\CommonLogic\ModelBuilders;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSources\ModelBuilderInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\AppInterface;
@@ -10,14 +14,22 @@ use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\ModelBuilders\AbstractSqlModelBuilder;
 
 abstract class AbstractModelBuilder implements ModelBuilderInterface
 {
+    use ImportUxonObjectTrait;
+    
     private $data_types = null;
     
     private $modelLanguage = 'en';
 
     private $data_connector = null;
+
+    private $updateAttributePropAliases = [];
+    private $updateDataTypePropNames = [];
+    
+    private $logbook = null;
     
     public function __construct(DataConnectionInterface $data_connector)
     {
@@ -106,5 +118,63 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
     {
         $this->modelLanguage = $value;
         return $this;
+    }
+
+    /**
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        // TODO
+        return new UxonObject();
+    }
+    
+    protected function getUpdateAttributeDataTypeProperties() : array
+    {
+        return $this->updateDataTypePropNames;
+    }
+
+    /**
+     * Array of custom data type property names to update for attributes
+     *
+     * @uxon-property update_attribute_data_type_properties
+     * @uxon-type array
+     * @uxon-template ["length_min","length_max"]
+     *
+     * @param bool $trueOrFalse
+     * @return AbstractSqlModelBuilder
+     */
+    protected function setUpdateAttributeDataTypeProperties(UxonObject $arrayOrPropNames) : AbstractSqlModelBuilder
+    {
+        $this->updateDataTypePropNames = $arrayOrPropNames->toArray();
+        return $this;
+    }
+
+    protected function setUpdateAttributeProperties(UxonObject|array $attributeAliases) : AbstractSqlModelBuilder
+    {
+        $this->updateAttributePropAliases = $attributeAliases instanceof UxonObject ? $attributeAliases->toArray() : $attributeAliases;
+        return $this;
+    }
+
+    protected function willUpdateDataTypeConfigs() : bool
+    {
+        return ! empty($this->updateDataTypePropNames);
+    }
+
+    protected function willUpdateAttributes() : bool
+    {
+        return $this->willUpdateDataTypeConfigs() || ! empty($this->updateAttributePropAliases);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ModelBuilderInterface::getLogbook()
+     */
+    public function getLogbook() : LogBookInterface
+    {
+        if ($this->logbook === null) {
+            $this->logbook = new MarkdownLogBook('Model builder');
+        }
+        return $this->logbook;
     }
 }
