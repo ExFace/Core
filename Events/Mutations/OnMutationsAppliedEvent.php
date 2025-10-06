@@ -51,7 +51,12 @@ class OnMutationsAppliedEvent extends AbstractEvent implements iCanGenerateDebug
         $appliedCnt = count($applied);
         $appliedList = '';
         foreach ($applied as $i => $mutationApplied) {
-            $appliedList .= "\n" . ($i + 1) . ". {$mutationApplied->getMutation()->getName()}}";
+            if ($mutationApplied->hasChanges()) {
+                $mutationSummary = 'see tab "' . ($i + 1) . '"';
+            } else {
+                $mutationSummary = 'no changes produced';
+            }
+            $appliedList .= "\n" . ($i + 1) . ". {$mutationApplied->getMutation()->getName()}: {$mutationSummary}";
         }
         return <<<MD
 # Mutations for {$this->getSubjectName()}
