@@ -24,6 +24,11 @@ use exface\Core\QueryBuilders\AbstractSqlBuilder;
  * Instead of letting the data source actually remove data on delete-operations, this behavior
  * performs an update and sets the attribute specified by the `soft_delete_attribute_alias`
  * to the `soft_delete_value`, thus marking the data item as "deleted".
+ *
+ *  Note, that `soft_delete_value` value will be parsed into the data type of the soft-delete
+ *  attribute, so you can use any supported notation: e.g. a `0` for the current timestamp for
+ *  time-attribute (e.g. if you have a `deleted_on` attribute with a timestamp instead of
+ *  a `deleted_flag`).
  * 
  * Soft-deleted data rows will be automatically filtered away when reading data. However, there
  * are different algorithms, that can be used here. Normally, the best one is selected
@@ -36,10 +41,8 @@ use exface\Core\QueryBuilders\AbstractSqlBuilder;
  * for SQL-based objects because it will automatically filter JOINs too.
  * - `via_datatsheet_condition` - TODO
  * 
- * Note, that `soft_delete_value` value will be parsed into the data type of the soft-delete
- * attribute, so you can use any supported notation: e.g. a `0` for the current timestamp for
- * time-attribute (e.g. if you have a `deleted_on` attribute with a timestamp instead of 
- * a `deleted_flag`).
+ * The default reading logic for soft-delete objects can be configured in `System.config.json`
+ * in `BEHAVIORS.SOFTDELETE.FILTER_DELETED_ON_READ`.
  * 
  * ## Examples
  * 
@@ -237,10 +240,16 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
     
     protected function getFilterOnReadAlgorithm() : string
     {
+        // Off if debug mode
         if ($this->getWorkbench()->getContext()->getScopeUser()->getVariable(DebugContext::VAR_SHOW_HIDDEN) === true) {
             return self::ON_READ_FILTER_OFF;
         }
-        if ($this->filterDeletedOnRead === null || $this->filterDeletedOnRead === self::ON_READ_FILTER_AUTO) {
+        // Default from System.config.json
+        if ($this->filterDeletedOnRead === null) {
+            $this->filterDeletedOnRead = $this->getWorkbench()->getConfig()->getOption('BEHAVIORS.SOFTDELETE.FILTER_DELETED_ON_READ');
+        }
+        // Select best option if auto mode
+        if ($this->filterDeletedOnRead === self::ON_READ_FILTER_AUTO) {
             if ($this->canUseSqlCustomWhere()) {
                 $this->filterDeletedOnRead = self::ON_READ_FILTER_VIA_CUSTOM_SQL_WHERE;
             } else {
