@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -474,4 +475,15 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return DataColumnInterface
      */
     public function splitRowsWithValueLists() : DataColumnInterface;
+
+    /**
+     * @param UxonObject $dataSheetUxon
+     * @return DataColumnInterface
+     */
+    public function setNestedDataTemplate(UxonObject $dataSheetUxon) : DataColumnInterface;
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getNestedDataTemplateUxon() : ?UxonObject;
 }

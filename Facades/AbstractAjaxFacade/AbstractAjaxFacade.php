@@ -580,6 +580,27 @@ HTML;
             $colName = $col->getName();
             $colType = $col->getDataType();
             switch (true) {
+                // Normalize nested data to JSON objects
+                case $col->isNestedData():
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName];
+                        switch (true) {
+                            case $val instanceof UxonObject:
+                                $json = $val->toArray();
+                                break;
+                            case is_array($val):
+                                // Do nothing - the array will be JSON encoded later
+                                break;
+                            default:
+                                $json = [
+                                    "oId" => $data_sheet->getMetaObject()->getId(), 
+                                    "rows" => []
+                                ];
+                                break;
+                        }
+                        $rows[$i][$colName] = $json;
+                    }
+                    break;
                 case $colType instanceof HtmlDataType:
                     // FIXME #xss-protection sanitize HTML here!
                     break;
