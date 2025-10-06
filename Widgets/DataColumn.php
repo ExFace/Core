@@ -132,6 +132,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $mergeCells = false;
 
     private $dataTypeUxon = null;
+    
+    private ?UxonObject $nestedDataSheetUxon = null;
 
     public function getAttributeAlias()
     {
@@ -1346,5 +1348,37 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->mergeCells = $value;
         return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getNestedDataTemplateUxon() : ?UxonObject
+    {
+        return $this->nestedDataSheetUxon;
+    }
+
+    /**
+     * A template for nested data in this column
+     * 
+     * @uxon-property nested_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":""}]}
+     * 
+     * @param UxonObject $data
+     * @return DataColumn
+     */
+    protected function setNestedData(UxonObject $data) : DataColumn
+    {
+        $this->nestedDataSheetUxon = $data;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasNestedData() : bool
+    {
+        return $this->nestedDataSheetUxon !== null;
     }
 }

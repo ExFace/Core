@@ -808,6 +808,14 @@ class DataSheet implements DataSheetInterface
             $this->sort($postprocessorSorters);
         }
         
+        // Read nested data
+        foreach ($this->getColumns() as $col) {
+            if (! $col->isNestedData()) {
+                continue;
+            }
+            $this->dataReadNestedSheet($col);            
+        }
+        
         $this->getWorkbench()->eventManager()->dispatch(new onReadDataEvent(
             $this,
             null,
@@ -924,6 +932,50 @@ class DataSheet implements DataSheetInterface
         }
         
         return $query;
+    }
+
+    protected function dataReadNestedSheet(DataColumnInterface $column) : int
+    {
+        if (! $column->isNestedData()) {
+            throw new InvalidArgumentException('Cannot update nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
+        }
+
+        $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
+        $relPathFromNestedSheet = $relPathToNestedSheet->reverse();
+        $relThisSheetKeyAttr = $relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute();
+        $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relThisSheetKeyAttr);
+        if (! $relThisSheetKeyCol) {
+            throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
+        }
+
+        // Instantiate a subsheet from the value
+        $nestedSheet = DataSheetFactory::createSubsheetFromUxon(
+            $this, // parent
+            $column->getNestedDataTemplateUxon(), // subsheet UXON
+            $relPathFromNestedSheet->toString(), // JOIN key alias in subsheet
+            $relThisSheetKeyCol->getAttributeAlias(), // JOIN key alias in parent
+            $relPathToNestedSheet //relation path from parent sheet to nested sheet
+        );
+
+        // Add a column with the relation to the parent sheet
+        if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
+            $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
+        }
+        
+        $filterVals = array_unique($relThisSheetKeyCol->getValues());
+        $nestedSheet->getFilters()->addConditionFromValueArray($relPathFromNestedSheet->toString(), $filterVals);
+        $counter = $nestedSheet->dataRead();
+        
+        foreach ($relThisSheetKeyCol->getValues() as $rowIdx => $thisSheetKey) {
+            $rowIdxs = $relNestedSheetCol->findRowsByValue($thisSheetKey);
+            $rows = $nestedSheet->getRowsByIndex($rowIdxs);
+            $column->setValue($rowIdx, [
+                'oId' => $nestedSheet->getMetaObject()->getId(),
+                'rows' => $rows
+            ]);
+        }
+
+        return $counter;
     }
 
     public function countRows() : int
@@ -1942,7 +1994,7 @@ class DataSheet implements DataSheetInterface
             $nestedFKeyCol->setValueOnAllRows($rowKey);
             
             // set the filter value in the nested sheet for filter to parent sheet to the new value
-            // else BEhaviors reacting on create events might fail because timestampingbehavior
+            // else behaviors reacting on create events might fail because timestampingbehavior
             foreach ($nestedSheet->getFilters()->getConditionsRecursive() as $cond) {
                 if ($cond->getLeftExpression()->isMetaAttribute() && $nestedFKeyAttr->isExactly($cond->getLeftExpression()->getAttribute())) {
                     $cond->setValue($rowKey);

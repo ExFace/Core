@@ -65,6 +65,8 @@ class DataColumn implements DataColumnInterface
     private $formula = null;
 
     private $writable = null;
+    
+    private ?UxonObject $nestedSheetTemplateUxon = null;
 
     function __construct($expression, DataSheetInterface $data_sheet, $name = '')
     {
@@ -237,6 +239,11 @@ class DataColumn implements DataColumnInterface
     public function getDataType()
     {
         if (null === $this->data_type) {
+            // If we have a nested data template, we obviously will need a nested data type
+            if ($this->nestedSheetTemplateUxon !== null) {
+                $this->data_type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DataSheetDataType::class);
+                return $this->data_type;
+            }
             // Determine the data type from the columns expression.
             // However, attributes need some special treatment as we need to detect columns
             // with subsheets - that is, attributes, that represent a reverse relation.
@@ -501,7 +508,7 @@ class DataColumn implements DataColumnInterface
      */
     public function isNestedData() : bool
     {
-        return $this->getDataType() instanceof DataSheetDataType;
+        return ($this->nestedSheetTemplateUxon !== null) || ($this->getDataType() instanceof DataSheetDataType);
     }
     
     /**
@@ -1184,5 +1191,24 @@ class DataColumn implements DataColumnInterface
             }
         }
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataColumnInterface::setNestedDataTemplate()
+     */
+    public function setNestedDataTemplate(UxonObject $dataSheetUxon) : DataColumnInterface
+    {
+        $this->nestedSheetTemplateUxon = $dataSheetUxon;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataColumnInterface::getNestedDataTemplate()
+     */
+    public function getNestedDataTemplateUxon() : ?UxonObject
+    {
+        return $this->nestedSheetTemplateUxon;
     }
 }
