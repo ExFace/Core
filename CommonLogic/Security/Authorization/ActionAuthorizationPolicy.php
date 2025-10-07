@@ -202,7 +202,6 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             // Match action
-            $action = null;
             if (null !== $selector = $this->actionSelector) {
                 switch(true) {
                     case $selector->isFilepath():
