@@ -522,23 +522,40 @@ JS;
                 aPastedData.push(cells);
             });
 
-            iXEnd = iXStart + aPastedData[0].length;
 
-            for (var i = iXStart; i <= iXEnd; i++) {
-                oColOpts = el.jspreadsheet.options.columns[i];
-                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
-                    if (typeof(oColOpts.filter) == 'function') {
-                        oDropdownVals[i - iXStart] = oColOpts.filter(el, null, (i - iXStart), null, oColOpts.source);
-                    } else {
-                        oDropdownVals[i - iXStart] = oColOpts.source;
-                    }
+            // if pasted data contains dropdown columns, get the source arrays
+            // this way, we can then set the actual value (id) and not just the label on paste
+            var iPastedColIdx = 0;
+            var iTableColIdx = iXStart;
+            while (iPastedColIdx < aPastedData[0].length && iTableColIdx < el.jspreadsheet.options.columns.length) {
+                var oColOpts = el.jspreadsheet.options.columns[iTableColIdx];
+
+                // skip hidden columns in the table (otherwise the pasted indices will be messed up)
+                if (oColOpts !== undefined && oColOpts.type === 'hidden') {
+                    iTableColIdx++;
+                    continue;
                 }
-            };
+
+                // only process autocomplete columns with a source
+                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    
+                    // dropdown validation is now handled via isDropdownValueValid, so we dont need to filter here
+                    // otherwise we might run into issues with dynamic filters here (?)
+
+                    // save unfiltered dropdown source
+                    oDropdownVals[iPastedColIdx] = oColOpts.source;
+                }
+
+                iPastedColIdx++;
+                iTableColIdx++;
+            }
 
             if (oDropdownVals === {}) {
                 return selectedCells;
             }
 
+            // for each value in a dropdown column, set the id not the label value
+            // if no fitting id is found, set empty
             aPastedData.forEach(function(aRow) {  
                 var aValRows, mVal, oValRow, bKeyFound;
                 for (var iCol in oDropdownVals) {
