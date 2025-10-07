@@ -810,7 +810,7 @@ class DataSheet implements DataSheetInterface
         
         // Read nested data
         foreach ($this->getColumns() as $col) {
-            if (! $col->isNestedData()) {
+            if (null === $col->getNestedDataTemplateUxon()) {
                 continue;
             }
             $this->dataReadNestedSheet($col);            
