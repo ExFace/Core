@@ -44,6 +44,8 @@ use exface\Core\Factories\ConditionGroupFactory;
 /**
  * Policy for access to actions.
  * 
+ * ## Targets
+ * 
  * Possible targets:
  * 
  * - User role - policy applies to users with this role only
@@ -68,7 +70,7 @@ use exface\Core\Factories\ConditionGroupFactory;
  * - `apply_if_target_app_matches_page_app` - means, a policy targeting an app is
  * applied to actions performed on pages of that app
  * 
- * Additional conditions:
+ * ## Additional conditions
  * 
  * - `command_line_task`, `http_task`, `scheduler_task` - if set, the policy only 
  * applies to the respective task type (`true`) or is explicitly not applicable 
@@ -78,14 +80,24 @@ use exface\Core\Factories\ConditionGroupFactory;
  * (`false`). NOTE: such policies never apply to actions, that explicitly do not 
  * require a trigger widget - e.g. `exface.Core.Login` or similar.
  * - `exclude_actions` - list of action selectors not to apply this policy to
- * - `apply_if_input_columns_exist` - only apply this policy if there is input data and that input
- * data has ALL listed columns - the policy will become `NotApplicable` if at least one is missing
- * - `apply_if` - conditions (filters) to evaluate when authorizing - the policy
- * will become `NotApplicable` if these condition evaluate to FALSE.
- * - `apply_if_exists` - a data sheet, that will be read when authorizing - the
+ * 
+ * ### Data-driven conditions
+ * 
+ * A policy can be applied to certain input data only. If any of these conditions is defined and
+ * the action has no input data or the input data does not match all conditions, the policy will
+ * become `NotApplicable`.
+ * 
+ * The conditions are evaluated in the following order and can be used in combinations:
+ * 
+ * 1. `apply_if_input_columns_exist` - only apply this policy if there is input data and that input
+ * data has ALL listed columns - the policy will become `NotApplicable` if at least one expression is 
+ * missing. This is handy for editor actions with different types of prefill.
+ * 2. `apply_if` - conditions (filters) to evaluate when authorizing - the policy
+ * will become `NotApplicable` if the condition group evaluates to FALSE.
+ * 3. `apply_if_exists` - a data sheet, that will be read when authorizing - the
  * policy will become `NotApplicable` if it is empty.
- *  - `apply_if_not_exists` - a data sheet, that will be read when authorizing - the
- *  policy will become `NotApplicable` if it is NOT empty.
+ * 4. `apply_if_not_exists` - a data sheet, that will be read when authorizing - the
+ * policy will become `NotApplicable` if it is NOT empty.
  * 
  * @author Andrej Kabachnik
  *
@@ -190,6 +202,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             // Match action
+            $action = null;
             if (null !== $selector = $this->actionSelector) {
                 switch(true) {
                     case $selector->isFilepath():
@@ -310,27 +323,31 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             $hasInputData = $task !== null && $task->hasInputData() === true;
             $inputData = null;
             $inputDataMapped = null;
+            $requiredCols = $this->getApplyIfInputColumnsExist();
+            $applyIfExists = $this->getApplyIfExists();
+            $applyIfNotExists = $this->getApplyIfNotExists();
+            $needsInputData = ! empty($requiredCols) || $this->hasApplyIf() || $applyIfExists !== null || $applyIfNotExists !== null;
             $explainInputData = '';
-            if ($hasInputData === true) {
+            if ($hasInputData === true && $needsInputData === true) {
                 $inputData = $task->getInputData();
                 $explainInputData = ' ' . $inputData->getMetaObject()->__toString();
                 if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
                     $inputDataMapped = $mapper->map($inputData);
-                    $explainInputData .= ' mapped from ' . $inputData->getMetaObject()->__toString();
+                    $explainInputData = ' ' . $inputData->getMetaObject()->__toString() . ' mapped from' . $explainInputData;
                 } else {
                     $inputDataMapped = $inputData;
                 }
             }
             
             // Match apply_if_input_columns_exist
-            if (null !== $requiredCols = $this->applyIfInputColumnsExist) {
+            if (null !== $requiredCols) {
                 if (! $hasInputData) {
                     return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_input_columns_exist` not met: no input data!');
                 }
                 
                 foreach ($requiredCols as $expr) {
                     if (! $inputDataMapped->getColumns()->getByExpression($expr)) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_input_columns_exist` not met: "' . $expr . '" not found in input data' . $explainInputData . '!');
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_input_columns_exist` not met: "' . $expr . '" not found in input data of' . $explainInputData . '!');
                     }
                 }
                 $applied = true;
@@ -349,7 +366,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                     
                     foreach ($checkData->getRows() as $rowIdx => $row) {
                         if ($conditionGrp->evaluate($checkData, $rowIdx, false) === false) {
-                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data');
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data' . $explainInputData . '!');
                         }
                     }
                     $applied = true;
@@ -357,23 +374,23 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                     // TODO better to add something like $conditionGrp->isStatic() and check that here.
                     try {
                         if ($conditionGrp->evaluate() === false) {
-                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched');
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched with no action input data!');
                         } else {
                             $applied = true;
                         }
                     } catch (InvalidArgumentException $e) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` cannot be evaluated: ' . $e->getMessage());
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` cannot be evaluated without action input data: ' . $e->getMessage());
                     }
                 }
             }
 
             // Match apply_if_exists
-            if (null !== $condition = $this->getApplyIfExists()) {
+            if (null !== $applyIfExists) {
                 if ($hasInputData) {
-                    if (! $condition->evaluate($inputDataMapped)) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_exists` not matched by action input data. ' . $condition->explain($inputDataMapped));
+                    if (! $applyIfExists->evaluate($inputDataMapped)) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_exists` not matched by action input data. ' . $applyIfExists->explain($inputDataMapped));
                     } else {
-                        $appliedExplanation = $condition->explain($inputDataMapped);
+                        $appliedExplanation = $applyIfExists->explain($inputDataMapped);
                         $applied = true;
                     }
                 } else {
@@ -385,12 +402,12 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             }
 
             // Match apply_if_not_exists
-            if (null !== $condition = $this->getApplyIfNotExists()) {
+            if (null !== $applyIfNotExists) {
                 if ($hasInputData) {
-                    if ($condition->evaluate($inputDataMapped)) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data. ' . $condition->explain($inputDataMapped));
+                    if ($applyIfNotExists->evaluate($inputDataMapped)) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data. ' . $applyIfNotExists->explain($inputDataMapped));
                     } else {
-                        $appliedExplanation = $condition->explain($inputDataMapped);
+                        $appliedExplanation = $applyIfNotExists->explain($inputDataMapped);
                         $applied = true;
                     }
                 } else {
@@ -916,7 +933,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
      * This is the exact opposite of `apply_if_exists`. It uses the same logic, but makes the policy
      * inapplicable if anything is found.
      *
-     * @uxon-property apply_if_exists
+     * @uxon-property apply_if_not_exists
      * @uxon-type \exface\Core\CommonLogic\Model\ExistsCondition
      * @uxon-template {"data_sheet": {"object_alias": "", "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "==", "value": ""}]}}}
      *
@@ -926,6 +943,14 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->applyIfNotExistsUxon = $uxon;
         return $this;
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function getApplyIfInputColumnsExist() : ?array
+    {
+        return $this->applyIfInputColumnsExist;
     }
 
     /**
