@@ -583,21 +583,29 @@ HTML;
                 // Normalize nested data to JSON objects
                 case $col->isNestedData():
                     foreach ($rows as $i => $row) {
-                        $val = $row[$colName];
+                        $val = $row[$colName] ?? null;
                         switch (true) {
+                            // Skip empty values - do not even add a key to the row to keep backwards
+                            // compatibility with times where reading nested data was not possible
+                            case $val === null:
+                            case $val === '':
+                                continue 2;
+                            // Transform UXON to array to ensure a nested structure in the ned
                             case $val instanceof UxonObject:
-                                $rows[$i][$colName] = $val->toArray();
+                                $json = $val->toArray();
                                 break;
+                            // Keep arrays as-is
                             case is_array($val):
-                                // Do nothing - the array will be JSON encoded later
+                                $json = $val;
                                 break;
+                            // Leave all other values as-is.
+                            // TODO but wouldn't we need to parse a JSON string to an array here? What to do if
+                            // that fails though?
                             default:
-                                $rows[$i][$colName] = [
-                                    "oId" => $data_sheet->getMetaObject()->getId(), 
-                                    "rows" => []
-                                ];
+                                $json = $val;
                                 break;
                         }
+                        $rows[$i][$colName] = $json;
                     }
                     break;
                 case $colType instanceof HtmlDataType:
