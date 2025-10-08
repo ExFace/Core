@@ -98,6 +98,11 @@ class Gantt extends DataTree
     
     /**
      * Same as setTasks() - just for better compatibility with Scheduler widget.
+     *
+     * @uxon-property items
+     * @uxon-type \exface\Core\Widgets\Parts\DataCalendarItem
+     * @uxon-template {"start_time": ""}
+     * 
      * @param UxonObject $uxon
      * @return Gantt
      */

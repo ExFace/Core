@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WidgetInterface;
@@ -18,6 +19,7 @@ use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 use exface\Core\Widgets\Popup;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Behaviors\FileAttachmentBehavior;
+use exface\Core\Widgets\WidgetGrid;
 
 
 /**
@@ -811,6 +813,9 @@ class Uploader implements WidgetPartInterface
                 $uxon->setProperty('caption', $translator->translate('WIDGET.UPLOADER.UPLOAD_EDIT_POPUP.TITLE')); 
             }
             $this->uploadEditPopup = WidgetFactory::createFromUxonInParent($this->getWidget(), $uxon, 'Popup');
+            if ($this->uploadEditPopup instanceof iLayoutWidgets) {
+                $this->uploadEditPopup->setColumnsInGrid(1);
+            }
         }
         return $this->uploadEditPopup;
     }

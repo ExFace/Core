@@ -115,6 +115,8 @@
 	"ACTION.READDATA.NAME": "Search",
     "ACTION.READDATA.SEARCH": "Search",
     "ACTION.READDATA.RESULT": "%number% entries read",
+    "ACTION.CALCULATEDATA.NAME": "Calculate",
+    "ACTION.CALCULATEDATA.RESULT": "%number% entries calculated",
     "ACTION.REFRESHWIDGET.NAME": "Refresh",
 	"ACTION.RESETWIDGET.NAME": "Reset",
 	
@@ -182,6 +184,9 @@
     "CONTEXT.DEBUG.TRACE_NAME": "Trace",
     "CONTEXT.DEBUG.TRACE_JS_STARTED": "JS Tracing ON: front-end JavaScript errors will now be visible a popup message",
     "CONTEXT.DEBUG.TRACE_JS_STOPPED": "JS Tracing OFF: front-end errors will now be logged in background",
+    "CONTEXT.DEBUG.SHOW_HIDDEN": "Show hidden data",
+    "CONTEXT.DEBUG.SHOW_HIDDEN_STARTED": "Show hidden data ON: soft-deleted data will become visible again",
+    "CONTEXT.DEBUG.SHOW_HIDDEN_STOPPED": "Show hidden data OFF: soft-deleted data will not be visible",
     "CONTEXT.DEBUG.TRACE_JS": "Trace front-end errors",
     "CONTEXT.DEBUG.TRACES_JS_LIST_BUTTON": "View front-end traces",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION": "Intercept user communication",
@@ -220,6 +225,9 @@
 	"DATASHEET.ERROR.LOOKUP_FAILED": "Could not find value %values% in \"%lookup_object%\"!|Could not find values %values% in \"%lookup_object%\"!",
 	"DATASHEET.ERROR.AFFECTED_ROWS": "Affected row(s): %row_numbers%",
 	
+    "DATATYPE.DATE.ERROR_INVALID_VALUE": "Invalid date/time value: \"%value%\"",
+    "DATATYPE.NUMBER.ERROR_INVALID_VALUE": "Value \"%value%\" is not a number",
+  
 	"DATATYPE.VALIDATION.MUST": "Must",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "have %condition% characters",
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "match the pattern %regex%",
@@ -461,8 +469,11 @@
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_MISSING": "Please enter a setup name",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE": "Save current view",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_HINT": "Saves the current configuration of the table as a new view",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE": "Update View",
+	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT": "Updates the selected view with the current configuration of the table",
 	"WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_SUCCESS": "Setup was saved successfully",
   "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE": "Favorite",
+  "WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE": "Active",
   "WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT": "Mark as favorite or vice versa",
 	"WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION": "Grouping",
 	
@@ -475,6 +486,9 @@
 	"WIDGET.TEXT.STYLE_UNDERLINE": "Underline",
 	"WIDGET.TEXT.STYLE_ITALIC": "Italic",
 	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Strike-through",
+  
+  "WIDGET.TEXTMENTION.COLLISION": "Mention widget collision: The current input has activated multiple mention widgets with the following activation characters:",
+  "WIDGET.TEXTMENTION.AJAX_CALL_ERROR": "The data could not be loaded. See logs for more information.",
 	
 	"WIDGET.UXONEDITOR.HELP": "Help",
 	"WIDGET.UXONEDITOR.JSON_PATH": "JSON Path",
@@ -570,6 +584,7 @@
 	"ERROR.ECHARTS.AXIS_NO_DATA": "No data received for axis",
 	
 	"ERROR.CAPTION": "Error",
+  "ERROR.No_RESULTS": "No results",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
 	"ERROR.OBJECT_CAPTION": "Object \"%name%\"",

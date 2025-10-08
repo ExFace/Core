@@ -222,6 +222,12 @@ class Data
                     $data_sheet->getColumns()->addFromExpression($col->getCalculationExpression(), $col->getDataColumnName());
                 }
                 
+                if ($col->hasNestedData()) {
+                    $nestedCol = $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias());
+                    $nestedCol->setNestedDataTemplate($col->getNestedDataTemplateUxon());
+                    continue;
+                }
+                
                 $cellWidget = $col->getCellWidget();
                 
                 // Don't add anything to the data sheet if the widget cannot even use it

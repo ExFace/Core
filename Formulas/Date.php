@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
@@ -19,6 +20,7 @@ use exface\Core\CommonLogic\Model\Formula;
  * - `=Date('1585090800')` = 2020-03-25
  * - `=Date('1585090800', 'dd.MM.yyyy')` = 25.03.2020
  * - `=Date('2020-03-25', 'yyyyMMddHHmmss')` = 20200325000000
+ * - `=Date('2020-03-25', 'ww ''yy')` = 13 '20
  * - `=Date('2021-07-08', 'E')` = Thu
  * - `=Date('2021-07-08', 'locale')` = 08.07.2021 - depending on the date format set for the current language
  * - `=Date('25.03.20', null, 'dd.MM.yy')` = 2020-03-25
@@ -68,11 +70,19 @@ class Date extends Formula
         $dataType = $this->getDataType();
         $dataType->setFormat($formatTo);
         
-        if ($formatFrom !== null) {
-            $phpDate = DateDataType::castFromFormat($date, $formatFrom, $dataType->getLocale(), true);
-        } else {
-            $phpDate = $dataType::castToPhpDate($date);
+        // Parse the given value
+        try {
+            if ($formatFrom !== null) {
+                $phpDate = DateDataType::castFromFormat($date, $formatFrom, $dataType->getLocale(), true);
+            } else {
+                $phpDate = $dataType::castToPhpDate($date);
+            }
+        } catch (\Throwable $e) {
+            // Wrap casting errors in parser errors because they are more informative
+            $badValue = $e->getValue() ?? $date;
+            throw $dataType->createValidationParseError($badValue, null, null, null, $e);
         }
+        
         try {
             return $dataType->formatDate($phpDate);
         } catch (DataTypeCastingError $e) {

@@ -27,19 +27,17 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
 
     /**
      * A behavior list will activate every behavior right after it has been added
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\EntityList::add()
+     * 
+     * @see BehaviorListInterface::add()
      * @param BehaviorInterface $behavior            
      */
-    public function add($behavior, $uid = null)
+    public function add($behavior, $uid = null, bool $register = true)
     {
         if (! $behavior->getObject()->isExactly($this->getParent())) {
             $behavior->setObject($this->getParent());
         }
         $result = parent::add($behavior, $uid);
-        if (! $behavior->isDisabled() && $this->autoregisterBehaviors === true) {
+        if (! $behavior->isDisabled() && $this->autoregisterBehaviors === true && $register === true) {
             $behavior->register();
         }
         return $result;

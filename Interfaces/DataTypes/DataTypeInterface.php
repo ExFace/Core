@@ -168,6 +168,14 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
     public function getValidationErrorMessage() : ?MessageInterface;
 
     /**
+     * Returns a user-oriented translated reason for why the given value is invalid
+     * 
+     * @param $value
+     * @return string|null
+     */
+    public function getValidationErrorReason($value) : ?string;
+
+    /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.
      *
      * @param mixed $string            

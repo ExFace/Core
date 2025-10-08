@@ -480,7 +480,7 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::extendFromObject()
      */
-    public function extendFromObject(MetaObjectInterface $parent)
+    public function extendFromObject(MetaObjectInterface $parent, bool $registerBehaviors = true) : void
     {
         // Do nothing, if trying to extend itself
         if ($parent->getId() === $this->getId()) {
@@ -497,7 +497,7 @@ class MetaObject implements MetaObjectInterface
         
         // Inherit data address
         $this->setDataAddress($parent->getDataAddress());
-        $this->setDataAddressProperties($parent->getDataAddressProperties());
+        $this->setDataAddressProperties($parent->getDataAddressProperties()->copy());
         // The inheriting object will only be readable/writable if it is marked as such itself
         // and the parent is readable or writable respectively.
         if ($this->isReadable() === true && $parent->isReadable() === false){
@@ -552,14 +552,13 @@ class MetaObject implements MetaObjectInterface
         // Inherit behaviors
         foreach ($parent->getBehaviors()->getAll() as $key => $behavior) {
             $copy = $behavior->copy()->setObject($this);
-            $this->getBehaviors()->add($copy, $key);
+            $this->getBehaviors()->add($copy, $key, $registerBehaviors);
         }
         
         // TODO Inherit actions here?
 
         // Reset the cache because it might get filled when inheriting relation and attributes
         $this->attributes_alias_cache = [];
-        return;
     }
 
     /**
