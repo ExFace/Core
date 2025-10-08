@@ -16,6 +16,7 @@ New features:
 - Mentions (e.g. hash-tags or @-mentions) for `InputMarkdown` widget
 - Widgets created from others via `extend_widget` now can be modified using mutations - much more flexible, that 
   simply overwriting properties previously.
+- `SoftDeleteBehavior` will now hide rows marked as deleted from read operations automatically. However, this can be reverted using the new `filter_deleted_on_read` property.
 - Many new options for `HttpConnector` and `CallWebService` action:
   - Customize cURL parameters via `curl_options`
   - Service parameters can now have custom `empty_expression` and `empty_as_null` to
