@@ -1,7 +1,11 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Data type for PHP file paths (file system agnostic).
@@ -16,6 +20,11 @@ class PhpFilePathDataType extends FilePathDataType
 {
     const FILE_EXTENSION_PHP = 'php';
     
+    private static array $cachedFileClasses = [];
+    private static array $cachedAppFolders = [];
+    private static array $cachedAppAliases = [];
+    private static array $cachedNamespaces = [];
+    
     /**
      * 
      * {@inheritDoc}
@@ -28,6 +37,119 @@ class PhpFilePathDataType extends FilePathDataType
             return self::FILE_EXTENSION_PHP;
         }
         return $ext;
+    }
+
+    /**
+     * Finds the qualified class name (with namespace) if the given file - even case insensitive!
+     * 
+     * This method is important to load file path selectors reliably. Depending on the file systems where
+     * the apps are run and developed, the class namespaces and file paths may differ in case. This
+     * produces different issues on Windows and on Unix/Linux
+     * 
+     * Examples:
+     * 
+     * - `/exface/Core/Behaviors/TimeStampingBehavior.php` results in 
+     *      - real path: `/exface/core/Behaviors/TimeStampingBehavior.php`
+     *      - class: `\exface\Core\Behaviors\TimeStampingBehavior`
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $pathRelOrAbs
+     * @return string
+     */
+    public static function findClassInVendorFile(WorkbenchInterface $workbench, string $pathRelOrAbs) : string
+    {
+        $triedClasses = [];
+        $triedPaths = [];
+        $dirSep = FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR;
+        $string = Filemanager::pathNormalize($pathRelOrAbs, $dirSep);
+        $vendorFolder = Filemanager::pathNormalize($workbench->filemanager()->getPathToVendorFolder(), $dirSep);
+
+        // Calculate relative path as /exface/Core/Behaviors/TimeStampingBehavior.php
+        // And absolute path
+        if (StringDataType::startsWith($string, $vendorFolder . $dirSep)) {
+            $relPath = mb_substr($string, mb_strlen($vendorFolder));
+            $absPath = $string;
+        } else {
+            $relPath = $dirSep . ltrim($string, $dirSep);
+            $absPath = $vendorFolder . $relPath;
+        }
+        $triedPaths[] = $relPath;
+        
+        // Look in cache first
+        if (null !== $cache = (static::$cachedFileClasses[mb_strtoupper($relPath)] ?? null)) {
+            return $cache;
+        }
+
+        // In most cases, we can be sure, the class name is the file name exactly.
+        // TODO this will not work reliably with classes typed by users: formulas, class-propertiesin
+        // UXON configurations, etc. Maybe it is better to call FilePathDataType::findPathCaseInsensitive
+        // right away without all these extra checks?
+        $className = FilePathDataType::findFileName($relPath);
+        // But the folder path can have case differences - especially in the composer package part (first two levels)
+        $folderPath = FilePathDataType::findFolderPath($relPath);
+        
+        // Check the namespace cache. If found, we can use the namespace for our class name
+        if (null !== $cache = (static::$cachedNamespaces[mb_strtoupper($folderPath)] ?? null)) {
+            $class = $cache . '\\' . $className;
+            if (class_exists($class)) {
+                static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
+                return $class;
+            } else {
+                $triedClasses[] = $class;
+            }
+        }
+        
+        // If not cached, try to determine the namespace
+        list($appVendor, $appAlias, $pathInApp) = explode($dirSep, ltrim($folderPath, $dirSep), 3);
+        $appFolder = $appVendor . $dirSep . $appAlias;
+        $nsInApp = str_replace($dirSep, '\\', $pathInApp);
+        
+        // If app namespace is cached already, we should be able to guess the class already
+        if (null !== $appNs = (self::$cachedNamespaces[mb_strtoupper($appFolder)] ?? null)) {
+            $class = $appNs . '\\' . $nsInApp . '\\' . $className;
+            if (class_exists($class)) {
+                static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
+                return $class;
+            } else {
+                $triedClasses[] = $class;
+            }
+        }
+
+        // If we do not know the app namespace or did not find the class right away
+        if (! file_exists($absPath)) {
+            // See if we already know the real app folder. If not, find it and cache it
+            if (null === $appFolderReal = (self::$cachedAppFolders[mb_strtoupper($appFolder)] ?? null)) {
+                $appFolderReal = $workbench->getAppFolder($appVendor . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $appAlias);
+                self::$cachedAppFolders[mb_strtoupper($appFolder)] = $appFolderReal;
+            }
+            $relPath = FilePathDataType::findPathCaseInsensitive($relPath, $vendorFolder, $dirSep);
+            $triedPaths[] = $relPath;
+            $absPath = $vendorFolder . $dirSep . $relPath;
+            $folderPath = FilePathDataType::findFolderPath($relPath);
+        }
+
+        $e = null;
+        try {
+            // The namespace can be different, then the file path, so get it 
+            // directly from the path. Of course, we could fetch the entire class
+            // name from the file, but this is way slower because it requires
+            // tokenizing.
+            $namespace = PhpFilePathDataType::findNamespaceOfFile($absPath);
+            static::$cachedNamespaces[mb_strtoupper($folderPath)] = $namespace;
+            $class = $namespace . '\\' . $className;
+            $triedClasses[] = $class;
+            if (class_exists($class)) {
+                static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
+            } else {
+                $class = static::findClassInFile($absPath);
+                $triedClasses[] = $class;
+                static::$cachedFileClasses[mb_strtoupper($relPath)] = $class;
+            }
+            return $class;
+        } catch (\Throwable $e) {
+            // Just keep $e here for the final exception below
+        }
+        throw new FileNotFoundError('Cannot load class from "' . $pathRelOrAbs . '". Tried classes "' . implode('", "', $triedClasses) . '"; tried files "' . implode('", "', $triedPaths) . '".', null, $e);
     }
     
     /**
@@ -43,7 +165,9 @@ class PhpFilePathDataType extends FilePathDataType
      */
     public static function findClassInFile(string $absolutePath, int $bufferSize = 512) : ?string
     {
-        if (! file_exists($absolutePath) && ! is_dir($absolutePath)) {
+        if (! file_exists($absolutePath)) {
+            // $absolutePath = FilePathDataType::normalize($absolutePath, DIRECTORY_SEPARATOR);
+            // $vendorPath = StringDataType::substringAfter($absolutePath, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR);
             throw new FileNotFoundError('Cannot get class from file "' . $absolutePath . '" - file not found!');
         }
 
@@ -121,8 +245,16 @@ class PhpFilePathDataType extends FilePathDataType
      */
     public static function findNamespaceOfFile(string $absolute_path) : ?string
     {
-        if (! file_exists($absolute_path) && ! is_dir($absolute_path)) {
+        if (! file_exists($absolute_path)) {
             throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - file not found!');
+            return null;
+        }
+        if (is_dir($absolute_path)) {
+            throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - it is a directory!');
+            return null;
+        }
+        if (is_link($absolute_path)) {
+            throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - it is a symlink!');
             return null;
         }
         $ns = NULL;

@@ -36,14 +36,11 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
  */
 class ReadData extends AbstractAction implements iReadData
 {
-
-    private $affected_rows = 0;
-
     private $update_filter_context = null;
     
     private $widgetToReadFor = null;
     
-    private $columns = null;
+    private $customColumnsUxon = null;
 
     /**
      * 
@@ -163,21 +160,21 @@ class ReadData extends AbstractAction implements iReadData
     public function getWidgetToReadFor(TaskInterface $task) : ?WidgetInterface
     {
         if ($this->widgetToReadFor !== null) {
-            $widget = $task->getPageTriggeredOn()->getWidget($this->widgetToReadFor);
+                $widget = $task->getPageTriggeredOn()->getWidget($this->widgetToReadFor);
         } else {
-            if ($task->isTriggeredByWidget()) {
-                $trigger = $task->getWidgetTriggeredBy();
-            } elseif ($this->isDefinedInWidget()) {
-                $trigger = $this->getWidgetDefinedIn();
-            }
-            
-            if ($trigger !== null) {
-                if ($trigger instanceof iUseInputWidget) {
-                    $widget = $trigger->getInputWidget();
-                } else {
-                    $widget = $trigger;
+                if ($task->isTriggeredByWidget()) {
+                    $trigger = $task->getWidgetTriggeredBy();
+                } elseif ($this->isDefinedInWidget()) {
+                    $trigger = $this->getWidgetDefinedIn();
                 }
-            }
+                
+                if ($trigger !== null) {
+                    if ($trigger instanceof iUseInputWidget) {
+                        $widget = $trigger->getInputWidget();
+                    } else {
+                        $widget = $trigger;
+                    }
+                }
         }
         
         $widget = $this->applyCustomWidgetProperties($task, $widget);

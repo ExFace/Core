@@ -252,7 +252,7 @@ class StringDataType extends AbstractDataType
             if (! $this->isSensitiveData()) {
                 $excValue = '"' . $value . '" (' . $length . ')';
             }
-            throw $this->createValidationError('The lenght of the string ' . $excValue . ' is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
+            throw $this->createValidationRuleError($value, 'The length of the string ' . $excValue . ' is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!', false);
         }
         if ($this->getLengthMax() && $length > $this->getLengthMax()){
             $value = mb_substr($value, 0, $this->getLengthMax());
@@ -271,7 +271,7 @@ class StringDataType extends AbstractDataType
                 if (! $this->isSensitiveData()) {
                     $excValue = '"' . $value . '"';
                 }
-                throw $this->createValidationError('Value ' . $excValue . ' does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
+                throw $this->createValidationRuleError($value, 'Value ' . $excValue . ' does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
             }
         }
         
@@ -688,6 +688,7 @@ class StringDataType extends AbstractDataType
             case '.':
             case '?':
             case '!':
+            case ':':
                 return $text;
         }
         

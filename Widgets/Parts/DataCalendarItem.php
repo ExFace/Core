@@ -2,6 +2,9 @@
 namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
@@ -19,7 +22,9 @@ use exface\Core\DataTypes\NumberDataType;
  */
 class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorScale
 {
-    use DataWidgetPartTrait;
+    use DataWidgetPartTrait {
+        addDataColumn as addDataColumnViaTrait;   
+    }
     
     use iHaveColorScaleTrait {
         getColorScale as getColorScaleViaTrait;
@@ -49,6 +54,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     private $colorColumn = null;
     
     private $indicator = null;
+    
+    private $objectAlias = null;
+    private $object = null;
     
     /**
      * 
@@ -426,5 +434,87 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     {
         $this->indicator = new DataItemIndicator($this->getDataWidget(), $uxon);
         return $this;
+    }
+
+    /**
+     * @see DataWidgetPartTrait::getMetaObject()
+     */
+    public function getMetaObject() : MetaObjectInterface
+    {
+        if ($this->objectAlias !== null) {
+            if ($this->object === null) {
+                $this->object = MetaObjectFactory::createFromString($this->getWorkbench(), $this->objectAlias);
+            }
+            return $this->object;
+        }
+        return $this->dataWidget->getMetaObject();
+    }
+
+    /**
+     * Make calendar items be based on a different metaobject than the data widget (e.g. to load multiple events per data row)
+     * 
+     * @uxon-property object_alias
+     * @uxon-type metamodel:object
+     * 
+     * @param string $namepsacedAlias
+     * @return $this
+     */
+    protected function setObjectAlias(string $namepsacedAlias) : DataCalendarItem
+    {
+        $this->objectAlias = $namepsacedAlias;
+        $this->object = null;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasOwnObject() : bool
+    {
+        return $this->objectAlias !== null;
+    }
+
+    /**
+     * @return MetaRelationPathInterface
+     */
+    protected function getRelationPathToDataWidget() : MetaRelationPathInterface
+    {
+        // TODO
+    }
+
+    /**
+     * @see DataWidgetPartTrait::addDataColumn()
+     */
+    protected function addDataColumn(string $expression) : DataColumn
+    {
+        if ($this->hasOwnObject()) {
+            $dw = $this->getDataWidget();
+            if (! $col = $dw->getColumnByAttributeAlias()) {
+                $col = $dw->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $this->getNestedDataAttributeAlias()
+                ]));
+                $dw->addColumn($col);
+            }
+        }
+        return $this->addDataColumnViaTrait($expression);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getNestedDataAttributeAlias() : ?string
+    {
+        $relPathToDataObject = $this->getRelationPathToDataWidget();
+        $relPathFromDataObject = $relPathToDataObject->reverse();
+        return $relPathFromDataObject->toString();
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getNestedDataColumnName() : ?string
+    {
+        // TODO save the real data column name somehow?
+        return \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getNestedDataAttributeAlias());
     }
 }

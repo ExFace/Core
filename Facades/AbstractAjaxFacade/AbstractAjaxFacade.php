@@ -580,6 +580,34 @@ HTML;
             $colName = $col->getName();
             $colType = $col->getDataType();
             switch (true) {
+                // Normalize nested data to JSON objects
+                case $col->isNestedData():
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName] ?? null;
+                        switch (true) {
+                            // Skip empty values - do not even add a key to the row to keep backwards
+                            // compatibility with times where reading nested data was not possible
+                            case $val === null:
+                            case $val === '':
+                                continue 2;
+                            // Transform UXON to array to ensure a nested structure in the ned
+                            case $val instanceof UxonObject:
+                                $json = $val->toArray();
+                                break;
+                            // Keep arrays as-is
+                            case is_array($val):
+                                $json = $val;
+                                break;
+                            // Leave all other values as-is.
+                            // TODO but wouldn't we need to parse a JSON string to an array here? What to do if
+                            // that fails though?
+                            default:
+                                $json = $val;
+                                break;
+                        }
+                        $rows[$i][$colName] = $json;
+                    }
+                    break;
                 case $colType instanceof HtmlDataType:
                     // FIXME #xss-protection sanitize HTML here!
                     break;

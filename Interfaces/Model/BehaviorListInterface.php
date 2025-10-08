@@ -8,12 +8,14 @@ use exface\Core\Interfaces\EntityListInterface;
 interface BehaviorListInterface extends EntityListInterface, iCanBeConvertedToUxon, \IteratorAggregate
 {
     /**
+     * A behavior list will activate every behavior right after it has been added
      * 
      * @param BehaviorInterface $behavior
      * @param mixed $key
+     * @param bool $register
      * @return BehaviorListInterface
      */
-    public function add($behavior, $key = null);
+    public function add($behavior, $key = null, bool $register = true);
 
     /**
      *

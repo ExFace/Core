@@ -49,10 +49,16 @@ class DebugContext extends AbstractContext
     const OPERATION_START_TRACING_JS = 'startTracingJs';
 
     const OPERATION_STOP_TRACING_JS = 'stopTracingJs';
+
+    const OPERATION_START_SHOW_HIDDEN = 'startShowingHidden';
+
+    const OPERATION_STOP_SHOW_HIDDEN = 'stopShowingHidden';
     
     const CFG_DEBUG_TRACE = 'DEBUG.TRACE';
     
     const VAR_TRACE_STARTED = 'trace_started';
+    
+    const VAR_SHOW_HIDDEN = 'DEBUG.SHOW_HIDDEN';
     
     private $intercepting = false;
     
@@ -175,6 +181,32 @@ class DebugContext extends AbstractContext
     {
         $this->getScope()->unsetVariable('DEBUG.TRACE_JS');
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_JS_STOPPED');
+    }
+
+    /**
+     * Starts the front-end tracer for the current context scope
+     *
+     * @uxon-operation startTracingJs
+     *
+     * @return string
+     */
+    public function startShowingHidden() : string
+    {
+        $this->getWorkbench()->getContext()->getScopeUser()->setVariable(self::VAR_SHOW_HIDDEN, true);
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.SHOW_HIDDEN_STARTED');
+    }
+
+    /**
+     * Stops the front-end tracer for the current context scope
+     *
+     * @uxon-operation stopTracingJs
+     *
+     * @return string
+     */
+    public function stopShowingHidden() : string
+    {
+        $this->getWorkbench()->getContext()->getScopeUser()->unsetVariable(self::VAR_SHOW_HIDDEN);
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.SHOW_HIDDEN_STOPPED');
     }
 
     public function isTracingJs() : bool
@@ -367,6 +399,7 @@ class DebugContext extends AbstractContext
     {
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $isTracing = $this->isTracing();
+        $isShowingHidden = $this->getWorkbench()->getContext()->getScopeUser()->getVariable(self::VAR_SHOW_HIDDEN);
         $menu = WidgetFactory::createFromUxonInParent($container, new UxonObject([
             'widget_type' => 'Menu',
             'caption' => $this->getName(),
@@ -556,6 +589,17 @@ class DebugContext extends AbstractContext
         throw {'message': 'This facade does not support front-end tracing'};
     }
 JS
+                    ]
+                ],
+                // Soft-delete transparency
+                [
+                    'caption' => $translator->translate('CONTEXT.DEBUG.SHOW_HIDDEN'),
+                    'action' => [
+                        'alias' => 'exface.Core.CallContext',
+                        'context_scope' => $this->getScope()->getName(),
+                        'context_alias' => $this->getAliasWithNamespace(),
+                        'operation' => $isShowingHidden ? self::OPERATION_STOP_SHOW_HIDDEN : self::OPERATION_START_SHOW_HIDDEN,
+                        'icon' => $isShowingHidden ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
                     ]
                 ], 
                 // Clear cache

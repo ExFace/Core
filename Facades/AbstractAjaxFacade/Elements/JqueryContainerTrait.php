@@ -285,7 +285,7 @@ JS;
         
 $( document ).off( "{$actionperformed}.{$this->getId()}" );
 $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
-    var oEffect = {};
+    var oEffect;
     var aChanges = [];
     var aRelatedObjectAliases = {$relatedObjAliasesJs};
     var sMainObjectAlias = '{$this->getMetaObject()->getAliasWithNamespace()}';

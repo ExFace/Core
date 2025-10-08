@@ -8,7 +8,7 @@
  * 
 -----------------------------------------------------------
 importScripts('exface/vendor/npm-asset/dexie/dist/dexie.min.js');
-importScripts('vendor/exface/Core/Facades/AbstractPWAFacade/exf_preloader.js');
+importScripts('vendor/exface/core/Facades/AbstractPWAFacade/exf_preloader.js');
 
 // Handle OfflineActionSync Event
 self.addEventListener('sync', function(event) {

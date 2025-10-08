@@ -808,6 +808,14 @@ class DataSheet implements DataSheetInterface
             $this->sort($postprocessorSorters);
         }
         
+        // Read nested data
+        foreach ($this->getColumns() as $col) {
+            if (null === $col->getNestedDataTemplateUxon()) {
+                continue;
+            }
+            $this->dataReadNestedSheet($col);            
+        }
+        
         $this->getWorkbench()->eventManager()->dispatch(new onReadDataEvent(
             $this,
             null,
@@ -926,6 +934,50 @@ class DataSheet implements DataSheetInterface
         return $query;
     }
 
+    protected function dataReadNestedSheet(DataColumnInterface $column) : int
+    {
+        if (! $column->isNestedData()) {
+            throw new InvalidArgumentException('Cannot read nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
+        }
+
+        $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
+        $relPathFromNestedSheet = $relPathToNestedSheet->reverse();
+        $relThisSheetKeyAttr = $relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute();
+        $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relThisSheetKeyAttr);
+        if (! $relThisSheetKeyCol) {
+            throw new DataSheetWriteError($this, 'Cannot read nested data - missing key value in main data sheet!');
+        }
+
+        // Instantiate a subsheet from the value
+        $nestedSheet = DataSheetFactory::createSubsheetFromUxon(
+            $this, // parent
+            $column->getNestedDataTemplateUxon(), // subsheet UXON
+            $relPathFromNestedSheet->toString(), // JOIN key alias in subsheet
+            $relThisSheetKeyCol->getAttributeAlias(), // JOIN key alias in parent
+            $relPathToNestedSheet //relation path from parent sheet to nested sheet
+        );
+
+        // Add a column with the relation to the parent sheet
+        if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
+            $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
+        }
+        
+        $filterVals = array_unique($relThisSheetKeyCol->getValues());
+        $nestedSheet->getFilters()->addConditionFromValueArray($relPathFromNestedSheet->toString(), $filterVals);
+        $counter = $nestedSheet->dataRead();
+        
+        foreach ($relThisSheetKeyCol->getValues() as $rowIdx => $thisSheetKey) {
+            $rowIdxs = $relNestedSheetCol->findRowsByValue($thisSheetKey);
+            $rows = $nestedSheet->getRowsByIndex($rowIdxs);
+            $column->setValue($rowIdx, [
+                'oId' => $nestedSheet->getMetaObject()->getId(),
+                'rows' => array_values($rows)
+            ]);
+        }
+
+        return $counter;
+    }
+
     public function countRows() : int
     {
         return count($this->rows);
@@ -1027,7 +1079,7 @@ class DataSheet implements DataSheetInterface
                                 // TODO wouldn't it actually be better to update ALL values in the original sheet?
                                 // Right now it is only done if the UID was empty or the column is a subsheet. But
                                 // why???
-                                if ($col->getDataType() instanceof DataSheetDataType) {
+                                if ($col->isNestedData()) {
                                     foreach ($create_col->getValues() as $createdIdx => $value) {
                                         $col->setValue($rowIdxsToCreate[$createdIdx], $value);
                                     }
@@ -1119,7 +1171,7 @@ class DataSheet implements DataSheetInterface
             
             // If there is a relation path, but the column contains subsheets, it's data will
             // be treated in the subsheet, so we don't need to process it here.
-            if ($col->getDataType() instanceof DataSheetDataType) {
+            if ($col->isNestedData()) {
                 continue;
             }
             
@@ -1180,7 +1232,7 @@ class DataSheet implements DataSheetInterface
                 // Here we need to check, if it really is only one relation - if more,
                 // the column should go into a subsheet just like other related columns
                 // TODO this seems to work differently to dataCreate() - why?
-                case ($col->getDataType() instanceof DataSheetDataType) && $columnAttr->getRelationPath()->countRelations() <= 1:
+                case $col->isNestedData() && $columnAttr->getRelationPath()->countRelations() <= 1:
                     $update_ds->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
                     continue 2; 
                 // Update related columns, that the current query builder cannot write, as
@@ -1407,7 +1459,7 @@ class DataSheet implements DataSheetInterface
     {
         $counter = 0;
         
-        if (! ($column->getDataType() instanceof DataSheetDataType)) {
+        if (! $column->isNestedData()) {
             throw new InvalidArgumentException('Cannot update nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
         }
         
@@ -1459,6 +1511,15 @@ class DataSheet implements DataSheetInterface
             }
             $relNestedSheetCol->setValues($relThisKeyVal);
             
+            // If the nested sheet does not have a UID column, or it is completely empty we should still check, if
+            // the data source already has corresponding rows - read all of them and try to match the contents against
+            // the subsheet data at hand. If they match, give the subsheet row the UID.
+            // TODO this is known to cause problems with subsheets of object with FileAttachmentBehavior (e.g. a
+            // ImageGallery with instant_upload:false. The subsheet contains the FILE__CONTENTS column and the
+            // logic below attempts to filter for it. But attachments will mostly save their files to a path
+            // containing the UID or another identifier of the attachment, so when there is no UID in the attachment
+            // subsheet, there is also not file path. The filter leads to a full-scan of the base path then which
+            // is useless and very slow. Maybe we should 
             if (! $nestedSheet->hasUidColumn(true) && $nestedSheet->getMetaObject()->hasUidAttribute()) {
                 // If the nested sheet has data, try to find the corresponding UID values in the data source
                 if (! $nestedSheet->isEmpty() && $nestedSheet->getMetaObject()->isReadable()) {
@@ -1469,8 +1530,6 @@ class DataSheet implements DataSheetInterface
                     
                     // Make a copy of the nested sheet
                     $nestedUidSheet = $nestedSheet->copy();
-                    // Add the UID column
-                    $nestedUidSheet->getColumns()->addFromUidAttribute();
                     // Add filters for every column in the original nested sheet
                     foreach ($nestedSheet->getColumns() as $col) {
                         // Skip the column with the relation to the main heet because we
@@ -1478,8 +1537,16 @@ class DataSheet implements DataSheetInterface
                         if ($relNestedSheetCol === $col) {
                             continue;
                         }
-                        if ($col->isAttribute() && $col->getAttribute()->isFilterable() && ! ($col->getDataType() instanceof DataSheetDataType)) {
-                            $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        if ($col->isAttribute()) {
+                            // Filter the UID-lookup sheet using values of all filterable columns unless they are
+                            // relations. Relations might produce foreign filters, that often lead to unexpected
+                            // issues or just performance drops. See explanation above.
+                            // IDEA Theoretically we could check, if the related filter will be a foreign filter
+                            // and only exclude it then. It is not quite clear, if we really need to filter over
+                            // relatded data - if it helps or not.
+                            if ($col->getAttribute()->isFilterable() && ! $col->getAttribute()->isRelated() && ! $col->isNestedData()) {
+                                $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                            }
                         }
                     }
                     // Read the data
@@ -1711,7 +1778,7 @@ class DataSheet implements DataSheetInterface
                 // If the column contains nested data, its attribute alias is a relation. So we only need a subsheet
                 // if the relation path has more than one relation in it (otherwise it would be regular nested data).
                 // Regular related data always goes into a subsheet
-                if ($column->getDataType() instanceof DataSheetDataType) {
+                if ($column->isNestedData()) {
                     $relPath = $columnAttr->getRelationPath()->getSubpath(0, -1);
                     // If it is regular nested data, put it into the $nestedSheetCols array and skip the rest for
                     // this column.
@@ -1742,7 +1809,7 @@ class DataSheet implements DataSheetInterface
             
             // if the column contains nested data sheets, we will need to save them after we
             // created the data for the main sheet - so skip them here.
-            if ($column->getDataType() instanceof DataSheetDataType) {
+            if ($column->isNestedData()) {
                 $nestedSheetCols[] = $column;
                 continue;
             } 
@@ -1859,7 +1926,7 @@ class DataSheet implements DataSheetInterface
         $thisObj = $this->getMetaObject();
         $counter = 0;
         
-        if (! ($column->getDataType() instanceof DataSheetDataType)) {
+        if (! $column->isNestedData()) {
             throw new InvalidArgumentException('Cannot create nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
         }
         
@@ -1927,7 +1994,7 @@ class DataSheet implements DataSheetInterface
             $nestedFKeyCol->setValueOnAllRows($rowKey);
             
             // set the filter value in the nested sheet for filter to parent sheet to the new value
-            // else BEhaviors reacting on create events might fail because timestampingbehavior
+            // else behaviors reacting on create events might fail because timestampingbehavior
             foreach ($nestedSheet->getFilters()->getConditionsRecursive() as $cond) {
                 if ($cond->getLeftExpression()->isMetaAttribute() && $nestedFKeyAttr->isExactly($cond->getLeftExpression()->getAttribute())) {
                     $cond->setValue($rowKey);

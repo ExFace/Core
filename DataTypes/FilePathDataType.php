@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\Exceptions\FileNotFoundError;
 use Webmozart\PathUtil\Path;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
@@ -15,6 +16,8 @@ class FilePathDataType extends StringDataType
     private $basePath = null;
     
     private $extension = null;
+    
+    private static $cachedPaths = [];
     
     /**
      *
@@ -79,7 +82,7 @@ class FilePathDataType extends StringDataType
         
         if ($ext = $this->getExtension()) {
             if (strcasecmp($ext, static::findExtension($value)) !== 0) {
-                throw new DataTypeValidationError($this, 'Invalid value "' . $value . '" for file path: extension "' . static::findExtension($value) . '" does not match required extension "' . $ext . '"!');
+                throw new DataTypeValidationError($this, 'Invalid value "' . $value . '" for file path: extension "' . static::findExtension($value) . '" does not match required extension "' . $ext . '"!', null, null, $value);
             }
         }
         
@@ -363,5 +366,101 @@ class FilePathDataType extends StringDataType
     public static function isPattern(string $pathWithWildcards) : bool
     {
         return strpos($pathWithWildcards, '*') !== false || strpos($pathWithWildcards, '?') !== false;
+    }
+
+    /**
+     * Find the correct case-sensitive path for a given input.
+     *
+     * @param string $path         Input path (may have wrong case in parts).
+     * @param string $base         Base directory to resolve from.
+     * @param string $dirSeparator Directory separator (default DIRECTORY_SEPARATOR).
+     *
+     * @return string|null         Correctly cased path, or null if not found.
+     */
+    public static function findPathCaseInsensitive(
+        string $path,
+        string $base,
+        string $dirSeparator = DIRECTORY_SEPARATOR,
+        bool $trustFilesystem = true
+    ): string 
+    {
+        // Normalize separators
+        $base = rtrim(str_replace(['/', '\\'], $dirSeparator, $base), $dirSeparator);
+        $path = str_replace(['/', '\\'], $dirSeparator, $path);
+        $cacheKey = mb_strtolower($base . $dirSeparator . $path);
+        
+        // Check cache. The cache uses absolute paths as keys and contains 
+        if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
+            $cacheRel = StringDataType::substringAfter($cache, $base . $dirSeparator, null);
+            if (! $cacheRel) {
+                throw new FileNotFoundError('Cannot find case-insensitive path for "' . $path . '". Found "' . $cache . '" but, it does not seem to match the requested base dir "' . $base . $dirSeparator . '"');
+            }
+            return $cacheRel;
+        }
+        
+        if ($trustFilesystem === true && file_exists($base . $dirSeparator . $path)) {
+            static::$cachedPaths[$cacheKey] = $path;
+            return $path;
+        }
+        
+        // Break path into parts
+        $parts = array_filter(explode($dirSeparator, $path), 'strlen');
+
+        $current = $base;
+        $cacheBase = mb_strtolower($current . $dirSeparator);
+        foreach ($parts as $part) {
+            $cacheKey = $cacheBase . mb_strtolower($part);
+
+            if (null !== $cache = (static::$cachedPaths[$cacheKey] ?? null)) {
+                // Use cached value
+                $current = $cache;
+                continue;
+            }
+
+            if (! is_dir($current) && ! is_file($current)) {
+                throw new FileNotFoundError(
+                    'Cannot find case insensitive path "' . $path . '" in "' . $base .
+                    '": the latter does not exist!'
+                );
+            }
+
+            $entries = @scandir($current);
+            if ($entries === false) {
+                throw new FileNotFoundError(
+                    'Cannot find case insensitive path "' . $path . '" in "' . $base .
+                    '": cannot read "' . $current . '"'
+                );
+            }
+
+            $found = null;
+            foreach ($entries as $entry) {
+                if (mb_substr($entry, 0, 1) === '.') {
+                    continue;
+                }
+                static::$cachedPaths[$cacheBase . mb_strtolower($entry)] = $current . $dirSeparator . $entry;
+                if (strcasecmp($entry, $part) === 0) {
+                    $found = $entry;
+                    break;
+                }
+            }
+
+            if ($found === null) {
+                throw new FileNotFoundError(
+                    'Cannot find case insensitive path "' . $path . '" in "' . $base .
+                    '": cannot find "' . $part . '" in "' . $current . '"'
+                );
+            }
+
+            $current .= $dirSeparator . $found;
+            $cacheBase .= mb_strtolower($found) . $dirSeparator;
+            static::$cachedPaths[$cacheKey] = $current;
+        }
+        
+        static::$cachedPaths[mb_strtolower($base . $dirSeparator . $path)] = $current;
+        $currentRel = StringDataType::substringAfter($current, $base . $dirSeparator, $current);
+        if (! $currentRel) {
+            throw new FileNotFoundError('Cannot find case-insensitive path for "' . $path . '". Found "' . $current . '" but, it does not seem to match the requested base dir "' . $base . $dirSeparator . '"');
+        }
+        return $currentRel;
     }
 }

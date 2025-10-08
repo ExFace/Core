@@ -37,6 +37,7 @@ trait PrefillValueTrait
      */
     protected function getPrefillExpression(DataSheetInterface $prefillData, MetaObjectInterface $widget_object, ?string $attributeAlias = null, ?string $dataColumnName = null, ?ExpressionInterface $formula = null) : ?string
     {
+        $exprString = null;
         // What is the widget bound to? If explicitly bound to an attribute or a formula - use that.
         switch (true) {
             case $attributeAlias !== null: $exprString = $attributeAlias; break;
@@ -44,7 +45,7 @@ trait PrefillValueTrait
         }
         // However, if there is a DIFFERENT data_column_name or ONLY a data_column_name without another binding,
         // use the data_column_name
-        if ($dataColumnName !== null && $exprString !== null && $dataColumnName !== DataColumn::sanitizeColumnName($exprString)) {
+        if ($dataColumnName !== null && ($exprString === null || $dataColumnName !== DataColumn::sanitizeColumnName($exprString))) {
             $exprString = $dataColumnName;
         }
         
