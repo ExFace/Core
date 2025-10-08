@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\Interfaces\DataSources\DataSourceInterface;
+use exface\Core\Interfaces\DataSources\ModelBuilderInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -52,14 +54,7 @@ class GenerateModelFromDataSource extends AbstractAction implements iModifyData
             
             foreach ($input_data->getRows() as $row){
                 $data_source = $this->getWorkbench()->data()->getDataSource($row[$data_src_col->getName()]);
-                $model_builder = $data_source->getConnection()->getModelBuilder();
-                $config = $row['BUILDER_CONFIG_UXON'];
-                if ($config) {
-                    $configArray = JsonDataType::decodeJson($config);
-                    $configArray = array_filter($configArray);
-                    $configUxon = new UxonObject($configArray);
-                    $model_builder->importUxonObject($configUxon);
-                }
+                $model_builder = $this->getModelBuilder($data_source, UxonObject::fromAnything($row['BUILDER_CONFIG_UXON']));
                 
                 $created_ds = $model_builder->generateAttributesForObject($this->getWorkbench()->model()->getObject($row['OBJECT']), $row['OBJECT_DATA_ADDRESS_MASK'] ?? '');
                 $created += $created_ds->countRows();
@@ -67,14 +62,13 @@ class GenerateModelFromDataSource extends AbstractAction implements iModifyData
             }
             
             $message .= 'Created ' . $created . ' attributes, ' . $skipped . ' skipped as duplicates.';
-            $message .= $model_builder->getLogbook()->__toString();
             
         } elseif ($data_src_col && ! $data_src_col->isEmpty()) {
             
             foreach ($input_data->getRows() as $row){
                 $data_source = $this->getWorkbench()->data()->getDataSource($row[$data_src_col->getName()]);
                 $app = $this->getWorkbench()->getApp($row['APP']);
-                $model_builder = $data_source->getConnection()->getModelBuilder();
+                $model_builder = $this->getModelBuilder($data_source, UxonObject::fromAnything($row['BUILDER_CONFIG_UXON']));
                 
                 $created_ds = $model_builder->generateObjectsForDataSource($app, $data_source, $row['OBJECT_DATA_ADDRESS_MASK']);
                 $created += $created_ds->countRows();
@@ -83,8 +77,26 @@ class GenerateModelFromDataSource extends AbstractAction implements iModifyData
             
             $message .= 'Created ' . $created . ' objects, ' . $skipped . ' skipped as duplicates.';
         }
+        $message .= "\n" . $model_builder->getLogbook()->__toString();
         
         return ResultFactory::createMessageResult($task, $message);
+    }
+
+    /**
+     * @param DataSourceInterface $data_source
+     * @param UxonObject|null $configUxon
+     * @return ModelBuilderInterface
+     */
+    protected function getModelBuilder(DataSourceInterface $data_source, ?UxonObject $configUxon = null) : ModelBuilderInterface
+    {
+        $model_builder = $data_source->getConnection()->getModelBuilder();
+        if ($configUxon) {
+            $configArray = $configUxon->toArray();
+            $configArray = array_filter($configArray);
+            $configUxon = new UxonObject($configArray);
+            $model_builder->importUxonObject($configUxon);
+        }
+        return $model_builder;
     }
     
     /**

@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\ModelBuilders;
 
+use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
@@ -126,7 +128,9 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         }
         
         if ($this->willUpdateAttributes()) {
-            $this->getLogbook()->addLine('Updating attributes')->addIndent(+1);
+            $this->getLogbook()
+                ->addSection('Updating existing attributes')
+                ->addIndent(+1);
             $this->updateAttributesForObject($meta_object, $transaction, $logbook);
             $this->getLogbook()->addIndent(-1);
         }
@@ -154,9 +158,13 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
     public function generateObjectsForDataSource(AppInterface $app, DataSourceInterface $source, string $data_address_mask = null) : DataSheetInterface
     {
         $this->setModelLanguage($app->getLanguageDefault());
+        $logbook = $this->getLogbook();
         
         $existing_objects = DataSheetFactory::createFromObjectIdOrAlias($app->getWorkbench(), 'exface.Core.OBJECT');
-        $existing_objects->getColumns()->addFromExpression('DATA_ADDRESS');
+        $existing_objects->getColumns()->addMultiple([
+            'ALIAS',
+            'DATA_ADDRESS'
+        ]);
         $existing_objects->getFilters()->addConditionFromString('APP', $app->getUid(), EXF_COMPARATOR_EQUALS);
         $existing_objects->dataRead();
         
@@ -172,27 +180,43 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         }
         
         if (! $newObjectsSheet->isEmpty()) {
+            $logbook->addSection('Creating objects');
+            $logbook->addLine('Found ' . $newObjectsSheet->countRows() . ' new objects');
+            $logbook->addIndent(+1);
             $newObjects = [];
             $newObjectsSheet->dataCreate(false, $transaction);
             // Generate attributes for each object
             foreach ($newObjectsSheet->getRows() as $row) {
-                $object = $app->getWorkbench()->model()->getObjectByAlias($row['ALIAS'], $app->getAliasWithNamespace());
+                $object = MetaObjectFactory::createFromAliasAndNamespace($app->getWorkbench(), $row['ALIAS'], $app->getAliasWithNamespace());
+                $logbook->addLine($object->getAliasWithNamespace());
+                $logbook->addIndent(+1);
                 $attributes = $this->generateAttributes($object, $transaction);
+                $logbook->addIndent(-1);
                 $newObjects[] = [$object, $attributes];
             }
+            $logbook->addIndent(-1);
             // After all attributes are there, generate relations. It must be done after all new objects have
             // attributes as relations need attribute UIDs on both sides!
+            $logbook->addSection('Creating relations');
+            $logbook->addIndent(+1);
             foreach($newObjects as $data) {
                 list($object, $attributes) = $data;
                 $this->generateRelations($object, $attributes, $transaction);
             }
+            $logbook->addIndent(-1);
         }
         
         if ($this->willUpdateAttributes()) {
+            $logbook->addSection('Updating existing attributes');
+            $logbook->addIndent(+1);
             foreach ($imported_rows as $row) {
-                $object = $app->getWorkbench()->model()->getObjectByAlias($row['ALIAS'], $app->getAliasWithNamespace());
-                $this->updateAttributesForObject($object, $transaction);
+                foreach ($existing_objects->getColumns()->getByExpression('DATA_ADDRESS')->findRowsByValue($row['DATA_ADDRESS']) as $i) {
+                    $existingObjRow = $existing_objects->getRow($i);
+                    $object = MetaObjectFactory::createFromAliasAndNamespace($app->getWorkbench(), $existingObjRow['ALIAS'], $app->getAliasWithNamespace());
+                    $this->updateAttributesForObject($object, $transaction, $logbook);
+                }
             }
+            $logbook->addIndent(-1);
         }
         
         $transaction->commit();
@@ -204,6 +228,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
     
     protected function updateAttributesForObject(MetaObjectInterface $object, DataTransactionInterface $transaction = null, LogBookInterface $logbook = null) : DataSheetInterface
     {
+        $logbook = $logbook ?? $this->getLogbook();
         $attrRowsFromSource = $this->getAttributeDataFromTableColumns($object, $object->getDataAddress());
         if ($this->willUpdateDataTypeConfigs()) {
             $oldAttrsSheet = DataSheetFactory::createFromObjectIdOrAlias($object->getWorkbench(), 'exface.Core.ATTRIBUTE');
@@ -236,12 +261,21 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                         $foundChanges = false;
                         foreach ($this->getUpdateAttributeDataTypeProperties() as $propName) {
                             if ($newDataTypeUxon->hasProperty($propName)) {
-                                $updateDataTypeUxon->setProperty($propName, $newDataTypeUxon->getproperty($propName));
-                                $logbook->addLine('Updated `' . $oldRow['ALIAS'] . '`: ' . $propName . ' `' . $oldDataTypeUxon->getproperty($propName) . '` => `' . $newDataTypeUxon->getproperty($propName) . '`');
-                                $foundChanges = true;
+                                $oldValue = $updateDataTypeUxon->getProperty($propName);
+                                $newValue = $newDataTypeUxon->getProperty($propName);
+                                if ($oldValue !== $newValue) {
+                                    if ($foundChanges === false) {
+                                        $logbook->addLine($object->getAliasWithNamespace());
+                                        $logbook->addIndent(+1);
+                                    }
+                                    $updateDataTypeUxon->setProperty($propName, $newValue);
+                                    $logbook->addLine('Updated ' . $oldRow['ALIAS'] . ': ' . $propName . ' `' . $oldValue . '` => `' . $newValue . '`');
+                                    $foundChanges = true;
+                                }
                             }
                         }
                         if ($foundChanges) {
+                            $logbook->addIndent(-1);
                             $updatedRow = $oldRow;
                             unset($updatedRow['DATA_ADDRESS']);
                             unset($updatedRow['ALIAS']);
