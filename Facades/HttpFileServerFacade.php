@@ -27,6 +27,9 @@ use exface\Core\CommonLogic\Filesystem\InMemoryFile;
 use GuzzleHttp\Psr7\ServerRequest;
 use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
+use Symfony\Component\Cache\Psr16Cache;
+
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -611,6 +614,16 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function getOtlCachePool() : CacheInterface
     {
-        return $this->getWorkbench()->getCache()->getPool(self::CACHE_POOL_OTL);
+        $wbCache = $this->getWorkbench()->getCache();
+        //on an azure app service cli php instances and instances initiated via nginx have different acpu caches.
+        //this causes an issue with background process initiaded by cli which call onetimelinks because the call initiates
+        //a different php instance which has a different acpu pool and can not access the onetimelink
+        //therefore the pool is specifically created (if it does not exists yet) here as no acpu cache and added to the workbench cache
+        if (! $wbCache->hasPool(self::CACHE_POOL_OTL)) {
+            $filePool = new Psr16Cache(new PhpFilesAdapter(self::CACHE_POOL_OTL, 0, $this->getWorkbench()->filemanager()->getPathToCacheFolder()));
+            $wbCache->addPool(self::CACHE_POOL_OTL, $filePool);
+            return $filePool;
+        }
+        return $wbCache->getPool(self::CACHE_POOL_OTL);
     }
 }
