@@ -971,7 +971,7 @@ class DataSheet implements DataSheetInterface
             $rows = $nestedSheet->getRowsByIndex($rowIdxs);
             $column->setValue($rowIdx, [
                 'oId' => $nestedSheet->getMetaObject()->getId(),
-                'rows' => $rows
+                'rows' => array_values($rows)
             ]);
         }
 
