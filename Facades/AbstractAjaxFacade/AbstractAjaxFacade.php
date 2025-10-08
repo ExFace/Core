@@ -586,19 +586,18 @@ HTML;
                         $val = $row[$colName];
                         switch (true) {
                             case $val instanceof UxonObject:
-                                $json = $val->toArray();
+                                $rows[$i][$colName] = $val->toArray();
                                 break;
                             case is_array($val):
                                 // Do nothing - the array will be JSON encoded later
                                 break;
                             default:
-                                $json = [
+                                $rows[$i][$colName] = [
                                     "oId" => $data_sheet->getMetaObject()->getId(), 
                                     "rows" => []
                                 ];
                                 break;
                         }
-                        $rows[$i][$colName] = $json;
                     }
                     break;
                 case $colType instanceof HtmlDataType:
