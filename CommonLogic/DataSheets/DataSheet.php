@@ -937,7 +937,7 @@ class DataSheet implements DataSheetInterface
     protected function dataReadNestedSheet(DataColumnInterface $column) : int
     {
         if (! $column->isNestedData()) {
-            throw new InvalidArgumentException('Cannot update nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
+            throw new InvalidArgumentException('Cannot read nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
         }
 
         $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
@@ -945,7 +945,7 @@ class DataSheet implements DataSheetInterface
         $relThisSheetKeyAttr = $relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute();
         $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relThisSheetKeyAttr);
         if (! $relThisSheetKeyCol) {
-            throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
+            throw new DataSheetWriteError($this, 'Cannot read nested data - missing key value in main data sheet!');
         }
 
         // Instantiate a subsheet from the value
