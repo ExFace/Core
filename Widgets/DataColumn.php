@@ -967,16 +967,24 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
+        
         // TODO add properties specific to this widget here
         if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
+        
         if ($this->isCalculated()) {
             $uxon->setProperty('calculation', $this->getCalculationExpression()->toString());
         }
+        
         if ($this->editable_if_access_to_action_alias !== null) {
             $uxon->setProperty('editable_if_access_to_action', $this->editable_if_access_to_action_alias);
         }
+        
+        if($this->nestedDataSheetUxon !== null) {
+            $uxon->setProperty('nested_data', $this->nestedDataSheetUxon);
+        }
+        
         return $uxon;
     }
     

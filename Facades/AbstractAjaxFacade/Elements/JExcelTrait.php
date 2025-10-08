@@ -58,6 +58,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * - validateCell(cell, iCol, iRow, mValue, bParseValue) : mixed
  * - validateAll() : void
  * - refreshConditionalProperties();
+ * - isDropdownValueValid (iCol, iRow, mValue = null) : bool // checks if the current dropdown value (or a passed parameter) is valid in the filter context
  * - convertArrayToData(aDataArray) : array
  * - convertDataToArray(aDataRows) : array
  * - setDisabled(bDisable) : bool
@@ -422,7 +423,7 @@ JS;
 
                 // refresh the conditional properties of spreadsheet onchange
                 // dont conditionize while lazy loading is in progress, otherwise disabled cells do not load data
-                if (!instance.isLazyLoadingInProgress){
+                if (!instance.isLazyLoadingInProgress && value != oldValue){
                     instance.exfWidget.refreshConditionalProperties();
                 }
             }, 0);
@@ -522,23 +523,40 @@ JS;
                 aPastedData.push(cells);
             });
 
-            iXEnd = iXStart + aPastedData[0].length;
 
-            for (var i = iXStart; i <= iXEnd; i++) {
-                oColOpts = el.jspreadsheet.options.columns[i];
-                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
-                    if (typeof(oColOpts.filter) == 'function') {
-                        oDropdownVals[i - iXStart] = oColOpts.filter(el, null, (i - iXStart), null, oColOpts.source);
-                    } else {
-                        oDropdownVals[i - iXStart] = oColOpts.source;
-                    }
+            // if pasted data contains dropdown columns, get the source arrays
+            // this way, we can then set the actual value (id) and not just the label on paste
+            var iPastedColIdx = 0;
+            var iTableColIdx = iXStart;
+            while (iPastedColIdx < aPastedData[0].length && iTableColIdx < el.jspreadsheet.options.columns.length) {
+                var oColOpts = el.jspreadsheet.options.columns[iTableColIdx];
+
+                // skip hidden columns in the table (otherwise the pasted indices will be messed up)
+                if (oColOpts !== undefined && oColOpts.type === 'hidden') {
+                    iTableColIdx++;
+                    continue;
                 }
-            };
+
+                // only process autocomplete columns with a source
+                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    
+                    // dropdown validation is now handled via isDropdownValueValid, so we dont need to filter here
+                    // otherwise we might run into issues with dynamic filters here (?)
+
+                    // save unfiltered dropdown source
+                    oDropdownVals[iPastedColIdx] = oColOpts.source;
+                }
+
+                iPastedColIdx++;
+                iTableColIdx++;
+            }
 
             if (oDropdownVals === {}) {
                 return selectedCells;
             }
 
+            // for each value in a dropdown column, set the id not the label value
+            // if no fitting id is found, set empty
             aPastedData.forEach(function(aRow) {  
                 var aValRows, mVal, oValRow, bKeyFound;
                 for (var iCol in oDropdownVals) {
@@ -666,11 +684,24 @@ JS;
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
         },
         restoreInitValue: function(iCol, iRow) {
+
+            var oJExcel = this.getJExcel();
             var mInitVal = this.getInitValue(iCol, iRow);
+
+            // if a dropdown cell with a filter is being restored, check if the intital value is still valid in the current context
+            // otherwise set empty
+            if (oJExcel.getColumnOptions(iCol).type == 'autocomplete' 
+                && typeof(oJExcel.getColumnOptions(iCol).filter) == 'function'
+                && !this.isDropdownValueValid(iCol, iRow, mInitVal))
+            {
+                 mInitVal = '';
+            }
+
             if (mInitVal === undefined) {
                 mInitVal = '';
             }
-            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal);            
+
+            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal, true);            
         },
         hasChanged: function(iCol, iRow, mValue){
             var mInitVal = this.getInitValue(iCol, iRow);
@@ -795,9 +826,54 @@ JS;
             });
         },
         refreshConditionalProperties: function() {
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+            let numRows = oJExcel.getData().length;
+
             for (i in this._cols) {
                 this._cols[i].conditionize(this);
             }
+
+            // if a dropdown source has filters, check if the set value is in the filtered source (jexcel by default just consideres the unfiltered source array)
+            // if not, set to empty
+            for (i = 0; i < oJExcel.getConfig().columns.length; i++) {
+                if (oJExcel.getColumnOptions(i).type == 'autocomplete' && typeof(oJExcel.getColumnOptions(i).filter) == 'function' ) {
+                    for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+                        
+                        // Clear the cell if value is not in filtered source array
+                        if (!this.isDropdownValueValid(i, rowIndex)){
+                            oJExcel.setValueFromCoords(i, rowIndex, '', true);
+                        }
+                    }
+                }
+            }
+        },
+        isDropdownValueValid: function(iCol, iRow, mValue = null) {
+
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+
+            // if data is not loaded yet, or column is not filtered, dont validate. otherwise all dropdowns would be emptied  
+            if (!{$this->buildJsJqueryElement()}[0].exfWidget.bLoaded || oJExcel.getColumnOptions(iCol).source.length === 0 || typeof(oJExcel.getColumnOptions(iCol).filter) != 'function'){
+                return true;
+            }
+
+            let aFilteredSrc = oJExcel.getColumnOptions(iCol).filter(null, null, iCol, iRow, oJExcel.getColumnOptions(iCol).source);
+            let mCellValue = (mValue !== null) ? mValue : oJExcel.getValueFromCoords(iCol, iRow);
+
+            
+            // empty values are always valid
+            if (mCellValue === null || mCellValue === undefined || mCellValue === '') {
+                return true;
+            }
+
+            // value is invalid if it does not match any id or name in the filtered source 
+            // (check name, in case inital value is passed as parameter (label))
+            if (!aFilteredSrc.some(entry => entry.id == mCellValue || entry.name == mCellValue)) {
+                return false;
+            }
+
+            return true;
         },
         convertArrayToData: function(aDataArray) {
             var aData = [];
@@ -2068,6 +2144,11 @@ JS;
     if (jqCtrl.length === 0) {
         return;
     }
+
+    // when re-setting data (e.g. zwischenspeichern), the element doesnt get destroyed, 
+    // so we need to set the loading flag again
+    jqCtrl[0].exfWidget.bLoaded = false;
+
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
         jqCtrl[0].exfWidget._initData = oData.rows;
@@ -2081,7 +2162,23 @@ JS;
     }
     jqCtrl.jspreadsheet('setData', aData);
     {$this->buildJsResetSelection('jqCtrl')};
-    jqCtrl[0].exfWidget.refreshConditionalProperties();
+
+    // Wait for setData to finish rendering before setting loaded and refreshing
+    setTimeout(function() {
+        jqCtrl[0].exfWidget.bLoaded = true;
+        jqCtrl[0].exfWidget.refreshConditionalProperties();
+    },0);
+
+    /*
+        TODO: When re-setting data (zwischenspeichern), validation seems to briefly fail (cells flash red)
+        this is likely some timing issue with retrieving/setting the data (?)
+
+        If we refresh the conditional properties here while bLoaded is still set to false, it fixes this issue, 
+        but then the data is not correctly conditionized on initial load..
+
+    */
+    
+    
 }()
 
 JS;
@@ -2289,20 +2386,31 @@ JS;
         // otherwise return values from seleted indices
 
         if ($filterTargetIsSpreadsheet === true){
-            // if target is the spreadsheet itself, get filter value from current spreadsheet row
+            // if filter target is the spreadsheet itself, get filter value from current spreadsheet row
             return <<<JS
 
 (function(oWidget){
-        var aAllRows = oWidget.getData(); 
-        var aVals = [];
 
-        if (aAllRows[y]['{$col->getDataColumnName()}'] === undefined) {
-            console.warn('Column {$col->getDataColumnName()} does not exist in the current spreadsheet'); 
-        } else {
-            aVals.push(aAllRows[y]['{$col->getDataColumnName()}']); 
+        if (oWidget && oWidget.bLoaded === true){
+
+            var aAllRows = oWidget.getData(); 
+            var aVals = [];
+
+            // skip automatically added empty rows (when adding new rows is allowed)
+            if (aAllRows.length === 0 || aAllRows[y] === undefined){
+                return "";
+            }
+
+            if (aAllRows[y]['{$col->getDataColumnName()}'] === undefined) {
+                console.warn('Column {$col->getDataColumnName()} does not exist in the current spreadsheet'); 
+            } else {
+                aVals.push(aAllRows[y]['{$col->getDataColumnName()}']); 
+            }
+
+            return aVals.join('{$delimiter}');
         }
 
-        return aVals.join('{$delimiter}');
+        return '';
 })({$this->buildJsJqueryElement()}[0].exfWidget)
 JS;
         } else{
@@ -2487,9 +2595,9 @@ JS;
                 $link = $expr->getWidgetLink($cellWidget);
                 if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
 
-                    // check if current spreadsheet is target to enable live relations
-                    $targetWidget = $expr->getWidgetLink($cellWidget)->getTargetWidgetId(); 
-                    $isTargetWidget = ($targetWidget === $this->getWidget()->getId()) ? true : false;
+                    // check if current spreadsheet is filter target to enable live relations
+                    $targetWidget = $expr->getWidgetLink($cellWidget)->getTargetWidget()->getId(); 
+                    $isTargetWidget = ($targetWidget === $this->getWidget()->getId(true)) ? true : false;
 
                     $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId(), null, $isTargetWidget);
                 }

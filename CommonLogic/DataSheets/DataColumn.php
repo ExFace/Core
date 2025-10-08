@@ -568,6 +568,9 @@ class DataColumn implements DataColumnInterface
                 $this->getTotals()->add($total);
             }
         }
+        if(null !== $val = $uxon->getProperty('nested_data')) {
+            $this->setNestedDataTemplate($val);
+        }
         
         $otherProps = array_diff(array_keys($uxon->toArray()), [
             'name',
@@ -576,7 +579,8 @@ class DataColumn implements DataColumnInterface
             'data_type',
             'formula',
             'attribute_alias',
-            'totals'
+            'totals',
+            'nested_data'
         ]);
         if (! empty($otherProps)) {
             throw new UxonParserError($uxon, 'Unknown UXON property "' . implode('", "', $otherProps) . '" found for data column "' . $this->getName() . '"');
@@ -1194,7 +1198,12 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     * {@inheritDoc}
+     * A template for nested data in this column
+     * 
+     * @uxon-property nested_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":""}]}
+     * 
      * @see DataColumnInterface::setNestedDataTemplate()
      */
     public function setNestedDataTemplate(UxonObject $dataSheetUxon) : DataColumnInterface
