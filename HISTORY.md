@@ -16,7 +16,6 @@ New features:
 - Mentions (e.g. hash-tags or @-mentions) for `InputMarkdown` widget
 - Widgets created from others via `extend_widget` now can be modified using mutations - much more flexible, that 
   simply overwriting properties previously.
-- Default values for placeholders in data addresses: e.g. `[#myparam|??false#]`
 - Many new options for `HttpConnector` and `CallWebService` action:
   - Customize cURL parameters via `curl_options`
   - Service parameters can now have custom `empty_expression` and `empty_as_null` to
@@ -45,6 +44,7 @@ Important fixes:
 
 - Fixed lots of edge cases with `InputComboTable`s inside `DataSpreadSheet`
 - Fixed unwanted dialog refreshes in UI5 on non-critical actions
+- Fixed issues with uploads to file storages with `FlysystemConnector` when files did not have an extension or had duplicate filenames.
 - Fixed issues on strictly case sensitive servers like Google Cloud AppEngine.
 
 ## 1.31 - 18.09.2025
