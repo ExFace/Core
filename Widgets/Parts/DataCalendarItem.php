@@ -74,16 +74,16 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         // We override, to ensure, that these properties are set first, because most others depend on them.
         $uxon = $uxon->copy();
         
-        $keyObjAlias = 'object_alias';
-        if($uxon->hasProperty($keyObjAlias)) {
-            $this->setObjectAlias($uxon->getProperty($keyObjAlias));
-            $uxon->unsetProperty($keyObjAlias);
+        $key = 'object_alias';
+        if($uxon->hasProperty($key)) {
+            $this->setObjectAlias($uxon->getProperty($key));
+            $uxon->unsetProperty($key);
         }
         
-        $keyRelPath = 'object_relation_path_to_parent';
-        if($uxon->hasProperty($keyRelPath)) {
-            $this->setObjectRelationPathToParent($uxon->getProperty($keyRelPath));
-            $uxon->unsetProperty($keyRelPath);
+        $key = 'object_relation_path_to_parent';
+        if($uxon->hasProperty($key)) {
+            $this->setObjectRelationPathToParent($uxon->getProperty($key));
+            $uxon->unsetProperty($key);
         }
         
         $this->importUxonObjectViaTrait($uxon, $skip_property_names);
@@ -149,7 +149,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
 
     /**
-     *
+     * 
      * @return DataColumn|null
      */
     public function getStartTimeColumn() : ?DataColumn
@@ -162,7 +162,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
 
     /**
-     *
+     * 
      * @return string|null
      */
     protected function getEndTime() : ?string
@@ -210,7 +210,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
 
     /**
-     *
+     * 
      * @param int|null $default
      * @return int|null
      */
@@ -237,7 +237,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     } 
     
     /**
-     *
+     * 
      * @return string
      */
     protected function getTitle() : string
@@ -253,7 +253,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * 
      * @uxon-property title
      * @uxon-type metamodel:expression
-     *
+     * 
      * @param string $expression
      * @return DataCalendarItem
      */
@@ -292,7 +292,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     
     
     /**
-     *
+     * 
      * @return string
      */
     protected function getSubtitle() : string
@@ -321,7 +321,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
 
     /**
-     *
+     * 
      * @return DataColumn|null
      */
     public function getSubtitleColumn() : ?DataColumn
@@ -426,7 +426,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
     
     /**
-     *
+     * 
      * {@inheritdoc}
      * @see iHaveColorScale::hasColorScale()
      */
@@ -506,7 +506,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * @param string $aliasWithNamespace
      * @return $this
      */
-    protected function setObjectAlias(string $aliasWithNamespace) : DataCalendarItem
+    public function setObjectAlias(string $aliasWithNamespace) : DataCalendarItem
     {
         $this->objectAlias = $aliasWithNamespace;
         $this->object = null;
@@ -514,8 +514,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
 
     /**
-     * Specify the relation path from the metaobject defined in `object_alias` to the metaobject 
-     * of the parent widget.
+     * Specify the relation path from the metaobject defined in `object_alias` to the metaobject of the parent widget.
      * 
      * NOTE: If `object_alias` is null, undefined, or points to the same metaobject as the parent widget,
      * this property has no effect.
@@ -526,22 +525,10 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * @param string|null $path
      * @return $this
      */
-    protected function setObjectRelationPathToParent(?string $path) : DataCalendarItem
+    public function setObjectRelationPathToParent(?string $path) : DataCalendarItem
     {
         $this->relationPathToParent = $path;
         return $this;
-    }
-
-    /**
-     * Returns TRUE if this widget part connects to a different metaobject than its parent.
-     * 
-     * @return bool
-     */
-    public function hasOwnObject() : bool
-    {
-        return 
-            $this->objectAlias !== null && 
-            $this->objectAlias !== $this->getDataWidget()->getMetaObject()->getAlias();
     }
 
     /**
@@ -561,6 +548,18 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         }
         
         return RelationPathFactory::createFromString($this->getMetaObject(), $this->relationPathToParent);
+    }
+
+    /**
+     * Returns TRUE if this widget part connects to a different metaobject than its parent.
+     *
+     * @return bool
+     */
+    public function hasOwnObject() : bool
+    {
+        return
+            $this->objectAlias !== null &&
+            $this->objectAlias !== $this->getDataWidget()->getMetaObject()->getAlias();
     }
 
     /**
@@ -641,11 +640,11 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * using this column's alias. Its cells will be formatted as follows:
      * 
      * ```
-     *  "{$this->getNestedDataAttributeAlias()}": {
+     *  "{$this->getNestedDataColumn()->getColumnName()}": {
      *      "oid": "someId",
      *      "rows": [
      *          // Rows according to their respective aliases.
-     *          "{$this->getTitleColumn()->getAttributeAlias()}": "someTitle",
+     *          "{$this->getTitleColumn()->getColumnName()}": "someTitle",
      *          // ...
      *      ]
      * }
