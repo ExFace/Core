@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\MetaObjectFactory;
@@ -34,6 +35,10 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         hasColorScale as hasColorScaleViaTrait;
     }
     
+    use ImportUxonObjectTrait {
+        importUxonObject as importUxonObjectViaTrait;
+    }
+    
     private $startTimeExprString = null;
     
     private $startTimeColumn = null;
@@ -63,6 +68,30 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     private $object = null;
     private ?string $relationPathToParent = null;
     private ?DataColumnGroup $columnGroup = null;
+
+    /**
+     * @see ImportUxonObjectTrait::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
+    {
+        // We override, to ensure, that these properties are set first, because most others depend on them.
+        $uxon = $uxon->copy();
+        
+        $keyObjAlias = 'object_alias';
+        if($uxon->hasProperty($keyObjAlias)) {
+            $this->setObjectAlias($uxon->getProperty($keyObjAlias));
+            $uxon->unsetProperty($keyObjAlias);
+        }
+        
+        $keyRelPath = 'object_relation_path_to_parent';
+        if($uxon->hasProperty($keyRelPath)) {
+            $this->setObjectRelationPathToParent($uxon->getProperty($keyRelPath));
+            $uxon->unsetProperty($keyRelPath);
+        }
+        
+        $this->importUxonObjectViaTrait($uxon, $skip_property_names);
+    }
+
 
     /**
      * 
@@ -493,6 +522,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * 
      * NOTE: If `object_alias` is null, undefined, or points to the same metaobject as the parent widget,
      * this property has no effect.
+     * 
+     * @uxon-property object_relation_path_to_parent
+     * @uxon-type metamodel:relation
      * 
      * @param string|null $path
      * @return $this
