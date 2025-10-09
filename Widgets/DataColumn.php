@@ -1376,7 +1376,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * @param UxonObject $data
      * @return DataColumn
      */
-    protected function setNestedData(UxonObject $data) : DataColumn
+    public function setNestedData(UxonObject $data) : DataColumn
     {
         $this->nestedDataSheetUxon = $data;
         return $this;

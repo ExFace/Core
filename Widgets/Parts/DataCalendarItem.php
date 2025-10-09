@@ -2,11 +2,14 @@
 namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\DataColumnGroup;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
@@ -40,24 +43,27 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     private $endTimeColumn = null;
     
     private $defaultDurationHours = null;
-    
+
     private $titleString = null;
-    
+
     private $titleColumn = null;
-    
+
     private $subtitleString = null;
-    
+
     private $subtitleColumn = null;
-    
+
+    private ?DataColumn $nestedDataColumn = null;
+
     private $colorExpr = null;
-    
+
     private $colorColumn = null;
-    
+
     private $indicator = null;
-    
     private $objectAlias = null;
     private $object = null;
-    
+    private ?string $relationPathToParent = null;
+    private ?DataColumnGroup $columnGroup = null;
+
     /**
      * 
      * {@inheritDoc}
@@ -99,7 +105,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
     
     /**
-     * Start time for every item: attribute alias or formula
+     * Start time for every item: attribute alias or formula.
      * 
      * @uxon-property start_time
      * @uxon-type metamodel:attribute|metamodel:formula
@@ -115,22 +121,23 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         $this->addDataColumn($value);
         return $this;
     }
-    
-    /**
-     * 
-     * @return DataColumn
-     */
-    public function getStartTimeColumn() : DataColumn
-    {
-        if ($this->startTimeColumn === null) {
-            $this->startTimeColumn = $this->getDataWidget()->getColumnByExpression($this->startTimeExprString);
-        }
-        return $this->startTimeColumn;
-    }
-    
+
     /**
      *
-     * @return string
+     * @return DataColumn|null
+     */
+    public function getStartTimeColumn() : ?DataColumn
+    {
+        if ($this->startTimeColumn === null && $this->startTimeExprString !== null) {
+            $this->startTimeColumn = $this->getColumnByExpression($this->startTimeExprString);
+        }
+        
+        return $this->startTimeColumn;
+    }
+
+    /**
+     *
+     * @return string|null
      */
     protected function getEndTime() : ?string
     {
@@ -138,7 +145,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
     
     /**
-     * End time for every item: attribute alias or formula
+     * End time for every item: attribute alias or formula.
      * 
      * @uxon-property end_time
      * @uxon-type metamodel:attribute|metamodel:formula
@@ -161,8 +168,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     public function getEndTimeColumn() : ?DataColumn
     {
         if ($this->endTimeColumn === null && $this->endTimeExprString !== null) {
-            $this->endTimeColumn = $this->getDataWidget()->getColumnByExpression($this->endTimeExprString);
+            $this->endTimeColumn = $this->getColumnByExpression($this->endTimeExprString);
         }
+        
         return $this->endTimeColumn;
     }
     
@@ -174,10 +182,11 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     {
         return $this->endTimeExprString !== null;
     }
-    
+
     /**
      *
-     * @return int
+     * @param int|null $default
+     * @return int|null
      */
     public function getDefaultDurationHours(int $default = null) : ?int
     {
@@ -209,17 +218,17 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     {
         return $this->titleString;
     }
-    
+
     /**
      * Attribute alias or any other expression to be displayed as item title.
-     * 
+     *
      * If not set explicitly, the object label will be used. If not present - the first
      * visible data column.
-     * 
+     *
      * @uxon-property title
      * @uxon-type metamodel:expression
-     * 
-     * @param string $value
+     *
+     * @param string $expression
      * @return DataCalendarItem
      */
     public function setTitle(string $expression) : DataCalendarItem
@@ -238,7 +247,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     {
         if ($this->titleColumn === null) {
             if ($this->titleString !== null) {
-                $this->titleColumn = $this->getDataWidget()->getColumnByExpression($this->titleString);
+                $this->titleColumn = $this->getColumnByExpression($this->titleString);
             } elseif ($this->getMetaObject()->hasLabelAttribute()) {
                 $this->titleColumn = $this->addDataColumn($this->getMetaObject()->getLabelAttribute()->getAlias());
             } else {
@@ -250,6 +259,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
                 }
             }
         }
+        
         return $this->titleColumn;
     }
     
@@ -263,7 +273,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     {
         return $this->subtitleString;
     }
-    
+
     /**
      * Attribute alias or any other expression to be displayed as item subtitle.
      *
@@ -273,7 +283,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * @uxon-property subtitle
      * @uxon-type metamodel:expression
      *
-     * @param string $value
+     * @param string $expression
      * @return DataCalendarItem
      */
     public function setSubtitle(string $expression) : DataCalendarItem
@@ -283,16 +293,17 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         $this->addDataColumn($expression);
         return $this;
     }
-    
+
     /**
      *
-     * @return DataColumn
+     * @return DataColumn|null
      */
     public function getSubtitleColumn() : ?DataColumn
     {
-        if ($this->subtitleColumn === null) {
+        if ($this->subtitleColumn === null && $this->subtitleString !== null) {
             $this->subtitleColumn = $this->getDataWidget()->getColumnByExpression($this->subtitleString);
         }
+        
         return $this->subtitleColumn;
     }
     
@@ -315,6 +326,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         if ($this->colorExpr === null || ! $this->colorExpr->isStatic()) {
             return null;
         }
+        
         return $this->colorExpr->evaluate();
     }
 
@@ -326,7 +338,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
      */
-    public function setColor($color)
+    public function setColor($color) : DataCalendarItem
     {
         $this->colorColumn = null;
         $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
@@ -336,7 +348,12 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         
         return $this;
     }
-    
+
+    /**
+     * Returns TRUE if `color` has a value and is NOT static.
+     * 
+     * @return bool
+     */
     public function hasColorColumn() : bool
     {
         return $this->colorExpr !== null && ! $this->colorExpr->isStatic();
@@ -349,8 +366,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     public function getColorColumn() : ?DataColumn
     {
         if ($this->colorColumn === null && $this->hasColorColumn()) {
-            $this->colorColumn = $this->getDataWidget()->getColumnByExpression($this->colorExpr);
+            $this->colorColumn = $this->getColumnByExpression($this->colorExpr);
         }
+        
         return $this->colorColumn;
     }
 
@@ -415,11 +433,11 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     {
         return $this->indicator;
     }
-    
+
     /**
      * Each calendar item can have an indicator with a different color - e.g. representing a status or similar.
-     * 
-     * The indicator is independant of the main color of the event. Depending on the facade
+     *
+     * The indicator is independent of the main color of the event. Depending on the facade
      * used, it may be rendered as a stripe on the side of the event bar or an icon inside
      * of it.
      *
@@ -427,7 +445,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * @uxon-type \exface\Core\Widgets\Parts\DataItemIndicator
      * @uxon-template {"color": ""}
      *
-     * @param DataCalendarItem $uxon
+     * @param UxonObject $uxon
      * @return DataCalendarItem
      */
     public function setIndicator(UxonObject $uxon) : DataCalendarItem
@@ -451,52 +469,124 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     }
 
     /**
-     * Make calendar items be based on a different metaobject than the data widget (e.g. to load multiple events per data row)
+     * Make calendar items be based on a different metaobject than the data widget (e.g. to load multiple events per
+     * data row).
+     * 
+     * NOTE: If you want to use this feature, remember to set `object_relation_path_to_parent` as well!
      * 
      * @uxon-property object_alias
      * @uxon-type metamodel:object
      * 
-     * @param string $namepsacedAlias
+     * @param string $aliasWithNamespace
      * @return $this
      */
-    protected function setObjectAlias(string $namepsacedAlias) : DataCalendarItem
+    protected function setObjectAlias(string $aliasWithNamespace) : DataCalendarItem
     {
-        $this->objectAlias = $namepsacedAlias;
+        $this->objectAlias = $aliasWithNamespace;
         $this->object = null;
         return $this;
     }
 
     /**
+     * Specify the relation path from the metaobject defined in `object_alias` to the metaobject 
+     * of the parent widget.
+     * 
+     * NOTE: If `object_alias` is null, undefined, or points to the same metaobject as the parent widget,
+     * this property has no effect.
+     * 
+     * @param string|null $path
+     * @return $this
+     */
+    protected function setObjectRelationPathToParent(?string $path) : DataCalendarItem
+    {
+        $this->relationPathToParent = $path;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if this widget part connects to a different metaobject than its parent.
+     * 
      * @return bool
      */
     public function hasOwnObject() : bool
     {
-        return $this->objectAlias !== null;
+        return 
+            $this->objectAlias !== null && 
+            $this->objectAlias !== $this->getDataWidget()->getMetaObject()->getAlias();
     }
 
     /**
-     * @return MetaRelationPathInterface
+     * Returns the relation path from the metaobject defined in `object_alias` to
+     * the metaobject defined in the parent.
+     * 
+     * @return MetaRelationPathInterface|null
      */
-    protected function getRelationPathToDataWidget() : MetaRelationPathInterface
+    protected function getRelationPathToDataWidget() : ?MetaRelationPathInterface
     {
-        // TODO
+        if(!$this->hasOwnObject()) {
+            return null;
+        }
+        
+        if($this->relationPathToParent === null || $this->relationPathToParent === '') {
+            throw new WidgetConfigurationError($this->getWidget(), 'Because you specified a value for `object_alias` you must also specify a relation path in `object_relation_path_to_parent` that leads from your object to the parent object!');
+        }
+        
+        return RelationPathFactory::createFromString($this->getMetaObject(), $this->relationPathToParent);
     }
 
     /**
+     * Tries to get a column by expression. If this widget part has its own metaobject,
+     * the column will be fetched internally. Otherwise, it will be fetched from the parent.
+     * 
+     * @param string $expression
+     * @return DataColumn|null
+     * 
+     * @see DataCalendarItem::hasOwnObject()
+     */
+    public function getColumnByExpression(string $expression) : ?DataColumn
+    {
+        return $this->hasOwnObject() ?
+            $this->columnGroup?->getColumnByExpression($expression) :
+            $this->getDataWidget()->getColumnByExpression($expression);
+    }
+
+    /**
+     * Adds a `DataColumn` widget. If this widget has its own metaobject, the column will
+     * be added internally and configured to be loaded from a nested sheet.
+     * 
+     * @see DataCalendarItem::getNestedDataColumn()
      * @see DataWidgetPartTrait::addDataColumn()
      */
     protected function addDataColumn(string $expression) : DataColumn
     {
-        if ($this->hasOwnObject()) {
-            $dw = $this->getDataWidget();
-            if (! $col = $dw->getColumnByAttributeAlias()) {
-                $col = $dw->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getNestedDataAttributeAlias()
-                ]));
-                $dw->addColumn($col);
-            }
+        // If we use the parent object, we can use the default function.
+        if (!$this->hasOwnObject()) {
+            return $this->addDataColumnViaTrait($expression);
         }
-        return $this->addDataColumnViaTrait($expression);
+        
+        // Initialize column group.
+        if($this->columnGroup === null) {
+            $dw = $this->getDataWidget();
+            $this->columnGroup = $dw->getPage()->createWidget('DataColumnGroup', $dw);
+            $this->columnGroup->setObjectAlias($this->objectAlias);
+        }
+        
+        // Column already exists.
+        if(null !== $col = $this->columnGroup->getColumnByExpression($expression)) {
+            return $col;
+        }
+        
+        // Add column.
+        $col = $this->columnGroup->createColumnFromUxon(new UxonObject([
+            'attribute_alias' => $expression
+        ]));
+        $this->columnGroup->addColumn($col);
+        
+        // Update nested data.
+        $nestedDataTemplate = $this->getNestedDataColumn()->getNestedDataTemplateUxon();
+        $nestedDataTemplate->appendToProperty('columns', $expression);
+        
+        return $col;
     }
 
     /**
@@ -505,16 +595,60 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     public function getNestedDataAttributeAlias() : ?string
     {
         $relPathToDataObject = $this->getRelationPathToDataWidget();
+        
+        if($relPathToDataObject === null) {
+            return null;
+        }
+        
         $relPathFromDataObject = $relPathToDataObject->reverse();
         return $relPathFromDataObject->toString();
     }
 
     /**
-     * @return string|null
+     * If this widget part has its own metaobject, the `DataColumn` widget 
+     * used to read nested data will be returned.
+     * 
+     * NOTE: Once data has been read, you can access the nested sheet,
+     * using this column's alias. Its cells will be formatted as follows:
+     * 
+     * ```
+     *  "{$this->getNestedDataAttributeAlias()}": {
+     *      "oid": "someId",
+     *      "rows": [
+     *          // Rows according to their respective aliases.
+     *          "{$this->getTitleColumn()->getAttributeAlias()}": "someTitle",
+     *          // ...
+     *      ]
+     * }
+     * ```
+     * 
+     * @return DataColumn|null
      */
-    public function getNestedDataColumnName() : ?string
+    public function getNestedDataColumn() : ?DataColumn
     {
-        // TODO save the real data column name somehow?
-        return \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getNestedDataAttributeAlias());
+        if(!$this->hasOwnObject()) {
+            return null;
+        }
+        
+        // Add the column used to read and store the nested data.
+        if ($this->nestedDataColumn === null) {
+            $dw = $this->getDataWidget();
+            $this->nestedDataColumn = $dw->getColumnByExpression($this->getNestedDataAttributeAlias());
+            
+            if($this->nestedDataColumn === null) {
+                $this->nestedDataColumn = $dw->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $this->getNestedDataAttributeAlias(),
+                ]));
+                
+                $dw->addColumn($this->nestedDataColumn);
+            }
+            
+            $this->nestedDataColumn->setNestedData(new UxonObject([
+                'object_alias' => $this->objectAlias,
+                'columns' => []
+            ]));
+        }
+        
+        return $this->nestedDataColumn;
     }
 }
