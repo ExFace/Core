@@ -26,7 +26,37 @@ class Gantt extends DataTree
     private $childrenMoveWithParentIf = null;
     
     private $childrenMoveWithParent = null;
-    
+
+    /**
+     * @inheritDoc
+     * @see AbstractWidget::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        // We override to avoid timing issues, if these properties appear higher up in the UXON.
+        $uxon->copy();
+        
+        $key = 'tasks';
+        $tasksUxon = null;
+        if($uxon->hasProperty($key)) {
+            $tasksUxon = $uxon->getProperty($key);
+            $uxon->unsetProperty($key);
+        }
+
+        $key = 'items';
+        if($uxon->hasProperty($key)) {
+            if($tasksUxon !== null) {
+                throw new WidgetConfigurationError($this, 'Setting both "items" and "tasks" is not allowed!');
+            }
+            
+            $tasksUxon = $uxon->getProperty($key);
+            $uxon->unsetProperty($key);
+        }
+
+        parent::importUxonObject($uxon);
+        $this->setTasks($tasksUxon);
+    }
+
     /**
      *
      * @return DataTimeline
