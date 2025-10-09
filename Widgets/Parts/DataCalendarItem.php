@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\MetaObjectFactory;
@@ -21,12 +22,13 @@ use exface\Core\DataTypes\NumberDataType;
  * Configuration for items in calendar-related data widgets.
  * 
  * @author Andrej Kabachnik
- *
+ * 
  */
 class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorScale
 {
     use DataWidgetPartTrait {
-        addDataColumn as addDataColumnViaTrait;   
+        addDataColumn as addDataColumnViaTrait;
+        importUxonObject as importUxonObjectViaTrait;
     }
     
     use iHaveColorScaleTrait {
@@ -63,6 +65,30 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     private $object = null;
     private ?string $relationPathToParent = null;
     private ?DataColumnGroup $columnGroup = null;
+
+    /**
+     * @see ImportUxonObjectTrait::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
+    {
+        // We override, to ensure, that these properties are set first, because most others depend on them.
+        $uxon = $uxon->copy();
+        
+        $keyObjAlias = 'object_alias';
+        if($uxon->hasProperty($keyObjAlias)) {
+            $this->setObjectAlias($uxon->getProperty($keyObjAlias));
+            $uxon->unsetProperty($keyObjAlias);
+        }
+        
+        $keyRelPath = 'object_relation_path_to_parent';
+        if($uxon->hasProperty($keyRelPath)) {
+            $this->setObjectRelationPathToParent($uxon->getProperty($keyRelPath));
+            $uxon->unsetProperty($keyRelPath);
+        }
+        
+        $this->importUxonObjectViaTrait($uxon, $skip_property_names);
+    }
+
 
     /**
      * 
@@ -221,10 +247,10 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
 
     /**
      * Attribute alias or any other expression to be displayed as item title.
-     *
+     * 
      * If not set explicitly, the object label will be used. If not present - the first
      * visible data column.
-     *
+     * 
      * @uxon-property title
      * @uxon-type metamodel:expression
      *
@@ -276,13 +302,13 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
 
     /**
      * Attribute alias or any other expression to be displayed as item subtitle.
-     *
+     * 
      * If not set explicitly, the object label will be used. If not present - the first
      * visible data column.
-     *
+     * 
      * @uxon-property subtitle
      * @uxon-type metamodel:expression
-     *
+     * 
      * @param string $expression
      * @return DataCalendarItem
      */
@@ -436,15 +462,15 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
 
     /**
      * Each calendar item can have an indicator with a different color - e.g. representing a status or similar.
-     *
+     * 
      * The indicator is independent of the main color of the event. Depending on the facade
      * used, it may be rendered as a stripe on the side of the event bar or an icon inside
      * of it.
-     *
+     * 
      * @uxon-property indicator
      * @uxon-type \exface\Core\Widgets\Parts\DataItemIndicator
      * @uxon-template {"color": ""}
-     *
+     * 
      * @param UxonObject $uxon
      * @return DataCalendarItem
      */
@@ -493,6 +519,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * 
      * NOTE: If `object_alias` is null, undefined, or points to the same metaobject as the parent widget,
      * this property has no effect.
+     * 
+     * @uxon-property object_relation_path_to_parent
+     * @uxon-type metamodel:relation
      * 
      * @param string|null $path
      * @return $this
