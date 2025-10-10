@@ -223,7 +223,7 @@ class Data
                 }
                 
                 if ($col->hasNestedData()) {
-                    if(null === $nestedCol = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias())) {
+                    if(false === $nestedCol = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias())) {
                         $nestedCol = $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias());
                     }
                     
