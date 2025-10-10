@@ -35,7 +35,13 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         getColorScale as getColorScaleViaTrait;
         hasColorScale as hasColorScaleViaTrait;
     }
-    
+
+    public const CFG_HIDE_IF_MISSING_EITHER = 'missing_either';
+    public const CFG_HIDE_IF_MISSING_START = 'missing_start';
+    public const CFG_HIDE_IF_MISSING_END = 'missing_end';
+    public const CFG_HIDE_IF_MISSING_BOTH = 'missing_both';
+    public const CFG_HIDE_IF_MISSING_NEVER = 'never';
+
     private $startTimeExprString = null;
     
     private $startTimeColumn = null;
@@ -65,6 +71,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     private $object = null;
     private ?string $relationPathToParent = null;
     private ?DataColumnGroup $columnGroup = null;
+    private string $hideIfMissingDate = self::CFG_HIDE_IF_MISSING_BOTH;
 
     /**
      * @see ImportUxonObjectTrait::importUxonObject()
@@ -217,6 +224,76 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     public function getDefaultDurationHours(int $default = null) : ?int
     {
         return $this->defaultDurationHours ?? $default;
+    }
+
+    /**
+     * Configure if calendar items should be hidden, when they have missing date data (Default is `never`).
+     * 
+     * - `missing_either`: Items are hidden, if EITHER start or end or both are missing.
+     * - `missing_start`: Items are hidden, if they don't have a START date.
+     * - `missing_end`: Items are hidden, if they don't have an END date.
+     * - `missing_both`: Items are hidden only, if BOTH dates are missing.
+     * - `never`: Items are always visible.
+     * 
+     * @uxon-property hide_if_missing_date
+     * @uxon-type [missing_either,missing_start,missing_end,missing_both,never]
+     * @uxon-template never
+     * 
+     * @param string $setting
+     * @return $this
+     */
+    public function setHideIfMissingDate(string $setting) : DataCalendarItem
+    {
+        $this->hideIfMissingDate = $setting;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHideIfMissingDate() : string
+    {
+        return $this->hideIfMissingDate;
+    }
+
+    /**
+     * Builds an inline JS-Snippet that returns TRUE if a given task item should be hidden.
+     * The task object is expected to have parameters for both the start and end date.
+     *
+     * @param string $taskJs
+     * @param string $taskStartJs
+     * @param string $taskEndJs
+     * @return string
+     */
+    public function buildJsHideIfMissingDateCheck(
+        string $taskJs = 'oTask',
+        string $taskStartJs = 'start',
+        string $taskEndJs = 'end'
+    ) : string
+    {
+        $varMissingStartJs = 'bMissingStart';
+        $varMissingEndJs = 'bMissingEnd';
+        
+        $checkJs = match ($this->hideIfMissingDate) {
+            self::CFG_HIDE_IF_MISSING_EITHER => $varMissingStartJs . ' || ' . $varMissingEndJs,
+            self::CFG_HIDE_IF_MISSING_START => $varMissingStartJs,
+            self::CFG_HIDE_IF_MISSING_END => $varMissingEndJs,
+            self::CFG_HIDE_IF_MISSING_BOTH => $varMissingStartJs . ' && ' . $varMissingEndJs,
+            default => false
+        };
+        
+        if($checkJs === false) {
+            return 'false';
+        }
+        
+        return <<<JS
+
+(function (oTask) {
+    var {$varMissingStartJs} = oTask.{$taskStartJs} === undefined || oTask.{$taskStartJs} === null || oTask.{$taskStartJs} === '';
+    var {$varMissingEndJs} = oTask.{$taskEndJs} === undefined || oTask.{$taskEndJs} === null || oTask.{$taskEndJs} === '';
+    return {$checkJs};
+})({$taskJs})
+JS;
     }
     
     /**
