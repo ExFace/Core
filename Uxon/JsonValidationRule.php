@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use JsonPath\JsonObject;
 
 /**
@@ -25,15 +26,22 @@ class JsonValidationRule
     private array $jsonPaths = [];
     private bool $isCritical = false;
     private string $message;
+    private string $appliesToClass;
 
     public function __construct(
         JsonDataType $dataType, 
-        string $alias = '',
-        string $mode = JsonValidationRule::MODE_PROHIBIT, 
-        array $jsonPaths = [], 
-        string $message = ''
+        string       $appliesToClass,
+        string       $alias = '',
+        string       $mode = JsonValidationRule::MODE_PROHIBIT, 
+        array        $jsonPaths = [], 
+        string       $message = ''
     )
     {
+        if(!class_exists($appliesToClass)) {
+            throw new InvalidArgumentException('Invalid value for "applies_to": ' . $appliesToClass . '" is not a valid class!');
+        }
+
+        $this->appliesToClass = $appliesToClass;
         $this->jsonDataType = $dataType;
         $this->alias = $alias;
         $this->mode = $mode;
@@ -41,9 +49,9 @@ class JsonValidationRule
         $this->message = $message;
     }
     
-    public static function fromUxon(JsonDataType $dataType, UxonObject $uxon) : JsonValidationRule
+    public static function fromUxon(JsonDataType $dataType, string $appliesToClass, UxonObject $uxon) : JsonValidationRule
     {
-        $rule = new JsonValidationRule($dataType);
+        $rule = new JsonValidationRule($dataType, $appliesToClass);
         $rule->importUxonObject($uxon);
         
         return $rule;
@@ -97,6 +105,11 @@ class JsonValidationRule
         }
         
         return $results;
+    }
+    
+    public function getAppliesToClass() : string
+    {
+        return $this->appliesToClass;
     }
     
     public function getMessage() : string
