@@ -87,11 +87,8 @@ trait JqueryContainerTrait {
      * @return string
      */
     public function buildJsValidator(?string $valJs = null) : string
-    {
-        $widget = $this->getWidget();
-        
-        $output = '
-				(function(){';
+    {        
+        $output = '(function(){';
         foreach ($this->getWidgetsToValidate() as $child) {
             $validator = $this->getFacade()->getElement($child)->buildJsValidator();
             $output .= '
@@ -249,18 +246,22 @@ JS;
      * The listener will check if the widget configured is affected by the event (e.g. by the action effects) and 
      * trigger a refresh (= js code passed to theis method) on the widget.
      * 
-     * The passed JS code will have access to the even parameters including action effects via `oEventParams`.
+     * The passed JS code will have access to the event parameters including action effects via `oEventParams`.
+     * 
+     * ## When is a container refreshed?
      * 
      * By default, a container is refreshed (= the passed code is called) if
      * - it is to be refreshed explicitly (e.g. the button has a `refresh_widget_ids` or `refresh_input` 
      * explicitly set to `true`)
-     * - its main object is effected by an action directly
-     * - one of the related objects used within the container is effected directly
-     * or indirectly
+     * - its main object is effected by an action directly AND
+     *  - there are not unsaved changes in the container
+     *  - or the action is handling changes (= direct hit by a change handler action)
+     * - one of the related objects used within the container is effected directly AND the container has no
+     * unsaved changes
      * 
      * **Exclusions:**
      * - By default, the script will not be executed if the container has changes and the action does not
-     * handle those changes directly - i.e. there is not direct action effect with `handles_changes` set to `true`. 
+     * handle those changes directly - i.e. there is no direct action effect with `handles_changes` set to `true`. 
      *- The container is not refreshed if it is explicitly excluded via `refresh_input`
      * being set to `false` on the button.
      * 
@@ -268,7 +269,16 @@ JS;
      * blocks user interaction, so we try to do it only when really necessary. In Dialog particularly, any action 
      * performed inside a nested dialog is considered to have an indirect effect on the object of the outer dialog. 
      * These effects do not lead to a refresh. Instead, the Dialog will only be refreshed if the action effects its 
-     * object explicitly.
+     * object or objects used by inner widgets explicitly.
+     * 
+     * ## Common examples
+     * 
+     * - SaveData button of a dialog will always refresh it because it is a direct effect, and it handles changes
+     * - Lookup buttons will not refresh the dialog because they do not handle changes
+     * - SaveData in a dialog opened from an outer dialog (e.g. editing a COMMENT on a REPORT) will only refresh
+     * the outer dialog, if that includes a widget with a relation to the inner dialog object: e.g. COMMENT_ID:COUNT
+     * in the header of the REPORT widget
+     * - CallWidgetFunction buttons inside the container will not refresh it because they do not handle changes
      *
      * @param string $scriptJs
      * @return string
@@ -285,13 +295,14 @@ JS;
         
 $( document ).off( "{$actionperformed}.{$this->getId()}" );
 $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
-    var oEffect;
+    var oEffect, oHit;
     var aChanges = [];
     var aRelatedObjectAliases = {$relatedObjAliasesJs};
     var sMainObjectAlias = '{$this->getMetaObject()->getAliasWithNamespace()}';
     var sWidgetId = "{$this->getId()}";
     var bCheckChanges = {$this->escapeBool($doNotCallOnUnhandledChanges)};
-    var fnRefresh = function(oEventParams) {
+    var fnRefresh = function(oEventParams, oEffectHit) {
+        // console.log('refresh {$this->getCaption()} due to effect ', oEffectHit);
         {$scriptJs}
     };
     
@@ -300,34 +311,47 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
     }
     
     if (oParams.refresh_widgets.indexOf(sWidgetId) !== -1) {
-        fnRefresh(aEffects);
+        fnRefresh(oParams);
         return;
     }
   
     for (var i = 0; i < oParams.effects.length; i++) {
         oEffect = oParams.effects[i];
-        // Refresh if the main object of the container is effected directly
-        if (oEffect.effected_object === sMainObjectAlias && ! oEffect.relation_path_to_effected_object) {
-            oEffect.direct = true;
+        // Ignore secondary effects (e.g. an effect on ORDER due to a action on ORDER_POSITION) - we only react to
+        // original effect and only if it really hits our container.
+        if (oEffect.relation_path_to_effected_object) {
+            continue;
+        }
+        // Register a direct hit if the main object of the container is effected directly. This should force a
+        // refresh because changes on this object are handled directly.
+        if (oEffect.effected_object === sMainObjectAlias) {
+            oHit = {
+                effect: oEffect,
+                direct: true
+            };
             break;
         }
-        // Refresh if one of the objects required for inner widgets is effected directly or indirectly
+        // Register an indirect hit on the container if one of the objects required for its inner widgets is effected 
+        // directly. This should only trigger a refresh if there are no pending changes in order to prevent loss
+        // of these changes
         if (aRelatedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-            oEffect.direct = false;
+            oHit = {
+                effect: oEffect,
+                direct: false
+            };
             break;
         }
-        oEffect = null;
     }
     
-    if (oEffect) {
+    if (oHit) {
         // DO NOT refresh if this widget has changes and the action does not handle changes of this object directly
-        if (bCheckChanges && ! (oEffect.direct === true && oEffect.handles_changes === true)) {
+        if (bCheckChanges && ! (oHit.direct === true && oHit.handles_changes === true)) {
             aChanges = {$this->buildJsChangesGetter(true)};
             if (aChanges.length > 0) {
                 return;
             }
         }
-        fnRefresh(oParams);
+        fnRefresh(oParams, oHit);
     }
 });
 

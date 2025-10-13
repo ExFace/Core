@@ -152,18 +152,12 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     public function addFromExpression($expression_or_string, $name = null, $hidden = false)
     {
         $data_sheet = $this->getDataSheet();
-
-        $existingCol = $this->getByExpression($expression_or_string);
-        if($existingCol) {
-            $existingCol->setHidden($hidden);
-            return $existingCol;
-        }
-        
         $col = DataColumnFactory::createFromString($data_sheet, $expression_or_string, $name);
         $col->setHidden($hidden);
         $this->add($col);
-        
-        return $col;
+        // TODO geb 2025-10-08: If this list contains a column with the same identity this function returns
+        // TODO                 an orphaned instance. This is unexpected behavior and should probably be fixed.
+        return $col; 
     }
 
     /**
