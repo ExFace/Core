@@ -120,7 +120,7 @@ class NumberDataType extends AbstractDataType
         try {
             $number = self::cast($string);
         } catch (\Throwable $e) {
-            throw $this->createValidationParseError($string, null, null, $e->getMessage(), $e->getCode(), $e);
+            throw $this->createValidationParseError($string, $e->getMessage(), null, $e->getCode(), $e);
         }
         
         if ($string === $this->getEmptyFormat()) {
