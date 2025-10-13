@@ -327,7 +327,8 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
         if (oEffect.effected_object === sMainObjectAlias) {
             oHit = {
                 effect: oEffect,
-                direct: true
+                direct: true,
+                handles_changes: oEffect.handles_changes
             };
             break;
         }
@@ -337,7 +338,8 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
         if (aRelatedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
             oHit = {
                 effect: oEffect,
-                direct: false
+                direct: false,
+                handles_changes: oEffect.handles_changes
             };
             break;
         }
