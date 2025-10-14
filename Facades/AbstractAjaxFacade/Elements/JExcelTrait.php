@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\InputSelect;
@@ -1834,10 +1835,24 @@ JS;
                     $srcData[] = $data;
                 }
             } else {
+
                 $srcData = [];
-                foreach ($cellWidget->getSelectableOptions() as $key => $val) {
-                    $srcData[] = ['id' => $key, 'name' => $val];
-                }                
+
+                if ($cellWidget->getValueDataType() instanceof NumberEnumDataType) {
+    
+                    // Having numerical ids (0 specifically) seems to cause problems with JExcel; seems to be an unfortunate implementation on their side
+                    // 0 gets replaced with an empty value when selecting via the dropdown (probably a truthy check somewhere, all other numerical values are fine) 
+                    // -> their example dropdown sources are also strings and not 0-indexed https://bossanova.uk/jspreadsheet/v4/examples/dropdown-and-autocomplete
+                    foreach ($cellWidget->getSelectableOptions() as $key => $val) {
+                        // use strignified ids in this case
+                        $srcData[] = ['id' => strval($key), 'name' => $val]; 
+                    }       
+                }
+                else{
+                    foreach ($cellWidget->getSelectableOptions() as $key => $val) {
+                        $srcData[] = ['id' => $key, 'name' => $val]; 
+                    } 
+                }         
             }
             $srcJson = json_encode($srcData);
         } else {
