@@ -33,6 +33,19 @@ trait iSupportLazyLoadingTrait {
     {
         return $this->lazy_loading ?? $default;
     }
+
+    /**
+     * Returns true if lazy loading was explicitly set for this widget (for example in the UXON) of the widget.
+     * Return false if the default value is used. 
+     * @return bool
+     */
+    public function isLazyLoadingExplicitlySet() : bool
+    {
+        if ($this->lazy_loading === null) {
+            return false;
+        }
+        return true;
+    }
     
     /**
      * Makes data values get loaded asynchronously in background if the facade supports it (i.e.

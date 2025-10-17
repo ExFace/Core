@@ -1200,7 +1200,8 @@ JS;
 JS;
             }
 
-            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && $cellWidget->getLazyLoading()) ? 'true' : 'false';
+            // only set lazy loading set to true if explicitly set (e.g. in uxon)
+            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && $cellWidget->getLazyLoading() && $cellWidget->isLazyLoadingExplicitlySet()) ? 'true' : 'false';
             $wasLazyLoaded = 'false';
 
             $lazyLoadingRequestJs = json_encode("");
@@ -1742,13 +1743,15 @@ JS;
             throw new FacadeLogicError('TODO');
         }
         $filterJs = '';
-        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false) {
+
+        // only use lazy loading is it is explicitly set (e.g. in uxon)
+        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false || !$cellWidget->isLazyLoadingExplicitlySet()) {
+
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 if ($cellWidget instanceof InputComboTable) {
                     $srcSheet = $cellWidget->getOptionsDataSheet();
-                    $table = $cellWidget->getTable()->getColumns();
 
                     // See if the widget has additional filters
                     // If so, add any attributes required for them to the $srcSheet
