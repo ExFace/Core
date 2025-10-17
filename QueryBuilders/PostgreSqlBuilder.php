@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
@@ -177,5 +178,25 @@ CASE
     ELSE '{}'
 END 
 SQL;
+    }
+
+    /**
+     * PostgreSQL does not allow table aliases in the SET clause
+     * 
+     * @see AbstractSqlBuilder::buildSqlSet()
+     */
+    protected function buildSqlSet(QueryPartValue $qpart, ?string $tableAlias = null, ?string $tableColumn = null) : string
+    {
+        $tableColumn ??= $this->buildSqlDataAddress($qpart, self::OPERATION_WRITE);
+        return $tableColumn;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::buildSqlAliasForRowCounter()
+     */
+    protected function buildSqlAliasForRowCounter() : string
+    {
+        return 'exfcnt';
     }
 }
