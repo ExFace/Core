@@ -66,7 +66,7 @@ use exface\Core\Widgets\Traits\iHaveColorTrait;
  * }
  * 
  * ```
- * 
+ *
  * @author Miriam Seitz
  *
  */
@@ -86,6 +86,14 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
     private $hintScale = null;
 
     private ?WidgetPropertyBinding $colorBinding = null;
+
+    private string $defaultColor = 'transparent';
+
+    private string $displayMode = 'Simplified';
+
+    private bool $showMoreColorsButton = true;
+
+    private bool $showDefaultColorButton = false;
 
     protected function init()
     {
@@ -175,7 +183,7 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
     }
 
     /**
-     * the color_scale does not override a given color scale from color_scale_datatype_alias
+     * Ensures that color_scale does not override a provided color scale from color_scale_datatype_alias
      *
      * @param UxonObject $valueColorPairs
      * @return iHaveColorScale
@@ -361,5 +369,90 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
         }
 
         return $scale;
+    }
+
+    /**
+     * Choose the default color. If the default color button is shown, clicking it will reset to this color.
+     *
+     * @uxon-property default_color
+     * @uxon-default transparent
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return InputColorPalette
+     */
+    public function setDefaultColor(string $value) : InputColorPalette
+    {
+        $this->defaultColor = $value;
+        return $this;
+    }
+
+    public function getDefaultColor(): string
+    {
+        return $this->defaultColor;
+    }
+
+    /**
+     * Select the complexity and size of the ColorPicker within "More colors..."
+     *
+     * @uxon-property display_mode
+     * @uxon-default Simplified
+     * @uxon-type [Default,Simplified,Large]
+     *
+     * @param string $value
+     * @return InputColorPalette
+     */
+    public function setDisplayMode(string $value) : InputColorPalette
+    {
+        $this->displayMode = $value;
+        return $this;
+    }
+
+    public function getDisplayMode(): string
+    {
+        return $this->displayMode;
+    }
+
+    /**
+     * Toggle the visibility of a "More colors..." button
+     * that will open a ColorPicker for the user to choose any color in the spectrum.
+     *
+     * @uxon-property show_more_colors_button
+     * @uxon-default true
+     * @uxon-type boolean
+     *
+     * @param boolean $value
+     * @return InputColorPalette
+     */
+    public function setShowMoreColorsButton(bool $value) : InputColorPalette
+    {
+        $this->showMoreColorsButton = $value;
+        return $this;
+    }
+
+    public function getShowMoreColorsButton(): bool
+    {
+        return $this->showMoreColorsButton;
+    }
+
+    /**
+     * Toggle the visibility of a default color button that can be used to reset the color to a default value.
+     *
+     * @uxon-property show_default_color_button
+     * @uxon-default false
+     * @uxon-type boolean
+     *
+     * @param boolean $value
+     * @return InputColorPalette
+     */
+    public function setShowDefaultColorButton(bool $value) : InputColorPalette
+    {
+        $this->showDefaultColorButton = $value;
+        return $this;
+    }
+
+    public function getShowDefaultColorButton(): bool
+    {
+        return $this->showDefaultColorButton;
     }
 }
