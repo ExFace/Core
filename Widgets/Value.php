@@ -574,11 +574,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
 
     /**
-     * Returns TRUE if the widget represents a cell in a data widget.
+     * Returns TRUE if the widget is a InputColorPalette.
      *
-     * This way, in-table editors and display widgets can be easily detected.
-     *
-     * @see Data::setCellWidget()
+     * A color palette is not a normal "Input" widget and thus must be treated differently in some aspects.
      *
      * @return bool
      */
