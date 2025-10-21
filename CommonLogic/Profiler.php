@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
@@ -34,6 +35,8 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     const LAP_CATEGORY = 'category';
     const LAP_SUBJECT = 'subject';
     
+    private string $name;
+    
     private $startMs = 0;
     
     private $workbench = null;
@@ -49,11 +52,12 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * @param WorkbenchInterface $workbench
      * @param float $startMs
      */
-    public function __construct(WorkbenchInterface $workbench, float $startMs = null, int $msDecimals = 1)
+    public function __construct(WorkbenchInterface $workbench, float $startMs = null, int $msDecimals = 1, string $name = 'Profiler')
     {
         $this->workbench = $workbench;
         $this->msDecimals = $msDecimals;
         $this->reset($startMs);
+        $this->name = $name;
     }
 
     /**
@@ -71,13 +75,16 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     /**
      * Starts the time for the given object and returns a generated lap id
      *
-     * @param mixed       $subject
-     * @param string|null $name
-     * @param string|null $category
+     * @param string|object $subject
+     * @param string|null   $name
+     * @param string|null   $category
      * @return int
      */
     public function start($subject, string $name = null, string $category = null) : int
     {
+        if ($name === null && is_string($subject)) {
+            $name = $subject;
+        }
         $lapId = $this->getLapId($subject);
         $this->lapData[$lapId] = [
             self::LAP_NAME => $name,
@@ -98,7 +105,16 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     public function stop($subject) : ?float
     {
         $lapId = $this->getLapId($subject);
-        if (null !== $data = $this->lapData[$lapId]) {
+        return $this->stopLap($lapId);
+    }
+
+    /**
+     * @param int $lapId
+     * @return float|null
+     */
+    public function stopLap(int $lapId) : ?float
+    {
+        if (null !== $data =& $this->lapData[$lapId]) {
             $data[self::LAP_STOP] = $now = $this->nowMs();
             $data[self::LAP_MEM_STOP] = memory_get_usage(true);
             return $this->roundMs($now - $data[self::LAP_START]);
@@ -280,6 +296,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     #{$id} td:first-of-type, #{$id} th:first-of-type {width: 50%}
     #{$id} .waterfall-offset {overflow: visible; white-space: nowrap; display: inline-block;}
     #{$id} .waterfall-bar {background-color: lightgray; display: inline-block; overflow: visible;}
+    #{$id} .waterfall-label {display: block; position: absolute;}
 
     #ps-table-control-container{
         margin-bottom: 10px;
@@ -443,7 +460,7 @@ generateEventTypeFilterOptions();
 HTML;
         
         $html .= '<table id="' . $id . '" class="debug-profiler" width="100%"><thead><tr><th>Event</th><th>Duration</th></tr></thead><tbody>';
-        $html .= $this->buildHtmlProfilerRow($startTime, 'Request', '0px', '100%', $totalDur . ' ms');
+        $html .= $this->buildHtmlProfilerRow($startTime, $this->getName(), '0px', '100%', $emptySymbol, $totalDur);
         
         $laps = [];
         foreach (array_keys($this->lapIds) as $lapId) {
@@ -451,9 +468,7 @@ HTML;
             if ($lapData === null) {
                 continue;   
             }
-            foreach ($lapData as $lap) {
-                $laps[] = $lap;
-            }
+            $laps[] = $lapData;
         }
         usort($laps, function($lap1, $lap2){
             return ($lap1[self::LAP_START] < $lap2[self::LAP_START]) ? -1 : 1;
@@ -474,6 +489,12 @@ HTML;
                 $eventWidth = '0px';
                 $eventSymbol = $milestoneSymbol;
             }
+            
+            if ($lap[self::LAP_MEM_STOP]) {
+                $memory = $lap[self::LAP_MEM_STOP] - $lap[self::LAP_MEM_START];
+                $memoryFormatted = ByteSizeDataType::formatWithScale($memory);
+            }
+            
             if (null === $name = $lap[self::LAP_NAME]) {
                 $subj = $lap[self::LAP_SUBJECT];
                 if (is_object($subj)) {
@@ -498,7 +519,8 @@ HTML;
 
             $subj = $lap[self::LAP_SUBJECT];
             $type = ucfirst($lap[self::LAP_CATEGORY]);
-            $phpClass = PhpClassDataType::findClassNameWithoutNamespace($subj);
+            $phpClass = is_object($subj) ? PhpClassDataType::findClassNameWithoutNamespace($subj) : '';
+            
             switch (true) {
                 case $type === 'Query':
                     $query = $lap[self::LAP_SUBJECT];
@@ -513,15 +535,20 @@ TEXT;
 Action name: {$action->getName()}
 TEXT;
                     break;
+                default:
+                    $tooltipData = '';
+                    break;
             }
+            
             $tooltipData = <<<TEXT
-Type: {$type}
+Category: {$type}
 Duration: {$this->formatMs($eventDur)}
+Memory: {$memoryFormatted}
 PHP class: {$phpClass}
 {$tooltipData}
 TEXT;
 
-            $html .= $this->buildHtmlProfilerRow($eventStart, $name, $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY], $tooltipData);
+            $html .= $this->buildHtmlProfilerRow($eventStart, $name, $eventOffset, $eventWidth, $eventSymbol, $eventDur, $memory, $lap[self::LAP_CATEGORY], $tooltipData);
         }
         
         $html .= '</tbody></table>';
@@ -536,15 +563,28 @@ TEXT;
      * @param string $cssWidth
      * @param string $symbol
      * @param float $duration
+     * @param float $memory
      * @param string $tooltipData
      * @return string
      */
-    protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, string $category = null, string $tooltipData='') : string
+    protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, float $memory = null, string $category = null, string $tooltipData='') : string
     {
-        $durationText = $this->formatMs($duration);
-        $tooltipData = str_replace("\\n", "&#10;", json_encode(htmlspecialchars($tooltipData)));
+        $text = $this->formatMs($duration);
+        if ($memory) {
+            $text .= ($text ? ', ' : '') . ByteSizeDataType::formatWithScale($memory);
+        }
+        $tooltipData = json_encode(StringDataType::replaceLineBreaks(htmlspecialchars($tooltipData), "&#10;"));
         $cssClass = $category ?? '';
-        return "<tr class=\"{$cssClass}\" title={$tooltipData}><td>{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
+        return <<<HTML
+    <tr class="{$cssClass}" title={$tooltipData}>
+        <td>{$name}</td>
+        <td>
+            <span class="waterfall-label">{$text}</span>
+            <span class="waterfall-offset" style="width: {$cssOffset}"></span>
+            <span class="waterfall-bar" style="width: calc({$cssWidth} - 3px)">{$symbol}</span>
+        </td>
+    </tr>
+HTML;
     }
     
     /**
@@ -581,5 +621,10 @@ TEXT;
     protected function nowMs() : float
     {
         return microtime(true) * 1000;
+    }
+    
+    protected function getName() : string
+    {
+        return $this->name;
     }
 }

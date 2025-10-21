@@ -75,7 +75,7 @@ class Tracer extends Profiler
      */
     public function __construct(WorkbenchInterface $workbench, int $startOffsetMs = 0)
     {
-        parent::__construct($workbench, $startOffsetMs);
+        parent::__construct($workbench, $startOffsetMs, 1, 'Request');
         $this->registerLogHandlers();
         $this->registerEventHandlers();
         
