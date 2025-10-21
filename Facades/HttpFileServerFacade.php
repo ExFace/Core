@@ -498,6 +498,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     public static function buildUrlToOneTimeLink(WorkbenchInterface $workbench, string $url, bool $relativeToSiteRoot = true) : string
     {
+        // TODO call OneTimeLink permalink prototype in future
         $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
         $cache = $facade->getOtlCachePool();        
         $rand = UUIDDataType::generateUuidV4('');      
@@ -512,7 +513,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @return ResponseInterface
      */
     public function createResponseFromOneTimeLinkIdent(string $ident) : ResponseInterface
-    {        
+    {
+        // TODO call OneTimeLink permalink prototype in future
         $exface = $this->getWorkbench();
         $cache = $this->getOtlCachePool();
         $url = $cache->get($ident, null);
