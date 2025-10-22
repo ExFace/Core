@@ -42,14 +42,12 @@ class ActionLogBook implements DataLogBookInterface
     
     private $logBook = null;
     
-    private $autoSectionsAdded = false;
-    
     private $flowDiagram = null;
 
     private $eventStack = [];
 
     private int $eventCount = 0;
-    private int $maxStackDepth = 9;
+    private int $maxStackDepth = 10;
     private int $maxEventCount = 500;
     
     private $eventStackIndent = 0;
@@ -238,7 +236,7 @@ class ActionLogBook implements DataLogBookInterface
                         $eventName = '';
                     } else {
                         $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
-                        $eventName = "`{$eventName}`";
+                        $eventName = "`{$eventName}` ";
                     }
                     $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
                     break;
