@@ -425,7 +425,7 @@ HTML;
         
         foreach ($lines as $line) {
             $eventStart = $this->roundMs($line->getTimeStartMs());
-            $eventOffset = round(($eventStart - $startTime) / $totalDur * 100) . '%';
+            $eventOffset = floor(($eventStart - $startTime) / $totalDur * 100) . '%';
 
             if (! $line->isMilestone()) {
                 $eventEnd = $this->roundMs($line->getTimeStopMs());
@@ -449,6 +449,11 @@ HTML;
                 'Memory' => $eventMemFormatted, 
                 'PHP class' => $line->getPhpClass()
             ];
+            if ($line->countLaps() > 1) {
+                $tooltipData['Calls'] = $line->countLaps();
+                $tooltipData['Avg. time per call'] = TimeDataType::formatMs($line->getTimeAvgMs());
+                $tooltipData['Avg. memory per call'] = ByteSizeDataType::formatWithScale($line->getMemoryAvgBytes());
+            }
             $tooltipData = array_merge($tooltipData, $line->getData());
 
             $html .= $this->buildHtmlProfilerRow(
@@ -487,8 +492,11 @@ HTML;
         if ($memory) {
             $text .= ($text ? ', ' : '') . ByteSizeDataType::formatWithScale($memory);
         }
-        $tooltip = implode(",\n", $tooltipData);
-        $tooltip = json_encode(StringDataType::replaceLineBreaks(htmlspecialchars($tooltip), "&#10;"));
+        $tooltip = '';
+        foreach ($tooltipData as $label => $value) {
+            $tooltip .= $label . ': ' . $value . "\n";
+        }
+        $tooltip = json_encode(trim(StringDataType::replaceLineBreaks(htmlspecialchars($tooltip), "&#10;")));
         $cssClass = $category ?? '';
         return <<<HTML
     <tr class="{$cssClass}" title={$tooltip}>

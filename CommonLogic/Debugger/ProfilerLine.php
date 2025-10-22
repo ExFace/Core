@@ -122,6 +122,18 @@ class ProfilerLine
         return $total;
     }
     
+    public function getMemoryAvgBytes() : float
+    {
+        $sum = $this->getMemoryConsumedBytes();
+        return $this->countLaps() === 0 ? 0 : ($sum / $this->countLaps());        
+    }
+
+    public function getTimeAvgMs() : float
+    {
+        $sum = $this->getTimeTotalMs();
+        return $this->countLaps() === 0 ? 0 : ($sum / $this->countLaps());
+    }
+    
     public function isMilestone() : bool
     {
         $hasStop = false;
@@ -132,5 +144,10 @@ class ProfilerLine
             }
         }
         return ! $hasStop;
+    }
+    
+    public function countLaps() : int
+    {
+        return count($this->laps);
     }
 }
