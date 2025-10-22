@@ -1,87 +1,118 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\DataTypes\ColorDataType;
 use exface\Core\DataTypes\NumberEnumDataType;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
-use exface\Core\Interfaces\Widgets\iHaveColor;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Interfaces\Widgets\iHaveHintScale;
 use exface\Core\Interfaces\Widgets\WidgetPropertyScaleInterface;
 use exface\Core\Widgets\Parts\WidgetPropertyBinding;
 use exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\DateDataType;
-use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Widgets\Parts\WidgetPropertyScale;
-use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
 
 /**
- * A ColorPalette will a color selection pop up with all colors provided by a color_scale.
+ * A ColorPalette is a pop up with a palette of colors filled by a color preset list and can be adjusted to offer an additional ColorPicker for more color choices.
+ *
+ *
+ * Colors can be defined via  
  * 
- * Colors can be defined via
+ * - `color_presets_attribute_alias` if the color presets are stored in the data source data type
+ * - `color_presets_datatype_alias` if the color presets are stored in a data type
+ * - `color_presets` if you want to define your own custom palette  
  * 
- * - `color_attribute_alias` if the color scale is stored in the data source data type
- * - `color_scale` (like in many other display widgets).
- * - `color_scale_datatype_alias` if the color scale is stored in a data type
+ * > [!TIP] If an attribute_alias is defined within the widget, the palette will try to load its color presets from that attribute (default display uxon or it's datatype)  
+ *   
+ * ## Examples  
  * 
- * ## Examples
- * 
- * ### Simple color palette
+ * ### Simple color palette  
  * 
  * ```
  * {
  *  "widget_type": "InputColorPalette",
- *   "color_scale": {
- *       "10": "~ERROR",
- *       "99": "~WARNING",
- *       "100": "~OK"
+ *   "color_presets": {
+ *       "~ERROR",
+ *       "~WARNING",
+ *       "~OK"
  *   }
  * }
  * 
- * ``` 
+ * ```
  *
- * ### Color palette based on data type with color scale
+ * ### Color palette with data binding
+ *
+ * #### Color palette presets from given attribute alias  
+ * 
+ * If the widget contains an Attribute alias, the color preset will be defined via that attribute.
+ * To deactivate this behavior and be able to define your own presets use `prefer_custom_color_presets`!  
  * 
  * ```
  * {
  *  "widget_type": "InputColorPalette",
- *   "color_scale_datatype_alias"'": "BaumanagementFarben"
+ *  "attribute_alias": "Farbe"
  * }
- * 
  * ```
+ *
+ * #### Color palette presets from given data type  
  * 
- * ### Color palette based on color attribute alias
- * 
- * You can calculate the value used in a `color_scale` by using a formula in the `color` attribute:
+ * The data type will be used to define the color presets via it's default display uxon containing a color_scale
+ * or it's values if the data type defines colors itself.
  * 
  * ```
  * {
  *  "widget_type": "InputColorPalette",
- *  "color_attribute_alias": 'Farbe'
+ *  "color_presets_datatype_alias": "BaumanagementFarben"
  * }
  * 
  * ```
+ * 
+ * #### Color palette presets from given color attribute alias  
+ * 
+ * That config overrides the binding with `attribute_alias` and instead binds the presets to the attribute given within this config.
+ * The attribute will be used to define the color presets via it's default display uxon containing a color_scale
+ * or it's data type.
+ * 
+ * ```
+ * {
+ *  "widget_type": "InputColorPalette",
+ *  "color_presets_attribute_alias": "Farbe"
+ * }
+ * 
+ * ```
+ *
+ * ### Custom color scale with color binding  
+ * 
+ * If you want to override the presets from the color binding use `prefer_custom_color_presets`
+ *
+ *  ```
+ *  {
+ *   "widget_type": "InputColorPalette",
+ *   "attribute_alias": "Farbe",
+ *   "prefer_custom_color_presets": true,
+ *    "color_presets": {
+ *        "~ERROR",
+ *        "~WARNING",
+ *        "~OK"
+ *    }
+ *  }
+ *
+ *  ```
  *
  * @author Miriam Seitz
  *
  */
-class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
+class InputColorPalette extends Input implements iHaveHintScale
 {
     use iHaveColorTrait;
-    use iHaveColorScaleTrait {
-        setColorScale as traitSetColorScale;
-    }
 
     const BINDING_PROPERTY_COLOR = 'colors';
     
     private $colorBindingUxon = null;
 
-    private bool $preferCustomColorScale = false;
+    private bool $preferCustomColorPresets = false;
 
     private $hintScale = null;
 
@@ -95,6 +126,8 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
 
     private bool $showDefaultColorButton = false;
 
+    private $colorPresets;
+
     protected function init()
     {
         parent::init();
@@ -104,39 +137,38 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
     /**
      * @param $value
      * @return array
-     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::getColorScale()
      */
-    public function getColorScale($value = null) : array
+    public function getColorPresets($value = null) : array
     {
-        if ($this->preferCustomColorScale) {
-            return $this->colorScale;
+        if ($this->preferCustomColorPresets) {
+            return $this->colorPresets;
         }
 
-        return $this->getColorBinding()->hasValue() ? $this->getColorScaleFromDataBinding() : $this->colorScale;
+        return $this->getColorBinding() !== null ? $this->getColorPresetsFromDataBinding() : $this->colorPresets;
     }
     
     /**
-     * The values of this attribute will be used for the color_scale.
-     * If not provided the widget look for a color_scale in the given attribute_alias.
-     * `color_scale_datatype_alias` and `color_scale` will only be used if the attribute has no color scale within itself.
+     * The values of this attribute will be used for the color_presets.
+     * If not provided the widget look for a color_presets in the given attribute_alias.
+     * `color_presets_datatype_alias` and `color_presets` will only be used if the attribute has no color presets within itself.
      *
-     * @uxon-property color_attribute_alias
+     * @uxon-property color_presets_attribute_alias
      * @uxon-type metamodel:attribute
      *
      * @param string $value
      * @return InputColorPalette
      */
-    public function setColorAttributeAlias(string $value) : InputColorPalette
+    public function setColorPresetsAttributeAlias(string $value) : InputColorPalette
     {
         $this->colorBindingUxon->setProperty('attribute_alias', $value);
         return $this;
     }
     
     /**
-     * Fill the color scale of the color palette with the color scale of a given data type.
+     * Fill the color presets of the color palette with the color presets of a given data type.
      * 
      * Examples:
-     * `exface.core.LogLevel` has a color scale within its default display that will then be used for the color palette widget:
+     * `exface.core.LogLevel` has a color presets within its default display that will then be used for the color palette widget:
      *  ```
      * {
      * "DEBUG": "transparent",
@@ -165,53 +197,53 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
      * }
      * ```
      * 
-     * @uxon-property color_scale_datatype_alias
+     * @uxon-property color_presets_datatype_alias
      * @uxon-type string
      *
      */
-    public function setColorScaleDataTypeAlias(string $dataTypeAlias): iHaveColorScale
+    public function setColorPresetsDataTypeAlias(string $dataTypeAlias)
     {
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), $dataTypeAlias);
         if ($dataType->getDefaultDisplayUxon()->hasProperty('color_scale')) {
-            $this->setColorScale($dataType->getDefaultDisplayUxon()->getProperty('color_scale'));
+            $this->setColorPresets($dataType->getDefaultDisplayUxon()->getProperty('color_scale'));
         } else {
             $uxon = new UxonObject();
             $uxon->setProperty('color_scale', $dataType->getValues());
-            $this->setColorScale($uxon->getProperty('color_scale'));
+            $this->setColorPresets($uxon->getProperty('color_scale'));
         }
         return $this;
     }
 
     /**
-     * Ensures that color_scale does not override a provided color scale from color_scale_datatype_alias
+     * Ensures that color_presets does not override a provided color presets from color_presets_datatype_alias
      *
      * @param UxonObject $valueColorPairs
-     * @return iHaveColorScale
-     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::setColorScale()
+     * @return InputColorPalette
      */
-    public function setColorScale(UxonObject $valueColorPairs): iHaveColorScale
+    public function setColorPresets(UxonObject $valueColorPairs)
     {
-        if($this->colorScale === null) {
-            $this->traitSetColorScale($valueColorPairs);
+        if($this->colorPresets === null) {
+            $this->colorPresets = $valueColorPairs->toArray();
+            ksort($this->colorPresets);
         }
 
         return $this;
     }
 
     /**
-     * Define if the color_scale properties should be priorities over any given attribute_alias.
-     * This is helpful when you use an attribute_alias with a defined color scale via it's datatype but want to override thar with your own scale.
+     * Define if the color_presets properties should be priorities over any given attribute_alias.
+     * This is helpful when you use an attribute_alias with a defined color presets via it's datatype but want to override thar with your own presets.
      *
-     * @uxon-property prefer_custom_color_scale
+     * @uxon-property prefer_custom_color_presets
      * @uxon-type string
      * @uxon-defaul false
      *
      * @param bool $value
      * @return $this
      */
-    public function setPreferCustomColorScale(bool $value): InputColorPalette
+    public function setPreferCustomColorPresets(bool $value): InputColorPalette
     {
-        $this->preferCustomColorScale = $value;
+        $this->preferCustomColorPresets = $value;
         return $this;
     }
 
@@ -230,7 +262,7 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
                 $uxon->setProperty('attribute_relation_path', $baseRelPath);
             }
             $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
-            if ($binding->isEmpty() && $this->hasColorScale() && $this->isBoundToAttribute()) {
+            if ($binding->isEmpty() && $this->preferCustomColorPresets === false && $this->isBoundToAttribute()) {
                 $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
                 $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
             }
@@ -261,24 +293,6 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
         parent::doPrefill($data_sheet);
         $this->getColorBinding()->prefill($data_sheet);
         return;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Display::isColorScaleRangeBased()
-     */
-    
-    public function isColorScaleRangeBased() : bool
-    {
-        $dataType = $this->getColorBinding()->getDataType();
-        switch (true) {
-            case $dataType instanceof NumberDataType:
-            case $dataType instanceof DateDataType:
-                return true;
-        }
-        
-        return false;
     }
 
     /**
@@ -328,47 +342,46 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
         return $this->hintScale;
     }
 
-    private function getColorScaleFromDataBinding() : array
+    private function getColorPresetsFromDataBinding() : array
     {
         $binding = $this->getColorBinding();
         $dataType = $binding->getDataType();
         switch (true) {
-            // use color scale in attribute default display uxon
+            // use color scale in attribute default display uxon for color presets
             case $binding->getAttribute()->getDefaultDisplayUxon()->hasProperty('color_scale'):
-                $values = $binding->getAttribute()->getDefaultDisplayUxon()->getProperty('color_scale')->toArray();
-                $scale = $values;
+                $colorPresets = $binding->getAttribute()->getDefaultDisplayUxon()->getProperty('color_scale')->toArray();
                 break;
-            case $dataType === null:
-                $scale = [];
+            // load presets via the datatype of the attribute
+            // datatype is a color data type
+            case $dataType instanceof ColorDataType:
+                $colorPresets = $dataType->getColorPresets();
                 break;
-            // use color scale within data type of attribute
             // datatype has a display uxon
             case $dataType->getDefaultDisplayUxon()->hasProperty('color_scale'):
-                $values = $dataType->getDefaultDisplayUxon()->getProperty('color_scale')->toArray();
-                $scale = $values;
+                $colorPresets = $dataType->getDefaultDisplayUxon()->getProperty('color_scale')->toArray();
                 break;
             // datatype is a color enum (number/string)
             case $dataType instanceof NumberEnumDataType:
-                $scale = $dataType->toArray();
+                $colorPresets = $dataType->toArray();
                 break;
             case $dataType instanceof EnumDataTypeInterface:
                 $values = $dataType->getValues();
-                $scale = !empty($values) ? array_combine($values, $values) : [];
+                $colorPresets = !empty($values) ? array_combine($values, $values) : [];
                 break;
             // alright, maybe the value within the attribute alias is a color then?
             default:
                 $val = $binding->getValue();
-                $scale = !empty($val) ? [$val => $val] : [];
+                $colorPresets = !empty($val) ? [$val => $val] : [];
                 break;
         }
-        ksort($scale);
+        ksort($colorPresets);
 
-        // Fallback to defined color scale via uxon color_scale_datatype_alias or color_scale property
-        if(empty($scale)) {
-            return $this->colorScale;
+        // Fallback to defined color presets via uxon color_presets_datatype_alias or color_presets property
+        if(empty($colorPresets)) {
+            return $this->colorPresets;
         }
 
-        return $scale;
+        return $colorPresets;
     }
 
     /**
@@ -454,5 +467,10 @@ class InputColorPalette extends Input implements iHaveColorScale, iHaveHintScale
     public function getShowDefaultColorButton(): bool
     {
         return $this->showDefaultColorButton;
+    }
+
+    private function hasColorPresets()
+    {
+        return $this->colorPresets !== null;
     }
 }

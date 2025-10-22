@@ -572,19 +572,6 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         // DataColumn namespace needed here because the DataSheet columns are used in this file too! 
         return $this->getParent() instanceof \exface\Core\Widgets\DataColumn;
     }
-
-    /**
-     * Returns TRUE if the widget is a InputColorPalette.
-     *
-     * A color palette is not a normal "Input" widget and thus must be treated differently in some aspects.
-     *
-     * @return bool
-     */
-    public function isColorPalette() : bool
-    {
-        // DataColumn namespace needed here because the DataSheet columns are used in this file too!
-        return $this instanceof \exface\Core\Widgets\InputColorPalette;
-    }
     
     /**
      * Explicitly sets the value of the widget: static value, widget link or formula.
