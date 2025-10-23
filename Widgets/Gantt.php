@@ -26,6 +26,10 @@ class Gantt extends DataTree
     private $childrenMoveWithParentIf = null;
     
     private $childrenMoveWithParent = null;
+    
+    private $keepScrollPosition = false;
+    
+    private $autoRelayoutOnChange = false;
 
     /**
      * @inheritDoc
@@ -231,6 +235,57 @@ class Gantt extends DataTree
     public function setStartDate(string $value) : Gantt
     {
         $this->startDate = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getKeepScrollPosition() : bool
+    {
+        return $this->keepScrollPosition;
+    }
+
+
+    /**
+     * If this is set to true, it will prevent the Gantt chart from scrolling back to the start position on the left after each rerender.
+     * Set this to true if you are using multiple draggable taskbars on the same row.
+     * 
+     * @uxon-property keep_scroll_position
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setKeepScrollPosition(bool $value): Gantt
+    {
+        $this->keepScrollPosition = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAutoRelayoutOnChange() : bool
+    {
+        return $this->autoRelayoutOnChange;
+    }
+
+    /**
+     * Automatically rearrange when dragging/resizing  the taskbars.
+     * It is necessary if multiple bars are at the same row:
+     * 
+     * @uxon-property auto_relayout_on_change
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setAutoRelayoutOnChange(bool $value) : Gantt
+    {
+        $this->autoRelayoutOnChange = $value;
         return $this;
     }
 }
