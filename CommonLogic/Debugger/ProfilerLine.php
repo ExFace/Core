@@ -56,9 +56,9 @@ class ProfilerLine
         return $this->laps;
     }
     
-    public function getLap(int $id) : ProfilerLap
+    public function getLap(int $id) : ?ProfilerLap
     {
-        return $this->laps[$id];
+        return $this->laps[$id] ?? null;
     }
     
     public function startLap() : ProfilerLap
@@ -75,8 +75,11 @@ class ProfilerLine
     
     public function stopLap(?int $lapId = null) : ProfilerLap
     {
-        $lapId = $lapId ?? array_key_last($this->laps);
-        $lap = $this->laps[$lapId];
+        if ($lapId !== null) {
+            $lap = $this->laps[$lapId] ?? null;
+        } else {
+            $lap = end($this->laps);
+        }
         $lap->stop();
         return $lap;
     }
