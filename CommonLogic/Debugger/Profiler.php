@@ -135,13 +135,22 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     {
         return memory_get_usage(true);
     }
+
+    public function getTimeTotalMs() : float
+    {
+        $sum = 0;
+        foreach ($this->getLines() as $line) {
+            $sum += $line->getTimeTotalMs();
+        }
+        return $sum;
+    }
     
     /**
      * Returns the total duration in milliseconds
      * 
      * @return float
      */
-    public function getTimeTotalMs() : float
+    public function getTimeElapsedMs() : float
     {
         return $this->getTimeStopMs() - $this->getTimeStartMs();
     }
@@ -239,33 +248,22 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     protected function buildHtmlProfilerTable(string $id) : string
     {        
         $html = <<<HTML
+
 <style>
-    #{$id} td:first-of-type, #{$id} th:first-of-type {width: 50%}
+    #{$id} td:first-of-type, #{$id} th:first-of-type {width: 40%}
+    #{$id} td:last-of-type, #{$id} th:last-of-type {width: 10%}
     #{$id} .waterfall-offset {overflow: visible; white-space: nowrap; display: inline-block;}
     #{$id} .waterfall-bar {background-color: lightgray; display: inline-block; overflow: visible;}
+    #{$id} td:last-of-type .waterfall-bar {background-color: sandybrown;}
     #{$id} .waterfall-label {display: block; position: absolute;}
 
-    #ps-table-control-container{
-        margin-bottom: 10px;
-    }
-    
-    .profiler-table-cell-hidden {
-        display: none;
-    }
-
-    .spacer-right{
-        margin-right: 25px;
-    }
-
-    .table-background-highlight{
-        background-color: #e2d7ed;
-    }
-
-
+    #{$id} .ps-table-control-container{margin-bottom: 10px;}
+    #{$id} .profiler-table-cell-hidden {display: none;}
+    #{$id} .spacer-right{margin-right: 25px;}
+    #{$id} .table-background-highlight {background-color: #e2d7ed;}
 </style>
 
-
-<div id="ps-table-control-container">
+<div class="ps-table-control-container">
     <input id="profiler-search-input" type="text" placeholder="Query..." name="search">
     <select id="profiler-event-category-filter">
         <option value="">all types</option> 
@@ -278,7 +276,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 
 // reset search and UI
 function resetSearch(){
-    const table = document.getElementById("DebugMessage_Tab_Html_profile");
+    const table = document.getElementById("{$id}");
     const hiddenRows = table.querySelectorAll("tbody tr.profiler-table-cell-hidden"); 
 
     hiddenRows.forEach(function(row) {
@@ -296,7 +294,7 @@ document.getElementById("profiler-reset-search-button").addEventListener("click"
 
 // generate dropdown with filter options from css classes
 function generateEventTypeFilterOptions() {
-    const table = document.getElementById("DebugMessage_Tab_Html_profile");
+    const table = document.getElementById("{$id}");
     const rows = table.querySelectorAll("tbody tr"); 
     const classSet = new Set();
 
@@ -327,7 +325,7 @@ document.getElementById("profiler-event-category-filter").addEventListener("chan
     resetSearch();
 
     const selectedEventType = this.value.toLowerCase(); 
-    const table = document.getElementById("DebugMessage_Tab_Html_profile");
+    const table = document.getElementById("{$id}");
     const rows = table.querySelectorAll("tbody tr");
 
 
@@ -346,7 +344,7 @@ document.getElementById("profiler-event-category-filter").addEventListener("chan
 document.getElementById("profiler-search-button").addEventListener("click", function() {
 
     const searchQuery = document.getElementById("profiler-search-input").value.toLowerCase(); 
-    const table = document.getElementById("DebugMessage_Tab_Html_profile");
+    const table = document.getElementById("{$id}");
     const rows = table.querySelectorAll("tbody tr"); 
     const selectedEventType = document.getElementById("profiler-event-category-filter").value;
 
@@ -382,7 +380,7 @@ document.getElementById("profiler-search-button").addEventListener("click", func
 });
 
 // highlight rows on mouseover
-document.getElementById('DebugMessage_Tab_Html_profile').addEventListener('mouseover', function(event) {
+document.getElementById('{$id}').addEventListener('mouseover', function(event) {
   
     if (event.target.tagName.toLowerCase() === 'td') {
         const row = event.target.closest('tr'); // Find the closest row
@@ -392,7 +390,7 @@ document.getElementById('DebugMessage_Tab_Html_profile').addEventListener('mouse
 });
 
 // remove highlight on mouseleave
-document.getElementById('DebugMessage_Tab_Html_profile').addEventListener('mouseout', function(event) {
+document.getElementById('{$id}').addEventListener('mouseout', function(event) {
     if (event.target.tagName.toLowerCase() === 'td') {
         const row = event.target.closest('tr'); // Find the closest row
 
@@ -408,12 +406,23 @@ HTML;
         $startTime = $this->getTimeStartMs();
         $endTime = $this->getTimeStopMs();
         $totalDur = $this->roundMs($endTime - $startTime);
+        $totalMem = $this->getMemoryConsumedBytes();
         $minWidth = '1px';
         $milestoneSymbol = '&loz;';
         $emptySymbol = '&nbsp;';
         
-        $html .= '<table id="' . $id . '" class="debug-profiler" width="100%"><thead><tr><th>Event</th><th>Duration</th></tr></thead><tbody>';
-        $html .= $this->buildHtmlProfilerRow($startTime, $this->getName(), '0px', 'calc(100% - 3px)', $emptySymbol, $totalDur);
+        $html .= <<<HTML
+<table id="{$id}" class="debug-profiler" width="100%">
+    <thead>
+        <tr>
+            <th>Event</th>
+            <th>Duration</th>
+            <th>Memory</th>
+        </tr>
+    </thead>
+<tbody>
+HTML;
+        $html .= $this->buildHtmlProfilerRow($this->getName(), '0px', 'calc(100% - 3px)', $emptySymbol, $totalDur);
         
         $lines = $this->getLines();
         usort(
@@ -457,13 +466,13 @@ HTML;
             $tooltipData = array_merge($tooltipData, $line->getData());
 
             $html .= $this->buildHtmlProfilerRow(
-                $eventStart, 
                 $line->getName(), 
                 $eventOffset, 
                 $eventWidth, 
                 $eventSymbol, 
                 $eventDur, 
                 $eventMem, 
+                $totalMem,
                 $line->getCategory(), 
                 $tooltipData
             );
@@ -481,16 +490,27 @@ HTML;
      * @param string $cssWidth
      * @param string $symbol
      * @param float|null $duration
-     * @param float|null $memory
+     * @param float|null $eventMem
      * @param string|null $category
      * @param array $tooltipData
      * @return string
      */
-    protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, float $memory = null, string $category = null, array $tooltipData = []) : string
+    protected function buildHtmlProfilerRow(
+        string $name, 
+        string $cssOffset, 
+        string $cssWidth, 
+        string $symbol, 
+        float  $duration = null, 
+        int    $eventMem = null, 
+        int    $totalMem = null,
+        string $category = null, 
+        array  $tooltipData = []
+    ) : string
     {
-        $text = TimeDataType::formatMs($duration, $this->msDecimals);
-        if ($memory) {
-            $text .= ($text ? ', ' : '') . ByteSizeDataType::formatWithScale($memory);
+        $eventText = TimeDataType::formatMs($duration, $this->msDecimals);
+        if ($eventMem) {
+            $memWidth = round($eventMem / $totalMem * 100) . '%';
+            $memText =  ByteSizeDataType::formatWithScale($eventMem);
         }
         $tooltip = '';
         foreach ($tooltipData as $label => $value) {
@@ -502,9 +522,13 @@ HTML;
     <tr class="{$cssClass}" title={$tooltip}>
         <td>{$name}</td>
         <td>
-            <span class="waterfall-label">{$text}</span>
+            <span class="waterfall-label">{$eventText}</span>
             <span class="waterfall-offset" style="width: {$cssOffset}"></span>
             <span class="waterfall-bar" style="width: {$cssWidth}">{$symbol}</span>
+        </td>
+        <td>
+            <span class="waterfall-label">{$memText}</span>
+            <span class="waterfall-bar" style="width: {$memWidth}">&nbsp;</span>
         </td>
     </tr>
 HTML;
