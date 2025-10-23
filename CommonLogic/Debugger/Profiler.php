@@ -438,12 +438,11 @@ HTML;
 
             if (! $line->isMilestone()) {
                 $eventEnd = $this->roundMs($line->getTimeStopMs());
-                $eventDur = $this->roundMs($eventEnd - $eventStart);
-                $eventDurPercent = round($eventDur / $totalDur * 100);
-                $eventWidth = $eventDurPercent > 0 ? 'calc(' . $eventDurPercent . '% - 3px)' : $minWidth;
+                $eventLen = $this->roundMs($eventEnd - $eventStart);
+                $eventLenPercent = round($eventLen / $totalDur * 100);
+                $eventWidth = $eventLenPercent > 0 ? 'calc(' . $eventLenPercent . '% - 3px)' : $minWidth;
                 $eventSymbol = $emptySymbol;
             } else {
-                $eventDur = null;
                 $eventWidth = '0px';
                 $eventSymbol = $milestoneSymbol;
             }
@@ -454,7 +453,7 @@ HTML;
            
             $tooltipData = [
                 'Category' => $line->getCategory(),
-                'Duration' => TimeDataType::formatMs($eventDur, $this->msDecimals),
+                'Duration' => TimeDataType::formatMs($line->getTimeTotalMs(), $this->msDecimals),
                 'Memory' => $eventMemFormatted, 
                 'PHP class' => $line->getPhpClass()
             ];
@@ -470,7 +469,7 @@ HTML;
                 $eventOffset, 
                 $eventWidth, 
                 $eventSymbol, 
-                $eventDur, 
+                $line->getTimeTotalMs(), 
                 $eventMem, 
                 $totalMem,
                 $line->getCategory(), 
@@ -489,7 +488,7 @@ HTML;
      * @param string $cssOffset
      * @param string $cssWidth
      * @param string $symbol
-     * @param float|null $duration
+     * @param float|null $barText
      * @param float|null $eventMem
      * @param string|null $category
      * @param array $tooltipData
@@ -500,14 +499,14 @@ HTML;
         string $cssOffset, 
         string $cssWidth, 
         string $symbol, 
-        float  $duration = null, 
+        float  $barText = null, 
         int    $eventMem = null, 
         int    $totalMem = null,
         string $category = null, 
         array  $tooltipData = []
     ) : string
     {
-        $eventText = TimeDataType::formatMs($duration, $this->msDecimals);
+        $eventText = TimeDataType::formatMs($barText, $this->msDecimals);
         if ($eventMem) {
             $memWidth = round($eventMem / $totalMem * 100) . '%';
             $memText =  ByteSizeDataType::formatWithScale($eventMem);
