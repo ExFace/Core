@@ -100,8 +100,20 @@ class ProfilerLine
         }
         return $max;
     }
-
+    
     public function getTimeTotalMs() : ?float
+    {
+        $sum = null;
+        foreach ($this->getLaps() as $lap) {
+            if ($lap->isMilestone() === true) {
+                continue;
+            }
+            $sum += $lap->getTimeTotalMs();
+        }
+        return $sum;
+    }
+
+    public function getTimeElapsedMs() : ?float
     {
         $start = $this->getTimeStartMs();
         $stop = $this->getTimeStopMs();
