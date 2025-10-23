@@ -280,9 +280,9 @@ class MetaModelInstaller extends DataInstaller
             }
 
             if($errorCount > 0) {
-                yield $indent . '...please check the configuration of the permalinks listed above.' . PHP_EOL . PHP_EOL;
+                yield $indent . 'Permalinks marked as INVALID were processed, but did not pass validation - check their configuration!' . PHP_EOL . PHP_EOL;
             } else {
-                yield $indent . '...all permalinks verified successfully.' . PHP_EOL . PHP_EOL;
+                yield $indent . 'Permalinks verified successfully.' . PHP_EOL . PHP_EOL;
             }
         }
     }

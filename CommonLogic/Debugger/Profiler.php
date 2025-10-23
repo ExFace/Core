@@ -1,15 +1,17 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\Debugger;
 
+use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\TimeDataType;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Events\DataQueryEventInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\StringDataType;
-use TextMode;
-use function Sabre\Event\Loop\instance;
 
 /**
  * The profiler can be used to stop the time for any objects (e.g. actions, data queries, etc.)
@@ -26,34 +28,29 @@ use function Sabre\Event\Loop\instance;
  */
 class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 {
-    const LAP_START = 'start';
-    const LAP_STOP = 'stop';
-    const LAP_MEM_START = 'memoryStart';
-    const LAP_MEM_STOP = 'memoryStop';
-    const LAP_NAME = 'name';
-    const LAP_CATEGORY = 'category';
-    const LAP_SUBJECT = 'subject';
+    private string $name;
     
-    private $startMs = 0;
+    private float $startMs = 0;
+    private ?float $stopFinalMs = null;
     
-    private $workbench = null;
+    private WorkbenchInterface $workbench;
     
-    private $lapIds = [];
+    private int $msDecimals = 1;
     
-    private $lapData = [];
-    
-    private $msDecimals = 1;
+    private array $lines = [];
 
     /**
-     * 
      * @param WorkbenchInterface $workbench
-     * @param float $startMs
+     * @param float|null $startMs
+     * @param int $msDecimals
+     * @param string $name
      */
-    public function __construct(WorkbenchInterface $workbench, float $startMs = null, int $msDecimals = 1)
+    public function __construct(WorkbenchInterface $workbench, float $startMs = null, int $msDecimals = 1, string $name = 'Profiler')
     {
         $this->workbench = $workbench;
         $this->msDecimals = $msDecimals;
         $this->reset($startMs);
+        $this->name = $name;
     }
 
     /**
@@ -64,89 +61,79 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      */
     public function reset(float $startMs = null) : Profiler
     {
-        $this->startMs = $startMs > 0 ? $startMs : $this->nowMs();
+        $this->startMs = $startMs > 0 ? $startMs : $this::getCurrentTimeMs();
+        $this->lines = [];
         return $this;
     }
 
     /**
      * Starts the time for the given object and returns a generated lap id
-     *
-     * @param mixed       $subject
+     * 
+     * @param object|string $subject
      * @param string|null $name
      * @param string|null $category
-     * @return int
+     * @return ProfilerLap
      */
-    public function start($subject, string $name = null, string $category = null) : int
+    public function start(object|string $subject, string $name = null, string $category = null) : ProfilerLap
     {
-        $lapId = $this->getLapId($subject);
-        $this->lapData[$lapId] = [
-            self::LAP_NAME => $name,
-            self::LAP_CATEGORY => $category,
-            self::LAP_START => $this->nowMs(),
-            self::LAP_MEM_START => memory_get_usage(true),
-            self::LAP_SUBJECT => $subject
-        ];
-        return $lapId;
+        if ($name === null) {
+            if (is_string($subject)) {
+                $name = $subject;
+            } else {
+                $name = PhpClassDataType::findClassNameWithoutNamespace($subject);
+            }
+        }
+        $phpClass = is_object($subject) ? get_class($subject) : gettype($subject);
+        $lineId = $this->getLineId($subject);
+        if (null === $line = ($this->lines[$lineId] ?? null)) {
+            $data = [];
+            switch (true) {
+                case $subject instanceof DataQueryEventInterface;
+                    $data['Query'] = StringDataType::truncate($subject->toString(), 500, false, false, true, true);;
+                    break;
+                case $subject instanceof ActionInterface:
+                    $data['Action name'] = $subject->getName();
+                    break;
+            }
+            $line = new ProfilerLine($this, $name, $category, $phpClass, $data);
+            $this->lines[$lineId] = $line;
+        }
+        return $line->startLap();
     }
+    
     
     /**
      * Stops the time for the given object and returns it's duration
      * 
-     * @param mixed $subject
-     * @return float|null
+     * @param object|string $subject
+     * @return ProfilerLine
      */
-    public function stop($subject) : ?float
+    public function stop(object|string $subject) : ProfilerLap
     {
-        $lapId = $this->getLapId($subject);
-        if (null !== $data = $this->lapData[$lapId]) {
-            $data[self::LAP_STOP] = $now = $this->nowMs();
-            $data[self::LAP_MEM_STOP] = memory_get_usage(true);
-            return $this->roundMs($now - $data[self::LAP_START]);
+        if (null === $line = $this->getLine($subject)) {
+            $line = $this->start($subject);
         }
-        return null;
+        return $line->stopLap();
     }
     
-    /**
-     * Returns the duration of a given object in milliseconds or NULL if no lap was started for it.
-     * 
-     * @param mixed $subject
-     * @return float|null
-     */
-    public function getDurationMs($subject = null) : ?float
+    public function stopCompletely() : Profiler
     {
-        if ($subject === null) {
-            return $this->getDurationTotal();
-        }
-        if (! $this->hasLapData($subject)) {
-            return null;
-        }
-        $data = $this->getLapData($subject);
-        $start = $data[self::LAP_START] ?? null;
-        $stop = $data[self::LAP_STOP] ?? $this->nowMs();
-        return $start === null || $stop === null ? null : $this->roundMs($stop - $start);
+        $this->stopFinalMs = $this::getCurrentTimeMs();
+        return $this;
     }
 
     /**
-     * Returns the total memory usage in BYTES for a given subject or NULL if no lap was started for 
-     * that subject yet.
-     * 
+     * Returns the current memory usage of this PHP script in BYTES.
+     *
      * NOTE: The memory usage is determined with `memory_get_usage(true)`, which, while accurate, cannot
      * track memory usage per class. So the returned value is the total memory allocated by the application,
      * since the lap was started.
      * 
-     * @param mixed $subject
-     * @return float|null
+     * @return int
      */
-    public function getMemoryUsageBytes(mixed $subject) : ?float
+    public static function getCurrentMemoryBytes() : int
     {
-        $data = $this->getLapData($subject);
-        if($data === null) {
-            return null;
-        }
-        
-        $start = $data[self::LAP_MEM_START];
-        $stop = $data[self::LAP_MEM_STOP] ?? memory_get_usage(true);
-        return $start !== null ? $stop - $start : null;
+        return memory_get_usage(true);
     }
     
     /**
@@ -154,9 +141,17 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * 
      * @return float
      */
-    public function getDurationTotal() : float
+    public function getTimeTotalMs() : float
     {
-        return $this->roundMs($this->nowMs() - $this->startMs);
+        return $this->getTimeStopMs() - $this->getTimeStartMs();
+    }
+    
+    /**
+     * 
+     */
+    public function getTimeStartMs() : float
+    {
+        return $this->startMs;
     }
     
     /**
@@ -164,37 +159,18 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * @param mixed $subject
      * @return float|null
      */
-    public function getStartTime($subject = null) : ?float
+    public function getTimeStopMs() : ?float
     {
-        if ($subject === null) {
-            return $this->roundMs($this->startMs);
-        }
-        if (! $this->hasLapData($subject)) {
-            return null;
-        }
-        if (null !== $data = $this->getLapData($subject)) {
-            return $this->roundMs($data[self::LAP_START]);
-        }
-        return null;
+        return $this->roundMs($this->stopFinalMs ?? $this::getCurrentTimeMs());
     }
     
-    /**
-     * 
-     * @param mixed $subject
-     * @return float|null
-     */
-    public function getEndTime($subject = null) : ?float
+    public function getMemoryConsumedBytes() : ?int
     {
-        if ($subject === null) {
-            return $this->roundMs($this->nowMs());
+        $sum = null;
+        foreach ($this->getLines() as $line) {
+            $sum += $line->getMemoryConsumedBytes();
         }
-        if (! $this->hasLapData($subject)) {
-            return null;
-        }
-        if (null !== $data = $this->getLapData($subject)) {
-            return $this->roundMs($data['end']);
-        }
-        return null;
+        return $sum;
     }
     
     /**
@@ -202,19 +178,9 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * @param mixed $subject
      * @return bool
      */
-    protected function hasLapData($subject) : bool
+    protected function hasLine($subject) : bool
     {
-        return in_array($subject, $this->lapIds);
-    }
-    
-    /**
-     * 
-     * @param mixed $subject
-     * @return array|null
-     */
-    protected function getLapData($subject) : ?array
-    {
-        return $this->lapData[$this->getLapId($subject)] ?? null;
+        return null !== ($this->lines[$this->getLineId($subject)] ?? null);
     }
     
     /**
@@ -226,20 +192,24 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     {
         return $this->workbench;
     }
-    
+
     /**
-     * 
-     * @param mixed $subject
-     * @return int
+     * @return ProfilerLine[]
      */
-    protected function getLapId($subject) : int
+    public function getLines() : array
     {
-        $lapId = array_search($subject, $this->lapIds, true);
-        if ($lapId === false) {
-            $this->lapIds[] = $subject;
-            $lapId = count($this->lapIds) - 1;
-        }
-        return $lapId;
+        return $this->lines;
+    }
+    
+    public function getLine($subject) : ?ProfilerLine
+    {
+        $id = $this->getLineId($subject);
+        return $this->lines[$id] ?? null;
+    }
+    
+    protected function getLineId($subject) : string
+    {
+        return is_string($subject) || is_numeric($subject) ? $subject : spl_object_id($subject);
     }
     
     /**
@@ -267,19 +237,13 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * @return string
      */
     protected function buildHtmlProfilerTable(string $id) : string
-    {
-        $startTime = $this->getStartTime();
-        $endTime = $this->getEndTime();
-        $totalDur = round($endTime - $startTime, $this->msDecimals);
-        $minWidth = '1px';
-        $milestoneSymbol = '&loz;';
-        $emptySymbol = '&nbsp;';
-        
+    {        
         $html = <<<HTML
 <style>
     #{$id} td:first-of-type, #{$id} th:first-of-type {width: 50%}
     #{$id} .waterfall-offset {overflow: visible; white-space: nowrap; display: inline-block;}
     #{$id} .waterfall-bar {background-color: lightgray; display: inline-block; overflow: visible;}
+    #{$id} .waterfall-label {display: block; position: absolute;}
 
     #ps-table-control-container{
         margin-bottom: 10px;
@@ -303,7 +267,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 
 <div id="ps-table-control-container">
     <input id="profiler-search-input" type="text" placeholder="Query..." name="search">
-    <select id="profiler-event-type-filter">
+    <select id="profiler-event-category-filter">
         <option value="">all types</option> 
     </select>
     <button id="profiler-search-button">Search</button>
@@ -327,7 +291,7 @@ function resetSearch(){
 document.getElementById("profiler-reset-search-button").addEventListener("click", function() {
     //clear the search field & dropdown
     resetSearch();
-    document.getElementById("profiler-event-type-filter").value = "";
+    document.getElementById("profiler-event-category-filter").value = "";
 });
 
 // generate dropdown with filter options from css classes
@@ -344,7 +308,7 @@ function generateEventTypeFilterOptions() {
         });
     });
 
-    const dropdown = document.getElementById("profiler-event-type-filter");
+    const dropdown = document.getElementById("profiler-event-category-filter");
     dropdown.innerHTML = '<option value="">all types</option>';
 
     //add event types
@@ -358,7 +322,7 @@ function generateEventTypeFilterOptions() {
 }
 
 // apply filters on dropdown change
-document.getElementById("profiler-event-type-filter").addEventListener("change", function() {
+document.getElementById("profiler-event-category-filter").addEventListener("change", function() {
 
     resetSearch();
 
@@ -384,7 +348,7 @@ document.getElementById("profiler-search-button").addEventListener("click", func
     const searchQuery = document.getElementById("profiler-search-input").value.toLowerCase(); 
     const table = document.getElementById("DebugMessage_Tab_Html_profile");
     const rows = table.querySelectorAll("tbody tr"); 
-    const selectedEventType = document.getElementById("profiler-event-type-filter").value;
+    const selectedEventType = document.getElementById("profiler-event-category-filter").value;
 
     const searchTerms = searchQuery.split(/\s+/).filter(term => term.length > 0);
 
@@ -441,110 +405,109 @@ generateEventTypeFilterOptions();
 </script>
 
 HTML;
+        $startTime = $this->getTimeStartMs();
+        $endTime = $this->getTimeStopMs();
+        $totalDur = $this->roundMs($endTime - $startTime);
+        $minWidth = '1px';
+        $milestoneSymbol = '&loz;';
+        $emptySymbol = '&nbsp;';
         
         $html .= '<table id="' . $id . '" class="debug-profiler" width="100%"><thead><tr><th>Event</th><th>Duration</th></tr></thead><tbody>';
-        $html .= $this->buildHtmlProfilerRow($startTime, 'Request', '0px', '100%', $totalDur . ' ms');
+        $html .= $this->buildHtmlProfilerRow($startTime, $this->getName(), '0px', 'calc(100% - 3px)', $emptySymbol, $totalDur);
         
-        $laps = [];
-        foreach (array_keys($this->lapIds) as $lapId) {
-            $lapData = $this->lapData[$lapId];
-            if ($lapData === null) {
-                continue;   
+        $lines = $this->getLines();
+        usort(
+            $lines, 
+            function(ProfilerLine $line1, ProfilerLine $line2){
+                return ($line1->getTimeStartMs() < $line2->getTimeStartMs()) ? -1 : 1;
             }
-            foreach ($lapData as $lap) {
-                $laps[] = $lap;
-            }
-        }
-        usort($laps, function($lap1, $lap2){
-            return ($lap1[self::LAP_START] < $lap2[self::LAP_START]) ? -1 : 1;
-        });
+        );
         
-        foreach ($laps as $lap) {
-            $eventStart = $lap[self::LAP_START] !== null ? $this->roundMs($lap[self::LAP_START]) : null;
-            $eventEnd = $lap[self::LAP_STOP] !== null ? $this->roundMs($lap[self::LAP_STOP]) : null;
-            $eventOffset = round(($eventStart - $startTime) / $totalDur * 100) . '%';
+        foreach ($lines as $line) {
+            $eventStart = $this->roundMs($line->getTimeStartMs());
+            $eventOffset = floor(($eventStart - $startTime) / $totalDur * 100) . '%';
 
-            if ($eventEnd !== null) {
-                $eventDur = round($eventEnd - $eventStart, $this->msDecimals);
+            if (! $line->isMilestone()) {
+                $eventEnd = $this->roundMs($line->getTimeStopMs());
+                $eventDur = $this->roundMs($eventEnd - $eventStart);
                 $eventDurPercent = round($eventDur / $totalDur * 100);
-                $eventWidth = $eventDurPercent > 0 ? $eventDurPercent . '%' : $minWidth;
+                $eventWidth = $eventDurPercent > 0 ? 'calc(' . $eventDurPercent . '% - 3px)' : $minWidth;
                 $eventSymbol = $emptySymbol;
             } else {
                 $eventDur = null;
                 $eventWidth = '0px';
                 $eventSymbol = $milestoneSymbol;
             }
-            if (null === $name = $lap[self::LAP_NAME]) {
-                $subj = $lap[self::LAP_SUBJECT];
-                if (is_object($subj)) {
-                    if (method_exists($subj , '__toString')) {
-                        $name = str_replace(["\r", "\n"], ' ', $subj->__toString());
-                    } else {
-                        $name = get_class($subj);
-                    }
-                } else {
-                    if (is_array($subj)) {
-                        $name = json_encode($subj);
-                    } else {
-                        $name = (string) $subj;
-                    }
-                }
-                $name = StringDataType::truncate($name, 40);
+            
+            if (null !== $eventMem = $line->getMemoryConsumedBytes()) {
+                $eventMemFormatted = ByteSizeDataType::formatWithScale($eventMem);
             }
-
-            /* 
-               Tooltip with additional details
-            */
-
-            $subj = $lap[self::LAP_SUBJECT];
-            $type = ucfirst($lap[self::LAP_CATEGORY]);
-            $phpClass = PhpClassDataType::findClassNameWithoutNamespace($subj);
-            switch (true) {
-                case $type === 'Query':
-                    $query = $lap[self::LAP_SUBJECT];
-                    $queryStr = StringDataType::truncate($query->toString(), 500, false, false, true, true);
-                    $tooltipData = <<<TEXT
-Query: {$queryStr}
-TEXT;
-                    break;
-                case $type === 'Action':
-                    $action = $lap[self::LAP_SUBJECT];
-                    $tooltipData = <<<TEXT
-Action name: {$action->getName()}
-TEXT;
-                    break;
+           
+            $tooltipData = [
+                'Category' => $line->getCategory(),
+                'Duration' => TimeDataType::formatMs($eventDur, $this->msDecimals),
+                'Memory' => $eventMemFormatted, 
+                'PHP class' => $line->getPhpClass()
+            ];
+            if ($line->countLaps() > 1) {
+                $tooltipData['Calls'] = $line->countLaps();
+                $tooltipData['Avg. time per call'] = TimeDataType::formatMs($line->getTimeAvgMs());
+                $tooltipData['Avg. memory per call'] = ByteSizeDataType::formatWithScale($line->getMemoryAvgBytes());
             }
-            $tooltipData = <<<TEXT
-Type: {$type}
-Duration: {$this->formatMs($eventDur)}
-PHP class: {$phpClass}
-{$tooltipData}
-TEXT;
+            $tooltipData = array_merge($tooltipData, $line->getData());
 
-            $html .= $this->buildHtmlProfilerRow($eventStart, $name, $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY], $tooltipData);
+            $html .= $this->buildHtmlProfilerRow(
+                $eventStart, 
+                $line->getName(), 
+                $eventOffset, 
+                $eventWidth, 
+                $eventSymbol, 
+                $eventDur, 
+                $eventMem, 
+                $line->getCategory(), 
+                $tooltipData
+            );
         }
         
         $html .= '</tbody></table>';
         return $html;
     }
-    
+
     /**
-     * 
+     *
      * @param float $start
      * @param string $name
      * @param string $cssOffset
      * @param string $cssWidth
      * @param string $symbol
-     * @param float $duration
-     * @param string $tooltipData
+     * @param float|null $duration
+     * @param float|null $memory
+     * @param string|null $category
+     * @param array $tooltipData
      * @return string
      */
-    protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, string $category = null, string $tooltipData='') : string
+    protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, float $memory = null, string $category = null, array $tooltipData = []) : string
     {
-        $durationText = $this->formatMs($duration);
-        $tooltipData = str_replace("\\n", "&#10;", json_encode(htmlspecialchars($tooltipData)));
+        $text = TimeDataType::formatMs($duration, $this->msDecimals);
+        if ($memory) {
+            $text .= ($text ? ', ' : '') . ByteSizeDataType::formatWithScale($memory);
+        }
+        $tooltip = '';
+        foreach ($tooltipData as $label => $value) {
+            $tooltip .= $label . ': ' . $value . "\n";
+        }
+        $tooltip = json_encode(trim(StringDataType::replaceLineBreaks(htmlspecialchars($tooltip), "&#10;")));
         $cssClass = $category ?? '';
-        return "<tr class=\"{$cssClass}\" title={$tooltipData}><td>{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
+        return <<<HTML
+    <tr class="{$cssClass}" title={$tooltip}>
+        <td>{$name}</td>
+        <td>
+            <span class="waterfall-label">{$text}</span>
+            <span class="waterfall-offset" style="width: {$cssOffset}"></span>
+            <span class="waterfall-bar" style="width: {$cssWidth}">{$symbol}</span>
+        </td>
+    </tr>
+HTML;
     }
     
     /**
@@ -557,29 +520,13 @@ TEXT;
         return round($milliseconds, $this->msDecimals);
     }
 
-    /**
-     * Formats milliseconds as "x.xx ms" or "y.yy s" depending on the scale
-     * @param float|null $milliseconds
-     * @return string
-     */
-    protected function formatMs(?float $milliseconds) : string
-    {
-        switch (true) {
-            case $milliseconds === null:
-                $formatted = '';
-                break;
-            case $milliseconds > 1000:
-                $formatted = round($milliseconds / 1000, $this->msDecimals) . ' s';
-                break;
-            default:
-                $formatted = $this->roundMs($milliseconds) . ' ms';
-                break;
-        }
-        return $formatted;
-    }
-
-    protected function nowMs() : float
+    public static function getCurrentTimeMs() : float
     {
         return microtime(true) * 1000;
+    }
+    
+    protected function getName() : string
+    {
+        return $this->name;
     }
 }

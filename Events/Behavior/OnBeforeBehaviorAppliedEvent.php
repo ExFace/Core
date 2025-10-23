@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Events\Behavior;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\AbstractEvent;
 use exface\Core\Interfaces\Events\BehaviorEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -80,5 +81,23 @@ class OnBeforeBehaviorAppliedEvent extends AbstractEvent implements BehaviorEven
     public function getLogbook() : ?LogBookInterface
     {
         return $this->logbook;
+    }
+    
+    public function getSummary() : string
+    {
+        $behavior = $this->getBehavior();
+        $processedEvent = $this->getEventProcessed();
+        if ($processedEvent == null) {
+            $eventName = '';
+        } else {
+            $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
+            $eventName = "[{$eventName}] ";
+        }
+        return "{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()}";
+    }
+    
+    public function __toString() : string
+    {
+        return $this->getSummary();
     }
 }
