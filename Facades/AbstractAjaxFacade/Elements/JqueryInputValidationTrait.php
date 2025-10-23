@@ -85,7 +85,7 @@ JS;
 JS;
             }
         }
-        if ($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf()) {
+        if (($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf())) {
             return <<<JS
 
                         if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs } }

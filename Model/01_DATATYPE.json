@@ -1294,6 +1294,25 @@
             },
             "ALIAS": "AttributeOrigin",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "Color",
+            "CREATED_ON": "2025-10-21 19:22:29",
+            "MODIFIED_ON": "2025-10-21 19:22:29",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f083f085692c9c83f0025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Color",
+            "PROTOTYPE": "exface/core/DataTypes/ColorDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputColorPalette"
+            },
+            "ALIAS": "Color",
+            "SHORT_DESCRIPTION": "TODO"
         }
     ],
     "totals_rows": [],
