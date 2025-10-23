@@ -1,8 +1,5 @@
 <?php
-
 namespace exface\Core\CommonLogic\Debugger;
-
-use exface\Core\DataTypes\TimeDataType;
 
 class ProfilerLine
 {
