@@ -70,17 +70,17 @@ class DataColumnSetupRule extends AbstractMutation
     }
 
     /**
-     * Target column calculation - used to identify the column to set up
+     * Target column name - used to identify the column to set up
      *
-     * @uxon-property calculation
-     * @uxon-type metamodel:formula
+     * @uxon-property column_name
+     * @uxon-type string
      *
-     * @param string $formula
+     * @param string $column_name
      * @return $this
      */
-    protected function setCalculation(string $formula): DataColumnSetupRule
+    protected function setColumnName(string $column_name): DataColumnSetupRule
     {
-        $this->expression = $formula;
+        $this->expression = $column_name;
         return $this;
     }
 

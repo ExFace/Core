@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic;
 
 use axenox\ETL\Events\Flow\OnAfterETLStepRun;
 use axenox\ETL\Events\Flow\OnBeforeETLStepRun;
+use exface\Core\CommonLogic\Debugger\Profiler;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
@@ -75,7 +76,7 @@ class Tracer extends Profiler
      */
     public function __construct(WorkbenchInterface $workbench, int $startOffsetMs = 0)
     {
-        parent::__construct($workbench, $startOffsetMs);
+        parent::__construct($workbench, $startOffsetMs, 1, 'Request');
         $this->registerLogHandlers();
         $this->registerEventHandlers();
         
@@ -407,7 +408,7 @@ class Tracer extends Profiler
     public function stopAction(ActionEventInterface $event)
     {
         try {
-            $ms = $this->stop($event->getAction());
+            $ms = $this->stop($event->getAction())->getTimeTotalMs();
         } catch (\Throwable $e) {
             // FIXME event-not-started exceptions are thrown here when perforimng
             // CallContext actions. Need to find out why, than reenable the following
@@ -442,7 +443,7 @@ class Tracer extends Profiler
     public function stopCommunication(OnMessageSentEvent $event)
     {
         try {
-            $ms = $this->stop($event->getMessage());
+            $ms = $this->stop($event->getMessage())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
                 $duration = ' (' . $ms . ' ms)';
@@ -473,7 +474,7 @@ class Tracer extends Profiler
     public function stopBehavior(OnBehaviorAppliedEvent $event)
     {
         try {
-            $ms = $this->stop($event->getBehavior());
+            $ms = $this->stop($event->getBehavior())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
                 $duration = ' (' . $ms . ' ms)';
@@ -502,7 +503,7 @@ class Tracer extends Profiler
     public function stopETLStep(OnAfterETLStepRun $event) : void
     {
         try {
-            $ms = $this->stop($event->getStep());
+            $ms = $this->stop($event->getStep())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
                 $duration = ' (' . $ms . ' ms)';
@@ -535,7 +536,7 @@ class Tracer extends Profiler
         try {
             $query = $event->getQuery();
             
-            $ms = $this->stop($query);
+            $ms = $this->stop($query)->getTimeTotalMs();
             $this->dataQueriesCnt++;
             
             $name = $this->getLapName($event);
@@ -574,7 +575,7 @@ class Tracer extends Profiler
     public function stopConnection(OnConnectEvent $event)
     {
         try {
-            $ms = $this->stop($event->getConnection());
+            $ms = $this->stop($event->getConnection())->getTimeTotalMs();
             $this->connectionsTotalMS += $ms;
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
@@ -587,7 +588,7 @@ class Tracer extends Profiler
      * @return void
      */
     public function stopWorkbench(OnBeforeStopEvent $event = null) {
-        $this->getWorkbench()->getLogger()->notice('Request summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
+        $this->getWorkbench()->getLogger()->notice('Request summary: ' . $this->getTimeTotalMs() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
         $this->logHandler->flush();
     }
     
