@@ -60,6 +60,8 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
 
     private $subtitleColumn = null;
 
+    private $titleOverflow = null;
+
     private ?DataColumn $nestedDataColumn = null;
 
     private $colorExpr = null;
@@ -417,6 +419,35 @@ JS;
     public function hasSubtitle() : bool
     {
         return $this->subtitleString !== null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTitleOverflow() : ?string
+    {
+        return $this->titleOverflow;
+    }
+
+    /**
+     * Sets the title overflow behavior of a task bar inside the gantt chard.
+     * Overflow happens when the length of the title is longer than the taskbar.
+     *
+     * Valid options:
+     * - 'outside': The title is displayed on the right-hand side of the task bar.
+     * - 'clip': The title stays inside the bar and the part that doesn't fit is cut off.
+     * - 'hide': The title is hidden, if it doesn't fit.
+     *
+     * @uxon-property title_overflow
+     * @uxon-type [outside,clip,hide]
+     *
+     * @param string $value
+     * @return $this
+     */
+    public function setTitleOverflow(string $value) : DataCalendarItem
+    {
+        $this->titleOverflow = $value;
+        return $this;
     }
     
     /**
