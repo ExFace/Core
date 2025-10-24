@@ -8,13 +8,24 @@ class ProfilerLine
     private ?string $category = null;
     private ?string $phpClass = null;
     private array $data = [];
-    
+
+    /**
+     * @var ProfilerLap[] 
+     */
     private array $laps = [];
+    private ?ProfilerLap $lastLap = null;
     
     private ?float $startMs = null;
     private ?float $startMemory = null;
-    
-    public function __construct(Profiler $profiler, string $name, ?string $category = null, ?string $phpClass, array $data = [])
+
+    /**
+     * @param Profiler $profiler
+     * @param string $name
+     * @param string|null $category
+     * @param string|null $phpClass
+     * @param array $data
+     */
+    public function __construct(Profiler $profiler, string $name, ?string $category = null, ?string $phpClass = null, array $data = [])
     {
         $this->profiler = $profiler;
         $this->name = $name;
@@ -63,20 +74,22 @@ class ProfilerLine
     
     public function startLap() : ProfilerLap
     {
-        $idx = count($this->laps);
-        if ($idx === 0) {
-            $this->startMs = Profiler::getCurrentTimeMs();
-            $this->startMemory = Profiler::getCurrentMemoryBytes();
+        $nowMs = Profiler::getCurrentTimeMs();
+        $nowMem = Profiler::getCurrentMemoryBytes();
+        if (empty($this->laps)) {
+            $this->startMs = $nowMs;
+            $this->startMemory = $nowMem;
         }
-        $lap = new ProfilerLap($this);
+        $lap = new ProfilerLap($this, $nowMs, $nowMem);
         $this->laps[] = $lap;
+        $this->lastLap = $lap;
         return $lap;
     }
     
     public function stopLap(?int $lapId = null) : ProfilerLap
     {
         if ($lapId !== null) {
-            $lap = $this->laps[$lapId] ?? null;
+            $lap = $this->lastLap;
         } else {
             $lap = end($this->laps);
         }
@@ -92,11 +105,11 @@ class ProfilerLine
     public function getTimeStopMs() : ?float
     {
         $max = null;
-        foreach ($this->getLaps() as $lap) {
-            if ($lap->isMilestone() === true) {
-                continue;
+        foreach ($this->laps as $lap) {
+            $stopMs = $lap->getTimeStopMs();
+            if ($stopMs !== null) {
+                $max = max($max, $stopMs);
             }
-            $max = max($max, $lap->getTimeStopMs());
         }
         return $max;
     }
@@ -104,11 +117,10 @@ class ProfilerLine
     public function getTimeTotalMs() : ?float
     {
         $sum = null;
-        foreach ($this->getLaps() as $lap) {
-            if ($lap->isMilestone() === true) {
-                continue;
+        foreach ($this->laps as $lap) {
+            if (null !== $ms = $lap->getTimeTotalMs()) {
+                $sum += $ms;
             }
-            $sum += $lap->getTimeTotalMs();
         }
         return $sum;
     }
@@ -128,8 +140,8 @@ class ProfilerLine
     public function getMemoryConsumedBytes() : int
     {
         $total = 0;
-        foreach ($this->getLaps() as $lap) {
-            $total += $lap->getMemoryConsumedBytes();
+        foreach ($this->laps as $lap) {
+            $total += $lap->getMemoryConsumedBytes() ?? 0;
         }
         return $total;
     }
@@ -137,13 +149,15 @@ class ProfilerLine
     public function getMemoryAvgBytes() : float
     {
         $sum = $this->getMemoryConsumedBytes();
-        return $this->countLaps() === 0 ? 0 : ($sum / $this->countLaps());        
+        $cnt = $this->countLaps();
+        return $cnt === 0 ? 0 : ($sum / $cnt);        
     }
 
     public function getTimeAvgMs() : float
     {
         $sum = $this->getTimeTotalMs();
-        return $this->countLaps() === 0 ? 0 : ($sum / $this->countLaps());
+        $cnt = $this->countLaps();
+        return $cnt === 0 ? 0 : ($sum / $cnt);
     }
     
     public function isMilestone() : bool
