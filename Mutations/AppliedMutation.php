@@ -2,6 +2,7 @@
 namespace exface\Core\Mutations;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Widgets\DebugMessage;
@@ -10,8 +11,9 @@ class AppliedMutation implements AppliedMutationInterface
 {
     private MutationInterface $mutation;
     private mixed $subject;
-    private string $stateBefore;
-    private string $stateAfter;
+    
+    private $stateBefore;
+    private $stateAfter;
 
     /**
      * @param MutationInterface $mutation
@@ -19,7 +21,7 @@ class AppliedMutation implements AppliedMutationInterface
      * @param string $stateBefore
      * @param string $stateAfter
      */
-    public function __construct(MutationInterface $mutation, $subject, string $stateBefore, string $stateAfter)
+    public function __construct(MutationInterface $mutation, $subject, $stateBefore = null, $stateAfter = null)
     {
         $this->mutation = $mutation;
         $this->subject = $subject;
@@ -51,7 +53,7 @@ class AppliedMutation implements AppliedMutationInterface
      */
     public function hasChanges(): bool
     {
-        return $this->stateAfter !== $this->stateBefore;
+        return $this->dumpStateBefore() !== $this->dumpStateAfter();
     }
 
     /**
@@ -60,7 +62,7 @@ class AppliedMutation implements AppliedMutationInterface
      */
     public function dumpStateBefore(): string
     {
-        return $this->stateBefore;
+        return $this->dumpState($this->stateBefore);
     }
 
     /**
@@ -69,7 +71,22 @@ class AppliedMutation implements AppliedMutationInterface
      */
     public function dumpStateAfter(): string
     {
-        return $this->stateAfter;
+        return $this->dumpState($this->stateAfter);
+    }
+
+    /**
+     * @param mixed $anything
+     * @return string
+     */
+    protected function dumpState($anything) : string
+    {
+        if (is_string($anything)) {
+            return $anything;
+        }
+        if (is_array($anything)) {
+            return JsonDataType::encodeJson($anything, true);
+        }
+        return print_r($anything, true);
     }
 
     /**
