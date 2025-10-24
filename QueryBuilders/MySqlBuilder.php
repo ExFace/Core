@@ -443,7 +443,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         $resultJson = $initialJson;
 
         foreach ($keyValuePairs as $attributePath => $attributeValue) {
-            if ($attributeValue === null) {
+            if ($attributeValue === null || $attributeValue === 'null') {
                 $resultJson = "JSON_REMOVE(" . $resultJson . ", '" . $attributePath . "')";
             } else {
                 $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
