@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use axenox\ETL\Events\Flow\OnAfterETLStepRun;
 use axenox\ETL\Events\Flow\OnBeforeETLStepRun;
 use exface\Core\CommonLogic\Debugger\Profiler;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
@@ -588,7 +589,10 @@ class Tracer extends Profiler
      * @return void
      */
     public function stopWorkbench(OnBeforeStopEvent $event = null) {
-        $this->getWorkbench()->getLogger()->notice('Request summary: ' . $this->getTimeTotalMs() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
+        $this->getWorkbench()->getLogger()->notice(
+            'Request summary: ' . TimeDataType::formatMs($this->getTimeTotalMs()) . ' total, '
+            . $this->conncetionsCnt . ' connections opened in ' . TimeDataType::formatMs($this->connectionsTotalMS) . ', '
+            . $this->dataQueriesCnt . ' data queries in ' . TimeDataType::formatMs($this->dataQueriesTotalMS), [], $this);
         $this->logHandler->flush();
     }
     
