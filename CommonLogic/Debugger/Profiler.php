@@ -170,7 +170,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      */
     public function getTimeStopMs() : ?float
     {
-        return $this->roundMs($this->stopFinalMs ?? $this::getCurrentTimeMs());
+        return $this->stopFinalMs ?? $this::getCurrentTimeMs();
     }
     
     public function getMemoryConsumedBytes() : ?int
@@ -405,7 +405,7 @@ generateEventTypeFilterOptions();
 HTML;
         $startTime = $this->getTimeStartMs();
         $endTime = $this->getTimeStopMs();
-        $totalDur = $this->roundMs($endTime - $startTime);
+        $totalDur = $endTime - $startTime;
         $totalMem = $this->getMemoryConsumedBytes();
         $minWidth = '1px';
         $milestoneSymbol = '&loz;';
@@ -433,12 +433,12 @@ HTML;
         );
         
         foreach ($lines as $line) {
-            $eventStart = $this->roundMs($line->getTimeStartMs());
+            $eventStart = $line->getTimeStartMs();
             $eventOffset = floor(($eventStart - $startTime) / $totalDur * 100) . '%';
 
             if (! $line->isMilestone()) {
-                $eventEnd = $this->roundMs($line->getTimeStopMs());
-                $eventLen = $this->roundMs($eventEnd - $eventStart);
+                $eventEnd = $line->getTimeStopMs();
+                $eventLen = $eventEnd - $eventStart;
                 $eventLenPercent = round($eventLen / $totalDur * 100);
                 $eventWidth = $eventLenPercent > 0 ? 'calc(' . $eventLenPercent . '% - 3px)' : $minWidth;
                 $eventSymbol = $emptySymbol;
@@ -531,16 +531,6 @@ HTML;
         </td>
     </tr>
 HTML;
-    }
-    
-    /**
-     * 
-     * @param float $milliseconds
-     * @return float
-     */
-    protected function roundMs(float $milliseconds) : float
-    {
-        return round($milliseconds, $this->msDecimals);
     }
 
     public static function getCurrentTimeMs() : float
