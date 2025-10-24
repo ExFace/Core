@@ -1471,6 +1471,16 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
             'name' => $this->getName(),
             'data_address' => $this->getDataAddress()
         ]);
+        
+        if ($this->default_display_uxon !== null) {
+            $uxon->setProperty('default_display_widget', $this->default_display_uxon);
+        }
+        if ($this->default_editor_uxon !== null) {
+            $uxon->setProperty('default_editor_widget', $this->default_editor_uxon);
+        }
+        if ($this->custom_data_type_uxon !== null) {
+            $uxon->setProperty('data_type', $this->custom_data_type_uxon);
+        }
 
         // TODO add other UXON properties here
 
