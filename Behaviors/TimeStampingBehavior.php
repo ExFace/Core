@@ -230,7 +230,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
      * 
      * @return bool
      */
-    protected function getCheckForConflictsOnUpdate() : bool
+    public function getCheckForConflictsOnUpdate() : bool
     {
         return $this->checkForConflictsOnUpdate;
     }
