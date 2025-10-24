@@ -348,8 +348,11 @@ class UiPage implements UiPageInterface
      * 
      * @return WidgetInterface
      */
-    private function getWidgetFromIdSpace($id, $id_space, WidgetInterface $parent, $use_id_path = true)
+    private function getWidgetFromIdSpace($id, $id_space, WidgetInterface $parent, $use_id_path = true, int $maxDepth = 100)
     {
+        if ($maxDepth < 0) {
+            throw new WidgetNotFoundError('Widget "' . $id . '" not found in id space "' . $id_space . '" within parent "' . $parent->getId() . '" on page "' . $this->getAliasWithNamespace() . '" - maximum search depth reached!');
+        }
         // There are two ways to reference the root id space explicitly: `.DataTable` and `_.DataTable`.
         // Treat both as empty id space here
         // TODO distinguish between no id space and root id space to speed up searching!
@@ -375,7 +378,7 @@ class UiPage implements UiPageInterface
         
         if (StringDataType::startsWith($id_space, $parentIdSep) || StringDataType::startsWith($id_space, $parentIdGeneratedSep)) {
             $id_space_root = $this->getWidget($id_space, $parent);
-            return $this->getWidgetFromIdSpace($id, $id_space, $id_space_root);
+            return $this->getWidgetFromIdSpace($id, $id_space, $id_space_root, $use_id_path, $maxDepth);
         }
         
         // See if the id searched for has an id space
@@ -421,7 +424,7 @@ class UiPage implements UiPageInterface
                     // If we are looking for a non-path id or the path includes the id of the child, look within the child
                     try {
                         // Note, the child may decide itself, whe
-                        return $this->getWidgetFromIdSpace($id, $id_space, $child);
+                        return $this->getWidgetFromIdSpace($id, $id_space, $child, $use_id_path, ($maxDepth - 1));
                     } catch (WidgetNotFoundError $e) {
                         // Catching the error means, we did not find the widget in this branch.
                         
@@ -439,7 +442,7 @@ class UiPage implements UiPageInterface
                                 // DT_TB_BG_BT2 to treat the id as a non-path. This will make it pass the search
                                 // to every child of DT_TB_BG_BT2. These will search regularly though, so starting
                                 // from DT_TB_BG_BT2_DT the path-idea will work again.
-                                return $this->getWidgetFromIdSpace($id, $id_space, $child, false);
+                                return $this->getWidgetFromIdSpace($id, $id_space, $child, false, ($maxDepth - 1));
                             } catch (WidgetNotFoundError $ed) {
                                 // If the deep-search fails too, we know, the widget was moved somewhere else (example 5)
                                 // or the really does not exist. In this case, we stop looking through children (no other
