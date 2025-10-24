@@ -111,7 +111,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     public function stop(object|string $subject) : ProfilerLap
     {
         if (null === $line = $this->getLine($subject)) {
-            $line = $this->start($subject);
+            $line = $this->start($subject)->getProfilerLine();
         }
         return $line->stopLap();
     }
