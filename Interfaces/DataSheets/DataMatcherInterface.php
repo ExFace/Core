@@ -30,6 +30,7 @@ interface DataMatcherInterface
     public function getMatchesForRow(int $mainSheetRowIdx) : array;
     
     /**
+     * Returns all indexes of the main sheet, that have matches
      * 
      * @return int[]
      */
