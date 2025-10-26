@@ -395,6 +395,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function hasSorters() : bool;
 
     /**
+     * Returns indexes (keys) of all rows
+     * @return int[]
+     */
+    public function getRowIndexes() : array;
+
+    /**
      * Returns multiple rows of the data sheet as an array of associative array (e.g.
      * [rownum => [col1 => val1, col2 => val2, ...] ])
      * By default returns all rows. Use the arguments to select only a range of rows.
@@ -536,9 +542,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Removes all or specified rows of the data sheet without changing anything in the column structure
      *
      * @param int[]|NULL $rowIndexes
+     * @param bool $reindex
      * @return DataSheetInterface
      */
-    public function removeRows(array $rowIndexes = null) : DataSheetInterface;
+    public function removeRows(array $rowIndexes = null, bool $reindex = true) : DataSheetInterface;
 
     /**
      * Removes a single row of the data sheet.
@@ -559,11 +566,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *      $dataSheet->removeRow($r);
      *  }
      * ```
-     *
-     * @param integer $row_number            
+     * 
+     * @param int $row_number
+     * @param bool $reindex
      * @return DataSheetInterface
      */
-    public function removeRow(int $row_number) : DataSheetInterface;
+    public function removeRow(int $row_number, bool $reindex = true) : DataSheetInterface;
 
     /**
      * Removes all rows with the given value in the UID column.
@@ -838,4 +846,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @throws DataNotFoundError if none or more then one row is within the datasheet
      */
     public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array;
+
+    /**
+     * Returns a copy of this sheet containing only the rows with the provided indexes
+     * 
+     * 
+     * 
+     * @param int[] $rowIndexes
+     * @return DataSheetInterface
+     */
+    public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface;
 }

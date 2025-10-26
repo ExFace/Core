@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataMatchInterface;
 use exface\Core\Interfaces\DataSheets\DataPointerInterface;
 use exface\Core\CommonLogic\DataSheets\DataPointer;
 use exface\Core\Interfaces\DataSheets\DataMatcherInterface;
+use exface\Core\Interfaces\DataSheets\TwoSheetMatcherInterface;
 
 class DataRowMatch implements DataMatchInterface
 {
@@ -20,7 +21,7 @@ class DataRowMatch implements DataMatchInterface
     
     private $matchPointer = null;
     
-    public function __construct(DataRowMatcher $matcher, int $mainRowIdx, int $matchedRowIdx, bool $isUidMatch = false)
+    public function __construct(TwoSheetMatcherInterface $matcher, int $mainRowIdx, int $matchedRowIdx, bool $isUidMatch = false)
     {
         $this->matcher = $matcher;
         $this->mainRowIdx = $mainRowIdx;

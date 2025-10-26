@@ -2308,12 +2308,18 @@ class DataSheet implements DataSheetInterface
     {
         return $this->autocount;
     }
-
+    
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRows()
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowIndexes()
      */
+    public function getRowIndexes() : array
+    {
+        return array_keys($this->rows);
+    }
+
+    
     function getRows(int $how_many = 0, int $offset = 0) : array
     {
         $return = array();
@@ -2746,13 +2752,13 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRows()
      */
-    public function removeRows(array $rowIndexes = null) : DataSheetInterface
+    public function removeRows(array $rowIndexes = null, bool $reindex = true) : DataSheetInterface
     {
         if ($rowIndexes !== null) {
             $rowIndexes = array_unique($rowIndexes);
             rsort($rowIndexes);
             foreach ($rowIndexes as $i) {
-                $this->removeRow($i);
+                $this->removeRow($i, $reindex);
             }
         } else {
             $this->rows = array();
@@ -2765,10 +2771,12 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRow()
      */
-    public function removeRow(int $row_number) : DataSheetInterface
+    public function removeRow(int $row_number, bool $reindex = true) : DataSheetInterface
     {
         unset($this->rows[$row_number]);
-        $this->rows = array_values($this->rows);
+        if ($reindex === true) {
+            $this->rows = array_values($this->rows);
+        }
         return $this;
     }
 
@@ -3549,11 +3557,7 @@ class DataSheet implements DataSheetInterface
         return $removeRows;
     }
 
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
-     */
+    
     public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array
     {
         $cnt = $this->countRows();
@@ -3583,5 +3587,18 @@ class DataSheet implements DataSheetInterface
             throw new DataNotFoundError($this, $msg);
         }
         return $this->rows[0];
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     */
+    public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface
+    {
+        $copy = $this->copy();
+        $allIdx = $this->getRowIndexes();
+        $removeIdx = array_diff($allIdx, $rowIndexes);
+        return $copy->removeRows($removeIdx, $reindex);
     }
 }
