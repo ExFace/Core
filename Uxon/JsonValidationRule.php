@@ -80,7 +80,7 @@ class JsonValidationRule
         );
     }
     
-    protected function findMatches(UxonObject $uxon, bool $stopOnHit = false) : array
+    protected function findMatches(UxonObject $uxon) : array
     {
         $data = $uxon->toArray();
         $jsonObject = new JsonObject($data);
@@ -90,7 +90,6 @@ class JsonValidationRule
         foreach ($this->jsonPaths as $path) {
             try {
                 $matches = $jsonObject->getJsonObjects($path);
-                //$jsonObject->set($path, 'TEST');
             } catch (\Throwable $exception) {
                 continue;
             }
@@ -105,6 +104,26 @@ class JsonValidationRule
         }
         
         return $results;
+    }
+    
+    // TODO This is probably expensive. Maybe try to merge related paths.
+    protected function traverseJsonPath(array $jsonPath, UxonObject $uxon, array $uxonPath) : array
+    {
+        $data = $uxon->toArray();
+        $jsonObject = new JsonObject($data);
+        $pattern = array_shift($jsonPath);
+        
+        try {
+            $matches = $jsonObject->getJsonObjects($pattern);
+        } catch (\Throwable $exception) {
+            // We treat any exception here as a miss.
+        }
+
+        foreach ($matches as $match) {
+            //if($pattern === )
+        }
+        
+        return [];
     }
     
     public function getAppliesToClass() : string
@@ -144,12 +163,12 @@ class JsonValidationRule
      */
     public function setJsonPaths(UxonObject $jsonPaths) : JsonValidationRule
     {
-        // TODO Assign splits
+        $this->jsonPaths = [];
+        
         foreach ($jsonPaths->toArray() as $jsonPath) {
-            $split = $this->splitJsonPath($jsonPath);
+            $this->jsonPaths[] = $this->splitJsonPath($jsonPath);
         }
         
-        $this->jsonPaths = $jsonPaths->toArray();
         return $this;
     }
     
@@ -179,7 +198,7 @@ class JsonValidationRule
         }
         
         if($buildRecursion) {
-            $result[] = '$..*';
+            $result[] = '$..*';// TODO Redundant, since it just returns all properties, i.e. is always a match.
         }
         
         return  $result;
