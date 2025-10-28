@@ -315,7 +315,7 @@ abstract class AbstractAction implements ActionInterface
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {        
         $logbook = $this->getLogBook($task);
-        $logbook->startLogginEvents();
+        $logbook->startLoggingEvents();
 
         // Start a new transaction if none passed
         if (is_null($transaction)) {
