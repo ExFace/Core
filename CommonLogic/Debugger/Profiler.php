@@ -40,6 +40,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets,
     private WorkbenchInterface $workbench;
     
     private float $startMs = 0;
+    private int $startMem = 0;
     private ?float $stopFinalMs = null;
     
     private array $lines = [];
@@ -191,9 +192,18 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets,
     {
         $sum = null;
         foreach ($this->getLines() as $line) {
-            $sum += $line->getMemoryConsumedBytes();
+            $sum += $line->getMemoryAllocatedBytes();
         }
         return $sum;
+    }
+
+    public function getMemoryPeakBytes() : ?int
+    {
+        $max = 0;
+        foreach ($this->getLines() as $line) {
+            $max = max($max, $line->getMemoryPeakBytes());
+        }
+        return $max;
     }
     
     /**
@@ -268,7 +278,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets,
     #{$id} td:last-of-type, #{$id} th:last-of-type {width: 10%}
     #{$id} .waterfall-offset {overflow: visible; white-space: nowrap; display: inline-block;}
     #{$id} .waterfall-bar {background-color: lightgray; display: inline-block; overflow: visible;}
-    #{$id} td:last-of-type .waterfall-bar {background-color: sandybrown;}
+    #{$id} td:last-of-type .waterfall-bar {background-color: wheat;}
     #{$id} .waterfall-label {display: block; position: absolute;}
 
     #{$id} .ps-table-control-container{margin-bottom: 10px;}
@@ -420,7 +430,7 @@ HTML;
         $startTime = $this->getTimeStartMs();
         $endTime = $this->getTimeStopMs();
         $totalDur = $endTime - $startTime;
-        $totalMem = $this->getMemoryConsumedBytes();
+        $totalMem = $this->getMemoryPeakBytes();
         $minWidth = '1px';
         $milestoneSymbol = '&loz;';
         $emptySymbol = '&nbsp;';
@@ -436,7 +446,15 @@ HTML;
     </thead>
 <tbody>
 HTML;
-        $html .= $this->buildHtmlProfilerRow($this->getName(), '0px', 'calc(100% - 3px)', $emptySymbol, $totalDur);
+        $html .= $this->buildHtmlProfilerRow(
+            $this->getName(), 
+            $emptySymbol, 
+            '0px', 
+            'calc(100% - 3px)', 
+            'Max. ' . TimeDataType::formatMs($totalDur),
+            '0px',
+            ByteSizeDataType::formatWithScale($totalMem)
+        );
         
         $lines = $this->getLines();
         usort(
@@ -461,31 +479,37 @@ HTML;
                 $eventSymbol = $milestoneSymbol;
             }
             
-            if (null !== $eventMem = $line->getMemoryConsumedBytes()) {
-                $eventMemFormatted = ByteSizeDataType::formatWithScale($eventMem);
+            if (null !== $eventMem = $line->getMemoryAvgBytes()) {
+                $eventMemWidth = round($eventMem / $totalMem * 100) . '%';
+                $eventMemText = '+ ' . ByteSizeDataType::formatWithScale($line->getMemoryAllocatedBytes());
+            } else {
+                $eventMemWidth = '0px';
+                $eventMemText = '';
             }
            
             $tooltipData = [
                 'Category' => $line->getCategory(),
                 'Duration' => TimeDataType::formatMs($line->getTimeTotalMs(), $this->msDecimals),
-                'Memory' => $eventMemFormatted, 
+                'Memory allocated' => $eventMemText,
+                'Memory @ start' => ByteSizeDataType::formatWithScale($line->getMemoryStartBytes()),
+                'Memory @ stop' => ByteSizeDataType::formatWithScale($line->getMemoryStopBytes()),
                 'PHP class' => $line->getPhpClass()
             ];
             if ($line->countLaps() > 1) {
                 $tooltipData['Calls'] = $line->countLaps();
                 $tooltipData['Avg. time per call'] = TimeDataType::formatMs($line->getTimeAvgMs());
-                $tooltipData['Avg. memory per call'] = ByteSizeDataType::formatWithScale($line->getMemoryAvgBytes());
+                $tooltipData['Avg. memory per call'] = ByteSizeDataType::formatWithScale($line->getMemoryAvgBytesPerLap());
             }
             $tooltipData = array_merge($tooltipData, $line->getData());
 
             $html .= $this->buildHtmlProfilerRow(
-                $line->getName(), 
-                $eventOffset, 
-                $eventWidth, 
-                $eventSymbol, 
-                $line->getTimeTotalMs(), 
-                $eventMem, 
-                $totalMem,
+                $line->getName(),
+                $eventSymbol,
+                $eventOffset, // $timeBarOffset
+                $eventWidth, // $timeBarWidth
+                TimeDataType::formatMs($line->getTimeTotalMs(), $this->msDecimals), // $timeBarText
+                $eventMemWidth,
+                $eventMemText, 
                 $line->getCategory(), 
                 $tooltipData
             );
@@ -499,8 +523,8 @@ HTML;
      *
      * @param float $start
      * @param string $name
-     * @param string $cssOffset
-     * @param string $cssWidth
+     * @param string $timeBarOffset
+     * @param string $timeBarWidth
      * @param string $symbol
      * @param float|null $barText
      * @param float|null $eventMem
@@ -509,22 +533,17 @@ HTML;
      * @return string
      */
     protected function buildHtmlProfilerRow(
-        string $name, 
-        string $cssOffset, 
-        string $cssWidth, 
-        string $symbol, 
-        float  $barText = null, 
-        int    $eventMem = null, 
-        int    $totalMem = null,
+        string $name,
+        string $symbol,
+        string $timeBarOffset, 
+        string $timeBarWidth, 
+        string $timeBarText = null,
+        string $memBarWidth = null,
+        string $memBarText = null,
         string $category = null, 
         array  $tooltipData = []
     ) : string
     {
-        $eventText = TimeDataType::formatMs($barText, $this->msDecimals);
-        if ($eventMem) {
-            $memWidth = round($eventMem / $totalMem * 100) . '%';
-            $memText =  ByteSizeDataType::formatWithScale($eventMem);
-        }
         $tooltip = '';
         foreach ($tooltipData as $label => $value) {
             $tooltip .= $label . ': ' . $value . "\n";
@@ -535,13 +554,13 @@ HTML;
     <tr class="{$cssClass}" title={$tooltip}>
         <td>{$name}</td>
         <td>
-            <span class="waterfall-label">{$eventText}</span>
-            <span class="waterfall-offset" style="width: {$cssOffset}"></span>
-            <span class="waterfall-bar" style="width: {$cssWidth}">{$symbol}</span>
+            <span class="waterfall-label">{$timeBarText}</span>
+            <span class="waterfall-offset" style="width: {$timeBarOffset}"></span>
+            <span class="waterfall-bar" style="width: {$timeBarWidth}">{$symbol}</span>
         </td>
         <td>
-            <span class="waterfall-label">{$memText}</span>
-            <span class="waterfall-bar" style="width: {$memWidth}">&nbsp;</span>
+            <span class="waterfall-label">{$memBarText}</span>
+            <span class="waterfall-bar" style="width: {$memBarWidth}">&nbsp;</span>
         </td>
     </tr>
 HTML;

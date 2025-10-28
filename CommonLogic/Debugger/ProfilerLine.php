@@ -137,18 +137,43 @@ class ProfilerLine
         return $this->startMemory;
     }
 
-    public function getMemoryConsumedBytes() : int
+    public function getMemoryStopBytes() : ?int
+    {
+        return $this->lastLap === null ? null : $this->lastLap->getMemoryStopBytes();
+    }
+
+    public function getMemoryAllocatedBytes() : int
     {
         $total = 0;
         foreach ($this->laps as $lap) {
-            $total += $lap->getMemoryConsumedBytes() ?? 0;
+            $total += $lap->getMemoryAllocatedBytes() ?? 0;
         }
         return $total;
     }
-    
+
     public function getMemoryAvgBytes() : float
     {
-        $sum = $this->getMemoryConsumedBytes();
+        $cnt = 0;
+        $sum = 0;
+        foreach ($this->laps as $lap) {
+            $sum += $lap->getMemoryAvgBytes();
+            $cnt++;
+        }
+        return $cnt === 0 ? 0 : ($sum / $cnt);
+    }
+
+    public function getMemoryPeakBytes() : float
+    {
+        $max = $this->startMemory;
+        foreach ($this->laps as $lap) {
+            $max = max($max, $lap->getMemoryPeakBytes());
+        }
+        return $max;
+    }
+    
+    public function getMemoryAvgBytesPerLap() : float
+    {
+        $sum = $this->getMemoryAllocatedBytes();
         $cnt = $this->countLaps();
         return $cnt === 0 ? 0 : ($sum / $cnt);        
     }

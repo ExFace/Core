@@ -51,9 +51,19 @@ class ProfilerLap
         return $this->endMemory ?? $this->startMemory;
     }
 
-    public function getMemoryConsumedBytes() : int
+    public function getMemoryAllocatedBytes() : int
     {
         return ($this->endMemory ?? $this->startMemory) - $this->startMemory;
+    }
+
+    public function getMemoryAvgBytes() : int
+    {
+        return (($this->endMemory ?? $this->startMemory) + $this->startMemory) / 2;
+    }
+    
+    public function getMemoryPeakBytes() : int
+    {
+        return max($this->startMemory, $this->endMemory);
     }
     
     public function getProfilerLine() : ProfilerLine
