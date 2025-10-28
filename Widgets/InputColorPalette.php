@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\DataTypes\ColorDataType;
 use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iHaveHintScale;
@@ -106,8 +107,6 @@ use exface\Core\Widgets\Traits\iHaveColorTrait;
  */
 class InputColorPalette extends Input implements iHaveHintScale
 {
-    use iHaveColorTrait;
-
     const BINDING_PROPERTY_COLOR = 'colors';
     
     private $colorBindingUxon = null;
@@ -146,81 +145,35 @@ class InputColorPalette extends Input implements iHaveHintScale
 
         return $this->getColorBinding() !== null ? $this->getColorPresetsFromDataBinding() : $this->colorPresets;
     }
-    
-    /**
-     * The values of this attribute will be used for the color_presets.
-     * If not provided the widget look for a color_presets in the given attribute_alias.
-     * `color_presets_datatype_alias` and `color_presets` will only be used if the attribute has no color presets within itself.
-     *
-     * @uxon-property color_presets_attribute_alias
-     * @uxon-type metamodel:attribute
-     *
-     * @param string $value
-     * @return InputColorPalette
-     */
-    public function setColorPresetsAttributeAlias(string $value) : InputColorPalette
-    {
-        $this->colorBindingUxon->setProperty('attribute_alias', $value);
-        return $this;
-    }
-    
-    /**
-     * Fill the color presets of the color palette with the color presets of a given data type.
-     * 
-     * Examples:
-     * `exface.core.LogLevel` has a color presets within its default display that will then be used for the color palette widget:
-     *  ```
-     * {
-     * "DEBUG": "transparent",
-     * "INFO": "lightblue",
-     * "NOTICE": "lightyellow",
-     * "WARNING": "yellow",
-     * "ERROR": "orange",
-     * "CRITICAL": "orangered",
-     * "ALERT": "red",
-     * "EMERGENCY": "red"
-     * }
-     * ```
-     *
-     * Example DataType with colors in its values:
-     * `onelink.BMDB.BaumanagementFarben` has colors as it's enum values:
-     * ```
-     * {
-     *  "~OK": "Grün",
-     *  "lightgreen": "Hellgrün",
-     *  "gold": "Gelb",
-     *  "~WARNING": "Orange",
-     *  "~ERROR": "Rot",
-     *  "lightgray": "Grau",
-     *  "lightsteelblue": "Hellblau",
-     *  "steelblue": "Dunkelblau"
-     * }
-     * ```
-     * 
-     * @uxon-property color_presets_datatype_alias
-     * @uxon-type string
-     *
-     */
-    public function setColorPresetsDataTypeAlias(string $dataTypeAlias)
-    {
-        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), $dataTypeAlias);
-        if ($dataType->getDefaultDisplayUxon()->hasProperty('color_scale')) {
-            $this->setColorPresets($dataType->getDefaultDisplayUxon()->getProperty('color_scale'));
-        } else {
-            $uxon = new UxonObject();
-            $uxon->setProperty('color_scale', $dataType->getValues());
-            $this->setColorPresets($uxon->getProperty('color_scale'));
-        }
-        return $this;
-    }
 
+    /**
+     * Set color presets or load it via a attribute or an datatypes.
+     *
+     * Examples:  
+     * - `{"attribute_alias": "ZeitlicherStatus__Farbe"}` - get the color stored in an attribute (works also for related objects)
+     * - `{"data_type_alias": "onelink.BMDB.BaumanagementFarben"}` - the color will be read from the data type
+     *
+     * @uxon-property color_presets_binding
+     * @uxon-type \exface\Core\Widgets\Parts\WidgetPropertyBinding
+     * @uxon-template {"attribute_alias": ""}
+     */
+    public function setColorPresetsBinding(UxonObject $widgetPropertyBindingUxon) : InputColorPalette
+    {
+        $this->colorBindingUxon = $widgetPropertyBindingUxon;
+        return $this;
+    }
+    
     /**
      * Ensures that color_presets does not override a provided color presets from color_presets_datatype_alias
      *
+     * @uxon-property color_presets
+     * @uxon-type array
+     * @uxon-template ["red","blue","green"]
+     * 
      * @param UxonObject $valueColorPairs
      * @return InputColorPalette
      */
-    public function setColorPresets(UxonObject $valueColorPairs)
+    public function setColorPresets(UxonObject $valueColorPairs) : InputColorPalette
     {
         if($this->colorPresets === null) {
             $this->colorPresets = $valueColorPairs->toArray();
@@ -262,7 +215,7 @@ class InputColorPalette extends Input implements iHaveHintScale
                 $uxon->setProperty('attribute_relation_path', $baseRelPath);
             }
             $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
-            if ($binding->isEmpty() && $this->preferCustomColorPresets === false && $this->isBoundToAttribute()) {
+            if ($binding->isEmpty() && $this->isBoundToAttribute()) {
                 $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
                 $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
             }
@@ -276,11 +229,10 @@ class InputColorPalette extends Input implements iHaveHintScale
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Value::prepareDataSheetToRead()
      */
-    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
-        $data_sheet = $this->getColorBinding()->prepareDataSheetToRead($data_sheet);
-        return $data_sheet;
+        return $this->getColorBinding()->prepareDataSheetToRead($data_sheet);
     }
 
     /**
@@ -348,25 +300,12 @@ class InputColorPalette extends Input implements iHaveHintScale
         $dataType = $binding->getDataType();
         switch (true) {
             // use color scale in attribute default display uxon for color presets
-            case $binding->getAttribute()->getDefaultDisplayUxon()->hasProperty('color_scale'):
+            case $binding->isBoundToAttribute() === true && $binding->getAttribute()->getDefaultDisplayUxon()->hasProperty('color_scale'):
                 $colorPresets = $binding->getAttribute()->getDefaultDisplayUxon()->getProperty('color_scale')->toArray();
                 break;
-            // load presets via the datatype of the attribute
-            // datatype is a color data type
-            case $dataType instanceof ColorDataType:
-                $colorPresets = $dataType->getColorPresets();
-                break;
-            // datatype has a display uxon
-            case $dataType->getDefaultDisplayUxon()->hasProperty('color_scale'):
-                $colorPresets = $dataType->getDefaultDisplayUxon()->getProperty('color_scale')->toArray();
-                break;
-            // datatype is a color enum (number/string)
-            case $dataType instanceof NumberEnumDataType:
-                $colorPresets = $dataType->toArray();
-                break;
-            case $dataType instanceof EnumDataTypeInterface:
-                $values = $dataType->getValues();
-                $colorPresets = !empty($values) ? array_combine($values, $values) : [];
+            // use color presets from datatype 
+            case $dataType != null:
+                $colorPresets = $this->getColorPresetsFromDataTypeBinding($dataType);
                 break;
             // alright, maybe the value within the attribute alias is a color then?
             default:
@@ -472,5 +411,75 @@ class InputColorPalette extends Input implements iHaveHintScale
     private function hasColorPresets()
     {
         return $this->colorPresets !== null;
+    }
+
+    /**
+     * Fill the color presets with the color presets found within the given data type.
+     *
+     *  ### Example color presets within data type definition:  
+     * ```
+     * {
+     *   "color_presets": [
+     *     "red",
+     *     "blue",
+     *     "green"
+     *   ]
+     * }
+     * ```
+     * 
+     *  ### Example default uxon within datatype:  
+     *  `exface.core.LogLevel` has a color scale within its default display that will then be used for the color palette widget:
+     *   ```
+     *  {
+     *  "DEBUG": "transparent",
+     *  "INFO": "lightblue",
+     *  "NOTICE": "lightyellow",
+     *  "WARNING": "yellow",
+     *  "ERROR": "orange",
+     *  "CRITICAL": "orangered",
+     *  "ALERT": "red",
+     *  "EMERGENCY": "red"
+     *  }
+     *  ```
+     *
+     *  ### Example DataType with colors in its values:  
+     *  `onelink.BMDB.BaumanagementFarben` has colors as it's enum values:
+     *  ```
+     *  {
+     *   "~OK": "Grün",
+     *   "lightgreen": "Hellgrün",
+     *   "gold": "Gelb",
+     *   "~WARNING": "Orange",
+     *   "~ERROR": "Rot",
+     *   "lightgray": "Grau",
+     *   "lightsteelblue": "Hellblau",
+     *   "steelblue": "Dunkelblau"
+     *  }
+     *  ```
+     * 
+     * @param DataTypeInterface $dataType
+     * @return array|void
+     */
+    private function getColorPresetsFromDataTypeBinding(\exface\Core\Interfaces\DataTypes\DataTypeInterface $dataType)
+    {
+        switch ($dataType) {
+            // load presets via the datatype of the attribute
+            // datatype is a color data type
+            case $dataType instanceof ColorDataType:
+                return $dataType->getColorPresets();
+                break;
+            // datatype has a display uxon
+            case $dataType->getDefaultDisplayUxon()->hasProperty('color_scale'):
+                return $dataType->getDefaultDisplayUxon()->getProperty('color_scale')->toArray();
+                break;
+            // datatype is a color enum (number/string)
+            case $dataType instanceof NumberEnumDataType:
+                return $dataType->toArray();
+                break;
+            case $dataType instanceof EnumDataTypeInterface:
+                $values = $dataType->getValues();
+                return !empty($values) ? array_combine($values, $values) : [];
+                break;
+        }
     }
 }
