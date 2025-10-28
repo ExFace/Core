@@ -51,7 +51,6 @@ class ActionLogBook implements DataLogBookInterface
     private int $maxEventCount = 500;
     
     private $eventStackIndent = 0;
-
     private $eventStackProcessed = false;
 
     /**
@@ -89,7 +88,7 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook->addIndent(-1);
     }
 
-    public function startLogginEvents() : void
+    public function startLoggingEvents() : void
     {
         $eventMgr = $this->action->getWorkbench()->eventManager();
         // Action
