@@ -1,11 +1,16 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger;
 
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\TimeDataType;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Events\DataQueryEventInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -26,18 +31,21 @@ use exface\Core\DataTypes\StringDataType;
  * @author Andrej Kabachnik
  *
  */
-class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
+class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets, iCanBeConvertedToUxon
 {
+    use ImportUxonObjectTrait;
+    
     private string $name;
+    private int $msDecimals = 1;
+    private WorkbenchInterface $workbench;
     
     private float $startMs = 0;
     private ?float $stopFinalMs = null;
     
-    private WorkbenchInterface $workbench;
-    
-    private int $msDecimals = 1;
-    
     private array $lines = [];
+    
+    private array $eventListeners = [];
+    private bool $trackBehaviors = false;
 
     /**
      * @param WorkbenchInterface $workbench
@@ -119,7 +127,13 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     public function stopCompletely() : Profiler
     {
         $this->stopFinalMs = $this::getCurrentTimeMs();
+        $this->removeEventListeners();
         return $this;
+    }
+    
+    public function __destruct()
+    {
+        $this->stopCompletely();
     }
 
     /**
@@ -541,5 +555,96 @@ HTML;
     protected function getName() : string
     {
         return $this->name;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function exportUxonObject()
+    {
+        return new UxonObject([
+            'track_behaviors' => $this->trackBehaviors
+        ]);
+    }
+
+    /**
+     * Set to TRUE to add a line for every behavior being applied during runtime of the profiler
+     * 
+     * @uxon-property track_behaviors
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setTrackBehaviors(bool $trueOrFalse) : Profiler
+    {
+        $this->trackBehaviors = $trueOrFalse;
+        
+        if ($trueOrFalse === true) {
+            $this->addEventListener(OnBeforeBehaviorAppliedEvent::getEventName(), [$this, 'onBehaviorStartLap'], 'Behaviors');
+            $this->addEventListener(OnBehaviorAppliedEvent::getEventName(), [$this, 'onBehaviorStopLap'], 'Behaviors');
+        } else {
+            $this->removeEventListeners('Behaviors');
+        }
+        
+        return $this;
+    }
+
+    /**
+     * @param string $eventName
+     * @param callable $listener
+     * @param string $group
+     * @return $this
+     */
+    protected function addEventListener(string $eventName, callable $listener, string $group) : Profiler
+    {
+        $this->eventListeners[$group][] = [$eventName, $listener];
+        $this->getWorkbench()->eventManager()->addListener($eventName, $listener);
+        return $this;
+    }
+
+    /**
+     * @param string|null $group
+     * @return $this
+     */
+    protected function removeEventListeners(?string $group = null) : Profiler
+    {
+        $eventMgr = $this->getWorkbench()->eventManager();
+        foreach ($this->eventListeners as $listeningGroup => $listeners) {
+            if ($group === null || $group === $listeningGroup) {
+                foreach ($listeners as $arr) {
+                    list($eventName, $listener) = $arr;
+                    $eventMgr->removeListener($eventName, $listener);
+                }
+            }
+        }
+        return $this;
+    }
+    
+    /**
+     * @return bool
+     */
+    protected function willTrackBehaviors() : bool
+    {
+        return $this->trackBehaviors;
+    }
+
+    /**
+     * @param OnBeforeBehaviorAppliedEvent $event
+     * @return void
+     */
+    public function onBehaviorStartLap(OnBeforeBehaviorAppliedEvent $event) : void
+    {
+        $this->start($event->getBehavior(), $event->getSummary(), 'Behaviors');
+    }
+
+    /**
+     * @param OnBehaviorAppliedEvent $event
+     * @return void
+     */
+    public function onBehaviorStopLap(OnBehaviorAppliedEvent $event) : void
+    {
+        $this->stop($event->getBehavior());
     }
 }
