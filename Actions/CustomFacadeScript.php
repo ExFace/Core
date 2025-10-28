@@ -32,12 +32,14 @@ class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
 {
 
     private $script_language = "javascript";
-
+    private $hideIcon = false;
     private $script = "";
 
     protected function init()
     {
-        $this->setIcon(Icons::CODE);
+        if (!$this->getHideIcon()) {
+            $this->setIcon(Icons::CODE);
+        }
     }
 
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
@@ -113,6 +115,32 @@ class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
     public function getIncludes(FacadeInterface $facade) : array
     {
         return array();
+    }
+
+    /**
+     * @return bool
+     */
+    public function getHideIcon() : bool
+    {
+        return $this->hideIcon;
+    }
+
+    /**
+     * Hides the icon of the execution button
+     * 
+     * @uxon-property hide_icon
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setHideIcon(bool $value) : CustomFacadeScript
+    {
+        $this->hideIcon = $value;
+        if ($value) { 
+            $this->setIcon('');
+        }
+        return $this;
     }
 }
 ?>

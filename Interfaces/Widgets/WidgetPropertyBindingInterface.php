@@ -27,10 +27,17 @@ interface WidgetPropertyBindingInterface extends WidgetPartInterface, iCanBeBoun
 
     /**
      * Returns TRUE if the binding points to data of any kind (either an attribute or a data column)
-     * 
+     *
      * @return bool
      */
     public function isBoundToDataColumn() : bool;
+    
+    /**
+     * Returns TRUE if the binding points to a datatype.
+     *
+     * @return bool
+     */
+    public function isBoundToDataType() : bool;
     
     /**
      * Returns the full attribute alias if the binding points to an attribute (including relation path and aggregator if present)

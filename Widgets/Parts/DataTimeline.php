@@ -27,6 +27,8 @@ class DataTimeline implements WidgetPartInterface
     
     private $granularity = null;
     
+    private $granularitySelectable = [];
+    
     private $workday_start_time = null;
     
     private $workday_end_time = null;
@@ -66,21 +68,32 @@ class DataTimeline implements WidgetPartInterface
      */
     public function setGranularity(string $value) : DataTimeline
     {
-        $value = mb_strtolower($value);
-        
-        // Backwards compatibility with legacy granularity types
-        switch ($value) {
-            case 'hour': $value = self::GRANULARITY_HOURS; break;
-            case 'day': $value = self::GRANULARITY_DAYS; break;
-            case 'week': $value = self::GRANULARITY_DAYS_PER_WEEK; break;
-            case 'month': $value = self::GRANULARITY_DAYS_PER_MONTH; break;
-        }
-        
-        $const = DataTimeline::class . '::GRANULARITY_' . strtoupper($value);
-        if (! defined($const)) {
-            throw new WidgetConfigurationError($this->getWidget(), 'Invalid timeline granularity "' . $value . '": please use hours, days, days_per_week, days_per_month, weeks or months!');
-        }
-        $this->granularity = $value;
+        $this->granularity = $this->formatGranularity($value);
+        return $this;
+    }
+    
+    /**
+     * @return array
+     */
+    public function getGranularitySelectable() : array
+    {
+        return $this->granularitySelectable;
+    }
+
+    /**
+     * Sets the selection of granularities.
+     * It can be used to set possible granularities for future menu selection.
+     * 
+     * @uxon-property granularity_selectable
+     * @uxon-type array
+     * @uxon-template ["days", "weeks", "months"]
+     * 
+     * @param UxonObject $value
+     * @return $this
+     */
+    public function setGranularitySelectable(UxonObject $value) : DataTimeline
+    {
+        $this->granularitySelectable = array_map([$this, 'formatGranularity'], $value->toArray());
         return $this;
     }
     
@@ -142,5 +155,25 @@ class DataTimeline implements WidgetPartInterface
     {
         $this->workday_end_time = $value;
         return $this;
+    }
+    
+    private function formatGranularity(string $value) : string
+    {
+        $value = mb_strtolower($value);
+
+        // Backwards compatibility with legacy granularity types
+        switch ($value) {
+            case 'hour': $value = self::GRANULARITY_HOURS; break;
+            case 'day': $value = self::GRANULARITY_DAYS; break;
+            case 'week': $value = self::GRANULARITY_DAYS_PER_WEEK; break;
+            case 'month': $value = self::GRANULARITY_DAYS_PER_MONTH; break;
+        }
+
+        $const = DataTimeline::class . '::GRANULARITY_' . strtoupper($value);
+        if (! defined($const)) {
+            throw new WidgetConfigurationError($this->getWidget(), 'Invalid timeline granularity "' . $value . '": please use hours, days, days_per_week, days_per_month, weeks or months!');
+        }
+        
+        return $value;
     }
 }
