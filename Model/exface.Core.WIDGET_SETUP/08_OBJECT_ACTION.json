@@ -266,7 +266,7 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Publish [WidgetSetupPublishDialog]",
             "CREATED_ON": "2025-08-14 09:00:02",
-            "MODIFIED_ON": "2025-08-14 12:26:14",
+            "MODIFIED_ON": "2025-10-28 15:07:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0b19a4d145426b19a025041000001",
@@ -280,6 +280,7 @@
                 "input_rows_max": 1,
                 "input_object_alias": "exface.Core.WIDGET_SETUP",
                 "icon": "users",
+                "offline_strategy": "online_only",
                 "input_invalid_if": [
                     {
                         "error_text": "This setup is already public",
