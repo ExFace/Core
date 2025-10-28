@@ -340,6 +340,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         $sqlType = strtoupper($sql_data_type);
         switch (true) {
             case $sqlType === 'BIT':
+            case $sqlType === 'BOOLEAN':
                 $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
                 break;
             case $sqlType === 'INT':
