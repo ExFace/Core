@@ -436,7 +436,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function isEmpty() : bool
     {
-        return $this->hasValue() === false && $this->isBoundToDataColumn() === false && $this->isBoundToDataType() === false;
+        return $this->hasValue() === false && $this->isBoundToDataColumn() === false;
     }
     
     /**
