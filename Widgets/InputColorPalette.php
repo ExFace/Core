@@ -3,17 +3,14 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\ColorDataType;
 use exface\Core\DataTypes\NumberEnumDataType;
-use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iHaveHintScale;
+use exface\Core\Interfaces\Widgets\WidgetPropertyDataTypeBindingInterface;
 use exface\Core\Interfaces\Widgets\WidgetPropertyScaleInterface;
-use exface\Core\Widgets\Parts\WidgetPropertyBinding;
-use exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\WidgetPropertyScale;
-use exface\Core\Widgets\Traits\iHaveColorTrait;
 
 /**
  * A ColorPalette is a pop up with a palette of colors filled by a color preset list and can be adjusted to offer an additional ColorPicker for more color choices.
@@ -115,7 +112,7 @@ class InputColorPalette extends Input implements iHaveHintScale
 
     private $hintScale = null;
 
-    private ?WidgetPropertyBinding $colorBinding = null;
+    private ?WidgetPropertyDataTypeBinding $colorBinding = null;
 
     private string $defaultColor = 'transparent';
 
@@ -154,7 +151,7 @@ class InputColorPalette extends Input implements iHaveHintScale
      * - `{"data_type_alias": "onelink.BMDB.BaumanagementFarben"}` - the color will be read from the data type
      *
      * @uxon-property color_presets_binding
-     * @uxon-type \exface\Core\Widgets\Parts\WidgetPropertyBinding
+     * @uxon-type \exface\Core\Widgets\Parts\WidgetPropertyDataTypeBinding
      * @uxon-template {"attribute_alias": ""}
      */
     public function setColorPresetsBinding(UxonObject $widgetPropertyBindingUxon) : InputColorPalette
@@ -202,9 +199,9 @@ class InputColorPalette extends Input implements iHaveHintScale
 
     /**
      *
-     * @return WidgetPropertyBindingInterface
+     * @return WidgetPropertyDataTypeBindingInterface
      */
-    public function getColorBinding() : WidgetPropertyBindingInterface
+    public function getColorBinding() : WidgetPropertyDataTypeBindingInterface
     {
         // Create emtpy binding if none was set explicitly
         if ($this->colorBinding === null) {
@@ -214,10 +211,10 @@ class InputColorPalette extends Input implements iHaveHintScale
             if ((null !== $baseRelPath = $this->getAttributeRelationPath()) && ! $uxon->isEmpty() && ! $uxon->hasProperty('attribute_relation_path')) {
                 $uxon->setProperty('attribute_relation_path', $baseRelPath);
             }
-            $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
+            $binding = new WidgetPropertyDataTypeBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
             if ($binding->isEmpty() && $this->isBoundToAttribute()) {
                 $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
+                $binding = new WidgetPropertyDataTypeBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
             }
             $this->colorBinding = $binding;
         }

@@ -43,8 +43,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
 
     const BINDING_TYPE_CALCULATION = 'calculation';
     
-    const BINDING_TYPE_DATA_TYPE = 'datatype';
-    
     const BINDING_TYPE_NONE = 'none';
     
     private $widget = null;
@@ -66,8 +64,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     private $valueExpr = null;
 
     private $aggregateFunc = null;
-    
-    private $dataTypeAlias = null;
     
     /**
      * 
@@ -173,21 +169,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     {
         return $this->setValue($formula);
     }
-
-    /**
-     * Bind this property to a metamodel datatype.
-     *
-     * @uxon-property data_type_alias
-     * @uxon-type metamodel:datatype
-     *
-     * @param string $alias
-     * @return WidgetPropertyBindingInterface
-     */
-    protected function setDataTypeAlias(string $alias) : WidgetPropertyBindingInterface
-    {
-        $this->dataTypeAlias = $alias;
-        return $this;
-    }
     
     /**
      * 
@@ -205,9 +186,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                     break;
                 case $this->dataColumnName !== null:
                     $this->dataBindingType = self::BINDING_TYPE_COLUMN;
-                    break;
-                case $this->dataTypeAlias !== null:
-                    $this->dataBindingType = self::BINDING_TYPE_DATA_TYPE;
                     break;
                 default:
                     $this->dataBindingType = self::BINDING_TYPE_NONE;
@@ -234,16 +212,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     public function isBoundToDataColumn() : bool
     {
         return $this->getDataColumnName() !== null;
-    }
-
-    /**
-     *
-     * {@inheritDoc}
-     * @see WidgetPropertyBindingInterface::isBoundToDataColumn
-     */
-    public function isBoundToDataType() : bool
-    {
-        return $this->getBindingType() === self::BINDING_TYPE_DATA_TYPE;
     }
     
     /**
@@ -489,8 +457,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     public function getDataType() : ?DataTypeInterface
     {
         switch ($this->getBindingType()) {
-            case self::BINDING_TYPE_DATA_TYPE:
-                return DataTypeFactory::createFromString($this->getWorkbench(), $this->dataTypeAlias);
             case self::BINDING_TYPE_ATTRIBUTE:
                 return $this->getAttribute()->getDataType();
             // TODO what about data columns?
@@ -587,7 +553,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 break;
             case self::BINDING_TYPE_COLUMN && $prefillObj->is($widgetObj):
                 return $this->getDataColumnName();
-            // TODO: DataType?
             default:
                 $expression = null;
         }
