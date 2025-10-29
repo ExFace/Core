@@ -220,6 +220,33 @@ class LookupMapping extends AbstractDataSheetMapping
         
         $log = "Lookup `{$lookupExpr->__toString()}` -> `{$toExpr->__toString()}`.";
 
+        // See if the target column will be a subsheet. We need to create column slightly differently
+        // for subsheets (the attribute_alias is the reverse relation) and for regular columns 
+        // (attribute_alias points to the specific attribute)
+        $isSubsheet = false;
+        $isRequired = false;
+        if (! $toCol = $toSheet->getColumns()->getByExpression($toExpr)) {
+            if ($this->needsSubsheet($toExpr)) {
+                $isSubsheet = true;
+                // Currently there is no way to tell, if at least one row is required in a subsheet,
+                // so we assume, that they are never required.
+                // TODO perhaps, an explicit `required` property of the lookup mapping could solve this issue.
+                $isRequired = false;
+                $toCol = $toSheet->getColumns()->addFromExpression($toExpr->getAttribute()->getRelationPath()->getRelationFirst()->getAlias());
+                $subsheetTpl = [
+                    'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
+                    'rows' => []
+                ];
+            } else {
+                $isRequired = $toExpr->isMetaAttribute() ? $toExpr->getAttribute()->isRequired() : false;
+                $toCol = $toSheet->getColumns()->addFromExpression($toExpr);
+            }
+        } else {
+            if ($this->needsSubsheet($toExpr)) {
+                $isSubsheet = true;
+            }
+        }
+
         // Get the lookup data - either from cache or by reading it
         $readAll = $this->willReadAll();
         $matchesLookup = [];
@@ -243,6 +270,7 @@ class LookupMapping extends AbstractDataSheetMapping
 
         // Prepare from-data keys to compare with lookup data
         $matchesFrom = [];
+        $fromColsHaveValues = false;
         foreach ($matches as $i => $match) {
             $fromExpr = ExpressionFactory::createForObject($fromSheet->getMetaObject(), $match['from']);
             if (! $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)) {
@@ -264,10 +292,27 @@ class LookupMapping extends AbstractDataSheetMapping
                 'fromValsParsed' => $fromVals
             ];*/
             
+            // If there are no from values
+            if ($fromCol->isEmpty(true) === false) {
+                $fromColsHaveValues = true;
+            }            
             // Add a filter to the lookup-sheet if not told to read it all anyhow
             if ($readAll === false) {
                 $lookupSheet->getFilters()->addConditionFromValueArray($match['lookup'], $fromCol->getValues());
             }
+        }
+        
+        // If none of the from-columns have values, we do not need to read any data - it will be empty anyway!
+        // In this case, ALL from-rows are definitely unmatched, so we can directly check, if we need an error
+        // and exit here. This will also prevent worst-cases like reading all available lookup data just because
+        // the filters do not have values.
+        if ($fromColsHaveValues === false) {
+            $toColVals = [];
+            if ($isRequired === true) {
+                $this->handleUnmatchedRows($fromSheet->getRows(), $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
+            }
+            $logbook?->addLine($log);
+            return $toSheet;
         }
         
         // Read the lookup data if not using cache or cache not filled yet
@@ -283,33 +328,6 @@ class LookupMapping extends AbstractDataSheetMapping
                 'matches' => $matches,
                 'matchesLookup' => $matchesLookup
             ];
-        }
-
-        // See if the target column will be a subsheet. We need to create column slightly differently
-        // for subsheets (the attribute_alias is the reverse relation) and for regular columns 
-        // (attribute_alias points to the specific attribute)
-        $isSubsheet = false;
-        $isRequired = false;
-        if (! $toCol = $toSheet->getColumns()->getByExpression($toExpr)) {
-            if ($this->needsSubsheet($toExpr)) {
-                $isSubsheet = true;
-                // Currently there is no way to tell, if at least on row is required in a subsheet,
-                // so we assume, that they are never required.
-                // TODO perhaps, an explicit `required` property of the lookup mapping could solve this issue.
-                $isRequired = false;
-                $toCol = $toSheet->getColumns()->addFromExpression($toExpr->getAttribute()->getRelationPath()->getRelationFirst()->getAlias());
-                $subsheetTpl = [
-                    'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
-                    'rows' => []
-                ];
-            } else {
-                $isRequired = $toExpr->isMetaAttribute() ? $toExpr->getAttribute()->isRequired() : false;
-                $toCol = $toSheet->getColumns()->addFromExpression($toExpr);
-            }
-        } else {
-            if ($this->needsSubsheet($toExpr)) {
-                $isSubsheet = true;
-            }
         }
 
         $lookupColName = $lookupCol->getName();
@@ -401,8 +419,8 @@ class LookupMapping extends AbstractDataSheetMapping
 
         $this->handleUnmatchedRows($unmatchedRows, $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
         $toCol->setValues($toColVals);
-        
-        if ($logbook !== null) $logbook->addLine($log);
+
+        $logbook?->addLine($log);
         
         return $toSheet;
     }
