@@ -26,7 +26,9 @@ use http\Exception\BadUrlException;
 class OneTimeLink extends AbstractPermalink
 {
     private ?string $fileUrlNormalized = null;
+    
     private ?string $slug = null;
+    
     private ?string $permalinkAlias = null;
     
     private ?string $fileUrl = null;
@@ -91,11 +93,8 @@ class OneTimeLink extends AbstractPermalink
         $filesIdx = array_search('files', $segments, true);
         $route = $segments[$filesIdx + 1]; // e.g. "download" or "thumb"
         if ($route === 'download') {
-            $slug = $this->getSlugFromFileUrl();
-            if($slug === null) {
-                $slug = $this->createOTL();
-                $this->saveSlug($slug);
-            }
+            $slug = $this->createOTL();
+            $this->saveSlug($slug);
             return $slug;
         }
         
@@ -132,9 +131,9 @@ class OneTimeLink extends AbstractPermalink
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK_SLUG');
         $ds->addRow([
-            'permalink' => $this->getPermalinkUid(),
-            'slug' => $slug,
-            'data_uxon' => UxonObject::fromArray(array('file_url'=> $this->fileUrlNormalized ?? $this->fileUrl))->toJson()
+            'PERMALINK' => $this->getPermalinkUid(),
+            'SLUG' => $slug,
+            'DATA_UXON' => UxonObject::fromArray(array('file_url'=> $this->fileUrlNormalized ?? $this->fileUrl))->toJson()
         ]);
         $ds->dataCreate();
     }
@@ -145,60 +144,34 @@ class OneTimeLink extends AbstractPermalink
         $slug  = $this->makeDeterministicSlug($this->fileUrlNormalized);
 
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK_SLUG');
-        $ds->getFilters()->addConditionFromString('permalink', $this->getPermalinkUid(), ComparatorDataType::EQUALS);
-        $ds->getFilters()->addConditionFromString('slug', $slug, ComparatorDataType::EQUALS);
-        $ds->getColumns()->addMultiple(['slug']);
+        $ds->getFilters()->addConditionFromString('PERMALINK', $this->getPermalinkUid(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('SLUG', $slug, ComparatorDataType::EQUALS);
+        $ds->getColumns()->addMultiple(['SLUG']);
         $ds->dataRead();
 
-        return $ds->countRows() > 0 ? $ds->getRows()[0]['slug'] : null;
-    }
-    
-    private function getSlugFromFileUrl() : ?string
-    {
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK_SLUG');
-        $ds->getFilters()->addConditionFromString('permalink', $this->getPermalinkUid(), ComparatorDataType::EQUALS);
-        $ds->getColumns()->addMultiple(['slug','data_uxon']);
-        $ds->dataRead();
-
-        foreach ($ds->getRows() as $row) {
-            $uxon = UxonObject::fromJson($row['data_uxon'])->toArray();
-            if (isset($uxon['file_url']) && $uxon['file_url'] === $this->fileUrl) {
-                return $row['slug']; // found same file_url
-            }
-        }
-        return null;
+        return $ds->countRows() > 0 ? $ds->getRows()[0]['SLUG'] : null;
     }
 
     private function getRedirectLink(?string $slug) :string
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK_SLUG');
-        $ds->getColumns()->addMultiple(['data_uxon']);
-        $ds->getFilters()->addConditionFromString('permalink', $this->getPermalinkUid(), ComparatorDataType::EQUALS);
-        $ds->getFilters()->addConditionFromString('slug', $slug, ComparatorDataType::EQUALS);
+        $ds->getColumns()->addMultiple(['DATA_UXON']);
+        $ds->getFilters()->addConditionFromString('PERMALINK', $this->getPermalinkUid(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('SLUG', $slug, ComparatorDataType::EQUALS);
         $ds->dataRead();
 
         if ($ds->countRows() !== 1) {
             throw new \RuntimeException('Permalink slug not found or not unique: ' . $this->slug);
         }
 
-        $uxon = UxonObject::fromJson($ds->getRow()['data_uxon'])->toArray();
+        $uxon = UxonObject::fromJson($ds->getRow()['DATA_UXON'])->toArray();
         if (empty($uxon['file_url']) || !is_string($uxon['file_url'])) {
             throw new \RuntimeException('Invalid data_uxon: missing "file_url" for slug ' . $this->slug);
         }
+        $ds->dataDelete();
         return $uxon['file_url'];
     }
-
-    /**
-     * Deterministic slug from file_url:
-     * base64url( sha256(fileUrl) ), trimmed for length (e.g. 22 chars).
-     * This guarantees the same file_url → same slug.
-     */
-    private function makeDeterministicSlug(string $canonicalFileUrl): string
-    {
-        $hash = hash('sha256', $canonicalFileUrl, true);
-        $b64  = rtrim(strtr(base64_encode($hash), '+/', '-_'), '=');
-        return substr($b64, 0, 22);
-    }
+    
     private function createOTL() :string
     {
         return UUIDDataType::generateUuidV4('');
