@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Widgets\iHaveHintScale;
 use exface\Core\Interfaces\Widgets\WidgetPropertyDataTypeBindingInterface;
 use exface\Core\Interfaces\Widgets\WidgetPropertyScaleInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\WidgetPropertyDataTypeBinding;
 use exface\Core\Widgets\Parts\WidgetPropertyScale;
 
 /**
