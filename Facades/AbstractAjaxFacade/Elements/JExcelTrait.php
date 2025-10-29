@@ -1140,7 +1140,7 @@ JS;
             let oJExcel = this.getJExcel();
 
             // prompt for number of rows to add
-            let sInputNumber = window.prompt('{$this->getWidget()->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT')}', "1"); // TODO translate
+            let sInputNumber = window.prompt('{$this->getWidget()->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT')}', "1"); 
             let iParsedNumber = Number(sInputNumber);
 
             if (iParsedNumber !== NaN && iParsedNumber > 0) {
