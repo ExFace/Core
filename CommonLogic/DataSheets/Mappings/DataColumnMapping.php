@@ -20,9 +20,9 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
 class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMappingInterface
 {
     private $fromExpression = null;
-    
+    private $fromExpressionString = null;
     private $toExpression = null;
-    
+    private $toExpressionString = null;
     private $createRowInEmptyData = true;
 
     private $ignoreIfMissingFromColumn = false;
@@ -34,21 +34,14 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
      */
     public function getFromExpression()
     {
-        return $this->fromExpression;
-    }
-
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setFromExpression()
-     */
-    public function setFromExpression(ExpressionInterface $expression)
-    {
-        if ($expression->isReference()){
-            throw new DataMappingConfigurationError($this, 'Cannot use widget links as expressions in data mappers!');
+        if ($this->fromExpression === null) {
+            $expression = ExpressionFactory::createFromString($this->getWorkbench(), $this->fromExpressionString, $this->getMapper()->getFromMetaObject());
+            if ($expression->isReference()){
+                throw new DataMappingConfigurationError($this, 'Cannot use widget links as expressions in data mappers!');
+            }
+            $this->fromExpression = $expression;
         }
-        $this->fromExpression = $expression;
-        return $this;
+        return $this->fromExpression;
     }
     
     /**
@@ -64,7 +57,8 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
      */
     public function setFrom($string)
     {
-        $this->setFromExpression(ExpressionFactory::createFromString($this->getWorkbench(), $string, $this->getMapper()->getFromMetaObject()));
+        $this->fromExpressionString = $string;
+        $this->fromExpression = null;
         return $this;
     }
 
@@ -75,21 +69,14 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
      */
     public function getToExpression()
     {
-        return $this->toExpression;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setToExpression()
-     */
-    public function setToExpression(ExpressionInterface $expression)
-    {
-        if ($expression->isReference()){
-            throw new DataMappingConfigurationError($this, 'Cannot use widget links as expressions in data mappers!');
+        if ($this->toExpression === null) {
+            $expression = ExpressionFactory::createFromString($this->getWorkbench(), $this->toExpressionString, $this->getMapper()->getToMetaObject());
+            if ($expression->isReference()){
+                throw new DataMappingConfigurationError($this, 'Cannot use widget links as expressions in data mappers!');
+            }
+            $this->toExpression = $expression;
         }
-        $this->toExpression = $expression;
-        return $this;
+        return $this->toExpression;
     }
     
     /**
@@ -103,7 +90,8 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
      */
     public function setTo($string)
     {
-        $this->setToExpression(ExpressionFactory::createFromString($this->getWorkbench(), $string, $this->getMapper()->getToMetaObject()));
+        $this->toExpressionString = $string;
+        $this->toExpression = null;
         return $this;
     }
     

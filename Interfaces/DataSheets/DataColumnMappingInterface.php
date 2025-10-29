@@ -34,21 +34,7 @@ interface DataColumnMappingInterface extends DataMappingInterface
     public function getFromExpression();
     
     /**
-     *
-     * @param ExpressionInterface $expression
-     * @return DataColumnMappingInterface
-     */
-    public function setFromExpression(ExpressionInterface $expression);
-    
-    /**
      * @return ExpressionInterface
      */
     public function getToExpression();
-    
-    /**
-     *
-     * @param ExpressionInterface $expression
-     * @return DataColumnMappingInterface
-     */
-    public function setToExpression(ExpressionInterface $expression);
 }
