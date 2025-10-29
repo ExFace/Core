@@ -10,8 +10,8 @@ CREATE TABLE exf_permalink_slug (
                                     [data_uxon] NVARCHAR(MAX) NOT NULL,
                                 
                                     CONSTRAINT [PK_exf_permalink_slug] PRIMARY KEY ([oid]),
-                                    CONSTRAINT [UQ_exf_permalink_slug_slug] UNIQUE ([permalink], [slug]),
-                                    CONSTRAINT [FK_exf_permalink_slug_perm] FOREIGN KEY ([permalink_oid])
+                                    CONSTRAINT [UQ_exf_permalink_slug_slug] UNIQUE ([permalink_oid], [slug]),
+                                    CONSTRAINT [FK_exf_permalink_slug_perm] FOREIGN KEY ([permalink_oid]) REFERENCES dbo.exf_permalink ([oid])
                                     );
 
 -- DOWN
