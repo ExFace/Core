@@ -23,6 +23,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Widgets\WidgetPropertyDataTypeBindingInterface;
 
 /**
  * Allows to bind a widget property to a data type either directly or through an attribute.
@@ -33,7 +34,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  * After all, the data type binding does not have a value and it actually is just there to allow
  * a configurable linke to a data type from a widget
  */
-class WidgetPropertyDataTypeBinding extends WidgetPropertyBinding
+class WidgetPropertyDataTypeBinding extends WidgetPropertyBinding implements WidgetPropertyDataTypeBindingInterface
 {    
     const BINDING_TYPE_DATA_TYPE = 'datatype';
     
