@@ -963,6 +963,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
         if ($this->default_display_uxon instanceof UxonObject){
             $copy->setDefaultDisplayUxon($this->default_display_uxon->copy());
         }
+
+        // Copy data address properties to decouple the copy from its parent
+        if ($this->data_address_properties instanceof UxonObject){
+            $copy->setDataAddressProperties($this->data_address_properties->copy());
+        }
         
         return $copy;
     }
