@@ -888,7 +888,21 @@ SQL;
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$this->buildSqlEscapedString($user_name)}') ON dcc.data_connection_oid = dc.oid";
+            // Add credentials IF they are bound to the current user OR marked as globally shared (private = -1)
+            $join_user_credentials = <<<SQL
+                LEFT JOIN (
+                    exf_data_connection_credentials dcc 
+                    LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid 
+                    LEFT JOIN exf_user u ON 
+                        uc.user_oid = u.oid 
+                        AND u.username = '{$this->buildSqlEscapedString($user_name)}'
+                ) ON 
+                    dcc.data_connection_oid = dc.oid 
+                    AND (
+                        u.username = '{$this->buildSqlEscapedString($user_name)}'
+                        OR dcc.private = -1
+                    )
+SQL;
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
 
