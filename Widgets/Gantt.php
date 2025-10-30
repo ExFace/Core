@@ -288,41 +288,4 @@ class Gantt extends DataTree
         $this->autoRelayoutOnChange = $value;
         return $this;
     }
-
-    /**
-     * Adds gantt view mode selection buttons to the toolbar
-     * 
-     * @param ButtonGroup $btnGrp
-     * @param int $index
-     * @param array $viewModes
-     * @return void
-     */
-    public function addGanttViewModeButtons(ButtonGroup $btnGrp, int $index = 0, array $viewModes = []) : void
-    {
-        if (empty($viewModes)) {
-            $viewModes = ['Day', 'Week', 'Month'];
-        }
-
-        $buttons = [];
-
-        foreach ($viewModes as $viewMode) {
-            $buttons[] = [
-                'caption' => $viewMode,
-                'action'  => [
-                    'alias'  => 'exface.Core.CustomFacadeScript',
-                    'hide_icon' => true,
-                    'script' => <<<JS
-                        sap.ui.getCore().byId('[#element_id:~input#]').gantt.change_view_mode('$viewMode');
-JS
-                ],
-            ];
-        }
-
-        $btnGrp->addButton($btnGrp->createButton(new UxonObject([
-            'widget_type' => 'MenuButton',
-            'icon' => 'calendar',
-            'hide_caption' => true,
-            'buttons' => $buttons
-        ])), $index);
-    }
 }
