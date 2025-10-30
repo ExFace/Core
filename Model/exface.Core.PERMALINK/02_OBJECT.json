@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Permalink [exface.Core.PERMALINK]",
             "CREATED_ON": "2025-06-18 11:07:34",
-            "MODIFIED_ON": "2025-10-30 09:16:43",
+            "MODIFIED_ON": "2025-10-30 09:55:42",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0943fac6e2acc943f9dc538708a84",
@@ -103,96 +103,96 @@
             "PARENT_OBJECT": null,
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": {
-                "widget_type": "Tabs",
-                "tabs": [
+                "widget_type": "Dialog",
+                "widgets": [
                     {
-                        "caption": "Detail",
-                        "widgets": [
+                        "widget_type": "Tabs",
+                        "tabs": [
                             {
-                                "widget_type": "WidgetGroup",
-                                "columns_in_grid": 1,
+                                "caption": "Detail",
                                 "widgets": [
                                     {
-                                        "widget_type": "Button",
-                                        "action_alias": "exface.Core.VisitPermalink",
-                                        "input_widget_id": "URL"
+                                        "width": "max",
+                                        "columns_in_grid": 2,
+                                        "widget_type": "WidgetGroup",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "widget_type": "WidgetGroup",
+                                                "caption": "Description",
+                                                "widgets": [
+                                                    {
+                                                        "attribute_alias": "DESCRIPTION",
+                                                        "height": 4,
+                                                        "hide_caption": true
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "attribute_alias": "ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "APP"
+                                            },
+                                            {
+                                                "attribute_alias": "PROTOTYPE_FILE",
+                                                "id": "prototype_selector"
+                                            },
+                                            {
+                                                "attribute_alias": "OBJECT"
+                                            },
+                                            {
+                                                "attribute_alias": "CONFIG_UXON",
+                                                "hide_caption": true,
+                                                "widget_type": "InputUxon",
+                                                "schema": "generic",
+                                                "height": "max",
+                                                "root_object": "exface.Core.PERMALINK",
+                                                "root_prototype": "=prototype_selector"
+                                            },
+                                            {
+                                                "attribute_alias": "EXAMPLE_URL",
+                                                "hidden": true,
+                                                "id": "URL"
+                                            }
+                                        ]
                                     }
                                 ]
                             },
                             {
-                                "width": "max",
-                                "columns_in_grid": 2,
-                                "widget_type": "WidgetGroup",
+                                "caption": "Slugs",
                                 "widgets": [
                                     {
-                                        "attribute_alias": "NAME"
-                                    },
-                                    {
-                                        "widget_type": "WidgetGroup",
-                                        "caption": "Description",
-                                        "widgets": [
+                                        "widget_type": "DataTableResponsive",
+                                        "object_alias": "exface.Core.PERMALINK_SLUG",
+                                        "filters": [
                                             {
-                                                "attribute_alias": "DESCRIPTION",
-                                                "height": 4,
-                                                "hide_caption": true
+                                                "attribute_alias": "PERMALINK",
+                                                "comparator": "==",
+                                                "required": true,
+                                                "hidden": true
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "SLUG"
+                                            },
+                                            {
+                                                "attribute_alias": "DATA_UXON"
                                             }
                                         ]
-                                    },
-                                    {
-                                        "attribute_alias": "ALIAS"
-                                    },
-                                    {
-                                        "attribute_alias": "APP"
-                                    },
-                                    {
-                                        "attribute_alias": "PROTOTYPE_FILE",
-                                        "id": "prototype_selector"
-                                    },
-                                    {
-                                        "attribute_alias": "OBJECT"
-                                    },
-                                    {
-                                        "attribute_alias": "CONFIG_UXON",
-                                        "hide_caption": true,
-                                        "widget_type": "InputUxon",
-                                        "schema": "generic",
-                                        "height": "max",
-                                        "root_object": "exface.Core.PERMALINK",
-                                        "root_prototype": "=prototype_selector"
-                                    },
-                                    {
-                                        "attribute_alias": "EXAMPLE_URL",
-                                        "hidden": true,
-                                        "id": "URL"
                                     }
                                 ]
                             }
                         ]
-                    },
+                    }
+                ],
+                "buttons": [
                     {
-                        "caption": "Slugs",
-                        "widgets": [
-                            {
-                                "widget_type": "DataTableResponsive",
-                                "object_alias": "exface.Core.PERMALINK_SLUG",
-                                "filters": [
-                                    {
-                                        "attribute_alias": "PERMALINK",
-                                        "comparator": "==",
-                                        "required": true,
-                                        "hidden": true
-                                    }
-                                ],
-                                "columns": [
-                                    {
-                                        "attribute_alias": "SLUG"
-                                    },
-                                    {
-                                        "attribute_alias": "DATA_UXON"
-                                    }
-                                ]
-                            }
-                        ]
+                        "action_alias": "exface.Core.VisitPermalink",
+                        "input_widget_id": "URL"
                     }
                 ]
             },
