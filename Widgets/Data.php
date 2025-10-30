@@ -679,6 +679,12 @@ class Data
         foreach ($this->getColumns() as $col) {
             yield $col;
         }
+        // Yield nested sheet column groups separately as they are not contained in $this->getColumns()
+        foreach ($this->getColumnGroups() as $group) {
+            if ($group instanceof DataColumnSubsheet) {
+                yield $group;
+            }
+        }
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
