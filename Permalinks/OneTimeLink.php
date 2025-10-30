@@ -8,6 +8,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
@@ -24,12 +25,8 @@ use http\Exception\BadUrlException;
  * - `api/permalink/exface.core.otl/my.App.OBJECT_ALIAS/0x5468789`
  */
 class OneTimeLink extends AbstractPermalink
-{
-    private ?string $fileUrlNormalized = null;
-    
+{    
     private ?string $slug = null;
-    
-    private ?string $permalinkAlias = null;
     
     private ?string $fileUrl = null;
     
@@ -41,23 +38,6 @@ class OneTimeLink extends AbstractPermalink
     {
         // TODO Load the real URL from the given UUID
         $this->fileUrl = $innerUrl;
-        /**
-                // Decide if $innerUrl is a FILE URL (creation) or a SLUG (resolve)
-                $in = urldecode($innerUrl);
-        
-                // If it looks like /api/files/..., treat as creation:
-                if (preg_match('#(^https?://[^/]+)?/?api/files/#i', $in)) {
-                    $this->fileUrlNormalized = $this->normalizeFileUrl($in);
-                    return $this;
-                }
-        
-                // Otherwise treat as slug (resolve):
-                $this->slug = trim($in, '/');
-                if ($this->slug === '') {
-                    throw new \RuntimeException('Invalid OneTimeLink input: empty slug.');
-                }
-         * 
-         * */
         return $this;
     }
 
@@ -68,25 +48,6 @@ class OneTimeLink extends AbstractPermalink
     public function buildRelativeRedirectUrl() : string
     {
         // TODO return something like api/files/...
-        /**
-        if ($this->slug !== null) {
-            return $this->getRedirectLink($this->slug);
-        }
-        
-        if ($this->fileUrlNormalized === null) {
-            throw new \LogicException('No file URL parsed. Ensure withUrl($realFileUrl) was called.');
-        }
-        $slug = $this->getSlug();
-        if ($slug === null) {
-            $slug = $this->makeDeterministicSlug($this->fileUrlNormalized);
-            $this->saveSlug($slug);
-        }
-        return \exface\Core\Factories\PermalinkFactory::buildRelativePermalinkUrl(
-            $this->permalinkAlias,
-            rawurlencode($slug)
-        );
-         * 
-         */
         $parts = parse_url($this->fileUrl);
         $path  = $parts['path'] ?? '';
         $segments = array_values(array_filter(explode('/', $path), fn($s) => $s !== ''));
@@ -120,10 +81,11 @@ class OneTimeLink extends AbstractPermalink
         $permalink->getFilters()->addConditionFromString('PROTOTYPE_FILE', 'exface/Core/Permalinks/OneTimeLink.php', ComparatorDataType::EQUALS);
         $permalink->getColumns()->addMultiple(['UID', 'ALIAS', 'APP__ALIAS']);
         $permalink->dataRead();
-        $row = $permalink->getRow();
-        if ($this->permalinkAlias === null) {
-            $this->permalinkAlias = $row['APP__ALIAS'] . '.' . $row['ALIAS'];
+        if ($permalink->countRows() === 0) {
+            throw new RuntimeException("One Time Link Permalink cannot be found");
         }
+            
+        $row = $permalink->getRow();
         return $row['UID'];
     }
     
@@ -133,23 +95,9 @@ class OneTimeLink extends AbstractPermalink
         $ds->addRow([
             'PERMALINK' => $this->getPermalinkUid(),
             'SLUG' => $slug,
-            'DATA_UXON' => UxonObject::fromArray(array('file_url'=> $this->fileUrlNormalized ?? $this->fileUrl))->toJson()
+            'DATA_UXON' => UxonObject::fromArray(array('file_url'=> $this->fileUrl))->toJson()
         ]);
         $ds->dataCreate();
-    }
-
-
-    private function getSlug(): ?string
-    {
-        $slug  = $this->makeDeterministicSlug($this->fileUrlNormalized);
-
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK_SLUG');
-        $ds->getFilters()->addConditionFromString('PERMALINK', $this->getPermalinkUid(), ComparatorDataType::EQUALS);
-        $ds->getFilters()->addConditionFromString('SLUG', $slug, ComparatorDataType::EQUALS);
-        $ds->getColumns()->addMultiple(['SLUG']);
-        $ds->dataRead();
-
-        return $ds->countRows() > 0 ? $ds->getRows()[0]['SLUG'] : null;
     }
 
     private function getRedirectLink(?string $slug) :string
@@ -176,18 +124,5 @@ class OneTimeLink extends AbstractPermalink
     {
         return UUIDDataType::generateUuidV4('');
 
-    }
-    /**
-     * Very light normalization:
-     * - drop scheme+host
-     * - ensure single leading slash removed
-     * - keep path and query as-is (so different resize stays different)
-     */
-    private function normalizeFileUrl(string $url): string
-    {
-        $p = parse_url($url);
-        $path = ltrim($p['path'] ?? '', '/');
-        $query = isset($p['query']) ? ('?' . $p['query']) : '';
-        return $path . $query;
     }
 }
