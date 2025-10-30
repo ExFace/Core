@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\InputSelect;
@@ -32,6 +34,7 @@ use exface\Core\Widgets\Text;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
@@ -244,6 +247,35 @@ JS;
         }
         return $includes;
     }
+
+    /**
+     * adds a button to add one or more rows to the spreadsheet
+     * 
+     * @param ButtonGroup $btnGrp
+     * @param int $index
+     */
+    protected function addNewRowsButton(ButtonGroup $btnGrp, int $index = 0) : void
+    {        
+        $widget = $this->getWidget();
+        $translator = $widget->getWorkbench()->getCoreApp()->getTranslator();
+
+        if ($this->getAllowAddRows()){
+            $btnGrp->addButton($btnGrp->createButton(new UxonObject([
+                    'widget_type' => 'Button',
+                    'icon' => 'plus',
+                    'caption' => $translator->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION'),
+                    'align' => 'right',
+                    'action' => [
+                        'alias' => 'exface.Core.CustomFacadeScript',
+                        'script' => <<<JS
+                            {$this->buildJsJqueryElement()}[0].exfWidget.showAddRowsDialogue();
+    JS
+                    ]
+                ])), $index);
+        }
+
+    }
+
     
     /**
      * Returns the jQuery element for jExcel - e.g. $('#element_id') in most cases.
@@ -1103,7 +1135,29 @@ JS;
                     console.warn('Relation key ' + sColRelationKey + ' not found in dropdown source');
                 }
             }
+        },
+        showAddRowsDialogue: function() {
+            let oJExcel = this.getJExcel();
+
+            // prompt for number of rows to add
+            let sInputNumber = window.prompt('{$this->getWidget()->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT')}', "1"); 
+            let iParsedNumber = Number(sInputNumber);
+
+            if (iParsedNumber !== NaN && iParsedNumber > 0) {
+                
+                // if nothing is selected, add rows at the end
+                // otherwise at end of selection
+                let iLastRow = oJExcel.getData().length;
+                let aSelectedRows = oJExcel.getSelectedRows(true);
+                if (aSelectedRows.length > 0) {
+                    iLastRow = aSelectedRows[aSelectedRows.length -1];
+                }
+
+                // insert rows
+                oJExcel.insertRow(iParsedNumber, iLastRow, false);
+            } 
         }
+
     };
     
     {$this->buildJsInitPlugins()}
@@ -1834,10 +1888,24 @@ JS;
                     $srcData[] = $data;
                 }
             } else {
+
                 $srcData = [];
-                foreach ($cellWidget->getSelectableOptions() as $key => $val) {
-                    $srcData[] = ['id' => $key, 'name' => $val];
-                }                
+
+                if ($cellWidget->getValueDataType() instanceof NumberEnumDataType) {
+    
+                    // Having numerical ids (0 specifically) seems to cause problems with JExcel; seems to be an unfortunate implementation on their side
+                    // 0 gets replaced with an empty value when selecting via the dropdown (probably a truthy check somewhere, all other numerical values are fine) 
+                    // -> their example dropdown sources are also strings and not 0-indexed https://bossanova.uk/jspreadsheet/v4/examples/dropdown-and-autocomplete
+                    foreach ($cellWidget->getSelectableOptions() as $key => $val) {
+                        // use strignified ids in this case
+                        $srcData[] = ['id' => strval($key), 'name' => $val]; 
+                    }       
+                }
+                else{
+                    foreach ($cellWidget->getSelectableOptions() as $key => $val) {
+                        $srcData[] = ['id' => $key, 'name' => $val]; 
+                    } 
+                }         
             }
             $srcJson = json_encode($srcData);
         } else {

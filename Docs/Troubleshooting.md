@@ -1,8 +1,9 @@
 # Troubleshooting
 
-## Installation
+## Installation & Servers
 
 - [Errors during installation](Installation/Installation_troubleshooting.md)
+- [Server errors (e.g. HTTP errors)](Installation/Server_troubleshooting.md)
 
 ## Data connections
 

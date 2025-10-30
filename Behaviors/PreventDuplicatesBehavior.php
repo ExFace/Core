@@ -146,8 +146,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     
     private $compareAttributeAliases = [];
     
-    private $allowEmptyValuesForAttributeAliases = [];
-    
     private $compareWithConditions = null;
     
     private $compareCaseSensitive = false;
@@ -592,6 +590,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function getDuplicatesMatcher(DataSheetInterface $eventSheet, string $mode, BehaviorLogBook $logbook, bool $treatUidMatchesAsDuplicates = true) : DataMatcherInterface
     {   
+        // TODO this method was completely moved to the DuplicatesMatcher. Need to use it here.
         $eventDataCols = $eventSheet->getColumns();
         $logbook->addSection('Searching for potential duplicates');
         
@@ -618,10 +617,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 throw new BehaviorRuntimeError($this, 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!', '7PNKJ50', null, $logbook);
             } 
             
+            ## TODO #DataCollector to be used here
             $eventRows = $eventSheet->getRows();
             $missingAttrSheet = DataSheetFactory::createFromObject($this->getObject());
             $missingAttrSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn());
-            $missingCols = [];
             foreach ($missingAttrs as $attr) {
                 $logbook->addLine($attr->getAliasWithRelationPath(), 1);
                 $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);

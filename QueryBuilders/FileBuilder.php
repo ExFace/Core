@@ -1268,7 +1268,7 @@ class FileBuilder extends AbstractQueryBuilder
         if ($query->isFullScanRequired() === true) {
             return true;
         }
-        foreach ($this->getFilters() as $qpart) {
+        foreach ($this->getFilters()->getFiltersAndNestedGroups() as $qpart) {
             if ($qpart->getApplyAfterReading() === true) { 
                 return true;
             }
