@@ -163,13 +163,14 @@ class UxonDataType extends JsonDataType
         foreach ($this->getValidationRules($prototypeClass) as $rule) {
             try {
                 $rule->check($validationUxon);
-            } catch (DataTypeValidationError $error) {
-                $errors[] = new UxonValidationError(
-                    $path,
-                    $error->getMessage(),
-                    $error->getAlias(),
-                    $error
-                );
+            } catch (UxonValidationError $error) {
+                foreach ($error->getPath() as $errorPath) {
+                    $errors[] = new UxonValidationError(
+                        $errorPath,
+                        $error->getMessage(),
+                        $error->getAlias()
+                    );
+                }
             }
         }
 
@@ -401,7 +402,7 @@ class UxonDataType extends JsonDataType
             return $this->validationRuleData = $rules;
         }
 
-        return $this->validationRuleData = [];
+        //return $this->validationRuleData = [];
         // TODO Load via DataSheet, no filters (?).
         $rules[] = [
             self::ATTR_UID => "a",
@@ -410,7 +411,7 @@ class UxonDataType extends JsonDataType
                 'alias' => 'RecursionTest',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
                 'json_paths' => ["$..object_alias"],
-                'message' => 'Rec'
+                'message' => 'HAS "object_alias"'
             ])
         ];
 
@@ -418,10 +419,10 @@ class UxonDataType extends JsonDataType
             self::ATTR_UID => "b",
             self::ATTR_APPLIES_TO_CLASS => '\exface\Core\Widgets\Tabs',
             self::ATTR_UXON => new UxonObject([
-                'alias' => 'NoTabsWidgetType',
+                'alias' => 'PregSplitTest',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
-                'json_paths' => ['$.tabs.*.widget_type'],
-                'message' => 'Cant use "widget_type" for definition of "Tab"!'
+                'json_paths' => ["$.tabs..*[?(@.caption == 'Table')]"],
+                'message' => 'HAS "caption" == "Table"!'
             ])
         ];
 
@@ -429,10 +430,10 @@ class UxonDataType extends JsonDataType
             self::ATTR_UID => "c",
             self::ATTR_APPLIES_TO_CLASS => '\exface\Core\Widgets\Tabs',
             self::ATTR_UXON => new UxonObject([
-                'alias' => 'PregSplitTest',
+                'alias' => 'TabsWidgetType',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
-                'json_paths' => ["$..*[?(@.category == 'fiction' and @.price < 10 or @.color == \"red\")].price..value.post.."],
-                'message' => '?'
+                'json_paths' => ["$..tabs[?(@.widget_type != 'Tab' and @.widget_type)]"],
+                'message' => 'Widget "Tab" cannot contain property "widget_type"'
             ])
         ];
 

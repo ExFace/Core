@@ -5,7 +5,7 @@ namespace exface\Core\Uxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\JsonDataType;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\UxonValidationError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use JsonPath\JsonObject;
 
@@ -19,6 +19,7 @@ class JsonValidationRule
     const JSON_PATH_SPLIT = '/\.(?![^\[\]]*\])(?=(?:[^\(\)]*\([^\(\)]*\))*[^\(\)]*$)/';
     const MODE_REQUIRE = 'require';
     const MODE_PROHIBIT = 'prohibit';
+    const PATTERN_IS_RECURSIVE = '#';
     
     private JsonDataType $jsonDataType;
     private string $alias;
@@ -74,84 +75,145 @@ class JsonValidationRule
         }
 
         // If the check failed, throw an error.
-        throw new DataTypeValidationError(
-            $this->jsonDataType,
+        throw new UxonValidationError(
+            $matches,
             'UXON failed to pass validation rule "' . $this->alias . '". ' . $this->message,
         );
     }
     
     protected function findMatches(UxonObject $uxon) : array
     {
-        $data = $uxon->toArray();
-        $jsonObject = new JsonObject($data);
         $results = [];
 
-        // TODO Traverse splits instead
         foreach ($this->jsonPaths as $path) {
-            try {
-                $matches = $jsonObject->getJsonObjects($path);
-            } catch (\Throwable $exception) {
-                continue;
-            }
-
-            // If this path did not produce any matches, the rule as a whole does not apply.
-            if(!$matches) {
-                $results = [];
-                break;
-            }
-
-            $results = array_merge($results, $matches);
+            $results = array_merge($results, $this->traverseJsonPath($path, $uxon->toArray(), []));
         }
         
         return $results;
     }
     
     // TODO This is probably expensive. Maybe try to merge related paths.
-    protected function traverseJsonPath(array $jsonPath, UxonObject $uxon, array $uxonPath) : array
+    protected function traverseJsonPath(array $jsonPath, array $data, array $uxonPath) : array
     {
-        $data = $uxon->toArray();
         $jsonObject = new JsonObject($data);
-        $pattern = array_shift($jsonPath);
         
-        try {
-            $matches = $jsonObject->getJsonObjects($pattern);
-        } catch (\Throwable $exception) {
-            // We treat any exception here as a miss.
+        $recursionPath = $jsonPath;
+        $pattern = array_shift($jsonPath);
+        $patternIsRecursive = str_starts_with($pattern, self::PATTERN_IS_RECURSIVE);
+        if($patternIsRecursive) {
+            $pattern = substr($pattern, 1);
         }
 
-        foreach ($matches as $match) {
-            //if($pattern === )
+        try {
+            $matchTag = $this->getMatchTag($data);
+            if(!empty($jsonObject->get($pattern))) {
+                // Mark all matches with the matched tag.
+                $matches = ($jsonObject->set($pattern, $matchTag))->getValue();
+            } elseif ($patternIsRecursive) {
+                $matches = $data;
+            } else {
+                return [];
+            }
+        } catch (\Throwable $exception) {
+            // We treat any exception here as a miss.
+            return [];
+        }
+
+        return $this->processQueryResults(
+            $jsonPath, 
+            $data, 
+            $matchTag, 
+            $matches, 
+            $uxonPath, 
+            $patternIsRecursive,
+            $recursionPath
+        );
+    }
+    
+    protected function processQueryResults(
+        array $jsonPath, 
+        array $data, 
+        string $matchTag, 
+        array $queryResult,
+        array $uxonPath,
+        bool $patternIsRecursive,
+        array $recursionPath,
+        bool $final = false
+    ) : array
+    {
+        $results = [];
+        $isDestination = empty($jsonPath);
+
+        foreach ($queryResult as $key => $value) {
+            $propValue = $data[$key];
+            $isArray = is_array($propValue);
+            $path = $uxonPath;
+            $path[] = $key;
+
+            // If we hit a match, process it.
+            if($value === $matchTag) {
+                if($isDestination) {
+                    $results[] = $path;
+                    continue;
+                }
+
+                if($isArray) {
+                    $results = array_merge($results, $this->traverseJsonPath($jsonPath, $propValue, $path));
+                }
+                
+                continue;
+            }
+
+            // We are now processing a miss.
+            // If a miss is not an array, we move on.
+            if(!$isArray) {
+                continue;
+            }
+
+            if($final) {
+                continue;
+            }
+
+            // Search one layer deeper, because filter queries can match the children of an object.
+            $nestedResults = $this->processQueryResults(
+                $jsonPath,
+                $data,
+                $matchTag,
+                $value,
+                $path,
+                false,
+                $recursionPath,
+                true
+            );
+
+            $results = array_merge(
+                $results,
+                $nestedResults
+            );
+            
+            // Lastly, if the pattern is recursive, we have to go deeper either way.
+            if($patternIsRecursive) {
+                $results = array_merge(
+                    $results,
+                    $this->traverseJsonPath($recursionPath, $propValue, $path)
+                );
+            }
+        }
+
+        return $results;
+    }
+    
+    protected function getMatchTag(array $data) : string
+    {
+        $matchedTag = '~/MATCHED';
+        
+        foreach ($data as $value) {
+            if($matchedTag === $value) {
+                $matchedTag . random_int(1000, 9999);
+            }
         }
         
-        return [];
-    }
-    
-    public function getAppliesToClass() : string
-    {
-        return $this->appliesToClass;
-    }
-    
-    public function getMessage() : string
-    {
-        return $this->message;
-    }
-    
-    public function setMessage(string $message) : JsonValidationRule
-    {
-        $this->message = $message;
-        return $this;
-    }
-    
-    public function setAlias(string $alias) : JsonValidationRule
-    {
-        $this->alias = $alias;
-        return $this;
-    }
-    
-    public function setMode(string $mode) : JsonValidationRule
-    {
-        $this->mode = $mode;
-        return $this;
+        return $matchedTag;
     }
 
     /**
@@ -171,7 +233,7 @@ class JsonValidationRule
         
         return $this;
     }
-    
+
     protected function splitJsonPath(string $jsonPath) : array
     {
         $result = [];
@@ -190,17 +252,41 @@ class JsonValidationRule
             $root = '$.';
             
             if($buildRecursion) {
-                $root = '~' . $root;
+                $root = self::PATTERN_IS_RECURSIVE . $root;
                 $buildRecursion = false;
             }
             
             $result[] = $root . $component;
         }
         
-        if($buildRecursion) {
-            $result[] = '$..*';// TODO Redundant, since it just returns all properties, i.e. is always a match.
-        }
-        
         return  $result;
+    }
+
+    public function getAppliesToClass() : string
+    {
+        return $this->appliesToClass;
+    }
+
+    public function getMessage() : string
+    {
+        return $this->message;
+    }
+
+    public function setMessage(string $message) : JsonValidationRule
+    {
+        $this->message = $message;
+        return $this;
+    }
+
+    public function setAlias(string $alias) : JsonValidationRule
+    {
+        $this->alias = $alias;
+        return $this;
+    }
+
+    public function setMode(string $mode) : JsonValidationRule
+    {
+        $this->mode = $mode;
+        return $this;
     }
 }
