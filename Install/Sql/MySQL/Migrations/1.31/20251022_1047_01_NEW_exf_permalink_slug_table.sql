@@ -15,4 +15,4 @@ CREATE TABLE `exf_permalink_slug` (
                                   );
 
 -- DOWN
-DROP TABLE IF EXISTS `exf_permalink`; 
+DROP TABLE IF EXISTS `exf_permalink_slug`; 
