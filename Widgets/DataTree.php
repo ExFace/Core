@@ -576,7 +576,7 @@ class DataTree extends DataTable
      */
     public function hasRowGroups()
     {
-        return $this->row_grouper !== null;
+        return false;
     }
     
     /**
