@@ -2,6 +2,7 @@
 namespace exface\Core\Facades;
 
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
+use exface\Core\Factories\PermalinkFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
@@ -17,7 +18,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
-use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Filesystem\DataSourceFileInfo;
@@ -500,10 +500,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
     {
         // TODO call OneTimeLink permalink prototype in future
         $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
-        $cache = $facade->getOtlCachePool();        
-        $rand = UUIDDataType::generateUuidV4('');      
-        $cache->set($rand, $url);        
-        $otl = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_OTL . '/' . urlencode($rand);
+        $permalink = PermalinkFactory::fromUrlOrSelector($workbench, \exface\Core\Permalinks\OneTimeLink::class);
+        $permalinkSlug = $permalink->withUrl($url)->buildRelativeRedirectUrl();
+        $otl = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_OTL . '/' . urlencode($permalinkSlug);
         return $relativeToSiteRoot ? $otl : $workbench->getUrl() . '/' . $otl;
     }
     
@@ -515,17 +514,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public function createResponseFromOneTimeLinkIdent(string $ident) : ResponseInterface
     {
         // TODO call OneTimeLink permalink prototype in future
-        $exface = $this->getWorkbench();
-        $cache = $this->getOtlCachePool();
-        $url = $cache->get($ident, null);
-        if (null === $url) {
-            $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
-            return new Response(404, $this->buildHeadersCommon());
-        }
-        $request = new ServerRequest('GET', $url);
-        $response = $this->createResponse($request);
-        $cache->delete($ident);        
-        return $response;
+        $permalink = PermalinkFactory::fromUrlOrSelector($this->getWorkbench(), \exface\Core\Permalinks\OneTimeLink::class);
+        $redirectUrl = $permalink->withUrl($ident)->buildRelativeRedirectUrl();
+        $request = new ServerRequest('GET', $redirectUrl);
+        return $this->createResponse($request);
     }
     
     /**
