@@ -1898,7 +1898,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlAsForSelects(string $alias) : string
     {
-        return ' AS "' . $alias . '"';
+        return ' AS ' . $this->escapeAlias($alias);
+    }
+
+    /**
+     * Escapes an SQL alias propertly: e.g. `"myalias"` for MySQL, `[myAlias]` for MS SQL
+     * 
+     * @param string $tableOrPredicateAlias
+     * @return string
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
     }
     
     /**
@@ -2816,7 +2827,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
         
-        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
+        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $this->escapeAlias($sort_by) . ' ' . $qpart->getOrder();
     }
     
     /**
