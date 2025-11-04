@@ -1926,7 +1926,7 @@ JS;
         }
 
         // Update dropdown values on action effects that might affect them
-        if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation() && $cellWidget->isLazyLoadingExplicitlySet() && $cellWidget->getLazyLoading()) {
+        if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation()) {
 
             // get affected objects
             $colTable = $cellWidget->getTable();
@@ -1970,12 +1970,11 @@ JS;
                             for (var i = 0; i < oParams.effects.length; i++) {
                                 oEffect = oParams.effects[i];
                                 if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-                                    // refresh immediately if directly affected or delayed if it is an indirect effect
+                                    // refresh immediately if directly affected
+                                    // (indirect effects waere causing issues in some dialogues with filters)
                                     if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
                                         fnRefresh();
-                                    } else {
-                                        setTimeout(fnRefresh, 100);
-                                    }
+                                    } 
                                     return;
                                 }
                             }
