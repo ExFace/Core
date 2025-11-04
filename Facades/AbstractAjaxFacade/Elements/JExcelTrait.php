@@ -1926,7 +1926,7 @@ JS;
         }
 
         // Update dropdown values on action effects that might affect them
-        if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation()) {
+        if ($cellWidget instanceof InputComboTable && $cellWidget->getAttribute()->isRelation() && $cellWidget->isLazyLoadingExplicitlySet() && $cellWidget->getLazyLoading()) {
 
             // get affected objects
             $colTable = $cellWidget->getTable();
