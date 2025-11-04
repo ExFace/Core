@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -555,7 +556,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
-                $result_total_count = $result_total_count ?? $totals[0]['EXFCNT'];
+                $result_total_count = $result_total_count ?? $totals[0][$this->buildSqlAliasForRowCounter()];
                 // now save the custom totals.
                 foreach ($this->getTotals() as $qpart) {
                     $result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
@@ -1059,6 +1060,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         return new DataQueryResultData($insertedIds, $insertedCounter);
     }
+
+    /**
+     * Returns the SET clause for the give query part
+     * 
+     * @param QueryPartValue $qpart
+     * @param string|null $tableAlias
+     * @param string|null $tableColumn
+     * @return string
+     */
+    protected function buildSqlSet(QueryPartValue $qpart, ?string $tableAlias = null, ?string $tableColumn = null) : string
+    {
+        $tableAlias ??= $this->getShortAlias($qpart->getQuery()->getMainObject()->getAlias());
+        $tableColumn ??= $this->buildSqlDataAddress($qpart, self::OPERATION_WRITE);
+        return $tableAlias . $this->getAliasDelim() . $tableColumn;
+    }
     
     /**
      * Performs SQL update queries.
@@ -1113,7 +1129,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             
             $attrAddress = $this->buildSqlDataAddress($attr);
             // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
-            if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->isSqlStatement($attrAddress)) {
+            if ($this->isSqlStatement($attrAddress) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)) {
                 continue;
             }
             // Make sure, that attributes stored as JSON have a custom data address property telling everyone the
@@ -1126,7 +1142,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)){
                 $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS));
             } else {
-                $column = $table_alias . $this->getAliasDelim() . $attrAddress;
+                $column = $this->buildSqlSet($qpart, $table_alias, $attrAddress);
             }
             
             $custom_update_sql = $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE);
@@ -1404,7 +1420,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result = $data_connection->runSql($this->buildSqlQueryCount());
-        $cnt = $result->getResultArray()[0]['EXFCNT'];
+        $cnt = $result->getResultArray()[0][$this->buildSqlAliasForRowCounter()];
         $result->freeResult();
         return new DataQueryResultData([], $cnt, true, $cnt);
     }
@@ -3715,5 +3731,15 @@ SQL;
             $this->addAttribute($attribute_alias);
         }
         return $qpart;
+    }
+
+    /**
+     * Returns the column alias to select the global row counter - EXFCNT by default
+     * 
+     * @return string
+     */
+    protected function buildSqlAliasForRowCounter() : string
+    {
+        return 'EXFCNT';
     }
 }

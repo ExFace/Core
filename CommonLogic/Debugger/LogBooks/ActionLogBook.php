@@ -42,18 +42,15 @@ class ActionLogBook implements DataLogBookInterface
     
     private $logBook = null;
     
-    private $autoSectionsAdded = false;
-    
     private $flowDiagram = null;
 
     private $eventStack = [];
 
     private int $eventCount = 0;
-    private int $maxStackDepth = 9;
+    private int $maxStackDepth = 10;
     private int $maxEventCount = 500;
     
     private $eventStackIndent = 0;
-
     private $eventStackProcessed = false;
 
     /**
@@ -91,7 +88,7 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook->addIndent(-1);
     }
 
-    public function startLogginEvents() : void
+    public function startLoggingEvents() : void
     {
         $eventMgr = $this->action->getWorkbench()->eventManager();
         // Action
@@ -238,7 +235,7 @@ class ActionLogBook implements DataLogBookInterface
                         $eventName = '';
                     } else {
                         $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
-                        $eventName = "`{$eventName}`";
+                        $eventName = "`{$eventName}` ";
                     }
                     $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
                     break;
