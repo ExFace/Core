@@ -29,22 +29,9 @@ trait iSupportLazyLoadingTrait {
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
-    public function getLazyLoading($default = true) : bool
+    public function getLazyLoading($default = true) : ?bool
     {
         return $this->lazy_loading ?? $default;
-    }
-
-    /**
-     * Returns true if lazy loading was explicitly set for this widget (for example in the UXON) of the widget.
-     * Return false if the default value is used. 
-     * @return bool
-     */
-    public function isLazyLoadingExplicitlySet() : bool
-    {
-        if ($this->lazy_loading === null) {
-            return false;
-        }
-        return true;
     }
     
     /**

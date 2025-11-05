@@ -1254,7 +1254,7 @@ JS;
             }
 
             // only set lazy loading set to true if explicitly set (e.g. in uxon)
-            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && $cellWidget->getLazyLoading() && $cellWidget->isLazyLoadingExplicitlySet()) ? 'true' : 'false';
+            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && ($cellWidget->getLazyLoading(null) === true)) ? 'true' : 'false';
             $wasLazyLoaded = 'false';
 
             $lazyLoadingRequestJs = json_encode("");
@@ -1798,7 +1798,7 @@ JS;
         $filterJs = '';
 
         // only use lazy loading is it is explicitly set (e.g. in uxon)
-        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false || !$cellWidget->isLazyLoadingExplicitlySet()) {
+        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading(null) !== true) {
 
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
