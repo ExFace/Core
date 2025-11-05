@@ -2826,8 +2826,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             default:
                 $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
-        
-        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $this->escapeAlias($sort_by) . ' ' . $qpart->getOrder();
+        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
     }
     
     /**
