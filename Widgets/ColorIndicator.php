@@ -335,41 +335,4 @@ class ColorIndicator extends Display implements iHaveColor, iHaveHintScale
         
         return parent::getColorScale();
     }
-
-    /**
-     * @inheritDoc
-     * @see iHaveColorScale::hasColorScale()
-     */
-    public function hasColorScale(): bool
-    {
-        if(parent::hasColorScale()) {
-            return true;
-        }
-        
-        $binding = $this->getColorBinding();
-        $dataType = $binding->getDataType();
-        switch (true) {
-            case $dataType === null:
-                $scale = [];
-                break;
-            case $dataType instanceof NumberEnumDataType:
-                $scale = $dataType->toArray();
-                break;
-            case $dataType instanceof EnumDataTypeInterface:
-                $values = $dataType->getValues();
-                $scale = !empty($values) ? array_combine($values, $values) : [];
-                break;
-            default:
-                $val = $binding->getValue();
-                $scale = $val !== null ? [$val => $val] : [];
-                break;
-        }
-
-        if(empty($scale)) {
-            return false;
-        }
-        
-        $this->setColorScale(new UxonObject($scale));
-        return true;
-    }
 }
