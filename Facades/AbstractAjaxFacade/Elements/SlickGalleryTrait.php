@@ -305,14 +305,14 @@ JS
                         var jqCarousel = $('#{$this->getIdOfSlick()}');
                         var jqActiveSlide = jqCarousel.find('.imagecarousel-item.selected');
                         var iSlideIdx = jqActiveSlide.index();
-                        var oData = jqCarousel.data('_exfData');
+                        var oData = jqCarousel.data({$this->getJqDataProperty()});
                         if (jqActiveSlide.length !== 0 && oData.rows !== undefined && iSlideIdx > -1) {
                             jqCarousel.slick('slickRemove', iSlideIdx);
                             oData.rows.splice(iSlideIdx, 1);
                             if (oData.rows.length === 0) {
                                 $('#{$this->getIdOfSlick()}-nodata').show();
                             }
-                            jqCarousel.data('_exfData', oData);
+                            jqCarousel.data({$this->getJqDataProperty()}, oData);
                         }
 JS
                     ]
@@ -440,7 +440,7 @@ JS;
         switch (true) {
             case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
-                return "($('#{$this->getIdOfSlick()}').data('_exfData') || {oId: '{$widget->getMetaObject()->getId()}', rows: []})";
+                return "($('#{$this->getIdOfSlick()}').data({$this->getJqDataProperty()}) || {oId: '{$widget->getMetaObject()->getId()}', rows: []})";
                 break;
                 
             // If the button requires none of the rows explicitly
@@ -477,7 +477,7 @@ JS;
                 // replaced by whatever is currently shown.
                 return <<<JS
 (function(){
-    var oData = ($('#{$this->getIdOfSlick()}').data('_exfData') || {});
+    var oData = ($('#{$this->getIdOfSlick()}').data({$this->getJqDataProperty()}) || {});
     var oConfiguratorData = {$this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter()};
     // Remove any keys, that are not in the columns of the widget
     oData.rows = (oData.rows || []).map(({ $colNamesList }) => ({ $colNamesList }));
@@ -506,7 +506,7 @@ JS;
 (function(){
     var jqCarousel = $('#{$this->getIdOfSlick()}');
     var aSelectedRows = [];
-    var aAllRows = ((jqCarousel.data('_exfData') || {}).rows || []);
+    var aAllRows = ((jqCarousel.data({$this->getJqDataProperty()}) || {}).rows || []);
     jqCarousel.find('.imagecarousel-item.selected').each(function(i, jqItem){
         aSelectedRows.push(aAllRows[$(jqItem).index()]);
     });
@@ -701,7 +701,12 @@ JS;
 
                 (function(){
                     var aRows = ($oDataJs.rows || []);
-                    $jqSlickJs.data('_exfData', $oDataJs);
+                    $jqSlickJs.data({$this->getJqDataProperty()}, $oDataJs);
+                    var oLastLoaded = {
+                        oId: $oDataJs.oId || '{$this->getMetaObject()->getId()}',
+                        rows: $oDataJs.rows ? Array.from($oDataJs.rows) : []
+                    }
+                    $('#{$this->getIdOfSlick()}').data({$this->getJqLastLoadedProperty()}, oLastLoaded);
     
                     $jqSlickJs.slick('slickRemove', null, null, true);
     
@@ -809,7 +814,8 @@ JS;
         return <<<JS
         
             $('#{$this->getIdOfSlick()}')
-                .data('_exfData', {})
+                .data({$this->getJqDataProperty()}, {})
+                .data({$this->getJqLastLoadedProperty()}, {})
                 .slick('slickRemove', null, null, true);
             $('#{$this->getIdOfSlick()}-nodata').show();
            
@@ -1014,17 +1020,85 @@ JS;
         return <<<JS
 
             (function(){
-                var oData = $('#{$this->getIdOfSlick()}').data('_exfData') || {};
+                var oData = $('#{$this->getIdOfSlick()}').data({$this->getJqDataProperty()}) || {};
                 var oNew = $oParamsJs.data;
                 if (Object.keys(oData).length === 0) {
                     oData = oNew;
                 } else {
                     oData.rows = oData.rows.concat(oNew.rows);
                 }
-                $('#{$this->getIdOfSlick()}').data('_exfData', oData);
+                $('#{$this->getIdOfSlick()}').data({$this->getJqDataProperty()}, oData);
                 {$onUploadCompleteJs}
             })();
 
+JS;
+    }
+
+    /**
+     * @param $dataJs
+     * @return string
+     */
+    public function buildJsDataLoaderOnLoaded($dataJs = 'data') : string
+    {
+        return  '';
+        return <<<JS
+
+        var oLastLoaded = {
+            oId: $dataJs.oId || '{$this->getMetaObject()->getId()}',
+            rows: $dataJs.rows ? Array.from($dataJs.rows) : []
+        }
+        $('#{$this->getIdOfSlick()}').data({$this->getJqLastLoadedProperty()}, oLastLoaded);
+JS;
+
+    }
+
+    /**
+     * @return string
+     */
+    public function buildJsLastLoadedGetter() : string
+    {
+        return "($('#{$this->getIdOfSlick()}').data({$this->getJqLastLoadedProperty()}) || {oId: '{$this->getWidget()->getMetaObject()->getId()}', rows: []})";
+    }
+
+    /**
+     * @param string|null $oTableJs
+     * @return string
+     */
+    protected function buildJsEditableChangesGetter(string $oTableJs = null) : string
+    {
+        $dataGetterJs = $this->buildJsDataGetter();
+        $lasLoadedGetterJs = $this->buildJsLastLoadedGetter();
+        
+        return <<<JS
+
+        (function (oLastLoadedData, oData) {
+            var aAllRows = oData?.rows || [];
+            var aLoadedRows = oLastLoadedData?.rows || [];
+            
+            var aLoadedJson = [];
+            aLoadedRows.forEach((row, index) => {
+                aLoadedJson[index] = JSON.stringify(row);
+            });
+            
+            var aChanges = [];
+            var aAllJson = [];
+            aAllRows.forEach((row, index) => {
+                var json = JSON.stringify(row);
+                aAllJson[index] = json;
+                
+                if(!aLoadedJson.includes(json)) {
+                    aChanges.push(row);
+                }
+            });
+
+            aLoadedJson.forEach((json, index) => {
+                if (!aAllJson.includes(json)) {
+                    aChanges.push(aLoadedRows[index]);
+                }
+            });
+            
+            return aChanges;
+        })({$lasLoadedGetterJs}, {$dataGetterJs})
 JS;
     }
     
@@ -1110,5 +1184,15 @@ HTML;
             $hint .= PHP_EOL . $this->getHintForUploadRestrictions();
         }
         return $hint;
+    }
+    
+    protected function getJqDataProperty() : string
+    {
+        return "'_exfData'";
+    }
+    
+    protected function getJqLastLoadedProperty() : string
+    {
+        return "'_exfLastLoaded'";
     }
 }
