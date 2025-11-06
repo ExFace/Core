@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
@@ -198,5 +200,29 @@ SQL;
     protected function buildSqlAliasForRowCounter() : string
     {
         return 'exfcnt';
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::buildSqlOrderBy()
+     */
+    protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
+    {
+        $orderByObject = parent::buildSqlOrderBy($qpart, $select_from);
+        if ($orderByObject === '') {
+            return $orderByObject;
+        }
+        $parts = preg_split('/\s+/', $orderByObject, 2);
+        $expr  = $parts[0];
+        $direction   = isset($parts[1]) ? strtoupper(trim($parts[1])) : '';
+
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $expr = $orderByObject;
+            $direction  = '';
+        }
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $expr)) {
+            $expr = '"' . str_replace('"', '""', $expr) . '"';
+        }
+        return trim($expr . ' ' . $direction);
     }
 }

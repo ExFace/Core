@@ -759,6 +759,16 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return ' AS ' . $alias;
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '[' . $tableOrPredicateAlias . ']';
+    }
     
     /**
      * 

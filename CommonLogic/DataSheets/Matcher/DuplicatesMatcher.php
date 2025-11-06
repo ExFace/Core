@@ -291,13 +291,15 @@ class DuplicatesMatcher implements DataMatcherInterface, iCanBeConvertedToUxon
             }
         }
 
+        $matchCollection = new DataRowMatchCollection($mainSheet, $updateSheet);
         if (! $updateSheet->isEmpty()) {
-            $matchCollection = new DataRowMatchCollection($mainSheet, $updateSheet);
             // Do the extracting
             $logbook->addLine('Found ' . $updateSheet->countRows() . ' update-rows in original data');
             foreach ($updateSheetRowIdxToEventRowIdx as $iUpdate => $iMain) {
                 $matchCollection->addMatchingRows($iMain, $iUpdate);
             }
+        } else {
+            $logbook->addLine('No update-rows in original data');
         }
 
         $logbook->addIndent(-1);
