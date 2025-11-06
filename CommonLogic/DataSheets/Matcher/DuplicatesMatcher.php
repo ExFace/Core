@@ -298,6 +298,8 @@ class DuplicatesMatcher implements DataMatcherInterface, iCanBeConvertedToUxon
             foreach ($updateSheetRowIdxToEventRowIdx as $iUpdate => $iMain) {
                 $matchCollection->addMatchingRows($iMain, $iUpdate);
             }
+        } else {
+            $logbook->addLine('No update-rows in original data');
         }
 
         $logbook->addIndent(-1);
