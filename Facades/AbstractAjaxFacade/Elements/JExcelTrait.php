@@ -1253,7 +1253,8 @@ JS;
 JS;
             }
 
-            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && $cellWidget->getLazyLoading()) ? 'true' : 'false';
+            // only set lazy loading set to true if explicitly set (e.g. in uxon)
+            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && ($cellWidget->getLazyLoading(null) === true)) ? 'true' : 'false';
             $wasLazyLoaded = 'false';
 
             $lazyLoadingRequestJs = json_encode("");
@@ -1795,13 +1796,15 @@ JS;
             throw new FacadeLogicError('TODO');
         }
         $filterJs = '';
-        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false) {
+
+        // only use lazy loading is it is explicitly set (e.g. in uxon)
+        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading(null) !== true) {
+
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 if ($cellWidget instanceof InputComboTable) {
                     $srcSheet = $cellWidget->getOptionsDataSheet();
-                    $table = $cellWidget->getTable()->getColumns();
 
                     // See if the widget has additional filters
                     // If so, add any attributes required for them to the $srcSheet
@@ -1967,12 +1970,11 @@ JS;
                             for (var i = 0; i < oParams.effects.length; i++) {
                                 oEffect = oParams.effects[i];
                                 if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-                                    // refresh immediately if directly affected or delayed if it is an indirect effect
+                                    // refresh immediately if directly affected
+                                    // (indirect effects waere causing issues in some dialogues with filters)
                                     if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
                                         fnRefresh();
-                                    } else {
-                                        setTimeout(fnRefresh, 100);
-                                    }
+                                    } 
                                     return;
                                 }
                             }
