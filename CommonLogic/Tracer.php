@@ -419,7 +419,7 @@ class Tracer extends Profiler
         }
         
         try {
-            $duration = $ms !== null ? ' in ' . $ms . ' ms' : '';
+            $duration = $ms !== null ? ' in ' . TimeDataType::formatMs($ms) : '';
             $this->getWorkbench()->getLogger()->debug($this->getLapName($event) . ' time measurement ended' . $duration . '.', array());
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
@@ -447,7 +447,7 @@ class Tracer extends Profiler
             $ms = $this->stop($event->getMessage())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
             } else {
                 $duration = '';
             }
@@ -478,7 +478,7 @@ class Tracer extends Profiler
             $ms = $this->stop($event->getBehavior())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
             } else {
                 $duration = '';
             }
@@ -507,7 +507,7 @@ class Tracer extends Profiler
             $ms = $this->stop($event->getStep())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
             } else {
                 $duration = '';
             }
@@ -542,7 +542,7 @@ class Tracer extends Profiler
             
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
                 $this->dataQueriesTotalMS += $ms;
             } else {
                 $duration = '';
