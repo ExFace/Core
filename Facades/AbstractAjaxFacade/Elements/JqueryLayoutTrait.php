@@ -36,7 +36,7 @@ trait JqueryLayoutTrait {
         $gridColsCnt = $this->getNumberOfColumns();
         $visibleCnt = 0;
         $nonMaxCnt = 0;
-        foreach ($widget->getChildren() as $child) {
+        foreach ($widget->getWidgets() as $child) {
             if ($child->isHidden()) {
                 continue;
             }
