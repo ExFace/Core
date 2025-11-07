@@ -1332,7 +1332,9 @@ SQL;
         }
         if ($row['role_oids']) {
             foreach (explode(',', rtrim($row['role_oids'], ",")) as $roleUid) {
-                $user->addRoleSelector($roleUid);
+                if ($roleUid !== '') {
+                    $user->addRoleSelector($roleUid);
+                }
             }
         }
 
@@ -1589,7 +1591,9 @@ SQL;
 
         if ($row['group_oids']) {
             foreach (explode(',', $row['group_oids']) as $groupUid) {
-                $uiPage->addGroupSelector($groupUid);
+                if ($groupUid !== '') {
+                    $uiPage->addGroupSelector($groupUid);
+                }
             }
         }
 
