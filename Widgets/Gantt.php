@@ -30,6 +30,14 @@ class Gantt extends DataTree
     private $keepScrollPosition = false;
     
     private $autoRelayoutOnChange = false;
+    
+    private $viewModeColumnWidthDay = null;
+    
+    private $viewModeColumnWidthWeek = null;
+    
+    private $viewModeColumnWidthMonth = null;
+    
+    private $viewModeColumnWidthYear = null;
 
     /**
      * @inheritDoc
@@ -286,6 +294,102 @@ class Gantt extends DataTree
     public function setAutoRelayoutOnChange(bool $value) : Gantt
     {
         $this->autoRelayoutOnChange = $value;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getViewModeColumnWidthDay() : ?int
+    {
+        return $this->viewModeColumnWidthDay;
+    }
+
+    /**
+     * Sets the column width of the "day" view mode in pixels.
+     * 
+     * @uxon-property view_mode_column_width_day
+     * @uxon-type integer
+     * @uxon-defaul 38
+     * 
+     * @param int $value
+     * @return $this
+     */
+    public function setViewModeColumnWidthDay(int $value): Gantt
+    {
+        $this->viewModeColumnWidthDay = $value;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getViewModeColumnWidthWeek() : ?int
+    {
+        return $this->viewModeColumnWidthWeek;
+    }
+
+    /**
+     * Sets the column width of the "week" view mode in pixels.
+     *
+     * @uxon-property view_mode_column_width_week
+     * @uxon-type integer
+     * @uxon-defaul 140
+     *
+     * @param int $value
+     * @return $this
+     */
+    public function setViewModeColumnWidthWeek(int $value): Gantt
+    {
+        $this->viewModeColumnWidthWeek = $value;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getViewModeColumnWidthMonth() : ?int
+    {
+        return $this->viewModeColumnWidthMonth;
+    }
+
+    /**
+     * Sets the column width of the "month" view mode in pixels.
+     *
+     * @uxon-property view_mode_column_width_month
+     * @uxon-type integer
+     * @uxon-defaul 20
+     *
+     * @param int $value
+     * @return $this
+     */
+    public function setViewModeColumnWidthMonth(int $value): Gantt
+    {
+        $this->viewModeColumnWidthMonth = $value;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getViewModeColumnWidthYear() : ?int
+    {
+        return $this->viewModeColumnWidthYear;
+    }
+
+    /**
+     * Sets the column width of the "year" view mode in pixels.
+     *
+     * @uxon-property view_mode_column_width_year
+     * @uxon-type integer
+     * @uxon-defaul 12
+     *
+     * @param int $value
+     * @return $this
+     */
+    public function setViewModeColumnWidthYear(int $value): Gantt
+    {
+        $this->viewModeColumnWidthYear = $value;
         return $this;
     }
 }
