@@ -617,7 +617,9 @@ class GenericTask implements TaskInterface
                     break;
                 case 'meta_object': 
                 case 'object_alias': 
-                    $this->setMetaObjectSelector($val); 
+                    if ($val) {
+                        $this->setMetaObjectSelector($val);
+                    }
                     break;
                 case 'widget_id':
                     $this->setWidgetIdTriggeredBy($val);
