@@ -337,6 +337,11 @@ class InputColorPalette extends Input implements iHaveHintScale
         return $this;
     }
 
+    /**
+     * Returns the configured default color for the color palette default color button.
+     * 
+     * @return string
+     */
     public function getDefaultColor(): string
     {
         return $this->defaultColor;
@@ -358,6 +363,11 @@ class InputColorPalette extends Input implements iHaveHintScale
         return $this;
     }
 
+    /**
+     * Returns the configured display mode of the color picker within the color palette.
+     * 
+     * @return string
+     */
     public function getDisplayMode(): string
     {
         return $this->displayMode;
@@ -380,6 +390,11 @@ class InputColorPalette extends Input implements iHaveHintScale
         return $this;
     }
 
+    /**
+     * Returns the configuration if the 'More colors...' button should be displayed.
+     * 
+     * @return bool
+     */
     public function getShowMoreColorsButton(): bool
     {
         return $this->showMoreColorsButton;
@@ -401,6 +416,11 @@ class InputColorPalette extends Input implements iHaveHintScale
         return $this;
     }
 
+    /**
+     * Returns the configuration if the default color button should be displayed.
+     * 
+     * @return bool
+     */
     public function getShowDefaultColorButton(): bool
     {
         return $this->showDefaultColorButton;
