@@ -95,6 +95,11 @@ class DataTableConfigurator extends DataConfigurator
         $this->columnsUxon = $arrayOfColumns;
         return $this;
     }
+    
+    public function getOptionalColumnsUxon() : ?UxonObject
+    {
+        return $this->columnsUxon;
+    }
 
     public function hasOptionalColumns() : bool
     {
