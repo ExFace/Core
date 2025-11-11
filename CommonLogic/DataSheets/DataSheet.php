@@ -305,7 +305,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::importRows()
      */
     public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true) : DataSheetInterface
@@ -336,11 +335,13 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             if ($other_col = $other_sheet->getColumns()->get($this_col->getName())) {
+                $thisColVals = $this_col->getValues(false);
+                $otherColVals = $other_col->getValues(false);
                 // TODO probably need to copy values to rows with matching UIDs instead of relying on identical sorting here
-                if (count($this_col->getValues(false)) > 0 && count($this_col->getValues(false)) !== count($other_col->getValues(false))) {
+                if (count($thisColVals) > 0 && count($thisColVals) !== count($otherColVals)) {
                     throw new DataSheetImportRowError($this, 'Cannot replace rows of column "' . $this_col->getName() . '": source and target columns have different amount of rows!', '6T5V1XX');
                 }
-                $this_col->setValues($other_col->getValues(false));
+                $this_col->setValues($otherColVals);
             }
             // if the column is formula and still has empty values, add it to columns to be calculated again
             if ($this_col->isFormula() && $this_col->hasEmptyValues()) {                
