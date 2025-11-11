@@ -346,8 +346,9 @@ class ModelValidatingBehavior extends AbstractBehavior
             return;
         }
 
+        /* @var $widget \exface\Core\Widgets\Container */
         $widget = $action->getWidget();
-        foreach ($widget->getChildrenRecursive() as $child) {
+        foreach ($widget->getWidgetsRecursive() as $child) {
             if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
                 $attrAlias = $child->getAttributeAlias();
                 if (($attrAlias === 'UID' || $attrAlias === 'ALIAS')) {
@@ -391,7 +392,7 @@ class ModelValidatingBehavior extends AbstractBehavior
         $widget = $action->getWidget();
         $foundObject = false;
         $foundAttribute = false;
-        foreach ($widget->getChildrenRecursive() as $child) {
+        foreach ($widget->getWidgetsRecursive() as $child) {
             if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
                 $attrAlias = $child->getAttributeAlias();
                 if (($attrAlias === 'OBJECT')) {
@@ -448,7 +449,7 @@ class ModelValidatingBehavior extends AbstractBehavior
         $widget = $action->getWidget();
         $foundObject = null;
         $foundBehavior = null;
-        foreach ($widget->getChildrenRecursive() as $child) {
+        foreach ($widget->getWidgetsRecursive() as $child) {
             if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
                 $attrAlias = $child->getAttributeAlias();
                 if (($attrAlias === 'OBJECT')) {
