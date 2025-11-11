@@ -920,9 +920,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $values[$nr][$uidAddress] = $uidCustomSqlInsert;
             }
         }
+
+        // We will need to UID column key to get the newly generated UID when we run each INSERT.
+        $uidColKey = null;
+        $uidAttr = null;
+        $uidAddress = null;
+        // If there was a UID part in the query, use that. But even if the UID was not explicitly
+        // part of the query, but the object HAS a UID, add a UID column to the result
+        if ($uidQpart) {
+            $uidColKey = $uidQpart->getColumnKey();
+            $uidAttr = $uidQpart->getAttribute();
+        } elseif ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            $uidColKey = DataColumn::sanitizeColumnName($uidAttr->getAlias());
+        }
         
-        $insertedIds = [];
-        $insertedCounter = 0;
 
         // We now have the following prepared data:
         // - $values - array of rows, where each row is an array with SQL column for keys and their respective prepared values
@@ -931,6 +943,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // FIXME how to handle JSON data here? 
         // - create a JSON in PHP and put it into the $values/$columns?
         // - use native SQL functions to update the JSON after the regular INSERT?
+        $insertedIds = [];
+        $insertedCounter = 0;
         foreach ($values as $rowIdx => $row) {
             // See if a UID (primary key) is provided
             $customUid = null;
@@ -973,8 +987,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $customUid = $query->getResultArray()[0][$uidAddress];
                     }
                 }
-            } else {            
-                $query = $data_connection->runSql($sql);
+            } else {     
+                $query = (new SqlDataQuery())->setSql($sql);
+                // In order to return newly create primary keys (UIDs), some SQL engines need to know which
+                // columns to return actually - so if we do not generate a custom UID here, we need to tell
+                // the query, where to get the UID values after the INSERT.
+                if ($customUid === null) {
+                    switch (true) {
+                        case $uidAddress:
+                            $query->setPrimaryKeyColumns([$uidAddress]);
+                            break;
+                        case $uidAttr && $uidAttr->isReadable():
+                            $query->setPrimaryKeyColumns([$this->buildSqlDataAddress($uidAttr)]);
+                            break;
+                    }
+                }
+                $query = $data_connection->query($query);
             }
             
             // Now get the primary key of the last insert. If it was not provided by PHP, assume it to be 
@@ -986,20 +1014,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $insertedId = $query->getLastInsertId();
             }
 
-
             // Remember inserted ids for this row if it really was inserted
             if ($cnt = $query->countAffectedRows()) {
                 $insertedCounter += $cnt;
-                $uidColKey = null;
-                // If there was a UID part in the query, use that. But even if the UID was not explicitly
-                // part of the query, but the objecdt HAS a UID, add a UID column to the result
-                if ($uidQpart) {
-                    $uidColKey = $uidQpart->getColumnKey();
-                    $uidAttr = $uidQpart->getAttribute();
-                } elseif ($this->getMainObject()->hasUidAttribute()) {
-                    $uidAttr = $this->getMainObject()->getUidAttribute();
-                    $uidColKey = DataColumn::sanitizeColumnName($uidAttr->getAlias());
-                }
                 // Get the values for the UID either from the last inserted id provided by the SQL
                 // engine or derive it from the data in case of compound attributes.
                 if ($uidColKey !== null) {
