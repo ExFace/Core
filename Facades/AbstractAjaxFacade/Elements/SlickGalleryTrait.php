@@ -1035,24 +1035,6 @@ JS;
     }
 
     /**
-     * @param $dataJs
-     * @return string
-     */
-    public function buildJsDataLoaderOnLoaded($dataJs = 'data') : string
-    {
-        return  '';
-        return <<<JS
-
-        var oLastLoaded = {
-            oId: $dataJs.oId || '{$this->getMetaObject()->getId()}',
-            rows: $dataJs.rows ? Array.from($dataJs.rows) : []
-        }
-        $('#{$this->getIdOfSlick()}').data({$this->getJqLastLoadedProperty()}, oLastLoaded);
-JS;
-
-    }
-
-    /**
      * @return string
      */
     public function buildJsLastLoadedGetter() : string
