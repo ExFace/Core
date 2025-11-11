@@ -80,7 +80,14 @@
       return (hi + 0.05) / (lo + 0.05);
     },
 
-    // Shift brightness (L) by delta; negative delta = darker
+    /**
+     * Shift brightness (L) by delta; negative delta = darker
+     * Example delta for getting slightly darker hover color: "-0.08"
+     * 
+     * @param baseColor
+     * @param deltaL
+     * @returns {*|string}
+     */
     shadeCssColor: function(baseColor, deltaL) {
       const rgba = this._cssColorToRgba(baseColor);
       if (!rgba) return baseColor; // Fallback: unverändert
@@ -91,7 +98,13 @@
       return this._rgbaToHex(rgb); // hex ist hier am zuverlässigsten
     },
 
-    // determines the text color for given background color
+    /**
+     * It determines whether the text colour should be black or white
+     * for given background colour.
+     * 
+     * @param backgroundCssColor
+     * @returns {string|string}
+     */
     pickTextColorForBackgroundColor: function(backgroundCssColor) {
       if (!backgroundCssColor) return '#000';
       const rgba = this._cssColorToRgba(backgroundCssColor);
