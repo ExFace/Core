@@ -121,16 +121,29 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function joinLeft(DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
 
     /**
-     * Imports data from matching columns of the given sheet.
-     * If the given sheet has the same columns, as this one, their
-     * values will be copied to this sheet. If this sheet has columns with formulas, they will get calculated
-     * for the imported rows if `calculateFormulas` is `true`.
+     * Replaces data if this sheet with data in matching columns of the given sheet.
+     * 
+     * This only works if all columns have the same amount of cells. 
+     * 
+     * Also keep in mind, that row UIDs are not checked. On the one hand, this allows to use this method on data
+     * sheets without UID columns, but on the other hand partial imports (if the "other" sheet does not have all the
+     * columns of this sheet) will probably produce broken data if row order differs between the sheets.
+     * 
+     * This method will not add any column to this sheet. It will only replace values of existing columns. In case this 
+     * sheet has columns, not present in the other sheet:
+     * - calculated columns (formulas) will be recalculated based on the new state of the data
+     * - other types columns will keep their values unchanged
+     * 
+     * If any of the imported columns are based on formulas, they will also be recalculated. However, you can
+     * disable this via $calculateFormulas if you just need the values. This may have side-effects though because
+     * the columns will still be based on their formulas and will probably get recalculated with the next read
+     * operation.
      * 
      * @param DataSheetInterface $other_sheet
      * @param bool $calculateFormulas
      * @return DataSheetInterface
      */
-    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas) : DataSheetInterface;
+    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true) : DataSheetInterface;
 
     /**
      * Returns the values a column of the data sheet as an array
