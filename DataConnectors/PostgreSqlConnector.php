@@ -2,6 +2,7 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
@@ -74,7 +75,17 @@ class PostgreSqlConnector extends AbstractSqlConnector
         $conn = $this->getCurrentConnection();
         $this->affectedRows = null;
 
-        $result = @pg_query($conn, $query->getSql());
+        $sql = $query->getSql();
+        if (! $query->isMultipleStatements()) {
+            $pkeys = $query->getPrimaryKeyColumns();
+            if (! empty($pkeys) && StringDataType::startsWith($sql, 'INSERT', false) === true) {
+                $sql .= ' RETURNING ' . implode(', ', $pkeys);
+            }
+        } else {
+            // TODO how to get results from multistatement queries?    
+        }
+        
+        $result = @pg_query($conn, $sql);
 
         if ($result === false) {
             throw new DataQueryFailedError($query, 'PostgreSQL query failed: ' . pg_last_error($conn));
@@ -93,7 +104,6 @@ class PostgreSqlConnector extends AbstractSqlConnector
     {
         $array = [];
         $rs = $query->getResultResource();
-
         if (! $rs instanceof \pgsql\Result) {
             return [];
         }
@@ -107,8 +117,20 @@ class PostgreSqlConnector extends AbstractSqlConnector
 
     public function getInsertId(SqlDataQuery $query)
     {
-        // PostgreSQL requires RETURNING clause for insert ID
-        return null;
+        $id = "";
+        $result = $query->getResultResource();
+        if ($result) {
+            $row = $query->getResultArray()[0];
+            $pkeys = $query->getPrimaryKeyColumns();
+            switch (count($pkeys)) {
+                case 0:
+                    return $row[array_key_first($row)];
+                case 1:
+                    return $row[$pkeys[0]];
+                // TODO what about compound keys???
+            }
+        }
+        return $id;
     }
 
     public function getAffectedRowsCount(SqlDataQuery $query)
