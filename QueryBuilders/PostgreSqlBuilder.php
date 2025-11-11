@@ -158,7 +158,7 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'IFNULL';
+        return 'COALESCE';
     }
 
     /**
