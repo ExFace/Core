@@ -127,9 +127,9 @@ class PostgreSqlBuilder extends MySqlBuilder
                         $value = $data_type->convertToHex($value, true);
                     }
                     if (stripos($value, '0x') === 0) {
-                        return $value;
+                        return "'" . substr($value, 2) . "'";
                     } else {
-                        return "UNHEX(" . $value . ")";
+                        return "'$value'";
                     }
                 default:
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
@@ -137,6 +137,18 @@ class PostgreSqlBuilder extends MySqlBuilder
         }
         
         return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
+    }
+
+    /**
+     * Returns the SQL to transform the given binary SELECT predicate into something like 0x12433.
+     *
+     * @param string $select_from
+     * @return string
+     */
+    protected function buildSqlSelectBinaryAsHEX(string $select_from) : string
+    {
+        // In PostgreSQL casting to `::text` should normalize all letters to lowercase
+        return "CONCAT('0x', REPLACE({$select_from}::text, '-', ''))";
     }
 
     /**

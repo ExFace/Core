@@ -8,6 +8,7 @@ use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
@@ -622,8 +623,12 @@ class UxonSchema implements UxonSchemaInterface
     public function getMetaObject(UxonObject $uxon, array $path, MetaObjectInterface $rootObject = null) : MetaObjectInterface
     {
         $objectAlias = $this->getPropertyValueRecursive($uxon, $path, 'object_alias', ($rootObject !== null ? $rootObject->getAliasWithNamespace() : ''));
-        if ($objectAlias === '' && $rootObject !== null) {
-            return $rootObject;
+        if ($objectAlias === '') {
+            if ($rootObject !== null) {
+                return $rootObject;
+            } else {
+                return MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.DUMMY');
+            }
         }
         return $this->getWorkbench()->model()->getObject($objectAlias);
     }

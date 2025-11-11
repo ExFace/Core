@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -14,8 +15,25 @@ use exface\Core\CommonLogic\UxonObject;
 /**
  * Sends a messages through communication channels for every row in the input data.
  * 
- * **NOTE:** If the reciepient is a user, the message will only be sent if this user is authorized to read the 
+ * **NOTE:** If the recipient is a user, the message will only be sent if this user is authorized to read the 
  * data row. You can change this via `send_only_if_data_authorized`.
+ * 
+ * ## Messages and placeholders
+ *
+ * Each action can send multiple `messages` through different communication channels. The available configuration 
+ * options for each notification depend on the message type of the selected channel.
+ *
+ * In any case, the contents of the notifications can contain the following placeholders
+ * at any position (see `messages` property for more details):
+ *
+ * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+ * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
+ * from the given app
+ * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
+ * for which the notification was triggered - only works with notification on data sheet events!
+ * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
+ * This means, static formulas will always work, while data-driven formulas will only work on data sheet
+ * events!
  * 
  * @author Andrej Kabachnik
  *
@@ -25,8 +43,13 @@ class SendMessage extends AbstractAction
     use SendMessagesFromDataTrait;
     
     private $messageUxons = null;
-    
     private $sendOnlyIfDataAuthorized = true;
+    
+    protected function init()
+    {
+        parent::init();
+        $this->setIcon(Icons::SEND);
+    }
     
     /**
      * 

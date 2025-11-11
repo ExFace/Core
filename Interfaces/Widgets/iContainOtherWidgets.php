@@ -25,10 +25,15 @@ interface iContainOtherWidgets extends WidgetInterface
     public function addWidgets(array $widgets);
 
     /**
-     * Returns all widgets in this container as an array optionally filterd via given closure
+     * Returns all widgets in this container as an array optionally filtered by the given closure
      *
-     * @param callable $filter
+     * **NOTE:** this will return only widgets added via `addWidget` to this container explicitly. This is an important
+     * difference to `Widget::getChildren()`, which will also return implicit children like those just used in the
+     * implementation of the specific container! For example, `Dialog::getChildren()` will return widgets the header
+     * container too, but `Dialog::getWidgets()` will not, because the header is not part of the dialog contents.
      * 
+     * @param callable|null $filter
+     *
      * @return WidgetInterface[]
      */
     public function getWidgets(callable $filter = null);
@@ -87,6 +92,13 @@ interface iContainOtherWidgets extends WidgetInterface
      * 
      * The resulting array will contain all inner widgets of this container and
      * their inner widgets too.
+     * 
+     * **NOTE:** this will return only widgets added via `addWidget` to this container explicitly. This is an important
+     * difference to `Widget::getChildrenRecursive()`, which will also return implicit children like those just used in 
+     * the implementation of the specific container! For example, `Dialog::getChildrenRecursive()` will
+     * return widgets from ShowDialog actions of its Buttons as children, but the `Dialog::getWidgetsRecursive()`
+     * will not, because they are not widgets contained in that dialog. However, action widgets are children
+     * from the point of view of a widget tree.
      * 
      * @param callable $filterCallback
      * @param int $depth

@@ -102,6 +102,26 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * wish to store definitions for attributes that belong to multiple different MetaObjects in the same table. In that
  * case, the definition owner object is used to identify what MetaObject a custom attribute belongs to.
  * 
+ * ### Using placeholders
+ * 
+ * Additionally, any attribute of the definition-object can be used as `[#placeholder#]` inside the definition of the
+ * attribute. Using these placeholders you can create even more flexible attribute definitions by adding columns
+ * for any part of the future attribute model to your definition-object.
+ * 
+ * ```
+ * {
+ *  "attribute_defaults": {
+ *      "editable": "[#EDITABLE#]",
+ *      "required": "[#REQUIRED#]",
+ *      "relation": {
+ *          "related_object_alias": "[#RELATED_OBJECT__ALIAS_WITH_NS#]",
+ *          "delete_with_related_object": "[#REQUIRED#]"
+ *      }
+ *  }
+ * }
+ * 
+ * ```
+ * 
  * ## Types models
  * 
  * If you need to let users pick from different attribute types, you can define multiple so-called "type models".
@@ -210,7 +230,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * ```
  * 
- * @author Georg Bieger
+ * @author Georg Bieger, Andrej Kabachnik
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
