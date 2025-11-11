@@ -20,19 +20,20 @@ class DataTimelineView implements WidgetPartInterface
     use ICanBeConvertedToUxonTrait;
     
     const GRANULARITY_DAYS = 'days';
+    const GRANULARITY_DAYS_PER_WEEK = 'days_per_week';
+    const GRANULARITY_DAYS_PER_MONTH = 'days_per_month';
     const GRANULARITY_HOURS = 'hours';
     const GRANULARITY_WEEKS = 'weeks';
     const GRANULARITY_MONTHS = 'months';
     const GRANULARITY_YEARS = 'years';
     
     private $timeline;
-    
     private ?string $name = null;
     private ?string $description = null;
-    
     private $granularity = null;
-    private ?string $columnWidth = null;
+    private ?WidgetDimension $columnWidth = null;
     
+    // TODO: Build these:
     private ?array $headerLines = null;
     private ?UxonObject $headerLinesUxon = null;
     
@@ -56,8 +57,82 @@ class DataTimelineView implements WidgetPartInterface
     {
         return $this->timeline->getWorkbench();
     }
-    
-    protected function getColumnWidth() : WidgetDimension
+
+    /**
+     * @return string|null
+     */
+    public function getName() : ?string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Sets the name of the timeline view
+     * 
+     * @uxon-property name
+     * @uxon-type string
+     * 
+     * @param string $name
+     * @return $this
+     */
+    public function setName(string $name): DataTimelineView
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDescription() : ?string
+    {
+        return $this->description;
+    }
+
+    /**
+     * Sets the description of the timeline view
+     * 
+     * @uxon-property description
+     * @uxon-type string
+     * 
+     * @param string $description
+     * @return $this
+     */
+    public function setDescription(string $description): DataTimelineView
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    /**
+     *
+     * @return string
+     */
+    public function getGranularity(string $default = null) : ?string
+    {
+        return $this->granularity ?? $default;
+    }
+
+    /**
+     * Granularity is the smallest time unit visible (e.g. days)
+     *
+     * @uxon-property granularity
+     * @uxon-type [hours,days,weeks,months,years]
+     * @uxon-default hour
+     *
+     * @param string $value
+     * @return DataTimelineView
+     */
+    public function setGranularity(string $value) : DataTimelineView
+    {
+        $this->granularity = $this->formatGranularity($value);
+        return $this;
+    }
+
+    /**
+     * @return WidgetDimension
+     */
+    public function getColumnWidth() : ?WidgetDimension
     {
         return $this->columnWidth;
     }
@@ -71,9 +146,29 @@ class DataTimelineView implements WidgetPartInterface
      * @param string $width
      * @return $this
      */
-    protected function setColumnWidth(string $width) : DataTimelineView
+    public function setColumnWidth(string $width) : DataTimelineView
     {
         $this->columnWidth = new WidgetDimension($this->getWorkbench(), $width);
         return $this;
+    }
+
+    private function formatGranularity(string $value) : string
+    {
+        $value = mb_strtolower($value);
+
+        // Backwards compatibility with legacy granularity types
+        switch ($value) {
+            case 'hour': $value = self::GRANULARITY_HOURS; break;
+            case 'day': $value = self::GRANULARITY_DAYS; break;
+            case 'week': $value = self::GRANULARITY_DAYS_PER_WEEK; break;
+            case 'month': $value = self::GRANULARITY_DAYS_PER_MONTH; break;
+        }
+
+        $const = DataTimeline::class . '::GRANULARITY_' . strtoupper($value);
+        if (! defined($const)) {
+            throw new WidgetConfigurationError($this->getWidget(), 'Invalid timeline granularity "' . $value . '": please use hours, days, days_per_week, days_per_month, weeks or months!');
+        }
+
+        return $value;
     }
 }
