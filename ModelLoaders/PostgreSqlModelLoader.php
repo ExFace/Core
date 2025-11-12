@@ -27,6 +27,17 @@ class PostgreSqlModelLoader extends SqlModelLoader
         // In PostgreSQL casting to `::text` should normalize all letters to lowercase
         return "CONCAT('0x', REPLACE({$field_name}::text, '-', ''))";
     }
+
+    /**
+     * {@inheritDoc}
+     * @see SqlModelLoader::buildSqlEscapedUid()
+     */
+    protected function buildSqlEscapedUid(string $uid) : string
+    {
+        $uid = parent::buildSqlEscapedUid($uid);
+        // Convert 0x6876846 -> \x6876846
+        return '\\' . substr($uid, 1);
+    }
     
     /**
      * 
