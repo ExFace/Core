@@ -115,8 +115,6 @@ class DataTimeline implements WidgetPartInterface
     private ?UxonObject $viewsUxon = null;
     
     private $granularity = null;
-    private $granularitySelectable = [];
-    
     private $workday_start_time = null;
     private $workday_end_time = null;
     
@@ -156,31 +154,6 @@ class DataTimeline implements WidgetPartInterface
     public function setGranularity(string $value) : DataTimeline
     {
         $this->granularity = $this->formatGranularity($value);
-        return $this;
-    }
-    
-    /**
-     * @return array
-     */
-    public function getGranularitySelectable() : array
-    {
-        return $this->granularitySelectable;
-    }
-
-    /**
-     * Sets the selection of granularities.
-     * It can be used to set possible granularities for future menu selection.
-     * 
-     * @uxon-property granularity_selectable
-     * @uxon-type array
-     * @uxon-template ["days", "weeks", "months"]
-     * 
-     * @param UxonObject $value
-     * @return $this
-     */
-    public function setGranularitySelectable(UxonObject $value) : DataTimeline
-    {
-        $this->granularitySelectable = array_map([$this, 'formatGranularity'], $value->toArray());
         return $this;
     }
     
@@ -263,16 +236,37 @@ class DataTimeline implements WidgetPartInterface
         
         return $value;
     }
-    
-    protected function getViews() : array
+
+    /**
+     * It gets the views with its settings. The 'days', 'weeks' and 'months' views are default.
+     * 
+     * @return DataTimelineView[]
+     */
+    public function getViews() : array
     {
         if ($this->views === null) {
             if ($this->viewsUxon === null) {
+                $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
                 // IDEA get defaults from widget? Different defaults for Gantt and Scheduler?
                 $this->views = [
                     new DataTimelineView($this, new UxonObject([
-                        'granularity' => $this->getGranularity(DataTimelineView::GRANULARITY_DAYS),
-                    ]))
+                        'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_DAY'),
+                        'granularity' => DataTimelineView::GRANULARITY_DAYS,
+                        'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_DAY_DESCRIPTION'),
+                        'column_width' => 38
+                    ])),
+                    new DataTimelineView($this, new UxonObject([
+                        'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_WEEK'),
+                        'granularity' => DataTimelineView::GRANULARITY_WEEKS,
+                        'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_WEEK_DESCRIPTION'),
+                        'column_width' => 140
+                    ])),
+                    new DataTimelineView($this, new UxonObject([
+                        'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH'),
+                        'granularity' => DataTimelineView::GRANULARITY_MONTHS,
+                        'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH_DESCRIPTION'),
+                        'column_width' => 20
+                    ])),
                 ];
             } else {
                 foreach ($this->viewsUxon as $uxon) {
@@ -289,9 +283,13 @@ class DataTimeline implements WidgetPartInterface
     /**
      * Different views (zoom levels) the user can select
      * 
+     *  You can control, which views are available and even customize these views by setting their
+     *  - `granularity` - smallest time unit visible (e.g. days)
+     *  - `column_width` - visual width of one time unit item (e.g. how wide is one day)
+     * 
      * @uxon-property views
      * @uxon-type \exface\Core\Widgets\Parts\DataTimelineView[]
-     * @uxon-template [{"name", "", "description": "", "granularity": ""}]
+     * @uxon-template [{"name": "", "description": "", "granularity": ""}]
      * 
      * @param UxonObject $arrayOfViews
      * @return $this

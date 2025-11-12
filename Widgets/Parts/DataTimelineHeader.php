@@ -7,7 +7,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 
 /**
- * 
+ * TODO: Build it and use for the Gantt chard header adjustments
  * 
  * @author Andrej Kabachnik
  *

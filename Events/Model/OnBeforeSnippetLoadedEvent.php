@@ -6,108 +6,105 @@ use exface\Core\Interfaces\Events\MetaObjectEventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Event fired before a meta objects behavior is instantiated.
- * 
+ *
  * Listeners to this even can modify the UXON configuration of the behavior.
- * 
- * @event exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded
+ *
+ * @event exface.Core.Model.OnBeforeSnippetLoaded
  *
  * @author Andrej Kabachnik
  *
  */
-class OnBeforeMetaObjectBehaviorLoadedEvent extends AbstractEvent implements MetaObjectEventInterface
+class OnBeforeSnippetLoadedEvent extends AbstractEvent
 {
-    private $prototype = null;
-    
-    private $behaviorUid = null;
-    
-    private $appUid = null;
-    
-    private $object = null;
-    
-    private $uxon = null;
-    
+    private WorkbenchInterface $workbench;
+    private string $prototype;
+    private string $snippetUid;
+    private string $snippetAlias;
+    private UxonObject $uxon;
+    private string $appSelectorString;
+
     /**
-     * 
+     *
      * @param string $prototype
-     * @param string $behaviorUid
+     * @param string $snippetUid
      * @param \exface\Core\Interfaces\AppInterface $appUid
      * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      */
-    public function __construct(string $prototype, string $behaviorUid, string $appUid, MetaObjectInterface $object, UxonObject $uxon)
+    public function __construct(WorkbenchInterface $workbench, string $prototype, string $snippetUid, string $snippetAlias, string $appSelector, UxonObject $uxon)
     {
+        $this->workbench = $workbench;
         $this->prototype = $prototype;
-        $this->object = $object;
-        $this->behaviorUid = $behaviorUid;
-        $this->appUid = $appUid;
+        $this->snippetUid = $snippetUid;
+        $this->snippetAlias = $snippetAlias;
+        $this->appSelectorString = $appSelector;
         $this->uxon = $uxon;
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Events\MetaObjectEventInterface::getObject()
-     */
-    public function getObject() : MetaObjectInterface
-    {
-        return $this->object;
-    }
-    
-    /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
-        return $this->object->getWorkbench();
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getBehaviorUid() : string
-    {
-        return $this->behaviorUid;
+        return $this->workbench;
     }
 
     /**
-     * 
+     *
+     * @return string
+     */
+    public function getSnippetUid() : string
+    {
+        return $this->snippetUid;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSnippetAlias() : string
+    {
+        return $this->snippetAlias;
+    }
+
+    /**
+     *
      * @return string
      */
     public function getPrototype() : string
     {
         return $this->prototype;
     }
-    
+
     /**
-     * 
+     *
      * @return AppInterface
      */
     public function getApp() : AppInterface
     {
-        return $this->getWorkbench()->getApp($this->appUid);
+        return $this->workbench->getApp($this->appSelectorString);
     }
-    
+
     /**
-     * 
+     *
      * @return UxonObject
      */
     public function getUxon() : UxonObject
     {
         return $this->uxon;
     }
-    
+
     /**
      * {@inheritdoc}
      * @see \exface\Core\Events\AbstractEvent::getEventName()
      */
     public static function getEventName() : string
     {
-        return 'exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded';
+        return 'exface.Core.Model.OnBeforeSnippetLoaded';
     }
 }

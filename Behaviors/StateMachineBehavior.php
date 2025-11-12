@@ -7,6 +7,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\StateMachineTransitionError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -215,7 +216,10 @@ class StateMachineBehavior extends AbstractBehavior
             $widget = $event->getMessageList()->getParent();
             $foundTypeSelector = false;
             $foundTypeConfig = false;
-            foreach ($widget->getChildrenRecursive() as $child) {
+            if (! $widget instanceof iContainOtherWidgets) {
+                return;
+            }
+            foreach ($widget->getWidgetsRecursive() as $child) {
                 if (($child instanceof iShowSingleAttribute) && $child->getAttributeAlias() === 'DATATYPE') {
                     if ($enumType !== null) {
                         // Change the value only if the saved type does not fit (= the custom $enumType is set)
@@ -260,7 +264,10 @@ class StateMachineBehavior extends AbstractBehavior
             }
             
             $widget = $event->getMessageList()->getParent();
-            foreach ($widget->getChildrenRecursive() as $child) {
+            if (! $widget instanceof iContainOtherWidgets) {
+                return;
+            }
+            foreach ($widget->getWidgetsRecursive() as $child) {
                 if (($child instanceof iShowSingleAttribute) && $child->getAttributeAlias() === 'DEFAULT_EDITOR_UXON') {
                     $child->setValue($uxon->toJson());
                     $child->setDisabled(true);
