@@ -449,44 +449,21 @@ class OrderingBehavior extends AbstractBehavior
     {
         $changedGroups = [];
         $uidAlias = $eventSheet->getUidColumnName();
-        $orderNumberAlias = $this->getOrderNumberAttributeAlias();
         
         foreach ($eventSheet->getRows() as $eventRow) {
             $uid = $eventRow[$uidAlias];
             $eventGroup = $this->getParentsForRow($eventRow);
-
-            // Empty UID means we have to process this group, because we cannot
-            // check for changes at this point.
-            if($uid === null || $uid === "") {
-                $changedGroups[] = $eventGroup;
-                continue;
-            }
-
-            $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $uid);
-            // If no loaded data exists, we must assume this entry is new
-            // and its group must be processed.
-            if(empty($loadedRow)) {
-                $changedGroups[] = $eventGroup;
-                continue;
-            }
+            
+            // Event groups must always be processed, to ensure that their group is
+            // well-ordered, regardless of user input.
+            $changedGroups[json_encode($eventGroup)] = $eventGroup;
 
             // If any of the parent aliases changed (i.e. the entry was moved to a different
             // group) both groups must be updated.
+            $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $uid);
             if(!$this->belongsToGroup($loadedRow, $eventGroup)) {
-                $changedGroups[] = $this->getParentsForRow($loadedRow);
-                $changedGroups[] = $eventGroup;
-                continue;
-            }
-
-            // If the ordering number is empty, we need to update it, i.e. process its group.
-            if($eventRow[$orderNumberAlias] === null) {
-                $changedGroups[] = $eventGroup;
-                continue;
-            }
-
-            // If the ordering number changed, we have to process this group.
-            if($eventRow[$orderNumberAlias] != $loadedRow[$orderNumberAlias]) {
-                $changedGroups[] = $eventGroup;
+                $loadedGroup = $this->getParentsForRow($loadedRow);
+                $changedGroups[json_encode($loadedGroup)] = $loadedGroup;
             }
         }
         
