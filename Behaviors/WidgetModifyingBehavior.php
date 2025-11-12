@@ -169,7 +169,16 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-        $configurator->setOptionalColumns( $this->columnsToAddUxon);
+
+        $columnsUxon = $this->columnsToAddUxon;
+        if($configurator->hasOptionalColumns()) {
+            foreach ($configurator->getOptionalColumnsUxon()->toArray() as $column) {
+                $columnsUxon->append($column);
+            }
+        }
+        
+        $configurator->setOptionalColumns($columnsUxon);
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
 

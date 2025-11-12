@@ -95,6 +95,11 @@ class DataTableConfigurator extends DataConfigurator
         $this->columnsUxon = $arrayOfColumns;
         return $this;
     }
+    
+    public function getOptionalColumnsUxon() : ?UxonObject
+    {
+        return $this->columnsUxon;
+    }
 
     public function hasOptionalColumns() : bool
     {
@@ -104,19 +109,32 @@ class DataTableConfigurator extends DataConfigurator
     public function addOptionalColumn(DataColumn $column) : DataTableConfigurator
     {
         $alias = $column->getAttributeAlias();
+        $columnExists = false;
 
         $tab = $this->tabColumns; // Do not use getOptionalColumnsTab() here to avoid infinite loop
         foreach ($tab->getWidgets() as $existingColumn) {
             if($alias === $existingColumn->getAttributeAlias()) {
-                return $this;
+                $columnExists = true;
+                if($existingColumn->getVisibility() === WidgetVisibilityDataType::HIDDEN) {
+                    $existingColumn->importUxonObject($column->exportUxonObject());
+                }
+                break;
             }
         }
 
         $configuredWidget = $this->getWidgetConfigured();
         foreach($configuredWidget->getColumns() as $existingColumn) {
             if($alias === $existingColumn->getAttributeAlias()) {
-                return $this;
+                $columnExists = true;
+                if($existingColumn->getVisibility() === WidgetVisibilityDataType::HIDDEN) {
+                    $existingColumn->importUxonObject($column->exportUxonObject());
+                }
+                break;
             }
+        }
+        
+        if($columnExists) {
+            return $this;
         }
 
         $tab->addWidget($column);
