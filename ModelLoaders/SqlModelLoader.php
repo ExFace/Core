@@ -4,6 +4,7 @@ namespace exface\Core\ModelLoaders;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
+use exface\Core\Events\Model\OnBeforeSnippetLoadedEvent;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Factories\AttributeGroupFactory;
@@ -1332,7 +1333,9 @@ SQL;
         }
         if ($row['role_oids']) {
             foreach (explode(',', rtrim($row['role_oids'], ",")) as $roleUid) {
-                $user->addRoleSelector($roleUid);
+                if ($roleUid !== '') {
+                    $user->addRoleSelector($roleUid);
+                }
             }
         }
 
@@ -1589,7 +1592,9 @@ SQL;
 
         if ($row['group_oids']) {
             foreach (explode(',', $row['group_oids']) as $groupUid) {
-                $uiPage->addGroupSelector($groupUid);
+                if ($groupUid !== '') {
+                    $uiPage->addGroupSelector($groupUid);
+                }
             }
         }
 
@@ -2317,6 +2322,18 @@ SQL;
         foreach ($rows as $row) {
             $uxon = UxonObject::fromJson($row['uxon']);
             $uxon->setProperty('name', $row['name']);
+
+            $this->getWorkbench()->eventManager()->dispatch(
+                new OnBeforeSnippetLoadedEvent(
+                    $this->getWorkbench(),
+                    $row['prototype'],
+                    $row['oid'],
+                    $row['alias'],
+                    $row['app_alias'],
+                    $uxon
+                )
+            );
+            
             $snippet = UxonSnippetFactory::createFromPrototype($this->getWorkbench(), $row['prototype'], $row['alias'], $row['app_alias'], $uxon);
         }
 

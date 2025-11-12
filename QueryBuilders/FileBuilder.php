@@ -414,11 +414,18 @@ class FileBuilder extends AbstractQueryBuilder
         $pregDelim = self::REGEX_DELIMITER;
         foreach ($qpart->getFilters() as $filter) {
             if ($this->isFilename($filter)) {
-                switch ($filter->getComparator()) {
-                    case ComparatorDataType::EQUALS:
-                    case ComparatorDataType::IS:
-                        $mask = preg_quote($filter->getCompareValue(), $pregDelim);
-                        if ($filter->getComparator() === ComparatorDataType::EQUALS) {
+                $comp = $filter->getComparator();
+                $val = $filter->getCompareValue();
+                switch (true) {
+                    /* TODO Can we use path patterns in filenames?
+                    case FilePathDataType::isPattern($val) && ! RegularExpressionDataType::isRegex($val):
+                        $values[] = '^' . str_replace('*', '.*', $val) . '$';
+                        $filtersApplied[] = $filter;
+                        break;*/
+                    case $comp === ComparatorDataType::EQUALS:
+                    case $comp === ComparatorDataType::IS:
+                        $mask = preg_quote($val, $pregDelim);
+                        if ($comp === ComparatorDataType::EQUALS) {
                             $mask = '^' . $mask . '$';
                         }
                         $values[] = $mask;
@@ -467,12 +474,12 @@ class FileBuilder extends AbstractQueryBuilder
     {
         // See if the data address has placeholders
         $oper = $qpart->getOperator();
-        $addr = $this->getPathForObject($this->getMainObject()) ?? '';
-        $addrPhs = StringDataType::findPlaceholders($addr);
+        $objAddr = $this->getPathForObject($this->getMainObject()) ?? '';
+        $addrPhs = StringDataType::findPlaceholders($objAddr);
         $pathPatterns = [];
         $uidPatterns = [];
-        if ($addr !== null && empty($this->getFilters()->getFilters())) {
-            return [$addr];
+        if ($objAddr !== null && empty($this->getFilters()->getFilters())) {
+            return [$objAddr];
         }
         // Look for filters, that can be processed by the connector itself
         foreach ($this->getFilters()->getFilters() as $qpart) {
@@ -486,14 +493,22 @@ class FileBuilder extends AbstractQueryBuilder
 
             // Calculate folder and filename patters from some other data addresses too
             switch (true) {
+                // Skip folder filters if object has an address (path pattern)
+                case $objAddr !== null && $objAddr !== '': 
+                    continue;
                 // `~folder:name ==` or `~folder:name =` 
-                case $addr === '' && $filterAddr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_NAME:
+                case $filterAddr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_NAME:
                     $isFolderFilter = true;
                     if ($filterComp === ComparatorDataType::EQUALS) {
                         $filterVal = "*/{$filterVal}";
                     } elseif ($filterComp === ComparatorDataType::IS) {
                         $filterVal = "*/*{$filterVal}*";
                     }
+                    break;
+                // `~folder:path_relative ==` 
+                case $filterAddr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_PATH_RELATIVE && $filterComp === ComparatorDataType::EQUALS:
+                    $isFolderFilter = true;
+                    $filterVal = "{$filterVal}";
                     break;
             }
 
@@ -506,7 +521,7 @@ class FileBuilder extends AbstractQueryBuilder
                 // add the base data adress to the patterns if first attribute replacing a placeholder is found
                 if (in_array($qpart->getAlias(), $addrPhs)) {
                     if (empty($pathPatterns)) {
-                        $pathPatterns[] = $addr;
+                        $pathPatterns[] = $objAddr;
                     }
                 }
                 switch ($filterComp) {
@@ -616,7 +631,7 @@ class FileBuilder extends AbstractQueryBuilder
                 $patterns = $uidPatterns;
         }
         
-        return empty($patterns) ? [$addr] : $patterns;
+        return empty($patterns) ? [$objAddr] : $patterns;
     }
 
     /**
@@ -1253,7 +1268,7 @@ class FileBuilder extends AbstractQueryBuilder
         if ($query->isFullScanRequired() === true) {
             return true;
         }
-        foreach ($this->getFilters() as $qpart) {
+        foreach ($this->getFilters()->getFiltersAndNestedGroups() as $qpart) {
             if ($qpart->getApplyAfterReading() === true) { 
                 return true;
             }

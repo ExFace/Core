@@ -245,6 +245,8 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $attrAddress = $freshRow['DATA_ADDRESS'];
                 $oldRowIdxs = $oldAttrsSheet->findRowsByValues(['DATA_ADDRESS' => $attrAddress]);
                 foreach ($oldRowIdxs as $oldRowIdx) {
+                    $oldDataTypeJson = null;
+                	$oldDataTypeUxon = null;
                     $oldRow = $oldAttrsSheet->getRow($oldRowIdx);
                     $newDataTypeJson = $freshRow['CUSTOM_DATA_TYPE'];
                     if ($newDataTypeJson) {
@@ -338,6 +340,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         $sqlType = strtoupper($sql_data_type);
         switch (true) {
             case $sqlType === 'BIT':
+            case $sqlType === 'BOOLEAN':
                 $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
                 break;
             case $sqlType === 'INT':

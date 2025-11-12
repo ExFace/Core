@@ -465,7 +465,6 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getChildren()
      */
     public function getChildren() : \Iterator
@@ -478,7 +477,7 @@ abstract class AbstractWidget implements WidgetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WidgetInterface::getChildrenRecursive()
      */
-    public function getChildrenRecursive(?int $depth = null) : \Iterator
+    public function getChildrenRecursive(?int $depth = null, ?int $depthIdSpaces = 1) : \Iterator
     {
         // Use a generator here because widgets with lot's of children (e.g. large editor dialogs)
         // will need to instantiate ALL their children first if we use an array. This is useless,
@@ -490,11 +489,26 @@ abstract class AbstractWidget implements WidgetInterface
             yield $child;
         }
         // Stop recursion if depth is reached
-        if ($depth === 0) {
+        if ($depth === 0 || $depthIdSpaces <= 0) {
             return;
         }
+        
+        if ($depthIdSpaces !== null) {
+            $idSpace = $this->getIdSpace();
+            $nestedIdSpaces = $depthIdSpaces;
+        } else {
+            $idSpace = null;
+            $nestedIdSpaces = null;
+        }
+        
         foreach ($this->getChildren() as $child) {
-            yield from $child->getChildrenRecursive($depth !== null ? ($depth - 1) : null);
+            if ($idSpace !== null) {
+                if ($child->isIdSpaceSpecified() && $child->getIdSpace() !== $idSpace) {
+                    $nestedIdSpaces = $depthIdSpaces - 1;
+                    continue;
+                }
+            }
+            yield from $child->getChildrenRecursive($depth !== null ? ($depth - 1) : null, $nestedIdSpaces);
             // Excplicitly continue - otherwise the foreach will break after the first yield from
             continue;
         }
@@ -624,7 +638,6 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getIdSpace()
      */
     public function getIdSpace()
@@ -637,6 +650,16 @@ abstract class AbstractWidget implements WidgetInterface
             }
         }
         return $this->id_space;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::isIdSpaceSpecified()
+     */
+    public function isIdSpaceSpecified() : bool
+    {
+        return $this->id_space !== null;
     }
 
     /**

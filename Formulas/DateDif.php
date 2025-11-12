@@ -27,7 +27,7 @@ class DateDif extends \exface\Core\CommonLogic\Model\Formula
      * 
      * @param string $date
      * @param string $format
-     * @return void|\DateTime
+     * @return null|int
      */
     public function run($start_date = null, $end_date = null, $unit = self::UNIT_D)
     {

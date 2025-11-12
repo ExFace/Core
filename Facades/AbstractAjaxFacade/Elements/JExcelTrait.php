@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\InputSelect;
@@ -33,6 +34,7 @@ use exface\Core\Widgets\Text;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
@@ -245,6 +247,35 @@ JS;
         }
         return $includes;
     }
+
+    /**
+     * adds a button to add one or more rows to the spreadsheet
+     * 
+     * @param ButtonGroup $btnGrp
+     * @param int $index
+     */
+    protected function addNewRowsButton(ButtonGroup $btnGrp, int $index = 0) : void
+    {        
+        $widget = $this->getWidget();
+        $translator = $widget->getWorkbench()->getCoreApp()->getTranslator();
+
+        if ($this->getAllowAddRows()){
+            $btnGrp->addButton($btnGrp->createButton(new UxonObject([
+                    'widget_type' => 'Button',
+                    'icon' => 'plus',
+                    'caption' => $translator->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION'),
+                    'align' => 'right',
+                    'action' => [
+                        'alias' => 'exface.Core.CustomFacadeScript',
+                        'script' => <<<JS
+                            {$this->buildJsJqueryElement()}[0].exfWidget.showAddRowsDialogue();
+    JS
+                    ]
+                ])), $index);
+        }
+
+    }
+
     
     /**
      * Returns the jQuery element for jExcel - e.g. $('#element_id') in most cases.
@@ -1104,7 +1135,29 @@ JS;
                     console.warn('Relation key ' + sColRelationKey + ' not found in dropdown source');
                 }
             }
+        },
+        showAddRowsDialogue: function() {
+            let oJExcel = this.getJExcel();
+
+            // prompt for number of rows to add
+            let sInputNumber = window.prompt('{$this->getWidget()->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT')}', "1"); 
+            let iParsedNumber = Number(sInputNumber);
+
+            if (iParsedNumber !== NaN && iParsedNumber > 0) {
+                
+                // if nothing is selected, add rows at the end
+                // otherwise at end of selection
+                let iLastRow = oJExcel.getData().length;
+                let aSelectedRows = oJExcel.getSelectedRows(true);
+                if (aSelectedRows.length > 0) {
+                    iLastRow = aSelectedRows[aSelectedRows.length -1];
+                }
+
+                // insert rows
+                oJExcel.insertRow(iParsedNumber, iLastRow, false);
+            } 
         }
+
     };
     
     {$this->buildJsInitPlugins()}
@@ -1200,7 +1253,8 @@ JS;
 JS;
             }
 
-            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && $cellWidget->getLazyLoading()) ? 'true' : 'false';
+            // only set lazy loading set to true if explicitly set (e.g. in uxon)
+            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && ($cellWidget->getLazyLoading(null) === true)) ? 'true' : 'false';
             $wasLazyLoaded = 'false';
 
             $lazyLoadingRequestJs = json_encode("");
@@ -1742,13 +1796,15 @@ JS;
             throw new FacadeLogicError('TODO');
         }
         $filterJs = '';
-        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false) {
+
+        // only use lazy loading is it is explicitly set (e.g. in uxon)
+        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading(null) !== true) {
+
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 if ($cellWidget instanceof InputComboTable) {
                     $srcSheet = $cellWidget->getOptionsDataSheet();
-                    $table = $cellWidget->getTable()->getColumns();
 
                     // See if the widget has additional filters
                     // If so, add any attributes required for them to the $srcSheet
@@ -1914,12 +1970,11 @@ JS;
                             for (var i = 0; i < oParams.effects.length; i++) {
                                 oEffect = oParams.effects[i];
                                 if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-                                    // refresh immediately if directly affected or delayed if it is an indirect effect
+                                    // refresh immediately if directly affected
+                                    // (indirect effects waere causing issues in some dialogues with filters)
                                     if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
                                         fnRefresh();
-                                    } else {
-                                        setTimeout(fnRefresh, 100);
-                                    }
+                                    } 
                                     return;
                                 }
                             }

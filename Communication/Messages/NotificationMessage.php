@@ -144,35 +144,6 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     {
         return $this->setTitle($value);
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Communication\AbstractMessage::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        if ($this->title !== null) {
-            $uxon->setProperty('title', $this->title);
-        }
-        if ($this->getIcon() !== null) {
-            $uxon->setProperty('icon', $this->getIcon());
-        }
-        if ($this->getIconSet() !== null) {
-            $uxon->setProperty('icon_set', $this->getIconSet());
-        }
-        if ($this->text !== null) {
-            $uxon->setProperty('text', $this->text);
-        }
-        if ($this->widgetUxon !== null) {
-            $uxon->setProperty('body_widget', $this->widgetUxon);
-        }
-        if ($this->buttonsUxon !== null) {
-            $uxon->setProperty('buttons', $this->buttonsUxon);
-        }
-        return $uxon;
-    }
 
     public function getFolder() : ?string
     {

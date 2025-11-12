@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
 /**
@@ -16,6 +17,46 @@ trait JqueryLayoutTrait {
     private $number_of_columns = null;
     
     private $searched_for_number_of_columns = false;
+
+    /**
+     * Return TRUE if this element requires a masonry grid
+     * 
+     * A layout is needed if the container contains multiple widgets, that might be displayed next to each other.
+     * If there is only one widget or all widgets fill the entire width, they will be displayed one-above-another
+     * anyway, so no layout is needed.
+     *
+     * @return bool
+     */
+    public function needsLayout() : bool
+    {
+        $widget = $this->getWidget();
+        if (! $widget instanceof iLayoutWidgets) {
+            return false;
+        }
+        $gridColsCnt = $this->getNumberOfColumns();
+        $visibleCnt = 0;
+        $nonMaxCnt = 0;
+        foreach ($widget->getWidgets() as $child) {
+            if ($child->isHidden()) {
+                continue;
+            }
+            $visibleCnt++;
+            $width = $child->getWidth();
+            switch (true) {
+                case $width->getValue() === '100%':
+                case $width->isMax():
+                case $width->isRelative() && $width->getValue() >= $gridColsCnt:
+                    break;
+                default:
+                    $nonMaxCnt++;
+                    break;
+            }
+            if ($nonMaxCnt > 0 && $visibleCnt > 1) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     /**
      * Returns a JavaScript-Snippet to create/refresh the layout of the widget.

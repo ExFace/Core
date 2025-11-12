@@ -8,19 +8,15 @@ use exface\Core\DataTypes\RegularExpressionDataType;
 
 class SqlDataQuery extends AbstractDataQuery
 {
-
     private $sql = '';
-
-    private $result_array = null;
-
-    private $result_resource = null;
+    private $pkeyCols = [];
     
+    private $result_array = null;
+    private $result_resource = null;
     private $result_row_counter = null;
-
     private $connection = null;
     
     private $multipleStatements = false;
-    
     private $batchDelimiter = null;
 
     /**
@@ -40,6 +36,24 @@ class SqlDataQuery extends AbstractDataQuery
     public function setSql($value)
     {
         $this->sql = $value;
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getPrimaryKeyColumns() : array
+    {
+        return $this->pkeyCols;
+    }
+
+    /**
+     * @param string[] $colNames
+     * @return $this
+     */
+    public function setPrimaryKeyColumns(array $colNames) : SqlDataQuery
+    {
+        $this->pkeyCols = $colNames;
         return $this;
     }
 

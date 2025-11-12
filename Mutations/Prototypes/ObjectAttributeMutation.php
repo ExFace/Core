@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Mutations\AppliedMutation;
+use exface\Core\Mutations\AppliedMutationOnUxon;
 
 /**
  * Allows to modify the model of an attribute
@@ -35,9 +36,12 @@ class ObjectAttributeMutation extends AbstractMutation
         }
 
         /* @var $subject \exface\Core\CommonLogic\Model\Attribute */
-        $stateBefore = null;
         if ($this->hasChanges()) {
-            $stateBefore = $subject->exportUxonObject()->toJson(true);
+            $stateBefore = $subject->exportUxonObject();
+            $hasChanges = true;
+        } else {
+            $stateBefore = new UxonObject();
+            $hasChanges = false;
         }
 
         if (null !== $mutation = $this->getChangeDataTypeMutation()) {
@@ -68,7 +72,7 @@ class ObjectAttributeMutation extends AbstractMutation
             $subject->importUxonObject(new UxonObject($changes));
         }
 
-        return new AppliedMutation($this, $subject, $stateBefore ?? '', ($stateBefore !== null ? $subject->exportUxonObject()->toJson(true) : ''));
+        return new AppliedMutationOnUxon($this, $subject, $stateBefore, ($hasChanges === true ? $subject->exportUxonObject() : new UxonObject()));
     }
 
     /**
