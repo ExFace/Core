@@ -305,7 +305,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::importRows()
      */
     public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true) : DataSheetInterface
@@ -336,11 +335,13 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             if ($other_col = $other_sheet->getColumns()->get($this_col->getName())) {
+                $thisColVals = $this_col->getValues(false);
+                $otherColVals = $other_col->getValues(false);
                 // TODO probably need to copy values to rows with matching UIDs instead of relying on identical sorting here
-                if (count($this_col->getValues(false)) > 0 && count($this_col->getValues(false)) !== count($other_col->getValues(false))) {
+                if (count($thisColVals) > 0 && count($thisColVals) !== count($otherColVals)) {
                     throw new DataSheetImportRowError($this, 'Cannot replace rows of column "' . $this_col->getName() . '": source and target columns have different amount of rows!', '6T5V1XX');
                 }
-                $this_col->setValues($other_col->getValues(false));
+                $this_col->setValues($otherColVals);
             }
             // if the column is formula and still has empty values, add it to columns to be calculated again
             if ($this_col->isFormula() && $this_col->hasEmptyValues()) {                
@@ -2308,12 +2309,18 @@ class DataSheet implements DataSheetInterface
     {
         return $this->autocount;
     }
-
+    
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRows()
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowIndexes()
      */
+    public function getRowIndexes() : array
+    {
+        return array_keys($this->rows);
+    }
+
+    
     function getRows(int $how_many = 0, int $offset = 0) : array
     {
         $return = array();
@@ -2746,13 +2753,13 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRows()
      */
-    public function removeRows(array $rowIndexes = null) : DataSheetInterface
+    public function removeRows(array $rowIndexes = null, bool $reindex = true) : DataSheetInterface
     {
         if ($rowIndexes !== null) {
             $rowIndexes = array_unique($rowIndexes);
             rsort($rowIndexes);
             foreach ($rowIndexes as $i) {
-                $this->removeRow($i);
+                $this->removeRow($i, $reindex);
             }
         } else {
             $this->rows = array();
@@ -2765,10 +2772,12 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRow()
      */
-    public function removeRow(int $row_number) : DataSheetInterface
+    public function removeRow(int $row_number, bool $reindex = true) : DataSheetInterface
     {
         unset($this->rows[$row_number]);
-        $this->rows = array_values($this->rows);
+        if ($reindex === true) {
+            $this->rows = array_values($this->rows);
+        }
         return $this;
     }
 
@@ -3549,11 +3558,7 @@ class DataSheet implements DataSheetInterface
         return $removeRows;
     }
 
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
-     */
+    
     public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array
     {
         $cnt = $this->countRows();
@@ -3583,5 +3588,18 @@ class DataSheet implements DataSheetInterface
             throw new DataNotFoundError($this, $msg);
         }
         return $this->rows[0];
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     */
+    public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface
+    {
+        $copy = $this->copy();
+        $allIdx = $this->getRowIndexes();
+        $removeIdx = array_diff($allIdx, $rowIndexes);
+        return $copy->removeRows($removeIdx, $reindex);
     }
 }

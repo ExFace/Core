@@ -1,16 +1,14 @@
 <?php
 namespace exface\Core\Mutations\Prototypes;
 
-use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
-use exface\Core\Mutations\AppliedMutation;
+use exface\Core\Mutations\AppliedMutationOnArray;
 
 /**
  * Allows to modify a UI page
@@ -61,17 +59,19 @@ class UiPageMutation extends AbstractMutation
         // TODO implement a mutation to change all properties of the page: e.g. name, description, etc.
         // A GenericUxonPrototypeMutation would be cool. We could use the on attributes, objects, etc.
 
-        $stateBefore = (new UxonObject($stateArrayBefore))->toJson(true);
-        $stateAfter = $page->exportUxonObject()->toJson(true);
+        $stateBefore = $stateArrayBefore;
+        $stateAfter = $page->exportUxonObject()->toArray();
 
-        return new AppliedMutation($this, $page, $stateBefore ?? '', $stateAfter ?? '');
+        return new AppliedMutationOnArray($this, $page, $stateBefore, $stateAfter);
     }
 
     protected function applyToMenuItem(UiMenuItemInterface $menuItem): AppliedMutationInterface
     {
         // Apply changes to properties of menu items in general
         $changes = $this->getChangesForMenuItem();
-
+        $stateBefore = [];
+        $stateAfter = [];
+        
         if (! empty($changes)) {
             // Menu items cannot be converted to UXON, so we just put those things in the state array, that
             // can be changed for a menu item
@@ -91,11 +91,11 @@ class UiPageMutation extends AbstractMutation
                 $menuItem->setIntro($val);
             }
 
-            $stateBefore = (new UxonObject($stateArrayBefore))->toJson(true);
-            $stateAfter = (new UxonObject(array_merge($stateArrayBefore, $changes)))->toJson(true);
+            $stateBefore = $stateArrayBefore;
+            $stateAfter = array_merge($stateArrayBefore, $changes);
         }
 
-        return new AppliedMutation($this, $menuItem, $stateBefore ?? '', $stateAfter ?? '');
+        return new AppliedMutationOnArray($this, $menuItem, $stateBefore, $stateAfter);
     }
 
     /**

@@ -425,9 +425,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         
         if ($totals_core_select) {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
         } else {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
         }
         
         if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
@@ -758,6 +758,16 @@ class MsSqlBuilder extends AbstractSqlBuilder
             return ' (NOLOCK) AS ' . $alias;
         }
         return ' AS ' . $alias;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '[' . $tableOrPredicateAlias . ']';
     }
     
     /**

@@ -39,20 +39,6 @@ class EmailMessage extends TextMessage
     
     private $attachmentPath = null;
     
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        if (null !== $this->userEmailAttributeAlias) {
-            $uxon->setProperty('recipient_user_email_attribute', $this->userEmailAttributeAlias);
-        }
-        return $uxon;
-    }
-    
     
     /**
      * 

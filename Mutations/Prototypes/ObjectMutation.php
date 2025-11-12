@@ -4,14 +4,19 @@ namespace exface\Core\Mutations\Prototypes;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\Mutations\AbstractMutation;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
+use exface\Core\Interfaces\Mutations\AppliedMutationOnArrayInterface;
 use exface\Core\Interfaces\Mutations\MutationInterface;
 use exface\Core\Mutations\AppliedEmptyMutation;
+use exface\Core\Mutations\AppliedMutation;
+use exface\Core\Mutations\AppliedMutationOnArray;
+use exface\Core\Mutations\AppliedMutationOnUxon;
 
 /**
  * Allows to modify the model of an object
@@ -60,34 +65,56 @@ class ObjectMutation extends AbstractMutation
         if (! $this->supports($subject)) {
             throw new InvalidArgumentException('Cannot apply page mutation to ' . get_class($subject) . ' - only instances of pages supported!');
         }
+        
+        $objectChanges = $this->getObjectChanges();
+        $stateBefore = [];
+        $stateAfter = [];
 
         /* @var $subject \exface\Core\CommonLogic\Model\MetaObject */
-        if (null !== $val = ($changedObjects['name'] ?? null)) {
+        if (null !== $val = ($objectChanges['name'] ?? null)) {
+            $stateBefore['name'] = $subject->getName();
             $subject->setName($val);
+            $stateAfter['name'] = $subject->getName();
         }
-        if (null !== $val = ($changedObjects['description'] ?? null)) {
+        if (null !== $val = ($objectChanges['description'] ?? null)) {
+            $stateBefore['description'] = $subject->getShortDescription();
             $subject->setShortDescription($val);
+            $stateAfter['description'] = $subject->getShortDescription();
         }
-        if (null !== $val = ($changedObjects['data_address'] ?? null)) {
+        if (null !== $val = ($objectChanges['data_address'] ?? null)) {
+            $stateBefore['data_address'] = $subject->getDataAddress();
             $subject->setDataAddress($val);
+            $stateAfter['data_address'] = $subject->getDataAddress();
         }
         if (null !== $mutation = $this->getDataAddressPropertiesMutation()) {
+            $stateBefore['data_address_properties'] = $subject->getDataAddressProperties()->toArray();
             $uxon = $subject->getDataAddressProperties();
             $mutation->apply($uxon);
             $subject->setDataAddressProperties($uxon);
+            $stateAfter['data_address_properties'] = $subject->getDataAddressProperties()->toArray();
         }
-        if (null !== $val = ($changedObjects['readable'] ?? null)) {
+        if (null !== $val = ($objectChanges['readable'] ?? null)) {
+            $stateBefore['name'] = $subject->isReadable();
             $subject->setReadable($val);
+            $stateAfter['readable'] = $subject->isReadable();
         }
-        if (null !== $val = ($changedObjects['writable'] ?? null)) {
+        if (null !== $val = ($objectChanges['writable'] ?? null)) {
+            $stateBefore['name'] = $subject->isWritable();
             $subject->setWritable($val);
+            $stateAfter['writable'] = $subject->isWritable();
         }
 
+        $stateBefore['attributes'] = [];
+        $stateAfter['attributes'] = [];
         foreach ($this->getAttributeMutations() as $mutation) {
             try {
                 $alias = $mutation->getAttributeAlias();
                 $attr = $subject->getAttribute($alias);
-                $mutation->apply($attr);
+                $attrMutationApplied = $mutation->apply($attr);
+                if ($attrMutationApplied instanceof AppliedMutationOnArrayInterface) {
+                    $stateBefore['attributes'][$alias] = $attrMutationApplied->dumpStateBeforeAsArray();
+                    $stateAfter['attributes'][$alias] = $attrMutationApplied->dumpStateAfterAsArray();
+                }
             } catch (MetaAttributeNotFoundError $e) {
                 throw new RuntimeException('Cannot apply mutation "' . $this->getName() . '". ' . $e->getMessage(), null, $e);
             }
@@ -106,13 +133,14 @@ class ObjectMutation extends AbstractMutation
                 $attr = new CustomAttribute($subject, $name, $alias, $this);
                 $attr->importUxonObject($uxon);
                 $subject->addAttribute($attr);
+                $stateAfter['attributes'][$alias] = $uxon->toArray();
             }
         }
         
         // TODO add attribute groups management here. Probably similarly to attributes also `change_attribute_groups`
         // and `add_attribute_groups`.
 
-        return new AppliedEmptyMutation($this, $subject);
+        return new AppliedMutationOnArray($this, $subject, $stateBefore, $stateAfter);
     }
 
     /**

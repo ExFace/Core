@@ -223,7 +223,7 @@ class Data
                 }
                 
                 if ($col->hasNestedData()) {
-                    if(null === $nestedCol = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias())) {
+                    if(false === $nestedCol = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias())) {
                         $nestedCol = $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias());
                     }
                     
@@ -678,6 +678,12 @@ class Data
         // IDEA yield column groups? They are actually the direct children...
         foreach ($this->getColumns() as $col) {
             yield $col;
+        }
+        // Yield nested sheet column groups separately as they are not contained in $this->getColumns()
+        foreach ($this->getColumnGroups() as $group) {
+            if ($group instanceof DataColumnSubsheet) {
+                yield $group;
+            }
         }
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
