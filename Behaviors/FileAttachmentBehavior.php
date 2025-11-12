@@ -106,10 +106,44 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  * files to be kept even if the attachments are deleted.
  * 
  * ## Examples
- * 
- * ### Basic Configuration
  *
- * Used in `axenox.ETL.webservice_request`, the storage object is `axenox.ETL.webservice_request_storage`.
+ * ### Persisted paths calculated from data
+ * 
+ * In this example, we are attaching files to an INVOICE object. The FILE_STORAGE object contains the
+ * data source pointing to the real file system. The attachment does not care, where exactly the files will
+ * be saved, but inside of this storage there will be an `Invoices` folder, where we will create subfolders
+ * for every invoice number and store files there. Every filename will get the UID of the attachment object
+ * as prefix - this is a good practice to allow users to upload multiple files with the same name without
+ * the risc of invisible overwrites.
+ * 
+ * For example, if uploading `invoice.xlsx` for invoice `I2024-78555` will produce an attachment entry with UID 
+ * `12258`, the file will be stored in `Invoices/I2024-78555/12258_invoice.xlsx`. However, the filename prefix
+ * will not be visible to users - they will still see `invoice.xlsx` because we explicitly save the FILENAME in
+ * the attachment and use `override_file_attributes` to make sure it is treated as the name of the file. Even
+ * if we download the file, it will be still named `invoice.xlsx`.
+ * 
+ * Storing creation/modification timestamps and mime type in the attachment object and overriding the
+ * corresponding file attributes allows us to use them as filters/sorters for attachments without querying the
+ * slow file system.
+ *
+ * ```
+ *  {
+ *      "file_relation": "FILE_STORAGE",
+ *      "file_path_calculation": "=Concatenate('Invoices/', INVOICE__NUMBER, '/', UID, '_', FILENAME)"
+ *      "override_file_attributes": {
+ *          "filename_attribute": "FILENAME",
+ *          "time_created_attribute": "CREATED_ON",
+ *          "time_modified_attribute": "MODIFIED_ON",
+ *          "mime_type_attribute": "MIME_TYPE"
+ *      }
+ *  }
+ * 
+ * ```
+ * 
+ * ### Live-calculated paths
+ *
+ * Used in `axenox.ETL.webservice_request`, the storage object is `axenox.ETL.webservice_request_storage`. The
+ * `body_file` attribute is a read-only SQL statement in this case.
  *
  * ```
  *  {
@@ -118,34 +152,6 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  *          "mime_type_attribute": "content_type",
  *          "time_created_attribute": "CREATED_ON",
  *          "time_modified_attribute": "MODIFIED_ON"
- *      }
- *  }
- * 
- * ```
- *
- * ### Select folder based on data conditions
- *
- * ```
- *  {
- *      "file_relation": "file_storage",
- *      "override_file_attributes": {
- *          "filename_attribute": "filename",
- *          "time_created_attribute": "created_on",
- *          "time_modified_attribute": "modified_on"
- *      },
- *      "path_conditions": {
- *          "invoices/[#invoice_id#]": {
- *              "operator": "AND",
- *              "conditions": [
- *                  {"expression": "invoice_id", "comparator": "!==", "value": "NULL"}
- *              ]
- *          },
- *          "orders/[#order_id#]": {
- *              "operator": "AND",
- *              "conditions": [
- *                  {"expression": "order_id", "comparator": "!==", "value": "NULL"}
- *              ]
- *          }
  *      }
  *  }
  * 
