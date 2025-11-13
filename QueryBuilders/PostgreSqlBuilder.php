@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\DataTypes\StringDataType;
@@ -18,6 +19,7 @@ use exface\Core\Factories\ConditionFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 
 /**
@@ -158,7 +160,7 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'IFNULL';
+        return 'COALESCE';
     }
 
     /**
@@ -236,5 +238,53 @@ SQL;
             $expr = '"' . str_replace('"', '""', $expr) . '"';
         }
         return trim($expr . ' ' . $direction);
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::buildSqlGroupByExpression()
+     */
+    protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
+        $output = '';
+
+        $args = $aggregator->getArguments();
+        $function_name = $aggregator->getFunction()->getValue();
+
+        switch ($function_name) {
+            case AggregatorFunctionsDataType::SUM:
+            case AggregatorFunctionsDataType::AVG:
+            case AggregatorFunctionsDataType::COUNT:
+            case AggregatorFunctionsDataType::MAX:
+            case AggregatorFunctionsDataType::MIN:
+                $output = $function_name . '(' . $sql . ')';
+                break;
+            case AggregatorFunctionsDataType::MAX_OF:
+            case AggregatorFunctionsDataType::MIN_OF:
+                // MIN_OF/MAX_OF is handled in buildSqlSelectSubselect()
+                $output = $sql;
+                break;
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+            case AggregatorFunctionsDataType::LIST_ALL:
+                $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
+                $output = "STRING_AGG(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . ", '{$this->escapeString($delim)}')";
+                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+                break;
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                $output = "COUNT(DISTINCT " . $sql . ")";
+                break;
+            case AggregatorFunctionsDataType::COUNT_IF:
+                $cond = $args[0];
+                list($if_comp, $if_val) = explode(' ', $cond ?? '', 2);
+                if (!$if_comp || is_null($if_val)) {
+                    throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
+                }
+                //we have to explicitly use the datatype of the attribute here so we can parte the values correctly in the where part
+                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($qpart, $sql, $if_comp, $if_val, false, false, $qpart->getAttribute()->getDataType()) . " THEN 1 ELSE 0 END)";
+                break;
+            default:
+                break;
+        }
+
+        return $output;
     }
 }
