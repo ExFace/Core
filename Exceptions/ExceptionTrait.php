@@ -48,6 +48,8 @@ trait ExceptionTrait {
     private $useExceptionMessageAsTitle = false;
 
     private $statusCode = null;
+    
+    private array $links = [];
 
     public function __construct($message, $alias = null, $previous = null)
     {
@@ -105,16 +107,16 @@ trait ExceptionTrait {
             if ($this->getAlias()) {
                 try {
                     $msgModel = $this->getMessageModel($page->getWorkbench());
-                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-                        ->setHeadingLevel(2)
-                        ->setWidth(WidgetDimension::MAX)
-                        ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $msgModel->getTitle());
-                    $error_tab->addWidget($error_heading);
-                    $error_text = WidgetFactory::create($page, 'Markdown', $error_tab)
-                        ->setWidth(WidgetDimension::MAX)
+                    
+                    $error_heading = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setHideCaption(true)
-                        ->setValue("> {$this->getMessage()}");
-                    $error_tab->addWidget($error_text);
+                        ->setWidth(WidgetDimension::MAX)
+                        ->setValue(<<<MD
+# {$debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION')} {$this->getAlias()}: {$msgModel->getTitle()}
+
+> {$this->getMessage()}
+MD);
+                    $error_tab->addWidget($error_heading);
                     if ($hint = $msgModel->getHint()) {
                         $error_hint = WidgetFactory::create($page, 'Message', $error_tab)
                         ->setText($hint)
@@ -127,9 +129,9 @@ trait ExceptionTrait {
                         ->setWidth(WidgetDimension::MAX)
                         ->setHideCaption(true)
                         ->setOpenLinksIn('popup')
-                        ->setOpenLinksInPopupWidth(1200)
+                        ->setOpenLinksInPopupWidth(800)
                         ->setOpenLinksInPopupHeight(800)
-                        ->setValue($msgModel->getDescription());
+                        ->setValue($msgModel->getDescription() . $this->getLinksAsMarkdown());
                     $error_tab->addWidget($error_descr);
                 } catch (\Throwable $e) {
                     $debug_widget->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e));
@@ -196,6 +198,18 @@ trait ExceptionTrait {
         }
         
         return $debug_widget;
+    }
+    
+    protected function getLinksAsMarkdown(int $headingLevel = 2) : string
+    {
+        $md = '';
+        foreach ($this->getLinks() as $title => $url) {
+            $md .= "\n- [{$title}]({$url})";
+        }
+        if ($md !== '') {
+            $md = "\n\n" . str_pad('#', $headingLevel, '#', STR_PAD_LEFT) . "Useful links\n" . $md;
+        }
+        return $md;
     }
     
     /**
@@ -402,5 +416,30 @@ trait ExceptionTrait {
     {
         $this->useExceptionMessageAsTitle = $value;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ExceptionInterface::addLink()
+     */
+    public function addLink(string $title, string $url) : ExceptionInterface
+    {
+        $this->links[$title] = $url;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = $this->links;
+        if ($prev = $this->getPrevious()) {
+            if ($prev instanceof ExceptionInterface) {
+                $links = array_merge($prev->getLinks(), $links);
+            }
+        }
+        return array_unique($links);
     }
 }
