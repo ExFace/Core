@@ -82,6 +82,7 @@ class OrderingBehavior extends AbstractBehavior
     private const KEY_LOADED = 'loaded';
     private const KEY_PRIORITY = 'priority';
     private const KEY_MAX_INDEX = 'maxIndex';
+    private const KEY_SAFE_INDEX = 'safeIndex';
     const KEY_GROUPS = 'changedGroups';
 
     // internal variables
@@ -378,7 +379,7 @@ class OrderingBehavior extends AbstractBehavior
             // If the pending index conflicts with the original data, we need to shift it.
             $indexColumn = $siblingData[self::KEY_LOADED]->getColumnValues($indexAlias);
             if(in_array($pendingIndex, $indexColumn)) {
-                $safeIndex = $siblingData[self::KEY_MAX_INDEX] - $startIndex + 1;
+                $safeIndex = $siblingData[self::KEY_SAFE_INDEX] - $startIndex + 1;
                 $newIndex = $pendingIndex + $safeIndex;
                 $pendingRow[$indexAlias] = $newIndex;
                 $shiftedIndices[$newIndex] = $pendingIndex;
@@ -461,7 +462,9 @@ class OrderingBehavior extends AbstractBehavior
             // If any of the parent aliases changed (i.e. the entry was moved to a different
             // group) both groups must be updated.
             $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $uid);
-            if(!$this->belongsToGroup($loadedRow, $eventGroup)) {
+            if( $loadedRow !== null &&
+                !$this->belongsToGroup($loadedRow, $eventGroup)
+            ) {
                 $loadedGroup = $this->getParentsForRow($loadedRow);
                 $changedGroups[json_encode($loadedGroup)] = $loadedGroup;
             }
@@ -966,7 +969,7 @@ class OrderingBehavior extends AbstractBehavior
         foreach ($updateSheet->getRows() as $row) {
             $siblingData = $siblingCache->getData($this->getParentsForRow($row));
             $pendingIndex = $row[$indexAlias];
-            $safeIndex = $siblingData[self::KEY_MAX_INDEX] - $startIndex + 1;
+            $safeIndex = $siblingData[self::KEY_SAFE_INDEX] - $startIndex + 1;
             $row[$indexAlias] = $pendingIndex + $safeIndex;
             $shiftSheet->addRow($row, false, false);
         }
@@ -1166,11 +1169,14 @@ class OrderingBehavior extends AbstractBehavior
         BehaviorLogBook             $logbook) : void
     {
         $indexAlias = $this->getOrderNumberAttributeAlias();
+        $maxIndex = max($allSiblingsSheet->getColumnValues($indexAlias));
+        $safeIndex = max($maxIndex, max($loadedSiblingsSheet->getColumnValues($indexAlias)));
         $cacheEntry = [
             self::KEY_LOADED => $loadedSiblingsSheet,
             self::KEY_ALL => $allSiblingsSheet,
             self::KEY_PRIORITY => $priorityRows,
-            self::KEY_MAX_INDEX => max($allSiblingsSheet->getColumnValues($indexAlias))
+            self::KEY_MAX_INDEX => $maxIndex,
+            self::KEY_SAFE_INDEX => $safeIndex
         ];
 
         try {
