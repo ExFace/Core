@@ -2,6 +2,8 @@
 namespace exface\Core\Facades;
 
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
@@ -25,8 +27,8 @@ use GuzzleHttp\Psr7\ServerRequest;
  * Usage:
  * 
  * - api/docs - render a list of links to all available app docs
- * - api/docs/exface/Core/index.md - render the index page for the Core app docs
- * - api/docs/exface/Core/index.md?render=print - render a printable version of the core docs with all subpages
+ * - api/docs/exface/Core/Docs/index.md - render the index page for the Core app docs
+ * - api/docs/exface/Core/Docs/index.md?render=print - render a printable version of the core docs with all subpages
  * 
  * @author Andrej Kabachnik
  *
@@ -104,6 +106,18 @@ class DocsFacade extends AbstractHttpFacade
         $reader = new MarkdownDocsReader($this->getWorkbench());
         
         switch (true) {
+            // api/docs/exface/Core/UXON/UXON_prototypes.md?selector=...
+            case StringDataType::endsWith($request->getUri()->getPath(), 'UXON/UXON_prototypes.md'):
+                $query = $request->getUri()->getQuery();
+                $params = [];
+                parse_str($query, $params);
+                $selector = urldecode($params['selector']);
+                $printer = new UxonPrototypeMarkdownPrinter($this->getWorkbench(), $selector);
+                $markdown = $printer->getMarkdown();
+                $html = MarkdownDataType::convertMarkdownToHtml($markdown);
+                $response = new Response(200, [], $html);
+                $response = $response->withHeader('Content-Type', 'text/html');
+                break;
             // If a printout is requested, include all child pages as chapters
             // TODO move the whole printing logic to a middleware
             case ($request->getQueryParams()[self::URL_PARAM_RENDER] === self::URL_PARAM_RENDER_PRINT):
@@ -141,7 +155,7 @@ class DocsFacade extends AbstractHttpFacade
                 $response = $handler->handle($request);
                 break;
             
-            // By defualt, render the regular interactiv template
+            // By defualt, render the regular interactive template
             default:
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
