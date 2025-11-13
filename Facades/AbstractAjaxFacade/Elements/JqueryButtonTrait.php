@@ -575,18 +575,21 @@ JS;
         
         // Render JS for the chain
         // Starting with the front-end-actions BEFORE the first server-action
-        $js = 'var oChainThis = this; ';
+        $js = "var oChainThis = this; var oRunningResult = $jsRequestData;";
         for ($i = 0; $i < $firstServerActionIdx; $i++) {
-            $js .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
+            $js .= $this->buildJsClickFunction($steps[$i], 'oRunningResult') . "\n\n";
         }
         // Now prepare the front-end-actions AFTER the last server-action and save their
-        // code into $onSuccess in order to perform it after the server request
-        $onSuccess = '';
+        // code into $onServerSuccess in order to perform it after the server request
+        $onServerSuccess = '';
         for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
+            // Save the server result to the running result variable
+            // TODO only do this if use_result_of_action is AFTER the last server action
+            $onServerSuccess .= "oRunningResult = oResultData;";
             // Make sure the on-success code has the same `this` in the JS as the code
             // executed immediately. After all, the action handlers cannot know, that
             // they are called within a chain.
-            $onSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], $jsRequestData)} }).call(oChainThis); \n\n";
+            $onServerSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], 'oResultData')} }).call(oChainThis); \n\n";
         }
         
         // TODO Multiple server actions in the middle are not supported yet
@@ -597,7 +600,7 @@ JS;
         // Now send the server-action stuff to the server and do the remaining JS-part of the chain
         // after a successful response was received.
         $serverAction = $steps[$firstServerActionIdx];
-        $js .= $this->buildJsClickOfflineWrapper($serverAction, $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
+        $js .= $this->buildJsClickOfflineWrapper($serverAction, $this->buildJsClickCallServerAction($action, $jsRequestData, $onServerSuccess, 'oResultData'), $onServerSuccess);
         
         return $js;
     }
@@ -723,12 +726,17 @@ JS;
     }
 
     /**
+     * Returns JS code to call a server action via AJAX
+     * 
+     * The $jsOnSuccess will be called after the AJAX calls succeeds and will have access to the received data
+     * in $oResultDataJsVar JS variable.
      * 
      * @param ActionInterface $action
-     * @param AbstractJqueryElement $input_element
+     * @param string $jsRequestData
+     * @param string $jsOnSuccess
      * @return string
      */
-    protected function buildJsClickCallServerAction(ActionInterface $action, string $jsRequestData, string $jsOnSuccess = '') : string
+    protected function buildJsClickCallServerAction(ActionInterface $action, string $jsRequestData, string $jsOnSuccess = '', string $oResultDataJsVar = 'oResultData') : string
     {
         $widget = $this->getWidget();
         
@@ -747,6 +755,7 @@ JS;
 									data: {$jsRequestData}
 								},
 								success: function(data, textStatus, jqXHR) {
+								    var {$oResultDataJsVar};
                                     if (typeof data === 'object') {
                                         response = data;
                                     } else {
@@ -757,6 +766,7 @@ JS;
     										response.error = data;
     									}
                                     }
+                                    {$oResultDataJsVar} = response;
 				                   	if (response.success !== undefined){
 										{$this->buildJsCloseDialog()}
 				                       	{$this->buildJsBusyIconHide()}
