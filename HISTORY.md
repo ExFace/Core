@@ -1,5 +1,30 @@
 # Release history
 
+## 1.33 - 13.11.2025
+
+New features:
+
+- UXON snippet mutations
+- Much improved `Gantt` widget now able to display multiple bars per row
+- Added `AzureGraphApiEmailConnector` to send Emails via Microsoft GraphAPI
+- Added PostreSQL connector & query builder
+- New widget `InputColorPalette` - a color picker with a palette of preset colors
+- New formulas:
+  - `=TimeDiff()`
+  - `=RowExpressionValue()`
+
+Improvements:
+
+- One-Time-Links in the HttpFileServerFacade now use the permalink framework
+- Improved profiler in traced server requests
+- Improved handling of column widths in widget setups for tables
+- Added option `read_all` to improve performance of lookup-mappings
+- `FileAttachmentBehavior` can now generate and save file storage paths via formula in `file_path_calculation `
+- `CallActionBehavior` can now read required data in-advance from a configurable `input_data_event_alias`
+- Improved data imports via [axenox.ETL](https://github.com/axenox/etl) app
+  - Added profiler tab to data flow step run details
+  - Improved performance of duplicate checks in API-to-DataSheet flow steps
+
 ## 1.32 - 08.10.2025
 
 Global news:

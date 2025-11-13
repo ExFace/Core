@@ -274,7 +274,10 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets,
         $html = <<<HTML
 
 <style>
+    #{$id} td {position: relative}
     #{$id} td:first-of-type, #{$id} th:first-of-type {width: 40%}
+    #{$id} td:nth-of-type(2), #{$id} th:nth-of-type(2) {width: 2rem}
+    #{$id} th:nth-of-type(2) {text-align: right}
     #{$id} td:last-of-type, #{$id} th:last-of-type {width: 10%}
     #{$id} .waterfall-offset {overflow: visible; white-space: nowrap; display: inline-block;}
     #{$id} .waterfall-bar {background-color: lightgray; display: inline-block; overflow: visible;}
@@ -432,14 +435,15 @@ HTML;
         $totalDur = $endTime - $startTime;
         $totalMem = $this->getMemoryPeakBytes();
         $minWidth = '1px';
-        $milestoneSymbol = '&loz;';
+        $milestoneSymbol = '<div style="margin-left: -2px">&loz;</div>';
         $emptySymbol = '&nbsp;';
         
         $html .= <<<HTML
 <table id="{$id}" class="debug-profiler" width="100%">
     <thead>
         <tr>
-            <th>Event</th>
+            <th>Process</th>
+            <th>Calls</th>
             <th>Duration</th>
             <th>Memory</th>
         </tr>
@@ -448,12 +452,13 @@ HTML;
 HTML;
         $html .= $this->buildHtmlProfilerRow(
             $this->getName(), 
-            $emptySymbol, 
+            $emptySymbol,
+            1,
             '0px', 
             'calc(100% - 3px)', 
-            'Max. ' . TimeDataType::formatMs($totalDur),
+            'Total  ' . TimeDataType::formatMs($totalDur),
             '0px',
-            ByteSizeDataType::formatWithScale($totalMem)
+            'Max ' . ByteSizeDataType::formatWithScale($totalMem)
         );
         
         $lines = $this->getLines();
@@ -489,22 +494,21 @@ HTML;
            
             $tooltipData = [
                 'Category' => $line->getCategory(),
-                'Duration' => TimeDataType::formatMs($line->getTimeTotalMs(), $this->msDecimals),
-                'Memory allocated' => $eventMemText,
+                'Calls' => $line->countLaps(),
+                'Total time (all calls)' => TimeDataType::formatMs($line->getTimeTotalMs(), $this->msDecimals),
+                'Avg. time per call' => TimeDataType::formatMs($line->getTimeAvgMs()),
+                'Total memory allocated' => $eventMemText,
+                'Avg. memory per call' => ByteSizeDataType::formatWithScale($line->getMemoryAvgBytesPerLap()),
                 'Memory @ start' => ByteSizeDataType::formatWithScale($line->getMemoryStartBytes()),
                 'Memory @ stop' => ByteSizeDataType::formatWithScale($line->getMemoryStopBytes()),
                 'PHP class' => $line->getPhpClass()
             ];
-            if ($line->countLaps() > 1) {
-                $tooltipData['Calls'] = $line->countLaps();
-                $tooltipData['Avg. time per call'] = TimeDataType::formatMs($line->getTimeAvgMs());
-                $tooltipData['Avg. memory per call'] = ByteSizeDataType::formatWithScale($line->getMemoryAvgBytesPerLap());
-            }
             $tooltipData = array_merge($tooltipData, $line->getData());
 
             $html .= $this->buildHtmlProfilerRow(
                 $line->getName(),
                 $eventSymbol,
+                $line->countLaps(),
                 $eventOffset, // $timeBarOffset
                 $eventWidth, // $timeBarWidth
                 TimeDataType::formatMs($line->getTimeTotalMs(), $this->msDecimals), // $timeBarText
@@ -535,6 +539,7 @@ HTML;
     protected function buildHtmlProfilerRow(
         string $name,
         string $symbol,
+        int    $calls,
         string $timeBarOffset, 
         string $timeBarWidth, 
         string $timeBarText = null,
@@ -553,6 +558,7 @@ HTML;
         return <<<HTML
     <tr class="{$cssClass}" title={$tooltip}>
         <td>{$name}</td>
+        <td>{$calls}</td>
         <td>
             <span class="waterfall-label">{$timeBarText}</span>
             <span class="waterfall-offset" style="width: {$timeBarOffset}"></span>
