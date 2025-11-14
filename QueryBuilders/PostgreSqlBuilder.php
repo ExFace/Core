@@ -4,6 +4,7 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\DateDataType;
@@ -121,7 +122,7 @@ class PostgreSqlBuilder extends MySqlBuilder
                         $value = $data_type->convertToHex($value, true);
                     }
                     if (stripos($value, '0x') === 0) {
-                        return "'" . substr($value, 2) . "'";
+                        return "'\x" . substr($value, 2) . "'";
                     } else {
                         return "'$value'";
                     }
@@ -131,6 +132,8 @@ class PostgreSqlBuilder extends MySqlBuilder
         } else if ($data_type instanceof TextDataType) {
             $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
             return stripcslashes($value);
+        } else if ($data_type instanceof HexadecimalNumberDataType) {
+            return "'".str_replace('0x','\\x',$value) . "'";
         }
         
         return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
@@ -213,6 +216,18 @@ SQL;
     
     /**
      * {@inheritDoc}
+     * @see AbstractSqlBuilder::decodeBinary()
+     */
+    protected function decodeBinary($value) : ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        return str_replace('\\x', '0x', $value);
+    }
+    
+    /**
+     * {@inheritDoc}
      * @see AbstractSqlBuilder::buildSqlOrderBy()
      */
     protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
@@ -281,5 +296,15 @@ SQL;
         }
 
         return $output;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
     }
 }
