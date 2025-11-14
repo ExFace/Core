@@ -4,19 +4,11 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
-use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\TextDataType;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
-use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
@@ -136,6 +128,9 @@ class PostgreSqlBuilder extends MySqlBuilder
                 default:
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
             }
+        } else if ($data_type instanceof TextDataType) {
+            $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
+            return stripcslashes($value);
         }
         
         return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
