@@ -174,30 +174,39 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
         switch (true) {
             // Arrays
             case is_array($varVal):
-                if ($toSheet->isEmpty() === true && $this->createRowInEmptyData === false) {
-                    $log .= " Will not add row to empty data because `create_row_in_empty_data` is `false`.";
-                    break;                    
-                }
-                if ($toSheet->isEmpty() === true && $this->createRowInEmptyData === true) {
-                    $log .= " Adding new rows because the to-sheet was empty.";
-                    foreach ($varVal as $rowVal) {
-                        $toSheet->addRow([$newCol->getName() => $rowVal]);
-                    }                
-                } elseif ($this->duplicateRows === true) {
-                    $toSheetNew = $toSheet->copy();
-                    $toSheetNew->removeRows();
-                    $log .= " Duplicating rows because because `duplicate_rows` is `true` and values saved in variable is an array.";
-                    foreach ($varVal as $val) {
-                        $toSheetCopy = $toSheet->copy();
-                        $toSheetCopy->getColumns()->getByExpression($toExpr)->setValueOnAllRows($val);
-                        $toSheetNew->addRows($toSheetCopy->getRows());
-                    }
-                    $toSheet->removeRows()->addRows($toSheetNew->getRows());
-                } elseif ($toSheet->countRows() === count($varVal)) {
-                    $log .= " Row counts matches values count. Setting values for rows.";
-                    $newCol->setValues($varVal);
-                } else {
-                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map array variable "' . $varName . '" with ' . count($varVal) . ' values to column "' . $toExpr->__toString() . '" with ' . $toSheet->countRows() . ' rows!');
+                $uniqueVals = array_unique($varVal);
+                switch (true) {
+                    case $toSheet->isEmpty() === true && $this->createRowInEmptyData === false:
+                        $log .= " Will not add row to empty data because `create_row_in_empty_data` is `false`.";
+                        break 2;                    
+                    case $toSheet->isEmpty() === true && $this->createRowInEmptyData === true:
+                        $log .= " Adding new rows because the to-sheet was empty.";
+                        foreach ($varVal as $rowVal) {
+                            $toSheet->addRow([$newCol->getName() => $rowVal]);
+                        }     
+                        break;
+                    case $this->duplicateRows === true:
+                        $toSheetNew = $toSheet->copy();
+                        $toSheetNew->removeRows();
+                        $log .= " Duplicating rows because because `duplicate_rows` is `true` and values saved in variable is an array.";
+                        foreach ($varVal as $val) {
+                            $toSheetCopy = $toSheet->copy();
+                            $toSheetCopy->getColumns()->getByExpression($toExpr)->setValueOnAllRows($val);
+                            $toSheetNew->addRows($toSheetCopy->getRows());
+                        }
+                        $toSheet->removeRows()->addRows($toSheetNew->getRows());
+                        break;
+                    case $toSheet->countRows() === count($varVal):
+                        $log .= " Row counts matches values count. Setting values for rows.";
+                        $newCol->setValues($varVal);
+                        break;
+                    case count($uniqueVals) === 1:
+                        $val = $varVal[0];
+                        $log .= " The " . count($varVal) . " from-rows all contain the same value \"{$val}\". Setting this value to all to-rows.";
+                        $newCol->setValueOnAllRows($varVal[0]);
+                        break;
+                    default:
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map array variable "' . $varName . '" with ' . count($varVal) . ' values to column "' . $toExpr->__toString() . '" with ' . $toSheet->countRows() . ' rows!');
                 }
                 break;
             // Scalars
