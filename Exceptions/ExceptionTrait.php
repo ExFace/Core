@@ -73,7 +73,7 @@ trait ExceptionTrait {
      */
     public function createWidget(UiPageInterface $page)
     {
-        // Make sure, the widget is generated only once. Otherwise different parts of the code might get different widgets (with different ids).
+        // Make sure, the widget is generated only once. Otherwise, different parts of the code might get different widgets (with different ids).
         if (! is_null($this->exception_widget)) {
             return $this->exception_widget;
         }

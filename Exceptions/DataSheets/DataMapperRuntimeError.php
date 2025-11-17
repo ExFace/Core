@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -61,5 +62,16 @@ class DataMapperRuntimeError extends RuntimeException implements DataMapperExcep
             $error_message = $this->logbook->createDebugWidget($error_message);
         }
         return $error_message;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $links['Data mapper configuration options'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($this->getMapper()));
+        return $links;
     }
 }
