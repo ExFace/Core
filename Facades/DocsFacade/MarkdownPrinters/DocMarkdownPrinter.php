@@ -11,16 +11,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
 
 class DocMarkdownPrinter
 {
-    //erhählt immer einen Link
-    /*
-     * api\/docs\/axenox\/genai\/Docs\/AI_Testing\/index.md
-     * 
-     * api\/docs\/ zeigt das der Link stimmt 
-     * bis zu Docs also zwischen kleinen und großen Docs steht die App z.b axenox.genai (muss vlllt axenox.Genai oder so geschrieben werden)
-     * dahinter der aktuelle Pfad
-     * 
-     * https://chatgpt.com/c/69185ba5-d238-832e-914d-7e1576d90220
-     */
     
     private WorkbenchInterface $workbench;
     
