@@ -88,9 +88,9 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
             $relation = "";
             if ($attribute->isRelation()) {
                 $relationObject = $attribute->getRelation();
-                $relation = $this->escapeCell($relationObject->getAlias());
                 $rightObject = $relationObject->getRightObject();
-                $link = '"'. $rightObject->getName() .'"['. $rightObject->getNameSpace() ."." .$rightObject->getName() ."]";
+                $relation = $this->escapeCell($rightObject->getAlias());
+                $link = '"'. $rightObject->getName() .'"['. $rightObject->getNameSpace() ."." .$rightObject->getAlias() ."]";
                 $this->addRelation($rightObject->getId());
                 $relation = "[" . $relation . "]"; 
                 $relation .= "(Available_metaobjects.md?selector=". urlencode($link) .")";
