@@ -153,7 +153,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
             }
 
             if (!pg_query($this->getCurrentConnection(), 'BEGIN')) {
-                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error());
+                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error($this->getCurrentConnection()));
             }
 
             $this->setTransactionStarted(true);
@@ -169,7 +169,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'COMMIT')) {
-            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error());
+            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);
@@ -183,7 +183,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'ROLLBACK')) {
-            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error());
+            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);
