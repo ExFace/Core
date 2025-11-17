@@ -4,19 +4,12 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
-use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\TextDataType;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
-use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
@@ -129,13 +122,18 @@ class PostgreSqlBuilder extends MySqlBuilder
                         $value = $data_type->convertToHex($value, true);
                     }
                     if (stripos($value, '0x') === 0) {
-                        return "'" . substr($value, 2) . "'";
+                        return "'\x" . substr($value, 2) . "'";
                     } else {
                         return "'$value'";
                     }
                 default:
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
             }
+        } else if ($data_type instanceof TextDataType) {
+            $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
+            return stripcslashes($value);
+        } else if ($data_type instanceof HexadecimalNumberDataType) {
+            return "'".str_replace('0x','\\x',$value) . "'";
         }
         
         return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
@@ -218,6 +216,18 @@ SQL;
     
     /**
      * {@inheritDoc}
+     * @see AbstractSqlBuilder::decodeBinary()
+     */
+    protected function decodeBinary($value) : ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        return str_replace('\\x', '0x', $value);
+    }
+    
+    /**
+     * {@inheritDoc}
      * @see AbstractSqlBuilder::buildSqlOrderBy()
      */
     protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
@@ -286,5 +296,15 @@ SQL;
         }
 
         return $output;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
     }
 }

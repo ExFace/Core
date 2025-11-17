@@ -9,5 +9,5 @@ Interface ActionExceptionInterface
      *
      * @return ActionInterface
      */
-    public function getAction();
+    public function getAction() : ActionInterface;
 }

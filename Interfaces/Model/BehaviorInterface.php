@@ -8,7 +8,7 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 
-interface BehaviorInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, AliasInterface, iCanBeCopied
+interface BehaviorInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, AliasInterface, iCanBeCopied, \Stringable
 {
     /**
      * 

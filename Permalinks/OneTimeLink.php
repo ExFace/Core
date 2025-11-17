@@ -9,6 +9,7 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
@@ -21,11 +22,13 @@ use http\Exception\BadUrlException;
  * 
  * 
  * **Link Syntax:** 
- * - `api/files/otl/my.App.OBJECT_ALIAS/0x5468789`
- * - `api/permalink/exface.core.otl/my.App.OBJECT_ALIAS/0x5468789`
+ * - `api/files/otl/my.App.OBJECT_ALIAS/7a2aadee-60cc-4029-845d-125bf14623ad`
+ * - `api/permalink/exface.Core.OTL/7a2aadee-60cc-4029-845d-125bf14623ad`
  */
 class OneTimeLink extends AbstractPermalink
 {    
+    const TEST_SLUG = '7a2aadee-60cc-4029-845d-125bf14623ad';
+    
     private ?string $slug = null;
     
     private ?string $fileUrl = null;
@@ -48,8 +51,7 @@ class OneTimeLink extends AbstractPermalink
     public function buildRelativeRedirectUrl() : string
     {
         // TODO return something like api/files/...
-        $parts = parse_url($this->fileUrl);
-        $path  = $parts['path'] ?? '';
+        $path = parse_url($this->fileUrl, PHP_URL_PATH);
         $segments = array_values(array_filter(explode('/', $path), fn($s) => $s !== ''));
         $filesIdx = array_search('files', $segments, true);
         $route = $segments[$filesIdx + 1]; // e.g. "download" or "thumb"
@@ -82,7 +84,7 @@ class OneTimeLink extends AbstractPermalink
         $permalink->getColumns()->addMultiple(['UID', 'ALIAS', 'APP__ALIAS']);
         $permalink->dataRead();
         if ($permalink->countRows() === 0) {
-            throw new RuntimeException("One Time Link Permalink cannot be found");
+            throw new RuntimeException('One Time Link Permalink cannot be found (prototype "exface/Core/Permalinks/OneTimeLink.php"');
         }
             
         $row = $permalink->getRow();
@@ -97,24 +99,34 @@ class OneTimeLink extends AbstractPermalink
             'SLUG' => $slug,
             'DATA_UXON' => UxonObject::fromArray(array('file_url'=> $this->fileUrl))->toJson()
         ]);
-        $ds->dataCreate();
+        $ds->dataCreate(false);
     }
 
     private function getRedirectLink(?string $slug) :string
     {
+        if ($slug === self::TEST_SLUG) {
+            return "/exface.core.permalinks.html";
+        }
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK_SLUG');
         $ds->getColumns()->addMultiple(['DATA_UXON']);
         $ds->getFilters()->addConditionFromString('PERMALINK', $this->getPermalinkUid(), ComparatorDataType::EQUALS);
         $ds->getFilters()->addConditionFromString('SLUG', $slug, ComparatorDataType::EQUALS);
         $ds->dataRead();
 
-        if ($ds->countRows() !== 1) {
-            throw new \RuntimeException('Permalink slug not found or not unique: ' . $this->slug);
+        switch ($ds->countRows()) {
+            case 0:
+                throw new RuntimeException('Permalink slug "' . $slug . '" not found!');
+            case 1:
+                // Everything is fine - continue
+                break;
+            default:
+                throw new RuntimeException('Permalink slug "' . $slug . '" not unique - found ' . $ds->countRows() . ' of them!');
         }
 
-        $uxon = UxonObject::fromJson($ds->getRow()['DATA_UXON'])->toArray();
-        if (empty($uxon['file_url']) || !is_string($uxon['file_url'])) {
-            throw new \RuntimeException('Invalid data_uxon: missing "file_url" for slug ' . $this->slug);
+        $uxon = UxonObject::fromJson($ds->getRow()['DATA_UXON']);
+        $url = $uxon->getProperty('file_url');
+        if (empty($url) || ! is_string($url)) {
+            throw new UxonParserError($uxon, 'Invalid data_uxon: missing "file_url" for slug "' . $slug . '"');
         }
         $ds->dataDelete();
         return $uxon['file_url'];
@@ -123,6 +135,5 @@ class OneTimeLink extends AbstractPermalink
     private function createOTL() :string
     {
         return UUIDDataType::generateUuidV4('');
-
     }
 }

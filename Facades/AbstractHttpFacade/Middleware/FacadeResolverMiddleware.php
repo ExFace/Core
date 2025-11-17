@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\Exceptions\Facades\HttpBadRequestError;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -74,9 +75,16 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                 $request = $request
                     ->withAttribute(HttpTask::REQUEST_ATTRIBUTE_NAME_ACTION, 'exface.Core.ShowWidget')
                     ->withAttribute(httptask::REQUEST_ATTRIBUTE_NAME_PAGE, $page->getSelector()->__toString());
-                
-                if ($page->getWidgetRoot()) {
-                    $request = $request->withAttribute(HttpTask::REQUEST_ATTRIBUTE_NAME_WIDGET, $page->getWidgetRoot()->getId());
+                try {
+                    if ($page->getWidgetRoot()) {
+                        $request = $request->withAttribute(HttpTask::REQUEST_ATTRIBUTE_NAME_WIDGET, $page->getWidgetRoot()->getId());
+                    }
+                } catch (\Throwable $e) {
+                    if ($facade instanceof AbstractAjaxFacade) {
+                        return $facade->createResponseFromError($e, $request);
+                    } else {
+                        throw $e;
+                    }
                 }
             } catch (UiPageNotFoundError $ePage) {
                 $eRequest = new HttpBadRequestError($request, 'No route can be found for URL "' . $request->getUri()->getPath() . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!', null, $ePage);

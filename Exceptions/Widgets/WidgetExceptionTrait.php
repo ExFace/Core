@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions\Widgets;
 
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Widgets\DebugMessage;
@@ -51,6 +52,16 @@ trait WidgetExceptionTrait {
         return $this;
     }
 
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $widget = $this->getWidget();
+        $links['Widget type `' . $widget->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($widget));
+        if ($widget->hasParent()) {
+            $links['Widget type `' . $widget->getParent()->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($widget->getParent()));
+        }
+        return $links;
+    }
     
     public function createDebugWidget(DebugMessage $debug_widget)
     {

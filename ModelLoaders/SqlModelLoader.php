@@ -1402,7 +1402,7 @@ SQL;
             FROM
                 exf_user_role_users turu
             WHERE
-                turu.user_oid = $anonymouseUserOid
+                turu.user_oid = {$this->buildSqlEscapedUid($anonymouseUserOid)}
         )
         OR
 SQL;
@@ -1422,7 +1422,7 @@ SQL;
             WHERE
                 u.username = '{$this->buildSqlEscapedString($userOrToken->getUsername())}'
         )
-        OR apol.target_user_role_oid = $authenticatedGroupOid
+        OR apol.target_user_role_oid = {$this->buildSqlEscapedUid($authenticatedGroupOid)}
         OR
 SQL;
             }
@@ -1987,6 +1987,16 @@ SQL;
 
     /**
      *
+     * @param string $tableOrPredicateAlias
+     * @return string
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return $tableOrPredicateAlias;
+    }
+
+    /**
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadMessageData()
      */
@@ -1997,7 +2007,7 @@ SQL;
         if (! array_key_exists($messageCode, $this->messages_loaded)) {
             $sql = <<<SQL
 /* Load message */
-SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS app_oid
+SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS {$this->escapeAlias('app_oid')}
     FROM exf_message
     WHERE code = '{$messageCode}'
 SQL;
@@ -2041,7 +2051,10 @@ SQL;
             $freshLoad = true;
             $sql = <<<SQL
 /* Load app */
-SELECT {$this->buildSqlUuidSelector('oid')} AS UID, app_alias AS ALIAS, app_name AS NAME, default_language_code AS DEFAULT_LANGUAGE_CODE
+SELECT {$this->buildSqlUuidSelector('oid')} AS {$this->escapeAlias('UID')}, 
+       app_alias AS {$this->escapeAlias('ALIAS')}, 
+       app_name AS {$this->escapeAlias('NAME')}, 
+       default_language_code AS {$this->escapeAlias('DEFAULT_LANGUAGE_CODE')}
     FROM exf_app;
 SQL;
             $result = $this->getDataConnection()->runSql($sql);

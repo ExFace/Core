@@ -79,6 +79,20 @@ use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
  * 
  * The workbench must be installed within the folder above. If you need to change the password, select your
  * created virtual directory on the left panel and press `Basic settings` on the right panel under `Actions`.
+ *
+ * ### Azure authentication via environment variables
+ *
+ * On an Azure AppService you can create environment variables in the Azure Portal for that service. You can then
+ * use these variables as placeholders in the connection settings:
+ * 
+ * ```
+ * {
+ *      "host": "",
+ *      "user": "[#~env:SQL_USER#]",
+ *      "password": "[#~env:SQL_PASSWORD#]"
+ * }
+ * 
+ * ```
  * 
  * ### Azure AD authentication
  * 
@@ -110,32 +124,32 @@ use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
  * @link https://github.com/ExFace/Core/tree/1.x-dev/Docs/creating_metamodels/data_sources/SQL/Troubleshooting_MS_SQL.md
  * 
  * ```
-<?php
-    $serverName = "<SERVER>\<INSTANCE>";  
-    $connectionInfo = [
-    	"Database" => "<dbname>"
-    	// Add more options here
-    ];  
-      
-    $conn = sqlsrv_connect($serverName, $connectionInfo);  
-    if( $conn === false ) {  
-         echo "Unable to connect.</br>";  
-         die( print_r( sqlsrv_errors(), true));  
-    }  
-    
-    $tsql = "SELECT CONVERT(varchar(32), SUSER_SNAME())";  
-    $stmt = sqlsrv_query( $conn, $tsql);  
-    if( $stmt === false )  {  
-         echo "Error in executing query.</br>";  
-         die( print_r( sqlsrv_errors(), true));  
-    }  
-     
-    $row = sqlsrv_fetch_array($stmt);  
-    echo "User login: ".$row[0]."</br>";  
-      
-    sqlsrv_free_stmt( $stmt);  
-    sqlsrv_close( $conn);  
-?>
+* <?php
+    * $serverName = "<SERVER>\<INSTANCE>";  
+    * $connectionInfo = [
+    	* "Database" => "<dbname>"
+    	* // Add more options here
+    * ];  
+ *
+* $conn = sqlsrv_connect($serverName, $connectionInfo);  
+    * if( $conn === false ) {  
+         * echo "Unable to connect.</br>";  
+         * die( print_r( sqlsrv_errors(), true));  
+    * }  
+ *
+* $tsql = "SELECT CONVERT(varchar(32), SUSER_SNAME())";  
+    * $stmt = sqlsrv_query( $conn, $tsql);  
+    * if( $stmt === false )  {  
+         * echo "Error in executing query.</br>";  
+         * die( print_r( sqlsrv_errors(), true));  
+    * }  
+ *
+* $row = sqlsrv_fetch_array($stmt);  
+    * echo "User login: ".$row[0]."</br>";  
+ *
+* sqlsrv_free_stmt( $stmt);  
+    * sqlsrv_close( $conn);  
+* ?>
  * 
  * ```
  *

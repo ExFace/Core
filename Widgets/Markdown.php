@@ -167,4 +167,24 @@ CSS;
     {
         return $this->openLinksInPopupHeight;
     }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Widgets\Html::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if ($this->openLinksIn !== null) {
+            $uxon->setProperty('open_links_in', $this->getOpenLinksIn());
+        }
+        if ($this->openLinksInPopupWidth !== null) {
+            $uxon->setProperty('open_links_in_popup_width', $this->getOpenLinksInPopupWidth());
+        }
+        if ($this->openLinksInPopupHeight !== null) {
+            $uxon->setProperty('open_links_in_popup_height', $this->getOpenLinksInPopupHeight());
+        }
+        return $uxon;
+    }
 }
