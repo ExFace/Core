@@ -45,11 +45,11 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         
         $markdown = '# ' . $metaObject->getAlias() . "\n\n";
         
-        $markdown .= "| Name | Alias | Data Address | Data Type | Required | Relation |\n";
-        $markdown .= "|------|--------|--------------|------------|-----------|-----------|\n";
+        $markdown .= "| Name | Alias | Data Type | Required | Relation |\n";
+        $markdown .= "|------|--------|------------|-----------|-----------|\n";
         
         $markdown.= implode("\n",$this->getAttributes($metaObject));
-        $markdown .= "\n";
+        $markdown .= "\n\n";
         
         if($this->depth >= $this->currentDepth){
             foreach ($this->relations as $relation){
@@ -78,27 +78,38 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         $attributes = $metaObject->getAttributes();
         
         $list = [];
-        
+
         foreach ($attributes->getAll() as  $attribute ) {
-            $name = $attribute->getName();
-            $alias = $attribute->getAlias();
-            $dataAddress = $attribute->getDataAddress();
-            $dataType = $attribute->getDataType()->getName();
+            $name = $this->escapeCell($attribute->getName());
+            $alias = $this->escapeCell($attribute->getAlias());
+            //$dataAddress = $this->escapeCell($attribute->getDataAddress());
+            $dataType = $this->escapeCell($attribute->getDataType()->getName());
             $required = $attribute->isRequired();
             $relation = "";
-            if($attribute->isRelation()){
+            if ($attribute->isRelation()) {
                 $relationObject = $attribute->getRelation();
-                $relation = $relationObject->getAlias();
-                $this->addRelation($relationObject->getRightObject()->getId());
+                $relation = $this->escapeCell($relationObject->getAlias());
+                $rightObject = $relationObject->getRightObject();
+                $link = '"'. $rightObject->getName() .'"['. $rightObject->getNameSpace() ."." .$rightObject->getName() ."]";
+                $this->addRelation($rightObject->getId());
+                $relation = "[" . $relation . "]"; 
+                $relation .= "(Available_metaobjects.md?selector=". urlencode($link) .")";
             }
 
-            
-
-            $list[] = "| {$name} | {$alias} | {$dataAddress} | {$dataType} | {$required} | {$relation} |\n";
+            $list[] = "| {$name} | {$alias}  | {$dataType} | {$required} | {$relation}  |";
         }
+
         return $list;
     }
-    
+
+    protected function escapeCell(string $value): string
+    {
+        $value = str_replace(["\r\n", "\r", "\n"], '<br>', $value);
+        $value = str_replace('|', '\|', $value);
+        return $value;
+    }
+
+
     protected function addRelation(string $relation) : ObjectMarkdownPrinter
     {
         if(!in_array($relation, $this->getFinishedRelations(), true)
