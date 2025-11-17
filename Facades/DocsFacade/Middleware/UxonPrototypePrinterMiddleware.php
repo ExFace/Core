@@ -31,13 +31,15 @@ class UxonPrototypePrinterMiddleware implements MiddlewareInterface
     private $facade = null;
     private string $baseUrl;
     private FileReaderInterface $reader;
+    private string $fileUrl;
     
-    public function __construct(HttpFacadeInterface $facade, string $baseUrl, FileReaderInterface $reader)
+    public function __construct(HttpFacadeInterface $facade, string $baseUrl, string $fileUrl, FileReaderInterface $reader)
     {
         $this->workbench = $facade->getWorkbench();
         $this->facade = $facade;
         $this->baseUrl = $baseUrl;
         $this->reader = $reader;
+        $this->fileUrl = $fileUrl;
     }
     
     /**
@@ -47,7 +49,7 @@ class UxonPrototypePrinterMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (! StringDataType::endsWith($request->getUri()->getPath(), 'UXON/UXON_prototypes.md')) {
+        if (! StringDataType::endsWith($request->getUri()->getPath(), $this->fileUrl)) {
             return $handler->handle($request);
         }
         
