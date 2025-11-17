@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\Behaviors;
 
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Model\MetaObjectExceptionTrait;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Exceptions\BehaviorExceptionInterface;
 
@@ -35,5 +36,18 @@ abstract class AbstractBehaviorException extends UnexpectedValueException implem
     public function getBehavior() : BehaviorInterface
     {
         return $this->behavior;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $behavior = $this->getBehavior();
+        $links['Behavior prototype `' . $behavior->getAliasWithNamespace() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($behavior));
+        $links['Metaobject ' . $behavior->getObject()->__toString()] = DocsFacade::buildUrlToDocsForMetaObject($behavior->getObject()->getAliasWithNamespace());
+        return $links;
     }
 }

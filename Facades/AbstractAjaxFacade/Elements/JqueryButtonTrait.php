@@ -534,6 +534,13 @@ JS;
         $firstDialogActionIdx = null;
         $steps = $action->getActions();
         $lastActionIdx = count($steps) - 1;
+        $resultActionIdx = null;
+
+        // check if a result index is specified
+        if ($action instanceof ActionChain && $action->getUseResultOfAction() !== null){
+            $resultActionIdx = $action->getUseResultOfAction();
+        }
+
         foreach ($steps as $i => $step) {
             // For front-end action their JS code will be called directly
             if ($this->isActionFrontendOnly($step)) {
@@ -584,8 +591,11 @@ JS;
         $onServerSuccess = '';
         for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
             // Save the server result to the running result variable
-            // TODO only do this if use_result_of_action is AFTER the last server action
-            $onServerSuccess .= "oRunningResult = oResultData;";
+            // only do this if use_result_of_action is AFTER the last server action
+            if ($resultActionIdx !== null && $resultActionIdx > $lastServerActionIdx){
+                $onServerSuccess .= "oRunningResult = oResultData;";
+            }
+            
             // Make sure the on-success code has the same `this` in the JS as the code
             // executed immediately. After all, the action handlers cannot know, that
             // they are called within a chain.

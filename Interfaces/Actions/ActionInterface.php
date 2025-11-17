@@ -55,7 +55,8 @@ interface ActionInterface extends
     iCanBeConvertedToUxon, 
     TaskHandlerInterface, 
     iCanGenerateDebugWidgets,
-    iHaveIcon
+    iHaveIcon,
+    \Stringable
 {
     
     /**
