@@ -128,4 +128,18 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
      * @return ExceptionInterface
      */
     public function setUseExceptionMessageAsTitle(bool $value);
+
+    /**
+     * Add a link to helpful information about this exception to 
+     * 
+     * @param string $title
+     * @param string $url
+     * @return ExceptionInterface
+     */
+    public function addLink(string $title, string $url) : ExceptionInterface;
+
+    /**
+     * @return string[]
+     */
+    public function getLinks() : array;
 }
