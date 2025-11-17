@@ -25,17 +25,17 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *          "views": [
  *              {
  *                  "name": "Days",
- *                  "icon": "",
+ *                  "icon": "", //TODO SR: Build it?
  *                  "description": "Show as many days as there is space on the screen"
  *                  "granularity": "days",
  *                  "column_width": "38",
- *                  "highlight_weekends": true
+ *                  "highlight_weekends": true //TODO SR: Build it?
  *              },
  *              {
  *                  "name": "Week per year",
  *                  "description": "Show the weeks of exactly one year"
  *                  "granularity": "weeks",
- *                  "visible_interval": "year"
+ *                  "visible_interval": "year" //TODO SR: Build it? Should the Gantt chard only show the current year and cut of the rest?
  *                  "column_width": "70",
  *                  "header_lines": [
  *                      {
@@ -43,7 +43,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *                          "format": "YYYY"
  *                      },
  *                      {
- *                          "interval": "week",
+ *                          "interval": "Year",
  *                          "format": "ww"
  *                      }
  *                  ]
@@ -52,8 +52,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *                  "name": "Super cool custom view",
  *                  "description": "Show days grouped by week with highlighted weekends"
  *                  "granularity": "weeks",
- *                  "bordered_interval": "month",
- *                  "border_color": "darkgray",
+ *                  "bordered_interval": "month", //TODO SR: Build it? => It got solved with header_lines.interval
+ *                  "border_color": "darkgray", //TODO SR: Build it?
  *                  "column_width": "40"
  *              },
  *          ]

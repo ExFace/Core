@@ -73,7 +73,7 @@ trait ExceptionTrait {
      */
     public function createWidget(UiPageInterface $page)
     {
-        // Make sure, the widget is generated only once. Otherwise different parts of the code might get different widgets (with different ids).
+        // Make sure, the widget is generated only once. Otherwise, different parts of the code might get different widgets (with different ids).
         if (! is_null($this->exception_widget)) {
             return $this->exception_widget;
         }
@@ -99,12 +99,13 @@ trait ExceptionTrait {
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $page = $debug_widget->getPage();
+        $translator = $debug_widget->getWorkbench()->getCoreApp()->getTranslator();
         // Add a tab with a user-friendly error description
         if ($debug_widget->findChildById('error_tab') === false) {
             $error_tab = $debug_widget->createTab();
             $error_tab->setId('error_tab');
             $error_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION'));
-            if ($this->getAlias()) {
+            if ($msgCode = $this->getAlias()) {
                 try {
                     $msgModel = $this->getMessageModel($page->getWorkbench());
                     
@@ -112,7 +113,7 @@ trait ExceptionTrait {
                         ->setHideCaption(true)
                         ->setWidth(WidgetDimension::MAX)
                         ->setValue(<<<MD
-# {$debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION')} {$this->getAlias()}: {$msgModel->getTitle()}
+# {$translator->translate('ERROR.CAPTION')} {$msgCode}: {$msgModel->getTitle()}
 
 > {$this->getMessage()}
 MD);
@@ -134,18 +135,35 @@ MD);
                         ->setValue($msgModel->getDescription() . $this->getLinksAsMarkdown());
                     $error_tab->addWidget($error_descr);
                 } catch (\Throwable $e) {
-                    $debug_widget->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e));
-                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-                        ->setHeadingLevel(2)
+                    $eRenderer = new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e);
+                    $debug_widget->getWorkbench()->getLogger()->logException($eRenderer);
+                    $error_heading = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setWidth(WidgetDimension::MAX)
-                        ->setValue($this->getMessage());
+                        ->setHideCaption(true)
+                        ->setValue(<<<MD
+# Failed to render error properly
+
+Could not format error **{$msgCode}** properly: 
+
+> {$eRenderer->getMessage()} in `{$eRenderer->getFile()}` on line `{$eRenderer->getLine()}`
+
+## Original error
+
+> {$this->getMessage()}
+
+MD);
                     $error_tab->addWidget($error_heading);
                 }
             } else {
-                $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-                    ->setHeadingLevel(2)
+                $error_heading = WidgetFactory::create($page, 'Markdown', $error_tab)
                     ->setWidth(WidgetDimension::MAX)
-                    ->setValue($this->getMessage());
+                    ->setHideCaption(true)
+                    ->setValue(<<<MD
+# Internal error
+
+> {$this->getMessage()}
+
+MD);
                 $error_tab->addWidget($error_heading);
             }
             
@@ -158,7 +176,7 @@ MD);
         if ($debug_widget->findChildById('stacktrace_tab') === false) {
             $stacktrace_tab = $debug_widget->createTab();
             $stacktrace_tab->setId('stacktrace_tab');
-            $stacktrace_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.STACKTRACE_CAPTION'));
+            $stacktrace_tab->setCaption($translator->translate('ERROR.STACKTRACE_CAPTION'));
             $stacktrace_widget = WidgetFactory::createFromUxonInParent($stacktrace_tab, new UxonObject([
                 'width' => '100%',
                 'height' => '100%'
@@ -179,7 +197,7 @@ MD);
             }
             $context_tab = $debug_widget->createTab();
             $context_tab->setId('context_tab');
-            $context_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CONTEXT_CAPTION'));
+            $context_tab->setCaption($translator->translate('ERROR.CONTEXT_CAPTION'));
             $context_tab->addWidget(WidgetFactory::createFromUxonInParent($context_tab,  new UxonObject([
                 'widget_type' => 'InputUxon',
                 'disabled' => true,

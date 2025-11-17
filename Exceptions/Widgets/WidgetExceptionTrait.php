@@ -56,7 +56,10 @@ trait WidgetExceptionTrait {
     {
         $links = parent::getLinks();
         $widget = $this->getWidget();
-        $links['Widget ' . $widget->getWidgetType()] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($widget));
+        $links['Widget type `' . $widget->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($widget));
+        if ($widget->hasParent()) {
+            $links['Widget type `' . $widget->getParent()->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($widget->getParent()));
+        }
         return $links;
     }
     

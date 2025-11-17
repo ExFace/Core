@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\DataSheet;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Widgets\DebugMessage;
@@ -53,5 +55,18 @@ trait DataSheetExceptionTrait {
     {
         $debug_widget = $this->createDebugWidgetViaExceptionTrait($debug_widget);
         return $this->getDataSheet()->createDebugWidget($debug_widget);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $links['DataSheet structure'] = DocsFacade::buildUrlToDocsForUxonPrototype(DataSheet::class);
+        $obj = $this->getDataSheet()->getMetaObject();
+        $links['Metaobject ' . $obj->__toString()] = DocsFacade::buildUrlToDocsForMetaObject($obj->getAliasWithNamespace());
+        return $links;
     }
 }
