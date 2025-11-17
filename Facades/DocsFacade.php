@@ -5,6 +5,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Facades\DocsFacade\MarkdownContent;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
+use exface\Core\Facades\DocsFacade\Middleware\MetaObjectPrinterMiddleware;
 use exface\Core\Facades\DocsFacade\Middleware\UxonPrototypePrinterMiddleware;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -108,7 +109,8 @@ class DocsFacade extends AbstractHttpFacade
         
         $reader = new MarkdownDocsReader($this->getWorkbench());
         
-        $handler->add(new UxonPrototypePrinterMiddleware($this, $baseUrl, $reader));
+        $handler->add(new UxonPrototypePrinterMiddleware($this, $baseUrl,'UXON/UXON_prototypes.md', $reader));
+        $handler->add(new MetaObjectPrinterMiddleware($this, $baseUrl, 'creating_metamodels/Available_metaobjects.md', $reader));
         
         switch (true) {
             // If a printout is requested, include all child pages as chapters
@@ -189,6 +191,11 @@ class DocsFacade extends AbstractHttpFacade
     public static function buildUrlToDocsForUxonPrototype(string $prototypeSelector) : string
     {
         return 'api/docs/exface/Core/Docs/UXON/UXON_prototypes.md?selector=' . urlencode($prototypeSelector);
+    }
+
+    public static function buildUrlToDocsForMetaObject(string $aliasOrUid) : string
+    {
+        return 'api/docs/exface/Core/Docs/creating_metamodels/Available_metaobjects.md?selector=' . urlencode($aliasOrUid);
     }
 
     /**

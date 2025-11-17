@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
@@ -98,21 +100,25 @@ class ShowDialog extends ShowWidget implements iShowDialog
      */
     protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
-        /* @var $dialog \exface\Core\Widgets\Dialog */
-        $parent_widget = $this->getWidgetDefinedIn();
-        $dialog = WidgetFactory::createFromUxonInParent($parent_widget, $this->addIdSpaceToWidgetUxon(new UxonObject()), $this->getDefaultWidgetType());
-        $dialog->setMetaObject($this->getMetaObject());
-        
-        if ($contained_widget) {
-            $dialog->addWidget($contained_widget);
-            $width = $contained_widget->getWidth();
-            $heigth = $contained_widget->getHeight();
-            if (! $width->isUndefined() && ! $width->isMax() && $width->getValue() !== '100%') {
-                $dialog->setWidth($contained_widget->getWidth()->getValue());
+        try {
+            /* @var $dialog \exface\Core\Widgets\Dialog */
+            $parent_widget = $this->getWidgetDefinedIn();
+            $dialog = WidgetFactory::createFromUxonInParent($parent_widget, $this->addIdSpaceToWidgetUxon(new UxonObject()), $this->getDefaultWidgetType());
+            $dialog->setMetaObject($this->getMetaObject());
+
+            if ($contained_widget) {
+                $dialog->addWidget($contained_widget);
+                $width = $contained_widget->getWidth();
+                $height = $contained_widget->getHeight();
+                if (!$width->isUndefined() && !$width->isMax() && $width->getValue() !== '100%') {
+                    $dialog->setWidth($contained_widget->getWidth()->getValue());
+                }
+                if (!$height->isUndefined() && !$height->isMax() && $height->getValue() !== '100%') {
+                    $dialog->setHeight($contained_widget->getHeight()->getValue());
+                }
             }
-            if (! $heigth->isUndefined() && ! $heigth->isMax() && $heigth->getValue() !== '100%') {
-                $dialog->setHeight($contained_widget->getHeight()->getValue());
-            }
+        } catch (\Throwable $e) {
+            throw new ActionConfigurationError($this, 'Cannot create dialog for acton ' . $this->__toString() . '. ' . $e->getMessage(), null, $e);
         }
         
         return $dialog;

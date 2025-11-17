@@ -3,6 +3,7 @@ namespace exface\Core\Facades\DocsFacade\Middleware;
 
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\DocsFacade\MarkdownContent;
+use exface\Core\Facades\DocsFacade\MarkdownPrinters\ObjectMarkdownPrinter;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
 use exface\Core\Interfaces\WorkbenchInterface;
 use GuzzleHttp\Psr7\Response;
@@ -24,7 +25,7 @@ use exface\Core\DataTypes\StringDataType;
  * @author Andrej Kabachnik
  *
  */
-class UxonPrototypePrinterMiddleware implements MiddlewareInterface
+class MetaObjectPrinterMiddleware implements MiddlewareInterface
 {
     private $workbench = null;
     
@@ -56,16 +57,16 @@ class UxonPrototypePrinterMiddleware implements MiddlewareInterface
         $query = $request->getUri()->getQuery();
         $params = [];
         parse_str($query, $params);
-        $selector = urldecode($params['selector']);
-        $printer = new UxonPrototypeMarkdownPrinter($this->getWorkbench(), $selector);
+        $selector = $this->normalize($params['selector']);
+        $printer = new ObjectMarkdownPrinter($this->getWorkbench(), $selector);
         $markdown = $printer->getMarkdown();
 
         $templatePath = Filemanager::pathJoin([$this->facade->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
         $template = new PlaceholderFileTemplate($templatePath, $this->baseUrl . '/' . $this->facade->buildUrlToFacade(true));
         $template->setBreadcrumbsRootName('Documentation');
         $vendorFolder = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . '/';
-        $folder = 'exface/Core/Docs/UXON/';
-        $file = 'UXON_prototypes.md';
+        $folder = 'exface/Core/Docs/creating_metamodels/';
+        $file = 'Available_metaobjects.md';
         $content = new MarkdownContent($vendorFolder . $folder . $file, $folder . $file, $this->reader->readFolder($vendorFolder . $folder, $folder), $markdown);
 
         $html = $template->render($content);
@@ -73,7 +74,22 @@ class UxonPrototypePrinterMiddleware implements MiddlewareInterface
         $response = $response->withHeader('Content-Type', 'text/html');
         return $response;
     }
-    
+
+    protected function normalize(string $raw): string
+    {
+        $decoded = urldecode($raw);
+
+        $start = strpos($decoded, '[');
+        $end   = strpos($decoded, ']');
+
+        if ($start === false || $end === false || $end <= $start) {
+            return '';
+        }
+
+        return substr($decoded, $start + 1, $end - $start - 1);
+    }
+
+
     protected function getWorkbench(): WorkbenchInterface
     {
         return $this->facade->getWorkbench();

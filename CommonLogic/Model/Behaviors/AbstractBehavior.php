@@ -383,6 +383,7 @@ abstract class AbstractBehavior implements BehaviorInterface
     public function setAppSelector($selectorOrString) : BehaviorInterface
     {
         $this->appSelectorOrString = $selectorOrString;
+        return $this;
     }
     
     /**
@@ -413,7 +414,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function __toString() : string
     {
-        return PhpClassDataType::findClassNameWithoutNamespace($this);
+        return $this->getName() . ' [' . $this->getAliasWithNamespace() . '] of ' . $this->getObject()->__toString();
     }
 
     public function getName() : string
