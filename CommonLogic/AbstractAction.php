@@ -2039,4 +2039,14 @@ abstract class AbstractAction implements ActionInterface
         }
         return $this;
     }
+
+    /**
+     * Returns <action name> [<alias with namespace>]
+     * 
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return '"' . $this->getName() . '"' . ' [' . $this->getAliasWithNamespace() . ']';
+    }
 }
