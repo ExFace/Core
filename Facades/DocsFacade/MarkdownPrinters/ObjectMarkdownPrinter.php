@@ -29,7 +29,7 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
     public function __construct(WorkbenchInterface $workbench, string $objectId, ObjectMarkdownPrinter $parent = null)
     {
         $this->workbench = $workbench;
-        $this->objectId = $objectId;
+        $this->objectId = $this->normalize($objectId);
         if($parent){
             $this->parent = $parent;
             $this->currentDepth = $parent->getCurrentDepth() + 1;
@@ -107,6 +107,20 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         $value = str_replace(["\r\n", "\r", "\n"], '<br>', $value);
         $value = str_replace('|', '\|', $value);
         return $value;
+    }
+
+    protected function normalize(string $raw): string
+    {
+        $decoded = urldecode($raw);
+
+        $start = strpos($decoded, '[');
+        $end   = strpos($decoded, ']');
+
+        if ($start === false || $end === false || $end <= $start) {
+            return '';
+        }
+
+        return substr($decoded, $start + 1, $end - $start - 1);
     }
 
 
