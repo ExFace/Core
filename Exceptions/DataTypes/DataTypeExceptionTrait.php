@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\DataTypes;
 
 use exface\Core\Exceptions\ExceptionTrait;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 
@@ -32,9 +33,10 @@ trait DataTypeExceptionTrait {
     }
     
     /**
-     * @return DataTypeInterface
+     * {@inheritDoc}
+     * @see DataTypeExceptionInterface::getDataType()
      */
-    public function getDataType()
+    public function getDataType() : DataTypeInterface
     {
         return $this->dataType;
     }
@@ -43,11 +45,21 @@ trait DataTypeExceptionTrait {
      * @param DataTypeInterface $dataType
      * @return DataTypeExceptionInterface
      */
-    public function setDataType(DataTypeInterface $dataType)
+    protected function setDataType(DataTypeInterface $dataType) : DataTypeExceptionInterface
     {
         $this->dataType = $dataType;
         return $this;
     }
-  
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $type = $this->getDataType();
+        $links['Data type ' . $type->getAliasWithNamespace()] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($type));
+        return $links;
+    }
 }
-?>
