@@ -50,7 +50,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
             : @pg_connect($connStr);
 
         if (! $conn instanceof \pgsql\Connection) {
-            throw new DataConnectionFailedError($this, 'Failed to connect to PostgreSQL: ' . pg_last_error());
+            throw new DataConnectionFailedError($this, 'Failed to connect to PostgreSQL: ' . pg_last_error($conn));
         }
 
         $this->setCurrentConnection($conn);
