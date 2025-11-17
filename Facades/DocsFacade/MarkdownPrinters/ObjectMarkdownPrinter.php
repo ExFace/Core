@@ -117,7 +117,7 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         $end   = strpos($decoded, ']');
 
         if ($start === false || $end === false || $end <= $start) {
-            return '';
+            return $raw;
         }
 
         return substr($decoded, $start + 1, $end - $start - 1);
