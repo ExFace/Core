@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
 use exface\Core\Exceptions\LogicException;
@@ -11,7 +12,8 @@ use exface\Core\Exceptions\LogicException;
  * @author Andrej Kabachnik
  *
  */
-class DataMapperConfigurationError extends LogicException implements DataMapperExceptionInterface {
+class DataMapperConfigurationError extends LogicException implements DataMapperExceptionInterface 
+{
     
     private $mapper = null;
     
@@ -29,5 +31,16 @@ class DataMapperConfigurationError extends LogicException implements DataMapperE
     public function getMapper() : DataSheetMapperInterface
     {
         return $this->mapper;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $links['Data mapper configuration options'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($this->getMapper()));
+        return $links;
     }
 }

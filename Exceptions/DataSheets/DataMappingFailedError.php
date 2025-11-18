@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -111,5 +113,19 @@ class DataMappingFailedError extends RuntimeException implements DataMappingExce
         ]));
         $debug_widget->addTab($tab);
         return $debug_widget;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $links['Data mapper configuration options'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($this->getMapper()));
+        $mapping = $this->getMapping();
+        $mappingName = PhpClassDataType::findClassNameWithoutNamespace($mapping);
+        $links['Mapping "' . $mappingName . '"'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($mapping));
+        return $links;
     }
 }
