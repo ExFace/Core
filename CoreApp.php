@@ -97,10 +97,10 @@ RewriteRule ^(config|backup|translations|logs)/.*$ - [F,NC]
 RewriteRule ^data/\..*$ - [F,NC]
 
 # Block .html files.
-RewriteRule ^vendor/.*\.html$ [F,L,NC]
+RewriteRule ^vendor/.*\.html$ - [F,L,NC]
 
 # Block library docs.
-RewriteRule ^vendor/.*/gh-pages.*$ [F,L,NC]
+RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]
 
 ");
         $installer->addInstaller($htaccessInstaller);
