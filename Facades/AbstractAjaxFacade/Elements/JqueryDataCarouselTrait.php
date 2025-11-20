@@ -48,7 +48,7 @@ JS;
      * {@inheritDoc}
      * @see AbstractJqueryElement::buildJsValueGetter()
      */
-    public function buildJsValueGetter()
+    public function buildJsValueGetter($dataColumnName = null)
     {
         return $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsValueGetter();
     }
