@@ -4,10 +4,11 @@ namespace exface\Core\Widgets\Parts;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\WidgetDimension;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\WidgetPartInterface;
-use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Widgets\WidgetPartInterface;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * DataTimelineView configuration can set different chard "views" that changes the header and the chard layout.
@@ -45,9 +46,11 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik & Sergej Riel
  *
  */
-class DataTimelineView implements WidgetPartInterface
+class DataTimelineView implements WidgetPartInterface, iHaveIcon
 {
     use ICanBeConvertedToUxonTrait;
+    
+    use iHaveIconTrait;
     
     const GRANULARITY_DAYS = 'days';
     const GRANULARITY_DAYS_PER_WEEK = 'days_per_week';
@@ -62,8 +65,6 @@ class DataTimelineView implements WidgetPartInterface
     private ?string $description = null;
     private $granularity = null;
     private ?WidgetDimension $columnWidth = null;
-    
-    // TODO: Build these:
     private ?array $headerLines = null;
     private ?UxonObject $headerLinesUxon = null;
     
