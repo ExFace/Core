@@ -129,7 +129,7 @@ class OneTimeLink extends AbstractPermalink
             throw new UxonParserError($uxon, 'Invalid data_uxon: missing "file_url" for slug "' . $slug . '"');
         }
         $ds->dataDelete();
-        return $uxon['file_url'];
+        return $url;
     }
     
     private function createOTL() :string
