@@ -43,7 +43,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *                          "format": "YYYY"
  *                      },
  *                      {
- *                          "interval": "week",
+ *                          "interval": "Year",
  *                          "format": "ww"
  *                      }
  *                  ]

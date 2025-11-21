@@ -4,20 +4,53 @@ namespace exface\Core\Widgets\Parts;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\WidgetDimension;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\WidgetPartInterface;
-use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Widgets\WidgetPartInterface;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
+ * DataTimelineView configuration can set different chard "views" that changes the header and the chard layout.
+ * 
+ * Widgets like the Gantt chart automatically adds the corresponding buttons for switching views to the toolbar.
+ * 
+ * ## Examples
+ * 
+ * ```
+ * "views": [
+ *      {
+ *          "name": "Tage",
+ *          "description": "Tagesansicht",
+ *          "granularity": "days",
+ *          "column_width": 38,
+ *          "header_lines": [ ... ] 
+ *       },
+ *       {
+ *          "name": "Wochen",
+ *          "description": "Wochenansicht",
+ *          "granularity": "weeks",
+ *          "column_width": 70,
+ *          "header_lines": [ ... ]
+ *      },
+ *      {
+ *          "name": "Monate",
+ *          "description": "Monatsansicht",
+ *          "granularity": "months",
+ *          "column_width": 20
+ *      }
+ * ]
+ * ```
  * 
  * 
- * @author Andrej Kabachnik
+ * @author Andrej Kabachnik & Sergej Riel
  *
  */
-class DataTimelineView implements WidgetPartInterface
+class DataTimelineView implements WidgetPartInterface, iHaveIcon
 {
     use ICanBeConvertedToUxonTrait;
+    
+    use iHaveIconTrait;
     
     const GRANULARITY_DAYS = 'days';
     const GRANULARITY_DAYS_PER_WEEK = 'days_per_week';
@@ -32,8 +65,6 @@ class DataTimelineView implements WidgetPartInterface
     private ?string $description = null;
     private $granularity = null;
     private ?WidgetDimension $columnWidth = null;
-    
-    // TODO: Build these:
     private ?array $headerLines = null;
     private ?UxonObject $headerLinesUxon = null;
     
@@ -149,6 +180,38 @@ class DataTimelineView implements WidgetPartInterface
     public function setColumnWidth(string $width) : DataTimelineView
     {
         $this->columnWidth = new WidgetDimension($this->getWorkbench(), $width);
+        return $this;
+    }
+
+    /**
+     * It gets the header lines with its settings.
+     * 
+     * @return array
+     */
+    public function getHeaderLines() : ?array
+    {
+       if ($this->headerLines === null) {
+           foreach ($this->headerLinesUxon as $uxon) {
+               $this->headerLines[] = new DataTimelineHeader($this, $uxon);
+           }
+       } 
+       return $this->headerLines;
+    }
+    
+    /**
+     * Header lines settings
+     * 
+     * @uxon-property header_lines
+     * @uxon-type \exface\Core\Widgets\Parts\DataTimelineHeader[]
+     * @uxon-template [{"interval": "month", "date_format": "d", "date_format_at_border": "d MMM"}]
+     * 
+     * @param UxonObject $arrayOfHeaderLines
+     * @return $this
+     */
+    protected function setHeaderLines(UxonObject $arrayOfHeaderLines) : DataTimelineView
+    {
+        $this->headerLinesUxon = $arrayOfHeaderLines;
+        $this->headerLines = null;
         return $this;
     }
 

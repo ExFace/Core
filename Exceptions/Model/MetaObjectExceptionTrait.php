@@ -1,17 +1,9 @@
 <?php
 namespace exface\Core\Exceptions\Model;
 
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\ExceptionTrait;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
-use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
-use exface\Core\Widgets\ErrorMessage;
-use exface\Core\Widgets\DebugMessage;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iTakeInput;
-use exface\Core\Widgets\Filter;
 
 /**
  * This trait enables an exception to output meta object specific debug information: properties, attributes, behaviors, etc.
@@ -19,8 +11,8 @@ use exface\Core\Widgets\Filter;
  * @author Andrej Kabachnik
  *        
  */
-trait MetaObjectExceptionTrait {
-    
+trait MetaObjectExceptionTrait 
+{
     use ExceptionTrait {
 		createDebugWidget as parentCreateDebugWidget;
 	}
@@ -38,7 +30,7 @@ trait MetaObjectExceptionTrait {
      *
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
-    public function getMetaObject()
+    public function getMetaObject() : MetaObjectInterface
     {
         return $this->meta_object;
     }
@@ -48,9 +40,21 @@ trait MetaObjectExceptionTrait {
      * @param MetaObjectInterface $object            
      * @return \exface\Core\Exceptions\Model\MetaObjectExceptionTrait
      */
-    public function setMetaObject(MetaObjectInterface $object)
+    protected function setMetaObject(MetaObjectInterface $object)
     {
         $this->meta_object = $object;
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $obj = $this->getMetaObject();
+        $links['Metaobject ' . $obj->__toString()] = DocsFacade::buildUrlToDocsForMetaObject($obj->__toString());
+        return $links;
     }
 }

@@ -26,6 +26,12 @@ class PostgreSqlConnector extends AbstractSqlConnector
      */
     protected function performConnect()
     {
+        /*
+         * Params described in https://www.php.net/manual/en/function.pg-connect.php
+         * The currently recognized parameter keywords are: host, hostaddr, port, dbname (defaults to value of user), 
+         * user, password, connect_timeout, options, tty (ignored), sslmode, requiressl (deprecated in favor of sslmode), 
+         * and service. Which of these arguments exist depends on your PostgreSQL version.
+         */
         $params = [
             'host=' . $this->getHost(),
             'user=' . $this->getUser(),
@@ -153,7 +159,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
             }
 
             if (!pg_query($this->getCurrentConnection(), 'BEGIN')) {
-                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error());
+                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error($this->getCurrentConnection()));
             }
 
             $this->setTransactionStarted(true);
@@ -169,7 +175,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'COMMIT')) {
-            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error());
+            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);
@@ -183,7 +189,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'ROLLBACK')) {
-            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error());
+            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);
