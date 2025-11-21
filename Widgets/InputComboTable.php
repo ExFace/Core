@@ -442,7 +442,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
     {
         $col = $this->getTable()->getColumn($this->getTextColumnId());
         if (! $col) {
-            throw new WidgetLogicError($this, 'No text data column found for ' . $this->getWidgetType() . ' with attribute_alias "' . $this->getAttributeAlias() . '"!');
+            throw new WidgetLogicError($this, 'No text data column found for ' . $this->getWidgetType() . ' with attribute_alias `' . $this->getAttributeAlias() . '`!');
         }
         return $col;
     }
