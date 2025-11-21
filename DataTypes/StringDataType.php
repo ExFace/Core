@@ -7,6 +7,7 @@ use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
+use Random\RandomException;
 use Transliterator;
 
 /**
@@ -795,5 +796,54 @@ class StringDataType extends AbstractDataType
     protected function getForceNullForEmptyValues() : bool
     {
         return $this->emptyAsNULL;
+    }
+
+    /**
+     * Scrambles the characters of a given string, while maintaining its basic structure.
+     *
+     * @param string $value
+     * @param string $keep
+     * Any characters that match this regex will not be scrambled.
+     * @param string $allowedChars
+     * Scrambled characters can turn into any character in this string.
+     * @param bool   $maintainCase
+     * If TRUE, scrambled characters will retain their case.
+     * @return string
+     * @throws RandomException
+     */
+    public static function scramble(
+        string $value, 
+        string $keep = "/[-_\\\\,.\/ ()\[\]\{\}=\"'@\:]/",
+        string $allowedChars = 'abcdefghijklmnopqrstuvwxyz',
+        bool $maintainCase = true
+    ) : string
+    {
+        $chars = mb_str_split($value);
+        $allowedArray = mb_str_split($allowedChars);
+        $allowedCount = count($allowedArray);
+
+        $result = [];
+
+        foreach ($chars as $i => $ch) {
+            if ($keep !== null && preg_match($keep, $ch)) {
+                // Keep original character
+                $result[$i] = $ch;
+            } else {
+                if(is_numeric($ch)) {
+                    // Replace with random number.
+                    $result[$i] = random_int(0, 9);
+                } else {
+                    // Replace with a random character from the allowed set
+                    $scrambled = $allowedArray[random_int(0, $allowedCount - 1)];
+                    if($maintainCase) {
+                        $result[$i] = ctype_upper($ch) ? strtoupper($scrambled) : strtolower($scrambled);
+                    } else {
+                        $result[$i] = random_int(0,1) === 1 ? strtoupper($scrambled) : strtolower($scrambled);
+                    }
+                }
+            }
+        }
+
+        return implode('', $result);
     }
 }
