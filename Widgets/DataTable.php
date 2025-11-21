@@ -144,6 +144,29 @@ class DataTable extends Data implements
      */
     const FUNCTION_DUMP_SETUP = 'dump_setup';
 
+    /**
+     * Tracks changes made to the current table setup, by marking the table as changed in a JS property (_exfConfigChanged).
+     * If a quick select menu for widget setups exists, it will indicate changes with an (*) 
+     *
+     * Arguments: None
+     *
+     * @uxon-property track_setup_changes
+     *
+     * @var string
+     */
+    const FUNCTION_TRACK_CHANGES = 'track_setup_changes';
+
+    /**
+     * Resets the tracking of changes made to the current table setup. Sets _exfConfigChanged to false and resets the quick select indicator.
+     *
+     * Arguments: None
+     *
+     * @uxon-property reset_tracked_setup_changes
+     *
+     * @var string
+     */
+    const FUNCTION_RESET_CHANGE_TRACKING = 'reset_setup_change_tracking';
+
     private $show_filter_row = null;
 
     private $show_row_numbers = false;
