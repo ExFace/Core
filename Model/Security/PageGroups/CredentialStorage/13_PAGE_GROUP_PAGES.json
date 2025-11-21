@@ -33,6 +33,10 @@
         {
             "name": "PAGE_GROUP",
             "attribute_alias": "PAGE_GROUP"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
         }
     ],
     "rows": [
@@ -44,7 +48,8 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6f99dd2e2158a3480205857feb80",
             "PAGE": "0x43ae1e36323211ea9c330205857feb80",
-            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80",
+            "APP": "0x31000000000000000000000000000000"
         },
         {
             "_EXPORT_SUMMARY": "Credential Storage / Permissions",
@@ -54,7 +59,8 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8dec72d5bc5997940205857feb80",
             "PAGE": "0x11ea8de4ed64848f97940205857feb80",
-            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80",
+            "APP": "0x31000000000000000000000000000000"
         },
         {
             "_EXPORT_SUMMARY": "Credential Storage / Users",
@@ -64,7 +70,8 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8dec72d5e73797940205857feb80",
             "PAGE": "0x0a3e0996949f11e78ac4028037ec0200",
-            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80",
+            "APP": "0x31000000000000000000000000000000"
         },
         {
             "_EXPORT_SUMMARY": "Credential Storage / Administration",
@@ -74,7 +81,8 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8dec800aa51597940205857feb80",
             "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
-            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80",
+            "APP": "0x31000000000000000000000000000000"
         },
         {
             "_EXPORT_SUMMARY": "Credential Storage / Login Types",
@@ -84,7 +92,8 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9ad1b921d1769ad1025041000001",
             "PAGE": "0x11ea860ba247621397940205857feb80",
-            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80",
+            "APP": "0x31000000000000000000000000000000"
         }
     ],
     "totals_rows": [],
@@ -93,7 +102,7 @@
         "base_object_alias": "exface.Core.PAGE_GROUP_PAGES",
         "conditions": [
             {
-                "expression": "PAGE__APP",
+                "expression": "APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
                 "object_alias": "exface.Core.PAGE_GROUP_PAGES"

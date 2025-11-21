@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Page [exface.Core.PAGE]",
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2024-02-13 13:36:46",
+            "MODIFIED_ON": "2025-11-21 11:26:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -266,7 +266,7 @@
                                                                 "caption": "Security Policies"
                                                             },
                                                             {
-                                                                "attribute_alias": "PAGE_GROUP__APP__LABEL"
+                                                                "attribute_alias": "APP__LABEL"
                                                             },
                                                             {
                                                                 "attribute_alias": "PAGE_GROUP__DESCRIPTION"
@@ -278,8 +278,26 @@
                                                         ],
                                                         "buttons": [
                                                             {
-                                                                "action_alias": "exface.Core.ShowObjectCreateDialog",
                                                                 "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "input_widget_id": "page_uid_field",
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectCreateDialog",
+                                                                    "prefill_with_input_data": true,
+                                                                    "input_mapper": {
+                                                                        "from_object_alias": "exface.Core.PAGE",
+                                                                        "to_object_alias": "exface.Core.PAGE_GROUP_PAGES",
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "UID",
+                                                                                "to": "PAGE"
+                                                                            },
+                                                                            {
+                                                                                "from": "APP",
+                                                                                "to": "APP"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                },
                                                                 "disabled_if": {
                                                                     "operator": "AND",
                                                                     "conditions": [
