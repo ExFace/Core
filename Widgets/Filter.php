@@ -339,7 +339,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
                 try {
                     $attr = $obj->getAttribute($this->getAttributeAlias());
                 } catch (MetaAttributeNotFoundError $e) {
-                    throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $obj->getAliasWithNamespace() . '"!', '6T91AR9', $e);
+                    throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias `' . $this->getAttributeAlias() . '` in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $obj->getAliasWithNamespace() . '"!', '6T91AR9', $e);
                 }
                 
                 // Set a special caption for filters on relations, which is derived from the relation itself
