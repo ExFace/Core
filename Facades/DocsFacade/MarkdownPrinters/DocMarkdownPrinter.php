@@ -135,7 +135,7 @@ class DocMarkdownPrinter
 
     public function getMarkdown(): string
     {
-        $markdown = $this->readFile($this->getAbsolutePath());
+        $markdown =  null;
         if(StringDataType::endsWith($this->uri->getPath(), 'UXON_prototypes.md')) {
             $query = $this->uri->getQuery();
             $params = [];
@@ -144,8 +144,19 @@ class DocMarkdownPrinter
             $printer = new UxonPrototypeMarkdownPrinter($this->workbench, $selector);
             $markdown = $printer->getMarkdown();
         }
+
+        if(StringDataType::endsWith($this->uri->getPath(), 'Available_metaobjects.md')) {
+            $query = $this->uri->getQuery();
+            $params = [];
+            parse_str($query, $params);
+            $selector = urldecode($params['selector']);
+            $printer = new ObjectMarkdownPrinter($this->workbench, $selector);
+            $markdown = $printer->getMarkdown();
+        }
         
-        
+        if(!$markdown) {
+            $markdown = $this->readFile($this->getAbsolutePath());
+        }
         
         
         return $this->rebaseRelativeLinks($markdown, $this->getAbsolutePath(), $this->getDirectoryPath(),0);
