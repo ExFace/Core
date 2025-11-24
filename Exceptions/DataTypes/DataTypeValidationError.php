@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\DataTypes;
 
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Exceptions\ValueExceptionInterface;
 
 /**
@@ -17,7 +18,7 @@ use exface\Core\Interfaces\Exceptions\ValueExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class DataTypeValidationError extends RangeException implements ValueExceptionInterface
+class DataTypeValidationError extends RangeException implements ValueExceptionInterface, DataTypeExceptionInterface
 {
     use DataTypeExceptionTrait;
     
