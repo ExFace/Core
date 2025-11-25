@@ -9,6 +9,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\ModelBuilders\PostgreSqlModelBuilder;
+use exface\Core\QueryBuilders\PostgreSqlBuilder;
 
 /**
  * Data source connector for PostgreSQL databases
@@ -264,5 +265,15 @@ class PostgreSqlConnector extends AbstractSqlConnector
     public function getModelBuilder()
     {
         return new PostgreSqlModelBuilder($this);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getSqlDialect()
+     */
+    public function getSqlDialect(): string
+    {
+        return PostgreSqlBuilder::SQL_DIALECT_PGSQL;
     }
 }

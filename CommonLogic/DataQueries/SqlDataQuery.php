@@ -9,6 +9,7 @@ use exface\Core\DataTypes\RegularExpressionDataType;
 class SqlDataQuery extends AbstractDataQuery
 {
     private $sql = '';
+    private ?string $sqlDialect = null;
     private $pkeyCols = [];
     
     private $result_array = null;
@@ -171,6 +172,23 @@ class SqlDataQuery extends AbstractDataQuery
     public function toString($prettify = true)
     {
         return $prettify ? \SqlFormatter::format($this->getSql(), false) : $this->getSql();
+    }
+    
+    public function getDialect() : ?string
+    {
+        if ($this->sqlDialect !== null) {
+            return $this->sqlDialect;
+        }
+        if ($this->connection !== null) {
+            $this->sqlDialect = $this->getConnection()->getSqlDialect();
+        }
+        return $this->sqlDialect;
+    }
+    
+    public function setDialect(string $value) : SqlDataQuery
+    {
+        $this->sqlDialect = $value;
+        return $this;
     }
 
     /**
