@@ -109,6 +109,18 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         return $value;
     }
 
+    /**
+     * Normalizes a raw link selector by extracting the object ID or alias.
+     *
+     * The function looks for a pattern like:
+     *   objectName [idOrAlias]
+     * and returns only the part inside the brackets.
+     *
+     * Example:
+     *   "AI agent" [axenox.GenAI.AI_AGENT]  →  axenox.GenAI.AI_AGENT
+     *
+     * If the selector does not follow this pattern, the original raw string is returned unchanged.
+     */
     protected function normalize(string $raw): string
     {
         $decoded = urldecode($raw);
@@ -122,6 +134,7 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 
         return substr($decoded, $start + 1, $end - $start - 1);
     }
+
 
 
     protected function addRelation(string $relation) : ObjectMarkdownPrinter
