@@ -34,6 +34,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_PLSQL = 'PL/SQL';
+    const SQL_DIALECT_ORACLE = 'Oracle';
+    
     /**
      * 
      * @param QueryBuilderSelectorInterface $selector
@@ -51,7 +54,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['PL/SQL', 'Oracle'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_PLSQL, self::SQL_DIALECT_ORACLE], parent::getSqlDialects());
     }
 
     /**

@@ -31,6 +31,9 @@ class PostgreSqlBuilder extends MySqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_PGSQL = 'pgSQL';
+    const SQL_DIALECT_POSTGRESQL = 'PostgreSQL';
+    
     /**
      *
      * @param QueryBuilderSelectorInterface $selector
@@ -49,7 +52,7 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['pgSQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_PGSQL, self::SQL_DIALECT_POSTGRESQL], parent::getSqlDialects());
     }
     
     /**

@@ -38,6 +38,8 @@ use exface\Core\DataTypes\ComparatorDataType;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    const SQL_DIALECT_TSQL = 'T-SQL';
+    const SQL_DIALECT_MSSQL = 'MSSQL';
     /**
      * Set to TRUE to add `WITH (NOLOCK)` in SELECT queries based on this object (also affects all JOINs!)
      * 
@@ -91,7 +93,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['T-SQL', 'MSSQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_TSQL, self::SQL_DIALECT_MSSQL], parent::getSqlDialects());
     }
 
     /**
