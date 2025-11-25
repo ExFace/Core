@@ -15,21 +15,24 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  */
 class MetaAttributeNotFoundError extends UnexpectedValueException implements MetaObjectExceptionInterface
 {
-    
     use MetaObjectExceptionTrait;
+    
+    private ?string $attrAlias = null;
 
     /**
      *
-     * @param MetaObjectInterface $meta_object            
-     * @param string $message            
-     * @param string $alias            
-     * @param \Throwable $previous            
+     * @param MetaObjectInterface $meta_object
+     * @param string $message
+     * @param null $alias
+     * @param null $previous
+     * @param string|null $aliasWithRelationPath
      */
-    public function __construct(MetaObjectInterface $meta_object, $message, $alias = null, $previous = null)
+    public function __construct(MetaObjectInterface $meta_object, $message, $alias = null, $previous = null, ?string $aliasWithRelationPath = null)
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setMetaObject($meta_object);
+        $this->attrAlias = $aliasWithRelationPath;
     }
     
     /**
@@ -40,5 +43,12 @@ class MetaAttributeNotFoundError extends UnexpectedValueException implements Met
     public function getDefaultAlias(){
         return '6VG35OA';
     }
+
+    /**
+     * @return string|null
+     */
+    public function getAttributeAliasWithRelationPath() : ?string
+    {
+        return $this->attrAlias;
+    }
 }
-?>
