@@ -814,13 +814,16 @@ class StringDataType extends AbstractDataType
     public static function scramble(
         string $value, 
         string $keep = "/[-_\\\\,.\/ ()\[\]\{\}=\"'@\:]/",
-        string $allowedChars = 'abcdefghijklmnopqrstuvwxyz',
+        string $allowedChars = 'abcdefghijklmnopqrstuvwxyz0123456789',
         bool $maintainCase = true
     ) : string
     {
         $chars = mb_str_split($value);
-        $allowedArray = mb_str_split($allowedChars);
-        $allowedCount = count($allowedArray);
+        $all = mb_str_split($allowedChars);
+        $allowedChars = array_values(array_filter($all, fn($char) => !is_numeric($char)));
+        $allowedCharsCount = count($allowedChars) - 1;
+        $allowedDigits = array_values(array_filter($all, fn($char) => is_numeric($char)));
+        $allowedDigitsCount = count($allowedDigits) - 1;
 
         $result = [];
 
@@ -829,12 +832,12 @@ class StringDataType extends AbstractDataType
                 // Keep original character
                 $result[$i] = $ch;
             } else {
-                if(is_numeric($ch)) {
+                if(is_numeric($ch) && $allowedDigitsCount > 0) {
                     // Replace with random number.
-                    $result[$i] = random_int(0, 9);
+                    $result[$i] = $allowedDigits[random_int(0, $allowedDigitsCount)];
                 } else {
                     // Replace with a random character from the allowed set
-                    $scrambled = $allowedArray[random_int(0, $allowedCount - 1)];
+                    $scrambled = $allowedChars[random_int(0, $allowedCharsCount)];
                     if($maintainCase) {
                         $result[$i] = ctype_upper($ch) ? strtoupper($scrambled) : strtolower($scrambled);
                     } else {
