@@ -2,7 +2,6 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataTypes\UxonValidationError;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UxonSchemaFactory;
@@ -23,8 +22,19 @@ use Throwable;
  */
 class UxonDataType extends JsonDataType
 {
+    private const ATTR_UID = 'UID';
+    private const ATTR_APPLIES_TO_CLASS = 'APPLIES_TO_CLASS';
+    private const ATTR_UXON = 'UXON';
+    private const CACHE_NAME = 'uxon.validation';
+    private const CACHE_KEY = 'rules';
     private const PRP_OBJECT_ALIAS = 'object_alias';
-
+    
+    /**
+     * @var JsonValidationRule[]
+     */
+    private array $validationRules = [];
+    private array $validationRuleData = [];
+    
     /**
      * Check if a given class as a property setter for a given property name.
      * 
@@ -102,12 +112,14 @@ class UxonDataType extends JsonDataType
         $prototypeClass = $prototypeClass ?? $schema->getPrototypeClass($validationUxon, []);
         $validationObject = null;
         $affectedProperty = null;
-        
-        try {
 
+        try {
+            $hasRootObject = ($lastValidationObject ?? $validationUxon->getProperty(self::PRP_OBJECT_ALIAS)) !== null;
+            $isObjectUxon = !$validationUxon->isArray(true);
+            
             // Validate the UXON import, by creating a mock object.
             // TODO This causes a lot of false positives, maybe there is a better way.
-            if(!$validationUxon->isArray(true)) {
+            if($hasRootObject && $isObjectUxon) {
                 $validationObject = $this->createValidationObject(
                     $schema,
                     $prototypeClass,
@@ -129,14 +141,16 @@ class UxonDataType extends JsonDataType
                 $errors[] = $creationError;
                 $creationError = null;
             }
-            
+        }
+        
+        if($validationObject === null) {
             // Try to create an empty validation object to improve accuracy of child validations.
             try {
                 $emptyUxon = UxonObject::fromArray([self::PRP_OBJECT_ALIAS => $objectAlias]);
                 if($validationUxon->hasProperty('attribute_alias')) {
                     $emptyUxon->setProperty('attribute_alias', $validationUxon->getProperty('attribute_alias'));
                 }
-                
+
                 $validationObject = $this->createValidationObject(
                     $schema,
                     $prototypeClass,
@@ -144,7 +158,7 @@ class UxonDataType extends JsonDataType
                     $lastValidationObject
                 );
             } catch (Throwable $error) {
-                
+
             }
         }
         
@@ -152,13 +166,14 @@ class UxonDataType extends JsonDataType
         foreach ($this->getValidationRules($prototypeClass) as $rule) {
             try {
                 $rule->check($validationUxon);
-            } catch (DataTypeValidationError $error) {
-                $errors[] = new UxonValidationError(
-                    $path,
-                    $error->getMessage(),
-                    $error->getAlias(),
-                    $error
-                );
+            } catch (UxonValidationError $error) {
+                foreach ($error->getPath() as $errorPath) {
+                    $errors[] = new UxonValidationError(
+                        $errorPath,
+                        $error->getMessage(),
+                        $error->getAlias()
+                    );
+                }
             }
         }
 
@@ -320,6 +335,7 @@ class UxonDataType extends JsonDataType
     {
         switch (true) {
             case $uxon->isEmpty():
+            case (new \ReflectionClass($class))->isAbstract():
                 return null;
             case is_a($class, UiPageInterface::class, true):
                 return UiPageFactory::createFromUxon($this->getWorkbench(), $uxon);
@@ -341,55 +357,93 @@ class UxonDataType extends JsonDataType
     {
         $rules = [];
         
-        // TODO Cache the fully instantiated rules and filter that cache.
-        /*foreach ($this->loadValidationRuleUxons($key) as $uxon) {
-            $rules[] = JsonValidationRule::fromUxon($this, $uxon);
-        }*/
+        // Instantiate all rules.
+        foreach ($this->loadValidationRuleData() as $ruleData) {
+            $appliesTo = $ruleData[self::ATTR_APPLIES_TO_CLASS];
+            // If rule does not apply, move on to the next.
+            // TODO We could lazily load the UXON to improve performance.
+            if(!is_a($key, $appliesTo, true)) {
+                continue;
+            }
+
+            // Try to get instance from cache.
+            $uid = $ruleData[self::ATTR_UID];
+            $rule = $this->validationRules[$uid];
+            
+            // If rule has not been instantiated, do so now.
+            if($rule === null) {
+                $rule = JsonValidationRule::fromUxon(
+                    $this,
+                    $appliesTo,
+                    $ruleData[self::ATTR_UXON]
+                );
+                $this->validationRules[$uid] = $rule;
+            }
+            
+            $rules[] = $rule;
+        }
         
         return $rules;
     }
 
     /**
      * Load validation rules. Either from cache or from the model.
-     * 
-     * @param string $key
+     *
      * @return array
      * @throws InvalidArgumentException
      */
-    protected function loadValidationRuleUxons(string $key) : array
+    protected function loadValidationRuleData() : array
     {
-        // Try to load from cache.
-        $cache = $this->getWorkbench()->getCache()->getPool('uxon.validation');
-        $rules = $cache->get('rules');
+        return [];
+        
+        // Try to retrieve from internal cache.
+        if(!empty($this->validationRuleData)) {
+            return $this->validationRuleData;
+        }
+        
+        // Try to load from external cache.
+        $cache = $this->getWorkbench()->getCache()->getPool(self::CACHE_NAME);
+        $rules = $cache->get(self::CACHE_KEY);
         if(!empty($rules)) {
-            return $rules;
+            return $this->validationRuleData = $rules;
         }
 
-        // TODO Load via DataSheet
-        if($key === '\exface\Core\Widgets\Tabs') {
-            $rules[] = new UxonObject([
+        //return $this->validationRuleData = [];
+        // TODO Load via DataSheet, no filters (?).
+        $rules[] = [
+            self::ATTR_UID => "a",
+            self::ATTR_APPLIES_TO_CLASS => '\exface\Core\Widgets\Tabs',
+            self::ATTR_UXON => new UxonObject([
                 'alias' => 'RecursionTest',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
                 'json_paths' => ["$..object_alias"],
-                'message' => 'Rec'
-            ]);
-            
-            $rules[] = new UxonObject([
-                'alias' => 'NoTabsWidgetType',
-                'mode' => JsonValidationRule::MODE_PROHIBIT,
-                'json_paths' => ['$.tabs.*.widget_type'],
-                'message' => 'Cant use "widget_type" for definition of "Tab"!'
-            ]);
+                'message' => 'HAS "object_alias"'
+            ])
+        ];
 
-            $rules[] = new UxonObject([
+        $rules[] = [
+            self::ATTR_UID => "b",
+            self::ATTR_APPLIES_TO_CLASS => '\exface\Core\Widgets\Tabs',
+            self::ATTR_UXON => new UxonObject([
                 'alias' => 'PregSplitTest',
                 'mode' => JsonValidationRule::MODE_PROHIBIT,
-                'json_paths' => ["$..*[?(@.category == 'fiction' and @.price < 10 or @.color == \"red\")].price..value.post.."],
-                'message' => '?'
-            ]);
-        }
+                'json_paths' => ["$.tabs..*[?(@.caption == 'Table')]"],
+                'message' => 'HAS "caption" == "Table"!'
+            ])
+        ];
 
-        $cache->set('rules', $rules);
-        return $rules;
+        $rules[] = [
+            self::ATTR_UID => "c",
+            self::ATTR_APPLIES_TO_CLASS => '\exface\Core\Widgets\Tabs',
+            self::ATTR_UXON => new UxonObject([
+                'alias' => 'TabsWidgetType',
+                'mode' => JsonValidationRule::MODE_PROHIBIT,
+                'json_paths' => ["$..tabs[?(@.widget_type != 'Tab' and @.widget_type)]"],
+                'message' => 'Widget "Tab" cannot contain property "widget_type"'
+            ])
+        ];
+
+        $cache->set(self::CACHE_KEY, $rules);
+        return $this->validationRuleData = $rules;
     }
 }
