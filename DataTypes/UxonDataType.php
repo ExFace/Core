@@ -2,7 +2,6 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataTypes\UxonValidationError;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UxonSchemaFactory;
@@ -113,12 +112,14 @@ class UxonDataType extends JsonDataType
         $prototypeClass = $prototypeClass ?? $schema->getPrototypeClass($validationUxon, []);
         $validationObject = null;
         $affectedProperty = null;
-        
-        try {
 
+        try {
+            $hasRootObject = ($lastValidationObject ?? $validationUxon->getProperty(self::PRP_OBJECT_ALIAS)) !== null;
+            $isObjectUxon = !$validationUxon->isArray(true);
+            
             // Validate the UXON import, by creating a mock object.
             // TODO This causes a lot of false positives, maybe there is a better way.
-            if(!$validationUxon->isArray(true)) {
+            if($hasRootObject && $isObjectUxon) {
                 $validationObject = $this->createValidationObject(
                     $schema,
                     $prototypeClass,
@@ -140,14 +141,16 @@ class UxonDataType extends JsonDataType
                 $errors[] = $creationError;
                 $creationError = null;
             }
-            
+        }
+        
+        if($validationObject === null) {
             // Try to create an empty validation object to improve accuracy of child validations.
             try {
                 $emptyUxon = UxonObject::fromArray([self::PRP_OBJECT_ALIAS => $objectAlias]);
                 if($validationUxon->hasProperty('attribute_alias')) {
                     $emptyUxon->setProperty('attribute_alias', $validationUxon->getProperty('attribute_alias'));
                 }
-                
+
                 $validationObject = $this->createValidationObject(
                     $schema,
                     $prototypeClass,
@@ -155,7 +158,7 @@ class UxonDataType extends JsonDataType
                     $lastValidationObject
                 );
             } catch (Throwable $error) {
-                
+
             }
         }
         
@@ -332,6 +335,7 @@ class UxonDataType extends JsonDataType
     {
         switch (true) {
             case $uxon->isEmpty():
+            case (new \ReflectionClass($class))->isAbstract():
                 return null;
             case is_a($class, UiPageInterface::class, true):
                 return UiPageFactory::createFromUxon($this->getWorkbench(), $uxon);
@@ -390,6 +394,8 @@ class UxonDataType extends JsonDataType
      */
     protected function loadValidationRuleData() : array
     {
+        return [];
+        
         // Try to retrieve from internal cache.
         if(!empty($this->validationRuleData)) {
             return $this->validationRuleData;
