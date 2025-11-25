@@ -4,6 +4,7 @@ namespace exface\Core\ModelLoaders;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
+use exface\Core\Events\Model\OnBeforeSnippetLoadedEvent;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Factories\AttributeGroupFactory;
@@ -106,7 +107,6 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
 use exface\Core\DataTypes\MessageCodeDataType;
-use exface\Core\Mutations\MetaObjectUidMutationTarget;
 use Throwable;
 
 /**
@@ -220,10 +220,10 @@ class SqlModelLoader implements ModelLoaderInterface
     {
         $exface = $object->getWorkbench();
         $load_behaviors = false;
-        $objectUid = $object->getId();
+        $objectUid = HexadecimalNumberDataType::cast($object->getId());
         if ($objectUid !== null) {
             $objectUid = HexadecimalNumberDataType::cast($objectUid);
-            $q_where = 'o.oid = ' . $objectUid;
+            $q_where = 'o.oid = ' . $this->buildSqlEscapedUid($objectUid);
         } else {
             $namespace = MetamodelAliasDataType::cast($object->getNamespace(), true);
             $alias = MetamodelAliasDataType::cast($object->getAlias());
@@ -353,7 +353,7 @@ SQL;
 					' . $this->buildSqlUuidSelector('a.related_object_special_key_attribute_oid') . ' as related_object_special_key_attribute_oid,
 					o.object_alias as rev_relation_alias
 				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
-				WHERE a.object_oid = ' . $objectUid . ' OR a.related_object_oid = ' . $objectUid);
+				WHERE a.object_oid = ' . $this->buildSqlEscapedUid($objectUid) . ' OR a.related_object_oid = ' . $this->buildSqlEscapedUid($objectUid));
         if ($res = $query->getResultArray()) {
             $relation_attrs = [];
             // use a for here instead of foreach because we want to extend the array from within the loop on some occasions
@@ -552,7 +552,7 @@ SQL;
                     {$this->buildSqlUuidSelector('oid')} AS oid,
                     {$this->buildSqlUuidSelector('behavior_app_oid')} AS behavior_app_oid
                 FROM exf_object_behaviors 
-                WHERE object_oid = {$objectUid}");
+                WHERE object_oid = {$this->buildSqlEscapedUid($objectUid)}");
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
                     $configUxon = UxonObject::fromJson($row['config_uxon'] ? $row['config_uxon'] : '{}');
@@ -712,7 +712,7 @@ SQL;
             if (false === $connectionSelector->isUid()) {
                 $joinConnectionOn = 'dc.alias = "' . MetamodelAliasDataType::cast($connectionSelector->toString(), true) . '"';
             } else {
-                $joinConnectionOn = 'dc.oid = ' . HexadecimalNumberDataType::cast($connectionSelector->toString());
+                $joinConnectionOn = 'dc.oid = ' . $this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($connectionSelector->toString()));
             }
         } else {
             $joinConnectionOn = "{$this->buildSqlCaseWhenThenElse('ds.custom_connection_oid IS NOT NULL', 'ds.custom_connection_oid', 'ds.default_connection_oid')} = dc.oid";
@@ -726,7 +726,7 @@ SQL;
         }
 
         if ($selector->isUid() === true) {
-            $selectorFilter = "ds.oid = " . HexadecimalNumberDataType::cast($selector->toString());
+            $selectorFilter = "ds.oid = " . $this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($selector->toString()));
             $joinDataSourceApp = '';
         } else {
             // Now we know, it's an alias
@@ -874,7 +874,7 @@ SQL;
         $exface = $selector->getWorkbench();
 
         if ($selector->isUid()) {
-            $filter = 'dc.oid = ' . $selector->toString();
+            $filter = 'dc.oid = ' . $this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($selector->toString()));
         } else {
             if ($selector->hasNamespace()) {
                 $appAlias = MetamodelAliasDataType::cast($selector->getAppAlias(), true);
@@ -1106,7 +1106,7 @@ SQL;
                 {$this->buildSqlUuidSelector('ac.attribute_oid')} as attribute_oid,
                 {$this->buildSqlUuidSelector('ac.compound_attribute_oid')} as compound_attribute_oid
             FROM exf_attribute_compound ac
-            WHERE ac.compound_attribute_oid = {$attrId}
+            WHERE ac.compound_attribute_oid = {$this->buildSqlEscapedUid($attrId)}
             ORDER BY ac.sequence_index ASC
         ");
         $obj = $attribute->getObject();
@@ -1188,7 +1188,7 @@ SQL;
     protected function cacheDataType(DataTypeSelectorInterface $selector)
     {
         if ($selector->isUid()){
-            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . HexadecimalNumberDataType::cast($selector->toString()) . ')';
+            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($selector->toString())) . ')';
         } else {
             $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . MetamodelAliasDataType::cast($selector->getAppAlias(), true) . "')";
         }
@@ -1271,12 +1271,12 @@ SQL;
                 return $this->loadUserData($user);
             } else {
                 $user = null;
-                $sqlWhere = "u.oid = {$userOrSelector->toString()}";
+                $sqlWhere = "u.oid = {$this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($userOrSelector->toString()))}";
             }
         } else {
             $user = $userOrSelector;
             if ($user->isAnonymous()) {
-                $sqlWhere = "u.oid = " . UserSelector::ANONYMOUS_USER_OID;
+                $sqlWhere = "u.oid = " . $this->buildSqlEscapedUid(UserSelector::ANONYMOUS_USER_OID);
             } else {
                 $sqlWhere = "UPPER(u.username) = '" . $this->buildSqlEscapedString(mb_strtoupper($user->getUsername())) . "'";
             }
@@ -1332,7 +1332,9 @@ SQL;
         }
         if ($row['role_oids']) {
             foreach (explode(',', rtrim($row['role_oids'], ",")) as $roleUid) {
-                $user->addRoleSelector($roleUid);
+                if ($roleUid !== '') {
+                    $user->addRoleSelector($roleUid);
+                }
             }
         }
 
@@ -1400,7 +1402,7 @@ SQL;
             FROM
                 exf_user_role_users turu
             WHERE
-                turu.user_oid = $anonymouseUserOid
+                turu.user_oid = {$this->buildSqlEscapedUid($anonymouseUserOid)}
         )
         OR
 SQL;
@@ -1420,7 +1422,7 @@ SQL;
             WHERE
                 u.username = '{$this->buildSqlEscapedString($userOrToken->getUsername())}'
         )
-        OR apol.target_user_role_oid = $authenticatedGroupOid
+        OR apol.target_user_role_oid = {$this->buildSqlEscapedUid($authenticatedGroupOid)}
         OR
 SQL;
             }
@@ -1507,7 +1509,7 @@ SQL;
             if ($uiPage = $this->pages_loaded[$selector->toString()]) {
                 return $uiPage;
             }
-            $where = "p.oid = " . HexadecimalNumberDataType::cast($selector->toString());
+            $where = "p.oid = " . $this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($selector->toString()));
             $err = 'UID "' . $selector->toString() . '"';
         } else {
             throw new UiPageNotFoundError('Unsupported page selector ' . $selector->toString() . '!');
@@ -1589,7 +1591,9 @@ SQL;
 
         if ($row['group_oids']) {
             foreach (explode(',', $row['group_oids']) as $groupUid) {
-                $uiPage->addGroupSelector($groupUid);
+                if ($groupUid !== '') {
+                    $uiPage->addGroupSelector($groupUid);
+                }
             }
         }
 
@@ -1899,7 +1903,7 @@ SQL;
         } else {
             $id = HexadecimalNumberDataType::cast($id);
             $sqlWhere = "
-            WHERE (oid = {$id} OR parent_oid = {$id}) AND menu_visible = 1";
+            WHERE (oid = {$this->buildSqlEscapedUid($id)} OR parent_oid = {$this->buildSqlEscapedUid($id)}) AND menu_visible = 1";
         }
         $sqlOrder = "
             ORDER BY parent_oid ASC, menu_index ASC, name ASC";
@@ -1933,7 +1937,7 @@ SQL;
                 $sqlUnionInnerWhere = $sqlWhere;
             } else {
                 $sqlUnionInnerWhere = "
-                WHERE parent_oid = {$id} AND menu_visible = 1";
+                WHERE parent_oid = {$this->buildSqlEscapedUid($id)} AND menu_visible = 1";
             }
             $sqlUnionWhere = "
                WHERE p.parent_oid IN (SELECT
@@ -1971,6 +1975,27 @@ SQL;
     }
 
     /**
+     * Turns our internal UID notation like 0x9854ad79a6754384 into a valid SQL piece
+     * 
+     * @param string $uid
+     * @return string
+     */
+    protected function buildSqlEscapedUid(string $uid) : string
+    {
+        return $uid;
+    }
+
+    /**
+     *
+     * @param string $tableOrPredicateAlias
+     * @return string
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return $tableOrPredicateAlias;
+    }
+
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadMessageData()
@@ -1982,7 +2007,7 @@ SQL;
         if (! array_key_exists($messageCode, $this->messages_loaded)) {
             $sql = <<<SQL
 /* Load message */
-SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS app_oid
+SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS {$this->escapeAlias('app_oid')}
     FROM exf_message
     WHERE code = '{$messageCode}'
 SQL;
@@ -2026,7 +2051,10 @@ SQL;
             $freshLoad = true;
             $sql = <<<SQL
 /* Load app */
-SELECT {$this->buildSqlUuidSelector('oid')} AS UID, app_alias AS ALIAS, app_name AS NAME, default_language_code AS DEFAULT_LANGUAGE_CODE
+SELECT {$this->buildSqlUuidSelector('oid')} AS {$this->escapeAlias('UID')}, 
+       app_alias AS {$this->escapeAlias('ALIAS')}, 
+       app_name AS {$this->escapeAlias('NAME')}, 
+       default_language_code AS {$this->escapeAlias('DEFAULT_LANGUAGE_CODE')}
     FROM exf_app;
 SQL;
             $result = $this->getDataConnection()->runSql($sql);
@@ -2252,7 +2280,7 @@ SELECT
     ) AS attribute_ids
 FROM exf_attribute_group ag
     INNER JOIN exf_app app ON app.oid = ag.app_oid
-WHERE ag.object_oid = {$object->getId()}
+WHERE ag.object_oid = {$this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($object->getId()))}
 SQL;
 
         try {
@@ -2290,7 +2318,7 @@ SQL;
     public function loadSnippet(UxonSnippetSelectorInterface $selector) : UxonSnippetInterface
     {
         if ($selector->isUid()) {
-            $sqlWhere = "us.oid = {$selector->toString()}";
+            $sqlWhere = "us.oid = {$this->buildSqlEscapedUid(HexadecimalNumberDataType::cast($selector->toString()))}";
         } else {
             $appAlias = MetamodelAliasDataType::cast($selector->getAppAlias(), true);
             $alias = MetamodelAliasDataType::cast(StringDataType::substringAfter($selector->toString(), $appAlias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
@@ -2317,6 +2345,18 @@ SQL;
         foreach ($rows as $row) {
             $uxon = UxonObject::fromJson($row['uxon']);
             $uxon->setProperty('name', $row['name']);
+
+            $this->getWorkbench()->eventManager()->dispatch(
+                new OnBeforeSnippetLoadedEvent(
+                    $this->getWorkbench(),
+                    $row['prototype'],
+                    $row['oid'],
+                    $row['alias'],
+                    $row['app_alias'],
+                    $uxon
+                )
+            );
+            
             $snippet = UxonSnippetFactory::createFromPrototype($this->getWorkbench(), $row['prototype'], $row['alias'], $row['app_alias'], $uxon);
         }
 

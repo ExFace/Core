@@ -1,21 +1,18 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\TextDataType;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
-use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 
 /**
@@ -125,16 +122,33 @@ class PostgreSqlBuilder extends MySqlBuilder
                         $value = $data_type->convertToHex($value, true);
                     }
                     if (stripos($value, '0x') === 0) {
-                        return $value;
+                        return "'\x" . substr($value, 2) . "'";
                     } else {
-                        return "UNHEX(" . $value . ")";
+                        return "'$value'";
                     }
                 default:
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
             }
+        } else if ($data_type instanceof TextDataType) {
+            $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
+            return stripcslashes($value);
+        } else if ($data_type instanceof HexadecimalNumberDataType) {
+            return "'".str_replace('0x','\\x',$value) . "'";
         }
         
         return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
+    }
+
+    /**
+     * Returns the SQL to transform the given binary SELECT predicate into something like 0x12433.
+     *
+     * @param string $select_from
+     * @return string
+     */
+    protected function buildSqlSelectBinaryAsHEX(string $select_from) : string
+    {
+        // In PostgreSQL casting to `::text` should normalize all letters to lowercase
+        return "CONCAT('0x', REPLACE({$select_from}::text, '-', ''))";
     }
 
     /**
@@ -144,7 +158,7 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'IFNULL';
+        return 'COALESCE';
     }
 
     /**
@@ -198,5 +212,99 @@ SQL;
     protected function buildSqlAliasForRowCounter() : string
     {
         return 'exfcnt';
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::decodeBinary()
+     */
+    protected function decodeBinary($value) : ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        return str_replace('\\x', '0x', $value);
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::buildSqlOrderBy()
+     */
+    protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
+    {
+        $orderByObject = parent::buildSqlOrderBy($qpart, $select_from);
+        if ($orderByObject === '') {
+            return $orderByObject;
+        }
+        $parts = preg_split('/\s+/', $orderByObject, 2);
+        $expr  = $parts[0];
+        $direction   = isset($parts[1]) ? strtoupper(trim($parts[1])) : '';
+
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $expr = $orderByObject;
+            $direction  = '';
+        }
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $expr)) {
+            $expr = '"' . str_replace('"', '""', $expr) . '"';
+        }
+        return trim($expr . ' ' . $direction);
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::buildSqlGroupByExpression()
+     */
+    protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
+        $output = '';
+
+        $args = $aggregator->getArguments();
+        $function_name = $aggregator->getFunction()->getValue();
+
+        switch ($function_name) {
+            case AggregatorFunctionsDataType::SUM:
+            case AggregatorFunctionsDataType::AVG:
+            case AggregatorFunctionsDataType::COUNT:
+            case AggregatorFunctionsDataType::MAX:
+            case AggregatorFunctionsDataType::MIN:
+                $output = $function_name . '(' . $sql . ')';
+                break;
+            case AggregatorFunctionsDataType::MAX_OF:
+            case AggregatorFunctionsDataType::MIN_OF:
+                // MIN_OF/MAX_OF is handled in buildSqlSelectSubselect()
+                $output = $sql;
+                break;
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+            case AggregatorFunctionsDataType::LIST_ALL:
+                $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
+                $output = "STRING_AGG(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . ", '{$this->escapeString($delim)}')";
+                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+                break;
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                $output = "COUNT(DISTINCT " . $sql . ")";
+                break;
+            case AggregatorFunctionsDataType::COUNT_IF:
+                $cond = $args[0];
+                list($if_comp, $if_val) = explode(' ', $cond ?? '', 2);
+                if (!$if_comp || is_null($if_val)) {
+                    throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
+                }
+                //we have to explicitly use the datatype of the attribute here so we can parte the values correctly in the where part
+                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($qpart, $sql, $if_comp, $if_val, false, false, $qpart->getAttribute()->getDataType()) . " THEN 1 ELSE 0 END)";
+                break;
+            default:
+                break;
+        }
+
+        return $output;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
     }
 }

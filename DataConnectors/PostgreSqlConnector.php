@@ -2,6 +2,7 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
@@ -25,6 +26,12 @@ class PostgreSqlConnector extends AbstractSqlConnector
      */
     protected function performConnect()
     {
+        /*
+         * Params described in https://www.php.net/manual/en/function.pg-connect.php
+         * The currently recognized parameter keywords are: host, hostaddr, port, dbname (defaults to value of user), 
+         * user, password, connect_timeout, options, tty (ignored), sslmode, requiressl (deprecated in favor of sslmode), 
+         * and service. Which of these arguments exist depends on your PostgreSQL version.
+         */
         $params = [
             'host=' . $this->getHost(),
             'user=' . $this->getUser(),
@@ -74,7 +81,17 @@ class PostgreSqlConnector extends AbstractSqlConnector
         $conn = $this->getCurrentConnection();
         $this->affectedRows = null;
 
-        $result = @pg_query($conn, $query->getSql());
+        $sql = $query->getSql();
+        if (! $query->isMultipleStatements()) {
+            $pkeys = $query->getPrimaryKeyColumns();
+            if (! empty($pkeys) && StringDataType::startsWith($sql, 'INSERT', false) === true) {
+                $sql .= ' RETURNING ' . implode(', ', $pkeys);
+            }
+        } else {
+            // TODO how to get results from multistatement queries?    
+        }
+        
+        $result = @pg_query($conn, $sql);
 
         if ($result === false) {
             throw new DataQueryFailedError($query, 'PostgreSQL query failed: ' . pg_last_error($conn));
@@ -93,7 +110,6 @@ class PostgreSqlConnector extends AbstractSqlConnector
     {
         $array = [];
         $rs = $query->getResultResource();
-
         if (! $rs instanceof \pgsql\Result) {
             return [];
         }
@@ -107,8 +123,20 @@ class PostgreSqlConnector extends AbstractSqlConnector
 
     public function getInsertId(SqlDataQuery $query)
     {
-        // PostgreSQL requires RETURNING clause for insert ID
-        return null;
+        $id = "";
+        $result = $query->getResultResource();
+        if ($result) {
+            $row = $query->getResultArray()[0];
+            $pkeys = $query->getPrimaryKeyColumns();
+            switch (count($pkeys)) {
+                case 0:
+                    return $row[array_key_first($row)];
+                case 1:
+                    return $row[$pkeys[0]];
+                // TODO what about compound keys???
+            }
+        }
+        return $id;
     }
 
     public function getAffectedRowsCount(SqlDataQuery $query)
@@ -131,7 +159,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
             }
 
             if (!pg_query($this->getCurrentConnection(), 'BEGIN')) {
-                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error());
+                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error($this->getCurrentConnection()));
             }
 
             $this->setTransactionStarted(true);
@@ -147,7 +175,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'COMMIT')) {
-            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error());
+            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);
@@ -161,7 +189,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'ROLLBACK')) {
-            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error());
+            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);

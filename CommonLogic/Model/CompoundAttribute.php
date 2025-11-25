@@ -219,7 +219,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     {
         $comp = $this->getComponents()[$index];
         if ($comp === null) {
-            throw new MetaAttributeNotFoundError($this->getObject(), 'Component "' . $index . '" not found for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ') from object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new MetaAttributeNotFoundError($this->getObject(), 'Component "' . $index . '" not found for compound attribute "' . $this->getName() . '" (alias `' . $this->getAliasWithRelationPath() . '`) from object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $comp;
     }

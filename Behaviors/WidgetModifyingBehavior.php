@@ -44,19 +44,13 @@ use exface\Core\Widgets\Dialog;
 class WidgetModifyingBehavior extends AbstractBehavior
 {    
     private ?array $onlyOnPages = null;
-    
     private ?array $onlyWidgetIds = null;
-
-    private ?array $onlyForActions = null;
-
     private bool $onlyPageRoot = false;
-
-    private ?array $onlyWidgetTypes = null;
-
+    private ?array $onlyForActions = null;
+    
+    private ?UxonObject $propertiesToSet = null;
     private ?UxonObject $buttonsToAddUxon = null;
-
     private ?UxonObject $columnsToAddUxon = null;
-
     private ?UxonObject $sideBarToAdd = null;
 
     /**
@@ -155,6 +149,11 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     public function onDataConfiguratorInitialized(OnDataConfiguratorInitEvent $event) : void
     {
+        // TODO avoid infinite loops here when there are no optional columns to add
+        // For example, adding ` && $this->propertiesToSet === null ` caused infinite loops when opening LOG_ENTRY in the
+        // logs. The behavior added a DialogSidebar with an AiChat widget, but no optional columns. No idea, why
+        // that caused trouble, but for now `change_properties` simply only works for regular widgets, not for
+        // configurators.
         if ($this->columnsToAddUxon === null) {
             return;
         }
@@ -169,7 +168,15 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-        $configurator->setOptionalColumns( $this->columnsToAddUxon);
+        
+        $columnsUxon = $this->columnsToAddUxon;
+        if($configurator->hasOptionalColumns()) {
+            foreach ($configurator->getOptionalColumnsUxon()->toArray() as $column) {
+                $columnsUxon->append($column);
+            }
+        }        
+        $configurator->setOptionalColumns($columnsUxon);
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
 
@@ -180,7 +187,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     public function onUiActionWidgetInitialized(OnUiActionWidgetInitEvent $event) : void
     {
-        if ($this->buttonsToAddUxon === null && $this->sideBarToAdd === null) {
+        if ($this->buttonsToAddUxon === null && $this->sideBarToAdd === null && $this->propertiesToSet === null) {
             return;
         }
 
@@ -193,8 +200,12 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-
         $widget = $event->getWidget();
+        
+        if ($this->propertiesToSet !== null) {
+            $widget->importUxonObject($this->propertiesToSet);
+        }
+        
         if ($this->buttonsToAddUxon !== null && $widget instanceof iHaveButtons) {
             $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
         }
@@ -268,6 +279,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
      * 
      * @uxon-property add_sidebar
      * @uxon-type \exface\Core\Widgets\DialogSidebar
+     * @uxon-template {"widgets": [{"widget_type": ""}]}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $sidebarUxon
      * @return \exface\Core\Behaviors\WidgetModifyingBehavior
@@ -369,6 +381,22 @@ class WidgetModifyingBehavior extends AbstractBehavior
     protected function setOnlyForActions(UxonObject $arrayOfAliases) : WidgetModifyingBehavior
     {
         $this->onlyForActions = $arrayOfAliases->toArray();
+        return $this;
+    }
+
+    /**
+     * Set direct properties of whatever widget the behavior is modifying - e.g. width, caption, etc.
+     * 
+     * @uxon-property change_properties
+     * @uxon-type \exface\Core\Widgets\AbstractWidget
+     * @uxon-template {"": ""}
+     * 
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setChangeProperties(UxonObject $uxon) : WidgetModifyingBehavior
+    {
+        $this->propertiesToSet = $uxon;
         return $this;
     }
 }

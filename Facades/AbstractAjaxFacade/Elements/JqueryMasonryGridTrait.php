@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
 /**
@@ -35,9 +36,13 @@ use exface\Core\Interfaces\Widgets\iLayoutWidgets;
  * @method iLayoutWidgets getWidget()
  *
  */
-trait JqueryMasonryGridTrait {
-    
-    
+trait JqueryMasonryGridTrait 
+{    
+    /**
+     * Returns TRUE if a grid wrapper around this element is needed
+     * 
+     * @return bool
+     */
     protected function needsGridWrapper() : bool
     {
         $widget = $this->getWidget();
@@ -47,7 +52,7 @@ trait JqueryMasonryGridTrait {
         // Nur wenn das Panel den gesamten Container ausfuellt, darf seine Groesse nicht
         // geaendert werden. In diesem Fall wird der wrapper eingefuegt und stattdessen seine
         // Groesse geaendert. Dadurch wird der Inhalt scrollbar im Panel angezeigt.
-        $containerWidget = $widget->getParentByClass('exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets');
+        $containerWidget = $widget->getParentByClass(iContainOtherWidgets::class);
         if(! $widget->hasParent() || ($containerWidget && $containerWidget->countWidgetsVisible() == 1)) {
             if ($widget->countWidgetsVisible() > 1) {
                 return true;

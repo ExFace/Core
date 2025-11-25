@@ -131,7 +131,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
         $relPathPrefix = $path. RelationPath::RELATION_SEPARATOR;
         if ($this->attributeAlias !== null) {
             if (! StringDataType::startsWith($this->attributeAlias, $relPathPrefix)) {
-                $this->getAttributeAlias = $relPathPrefix . $this->attributeAlias;
+                $this->attributeAlias = $relPathPrefix . $this->attributeAlias;
             }
         }
         return $this;

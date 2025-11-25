@@ -96,6 +96,12 @@ RewriteRule ^(config|backup|translations|logs)/.*$ - [F,NC]
 # Block requests to system files (starting with a dot) in the data folder
 RewriteRule ^data/\..*$ - [F,NC]
 
+# Block .html files.
+RewriteRule ^vendor/.*\.html$ - [F,L,NC]
+
+# Block library docs.
+RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]
+
 ");
         $installer->addInstaller($htaccessInstaller);
         
