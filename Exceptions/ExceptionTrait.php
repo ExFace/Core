@@ -179,10 +179,11 @@ MD);
             $stacktrace_tab->setCaption($translator->translate('ERROR.STACKTRACE_CAPTION'));
             $stacktrace_widget = WidgetFactory::createFromUxonInParent($stacktrace_tab, new UxonObject([
                 'width' => '100%',
-                'height' => '100%'
-            ]), 'Html');
+                'height' => '100%',
+                'hide_caption' => true,
+            ]), 'Markdown');
             $stacktrace_tab->addWidget($stacktrace_widget);
-            $stacktrace_widget->setHtml($page->getWorkbench()->getDebugger()->printException($this));
+            $stacktrace_widget->setValue($page->getWorkbench()->getDebugger()->printExceptionAsMarkdown($this));
             $debug_widget->addTab($stacktrace_tab);
         }
         
