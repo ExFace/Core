@@ -3,14 +3,25 @@ namespace exface\Core\Interfaces;
 
 interface DebuggerInterface
 {
-
     /**
-     * Returns a human readable representation of the exception
+     * Returns a human-readable representation of the exception
      *
      * @param \Throwable $exception            
      * @return string
      */
-    public static function printException(\Throwable $exception, $use_html = true);
+    public static function printException(\Throwable $exception, $use_html = false) : string;
+
+    /**
+     * @param $exception
+     * @return string
+     */
+    public static function printExceptionAsHtml($exception) : string;
+
+    /**
+     * @param \Throwable $exception
+     * @return string
+     */
+    public static function printExceptionAsMarkdown(\Throwable $exception) : string;
 
     /**
      * Returns a human-readable string dump of the given variable (similar to var_dump(), but returning a string)
