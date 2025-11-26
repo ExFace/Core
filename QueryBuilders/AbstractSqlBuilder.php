@@ -957,12 +957,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Remember the value to ensure it is returned as the created UID later.
                     case $uidValuesProvided === false && $uidIsOptimizedUUID === true:
                         $customUid = UUIDDataType::generateSqlOptimizedUuid();
-                        $row[$uidAddress] = $customUid;
+                        $row[$uidAddress] = $this->prepareInputValue($customUid,$uidQpart->getDataType(),$uidQpart->getDataAddressProperties());
                         break;
                     // If there is a non-empty UID value provided AND it is not an SQL statement, use
                     // that value directly
                     case $uidValuesProvided === true && $row[$uidAddress] !== null && $row[$uidAddress] !== '' && $this->isSqlStatement($uidAddress) === false:
-                        $customUid = $row[$uidAddress];
+                        $customUid = $this->prepareInputValue($row[$uidAddress],$uidQpart->getDataType(),$uidQpart->getDataAddressProperties());
                         break;
                 }
             }
