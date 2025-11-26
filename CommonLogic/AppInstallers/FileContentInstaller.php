@@ -151,7 +151,13 @@ class FileContentInstaller extends AbstractAppInstaller
                         break;
                     // Error.
                     default:
-                        throw new InstallerRuntimeError($this, "Failed to find marker \"{$marker}\" in file \"{$this->getFilePathAbsolute()}\".");
+                        $requiredMarkers = json_encode(array_keys($this->contentArray));
+                        throw new InstallerRuntimeError(
+                            $this, 
+                            "Failed to find marker \"{$marker}\" in file \"{$this->getFilePathAbsolute()}\"." . 
+                            " Both \"{$this->getMarkerBegin()}\" and \"{$this->getMarkerEnd()}\" for the following" . 
+                            " markers should be present in that file: " . $requiredMarkers . "."
+                        );
                 }
             }
         }
