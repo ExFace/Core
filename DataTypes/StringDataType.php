@@ -7,6 +7,7 @@ use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
+use Random\RandomException;
 use Transliterator;
 
 /**
@@ -795,5 +796,57 @@ class StringDataType extends AbstractDataType
     protected function getForceNullForEmptyValues() : bool
     {
         return $this->emptyAsNULL;
+    }
+
+    /**
+     * Scrambles the characters of a given string, while maintaining its basic structure.
+     *
+     * @param string $value
+     * @param string $keep
+     * Any characters that match this regex will not be scrambled.
+     * @param string $allowedChars
+     * Scrambled characters can turn into any character in this string.
+     * @param bool   $maintainCase
+     * If TRUE, scrambled characters will retain their case.
+     * @return string
+     * @throws RandomException
+     */
+    public static function scramble(
+        string $value, 
+        string $keep = "/[-_\\\\,.\/ ()\[\]\{\}=\"'@\:]/",
+        string $allowedChars = 'abcdefghijklmnopqrstuvwxyz0123456789',
+        bool $maintainCase = true
+    ) : string
+    {
+        $chars = mb_str_split($value);
+        $all = mb_str_split($allowedChars);
+        $allowedChars = array_values(array_filter($all, fn($char) => !is_numeric($char)));
+        $allowedCharsCount = count($allowedChars) - 1;
+        $allowedDigits = array_values(array_filter($all, fn($char) => is_numeric($char)));
+        $allowedDigitsCount = count($allowedDigits) - 1;
+
+        $result = [];
+
+        foreach ($chars as $i => $ch) {
+            if ($keep !== null && preg_match($keep, $ch)) {
+                // Keep original character
+                $result[$i] = $ch;
+            } else {
+                if(is_numeric($ch) && $allowedDigitsCount > 0) {
+                    // Replace with random number.
+                    $result[$i] = $allowedDigits[random_int(0, $allowedDigitsCount)];
+                } else {
+                    // Replace with a random character from the allowed set
+                    $scrambled = $allowedChars[random_int(0, $allowedCharsCount)];
+                    if($maintainCase) {
+                        $result[$i] = ctype_upper($ch) ? strtoupper($scrambled) : strtolower($scrambled);
+                    } else {
+                        $result[$i] = random_int(0,1) === 1 ? strtoupper($scrambled) : strtolower($scrambled);
+                    }
+                }
+            }
+        }
+
+        return implode('', $result);
     }
 }

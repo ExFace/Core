@@ -178,9 +178,11 @@ MD;
         }
         return <<<MD
 
-{$this->buildMarkdownHeading('Property `' . $propertyRow['PROPERTY'] . '`', $headingLevel + 1)}
-{$propertyRow['TITLE']}{$links}
 
+{$this->buildMarkdownHeading('Property `' . $propertyRow['PROPERTY'] . '`', $headingLevel + 1)}
+`Type : {$propertyRow['TYPE']}`
+
+{$propertyRow['TITLE']}{$links}
 {$propertyRow['DESCRIPTION']}
 MD;
     }

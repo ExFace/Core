@@ -31,6 +31,9 @@ class PostgreSqlBuilder extends MySqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_PGSQL = 'pgSQL';
+    const SQL_DIALECT_POSTGRESQL = 'PostgreSQL';
+    
     /**
      *
      * @param QueryBuilderSelectorInterface $selector
@@ -49,7 +52,7 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['pgSQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_PGSQL, self::SQL_DIALECT_POSTGRESQL], parent::getSqlDialects());
     }
     
     /**
@@ -133,7 +136,8 @@ class PostgreSqlBuilder extends MySqlBuilder
             $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
             return stripcslashes($value);
         } else if ($data_type instanceof HexadecimalNumberDataType) {
-            return "'".str_replace('0x','\\x',$value) . "'";
+
+            return "'" . substr($value, 2) . "'";
         }
         
         return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
@@ -223,7 +227,10 @@ SQL;
         if ($value === null) {
             return null;
         }
-        return str_replace('\\x', '0x', $value);
+        $hex = str_replace('-', '', $value);
+
+        // hex → binary data
+        return '0x' . $hex;
     }
     
     /**

@@ -33,6 +33,8 @@ class MySqlBuilder extends AbstractSqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_MYSQL = 'MySQL';
+    
     /**
      *
      * @param QueryBuilderSelectorInterface $selector
@@ -51,7 +53,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['MySQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_MYSQL], parent::getSqlDialects());
     }
     
     /**
