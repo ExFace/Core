@@ -16,6 +16,7 @@ use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
+use exface\Core\QueryBuilders\MsSqlBuilder;
 
 /**
  * Microsoft SQL Server connector via the official sqlsrv PHP extension.
@@ -712,5 +713,15 @@ class MsSqlConnector extends AbstractSqlConnector
             return false;
         }
         return $this->getDatabase() === $otherConnection->getDatabase();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getSqlDialect()
+     */
+    public function getSqlDialect(): string
+    {
+        return MsSqlBuilder::SQL_DIALECT_TSQL;
     }
 }

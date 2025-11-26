@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\ModelBuilders\OracleSqlModelBuilder;
+use exface\Core\QueryBuilders\OracleSqlBuilder;
 
 /**
  * Datbase API object of OracleSQL
@@ -323,5 +324,15 @@ class OracleSqlConnector extends AbstractSqlConnector
             return false;
         }
         return $this->getSid() === $otherConnection->getSid();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getSqlDialect()
+     */
+    public function getSqlDialect(): string
+    {
+        return OracleSqlBuilder::SQL_DIALECT_PLSQL;
     }
 }

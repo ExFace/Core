@@ -143,6 +143,8 @@ use exface\Core\Templates\Modifiers\IfNullModifier;
  */
 abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 {
+    const SQL_DIALECT_OTHER = 'OTHER';
+    
     /**
      * Custom where statement automatically appended to direct selects for this object (not if the object's table is joined!).
      *
@@ -538,6 +540,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $query = $this->buildSqlQuerySelect();
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
+            $q->setDialect($this->getSqlDialectDefault());
             $q->setSql($query);
             // first do the main query
             $qr = $data_connection->query($q);
@@ -988,7 +991,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                 }
             } else {
-                $query = (new SqlDataQuery())->setSql($sql);
+                $query = new SqlDataQuery();
+                $query->setDialect($this->getSqlDialectDefault());
+                $query->setSql($sql);
                 // In order to return newly create primary keys (UIDs), some SQL engines need to know which
                 // columns to return actually - so if we do not generate a custom UID here, we need to tell
                 // the query, where to get the UID values after the INSERT.
@@ -3602,7 +3607,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function getSqlDialects() : array
     {
-        return ['OTHER'];
+        return [self::SQL_DIALECT_OTHER];
+    }
+
+    /**
+     * @return string
+     */
+    protected function getSqlDialectDefault() : string
+    {
+        return $this->getSqlDialects()[0];
     }
 
     protected function setDirty(bool $trueOrFalse) : AbstractSqlBuilder

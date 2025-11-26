@@ -74,4 +74,6 @@ interface SqlDataConnectorInterface extends DataConnectionInterface, TextualQuer
      * @return void
      */
     public function canJoin(DataConnectionInterface $otherConnection) : bool;
+    
+    public function getSqlDialect() : string;
 }
