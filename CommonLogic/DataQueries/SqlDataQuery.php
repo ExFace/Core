@@ -200,28 +200,28 @@ class SqlDataQuery extends AbstractDataQuery
      */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
-        $page = $debug_widget->getPage();
         $sql_tab = $debug_widget->createTab();
         $sql_tab->setCaption('SQL');
         $sql_tab->setNumberOfColumns(1);
-        /* @var $sql_widget \exface\Core\Widgets\InputCode */
+        /* @var $inputCode_widget \exface\Core\Widgets\InputCode */
         
         $sql = $this->getSql();
+        $dialect = $this->getDialect();
         
-        //TODO SR: define the sql dialect and pass it here:
-        $sql_widget =WidgetFactory::createFromUxonInParent($sql_tab, new UxonObject([
+        $inputCode_widget = WidgetFactory::createFromUxonInParent($sql_tab, new UxonObject([
             'widget_type' => 'InputCode',
-            'width' => '825px',
-            'height' => '740px',
+            'width' => '100%',
+            'height' => '100%',
             "language" => 'sql',
+            "editable" => false,
             "code_formatter" => [
                 'language' => 'sql',
-                'dialect' => 'tsql',
+                'dialect' => $dialect,
             ],
             "value" => $sql,
         ]));
         
-        $sql_tab->addWidget($sql_widget);
+        $sql_tab->addWidget($inputCode_widget);
         $debug_widget->addTab($sql_tab);
         return $debug_widget;
     }

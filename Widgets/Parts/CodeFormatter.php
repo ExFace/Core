@@ -27,6 +27,13 @@ use exface\Core\Widgets\InputCode;
 class CodeFormatter implements WidgetPartInterface
 {
     use ICanBeConvertedToUxonTrait;
+
+    const DIALECT_SQL = 'sql';
+    const DIALECT_TSQL = 'tsql';
+    const DIALECT_MARIADB = 'mariadb';
+    const DIALECT_MYSQL = 'mysql';
+    const DIALECT_ORACLE = 'plsql';
+    const DIALECT_POSTGRESQL = 'postgresql';
     
     private $inputCode;
     private $language;
@@ -98,7 +105,7 @@ class CodeFormatter implements WidgetPartInterface
      */
     public function setDialect(string $dialect) : CodeFormatter
     {
-        $this->dialect = $dialect;
+        $this->dialect = $this->formatDialectName($dialect);
         return $this;
     }
 
@@ -150,5 +157,31 @@ class CodeFormatter implements WidgetPartInterface
     {
         $this->colorize = $colorize;
         return $this;
+    }
+
+    /**
+     * This function maps internal dialect names to formatter-known names.
+     * 
+     * @param string $value
+     * @return string
+     */
+    private function formatDialectName(string $value) : string
+    {
+        $value = mb_strtolower($value);
+        
+        switch ($value) {
+            case 'mssql':
+            case 't-sql': $value = self::DIALECT_TSQL; break;
+            case 'mariadb':  $value = self::DIALECT_MARIADB; break;
+            case 'mysql': $value = self::DIALECT_MYSQL; break;
+            case 'oracle':
+            case 'pl/sql': $value = self::DIALECT_ORACLE; break;
+            case 'postgresql':
+            case 'pgsql': $value = self::DIALECT_POSTGRESQL; break;
+            case 'other':
+            case 'sql' : $value = self::DIALECT_SQL; break;
+        }
+        
+        return $value;
     }
 }
