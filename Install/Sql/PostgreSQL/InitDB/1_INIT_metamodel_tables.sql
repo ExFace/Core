@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS exf_announcement (
     show_to timestamp,
     message_uxon text,
     message_type varchar(10),
-    CONSTRAINT exf_announcement_pkey PRIMARY KEY (oid),
-    CONSTRAINT exf_announcement_ibfk_1 FOREIGN KEY (communication_template_oid) REFERENCES exf_communication_template (oid) ON DELETE CASCADE ON UPDATE RESTRICT
+    CONSTRAINT exf_announcement_pkey PRIMARY KEY (oid)
 );
 
 CREATE INDEX exf_announcement_communication_template_oid_idx ON exf_announcement (communication_template_oid);
@@ -158,8 +157,7 @@ CREATE TABLE IF NOT EXISTS exf_attribute_group (
     app_oid uuid NOT NULL,
     description varchar(200),
     CONSTRAINT exf_attribute_group_pkey PRIMARY KEY (oid),
-    CONSTRAINT exf_attribute_group_uq_alias_per_object UNIQUE (object_oid, alias),
-    CONSTRAINT exf_attribute_group_ibfk_2 FOREIGN KEY (app_oid) REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT
+    CONSTRAINT exf_attribute_group_uq_alias_per_object UNIQUE (object_oid, alias)
 );
 
 CREATE INDEX exf_attribute_group_app_oid_idx ON exf_attribute_group (app_oid);
@@ -470,8 +468,7 @@ CREATE TABLE IF NOT EXISTS exf_mutation_set (
     description text,
     enabled_flag smallint NOT NULL DEFAULT 1,
     CONSTRAINT exf_mutation_set_pkey PRIMARY KEY (oid),
-    CONSTRAINT exf_mutation_set_name_unique UNIQUE (name, app_oid),
-    CONSTRAINT fk_mutation_set_app FOREIGN KEY (app_oid) REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT
+    CONSTRAINT exf_mutation_set_name_unique UNIQUE (name, app_oid)
 );
 
 CREATE INDEX fk_mutation_set_app_idx ON exf_mutation_set (app_oid);
@@ -488,8 +485,7 @@ CREATE TABLE IF NOT EXISTS exf_mutation_target (
     description text,
     object_oid uuid NOT NULL,
     CONSTRAINT exf_mutation_target_pkey PRIMARY KEY (oid),
-    CONSTRAINT exf_mutation_target_name_unique UNIQUE (name, app_oid),
-    CONSTRAINT fk_mutation_target_app FOREIGN KEY (app_oid) REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT
+    CONSTRAINT exf_mutation_target_name_unique UNIQUE (name, app_oid)
 );
 
 CREATE INDEX fk_mutation_target_app_idx ON exf_mutation_target (app_oid);
@@ -508,9 +504,7 @@ CREATE TABLE IF NOT EXISTS exf_mutation_type (
     mutation_prototype_file varchar(200) NOT NULL,
     mutation_target_oid uuid NOT NULL,
     CONSTRAINT exf_mutation_type_pkey PRIMARY KEY (oid),
-    CONSTRAINT exf_mutation_type_name_unique UNIQUE (name, app_oid),
-    CONSTRAINT fk_mutation_type_app FOREIGN KEY (app_oid) REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT,
-    CONSTRAINT fk_mutation_type_target FOREIGN KEY (mutation_target_oid) REFERENCES exf_mutation_target (oid) ON DELETE RESTRICT ON UPDATE RESTRICT
+    CONSTRAINT exf_mutation_type_name_unique UNIQUE (name, app_oid)
 );
 
 CREATE INDEX fk_mutation_type_app_idx ON exf_mutation_type (app_oid);
@@ -1121,3 +1115,32 @@ CREATE TABLE IF NOT EXISTS exf_widget_setup_user (
 );
 
 CREATE INDEX fk_widget_setup_user_setup_idx ON exf_widget_setup_user (widget_setup_oid);
+
+
+ALTER TABLE exf_announcement
+    ADD CONSTRAINT exf_announcement_ibfk_1
+        FOREIGN KEY (communication_template_oid)
+            REFERENCES exf_communication_template (oid) ON DELETE CASCADE ON UPDATE RESTRICT;
+
+ALTER TABLE exf_attribute_group
+    ADD CONSTRAINT exf_attribute_group_ibfk_2
+        FOREIGN KEY (app_oid) 
+            REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE exf_mutation_set
+    ADD CONSTRAINT fk_mutation_set_app
+        FOREIGN KEY (app_oid) 
+            REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE exf_mutation_target
+    ADD CONSTRAINT fk_mutation_target_app
+        FOREIGN KEY (app_oid) 
+            REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE exf_mutation_type
+    ADD CONSTRAINT fk_mutation_type_app
+        FOREIGN KEY (app_oid) 
+            REFERENCES exf_app (oid) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    ADD CONSTRAINT fk_mutation_type_target 
+        FOREIGN KEY (mutation_target_oid) 
+            REFERENCES exf_mutation_target (oid) ON DELETE RESTRICT ON UPDATE RESTRICT;
