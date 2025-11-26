@@ -1,8 +1,12 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\PhpFilePathDataType;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\ErrorMessage;
@@ -456,7 +460,25 @@ MD);
         $links = $this->links;
         if ($prev = $this->getPrevious()) {
             if ($prev instanceof ExceptionInterface) {
+                // For our own exceptions, just generate links recursively
                 $links = array_merge($prev->getLinks(), $links);
+            } else {
+                // For other types of exceptions, see if they happened in one of our UXON prototypes. If so,
+                // add a link to this prototype docs. This should help in cases like invalid return types
+                // because a required UXON property not set.
+                try {
+                    $file = $prev->getFile();
+                    if ($file) {
+                        $class = PhpFilePathDataType::findClassInFile($file);
+                        $class = '\\' . ltrim($class, '\\');
+                        if ($class && is_a($class, iCanBeConvertedToUxon::class, true)) {
+                            $links['UXON prototype `' . PhpClassDataType::findClassNameWithoutNamespace($class) . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($class);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Do nothing - we were just trying to find some editional information
+                }
+                
             }
         }
         return array_unique($links);
