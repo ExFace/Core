@@ -128,6 +128,10 @@ class DocsFacade extends AbstractHttpFacade
 
     public function getDocsMarkdown(string $path) : string
     {
+        $facadeRoute = $this->getUrlRouteDefault() . '/';
+        if (stripos($path, $facadeRoute) !== false) {
+            $path = StringDataType::substringAfter($path, $facadeRoute, $path);
+        }
         $baseUrl = $this->buildUrlToFacade(false);
         $request = new ServerRequest('GET', $baseUrl . '/' . $path);
         $template = new RawMarkdownTemplate($baseUrl);
