@@ -297,6 +297,8 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         switch ($err->getSqlErrorCode()) {
+            case 512:
+                return new DataQueryRelationCardinalityError($query, $message, null, $err->setAlias('7W2J960'));
             case 2627:
             case 2601:
                 return new DataQueryConstraintError($query, $message, null, $err->setAlias('73II64M'));
