@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core;
 
+use exface\Core\CommonLogic\AppInstallers\ApacheServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
 use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Interfaces\InstallerInterface;
@@ -54,59 +55,8 @@ class CoreApp extends App
         // Add the custom core installer, that will take care of model schema updates, etc.
         // Make sure, it runs before any other installers do.
         $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
-        
-        // .htaccess for Apache servers
-        
-        $htaccessInstaller = new FileContentInstaller($this->getSelector());
-        $htaccessInstaller
-            ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']))
-            ->setFileTemplatePath('default.htaccess')
-            ->setMarkerBegin("\n# BEGIN [#marker#]")
-            ->setMarkerEnd('# END [#marker#]')
-            ->addContent('Core URLs', "
 
-# API requests
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/.*$ vendor/exface/core/index.php [L,QSA,NC]
-
-# Force trailing slash on requests to the root folder of the workbench
-# E.g. me.com/exface -> me.com/exface/
-RewriteCond %{REQUEST_URI} ^$
-RewriteRule ^$ %{REQUEST_URI} [R=301]
-
-# index request without any path
-RewriteRule ^/?$ vendor/exface/core/index.php [L,QSA]
-
-# Requests to UI pages
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^[^/]*$ vendor/exface/core/index.php [L,QSA]
-
-")
-            ->addContent('Core Security', "
-
-# Block direct access to PHP scripts
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteCond %{REQUEST_FILENAME} !vendor/exface/core/index.php [NC]
-RewriteRule ^vendor/.*\.php$ - [F,L,NC]
-
-# Block requests to config, cache, backup, etc.
-RewriteRule ^(config|backup|translations|logs)/.*$ - [F,NC]
-# Block requests to system files (starting with a dot) in the data folder
-RewriteRule ^data/\..*$ - [F,NC]
-
-# Block .html files.
-RewriteRule ^vendor/.*\.html$ - [F,L,NC]
-
-# Block library docs.
-RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]
-
-");
-        $installer->addInstaller($htaccessInstaller);
-        
         // robot.txt
-        
         $robotsTxtInstaller = new FileContentInstaller($this->getSelector());
         $robotsTxtInstaller
         ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'robots.txt']))
@@ -136,12 +86,6 @@ Disallow: /
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(WebConsoleFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
-        $htaccessInstaller->addContent("zlib compression off for webconsole facade\n", "
-<If \"'%{THE_REQUEST}' =~ m#api/webconsole#\">
-    php_flag zlib.output_compression Off
-</If>
-            
-");
         
         // HttpTask facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
@@ -159,17 +103,8 @@ Disallow: /
         $installer->addInstaller($tplInstaller);
         
         // Server installer (e.g. for Microsoft IIS)
-        $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
-        // Autodetect server installer if not set explicitly
-        if ($serverInstallerClass === null) {
-            switch (true) {
-                case ServerSoftwareDataType::isServerIIS():
-                    $serverInstallerClass = '\\' . ltrim(IISServerInstaller::class, "\\");
-                    break;
-                // TODO add installers for apache and nginx here!
-            }
-        }
-        if ($serverInstallerClass != null) {
+        $serverInstallerClass = $this->getServerInstallerClass();
+        if ($serverInstallerClass !== null) {
             $serverInstaller = new $serverInstallerClass($this->getSelector());
             $installer->addInstaller($serverInstaller);
         }
@@ -185,6 +120,23 @@ Disallow: /
         $installer->addInstaller($docsInstaller);
         
         return $installer;
+    }
+
+    /**
+     * @return string|null
+     */
+    protected function getServerInstallerClass() : string|null
+    {
+        $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
+
+        // Autodetect server installer if not set explicitly
+        return match (true) {
+            !empty($serverInstallerClass) => $serverInstallerClass,
+            ServerSoftwareDataType::isServerIIS() => '\\' . ltrim(IISServerInstaller::class, "\\"),
+            ServerSoftwareDataType::isServerNginx() => null,
+            ServerSoftwareDataType::isServerApache() => '\\' . ltrim(ApacheServerInstaller::class, "\\"),
+            default => null,
+        };
     }
     
     /**
