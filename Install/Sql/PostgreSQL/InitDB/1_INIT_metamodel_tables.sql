@@ -660,6 +660,7 @@ CREATE TABLE IF NOT EXISTS exf_page_group_pages (
     modified_by_user_oid uuid,
     page_oid uuid NOT NULL,
     page_group_oid uuid NOT NULL,
+    app_oid uuid,
     CONSTRAINT exf_page_group_pages_pkey PRIMARY KEY (oid),
     CONSTRAINT exf_page_group_pages_unique UNIQUE (page_oid, page_group_oid)
 );
