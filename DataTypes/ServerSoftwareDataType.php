@@ -11,6 +11,10 @@ namespace exface\Core\DataTypes;
  */
 class ServerSoftwareDataType extends StringDataType
 {
+    const SERVER_SOFTWARE_APACHE = 'Apache';
+    const SERVER_SOFTWARE_IIS = 'Microsoft-IIS';
+    const SERVER_SOFTWARE_NGINX = 'nginx';
+    
     /**
      * Returns the full name of the servers software, that runs the workbench
      * 
@@ -75,7 +79,7 @@ class ServerSoftwareDataType extends StringDataType
      */
     public static function isServerIIS() : bool
     {
-        return strcasecmp(static::getServerSoftwareFamily(), 'Microsoft-IIS') === 0;
+        return strcasecmp(static::getServerSoftwareFamily(), self::SERVER_SOFTWARE_IIS) === 0;
     }
     
     /**
@@ -84,7 +88,7 @@ class ServerSoftwareDataType extends StringDataType
      */
     public static function isServerApache() : bool
     {
-        return strcasecmp(static::getServerSoftwareFamily(), 'Apache') === 0;
+        return strcasecmp(static::getServerSoftwareFamily(), self::SERVER_SOFTWARE_APACHE) === 0;
     }
     
     /**
@@ -93,7 +97,7 @@ class ServerSoftwareDataType extends StringDataType
      */
     public static function isServerNginx() : bool
     {
-        return strcasecmp(static::getServerSoftwareFamily(), 'nginx') === 0;
+        return strcasecmp(static::getServerSoftwareFamily(), self::SERVER_SOFTWARE_NGINX) === 0;
     }
     
     /**
