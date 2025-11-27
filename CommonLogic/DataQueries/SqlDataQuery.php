@@ -213,7 +213,7 @@ class SqlDataQuery extends AbstractDataQuery
             'width' => '100%',
             'height' => '100%',
             "language" => 'sql',
-            "editable" => false,
+            "disabled" => true,
             "code_formatter" => [
                 'language' => 'sql',
                 'dialect' => $dialect,

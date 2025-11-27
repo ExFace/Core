@@ -32,12 +32,9 @@ use exface\Core\Widgets\Parts\CodeFormatter;
 class InputCode extends Input
 {
     const LANGUAGE_SQL = 'sql';
-    const LANGUAGE_JSON = 'json';
-    const LANGUAGE_PHP = 'php';
     
     private $language = null;
     private $codeFormatter = null;
-    private $editable = true;
     private ?UxonObject $codeFormatterUxon = null;
     
     
@@ -56,7 +53,7 @@ class InputCode extends Input
      * 
      * @uxon-property language
      * @uxon-type [javascript,json,php,sql]
-     * @uxon-defaul json
+     * @uxon-defaul text
      * 
      * @param string $value
      * @return $this
@@ -76,7 +73,7 @@ class InputCode extends Input
     {
         if (!$this->hasCodeFormatter()) {
             if ($this->codeFormatterUxon === null) {
-                $this->createDefaultCodeFormatter();
+                $this->codeFormatter = $this->createDefaultCodeFormatter($this->language);
             } else {
                 $this->codeFormatter = new CodeFormatter($this, $this->codeFormatterUxon);
             }
@@ -101,30 +98,6 @@ class InputCode extends Input
     {
         $this->codeFormatterUxon = $uxon;
         $this->codeFormatter = null;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getEditable() : bool
-    {
-        return $this->editable;
-    }
-
-    /**
-     * Sets the inputCode to editable.
-     * The inputCode is editable by default.
-     * 
-     * @uxon-property editable
-     * @uxon-type boolean
-     * 
-     * @param bool $editable
-     * @return $this
-     */
-    public function setEditable(bool $editable) : InputCode
-    {
-        $this->editable = $editable;
         return $this;
     }
 
