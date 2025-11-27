@@ -1,10 +1,11 @@
 <?php
 namespace exface\Core\CommonLogic\DataQueries;
 
-use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Widgets\DebugMessage;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\RegularExpressionDataType;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Widgets\DebugMessage;
 
 class SqlDataQuery extends AbstractDataQuery
 {
@@ -199,22 +200,28 @@ class SqlDataQuery extends AbstractDataQuery
      */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
-        $page = $debug_widget->getPage();
         $sql_tab = $debug_widget->createTab();
         $sql_tab->setCaption('SQL');
         $sql_tab->setNumberOfColumns(1);
-        /* @var $sql_widget \exface\Core\Widgets\Html */
-        $sql_widget = WidgetFactory::create($page, 'Html', $sql_tab);
+        /* @var $inputCode_widget \exface\Core\Widgets\InputCode */
+        
         $sql = $this->getSql();
-        // Pretty print SQLs as long as they are not too big
-        if (strlen($sql) <= $debug_widget->getWorkbench()->getConfig()->getOption('DEBUG.SQL_FORMATTING_MAX_CHARS')) {
-            $sql_formatted = \SqlFormatter::format($sql);
-        } else {
-            $sql_formatted = '<pre class="prettyprint lang-sql">' . $sql . '</pre>';
-        }
-        $sql_widget->setHtml('<div style="padding:10px;">' . $sql_formatted . '</div>');
-        $sql_widget->setWidth('100%');
-        $sql_tab->addWidget($sql_widget);
+        $dialect = $this->getDialect();
+        
+        $inputCode_widget = WidgetFactory::createFromUxonInParent($sql_tab, new UxonObject([
+            'widget_type' => 'InputCode',
+            'width' => '100%',
+            'height' => '100%',
+            "language" => 'sql',
+            "disabled" => true,
+            "code_formatter" => [
+                'language' => 'sql',
+                'dialect' => $dialect,
+            ],
+            "value" => $sql,
+        ]));
+        
+        $sql_tab->addWidget($inputCode_widget);
         $debug_widget->addTab($sql_tab);
         return $debug_widget;
     }
