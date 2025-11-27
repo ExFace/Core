@@ -119,7 +119,7 @@ class DebugWidgetProcessor
         if ($debugWidgetUxon === null) {
             $dump = $record;
             unset($dump['formatted']);
-            $debugWidgetUxon = $this->createMarkdownFallback($this->printAsMarkdown($dump))->toArray();
+            $debugWidgetUxon = $this->createMarkdownFallback($this->printAsMarkdown($dump));
         }
         
         $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);
@@ -134,7 +134,8 @@ class DebugWidgetProcessor
      */
     protected function printAsMarkdown($record) : string
     {
-        return "```\n" . print_r($record, true) . "\n```\n";
+        // Do NOT use print_r() here as it will cause recursion and memory overflows!
+        return "```\n" . Debugger::printVariable($record, false) . "\n```\n";
     }
     
     /**

@@ -4,6 +4,7 @@ namespace exface\Core\Facades\DocsFacade\Middleware;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\DocsFacade\MarkdownContent;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
+use exface\Core\Interfaces\Facades\MarkdownPrinterMiddlewareInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use GuzzleHttp\Psr7\Response;
 use kabachello\FileRoute\Interfaces\FileReaderInterface;
@@ -24,7 +25,7 @@ use exface\Core\DataTypes\StringDataType;
  * @author Andrej Kabachnik
  *
  */
-class UxonPrototypePrinterMiddleware implements MiddlewareInterface
+class UxonPrototypePrinterMiddleware implements MarkdownPrinterMiddlewareInterface
 {
     private $workbench = null;
     
@@ -49,16 +50,11 @@ class UxonPrototypePrinterMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (! StringDataType::endsWith($request->getUri()->getPath(), $this->fileUrl)) {
-            return $handler->handle($request);
+        if ($this->shouldSkip($request)) { 
+            return $handler->handle($request); 
         }
         
-        $query = $request->getUri()->getQuery();
-        $params = [];
-        parse_str($query, $params);
-        $selector = urldecode($params['selector']);
-        $printer = new UxonPrototypeMarkdownPrinter($this->getWorkbench(), $selector);
-        $markdown = $printer->getMarkdown();
+        $markdown = $this->getMarkdown($request);
 
         $templatePath = Filemanager::pathJoin([$this->facade->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
         $template = new PlaceholderFileTemplate($templatePath, $this->baseUrl . '/' . $this->facade->buildUrlToFacade(true));
@@ -72,6 +68,24 @@ class UxonPrototypePrinterMiddleware implements MiddlewareInterface
         $response = new Response(200, [], $html);
         $response = $response->withHeader('Content-Type', 'text/html');
         return $response;
+    }
+    
+    public function getMarkdown(ServerRequestInterface $request) : string
+    {
+        $query = $request->getUri()->getQuery();
+        $params = [];
+        parse_str($query, $params);
+        $selector = urldecode($params['selector']);
+        $printer = new UxonPrototypeMarkdownPrinter($this->getWorkbench(), $selector);
+        return $printer->getMarkdown();
+    }
+
+    public function shouldSkip(ServerRequestInterface $request): bool
+    {
+        return ! StringDataType::endsWith(
+            $request->getUri()->getPath(),
+            $this->fileUrl
+        );
     }
     
     protected function getWorkbench(): WorkbenchInterface

@@ -1,11 +1,14 @@
 <?php
 namespace exface\Core\Facades;
 
+use axenox\GenAI\Interfaces\MarkdownPrinterInterface;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Facades\DocsFacade\MarkdownPrinters\DocMarkdownPrinter;
 use exface\Core\Facades\DocsFacade\Middleware\MetaObjectPrinterMiddleware;
 use exface\Core\Facades\DocsFacade\Middleware\UxonPrototypePrinterMiddleware;
 use exface\Core\Facades\DocsFacade\RawMarkdownTemplate;
 use exface\Core\Interfaces\Facades\HttpMiddlewareBusInterface;
+use exface\Core\Interfaces\Facades\MarkdownPrinterMiddlewareInterface;
 use kabachello\FileRoute\Interfaces\FileReaderInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -128,6 +131,10 @@ class DocsFacade extends AbstractHttpFacade
 
     public function getDocsMarkdown(string $path) : string
     {
+        $facadeRoute = $this->getUrlRouteDefault() . '/';
+        if (stripos($path, $facadeRoute) !== false) {
+            $path = StringDataType::substringAfter($path, $facadeRoute, $path);
+        }
         $baseUrl = $this->buildUrlToFacade(false);
         $request = new ServerRequest('GET', $baseUrl . '/' . $path);
         $template = new RawMarkdownTemplate($baseUrl);
@@ -135,8 +142,22 @@ class DocsFacade extends AbstractHttpFacade
         $handler = $this->getDocsHandler($baseUrl, $reader);
         $matcher = $this->getUrlMatcher();
         $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
-        $response = $handler->handle($request);
-        return $response->getBody()->__toString();
+        
+        $markdown = null;
+        
+        foreach ($this->getMarkdownPrinterMiddlewares($baseUrl,$reader) as $printer) {
+            if($printer instanceof MarkdownPrinterMiddlewareInterface) {
+                if(!$printer->shouldSkip($request)) {
+                    $markdown = $printer->getMarkdown($request);
+                }
+            }
+        }
+        
+        if(!$markdown) {
+            $printer = new DocMarkdownPrinter($this->getWorkbench(), $path);
+            $markdown = $printer->getMarkdown();
+        }
+        return $markdown;
     }
     
     protected function getUrlMatcher() : callable
@@ -178,7 +199,24 @@ class DocsFacade extends AbstractHttpFacade
     {
         return new MarkdownDocsReader($this->getWorkbench());
     }
-    
+
+    /**
+     * Builds and returns a list of middlewares that implement
+     * MarkdownPrinterMiddlewareInterface.
+
+     *
+     * @return MarkdownPrinterMiddlewareInterface[] 
+     */
+    protected function getMarkdownPrinterMiddlewares(string $baseUrl, FileReaderInterface $reader) : array
+    {
+        return [
+            new UxonPrototypePrinterMiddleware($this, $baseUrl, 'UXON/UXON_prototypes.md', $reader),
+            new MetaObjectPrinterMiddleware($this, $baseUrl, 'creating_metamodels/Available_metaobjects.md', $reader)
+        ];
+    }
+
+
+
     protected function getDocsHandler(string $baseUrl, FileReaderInterface $reader) : HttpMiddlewareBusInterface
     {
         $handler = new HttpRequestHandler(new NotFoundHandler());
@@ -187,8 +225,9 @@ class DocsFacade extends AbstractHttpFacade
         $urlRewriter = new AppUrlRewriterMiddleware($this);
         $handler->add($urlRewriter);
 
-        $handler->add(new UxonPrototypePrinterMiddleware($this, $baseUrl,'UXON/UXON_prototypes.md', $reader));
-        $handler->add(new MetaObjectPrinterMiddleware($this, $baseUrl, 'creating_metamodels/Available_metaobjects.md', $reader));
+        foreach ($this->getMarkdownPrinterMiddlewares($baseUrl, $reader) as $middleware) {
+            $handler->add($middleware);
+        }
         
         return $handler;
     }

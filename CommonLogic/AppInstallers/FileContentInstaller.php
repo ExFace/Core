@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  *
@@ -11,6 +12,31 @@ use exface\Core\DataTypes\StringDataType;
  */
 class FileContentInstaller extends AbstractAppInstaller
 {
+    /**
+     * Behavior setting for missing markers. If applied, missed markers and their contents 
+     * will be appended to the end of the file.
+     * @see FileContentInstaller::setMissingMarkerBehavior()
+     */
+    public const MISSING_MARKER_BEHAVIOR_APPEND = 'append';
+
+    /**
+     * Behavior setting for missing markers. If applied, missed markers will be ignored.
+     * @see FileContentInstaller::setMissingMarkerBehavior()
+     */
+    public const MISSING_MARKER_BEHAVIOR_IGNORE = 'ignore';
+
+    /**
+     * Behavior setting for missing markers. If applied, missed markers will cause an error.
+     * @see FileContentInstaller::setMissingMarkerBehavior()
+     */
+    public const MISSING_MARKER_BEHAVIOR_ERROR = 'error';
+
+    private array $missingMarkerBehaviorOptions = [
+        self::MISSING_MARKER_BEHAVIOR_APPEND,
+        self::MISSING_MARKER_BEHAVIOR_IGNORE,
+        self::MISSING_MARKER_BEHAVIOR_ERROR
+    ];
+    
     private $filePathAbsolute = null;
     
     private $fileTemplatePathAbsolute = null;
@@ -18,6 +44,8 @@ class FileContentInstaller extends AbstractAppInstaller
     private $markerBegin = null;
     
     private $markerEnd = null;
+    
+    private $missingMarkerBehavior = self::MISSING_MARKER_BEHAVIOR_APPEND;
     
     /**
      * [ marker => content ]
@@ -89,12 +117,22 @@ class FileContentInstaller extends AbstractAppInstaller
         $changesCnt = 0;
         foreach ($this->contentArray as $marker => $content) {
             $originalContent = $fileContent;
-            $begin = StringDataType::replacePlaceholders($this->getMarkerBegin(), ['marker' => preg_quote($marker)]);
-            $end = StringDataType::replacePlaceholders($this->getMarkerEnd(), ['marker' => preg_quote($marker)]);
-            $pattern = '/' . $begin . '.*' . $end . '/is';
-            
+            $begin = trim(StringDataType::replacePlaceholders($this->getMarkerBegin(), ['marker' => preg_quote($marker)]));
+            $end = trim(StringDataType::replacePlaceholders($this->getMarkerEnd(), ['marker' => preg_quote($marker)]));
+            $pattern = '/' . "\s+" . $begin . '.*' . $end . '/is';
+            $newContent = "\n\n" . $begin . "\n" . $content . "\n" . $end;
+
             if (preg_match($pattern, $fileContent)) {
-                $fileContent = preg_replace($pattern, $begin . $content . $end, $fileContent);
+                if(preg_match('/^(\t+)(?=' . $begin . ')/m', $fileContent, $indents) === 1) {
+                    $newContent = StringDataType::indent($newContent, $indents[0]);
+                }
+
+                $fileContent = preg_replace(
+                    $pattern,
+                    $newContent,
+                    $fileContent
+                );
+
                 if ($fileContent === null) {
                     throw new InstallerRuntimeError($this, 'Error replacing marker "' . $marker . '" in file "' . $this->getFilePathAbsolute() . '"!');
                 }
@@ -102,12 +140,29 @@ class FileContentInstaller extends AbstractAppInstaller
                     $changesCnt++;
                 }
             } else {
-                $fileContent .= $begin . $content . $end;
-                $changesCnt++;
+                switch ($this->getMissingMarkerBehavior()) {
+                    // Append.
+                    case self::MISSING_MARKER_BEHAVIOR_APPEND:
+                        $fileContent .= $newContent . "\n";
+                        $changesCnt++;
+                        break;
+                    // Ignore.
+                    case self::MISSING_MARKER_BEHAVIOR_IGNORE:
+                        break;
+                    // Error.
+                    default:
+                        $requiredMarkers = json_encode(array_keys($this->contentArray));
+                        throw new InstallerRuntimeError(
+                            $this, 
+                            "Failed to find marker \"{$marker}\" in file \"{$this->getFilePathAbsolute()}\"." . 
+                            " Both \"{$this->getMarkerBegin()}\" and \"{$this->getMarkerEnd()}\" for the following" . 
+                            " markers should be present in that file: " . $requiredMarkers . "."
+                        );
+                }
             }
         }
+
         file_put_contents($this->getFilePathAbsolute(), $fileContent);
-        
         yield ' made ' . $changesCnt . ' changes.' . PHP_EOL;
     }
 
@@ -220,4 +275,32 @@ class FileContentInstaller extends AbstractAppInstaller
         return $this;
     }
 
+    /**
+     * Returns the behavior setting for missing markers. 
+     * Check the corresponding `MISSING_MARKER_BEHAVIOR` constants for more info.
+     * 
+     * @return string
+     */
+    public function getMissingMarkerBehavior() : string
+    {
+        return $this->missingMarkerBehavior;
+    }
+
+    /**
+     * Set the behavior for missing markers.
+     * Check the corresponding `MISSING_MARKER_BEHAVIOR` constants for more info.
+     *
+     * @param string $value
+     * @return FileContentInstaller
+     */
+    public function setMissingMarkerBehavior(string $value) : FileContentInstaller
+    {
+        if(!in_array($value, $this->missingMarkerBehaviorOptions)) {
+            $allowed = json_encode($this->missingMarkerBehaviorOptions);
+            throw new InvalidArgumentException('Invalid argument "' . $value . '", expected ' . $allowed . '.');
+        }
+
+        $this->missingMarkerBehavior = $value;
+        return $this;
+    }
 }
