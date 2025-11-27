@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
-use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataTypes\ServerSoftwareDataType;
@@ -13,7 +12,7 @@ use exface\Core\DataTypes\ServerSoftwareDataType;
  */
 abstract class AbstractServerInstaller extends AbstractAppInstaller
 {
-    protected InstallerInterface $configInstaller;
+    protected FileContentInstaller $configInstaller;
     
     /**
      * 
@@ -29,7 +28,7 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
                 $this->getConfigFileName()
             ]))
             ->setFileTemplatePath($this->getConfigTemplatePathRelative())
-            ->setMarkerBegin("\n{$this->stringToComment('BEGIN [#marker#]')}")
+            ->setMarkerBegin($this->stringToComment('BEGIN [#marker#]'))
             ->setMarkerEnd($this->stringToComment('END [#marker#]'));
         
         $this->configInstaller = $configInstaller;
@@ -54,10 +53,10 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
     /**
      * Turns a string into a config comment.
      * 
-     * @param string $markerText
+     * @param string $comment
      * @return string
      */
-    protected abstract function stringToComment(string $markerText) : string;
+    protected abstract function stringToComment(string $comment) : string;
     
     /**
      * 
