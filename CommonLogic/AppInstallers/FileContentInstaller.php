@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\PlaceholderRenderers\PlaceholderRendererInterface;
 
 /**
  *
@@ -46,6 +47,8 @@ class FileContentInstaller extends AbstractAppInstaller
     private $markerEnd = null;
     
     private $missingMarkerBehavior = self::MISSING_MARKER_BEHAVIOR_APPEND;
+    
+    private PlaceholderRendererInterface|null $placeholderRenderer = null;
     
     /**
      * [ marker => content ]
@@ -160,6 +163,12 @@ class FileContentInstaller extends AbstractAppInstaller
                         );
                 }
             }
+        }
+
+        // Replace placeholders if needed
+        $placeholderRenderer = $this->getPlaceholderRenderer();
+        if ($placeholderRenderer) {
+            $fileContent = $placeholderRenderer->render($fileContent);
         }
 
         file_put_contents($this->getFilePathAbsolute(), $fileContent);
@@ -302,5 +311,25 @@ class FileContentInstaller extends AbstractAppInstaller
 
         $this->missingMarkerBehavior = $value;
         return $this;
+    }
+
+    /**
+     * Add a template renderer to replace placeholders in the template file and in the generated sections
+     * 
+     * @param PlaceholderRendererInterface $renderer
+     * @return $this
+     */
+    public function setPlaceholderRenderer(PlaceholderRendererInterface $renderer) : FileContentInstaller
+    {
+        $this->placeholderRenderer = $renderer;
+        return $this;
+    }
+
+    /**
+     * @return PlaceholderRendererInterface|null
+     */
+    protected function getPlaceholderRenderer() : ?PlaceholderRendererInterface
+    {
+        return $this->placeholderRenderer;
     }
 }

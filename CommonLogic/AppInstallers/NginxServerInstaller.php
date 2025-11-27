@@ -2,7 +2,10 @@
 
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\ArrayPlaceholders;
 
 class NginxServerInstaller extends AbstractServerInstaller
 {
@@ -10,82 +13,55 @@ class NginxServerInstaller extends AbstractServerInstaller
     {
         parent::__construct($selectorToInstall);
         
+        // Placeholders to be used in the nginx.conf files
+        $workbenchPath = $this->getWorkbench()->getInstallationPath();
+        $workbenchUrl = $this->getWorkbench()->getUrl();
+        $workbenchHost = UrlDataType::findHost($workbenchPath);
+        $urlPath = UrlDataType::findPath($workbenchUrl); 
+        $phRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+        $phRenderer->addPlaceholder(new ArrayPlaceholders([
+            'installation_url_path' => $urlPath,
+            'installation_absolute_path' => $workbenchPath,
+            'host' => $workbenchHost
+        ]));
+        
         $this->configInstaller
             ->setMissingMarkerBehavior($this->configInstaller::MISSING_MARKER_BEHAVIOR_ERROR)
-            ->addContent('Locations', $this->getLocationsContent());
+            ->addContent('Locations', $this->getLocationsContent($urlPath));
     }
 
-    protected function getLocationsContent() : string
+    protected function getLocationsContent(string $urlPath) : string
     {
-        return 'location / {
-    if (!-e $request_filename){
+        return <<<CONF
+
+    if (!-e \$request_filename){
         rewrite ^/api/.*$ /vendor/exface/Core/index.php;
     }
 
-    if ($request_uri ~ "^$"){
-        rewrite ^/$ /$request_uri redirect;
+    if (\$request_uri ~ "^$")
+        rewrite ^/$ /\$request_uri redirect;
     }
     
     rewrite ^/?$ /vendor/exface/Core/index.php;
     
-    if (!-e $request_filename){
+    if (!-e \$request_filename){
         rewrite ^/[^/]*$ /vendor/exface/Core/index.php;
     }
-}
+    
+    # Security restrictions
+    location /{$urlPath}/config { return 403; }
+    location /{$urlPath}/backup { return 403; }
+    location /{$urlPath}/translations { return 403; }
+    location /{$urlPath}/logs { return 403; }
+    location ~ ^/{$urlPath}/data/\..*$ { return 403; }
 
-location /config {
-    return 403;
-}
+    location ~* ^/{$urlPath}/vendor/.*\.html$ { return 404; }
+    location ~* ^/{$urlPath}/vendor/.*/gh-pages.*$ { return 404; }
 
-location /backup {
-    return 403;
+    # Disable .git directory
+    location ~ /\.git { deny all; access_log off; log_not_found off; }
 }
-
-location /translations {
-    return 403;
-}
-
-location /logs {
-    return 403;
-}
-
-location ~ ^/data/\..*$ {
-    return 403;
-}
-
-location ~* ^vendor/.*\.html$ {                
-        return 403;
-}
-
-location ~* ^vendor/.*/gh-pages.*$ {
-        return 403;
-}
-
-# Disable .git directory
-location ~ /\.git {
-    deny all;
-    access_log off;
-    log_not_found off;
-}
-
-# Add locations of phpmyadmin here.
-location ~ [^/]\.php(/|$) {
-    fastcgi_split_path_info ^(.+?\.php)(|/.*)$;
-    fastcgi_pass 127.0.0.1:9000;
-    include fastcgi_params;
-    fastcgi_param HTTP_PROXY "";
-    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-    fastcgi_param PATH_INFO $fastcgi_path_info;
-    fastcgi_param QUERY_STRING $query_string;
-    fastcgi_intercept_errors on;
-    fastcgi_connect_timeout         300;
-    fastcgi_send_timeout           3600;
-    fastcgi_read_timeout           3600;
-    fastcgi_buffer_size 128k;
-    fastcgi_buffers 4 256k;
-    fastcgi_busy_buffers_size 256k;
-    fastcgi_temp_file_write_size 256k;
-}';
+CONF;
     }
 
     /**
