@@ -14,9 +14,9 @@ use exface\Core\Widgets\Parts\CodeFormatter;
  *  {
  *      "widget_type": "InputCode",
  *      "language": "sql",
- *      "editable": false,
- *      "width": "1000px",
- *      "height": "800px",
+ *      "disable": true,
+ *      "width": "100%",
+ *      "height": "100%",
  *      "value": "SELECT * FROM myTable",
  *      "code_formatter": {
  *          "prettify": true,
