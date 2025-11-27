@@ -75,7 +75,7 @@ class CodeFormatter implements WidgetPartInterface
      * Sets the formatted language.
      * 
      * @uxon-property language
-     * @uxon-type [sql, json]
+     * @uxon-type [sql,javascript,json]
      * 
      * @param string $language
      * @return $this
