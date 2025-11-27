@@ -63,7 +63,7 @@ class DebugWidgetProcessor
                 $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                     'caption' => 'Log entry',
                     'widgets' => [
-                        $this->createMarkdownFallback("```\n" . print_r($dump, true) . "\n```\n")->toArray()
+                        $this->createMarkdownFallback($this->printAsMarkdown($dump))->toArray()
                     ]
                 ]));
                 $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);
@@ -119,12 +119,22 @@ class DebugWidgetProcessor
         if ($debugWidgetUxon === null) {
             $dump = $record;
             unset($dump['formatted']);
-            $debugWidgetUxon = $this->createMarkdownFallback(Debugger::printExceptionAsMarkdown($dump));
+            $debugWidgetUxon = $this->createMarkdownFallback($this->printAsMarkdown($dump));
         }
         
         $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);
         
         return $record;
+    }
+
+    /**
+     * 
+     * @param mixed $record
+     * @return string
+     */
+    protected function printAsMarkdown($record) : string
+    {
+        return "```\n" . print_r($record, true) . "\n```\n";
     }
     
     /**
