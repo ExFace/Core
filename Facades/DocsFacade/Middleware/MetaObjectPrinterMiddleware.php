@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\DocsFacade\MarkdownContent;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\ObjectMarkdownPrinter;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
+use exface\Core\Interfaces\Facades\MarkdownPrinterMiddlewareInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use GuzzleHttp\Psr7\Response;
 use kabachello\FileRoute\Interfaces\FileReaderInterface;
@@ -25,7 +26,7 @@ use exface\Core\DataTypes\StringDataType;
  * @author Andrej Kabachnik
  *
  */
-class MetaObjectPrinterMiddleware implements MiddlewareInterface
+class MetaObjectPrinterMiddleware implements MarkdownPrinterMiddlewareInterface
 {
     private $workbench = null;
     
@@ -50,16 +51,12 @@ class MetaObjectPrinterMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (! StringDataType::endsWith($request->getUri()->getPath(), $this->fileUrl)) {
+        if ($this->shouldSkip($request)) {
             return $handler->handle($request);
         }
         
-        $query = $request->getUri()->getQuery();
-        $params = [];
-        parse_str($query, $params);
-        $selector = $this->normalize($params['selector']);
-        $printer = new ObjectMarkdownPrinter($this->getWorkbench(), $selector);
-        $markdown = $printer->getMarkdown();
+        $markdown = $this->getMarkdown($request);
+        
 
         $templatePath = Filemanager::pathJoin([$this->facade->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
         $template = new PlaceholderFileTemplate($templatePath, $this->baseUrl . '/' . $this->facade->buildUrlToFacade(true));
@@ -73,6 +70,25 @@ class MetaObjectPrinterMiddleware implements MiddlewareInterface
         $response = new Response(200, [], $html);
         $response = $response->withHeader('Content-Type', 'text/html');
         return $response;
+    }
+
+    public function shouldSkip(ServerRequestInterface $request): bool
+    {
+        return ! StringDataType::endsWith(
+            $request->getUri()->getPath(),
+            $this->fileUrl
+        );
+    }
+
+
+    public function getMarkdown(ServerRequestInterface $request): string
+    {
+        $query = $request->getUri()->getQuery();
+        $params = [];
+        parse_str($query, $params);
+        $selector = $this->normalize($params['selector']);
+        $printer = new ObjectMarkdownPrinter($this->getWorkbench(), $selector);
+        return $printer->getMarkdown();
     }
 
     /**
@@ -100,7 +116,6 @@ class MetaObjectPrinterMiddleware implements MiddlewareInterface
 
         return substr($decoded, $start + 1, $end - $start - 1);
     }
-
 
 
     protected function getWorkbench(): WorkbenchInterface
