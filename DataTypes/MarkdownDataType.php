@@ -110,7 +110,26 @@ class MarkdownDataType
 
         return $md;
     }
-    
+
+    /**
+     * Builds a Markdown header string with the given heading level.
+     *
+     * Example:
+     *   buildMarkdownHeader("Title", 3)
+     *   returns: "### Title"
+     *
+     * @param string $content       The text of the header
+     * @param int    $headingLevel  The header level (1 to 6)
+     *
+     * @return string A Markdown formatted header line
+     */
+    public static function buildMarkdownHeader(string $content, int $headingLevel): string
+    {
+        $prefix = str_repeat('#', $headingLevel);
+        return $prefix . ' ' . $content;
+    }
+
+
     /**
      *
      * @param string $markdown
@@ -121,6 +140,64 @@ class MarkdownDataType
         $parser = new GithubMarkdown();
         return $parser->parse($markdown);
     }
+
+    /**
+     * Adjusts all Markdown header levels so that the highest level header
+     * (the one with the fewest number of # characters) is shifted to a
+     * specified target level.
+     *
+     * Example:
+     * If the highest header in the input is "#" and $highestLevel = 2,
+     * all headers are shifted by +1, so:
+     *   # Title     -> ## Title
+     *   ## Section  -> ### Section
+     *
+     * If the highest header already equals $highestLevel, the input
+     * markdown is returned unchanged.
+     *
+     * Headers are always clamped between level 1 and 6.
+     *
+     * @param string $markdown      The full markdown content
+     * @param int    $highestLevel  The desired level for the highest header (default 2)
+     *
+     * @return string The markdown content with adjusted header levels
+     */
+    public static function convertHeaderLevels(string $markdown, int $highestLevel = 2): string
+    {
+        if (!preg_match_all('/^(#{1,6})\s+.+$/m', $markdown, $matches)) {
+            return $markdown;
+        }
+
+        $levels = array_map('strlen', $matches[1]);
+        $minLevel = min($levels);
+
+        if ($minLevel === $highestLevel) {
+            return $markdown;
+        }
+
+        $offset = $highestLevel - $minLevel;
+
+        $converted = preg_replace_callback(
+            '/^(#{1,6})\s+(.+)$/m',
+            function (array $m) use ($offset) {
+                $currentLevel = strlen($m[1]);
+                $newLevel = $currentLevel + $offset;
+
+                if ($newLevel < 1) {
+                    $newLevel = 1;
+                } elseif ($newLevel > 6) {
+                    $newLevel = 6;
+                }
+
+                return str_repeat('#', $newLevel) . ' ' . $m[2];
+            },
+            $markdown
+        );
+
+        return $converted ?? $markdown;
+    }
+
+
 
     /**
      * 
