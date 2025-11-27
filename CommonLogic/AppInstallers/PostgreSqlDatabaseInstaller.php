@@ -56,9 +56,9 @@ CREATE TABLE IF NOT EXISTS "{$this->getMigrationsTableName()}" (
     down_datetime TIMESTAMP NULL,
     down_script TEXT NOT NULL,
     down_result TEXT NULL,
-    failed_flag BOOLEAN NOT NULL DEFAULT FALSE,
+    failed_flag SMALLINT NOT NULL DEFAULT 0,
     failed_message TEXT NULL,
-    skip_flag BOOLEAN NOT NULL DEFAULT FALSE,
+    skip_flag SMALLINT NOT NULL DEFAULT 0,
     log_id VARCHAR(10) NULL
 );
 SQL;
