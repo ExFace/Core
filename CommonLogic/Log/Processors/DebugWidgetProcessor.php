@@ -134,7 +134,8 @@ class DebugWidgetProcessor
      */
     protected function printAsMarkdown($record) : string
     {
-        return "```\n" . print_r($record, true) . "\n```\n";
+        // Do NOT use print_r() here as it will cause recursion and memory overflows!
+        return "```\n" . Debugger::printVariable($record, false) . "\n```\n";
     }
     
     /**

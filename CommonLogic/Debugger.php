@@ -133,6 +133,11 @@ class Debugger implements DebuggerInterface
             return $dumper->dump($cloner->cloneVar($anything), true, ['maxDepth' => $expand_depth]);
         } else {
             $dumper = new CliDumper();
+            // No colors
+            $dumper->setColors(false);
+            // If DUMP_LIGHT_ARRAY is set, then arrays are dumped in a shortened format similar to PHP's short array notation
+            // $dumper->setFlags(CliDumper::DUMP_LIGHT_ARRAY);
+
             return $dumper->dump($cloner->cloneVar($anything), true);
         }
     }
