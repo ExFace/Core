@@ -119,7 +119,7 @@ class DebugWidgetProcessor
         if ($debugWidgetUxon === null) {
             $dump = $record;
             unset($dump['formatted']);
-            $debugWidgetUxon = $this->createMarkdownFallback($this->printAsMarkdown($dump))->toArray();
+            $debugWidgetUxon = $this->createMarkdownFallback($this->printAsMarkdown($dump));
         }
         
         $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);

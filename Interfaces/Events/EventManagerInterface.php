@@ -36,7 +36,20 @@ interface EventManagerInterface extends WorkbenchDependantInterface
      * @param int|NULL $priority The higher this value, the earlier the listener will be triggered in the chain            
      * @return EventManagerInterface
      */
-    public function addListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface;
+    public function addListener(string $eventName, callable $listener_callable, ?int $priority = null) : EventManagerInterface;
+
+    /**
+     * Adds a listener, that will only be called once - the next time the event is triggered.
+     * 
+     * The listener can explicitly prevent being removed by returning FALSE. This way, you can add a one-time listener,
+     * that will only perform its work on certain conditions, but will do it once only.
+     * 
+     * @param string $eventName
+     * @param callable $listener_callable
+     * @param int|NULL $priority The higher this value, the earlier the listener will be triggered in the chain
+     * @return EventManagerInterface
+     */
+    public function addListenerOnce(string $eventName, callable $listener, ?int $priority = null) : EventManagerInterface;
 
     /**
      * Dispatches an event and returns it (eventually updated during handling).
