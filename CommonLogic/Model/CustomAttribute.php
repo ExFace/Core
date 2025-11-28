@@ -23,6 +23,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 class CustomAttribute extends Attribute
 {
     private mixed $source = null;
+    private ?string $typeModel = null;
 
     /**
      * 
@@ -82,6 +83,23 @@ class CustomAttribute extends Attribute
     public function getOrigin() : int
     {
         return MetaAttributeOriginDataType::CUSTOM_ATTRIBUTE;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTypeModel(): ?string
+    {
+        return $this->typeModel;
+    }
+
+    /**
+     * @param string|null $typeModel
+     * @return void
+     */
+    public function setTypeModel(?string $typeModel): void
+    {
+        $this->typeModel = $typeModel;
     }
 
     /**
