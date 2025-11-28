@@ -97,4 +97,12 @@ RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]";
     {
         return "# {$comment}";
     }
+
+    /**
+     * @inheritDoc
+     */
+    protected function ServerSoftwareFamilyDefault(): string
+    {
+        return 'Apache';
+    }
 }

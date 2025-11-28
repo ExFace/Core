@@ -57,8 +57,13 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
      * @return string
      */
     protected abstract function stringToComment(string $comment) : string;
-    
+
     /**
+     * @return string
+     */
+    protected abstract function ServerSoftwareFamilyDefault() : string;
+
+        /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
@@ -87,10 +92,15 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
     {
         $indentOuter = $this->getOutputIndentation();
         $indent = $indentOuter . $indentOuter;
-        $serverType = ServerSoftwareDataType::getServerSoftwareFamily() ?? 'UNKNOWN SERVER SOFTWARE';
-        $serverVersion = ServerSoftwareDataType::getServerSoftwareVersion() ?? 'UNKNOWN VERSION';
         
-        yield $indentOuter . "Server configuration for {$serverType} {$serverVersion}:" . PHP_EOL;
+        $serverType = ServerSoftwareDataType::getServerSoftwareFamily() ?? 
+            $this->ServerSoftwareFamilyDefault() ?? 
+            'UNKNOWN SERVER SOFTWARE';
+        
+        $serverVersion = ServerSoftwareDataType::getServerSoftwareVersion() ?? 
+            'with unknown version';
+        
+        yield $indentOuter . "Loading server configuration for \"{$serverType}\" {$serverVersion}:" . PHP_EOL;
         
         $this->configInstaller->setOutputIndentation($indent);
         yield $indent . "Using \"{$this->getConfigTemplatePathRelative()}\" template for {$serverType}." . PHP_EOL;

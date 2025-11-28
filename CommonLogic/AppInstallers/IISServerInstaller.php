@@ -82,4 +82,12 @@ class IISServerInstaller extends AbstractServerInstaller
     {
         return "<!-- {$comment} -->";
     }
+
+    /**
+     * @inheritDoc
+     */
+    protected function ServerSoftwareFamilyDefault(): string
+    {
+        return 'Microsoft-IIS';
+    }
 }

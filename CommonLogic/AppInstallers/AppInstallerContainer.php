@@ -161,4 +161,16 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         }
         return $container;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function addMessage(string $message) : InstallerContainerInterface
+    {
+        if($message !== '') {
+            $this->addInstaller(new AppDebugInstaller($message));
+        }
+        
+        return $this;
+    }
 }
