@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\DocsFacade\MarkdownContent;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\ObjectMarkdownPrinter;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
+use exface\Core\Interfaces\Facades\MarkdownPrinterMiddlewareInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use GuzzleHttp\Psr7\Response;
 use kabachello\FileRoute\Interfaces\FileReaderInterface;
@@ -25,7 +26,7 @@ use exface\Core\DataTypes\StringDataType;
  * @author Andrej Kabachnik
  *
  */
-class MetaObjectPrinterMiddleware implements MiddlewareInterface
+class MetaObjectPrinterMiddleware implements MarkdownPrinterMiddlewareInterface
 {
     private $workbench = null;
     
@@ -50,16 +51,12 @@ class MetaObjectPrinterMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (! StringDataType::endsWith($request->getUri()->getPath(), $this->fileUrl)) {
+        if ($this->shouldSkip($request)) {
             return $handler->handle($request);
         }
         
-        $query = $request->getUri()->getQuery();
-        $params = [];
-        parse_str($query, $params);
-        $selector = $this->normalize($params['selector']);
-        $printer = new ObjectMarkdownPrinter($this->getWorkbench(), $selector);
-        $markdown = $printer->getMarkdown();
+        $markdown = $this->getMarkdown($request);
+        
 
         $templatePath = Filemanager::pathJoin([$this->facade->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
         $template = new PlaceholderFileTemplate($templatePath, $this->baseUrl . '/' . $this->facade->buildUrlToFacade(true));
@@ -75,6 +72,37 @@ class MetaObjectPrinterMiddleware implements MiddlewareInterface
         return $response;
     }
 
+    public function shouldSkip(ServerRequestInterface $request): bool
+    {
+        return ! StringDataType::endsWith(
+            $request->getUri()->getPath(),
+            $this->fileUrl
+        );
+    }
+
+
+    public function getMarkdown(ServerRequestInterface $request): string
+    {
+        $query = $request->getUri()->getQuery();
+        $params = [];
+        parse_str($query, $params);
+        $selector = $this->normalize($params['selector']);
+        $printer = new ObjectMarkdownPrinter($this->getWorkbench(), $selector);
+        return $printer->getMarkdown();
+    }
+
+    /**
+     * Normalizes a raw link selector by extracting the object ID or alias.
+     *
+     * The function looks for a pattern like:
+     *   objectName [idOrAlias]
+     * and returns only the part inside the brackets.
+     *
+     * Example:
+     *   "AI agent" [axenox.GenAI.AI_AGENT]  →  axenox.GenAI.AI_AGENT
+     *
+     * If the selector does not follow this pattern, the original raw string is returned unchanged.
+     */
     protected function normalize(string $raw): string
     {
         $decoded = urldecode($raw);
