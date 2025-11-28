@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\CommonLogic\Debugger;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -147,7 +148,9 @@ class JsonDataType extends TextDataType
         }
         $result = json_encode($anything, $options);
         if ($result === false && $anything !== false) {
-            throw new DataTypeCastingError('Cannot encode "' . gettype($anything) . '" as JSON: ' . json_last_error_msg() . ' in JSON encoder!');
+            $trunc = Debugger::printVariable($anything, false, 0);
+            $trunc = StringDataType::truncate($trunc ?? '', 60, false, true, true, true);
+            throw new DataTypeCastingError('Cannot encode ' . gettype($anything) . ' "' . $trunc . '" as JSON: ' . json_last_error_msg() . ' in JSON encoder!', null, null, $anything);
         }
         return $result;
     }
