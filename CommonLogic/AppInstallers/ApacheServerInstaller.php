@@ -19,6 +19,11 @@ class ApacheServerInstaller extends AbstractServerInstaller
 </If>");
     }
 
+    protected function getServerFamily() : string
+    {
+        return 'Apache';
+    }
+
 
     /**
      * Returns a string containing config options for core URLs. 
