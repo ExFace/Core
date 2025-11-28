@@ -3,8 +3,9 @@ namespace exface\Core;
 
 use exface\Core\CommonLogic\AppInstallers\ApacheServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
+use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
+use exface\Core\CommonLogic\AppInstallers\AppDebugInstaller;
 use exface\Core\CommonLogic\AppInstallers\NginxServerInstaller;
-use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
@@ -106,17 +107,14 @@ Disallow: /
         $installer->addInstaller($tplInstaller);
         
         // Server installer.
-        $serverInstallerClass = $this->getServerInstallerClass();
+        $serverInstallerClass = $this->getServerInstallerClass($installer);
         if ($serverInstallerClass !== null) {
             $serverInstaller = new $serverInstallerClass($this->getSelector());
             $installer->addInstaller($serverInstaller);
         } else {
-            $msg = 'Could not determine server installer class! Consider defining the server installer class ' .
-                'explicitly by setting "' . self::CONFIG_SERVER_INSTALLER . '" in "System.config.json".';
-             
-            throw new InstallerRuntimeError(
-                $installer,
-                $msg
+            $installer->addMessage('FAILED - Could not determine server installer class! Consider defining the' .
+                ' server installer class explicitly by setting "' . self::CONFIG_SERVER_INSTALLER . 
+                '" in "System.config.json".'
             );
         }
         
@@ -134,18 +132,28 @@ Disallow: /
     }
 
     /**
+     * @param AppInstallerContainer $installer
      * @return string|null
      */
-    protected function getServerInstallerClass() : string|null
+    protected function getServerInstallerClass(AppInstallerContainer $installer) : string|null
     {
+        $installer->addMessage('Determining server installer class:');
+        $indent = '  ';
+
         // From config option.
         $cfg = $this->getWorkbench()->getConfig();
         if($cfg->hasOption(self::CONFIG_SERVER_INSTALLER)) {
             $configOption = $this->getWorkbench()->getConfig()->getOption(self::CONFIG_SERVER_INSTALLER);
-            
-            if(!empty($configOption)) {
+
+            // Valid-ish config option.
+            if(class_exists($configOption)) {
+                $installer->addMessage($indent . 'Found installer class in config: "' . $configOption . '".');
                 return $configOption;
-            }
+            } 
+            
+            // Invalid config option.
+            $installer->addMessage($indent . 'Value "' . $configOption . '" for config option "' .
+                self::CONFIG_SERVER_INSTALLER . '" is not a valid class name.');
         }
 
         // Read from PHP constant.
@@ -155,6 +163,9 @@ Disallow: /
         // Future installations should have a manually defined ``
         if(empty($softwareFamily)) {
             $path = $this->getWorkbench()->getInstallationPath();
+            $installer->addMessage($indent . 'Deducing server software from installation path "' . $path . 
+                '" under "' . php_uname('s') . '".');
+
             $softwareFamily = match (true) {
                 // Microsoft IIS runs on windows and has its files mostly in c:\inetpub\wwwroot 
                 ServerSoftwareDataType::isOsWindows() && preg_match('/[Cc]:\\\\inetpub\\\\wwwroot\\\\/', $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_IIS,
@@ -165,18 +176,31 @@ Disallow: /
                 ServerSoftwareDataType::isOsLinux() && preg_match("/\/www\//", $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_APACHE,
                 default => null
             };
-            
+
             if(empty($softwareFamily)) {
+                $installer->addMessage($indent . 'Could not determine server software.');
                 return null;
+            } else {
+                $installer->addMessage($indent . 'Server software from folder structure: "' . $softwareFamily . '".');
             }
+        } else {
+            $installer->addMessage($indent . 'Server software from PHP constant: "' . $softwareFamily . '".');
         }
         
-        return match ($softwareFamily) {
+        $class = match ($softwareFamily) {
             ServerSoftwareDataType::SERVER_SOFTWARE_APACHE => '\\' . ltrim(ApacheServerInstaller::class, "\\"),
             ServerSoftwareDataType::SERVER_SOFTWARE_IIS => '\\' . ltrim(IISServerInstaller::class, "\\"),
             ServerSoftwareDataType::SERVER_SOFTWARE_NGINX => '\\' . ltrim(NginxServerInstaller::class, "\\"),
             default => null
         };
+        
+        if($class !== null) {
+            $installer->addMessage($indent . 'Deduced installer class from server software: "' . $class . '".');
+        } else {
+            $installer->addMessage($indent . 'Could not deduce server installer class.');
+        }
+        
+        return $class;
     }
     
     /**
