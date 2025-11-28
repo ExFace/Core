@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2013-06-20 19:21:06",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-05-20 12:26:35",
+    "modified_on": "2025-11-28 09:09:01",
     "contents": {
         "object_alias": "exface.Core.OBJECT",
         "widget_type": "DataTable",
@@ -41,6 +41,12 @@
             },
             {
                 "attribute_alias": "DEFAULT_EDITOR_UXON",
+                "widget_type": "Input",
+                "width": 1,
+                "height": 1
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS_PROPS",
                 "widget_type": "Input",
                 "width": 1,
                 "height": 1
