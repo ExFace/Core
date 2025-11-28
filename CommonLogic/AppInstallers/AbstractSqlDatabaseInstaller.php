@@ -853,11 +853,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
             if ($up == TRUE){
                 $migstr = $src;
             } elseif ($up == FALSE){
-                $migstr = '';
-                $this->getWorkbench()->getLogger()->warning("SQL migration {$filename} has no down-script!"); 
+                $migstr = ''; 
             }                       
         }
         else{
+            // MUST use substr() here and not mb_substr() because the latter seams to split --DOWN after
+            // the first `-` leaving that minus sign as part of the UP migration.
             if ($up === true){
                 if ($cut_down > $cut_up){
                     $migstr = substr($src, 0, $cut_down);
@@ -1006,7 +1007,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      */
     protected function stringifyQueryResults(array $sqlDataQueries) : string
     {
-        $json = [];
+        $resultJson = '';
         foreach ($sqlDataQueries as $query) {
             $resultArray = $query->getResultArray();
             if (empty($resultArray)) {
@@ -1014,12 +1015,20 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
             } else {
                 $result = $resultArray;
             }
-            $json[] = [
+            $array = [
                 "SQL" => $query->getSql(),
                 "Result" => $result
             ];
+            try {
+                $json = JsonDataType::encodeJson($array, true);
+            } catch (\Throwable $e) {
+                $eInstaller = new InstallerRuntimeError($this, 'Failed to log result of SQL migration. ' . $e->getmessage());
+                $json = JsonDataType::encodeJson(['Result' => 'Cannot stringify SQL migration response. See Log-ID ' . $eInstaller->getId()], true);
+                $this->getWorkbench()->getLogger()->logException($eInstaller);
+            }
+            $resultJson .= ($resultJson ? ', ' : '') . $json;
         }
-        return JsonDataType::encodeJson($json, true);
+        return '[' . $resultJson . ']';
     }
     
     /**
