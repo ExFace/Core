@@ -3,7 +3,6 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
-use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
@@ -28,13 +27,11 @@ use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Events\CrudPerformedEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -463,78 +460,6 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     }
 
     /**
-     * Returns a list of all definition keys that are currently associated with the metaobject of this behavior
-     * (i.e. the definitions object). 
-     * 
-     * Definition keys are unique per target object and CustomAttributesDefinition and will be associated with a
-     * definitions object, whenever `addAttributesToObject()` is called. 
-     * 
-     * @return array
-     * @throws \Psr\SimpleCache\InvalidArgumentException
-     * @see CustomAttributeDefinitionBehavior::addAttributesToObject()
-     */
-    protected function getTrackedDefinitionKeys() : array
-    {
-        $cache = $this->getWorkbench()->getCache();
-        if($cache->has($this->getKeyForTrackingCache())) {
-            return json_decode($cache->get($this->getKeyForTrackingCache()));
-        }
-        
-        return [];
-    }
-
-    /**
-     * Update the list of tracked definition keys associated with the metaobject of this behavior.
-     * 
-     * @param array $value
-     * @return $this
-     * @throws \Psr\SimpleCache\InvalidArgumentException
-     */
-    protected function setTrackedDefinitionKeys(array $value) : CustomAttributeDefinitionBehavior
-    {
-        $cache = $this->getWorkbench()->getCache();
-        if(empty($value) && $cache->has($this->getKeyForTrackingCache())) {
-            $cache->delete($this->getKeyForTrackingCache());
-        } else {
-            $cache->set($this->getKeyForTrackingCache(), json_encode($value));
-        }
-        
-        return $this;
-    }
-
-    /**
-     * Associate a definition key with the metaobject of this behavior.
-     * 
-     * @param string $key
-     * @return void
-     * @throws \Psr\SimpleCache\InvalidArgumentException
-     */
-    protected function trackDefinitionKey(string $key) : void
-    {
-        $trackedKeys = $this->getTrackedDefinitionKeys();
-        if(in_array($key, $trackedKeys)) {
-            return;
-        }
-
-        $trackedKeys[] = $key;
-        $this->setTrackedDefinitionKeys($trackedKeys);
-    }
-
-    /**
-     * Returns the key for the cache that tracks all definitions keys associated with the metaobject of this behavior.
-     * 
-     * @return string
-     */
-    protected function getKeyForTrackingCache() : string
-    {
-        if(empty($this->trackingCacheKey)) {
-            $this->trackingCacheKey = self::KEY_BASE . '_TrackedKeys_' . $this->getObject()->getAliasWithNamespace();
-        }
-        
-        return $this->trackingCacheKey;
-    }
-
-    /**
      * Performs maintenance, whenever the metaobject of this behavior (i.e. the definitions object) has changed.
      * 
      * @param CrudPerformedEventInterface $event
@@ -561,9 +486,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * Returns an array of custom attributes for the target object, based on the definition provided.
      * 
-     * The first time this method is called with a certain combination of target object and definition
-     * cause an expensive read from the data source. Repeated calls with the same target object and definition 
-     * will return cached data instead.
+     * The first time this method is called with a certain combination of target object and definition,
+     * attributes are loaded by reading from the data source. Repeated calls with the same target object and
+     * definition will return data from a persistent cache instead.
      * 
      * @param MetaObjectInterface        $targetObject
      * @param CustomAttributesDefinition $definition
@@ -785,6 +710,78 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         }
         
         return $attributes;
+    }
+
+    /**
+     * Associate a definition key with the metaobject of this behavior.
+     *
+     * @param string $key
+     * @return void
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    protected function trackDefinitionKey(string $key) : void
+    {
+        $trackedKeys = $this->getTrackedDefinitionKeys();
+        if(in_array($key, $trackedKeys)) {
+            return;
+        }
+
+        $trackedKeys[] = $key;
+        $this->setTrackedDefinitionKeys($trackedKeys);
+    }
+
+    /**
+     * Returns a list of all definition keys that are currently associated with the metaobject of this behavior
+     * (i.e. the definitions object).
+     *
+     * Definition keys are unique per target object and CustomAttributesDefinition and will be associated with a
+     * definitions object, whenever `addAttributesToObject()` is called.
+     *
+     * @return array
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @see CustomAttributeDefinitionBehavior::addAttributesToObject()
+     */
+    protected function getTrackedDefinitionKeys() : array
+    {
+        $cache = $this->getWorkbench()->getCache();
+        if($cache->has($this->getKeyForTrackingCache())) {
+            return json_decode($cache->get($this->getKeyForTrackingCache()));
+        }
+
+        return [];
+    }
+
+    /**
+     * Update the list of tracked definition keys associated with the metaobject of this behavior.
+     *
+     * @param array $value
+     * @return $this
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    protected function setTrackedDefinitionKeys(array $value) : CustomAttributeDefinitionBehavior
+    {
+        $cache = $this->getWorkbench()->getCache();
+        if(empty($value) && $cache->has($this->getKeyForTrackingCache())) {
+            $cache->delete($this->getKeyForTrackingCache());
+        } else {
+            $cache->set($this->getKeyForTrackingCache(), json_encode($value));
+        }
+
+        return $this;
+    }
+
+    /**
+     * Returns the key for the cache that tracks all definitions keys associated with the metaobject of this behavior.
+     *
+     * @return string
+     */
+    protected function getKeyForTrackingCache() : string
+    {
+        if(empty($this->trackingCacheKey)) {
+            $this->trackingCacheKey = self::KEY_BASE . '_TrackedKeys_' . $this->getObject()->getAliasWithNamespace();
+        }
+
+        return $this->trackingCacheKey;
     }
 
     /**
@@ -1327,8 +1324,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_defaults
      * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute
-     * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable":
-     *     false, "value_list_delimiter": ","}
+     * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable": false, "value_list_delimiter": ","}
      *
      * @uxon-placeholder [#~custom_attribute_name#]
      * @uxon-placeholder [#~custom_attribute_alias#]
