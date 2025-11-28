@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\DateDataType;
@@ -133,8 +134,10 @@ class PostgreSqlBuilder extends MySqlBuilder
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
             }
         } else if ($data_type instanceof TextDataType) {
-            $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
-            return stripcslashes($value);
+            if(!($data_type instanceof JsonDataType)) {
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
+                return stripcslashes($value);
+            }
         } else if ($data_type instanceof HexadecimalNumberDataType) {
             if ($value === null || $value === '') {
                 return 'NULL';
