@@ -151,13 +151,18 @@ Disallow: /
         // Read from PHP constant.
         $softwareFamily = ServerSoftwareDataType::getServerSoftwareFamily();
         
-        // Guess via folder structure. 
+        // Guess via folder structure - this is important for backwards compatibility with existing installations. 
+        // Future installations should have a manually defined ``
         if(empty($softwareFamily)) {
             $path = $this->getWorkbench()->getInstallationPath();
             $softwareFamily = match (true) {
-                preg_match("/\\\\www\\\\/", $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_APACHE,
-                preg_match("/[Cc]:inetpub\\\\/", $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_IIS,
-                preg_match("/\\\\wwwroot\\\\/", $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_NGINX,
+                // Microsoft IIS runs on windows and has its files mostly in c:\inetpub\wwwroot 
+                ServerSoftwareDataType::isOsWindows() && preg_match('/[Cc]:\\\\inetpub\\\\wwwroot\\\\/', $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_IIS,
+                // nginx runs on Linux/Unix only and also has wwwroot in its path
+                ServerSoftwareDataType::isOsLinux() && preg_match('/\/wwwroot\//', $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_NGINX,
+                // Apache will have www in its path while being able to run on both
+                ServerSoftwareDataType::isOsWindows() && preg_match("/\\\\www\\\\/", $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_APACHE,
+                ServerSoftwareDataType::isOsLinux() && preg_match("/\/www\//", $path) === 1 => ServerSoftwareDataType::SERVER_SOFTWARE_APACHE,
                 default => null
             };
             

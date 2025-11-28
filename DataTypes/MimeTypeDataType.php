@@ -17,6 +17,7 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
 {
     const JSON = 'application/json';
     const URLENCODED = 'application/x-www-form-urlencoded';
+    const MARKDOWN = 'text/markdown';
     
     private $mimeTypes = null;
     
