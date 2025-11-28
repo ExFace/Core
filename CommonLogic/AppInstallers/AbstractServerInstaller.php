@@ -33,6 +33,11 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
         
         $this->configInstaller = $configInstaller;
     }
+
+    /**
+     * @return string
+     */
+    abstract protected function getServerFamily() : string;
     
     /**
      * Returns the filename for the config file created by this installer.
@@ -87,7 +92,7 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
     {
         $indentOuter = $this->getOutputIndentation();
         $indent = $indentOuter . $indentOuter;
-        $serverType = ServerSoftwareDataType::getServerSoftwareFamily() ?? 'UNKNOWN SERVER SOFTWARE';
+        $serverType = ServerSoftwareDataType::getServerSoftwareFamily() ?? $this->getServerFamily();
         $serverVersion = ServerSoftwareDataType::getServerSoftwareVersion() ?? 'UNKNOWN VERSION';
         
         yield $indentOuter . "Server configuration for {$serverType} {$serverVersion}:" . PHP_EOL;
