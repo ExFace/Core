@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\DocsFacade\Middleware;
 
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Facades\DocsFacade\MarkdownContent;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\ObjectMarkdownPrinter;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
@@ -18,75 +19,27 @@ use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 
 /**
- * This middeware rewrites URLs in documentation files to make them usable with the DocsFacade.
+ * This middleware generates a Markdown/HTML printout for a metaobject
  * 
- * This middleware only works with apps, that have a composer.json with `support/docs` or `support/source`
- * properties!
+ * It will replace the body of a request to a certain URL (provided in the constructor) with generated
+ * contents for the object referenced by the `selector` URL parameter.
  * 
  * @author Andrej Kabachnik
  *
  */
-class MetaObjectPrinterMiddleware implements MarkdownPrinterMiddlewareInterface
+class MetaObjectPrinterMiddleware extends AbstractMarkdownPrinterMiddleware
 {
-    private $workbench = null;
-    
-    private $facade = null;
-    private string $baseUrl;
-    private FileReaderInterface $reader;
-    private string $fileUrl;
-    
-    public function __construct(HttpFacadeInterface $facade, string $baseUrl, string $fileUrl, FileReaderInterface $reader)
+
+    public function __construct(HttpFacadeInterface $facade, string $baseUrl, string $fileUrl, FileReaderInterface $reader, string $objectSelectorUrlParam = 'selector')
     {
-        $this->workbench = $facade->getWorkbench();
-        $this->facade = $facade;
-        $this->baseUrl = $baseUrl;
-        $this->reader = $reader;
-        $this->fileUrl = $fileUrl;
+        parent::__construct($facade, $baseUrl, $fileUrl, $reader);
+        $this->objectSelectorUrlParam = $objectSelectorUrlParam;
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \Psr\Http\Server\MiddlewareInterface::process()
-     */
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-    {
-        if ($this->shouldSkip($request)) {
-            return $handler->handle($request);
-        }
-        
-        $markdown = $this->getMarkdown($request);
-        
-
-        $templatePath = Filemanager::pathJoin([$this->facade->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
-        $template = new PlaceholderFileTemplate($templatePath, $this->baseUrl . '/' . $this->facade->buildUrlToFacade(true));
-        $template->setBreadcrumbsRootName('Documentation');
-        $vendorFolder = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . '/';
-        $folder = 'exface/Core/Docs/creating_metamodels/';
-        $file = 'Available_metaobjects.md';
-        $content = new MarkdownContent($vendorFolder . $folder . $file, $folder . $file, $this->reader->readFolder($vendorFolder . $folder, $folder), $markdown);
-
-        $html = $template->render($content);
-        $response = new Response(200, [], $html);
-        $response = $response->withHeader('Content-Type', 'text/html');
-        return $response;
-    }
-
-    public function shouldSkip(ServerRequestInterface $request): bool
-    {
-        return ! StringDataType::endsWith(
-            $request->getUri()->getPath(),
-            $this->fileUrl
-        );
-    }
-
-
     public function getMarkdown(ServerRequestInterface $request): string
     {
-        $query = $request->getUri()->getQuery();
-        $params = [];
-        parse_str($query, $params);
-        $selector = $this->normalize($params['selector']);
+        $params = $request->getQueryParams();
+        $selector = $this->normalize($params[$this->objectSelectorUrlParam]);
         $printer = new ObjectMarkdownPrinter($this->getWorkbench(), $selector);
         return $printer->getMarkdown();
     }
@@ -115,11 +68,5 @@ class MetaObjectPrinterMiddleware implements MarkdownPrinterMiddlewareInterface
         }
 
         return substr($decoded, $start + 1, $end - $start - 1);
-    }
-
-
-    protected function getWorkbench(): WorkbenchInterface
-    {
-        return $this->facade->getWorkbench();
     }
 }
