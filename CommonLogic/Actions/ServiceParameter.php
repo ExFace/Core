@@ -313,8 +313,11 @@ class ServiceParameter implements ServiceParameterInterface
     }
     
     /**
+     * More details about the use of this parameter, examples, syntax, etc.
      * 
-     * {@inheritDoc}
+     * @uxon-property description
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::setDescription()
      */
     public function setDescription(string $value) : ServiceParameterInterface
