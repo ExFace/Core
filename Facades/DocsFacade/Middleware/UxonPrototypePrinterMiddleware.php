@@ -1,20 +1,11 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Middleware;
 
-use exface\Core\CommonLogic\Filemanager;
-use exface\Core\Facades\DocsFacade\MarkdownContent;
+use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
-use exface\Core\Interfaces\Facades\MarkdownPrinterMiddlewareInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
-use GuzzleHttp\Psr7\Response;
 use kabachello\FileRoute\Interfaces\FileReaderInterface;
-use kabachello\FileRoute\Templates\PlaceholderFileTemplate;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * This middleware rewrites URLs in documentation files to make them usable with the DocsFacade.
@@ -37,7 +28,7 @@ class UxonPrototypePrinterMiddleware extends AbstractMarkdownPrinterMiddleware
     
     public function getMarkdown(ServerRequestInterface $request) : string
     {
-        $params = $request->getQueryParams();
+        $params = UrlDataType::findUrlParams($request->getUri());
         $selector = urldecode($params[$this->prototypeSelectorUrlParam]);
         $printer = new UxonPrototypeMarkdownPrinter($this->getWorkbench(), $selector);
         return $printer->getMarkdown();
