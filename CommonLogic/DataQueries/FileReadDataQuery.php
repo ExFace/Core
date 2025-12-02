@@ -274,7 +274,8 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
             'widget_type' => 'Markdown',
             'value' => $this->toMarkdown(),
             'height' => '100%',
-            'width' => '100%'
+            'width' => '100%',
+            'hide_caption' => true
         ])));
         $debug_widget->addTab($tab);
         return $debug_widget;

@@ -4,6 +4,7 @@ namespace exface\Core\Communication\Messages;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Widgets\Markdown;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\Communication\AbstractMessage;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
@@ -46,6 +47,7 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
             $textUxon = new UxonObject([
                 'widget_type' => 'Markdown',
                 'hide_caption' => true,
+                'open_links_in' => Markdown::OPEN_LINKS_IN_NEW_TAB,
                 'value' => $this->getText() ? $this->getText() : $this->getTitle()
             ]);
             $this->widgetUxon = $textUxon;
