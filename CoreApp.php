@@ -4,7 +4,6 @@ namespace exface\Core;
 use exface\Core\CommonLogic\AppInstallers\ApacheServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
-use exface\Core\CommonLogic\AppInstallers\AppDebugInstaller;
 use exface\Core\CommonLogic\AppInstallers\NginxServerInstaller;
 use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Interfaces\InstallerInterface;

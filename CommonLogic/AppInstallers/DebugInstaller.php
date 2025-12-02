@@ -2,8 +2,7 @@
 
 namespace exface\Core\CommonLogic\AppInstallers;
 
-use exface\Core\Exceptions\NotImplementedError;
-use exface\Core\Interfaces\AppInstallerInterface;
+use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -12,16 +11,19 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * 
  * You can use this installer as a stub or to inject debugging messages and logging into your deployment logic.
  */
-class AppDebugInstaller implements AppInstallerInterface
+class DebugInstaller implements InstallerInterface
 {
+    private WorkbenchInterface $workbench;
     private ?string $message;
     private string $indent;
 
     function __construct(
+        WorkbenchInterface $workbench,
         string $message = null,
         string $indent = '  '
     )
     {
+        $this->workbench = $workbench;
         $this->indent = $indent;
         $this->message = str_ends_with($message, PHP_EOL) ? $message : $message . PHP_EOL;
     }
@@ -56,16 +58,7 @@ class AppDebugInstaller implements AppInstallerInterface
      */
     public function getWorkbench() : WorkbenchInterface
     {
-        throw new NotImplementedError('Method "getWorkbench()" is only a stub in "' . self::class . '"!');
-    }
-
-    /**
-     * STUB! Do not use.
-     * @deprecated
-     */
-    public function getApp() : WorkbenchInterface
-    {
-        throw new NotImplementedError('Method "getApp()" is only a stub in "' . self::class . '"!');
+        return $this->workbench;
     }
 
     /**
@@ -80,7 +73,7 @@ class AppDebugInstaller implements AppInstallerInterface
      * @param string $value
      * @return $this
      */
-    public function setOutputIndentation(string $value) : AppDebugInstaller
+    public function setOutputIndentation(string $value) : DebugInstaller
     {
         $this->indent = $value;
         return $this;
