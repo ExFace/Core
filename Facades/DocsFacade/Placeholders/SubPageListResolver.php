@@ -3,26 +3,30 @@ namespace exface\Core\Facades\DocsFacade\Placeholders;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
+/**
+ * 
+ */
 class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
     const OPTION_DEPTH = "depth";
-
+    const OPTION_ROOT = 'root';
     const OPTION_LIST_TYPE = "list-type";
+    const OPTION_LIST_TYPE_NONE = "none";
+    const OPTION_LIST_TYPE_BULLET = "bullet";
 
-    const LIST_TYPE_NONE = "none";
-
-    const LIST_TYPE_BULLET = "bullet";
-
-    private $pagePath = null;
-    private $optionDefaults = [
-        self::OPTION_LIST_TYPE => self::LIST_TYPE_BULLET,
+    private string $pagePath;
+    private string $vendorPath;
+    private array $optionDefaults = [
+        self::OPTION_LIST_TYPE => self::OPTION_LIST_TYPE_BULLET,
     ];
 
-    public function __construct(string $pagePathAbsolute, string $prefix = 'SubPageList:') {
+    public function __construct(string $pagePathAbsolute, string $vendorPath, string $prefix = 'SubPageList:') {
         $this->pagePath = $pagePathAbsolute;
-        $this->rootPath = FilePathDataType::normalize(FilePathDataType::findFolderPath($pagePathAbsolute)) . '/';
+        $this->vendorPath = $vendorPath;
         $this->setPrefix($prefix);
     }
 
@@ -40,9 +44,21 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
             if (in_array($placeholder['name'], $filteredNames)) {
                 $options = $placeholder['options'];
                 parse_str($options, $optionsArray);
-                $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
-                $markdownStructure = $this->generateMarkdownList($rootDirectory, $this->getOption('depth',$optionsArray));
-                $val = $this->renderMarkdownList($markdownStructure, $this->getOption('list-type',$optionsArray), $this->getOption('depth',$optionsArray));
+                if (null !== $rootDirectory = $optionsArray[self::OPTION_ROOT]) {
+                    if (! FilePathDataType::isAbsolute($rootDirectory)) {
+                        $rootDirectory = $this->vendorPath . DIRECTORY_SEPARATOR . FilePathDataType::normalize($rootDirectory, DIRECTORY_SEPARATOR);
+                    }
+                } else {
+                    $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);
+                }
+                $depth = $this->getOption(self::OPTION_DEPTH, $optionsArray);
+                $listType = $this->getOption(self::OPTION_LIST_TYPE, $optionsArray);
+                $markdownStructure = $this->generateMarkdownList($rootDirectory, $depth);
+                if ($listType === self::OPTION_LIST_TYPE_NONE) {
+                    $val = $this->renderHtmlList($markdownStructure, $listType, $depth);
+                } else {
+                    $val = $this->renderMarkdownList($markdownStructure, $listType, $depth);
+                }
                 $vals[$i] = $val;
             }
         }
@@ -94,9 +110,47 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
     }
     
     
-    function renderMarkdownList($items, $listType, $depth, $level = 0) {
+    function renderMarkdownList($items, $listType, $depth, $level = 0) 
+    {
         $output = '';
-        $listStyle = '';
+        if ($level === $depth) {
+            return $output;
+        }
+        $indent = $level + 1;
+
+        switch ($listType) {
+            case self::OPTION_LIST_TYPE_BULLET:
+                $symbol = '- ';
+                break;
+            default:
+                $symbol = '- ';
+                break;
+        }
+
+        foreach ($items as $item) {
+            $output .= str_pad($symbol, $indent * 2 + strlen($symbol), ' ', STR_PAD_LEFT);
+
+            if (!empty($item['link'])) {
+                $output .= '[' . MarkdownDataType::escapeString($item['title']) . '](' . $item['link'] . ')';
+            } else {
+                $output .= MarkdownDataType::escapeString($item['title']);
+            }
+            
+            $output .= "\n";
+
+            if (!empty($item['children'])) {
+                $output .= $this->renderMarkdownList($item['children'], $listType, $depth, ($level + 1));
+            }
+        }
+
+        if ($level === 0) {
+            $output .= "\n";
+        }
+        return $output;
+    }
+
+    function renderHtmlList($items, $listType, $depth, $level = 0) {
+        $output = '';
 
         if ($level === 0) {
             $output .= '<div class="list-wrapper">' . "\n";
@@ -108,7 +162,7 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
         $indent = 20 * $level;
 
         switch ($listType) {
-            case self::LIST_TYPE_NONE:
+            case self::OPTION_LIST_TYPE_NONE:
                 $listStyle = " style=\"list-style-type: none; padding-left: 0; margin-left: {$indent}px;\"";
                 break;
             default:
@@ -127,7 +181,7 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
             }
 
             if (!empty($item['children'])) {
-                $output .= $this->renderMarkdownList($item['children'], $listType, $depth, $level + 1);
+                $output .= $this->renderHtmlList($item['children'], $listType, $depth, $level + 1);
             }
 
             $output .= "</li>\n";
