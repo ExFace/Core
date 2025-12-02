@@ -3,6 +3,7 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\InstallerInterface;
+use exface\Core\Interfaces\IAmSilentInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -11,7 +12,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * 
  * You can use this installer as a stub or to inject debugging messages and logging into your deployment logic.
  */
-class DebugInstaller implements InstallerInterface
+class DebugInstaller implements InstallerInterface, IAmSilentInterface
 {
     private WorkbenchInterface $workbench;
     private ?string $message;

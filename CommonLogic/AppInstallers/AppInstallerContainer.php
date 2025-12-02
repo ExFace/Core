@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\AppInstallerInterface;
+use exface\Core\Interfaces\IAmSilentInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Interfaces\InstallerContainerInterface;
 use exface\Core\Events\Installer\OnBeforeInstallEvent;
@@ -44,7 +45,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
 
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
-            if($installer instanceof DebugInstaller) {
+            if($installer instanceof IAmSilentInterface) {
                 yield from $installer->install($source_absolute_path);
                 continue;
             }
@@ -98,7 +99,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
-            if($installer instanceof DebugInstaller) {
+            if($installer instanceof IAmSilentInterface) {
                 yield from $installer->backup($destination_absolute_path);
                 continue;
             }
@@ -127,7 +128,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         // TODO disable mutations here too???
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach (array_reverse($this->getInstallers()) as $installer) {
-            if($installer instanceof DebugInstaller) {
+            if($installer instanceof IAmSilentInterface) {
                 yield from $installer->uninstall();
                 continue;
             }
