@@ -287,7 +287,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-        return; 
     }
     
     /**
@@ -384,7 +383,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-        return; 
     }
 
     /**
@@ -780,14 +778,19 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         return $dataSheet;
     }
-    
+
     /**
-     * 
-     * @param DataSheetInterface $dataSheet
-     * @param array[] $matcher
-     * @return DataSheetDuplicatesError
+     *
+     * @param DataSheetInterface   $dataSheet
+     * @param DataMatcherInterface $matcher
+     * @param BehaviorLogBook      $logbook
+     * @return BehaviorRuntimeError
      */
-    protected function createDuplicatesError(DataSheetInterface $dataSheet, DataMatcherInterface $matcher, BehaviorLogBook $logbook) : DataSheetDuplicatesError
+    protected function createDuplicatesError(
+        DataSheetInterface $dataSheet,
+        DataMatcherInterface $matcher,
+        BehaviorLogBook $logbook
+    ) : BehaviorRuntimeError
     {
         $logbook->addLine('Sending an error about the duplicates');
         $object = $dataSheet->getMetaObject();
@@ -829,7 +832,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $ex = new DataSheetDuplicatesError($dataSheet, 'Cannot update/create data, as it contains duplicates of already existing data!', $this->getDuplicateErrorCode());
         }
         
-        return $ex;
+        return new BehaviorRuntimeError($this, $ex->getMessage(), $ex->getAlias(), $ex, $logbook);
     }
     
     /**
