@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\Middleware;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use kabachello\FileRoute\Interfaces\FileReaderInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
@@ -30,6 +32,10 @@ class UxonPrototypePrinterMiddleware extends AbstractMarkdownPrinterMiddleware
     {
         $params = UrlDataType::findUrlParams($request->getUri());
         $selector = urldecode($params[$this->prototypeSelectorUrlParam]);
+        // Make sure a class selector always starts with a backslash.
+        if (! str_starts_with($selector, '\\') && stripos($selector, '\\') !== false && ! StringDataType::endsWith($selector, '.' . FileSelectorInterface::PHP_FILE_EXTENSION, false)) {
+            $selector = '\\' . $selector;
+        }
         $printer = new UxonPrototypeMarkdownPrinter($this->getWorkbench(), $selector);
         return $printer->getMarkdown();
     }
