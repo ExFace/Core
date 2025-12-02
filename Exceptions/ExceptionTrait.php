@@ -134,8 +134,6 @@ MD);
                         ->setWidth(WidgetDimension::MAX)
                         ->setHideCaption(true)
                         ->setOpenLinksIn('popup')
-                        ->setOpenLinksInPopupWidth(800)
-                        ->setOpenLinksInPopupHeight(800)
                         ->setValue($msgModel->getDescription() . $this->getLinksAsMarkdown());
                     $error_tab->addWidget($error_descr);
                 } catch (\Throwable $e) {
@@ -230,7 +228,7 @@ MD);
             $md .= "\n- [{$title}]({$url})";
         }
         if ($md !== '') {
-            $md = "\n\n" . str_pad('#', $headingLevel, '#', STR_PAD_LEFT) . "Useful links\n" . $md;
+            $md = "\n\n" . str_pad('#', $headingLevel, '#', STR_PAD_LEFT) . "Documentation links\n" . $md;
         }
         return $md;
     }
