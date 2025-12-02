@@ -45,7 +45,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
             if($installer instanceof DebugInstaller) {
-                $installer->install($source_absolute_path);
+                yield from $installer->install($source_absolute_path);
                 continue;
             }
             
@@ -99,7 +99,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
             if($installer instanceof DebugInstaller) {
-                $installer->backup($destination_absolute_path);
+                yield from $installer->backup($destination_absolute_path);
                 continue;
             }
             
@@ -128,7 +128,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach (array_reverse($this->getInstallers()) as $installer) {
             if($installer instanceof DebugInstaller) {
-                $installer->uninstall();
+                yield from $installer->uninstall();
                 continue;
             }
             
