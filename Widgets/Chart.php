@@ -395,7 +395,6 @@ class Chart extends AbstractWidget implements
         foreach ($this->getAxes() as $axis) {
             $axis->prepareDataWidget($dataWidget);
         }
-        if ($dat)
         $dataWidget->setPaginate(false);
         return $this;
     }
