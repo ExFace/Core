@@ -176,6 +176,12 @@ class PhpFilePathDataType extends FilePathDataType
         $pathNoralized = FilePathDataType::normalize($absolutePath, '\\');
         $pathInVendor = StringDataType::substringAfter($pathNoralized, '\\vendor\\');
         $psrClass = '\\' . StringDataType::substringBefore($pathInVendor, '.' . self::FILE_EXTENSION_PHP, $pathInVendor, false, true);
+        if (class_exists($psrClass, false)) {
+            return $psrClass;
+        }
+        $className = PhpClassDataType::findClassNameWithoutNamespace($psrClass);
+        $namespace = static::findNamespaceOfFile($absolutePath);
+        $psrClass = $namespace . '\\' . $className;
         if (class_exists($psrClass)) {
             return $psrClass;
         }
