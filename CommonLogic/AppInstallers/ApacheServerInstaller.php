@@ -13,13 +13,17 @@ class ApacheServerInstaller extends AbstractServerInstaller
         $this->configInstaller
             ->addContent('Core URLs', $this->getContentCoreUrls())
             ->addContent('Core Security', $this->getContentSecurityRules())
-            ->addContent("zlib compression OFF for WebConsoleFacade", "
-<If \"'%{THE_REQUEST}' =~ m#api/webconsole#\">
+            ->addContent("zlib compression OFF for WebConsoleFacade", 
+"<If \"'%{THE_REQUEST}' =~ m#api/webconsole#\">
     php_flag zlib.output_compression Off
-</If>
-            
-");;
+</If>");
     }
+
+    protected function getServerFamily() : string
+    {
+        return 'Apache';
+    }
+
 
     /**
      * Returns a string containing config options for core URLs. 
@@ -30,9 +34,7 @@ class ApacheServerInstaller extends AbstractServerInstaller
      */
     protected function getContentCoreUrls() : string
     {
-        return "
-
-# API requests
+        return "# API requests
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^api/.*$ vendor/exface/core/index.php [L,QSA,NC]
@@ -48,9 +50,7 @@ RewriteRule ^/?$ vendor/exface/core/index.php [L,QSA]
 # Requests to UI pages
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^[^/]*$ vendor/exface/core/index.php [L,QSA]
-
-";
+RewriteRule ^[^/]*$ vendor/exface/core/index.php [L,QSA]";
     }
 
     /**
@@ -62,9 +62,7 @@ RewriteRule ^[^/]*$ vendor/exface/core/index.php [L,QSA]
      */
     protected function getContentSecurityRules() : string
     {
-        return "
-
-# Block direct access to PHP scripts
+        return "# Block direct access to PHP scripts
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteCond %{REQUEST_FILENAME} !vendor/exface/core/index.php [NC]
 RewriteRule ^vendor/.*\.php$ - [F,L,NC]
@@ -78,9 +76,7 @@ RewriteRule ^data/\..*$ - [F,NC]
 RewriteRule ^vendor/.*\.html$ - [F,L,NC]
 
 # Block library docs.
-RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]
-
-";
+RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]";
     }
 
     /**
@@ -102,8 +98,8 @@ RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]
     /**
      * @inheritDoc
      */
-    protected function stringToComment(string $markerText): string
+    protected function stringToComment(string $comment): string
     {
-        return "# {$markerText}";
+        return "# {$comment}";
     }
 }
