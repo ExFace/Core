@@ -652,14 +652,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if ($this->hasCustomConditions()) {
             $customConditionsFilters = ConditionGroupFactory::createForDataSheet($mainSheet, $this->getCompareWithConditions()->getOperator());
             foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
-                if ($mainSheet->getColumns()->getByExpression($cond->getExpression())) {
-                    $customConditionsFilters->addCondition($cond);
-                } else {
-                    $logbook->addLine('Ignoring condition: ´'  . $customConditionsFilters->__toString() . '´ in `compare_with_conditions` because required column is NOT part of event data sheet!');
-                }
+                $customConditionsFilters->addCondition($cond);
             }
             $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $customConditionsFilters->__toString());
-            $mainSheet = $mainSheet->extract($customConditionsFilters);
+            $mainSheet = $mainSheet->extract($customConditionsFilters, true, $logbook);
         } else {
             $logbook->addLine('Will search for duplicates for all rows, no filtering required');
         }

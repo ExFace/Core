@@ -9,6 +9,7 @@ use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetListInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
@@ -3156,9 +3157,13 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::extract()
      */
-    public function extract(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : DataSheetInterface
+    public function extract(
+        ConditionalExpressionInterface $conditionOrGroup, 
+        bool $readMissingData = false,
+        ?LogBookInterface $logBook = null
+    ) : DataSheetInterface
     {
-        $foundIdxs = $this->findRows($conditionOrGroup, $readMissingData);
+        $foundIdxs = $this->findRows($conditionOrGroup, $readMissingData, $logBook);
         return $this
             ->copy()
             ->removeRows()
@@ -3170,40 +3175,18 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::findRows()
      */
-    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array
+    public function findRows(
+        ConditionalExpressionInterface $conditionOrGroup, 
+        bool $readMissingData = false,
+        ?LogBookInterface $logBook = null
+    ) : array
     {
         $condGrp = $conditionOrGroup->toConditionGroup();
 
         if ($readMissingData === true) {
-            // TODO #DataCollector needs to be used here instead of all the following logic
-            foreach ($condGrp->getRequiredExpressions($this->getMetaObject()) as $expr) {
-                // IMPORTANT: only include treat attribute aliases as missing data! We do NOT need
-                // formulas as columns to evaluate the respective conditions - conditions will evaluate
-                // formulas on-the-fly. If added to $missingCols formulas will greatly increase probability
-                // of errors in data without UIDs!
-                foreach ($expr->getRequiredAttributes() as $attrAlias) {
-                    if (! $this->getColumns()->getByExpression($attrAlias)) {
-                        $missingCols[] = $attrAlias;
-                    }
-                }
-            }
-            if (! empty($missingCols)) {
-                if ($this->hasUidColumn(true)) {
-                    $missingSheet = DataSheetFactory::createFromObject($this->getMetaObject());
-                    $missingSheet->getColumns()->addFromUidAttribute();
-                    foreach ($missingCols as $expr) {
-                        $missingSheet->getColumns()->addFromExpression($expr);
-                    }
-                    $missingSheet->getFilters()->addConditionFromColumnValues($this->getUidColumn());
-                    $missingSheet->dataRead();
-                    $checkSheet = $this->copy();
-                    $checkSheet->joinLeft($missingSheet, $checkSheet->getUidColumnName(), $missingSheet->getUidColumnName());
-                } else {
-                    throw new DataSheetExtractError($this, 'Cannot filter/extract data rows! Information required for conditions is not available in the data sheet: `' . implode('`, `', $missingCols). '`!', null, null, $condGrp);
-                }
-            } else {
-                $checkSheet = $this;
-            }
+            $collector = DataCollector::fromConditionGroup($conditionOrGroup->toConditionGroup(), $this->getMetaObject());
+            $collector->collectFrom($this, $logBook);
+            $checkSheet = $collector->getRequiredData();
         } else {
             $checkSheet = $this;
         }

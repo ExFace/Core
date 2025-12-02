@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\DataSheets;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -752,24 +753,34 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return bool
      */
     public function hasColumTotals() : bool;
-    
+
     /**
      * Returns a new data sheet with the same columns, but only containing rows, that match the given filter
-     * 
+     *
      * @param ConditionalExpressionInterface $filter
-     * @param bool $readMissingData
+     * @param bool                           $readMissingData
+     * @param LogBookInterface|null          $logBook
      * @return DataSheetInterface
      */
-    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
+    public function extract(
+        ConditionalExpressionInterface $filter, 
+        bool $readMissingData = false,
+        ?LogBookInterface $logBook = null
+    ) : DataSheetInterface;
 
     /**
      * Returns the indexes of rows matching the given conditions (starting with 0)
      *
      * @param ConditionalExpressionInterface $conditionOrGroup
-     * @param bool $readMissingData
+     * @param bool                           $readMissingData
+     * @param LogBookInterface|null          $logBook
      * @return int[]
      */
-    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array;
+    public function findRows(
+        ConditionalExpressionInterface $conditionOrGroup,
+        bool $readMissingData = false,
+        ?LogBookInterface $logBook = null
+    ) : array;
     
     /**
      * Returns a copy of this data sheet, that only contains system columns
