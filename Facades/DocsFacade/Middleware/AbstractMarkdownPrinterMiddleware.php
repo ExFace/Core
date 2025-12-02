@@ -59,23 +59,22 @@ abstract class AbstractMarkdownPrinterMiddleware implements MarkdownPrinterMiddl
         }
 
         $markdown = $this->getMarkdown($request);
-
-        $templatePath = Filemanager::pathJoin([$this->getFacade()->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
-        $template = new PlaceholderFileTemplate($templatePath, $this->getBaseUrl() . '/' . $this->getFacade()->buildUrlToFacade(true));
-        $template->setBreadcrumbsRootName('Documentation');
-        $vendorFolder = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . '/';
-        $folder = FilePathDataType::findFolderPath($this->getFileUrl());
-        $file = FilePathDataType::findFileName($this->getFileUrl(), true);
-        $content = new MarkdownContent($vendorFolder . $folder . $file, $folder . $file, $this->getFileReader()->readFolder($vendorFolder . $folder, $folder), $markdown);
-
+        
         $needRawMarkdown = $request->getHeaderLine('Accept') === MimeTypeDataType::MARKDOWN;
         if (! $needRawMarkdown) {
-            $html = $template->render($content);
+            $templatePath = Filemanager::pathJoin([$this->getFacade()->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
+            $template = new PlaceholderFileTemplate($templatePath, $this->getBaseUrl() . '/' . $this->getFacade()->buildUrlToFacade(true));
+            $template->setBreadcrumbsRootName('Documentation');
+            $vendorFolder = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . '/';
+            $folder = FilePathDataType::findFolderPath($this->getFileUrl());
+            $file = FilePathDataType::findFileName($this->getFileUrl(), true);
+            $mdContent = new MarkdownContent($vendorFolder . $folder . $file, $folder . $file, $this->getFileReader()->readFolder($vendorFolder . $folder, $folder), $markdown);
+            
+            $html = $template->render($mdContent);
             $response = new Response(200, [
                 'Content-Type' => 'text/html',
             ], $html);
         } else {
-            $markdown = $content;
             $response = new Response(200, [
                 'Content-Type' => MimeTypeDataType::MARKDOWN,
             ], $markdown);

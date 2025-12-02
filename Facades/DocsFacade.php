@@ -254,7 +254,7 @@ class DocsFacade extends AbstractHttpFacade
         if (is_string($prototypeSelector)) {
             $selectorString = $prototypeSelector;
         } else {
-            $selectorString = get_class($prototypeSelector);
+            $selectorString = '\\' . ltrim(get_class($prototypeSelector), '\\');
         }
         return 'api/docs/exface/Core/Docs/UXON/UXON_prototypes.md?selector=' . urlencode($selectorString);
     }
