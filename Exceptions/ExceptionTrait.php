@@ -465,12 +465,11 @@ MD);
                 // add a link to this prototype docs. This should help in cases like invalid return types
                 // because a required UXON property not set.
                 try {
-                    $file = $prev->getFile();
-                    if ($file) {
-                        $class = PhpFilePathDataType::findClassInFile($file);
-                        $class = '\\' . ltrim($class, '\\');
-                        if ($class && is_a($class, iCanBeConvertedToUxon::class, true)) {
-                            $links['UXON prototype `' . PhpClassDataType::findClassNameWithoutNamespace($class) . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($class);
+                    $prevFileClass = $prev->getTrace()[0]['class'] ?? null;
+                    if ($prevFileClass) {
+                        $prevFileClass = '\\' . ltrim($prevFileClass, '\\');
+                        if ($prevFileClass && is_a($prevFileClass, iCanBeConvertedToUxon::class, true)) {
+                            $links['UXON prototype `' . PhpClassDataType::findClassNameWithoutNamespace($prevFileClass) . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($prevFileClass);
                         }
                     }
                 } catch (\Throwable $e) {

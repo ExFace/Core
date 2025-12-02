@@ -176,9 +176,17 @@ class PhpFilePathDataType extends FilePathDataType
         $pathNoralized = FilePathDataType::normalize($absolutePath, '\\');
         $pathInVendor = StringDataType::substringAfter($pathNoralized, '\\vendor\\');
         $psrClass = '\\' . StringDataType::substringBefore($pathInVendor, '.' . self::FILE_EXTENSION_PHP, $pathInVendor, false, true);
+        // DO NOT use the autoloader here because if the namespace does not correspond to the path, this might lead
+        // to a compile error. For Example, this happened when finding files for Guzzle components - in particular
+        // the RequestException. When being thrown, the RequestException class was loaded, then while trying to
+        // handle the error, findClassInFile() was called for the file `guzzlehttp/guzzle/src/.../RequestException`,
+        // which could not be autoloaded because its file path was different from the namespace.
         if (class_exists($psrClass, false)) {
             return $psrClass;
         }
+        // Now we know, the simplest guess did not work: either the namespace convention is non-standard or the
+        // class simply was not loaded yet. 
+        // Next step is to check 
         $className = PhpClassDataType::findClassNameWithoutNamespace($psrClass);
         $namespace = static::findNamespaceOfFile($absolutePath);
         $psrClass = $namespace . '\\' . $className;
@@ -266,11 +274,17 @@ class PhpFilePathDataType extends FilePathDataType
         $ns = NULL;
         $handle = fopen($absolute_path, "r");
         if ($handle) {
+            $i = 1;
             while (($line = fgets($handle)) !== false) {
-                if (strpos($line, 'namespace') === 0) {
+                if (str_starts_with($line, 'namespace')) {
                     $ns = rtrim(trim(substr($line, 9)), ';');
                     break;
                 }
+                // Don't search more than 5 lines - the namespace should actually be line 2 or 3!
+                if ($i > 5) {
+                    break;
+                }
+                $i++;
             }
             fclose($handle);
         }
