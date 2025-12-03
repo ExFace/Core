@@ -95,7 +95,7 @@ class Chart extends AbstractWidget implements
     
     const VALUE_LEGEND_INACTIVE = '~legend_disabled';
     
-    private $autoload_disabled_hint = null;
+    private ?string $autoload_disabled_hint = null;
     
     /**
      * @var ChartAxis[]
