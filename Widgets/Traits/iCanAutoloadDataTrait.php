@@ -55,6 +55,7 @@ trait iCanAutoloadDataTrait {
         switch (true) {
             case $autoloadData === '1': $autoloadData = AutoloadStrategyDataType::ALWAYS; break;
             case $autoloadData === '0': $autoloadData = AutoloadStrategyDataType::NEVER; break;
+            case $autoloadData === '': $autoloadData = AutoloadStrategyDataType::NEVER; break;
             case ! AutoloadStrategyDataType::isValidStaticValue($autoloadData):
                 throw new WidgetConfigurationError($this, 'Invalid value "' . $autoloadData . '" for property `autoload_data` of widget ' . $this->getWidgetType());
         }
