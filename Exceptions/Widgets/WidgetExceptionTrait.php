@@ -2,12 +2,10 @@
 namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Facades\DocsFacade;
+use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Widgets\DebugMessage;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This trait enables an exception to output widget specific debug information.
@@ -46,7 +44,7 @@ trait WidgetExceptionTrait {
      * @param WidgetInterface $widget            
      * @return \exface\Core\Exceptions\Widgets\WidgetExceptionTrait
      */
-    public function setWidget(WidgetInterface $widget)
+    protected function setWidget(WidgetInterface $widget) : WidgetExceptionInterface
     {
         $this->widget = $widget;
         return $this;
@@ -56,9 +54,9 @@ trait WidgetExceptionTrait {
     {
         $links = parent::getLinks();
         $widget = $this->getWidget();
-        $links['Widget type `' . $widget->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($widget));
+        $links['Widget type `' . $widget->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($widget);
         if ($widget->hasParent()) {
-            $links['Widget type `' . $widget->getParent()->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($widget->getParent()));
+            $links['Widget type `' . $widget->getParent()->getWidgetType() . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($widget->getParent());
         }
         return $links;
     }
