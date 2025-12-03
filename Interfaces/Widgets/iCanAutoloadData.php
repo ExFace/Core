@@ -15,6 +15,11 @@ interface iCanAutoloadData extends WidgetInterface
      * @return bool
      */
     public function hasAutoloadData() : bool;
+
+    /**
+     * @return string
+     */
+    public function getAutoloadDataStrategy() : string;
     
     /**
      * Set to TRUE/FALSE to force/prevent initial loading of data or TRUE (default) to enable it.
@@ -22,7 +27,7 @@ interface iCanAutoloadData extends WidgetInterface
      * @param boolean $autoloadData
      * @return iCanAutoloadData
      */
-    public function setAutoloadData(bool $trueOrFalse) : iCanAutoloadData;
+    public function setAutoloadData(string $trueOrFalse) : iCanAutoloadData;
     
     /**
      * Returns a text which can be displayed if initial loading is prevented.
