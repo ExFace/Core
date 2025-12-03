@@ -131,7 +131,8 @@ class MarkdownLogBook implements LogBookInterface
             'widget_type' => 'Markdown',
             'value' => $this->toMarkdown(),
             'width' => 'max',
-            'render_mermaid_diagrams' => $this->mermaid
+            'render_mermaid_diagrams' => $this->mermaid,
+            'open_links_in' => 'popup'
         ])));
         
         // Render added exceptions as separate tabs with all their data (other debug tabs)

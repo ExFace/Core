@@ -222,4 +222,31 @@ class MarkdownDataType
 
         return pathinfo($filePath, PATHINFO_FILENAME);
     }
+
+    /**
+     * @param string $text
+     * @param int $level
+     * @return string
+     */
+    public static function makeHeading(string $text, int $level = 1) : string
+    {
+        return str_repeat('#', $level) . ' ' . $text;
+    }
+
+    /**
+     * Wraps given code in a Markdown code block
+     *
+     * @param string $code
+     * @param string|null $language
+     * @return string
+     */
+    public static function escapeCodeBlock(string $code, ?string $language = null) : string
+    {
+        return <<<MD
+
+```{$language}
+{$code}
+```
+MD;
+    }
 }

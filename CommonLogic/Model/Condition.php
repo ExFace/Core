@@ -331,53 +331,83 @@ class Condition implements ConditionInterface
      * The comparison operator used in this condition
      * 
      * ## Scalar (single value) comparators
-     * 
-     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
-     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+     *
+     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different
+     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case
      * insensitive for strings
      * - `!=` - yields TRUE if `IS` would result in FALSE
-     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
-     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
+     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the
+     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020.
      * - `!==` - the inverse of `EQUALS`
      * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
      * comparable types: e.g. numbers or dates.
-     * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
+     * - `<=` - yields TRUE if the left value is less than or equal to the right one.
      * Both values must be of comparable types: e.g. numbers or dates.
      * - `>` - yields TRUE if the left value is greater than the right one. Both values must be of
      * comparable types: e.g. numbers or dates.
-     * - `>=` - yields TRUE if the left value is greater than or equal to the right one. 
+     * - `>=` - yields TRUE if the left value is greater than or equal to the right one.
      * Both values must be of comparable types: e.g. numbers or dates.
-     * 
+     *
      * ## List comparators
-     * 
+     *
+     * ### Comparing entire lists
+     *
      * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
      * value equals at least on of the values in the list within the right value. The list on the
      * right side must consist of numbers or strings separated by commas or the attribute's value
      * list delimiter if filtering over an attribute. The right side can also be another type of
      * expression (e.g. a formula or widget link), that yields such a list.
-     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
-     * list within the right value. The list on the right side must consist of numbers or strings separated 
-     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the
+     * list within the right value. The list on the right side must consist of numbers or strings separated
+     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can
      * also be another type of expression (e.g. a formula or widget link), that yields such a list.
-     * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least 
+     * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least
      * one element, that is present in both lists.
      * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
-     * - `[[` - subset - compares two lists with each other. Becomes true when all elements of the left list 
+     * - `[[` - subset - compares two lists with each other. Becomes true when all elements of the left list
      * are in the right list too
-     * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in 
+     * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in
      * the right list.
-     * 
-     * ## Range comparators
-     * 
-     * - `..` - range between two values - e.g. `1 .. 5`
+     *
+     * ### EACH comparators
+     *
+     * The following comparators yield TRUE if **EACH** of the values of the left list yields TRUE
+     * when compared to at least one value of the right list using the respective scalar comparator.
+     *
+     * - `[=` - each value left is at least one value on the right
+     * - `[!=` - at least one value on the left does not match any value on the right
+     * - `[==` - each value left equals at least one value on the right exactly
+     * - `[!==` - at least one value on the left does not exactly equal any value on the right
+     * - `[<` - each value left is less than any value on the right
+     * - `[<=` - each value left is less than or equals any value on the right
+     * - `[>` - each value left is greater than any value on the right
+     * - `[>=` - each value left is greater than or equals value on the right
+     *
+     * ### ANY comparators
+     *
+     * Similarly, the following comparators will yield TRUE if **ANY** of the values of the left list yields TRUE
+     * when compared to at least one value of the right list using the respective scalar comparator.
+     *
+     * - `]=` - at least one value left is at least one value on the right
+     * - `]!=` - none of the left values match any value on the right
+     * - `]==` - at least one value left equals at least one value on the right exactly
+     * - `]!==` - none of the left values equals exactly any value on the right
+     * - `]<` - at least one value left is less than any value on the right
+     * - `]<=` - at least one value left is less than or equals any value on the right
+     * - `]>` - at least one value left is greater than any value on the right
+     * - `]>=` - at least one value left is greater than or equals value on the right
+     *
+     *  ## Range comparators
+     *
+     *  - `..` - range between two values - e.g. `1 .. 5`
      * 
      * @uxon-property comparator
      * @uxon-type metamodel:comparator
      * @uxon-default =
      * 
      * @param string $value
-     * @throws UnexpectedValueException
      * @return ConditionInterface
+     *@throws UnexpectedValueException
      */
     protected function setComparator(string $value) : ConditionInterface
     {

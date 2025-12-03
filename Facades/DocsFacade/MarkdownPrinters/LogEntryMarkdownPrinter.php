@@ -91,41 +91,52 @@ class LogEntryMarkdownPrinter
      * log details file to be mapped to a nested Markdown document with
      * multiple levels of headings.
      *
-     * @param array<string,mixed> $json Decoded JSON node describing a part of the log details.
+     * @param array<string,mixed> $widgetUxon Decoded JSON node describing a part of the log details.
      * @param int $headingLevel Current heading level that should be used for this node.
      *
      * @return string Generated Markdown segment for the given JSON node.
      */
-    protected function buildMarkdown($json, int $headingLevel) : string
+    protected function buildMarkdown($widgetUxon, int $headingLevel) : string
     {
         $markdown = "";
 
-        if (isset($json['caption'])) {
+        if (isset($widgetUxon['caption'])) {
 
-            $hide = isset($json['hide_caption']) ? (bool)$json['hide_caption'] : false;
+            $hide = isset($widgetUxon['hide_caption']) ? (bool)$widgetUxon['hide_caption'] : false;
 
             if (!$hide) {
-                $markdown .= MarkdownDataType::convertHeaderLevels($json['caption'], $headingLevel) . "\n";
+                $caption = MarkdownDataType::makeHeading($widgetUxon['caption'], $headingLevel) . "\n";
+                $markdown .= $caption;
+                $headingLevel++;
             }
         }
 
-        if (isset($json['widgets']) && is_array($json['widgets'])) {
-            foreach ($json['widgets'] as $widget) {
+        $children = $widgetUxon['widgets'] ?? ($widgetUxon['tabs'] ?? []);
+        if (! empty($children)) {
+            foreach ($children as $childUxon) {
                 // Recursive call for each nested widget, using a deeper heading level
-                $markdown .= $this->buildMarkdown($widget, $headingLevel + 1);
+                $markdown .= $this->buildMarkdown($childUxon, $headingLevel);
             }
         }
 
-        if (isset($json['value'])) {
+        if (($value = $widgetUxon['value']) || ($value = $widgetUxon['markdown']) || ($value = $widgetUxon['text'])) {
 
             // Future toggle to allow filtering of forbidden words
             $showContactSupport = true;
 
-            if (
-                $showContactSupport
-                && stripos(strtolower($json['value']), 'support') === false
-            ) {
-                $markdown .= MarkdownDataType::convertHeaderLevels($json['value'], $headingLevel + 1);
+            switch (true) {
+                case $widgetUxon['widget_type'] === 'Message':
+                    if ($showContactSupport && stripos(strtolower($value), 'support') === false) {
+                        $markdown .= $value;
+                    }
+                    break;
+                case $widgetUxon['widget_type'] === 'InputUxon':
+                case $widgetUxon['widget_type'] === 'InputJson':
+                case $widgetUxon['widget_type'] === 'InputCode':
+                    $markdown .= MarkdownDataType::escapeCodeBlock($value);
+                    break;
+                default:
+                    $markdown .= MarkdownDataType::convertHeaderLevels($value, $headingLevel + 1);
             }
         }
 

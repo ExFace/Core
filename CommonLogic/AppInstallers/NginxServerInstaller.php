@@ -30,6 +30,11 @@ class NginxServerInstaller extends AbstractServerInstaller
             ->addContent('Locations', $this->getLocationsContent($urlPath));
     }
 
+    protected function getServerFamily() : string
+    {
+        return 'nginx';
+    }
+
     protected function getLocationsContent(string $urlPath) : string
     {
         return <<<CONF

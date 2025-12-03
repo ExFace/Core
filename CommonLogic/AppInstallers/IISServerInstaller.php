@@ -19,7 +19,7 @@ class IISServerInstaller extends AbstractServerInstaller
      */
     public function install(string $source_absolute_path): \Iterator
     {
-        parent::install($source_absolute_path);
+        yield from parent::install($source_absolute_path);
 
         $fm = $this->getWorkbench()->filemanager();
         $user = 'IUSR';
@@ -36,6 +36,11 @@ class IISServerInstaller extends AbstractServerInstaller
         
         $user = 'IIS_IUSRS';
         yield $indent . $this->setPermissionsForPath($fm->getPathToDataFolder(), $user) . PHP_EOL;
+    }
+
+    protected function getServerFamily() : string
+    {
+        return 'Microsoft IIS';
     }
     
     /**

@@ -959,10 +959,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $customUid = UUIDDataType::generateSqlOptimizedUuid();
                         $row[$uidAddress] = $this->prepareInputValue($customUid,$uidQpart->getDataType(),$uidQpart->getDataAddressProperties());
                         break;
-                    // If there is a non-empty UID value provided AND it is not an SQL statement, use
-                    // that value directly
-                    case $uidValuesProvided === true && $row[$uidAddress] !== null && $row[$uidAddress] !== '' && $this->isSqlStatement($uidAddress) === false:
-                        $customUid = $this->prepareInputValue($row[$uidAddress],$uidQpart->getDataType(),$uidQpart->getDataAddressProperties());
+                    // If there is a non-empty UID value provided AND the data address is not an SQL statement, use
+                    // that value. Use it as-is if it is an SQL statement, escape it properly otherwise.
+                    case $uidValuesProvided === true 
+                    && (null !== $customUidData = ($row[$uidAddress] ?? null)) 
+                    && $customUidData !== '' 
+                    && $this->isSqlStatement($uidAddress) === false:
+                        // Here we need to distinguish between plain values and SQL statements. Since we are talking about
+                        // IDs here, detecting parenthesis like in data addresses should be OK. However, should we 
+                        // really have UID values with `(` or `)` in SQL columns (which would be really strange), this if()
+                        // here will prevent parsing.
+                        if ($this->isSqlStatement($customUidData)) {
+                            $customUid = $customUidData;
+                        } else {
+                            $customUid = $this->prepareInputValue($customUidData, $uidQpart->getDataType(), $uidQpart->getDataAddressProperties());
+                        }
                         break;
                 }
             }

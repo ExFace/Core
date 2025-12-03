@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpClassDataType;
-use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -134,8 +134,6 @@ MD);
                         ->setWidth(WidgetDimension::MAX)
                         ->setHideCaption(true)
                         ->setOpenLinksIn('popup')
-                        ->setOpenLinksInPopupWidth(800)
-                        ->setOpenLinksInPopupHeight(800)
                         ->setValue($msgModel->getDescription() . $this->getLinksAsMarkdown());
                     $error_tab->addWidget($error_descr);
                 } catch (\Throwable $e) {
@@ -230,7 +228,7 @@ MD);
             $md .= "\n- [{$title}]({$url})";
         }
         if ($md !== '') {
-            $md = "\n\n" . str_pad('#', $headingLevel, '#', STR_PAD_LEFT) . "Useful links\n" . $md;
+            $md = "\n\n" . MarkdownDataType::makeHeading('Documentation links') . "\n" . $md;
         }
         return $md;
     }
@@ -467,12 +465,11 @@ MD);
                 // add a link to this prototype docs. This should help in cases like invalid return types
                 // because a required UXON property not set.
                 try {
-                    $file = $prev->getFile();
-                    if ($file) {
-                        $class = PhpFilePathDataType::findClassInFile($file);
-                        $class = '\\' . ltrim($class, '\\');
-                        if ($class && is_a($class, iCanBeConvertedToUxon::class, true)) {
-                            $links['UXON prototype `' . PhpClassDataType::findClassNameWithoutNamespace($class) . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($class);
+                    $prevFileClass = $prev->getTrace()[0]['class'] ?? null;
+                    if ($prevFileClass) {
+                        $prevFileClass = '\\' . ltrim($prevFileClass, '\\');
+                        if ($prevFileClass && is_a($prevFileClass, iCanBeConvertedToUxon::class, true)) {
+                            $links['UXON prototype `' . PhpClassDataType::findClassNameWithoutNamespace($prevFileClass) . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($prevFileClass);
                         }
                     }
                 } catch (\Throwable $e) {
@@ -482,5 +479,19 @@ MD);
             }
         }
         return array_unique($links);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ExceptionInterface::findPrevious()
+     */
+    public function findPrevious(string $classOrInterface) : ?\Throwable
+    {
+        while ($prev = $this->getPrevious()) {
+            if ($prev instanceof $classOrInterface) {
+                return $prev;
+            }
+        }
+        return null;
     }
 }

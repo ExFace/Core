@@ -7,16 +7,6 @@ Interface UxonExceptionInterface
 {
     /**
      *
-     * @param UxonObject  $uxon
-     * @param string      $message
-     * @param null        $code
-     * @param null        $previous
-     * @param string|null $affectedProperty
-     */
-    public function __construct(UxonObject $uxon, string $message, $code = null, $previous = null, string $affectedProperty = null);
-
-    /**
-     *
      * @return UxonObject
      */
     public function getUxon();
