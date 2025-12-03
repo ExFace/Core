@@ -100,8 +100,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * of the attribute, that could even include relations, data address properties and other things. You can provide a
  * set of valid type model in this behavior via `type_models`. 
  * - **Attribute groups** (`groups_attribute`): One of the attributes of this object can be used to store a delimited
- * list of attribute groups, that should be assigned to the generated custom attribute belongs to. Attribute groups
- * give
+ * list of attribute groups, that should be assigned to the generated custom attribute belongs to. Attribute groups give
  * designers more fine-grained control over which custom attributes will be included in automatically generated widgets
  * (see "Attribute groups").
  * - **Hint** (`hint_attribute`): The short description stored in this attribute is used for tooltips and info panels, 
@@ -137,15 +136,13 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * There are built-in type models for the most important data types: "Date", "Time", "Text" and "Number". 
  * 
  * However, type models are more than just data types - they are preconfigured models for the entire attribute. You can
- * 
  * can set any attribute property in the type model: default display or editor widgets, relations configurations,
  * readable/writable flags - everything! 
  * 
  * When a user creates a custom attribute and you have `type_attribute` set in the behavior config, the user will
  * need to pick a type from an automatically generated list. Users cannot control all the mighty attribute
- * configuration
- * explicitly - they can only pick your preconfigured types. This makes it much easier to create custom attributes as
- * there is not much to know about how the workbench works in the background.
+ * configuration explicitly - they can only pick your preconfigured types. This makes it much easier to create custom
+ * attributes as there is not much to know about how the workbench works in the background.
  * 
  * You can define as many type models as many as you like. Type models can even use use inheritance: you can specify 
  * another type model in the `inherits` property and change it selectively. By default all type models inherit from
@@ -154,8 +151,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * ### Default attribute model
  * 
  * There is always a default attribute model. You can modify it using `attribute_defaults`. All type models will
- * inherit
- * from it.
+ * inherit from it.
  * 
  * If you have no `type_attribute` in your config at all, all attributes will have the same default model. Most
  * storage-behaviors provide their own default models. For example, the `CustomAttributesJsonBehavior` will have 
