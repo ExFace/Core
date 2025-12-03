@@ -126,7 +126,6 @@ class UxonPrototypeMarkdownPrinter
         $title = $classInfo['TITLE'];
         $description = $classInfo['DESCRIPTION'];
         
-        $headingHashes = str_pad('#', $this->headingLevel, '#', STR_PAD_RIGHT);
         $markdown = <<<MD
 {$this->buildMarkdownHeading($title, $this->headingLevel)}
 
