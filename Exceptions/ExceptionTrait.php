@@ -480,4 +480,18 @@ MD);
         }
         return array_unique($links);
     }
+
+    /**
+     * {@inheritDoc}
+     * @see ExceptionInterface::findPrevious()
+     */
+    public function findPrevious(string $classOrInterface) : ?\Throwable
+    {
+        while ($prev = $this->getPrevious()) {
+            if ($prev instanceof $classOrInterface) {
+                return $prev;
+            }
+        }
+        return null;
+    }
 }
