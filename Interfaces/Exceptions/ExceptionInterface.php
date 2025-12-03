@@ -142,4 +142,12 @@ interface ExceptionInterface extends \Throwable, iCanBeConvertedToUxon, iCanGene
      * @return string[]
      */
     public function getLinks() : array;
+
+    /**
+     * Searches the exception stack for the given exception class or interface
+     * 
+     * @param string $classOrInterface
+     * @return \Throwable|null
+     */
+    public function findPrevious(string $classOrInterface) : ?\Throwable;
 }
