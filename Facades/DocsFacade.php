@@ -1,15 +1,15 @@
 <?php
 namespace exface\Core\Facades;
 
-use axenox\GenAI\Interfaces\MarkdownPrinterInterface;
+use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MimeTypeDataType;
-use exface\Core\Facades\DocsFacade\MarkdownPrinters\DocMarkdownPrinter;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Facades\DocsFacade\Middleware\MetaObjectPrinterMiddleware;
 use exface\Core\Facades\DocsFacade\Middleware\UxonPrototypePrinterMiddleware;
 use exface\Core\Facades\DocsFacade\RawMarkdownTemplate;
 use exface\Core\Interfaces\Facades\HttpMiddlewareBusInterface;
-use exface\Core\Interfaces\Facades\MarkdownPrinterMiddlewareInterface;
+use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use kabachello\FileRoute\Interfaces\FileReaderInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -249,14 +249,32 @@ class DocsFacade extends AbstractHttpFacade
         return 'api/docs';
     }
     
-    public static function buildUrlToDocsForUxonPrototype(string $prototypeSelector) : string
+    public static function buildUrlToDocsForUxonPrototype(string|object $prototypeSelector) : string
     {
-        return 'api/docs/exface/Core/Docs/UXON/UXON_prototypes.md?selector=' . urlencode($prototypeSelector);
+        if (is_string($prototypeSelector)) {
+            $selectorString = $prototypeSelector;
+        } else {
+            $selectorString = '\\' . ltrim(get_class($prototypeSelector), '\\');
+        }
+        return 'api/docs/exface/Core/Docs/UXON/UXON_prototypes.md?selector=' . urlencode($selectorString);
     }
 
-    public static function buildUrlToDocsForMetaObject(string $aliasOrUid) : string
+    public static function buildUrlToDocsForMetaObject(string|object $aliasOrUid) : string
     {
-        return 'api/docs/exface/Core/Docs/creating_metamodels/Available_metaobjects.md?selector=' . urlencode($aliasOrUid);
+        switch (true) {
+            case is_string($aliasOrUid):
+                $selectorString = $aliasOrUid;
+                break;
+            case $aliasOrUid instanceof MetaObject:
+                $selectorString = $aliasOrUid->getAliasWithNamespace();
+                break;
+            case $aliasOrUid instanceof MetaObjectSelectorInterface:
+                $selectorString = $aliasOrUid->__toString();
+                break;
+            default: 
+                throw new InvalidArgumentException('Cannot generate docs URL for meta object: expecting object/selector instance or alias, got "' . gettype($aliasOrUid) . '"');
+        }
+        return 'api/docs/exface/Core/Docs/creating_metamodels/Available_metaobjects.md?selector=' . urlencode($selectorString);
     }
 
     /**
