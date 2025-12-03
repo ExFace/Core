@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpClassDataType;
-use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -228,7 +228,7 @@ MD);
             $md .= "\n- [{$title}]({$url})";
         }
         if ($md !== '') {
-            $md = "\n\n" . str_pad('#', $headingLevel, '#', STR_PAD_LEFT) . "Documentation links\n" . $md;
+            $md = "\n\n" . MarkdownDataType::makeHeading('Documentation links') . "\n" . $md;
         }
         return $md;
     }
