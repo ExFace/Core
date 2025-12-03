@@ -3,6 +3,7 @@ namespace exface\Core\Facades\DocsFacade\Middleware;
 
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Facades\DocsFacade\MarkdownContent;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\ObjectMarkdownPrinter;
 use exface\Core\Facades\DocsFacade\MarkdownPrinters\UxonPrototypeMarkdownPrinter;
@@ -38,7 +39,7 @@ class MetaObjectPrinterMiddleware extends AbstractMarkdownPrinterMiddleware
     
     public function getMarkdown(ServerRequestInterface $request): string
     {
-        $params = $request->getQueryParams();
+        $params = UrlDataType::findUrlParams($request->getUri());
         $selector = $this->normalize($params[$this->objectSelectorUrlParam]);
         $printer = new ObjectMarkdownPrinter($this->getWorkbench(), $selector);
         return $printer->getMarkdown();

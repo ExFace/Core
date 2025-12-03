@@ -32,6 +32,8 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * 
  * ## List comparators
  * 
+ * ### Comparing entire lists
+ * 
  * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
  * value equals at least on of the values in the list within the right value. The list on the
  * right side must consist of numbers or strings separated by commas or the attribute's value
@@ -49,9 +51,37 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in 
  * the right list.
  * 
- * ## Range comparators
+ * ### EACH comparators
  * 
- * - `..` - range between two values - e.g. `1 .. 5`
+ * The following comparators yield TRUE if **EACH** of the values of the left list yields TRUE
+ * when compared to at least one value of the right list using the respective scalar comparator.
+ *
+ * - `[=` - each value left is at least one value on the right
+ * - `[!=` - at least one value on the left does not match any value on the right
+ * - `[==` - each value left equals at least one value on the right exactly
+ * - `[!==` - at least one value on the left does not exactly equal any value on the right
+ * - `[<` - each value left is less than any value on the right
+ * - `[<=` - each value left is less than or equals any value on the right
+ * - `[>` - each value left is greater than any value on the right
+ * - `[>=` - each value left is greater than or equals value on the right
+ * 
+ * ### ANY comparators
+ * 
+ * Similarly, the following comparators will yield TRUE if **ANY** of the values of the left list yields TRUE
+ * when compared to at least one value of the right list using the respective scalar comparator.
+ * 
+ * - `]=` - at least one value left is at least one value on the right
+ * - `]!=` - none of the left values match any value on the right
+ * - `]==` - at least one value left equals at least one value on the right exactly
+ * - `]!==` - none of the left values equals exactly any value on the right
+ * - `]<` - at least one value left is less than any value on the right
+ * - `]<=` - at least one value left is less than or equals any value on the right
+ * - `]>` - at least one value left is greater than any value on the right
+ * - `]>=` - at least one value left is greater than or equals value on the right
+ *
+ *  ## Range comparators
+ *
+ *  - `..` - range between two values - e.g. `1 .. 5`
  * 
  * @method ComparatorsDataType IS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
@@ -69,6 +99,24 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * @method ComparatorsDataType LIST_NOT_INTERSECTS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LIST_SUBSET(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LIST_NOT_SUBSET(\exface\Core\CommonLogic\Workbench $workbench)
+ * 
+ * @method ComparatorsDataType LIST_EACH_IS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_EACH_IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_EACH_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_EACH_EQUALS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_EACH_LESS_THAN(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_EACH_LESS_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_EACH_GREATER_THAN(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_EACH_GREATER_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
+ * 
+ * @method ComparatorsDataType LIST_ANY_IS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_ANY_IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_ANY_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_ANY_EQUALS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_ANY_LESS_THAN(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_ANY_LESS_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_ANY_GREATER_THAN(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_ANY_GREATER_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *

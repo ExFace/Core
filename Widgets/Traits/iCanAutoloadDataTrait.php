@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
+use exface\Core\DataTypes\AutoloadStrategyDataType;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 
 /**
@@ -10,19 +12,28 @@ use exface\Core\Interfaces\Widgets\iCanAutoloadData;
  */
 trait iCanAutoloadDataTrait {
     
-    private $autoload_data = true;
+    private string $autoload_data = AutoloadStrategyDataType::ALWAYS;
     
-    private $autoload_disabled_hint = null;
+    private ?string $autoload_disabled_hint = null;
     
-    private $autorefresh = true;
+    private bool $autorefresh = true;
     
-    private $autorefresh_seconds = null;
+    private ?int $autorefresh_seconds = null;
     
     /**
      * 
      * @see iCanAutoloadData::hasAutoloadData()
      */
     public function hasAutoloadData() : bool
+    {
+        return $this->autoload_data !== AutoloadStrategyDataType::NEVER;
+    }
+
+    /**
+     *
+     * @see iCanAutoloadData::getAutoloadDataStrategy()
+     */
+    public function getAutoloadDataStrategy() : string
     {
         return $this->autoload_data;
     }
@@ -34,12 +45,21 @@ trait iCanAutoloadDataTrait {
      * `autoload_disabled_hint` property.
      *
      * @uxon-property autoload_data
-     * @uxon-type boolean
+     * @uxon-type [never,always,if_visible]
      *
      * @see iCanAutoloadData::setAutoloadData()
      */
-    public function setAutoloadData(bool $autoloadData) : iCanAutoloadData
+    public function setAutoloadData(string $autoloadData) : iCanAutoloadData
     {
+        // Backwards compatibility to booleans
+        switch (true) {
+            case $autoloadData === '1': $autoloadData = AutoloadStrategyDataType::ALWAYS; break;
+            case $autoloadData === '0': $autoloadData = AutoloadStrategyDataType::NEVER; break;
+            case $autoloadData === '': $autoloadData = AutoloadStrategyDataType::NEVER; break;
+            case ! AutoloadStrategyDataType::isValidStaticValue($autoloadData):
+                throw new WidgetConfigurationError($this, 'Invalid value "' . $autoloadData . '" for property `autoload_data` of widget ' . $this->getWidgetType());
+        }
+        
         $this->autoload_data = $autoloadData;
         return $this;
     }

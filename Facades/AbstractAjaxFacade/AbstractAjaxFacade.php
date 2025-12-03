@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\DataTypes\ListDataType;
+use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
@@ -91,8 +92,6 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     private $class_prefix = '';
 
     private $class_namespace = '';
-    
-    private $data_type_formatters = [];
     
     private $pageTemplateFilePath = null;
     
@@ -222,19 +221,24 @@ HTML;
         
         return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
     }
-    
+
     /**
-     * 
+     *
      * @param WidgetInterface $widget
      * @return AbstractJqueryElement
+     * @throws WidgetFacadeRenderingError
      */
     protected function createElement(WidgetInterface $widget) : AbstractJqueryElement
     {
-        $elem_class = $this->getElementClassForWidget($widget);
-        $instance = new $elem_class($widget, $this);
-        
-        if ($widget instanceof CustomWidgetInterface) {
-            $instance = $widget->createFacadeElement($this, $instance);
+        try {
+            $elem_class = $this->getElementClassForWidget($widget);
+            $instance = new $elem_class($widget, $this);
+
+            if ($widget instanceof CustomWidgetInterface) {
+                $instance = $widget->createFacadeElement($this, $instance);
+            }
+        } catch (\Throwable $e) {
+            throw new WidgetFacadeRenderingError($widget, $this, 'Cannot create facade element for widget ' . $widget->getWidgetType() . '! ' . $e->getMessage(), null, $e);
         }
         
         return $instance;
