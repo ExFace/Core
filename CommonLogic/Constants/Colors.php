@@ -178,14 +178,23 @@ abstract class Colors
     const GREY_SLATEGRAY = 'SlateGray';
     const GREY_DARKSLATEGRAY = 'DarkSlateGray';
     const BLACK = 'Black';
-    
+
     /**
      * Returns TRUE if the given HTML color is dark and FALSE otherwise.
-     * 
+     *
      * @param string $color
+     * @param float  $weight
+     * Pass an optional weight [0..1] to favor a certain outcome:
+     * - `0` means the return value is always `#ffffff` (white).
+     * - Values `(0..1)` weigh the contrast of the input color to black or white
+     * and returns the closest result. For example `0.4` would prefer white, but
+     * will return black if the contrast is large enough.
+     * - `1` means the return value is always `#000000` (black).
+     *
+     * Default value is `0.5`, i.e. equal weight for black and white.
      * @return boolean
      */
-    public static function isDark($color) {
+    public static function isDark(string $color, float $weight = 0.5) {
         if ($color === self::SEMANTIC_ERROR) {
             return true;
         }
@@ -201,8 +210,9 @@ abstract class Colors
         $c_b = hexdec( substr( $hex, 4, 2 ) );
         
         $brightness = ( ( $c_r * 299 ) + ( $c_g * 587 ) + ( $c_b * 114 ) ) / 1000;
-        
-        return $brightness > 155 ? false : true;
+        $weight = max(min($weight, 1), 0) * 2;
+
+        return $brightness * $weight > 155 ? false : true;
     }
     
     /**
