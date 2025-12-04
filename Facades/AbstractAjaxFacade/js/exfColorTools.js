@@ -99,13 +99,21 @@
     },
 
     /**
-     * It determines whether the text colour should be black or white
-     * for given background colour.
-     * 
+     * Returns a well readable text color (black or white) for a given background colour.
+     *
      * @param backgroundCssColor
+     * @param weight
+     * Pass an optional weight [0..1] to favor a certain outcome: 
+     *  - `0` means the return value is always `#ffffff` (white).
+     *  - Values `(0..1)` weigh the contrast of the input color to black or white
+     *  and returns the closest result. For example `0.4` would prefer white, but
+     *  will return black if the contrast is large enough.
+     *  - `1` means the return value is always `#000000` (black).
+     *  
+     *  Default value is `0.5`, i.e. equal weight for black and white.
      * @returns {string|string}
      */
-    pickTextColorForBackgroundColor: function(backgroundCssColor) {
+    pickTextColorForBackgroundColor: function(backgroundCssColor, weight) {
       if (!backgroundCssColor) return '#000';
       const rgba = this._cssColorToRgba(backgroundCssColor);
       if (!rgba) return '#000';
@@ -113,8 +121,12 @@
       const Lbg = this._relativeLuminance(rgba);
       const contrastToWhite = this._contrastRatio(1.0, Lbg);
       const contrastToBlack = this._contrastRatio(Lbg, 0.0);
+      
+      weight = weight === undefined || weight === null || (typeof weight !== 'number') ? 
+          0.5 :
+          Math.max(Math.min(weight, 1), 0);
 
-      return (contrastToBlack >= contrastToWhite) ? '#000' : '#fff';
+      return (weight * contrastToBlack >= (1 - weight) * contrastToWhite) ? '#000' : '#fff';
     },
   }
   return exfColorTools;
