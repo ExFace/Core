@@ -210,8 +210,10 @@ abstract class Colors
         $c_b = hexdec( substr( $hex, 4, 2 ) );
         
         $brightness = ( ( $c_r * 299 ) + ( $c_g * 587 ) + ( $c_b * 114 ) ) / 1000;
-        $weight = max(min($weight, 1), 0) * 2;
 
+        $weight = max(min($weight, 1), 0);
+        $weight = (1 - $weight) * 2;
+        
         return $brightness * $weight > 155 ? false : true;
     }
     
