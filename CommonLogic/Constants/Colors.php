@@ -185,11 +185,11 @@ abstract class Colors
      * @param string $color
      * @param float  $weight
      * Pass an optional weight [0..1] to favor a certain outcome:
-     * - `0` means the return value is always `#ffffff` (white).
+     * - `0` means the return value is always `false` (is not dark).
      * - Values `(0..1)` weigh the contrast of the input color to black or white
-     * and returns the closest result. For example `0.4` would prefer white, but
+     * and return the closest result. For example `0.4` would prefer white, but
      * will return black if the contrast is large enough.
-     * - `1` means the return value is always `#000000` (black).
+     * - `1` means the return value is always `true` (is dark).
      *
      * Default value is `0.5`, i.e. equal weight for black and white.
      * @return boolean
