@@ -7,6 +7,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\QueryBuilders\AbstractSqlBuilder;
 
 /**
  * Generic connector for ODBC SQL data sources
@@ -15,8 +16,8 @@ use exface\Core\Exceptions\DataSources\DataQueryFailedError;
  */
 class OdbcSqlConnector extends AbstractSqlConnector
 {
-
     private $dsn = null;
+    private ?string $sqlDialect = null;
 
     /**
      *
@@ -201,6 +202,35 @@ class OdbcSqlConnector extends AbstractSqlConnector
     public function setDsn($value)
     {
         $this->dsn = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getSqlDialect()
+     */
+    public function getSqlDialect(): string
+    {
+        return $this->sqlDialect ?? AbstractSqlBuilder::SQL_DIALECT_OTHER;
+    }
+
+    /**
+     * Set the SQL dialect used for this ODBC connection.
+     *
+     * Setting the correct dialect here will enable proper formatting in debug logs and better understanding for AI
+     * agents.
+     * 
+     * @uxon-property sql_dialect
+     * @uxon-type string
+     * @uxon-default OTHER
+     *  
+     * @param $value
+     * @return $this
+     */
+    protected function setSqlDialect($value) : OdbcSqlConnector
+    {
+        $this->sqlDialect = $value;
         return $this;
     }
 }

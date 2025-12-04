@@ -55,7 +55,7 @@ class DebugWidgetProcessor
                     $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                         'caption' => 'Stack trace',
                         'widgets' => [
-                            $this->createHtmlFallback(Debugger::printException($exception, true))->toArray()
+                            $this->createMarkdownFallback(Debugger::printExceptionAsMarkdown($exception))->toArray()
                         ]
                     ]));
                 }
@@ -63,7 +63,7 @@ class DebugWidgetProcessor
                 $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                     'caption' => 'Log entry',
                     'widgets' => [
-                        $this->createHtmlFallback(Debugger::printVariable($dump))->toArray()
+                        $this->createMarkdownFallback($this->printAsMarkdown($dump))->toArray()
                     ]
                 ]));
                 $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);
@@ -90,7 +90,7 @@ class DebugWidgetProcessor
                 ]);
                 // Create a fallback debug widget for the $sender
                 if ($sender instanceof \Throwable){
-                    $originalErrorUxon = $this->createHtmlFallback(Debugger::printException($sender, true));
+                    $originalErrorUxon = $this->createMarkdownFallback(Debugger::printExceptionAsMarkdown($sender));
                     $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                         'caption' => 'Original error',
                         'widgets' => [
@@ -99,7 +99,7 @@ class DebugWidgetProcessor
                     ]));
                 }
                 // Create a fallback debug widget for the exception from the first rendering attempt
-                $renderErrorUxon = $this->createHtmlFallback(Debugger::printException($e, true));
+                $renderErrorUxon = $this->createMarkdownFallback(Debugger::printExceptionAsMarkdown($e));
                 $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                     'caption' => 'Rendering exception',
                     'widgets' => [
@@ -112,19 +112,30 @@ class DebugWidgetProcessor
         // If there is no sender or an problem with it, but the context contains an 
         // error, use the error fallback to create a debug widget
         if ($debugWidgetUxon === null && ($e = $record['context']['exception'] ?? null) instanceof \Throwable){
-            $debugWidgetUxon = $this->createHtmlFallback(Debugger::printException($e, true));
+            $debugWidgetUxon = $this->createMarkdownFallback(Debugger::printExceptionAsMarkdown($e));
         } 
         
         // If all the above fails, simply dump the entire record to the debug widget
         if ($debugWidgetUxon === null) {
             $dump = $record;
             unset($dump['formatted']);
-            $debugWidgetUxon = $this->createHtmlFallback(Debugger::printVariable($dump, true));
+            $debugWidgetUxon = $this->createMarkdownFallback($this->printAsMarkdown($dump));
         }
         
         $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);
         
         return $record;
+    }
+
+    /**
+     * 
+     * @param mixed $record
+     * @return string
+     */
+    protected function printAsMarkdown($record) : string
+    {
+        // Do NOT use print_r() here as it will cause recursion and memory overflows!
+        return "```\n" . Debugger::printVariable($record, false) . "\n```\n";
     }
     
     /**
@@ -134,15 +145,16 @@ class DebugWidgetProcessor
      * reason. Using this fallback it is still possible to create a readable
      * debug widget.
      *
-     * @param string $html
+     * @param string $markdown
      * @return UxonObject
      */
-    protected function createHtmlFallback($html) : UxonObject
+    protected function createMarkdownFallback($markdown) : UxonObject
     {
         $uxon = new UxonObject([
-            'widget_type' => 'Html',
+            'widget_type' => 'Markdown',
             'width' => '100%',
-            'html' => $html
+            'hide_caption' => true,
+            'value' => $markdown
         ]);
         return $uxon;
     }

@@ -1199,7 +1199,7 @@ class StateMachineBehavior extends AbstractBehavior
                             'width' => '100%',
                             'height' => '100%',
                             'value' => $this->buildMermaidDiagram(),
-                            'renderMermaidDiagrams' => true
+                            'render_mermaid_diagrams' => true
                         ]
                     ]
                 ]

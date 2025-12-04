@@ -1,4 +1,6 @@
 {
+    "INSTALLER.SERVER_INSTALLER.CLASS": "",
+  
 	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\SqlModelLoader",
 	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
 	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
@@ -220,8 +222,6 @@
 		"Access-Control-Allow-Headers": "",
 		"Access-Control-Expose-Headers": ""
 	},
-	
-    "INSTALLER.SERVER_INSTALLER.CLASS": "",
 
 	"MUTATIONS.ENABLED": false,
   

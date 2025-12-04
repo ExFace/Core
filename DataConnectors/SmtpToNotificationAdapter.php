@@ -40,9 +40,9 @@ class SmtpToNotificationAdapter extends SmtpConnector
                     'title' => 'Email dump: ' . $email->getSubject(),
                     'body_widget' => [
                         'widget_type' => 'Markdown',
-                        'value' => $this->buildMarkdownDebug($email),
                         'hide_caption' => true,
-                        'width' => 2
+                        'width' => 2,
+                        'value' => $this->buildMarkdownDebug($email)
                     ]
                 ]));
                 break;

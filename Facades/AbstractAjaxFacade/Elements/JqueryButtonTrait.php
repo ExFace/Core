@@ -534,6 +534,13 @@ JS;
         $firstDialogActionIdx = null;
         $steps = $action->getActions();
         $lastActionIdx = count($steps) - 1;
+        $useInputOfActionIdx = null;
+
+        // check if a result index is specified
+        if ($action instanceof ActionChain){
+            $useInputOfActionIdx = $action->getUseInputDataOfAction();
+        }
+
         foreach ($steps as $i => $step) {
             // For front-end action their JS code will be called directly
             if ($this->isActionFrontendOnly($step)) {
@@ -575,21 +582,31 @@ JS;
         
         // Render JS for the chain
         // Starting with the front-end-actions BEFORE the first server-action
-        $js = "var oChainThis = this; var oRunningResult = $jsRequestData;";
+        // The first one wil get the input data of the chain
+        $js = "var oChainThis = this; var oRunningInput = $jsRequestData;";
         for ($i = 0; $i < $firstServerActionIdx; $i++) {
-            $js .= $this->buildJsClickFunction($steps[$i], 'oRunningResult') . "\n\n";
+            $js .= $this->buildJsClickFunction($steps[$i], 'oRunningInput') . "\n\n";
+            // TODO how to update oRunningInput with the result of the front-end actions???
         }
-        // Now prepare the front-end-actions AFTER the last server-action and save their
-        // code into $onServerSuccess in order to perform it after the server request
+        // Now BEFORE we call the FIRST server action we need to prepare the front-end-actions
+        // AFTER the LAST server-action and save their code into $onServerSuccess in order to perform
+        // it after the server request.
         $onServerSuccess = '';
         for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
-            // Save the server result to the running result variable
-            // TODO only do this if use_result_of_action is AFTER the last server action
-            $onServerSuccess .= "oRunningResult = oResultData;";
+            // Save the server result and every subsequent action result to the running input variable to pass it
+            // as input data to the next action - unless we are explicitly using the result of one of the
+            // previous actions.
+            // TODO not sure, if this will work if the input-data index is somewhere in-between the server actions
+            // TODO this will actually only pass the server result to the next action, but not the client-action
+            // results from one to another. 
+            if (! ($useInputOfActionIdx !== null && $useInputOfActionIdx < $i)) {
+                $onServerSuccess .= "oRunningInput = oResultData;";
+            }
+            
             // Make sure the on-success code has the same `this` in the JS as the code
             // executed immediately. After all, the action handlers cannot know, that
             // they are called within a chain.
-            $onServerSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], 'oResultData')} }).call(oChainThis); \n\n";
+            $onServerSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], 'oRunningInput')} }).call(oChainThis); \n\n";
         }
         
         // TODO Multiple server actions in the middle are not supported yet

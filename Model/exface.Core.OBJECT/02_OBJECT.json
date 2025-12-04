@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-05-21 11:31:07",
+            "MODIFIED_ON": "2025-11-28 09:30:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -942,6 +942,10 @@
                                 }
                             ]
                         }
+                    },
+                    {
+                        "close_dialog": false,
+                        "action_alias": "exface.Core.ShowModelSearchDialog"
                     }
                 ]
             },

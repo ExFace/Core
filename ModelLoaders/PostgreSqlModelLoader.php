@@ -25,7 +25,7 @@ class PostgreSqlModelLoader extends SqlModelLoader
     protected function buildSqlUuidSelector($field_name) : string
     {
         // In PostgreSQL casting to `::text` should normalize all letters to lowercase
-        return "CONCAT('0x', REPLACE({$field_name}::text, '-', ''))";
+        return "('0x' || REPLACE({$field_name}::text, '-', ''))";
     }
 
     /**
@@ -35,8 +35,9 @@ class PostgreSqlModelLoader extends SqlModelLoader
     protected function buildSqlEscapedUid(string $uid) : string
     {
         $uid = parent::buildSqlEscapedUid($uid);
-        // Convert 0x6876846 -> \x6876846
-        return '\\' . substr($uid, 1);
+        // Convert 0x6876846 -> 6876846-547547-
+        $hex = substr($uid, 2);
+        return "'{$hex}'";
     }
     
     /**
@@ -92,5 +93,15 @@ SQL;
             $this->installer = $installer;
         }
         return $this->installer;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\ModelLoaders\SqlModelLoader::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
     }
 }

@@ -2,12 +2,13 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeReadDataEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
@@ -25,10 +26,10 @@ use exface\Core\QueryBuilders\AbstractSqlBuilder;
  * performs an update and sets the attribute specified by the `soft_delete_attribute_alias`
  * to the `soft_delete_value`, thus marking the data item as "deleted".
  *
- *  Note, that `soft_delete_value` value will be parsed into the data type of the soft-delete
- *  attribute, so you can use any supported notation: e.g. a `0` for the current timestamp for
- *  time-attribute (e.g. if you have a `deleted_on` attribute with a timestamp instead of
- *  a `deleted_flag`).
+ * Note, that `soft_delete_value` value will be parsed into the data type of the soft-delete
+ * attribute, so you can use any supported notation: e.g. a `0` for the current timestamp for
+ * time-attribute (e.g. if you have a `deleted_on` attribute with a timestamp instead of
+ * a `deleted_flag`).
  * 
  * Soft-deleted data rows will be automatically filtered away when reading data. However, there
  * are different algorithms, that can be used here. Normally, the best one is selected
@@ -43,6 +44,23 @@ use exface\Core\QueryBuilders\AbstractSqlBuilder;
  * 
  * The default reading logic for soft-delete objects can be configured in `System.config.json`
  * in `BEHAVIORS.SOFTDELETE.FILTER_DELETED_ON_READ`.
+ * 
+ * ## Side-effects
+ * 
+ * ### Data-visibility outside of the workbench
+ * 
+ * This behavior of course does not make soft-deleted data invisible in its data source. Instead, the
+ * data is simply filtered away at runtime. If the data source has its own logic (like SQL stored
+ * procedures or triggers), you will need to make sure, they treat soft-deleted data accordingly.
+ * 
+ * ### Update-Events
+ * 
+ * Since this behavior replaces a delete operation by an update operation, it will generate update
+ * events between `OnBeforeDeleteData` and `OnDeleteData`. By default it will disable all behaviors
+ * of its object for this short time to avoid inconsistent states, where other behaviors still think
+ * the data is there although it is being deleted. This should work for most of the cases, but if
+ * you still want on-update behaviors, you can re-enable them by setting `bypass_behaviors_on_update` 
+ * to FALSE.
  * 
  * ## Examples
  * 
@@ -71,6 +89,9 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
     
     private $soft_delete_attribute_alias = null;
     private $soft_delete_value = null;
+    private $undelete_value = null;
+    
+    private $bypassBehaviorsOnUpdate = true;
     
     private ?string $filterDeletedOnRead = null;
     private ?string $customSqlWhere = null;
@@ -203,7 +224,15 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
         // if the datasheet still contains no datarows, then no items have to be marked as deleted
         if ($updateData->isEmpty() === false){
             $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+            // Disable ALL behaviors temporarily because this particular update is not an update really, but
+            // a delete operation. So behaviors, listening to updates should not be triggered.
+            if (true === $disableBehaviors = $this->willBypassBehaviorsOnUpdate()) {
+                $updateData->getMetaObject()->getBehaviors()->disableTemporarily(true);
+            }
             $updateData->dataUpdate(false, $transaction);
+            if (true === $disableBehaviors) {
+                $updateData->getMetaObject()->getBehaviors()->disableTemporarily(false);
+            }
             $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
         }
             
@@ -374,7 +403,7 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
     }
     
     /**
-     * Value, which should be filled into the flag attribute.
+     * If this value is placed in the `soft_delete_attribute_alias`, the row will be "deleted".
      *
      * @uxon-property soft_delete_value
      * @uxon-type string
@@ -386,6 +415,50 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
     public function setSoftDeleteValue(string $value) : SoftDeleteBehavior
     {
         $this->soft_delete_value = $value;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSoftDeleteUndoValue() : ?string
+    {
+        if ($this->undelete_value === null) {
+            // Guess the undelete value for typical soft-delete values (all sorts of flags)
+            switch (true) {
+                case $this->soft_delete_value === true:
+                    $this->undelete_value = false;
+                    break;
+                case $this->soft_delete_value === false:
+                    $this->undelete_value = true;
+                    break;
+                case $this->soft_delete_value === 1:
+                    $this->undelete_value = 0;
+                    break;
+                case $this->soft_delete_value === 0:
+                    $this->undelete_value = 1;
+                    break;
+            }
+        }
+        return $this->undelete_value;
+    }
+
+    /**
+     * The opposite of `soft_delete_value` - this value will be used to restore/undelete rows if necessary
+     * 
+     * For some typical types of `soft_delete_value` like `1`, `0`, `true` or `false`, the inverse value
+     * can be determined automatically. For other values you will need to set it manually - otherwise 
+     * undeletes will not work!
+     * 
+     * @uxon-property soft_delete_undo_value
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return $this
+     */
+    protected function setSoftDeleteUndoValue(string $value) : SoftDeleteBehavior
+    {
+        $this->undelete_value = $value;
         return $this;
     }
     
@@ -426,5 +499,60 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
     public function canAddColumnsToData(): bool
     {
         return true;   
+    }
+
+    /**
+     * @param DataSheetInterface $deletedSheet
+     * @return DataSheetEventInterface
+     */
+    public function undeleteData(DataSheetInterface $deletedSheet) : DataSheetEventInterface
+    {
+        if (! $deletedSheet->getMetaObject()->is($this->getObject())) {
+            throw new BehaviorRuntimeError('Cannot restore soft-deleted rows for ' . $deletedSheet->getMetaObject()->__toString(). ' - expecting data of ' . $this->getObject()->__toString() . '.');
+        }
+        if ($deletedSheet->isEmpty()) {
+            throw new BehaviorRuntimeError('Cannot restore soft-deleted rows: no rows found in data of ' . $deletedSheet->getMetaObject()->__toString());
+        }
+        if ($deletedSheet->hasAggregations() || $deletedSheet->hasAggregateAll()) {
+            throw new BehaviorRuntimeError('Cannot restore soft-deleted rows in aggregated data!');
+        }
+        if (null === $undeleteVal = $this->getSoftDeleteUndoValue()) {
+            throw new BehaviorRuntimeError('Cannot restore soft-deleted rows: cannot determine undo-value for `soft_delete_attribute_alias`!');
+        }
+        if (! $col = $deletedSheet->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())) {
+            $col = $deletedSheet->getColumns()->addFromAttribute($this->getSoftDeleteAttribute());
+        }
+        $col->setValueOnAllRows($undeleteVal);
+        return $deletedSheet;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function willBypassBehaviorsOnUpdate() : bool
+    {
+        return $this->bypassBehaviorsOnUpdate;
+    }
+
+    /**
+     * Set to FALSE to allow other behaviors to react to update-events generated when setting the soft-delete flags.
+     * 
+     * By default, this behavior will disable all other behaviors when it performs the update operation to
+     * mark given rows as deleted. Setting this property to FALSE will leave all behaviors untouched, so
+     * our delete operation will trigger `OnDelete` and `OnUpdate` behaviors.
+     * 
+     * NOTE: this does not suppress OnUpdate events - only behaviors listening to them!
+     * 
+     * @uxon-property bypass_behaviors_on_update
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setBypassBehaviorsOnUpdate(bool $trueOrFalse) : SoftDeleteBehavior
+    {
+        $this->bypassBehaviorsOnUpdate = $trueOrFalse;
+        return $this;
     }
 }

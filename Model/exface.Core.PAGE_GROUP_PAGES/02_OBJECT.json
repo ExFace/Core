@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Group Page [exface.Core.PAGE_GROUP_PAGES]",
             "CREATED_ON": "2020-02-08 21:31:59",
-            "MODIFIED_ON": "2020-02-09 07:39:07",
+            "MODIFIED_ON": "2025-11-21 11:12:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba642f3fdeb2cfe4b318306b9a",
@@ -102,7 +102,22 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": null,
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "width": 1,
+                "height": "auto",
+                "widgets": [
+                    {
+                        "attribute_alias": "PAGE_GROUP"
+                    },
+                    {
+                        "attribute_alias": "PAGE"
+                    },
+                    {
+                        "attribute_alias": "APP"
+                    }
+                ]
+            },
             "ALIAS": "PAGE_GROUP_PAGES",
             "DATA_ADDRESS": "exf_page_group_pages"
         }
