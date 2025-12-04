@@ -1170,7 +1170,7 @@ class OrderingBehavior extends AbstractBehavior
     {
         $indexAlias = $this->getOrderNumberAttributeAlias();
         $maxIndex = max($allSiblingsSheet->getColumnValues($indexAlias));
-        $safeIndex = max($maxIndex, max($loadedSiblingsSheet->getColumnValues($indexAlias)));
+        $safeIndex = max($maxIndex, max($loadedSiblingsSheet->getColumnValues($indexAlias), $maxIndex));
         $cacheEntry = [
             self::KEY_LOADED => $loadedSiblingsSheet,
             self::KEY_ALL => $allSiblingsSheet,
