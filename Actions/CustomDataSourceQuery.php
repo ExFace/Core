@@ -118,6 +118,18 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     /**
      * Queries to run in data source language (e.g. SQL)
      * 
+     * ## Placeholders
+     *
+     *  - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+     *  - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
+     *  from the given app
+     *  - `[#~input:column_name#]` - will be replaced by the value from `column_name` of the input data sheet
+     *  - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
+     *  This means, static formulas will always work, while data-driven formulas will only work on notifications
+     *  that have data sheets present!
+     * - Placeholders without a prefix will be replaced by input data from columns with the same name. This is
+     * the way placeholders worked in very early versions of this action.
+     * 
      * @uxon-property queries
      * @uxon-type array
      * @uxon-template [""]
@@ -276,17 +288,25 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             if (! empty($inputRowNos)) {
                 foreach ($inputRowNos as $rowNo) {
                     $rowRenderer = clone $renderer;
+                    // [#~input:#]
+                    $rowRenderer->addPlaceholder(
+                        (new DataRowPlaceholders($data_sheet, $rowNo, '~input:'))
+                        ->setFormatValues(false)
+                    );
+                    // Non-prefixed placeholders should also be treated as references to input data - for backwards
+                    // compatibility with the way the action worked before using template renderers
                     $rowRenderer->setDefaultPlaceholderResolver(
                         (new DataRowPlaceholders($data_sheet, $rowNo, ''))
                             ->setFormatValues(false)
                     );
                     $rowRenderer->addPlaceholder(
                         (new FormulaPlaceholders($this->getWorkbench(), $data_sheet, $rowNo))
-                    //->setSanitizeAsUxon(true)
                     );
                     $queryRuns[] = $rowRenderer->render($query);
                 }
             } else {
+                // Add static formula placeholders if we do not have any input rows
+                $renderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
                 $queryRuns[] = $renderer->render($query);
             }
             
