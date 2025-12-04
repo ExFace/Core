@@ -1,7 +1,11 @@
 <?php
-
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\AppExporterInterface;
+use exface\Core\CommonLogic\AppInstallers\Plugins\AbstractSqlInstallerPlugin;
+use exface\Core\CommonLogic\AppInstallers\Plugins\AppInstallerPluginFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
@@ -45,6 +49,8 @@ use exface\Core\DataTypes\JsonDataType;
  * 
  * - `INSTALLER.SQLDATABASEINSTALLER.DISABLED` - set to TRUE to disable this installer
  * completely (e.g. if you wish to manage the database manually).
+ * - `INSTALLER.SQLDATABASEINSTALLER.COMPARE_SCHEMAS` - set to TRUE to compare the
+ * current SQL schema to a dump  
  * - `INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS` - array of migration names to
  * skip for this specific installation.
  * 
@@ -87,7 +93,7 @@ use exface\Core\DataTypes\JsonDataType;
  * @author Ralf Mulansky
  *
  */
-abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
+abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller implements AppExporterInterface
 {
     const CONFIG_OPTION_SKIP_MIGRATIONS = 'SKIP_MIGRATIONS';
     const CONFIG_OPTION_DISABLED = 'DISABLED';
@@ -129,7 +135,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         yield from $this->installMigrations($source_absolute_path, $indent.$indent);
         yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
         // TODO make schema compare work
-        // yield from $this->compareSchemas($source_absolute_path, $indent.$indent);
+
+        if($this->getConfigOption('COMPARE_SCHEMAS') === true){
+            yield from $this->compareSchemas($source_absolute_path, $indent . $indent);
+        }
         
         return;
     }
@@ -151,7 +160,29 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function compareSchemas(string $source_absolute_path, string $indent = '') : \Iterator
     {
-        yield 'Schema compare not available for this database yet';
+        if ($this->canDumpSchema() === false) {
+            yield $indent . 'SQL dumps currently not supported in ' . PhpClassDataType::findClassNameWithoutNamespace(self::class);
+            return;
+        }
+        $sqlFolder = $this->getSqlFolderAbsolutePath($source_absolute_path);
+        $schemaFile = $sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql';
+        if(!file_exists($schemaFile)) {
+            yield $indent . 'No comparison possible Schema dump not found.';
+            return;
+        }
+        $schema = file_get_contents($schemaFile);
+        $tmpSchema = $this->buildSqlSchema();
+        
+        $diffs = $this->performComparison($tmpSchema, $schema);
+        
+        if (empty($diffs)) {
+            yield "The schemas matches fully";
+        } else {
+            echo "Differences found:\n";
+            foreach ($diffs as $line) {
+                echo "- $line\n";
+            }
+        }
     }
     
     /**
@@ -161,19 +192,78 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function dumpSchema(string $destination_absolute_path, string $indent = '') : \Iterator
     {
-        // Save schema dump to schema.sql in the $sqlFolder folder
+        if ($this->canDumpSchema() === false) {
+            yield $indent . 'SQL dumps currently not supported in ' . PhpClassDataType::findClassNameWithoutNamespace(self::class);
+            return;
+        }
         $sqlFolder = $this->getSqlFolderAbsolutePath($destination_absolute_path);
         $schema = $this->buildSqlSchema();
         if ($schema !== '') {
             $this->getWorkbench()->filemanager()->dumpFile($sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql', $schema);
+            yield $indent . 'SQL dump Schema was successfully created.';
         }
-        yield 'Schema dumps not available for this database yet';
+        else {
+            yield $indent . 'Schema dumps not available for this database yet';
+        }
     }
 
+    /**
+     * @return bool
+     */
+    protected function canDumpSchema() : bool
+    {
+        return false;
+    }
+
+    /**
+     * @return string
+     */
     protected function buildSqlSchema() : string
     {
-        return '';
+        $connection = $this->getDataConnection();
+        $tables = $this->getTables();
+        $tableDumps = '';
+        foreach ($tables as $table) {
+            $runQuery = $connection->runSql($this->getTableDumpSchema($table['DATA_ADDRESS']), true)->getResultArray();
+            $tableDumps .= $runQuery[0]['CreateTableScript'] . PHP_EOL;
+        }
+        $connection->disconnect();
+        return $tableDumps;
     }
+
+    /**
+     * 
+     * @return array
+     */
+    protected function getTables() : array
+    {
+        $existing_objects = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT');
+        $existing_objects->getColumns()->addFromExpression('DATA_ADDRESS');
+        $existing_objects->getFilters()->addConditionFromString('APP', $this->getWorkbench()->getApp($this->getSelectorInstalling())->getUid(), EXF_COMPARATOR_EQUALS);
+        $existing_objects->getFilters()->addConditionFromString('DATA_SOURCE__CONNECTION', $this->getDataConnection()->getId(), EXF_COMPARATOR_EQUALS);
+        $existing_objects->getSorters()->addFromString('DATA_ADDRESS', 'ASC');
+        $existing_objects->dataRead();
+        $result = $existing_objects->getRows();
+
+        $seen = [];
+        $returnResult = [];
+        foreach ($result as $item) {
+            if (!in_array($item['DATA_ADDRESS'], $seen)) {
+                $seen[] = $item['DATA_ADDRESS'];
+                $returnResult[] = $item;
+            }
+        }
+
+        return $returnResult;
+    }
+
+    /**
+     * Returns the dump script for the related table
+     * 
+     * @param string $tableName
+     * @return void
+     */
+    abstract protected function getTableDumpSchema(string $tableName) : string;
     
     /**
      *
@@ -246,9 +336,21 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     public function backup(string $destination_absolute_path) : \Iterator
     {
-        yield from $this->dumpSchema($destination_absolute_path);
+        if ($this->getConfigOption('COMPARE_SCHEMAS') === true) {
+            yield from $this->dumpSchema($destination_absolute_path);
+        }
     }
     
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppExporterInterface::exportModel()
+     */
+    public function exportModel() : \Iterator
+    {
+        if ($this->getConfigOption('COMPARE_SCHEMAS') === true){
+            yield from $this->dumpSchema($this->getApp()->getDirectoryAbsolutePath());
+        }
+    }
     /**
      * Method to check if Database already exists, if not, needs to create it.
      * Custom for every SQL Database Type.
@@ -528,7 +630,29 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         return '-- BATCH-DELIMITER';
     }
-    
+
+    /**
+     * Returns a string that indicates a call of a PHP plugin function.
+     *
+     * Override this method to define a custom marker for a specific SQL dialect.
+     *
+     * @return string
+     */
+    protected function getMarkerPhpPlugin() : string
+    {
+        return '@plugin\.';
+    }
+
+    protected function getRegexTokenOpenComment() : string
+    {
+        return '(^\/\*)|([\s]\/\*)';
+    }
+
+    protected function getRegexTokenCloseComment() : string
+    {
+        return '(\*\/[\s])|(\*\/$)';
+    }
+
     /**
      * Function to perform migrations on the database.
      * 
@@ -729,11 +853,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             if ($up == TRUE){
                 $migstr = $src;
             } elseif ($up == FALSE){
-                $migstr = '';
-                $this->getWorkbench()->getLogger()->warning("SQL migration {$filename} has no down-script!"); 
+                $migstr = ''; 
             }                       
         }
         else{
+            // MUST use substr() here and not mb_substr() because the latter seams to split --DOWN after
+            // the first `-` leaving that minus sign as part of the UP migration.
             if ($up === true){
                 if ($cut_down > $cut_up){
                     $migstr = substr($src, 0, $cut_down);
@@ -845,19 +970,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $connection->transactionStart();
             }
             if (null !== $delim = $this->getBatchDelimiter($script)) {
-                if (! RegularExpressionDataType::isRegex($delim)) {
+                if (!RegularExpressionDataType::isRegex($delim)) {
                     $delim = '/' . preg_quote($delim, '/') . '/';
                 }
                 foreach (preg_split($delim, $script) as $statement) {
-                    if ($statement) {
-                        if ($this->isPlugin($statement)) {
-                            $this->runPlugin($statement);
-                        }
-                        $results[] = $connection->runSql($statement, true);
+                    if(!$statement){
+                        continue;
                     }
+                    $results = $this->interpretAndRunStatements($connection, $statement, $results);
                 }
             } else {
-                $results[] = $connection->runSql($script, true);
+                $results = $this->interpretAndRunStatements($connection, $script, $results);
             }
             
             if ($wrapInTransaction === true) {
@@ -884,7 +1007,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function stringifyQueryResults(array $sqlDataQueries) : string
     {
-        $json = [];
+        $resultJson = '';
         foreach ($sqlDataQueries as $query) {
             $resultArray = $query->getResultArray();
             if (empty($resultArray)) {
@@ -892,12 +1015,20 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             } else {
                 $result = $resultArray;
             }
-            $json[] = [
+            $array = [
                 "SQL" => $query->getSql(),
                 "Result" => $result
             ];
+            try {
+                $json = JsonDataType::encodeJson($array, true);
+            } catch (\Throwable $e) {
+                $eInstaller = new InstallerRuntimeError($this, 'Failed to log result of SQL migration. ' . $e->getmessage());
+                $json = JsonDataType::encodeJson(['Result' => 'Cannot stringify SQL migration response. See Log-ID ' . $eInstaller->getId()], true);
+                $this->getWorkbench()->getLogger()->logException($eInstaller);
+            }
+            $resultJson .= ($resultJson ? ', ' : '') . $json;
         }
-        return JsonDataType::encodeJson($json, true);
+        return '[' . $resultJson . ']';
     }
     
     /**
@@ -984,16 +1115,144 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         return $this;
     }
 
-    protected function isPlugin(string $statement) : bool
+    /**
+     * Returns an indicator if the statement provided as argument has a Plugin Call.
+     *
+     * @param string $statement the statement to be checked
+     * @return bool TRUE if $statement has a Plugin Call, otherwise FALSE
+     */
+    protected function hasPlugin(string $statement) : bool
     {
-        // TODO regex to search for @installer.xxx()
-        return false;
+        $matches = [];
+        $found = preg_match('/' . $this->getMarkerPhpPlugin() . '/', $statement, $matches);
+        return $found && $matches[0] !== null;
     }
 
-    protected function runPlugin(string $statement)
+    /**
+     * Executes the Plugin Call.
+     *
+     * @param SqlDataConnectorInterface $connector
+     * @param string                    $statement
+     * @return void
+     */
+    protected function runPlugin(SqlDataConnectorInterface $connector, string $statement) : void
     {
-        // TODO @installer.xxx() -> xxx() -> Plugin -> Formula
-        return;
+        $matches = [];
+        $found = preg_match_all('/'.$this->getMarkerPhpPlugin().'(?<fnc>[.|\s|\S]*?\)(?=;))/', $statement, $matches);
+        if(!$found){
+            return;
+        }
+        foreach ($matches['fnc'] as $match) {
+            $expression = preg_replace('/\n\s*/', '', $match);
+            $formula = AppInstallerPluginFactory::createPlugin($this->getWorkbench(), $expression);
+            
+            if($formula instanceof AbstractSqlInstallerPlugin) {
+                $formula->setConnector($connector);
+            }
+            
+            $formula->evaluate();
+        }
+    }
+
+    /**
+     * @param SqlDataConnectorInterface $connection
+     * @param string $script
+     * @param array $results
+     * @return array
+     */
+    protected function interpretAndRunStatements(SqlDataConnectorInterface $connection, string $script, array $results): array
+    {
+        foreach ($this->parseScript($script) as $statement) {
+            list('isPlugin' => $isPlugin, 'script' => $script) = $statement;
+            if(empty(trim($script))) {
+                continue;
+            }
+
+            if ($isPlugin) {
+                $this->runPlugin($connection, $script);
+            } else {
+                $results[] = $connection->runSql($script, true);
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Parses a script and extracts consecutive blocks of SQL and plugin statements.
+     * 
+     * NOTE: This is a very crude imitation of a state machine. If you ever want to
+     * expand this with more complex parsing logic, consider using fully featured 3rd party
+     * parser instead.
+     * 
+     * @param string $script
+     * @return array
+     */
+    protected function parseScript(string $script) : array
+    {
+        $commentRegex = '/' . $this->getRegexTokenOpenComment() . '|' . $this->getRegexTokenCloseComment() . '/';
+        $openCommentRegex = '/' . $this->getRegexTokenOpenComment() . '/';
+        $closeCommentRegex = '/' . $this->getRegexTokenCloseComment() . '/';
+        
+        $isComment = false;
+        $putStatement = false;
+        $statements = [];
+        $statementCache = '';
+        $commentCache = '';
+
+        foreach(preg_split($commentRegex, $script, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) as $sPart) {
+            if(empty(trim($sPart))) {
+                continue;
+            }
+            
+            // Update state.
+            $isCommentNext = !$isComment ?
+                preg_match($openCommentRegex, $sPart) :
+                !preg_match($closeCommentRegex, $sPart);
+
+            // Add part to statement cache.
+            $statementCache .= $sPart;
+            
+            // If part is a comment, add it to comment cache.
+            if($isComment || $isCommentNext) {
+                $commentCache .= $sPart;
+            }
+            
+            // If part has a plugin, prepare to put the current statement into the results.
+            // This is needed to execute any plugins after any SQL statements that have come before.
+            if ($this->hasPlugin($sPart)) {
+                $putStatement = true;
+            }
+            
+            // Put the statement to the results.
+            if($putStatement && $isComment && !$isCommentNext) {
+                $statements[] = [
+                    'isPlugin' => false,
+                    'script' => $statementCache
+                ];
+
+                $statements[] = [
+                    'isPlugin' => true,
+                    'script' => $commentCache
+                ];
+
+                $putStatement = false;
+                $statementCache = '';
+            } 
+
+            if(!$isCommentNext) {
+                $commentCache = '';
+            }
+
+            $isComment = $isCommentNext;
+        }
+        
+        if(!empty($statementCache)) {
+            $statements[] = [
+                'isPlugin' => false,
+                'script' => $statementCache
+            ];
+        } 
+        
+        return $statements;
     }
 }
-?>

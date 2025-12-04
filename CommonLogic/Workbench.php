@@ -11,6 +11,7 @@ use exface\Core\Factories\ModelLoaderFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
+use exface\Core\Interfaces\Mutations\MutatorInterface;
 use exface\Core\Interfaces\WorkbenchCacheInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -35,6 +36,7 @@ use exface\Core\CommonLogic\Model\App;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\CommonLogic\Communication\Communicator;
 use exface\Core\Interfaces\Events\EventManagerInterface;
+use exface\Core\Mutations\Mutator;
 
 class Workbench implements WorkbenchInterface
 {
@@ -43,8 +45,6 @@ class Workbench implements WorkbenchInterface
     private $data;
 
     private $mm;
-
-    private $db;
 
     private $debugger;
 
@@ -58,8 +58,6 @@ class Workbench implements WorkbenchInterface
     
     private $running_apps_selectors = [];
 
-    private $utils = null;
-
     private $event_manager = null;
 
     private $vendor_dir_path = null;
@@ -67,12 +65,12 @@ class Workbench implements WorkbenchInterface
     private $installation_path = null;
     
     private $installation_name = null;
-
-    private $request_params = null;
     
     private $security = null;
     
     private $communicator = null;
+
+    private $mutator = null;
     
     private $startTime = null;
 
@@ -454,9 +452,19 @@ class Workbench implements WorkbenchInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchInterface::getAppFolder()
      */
-    public function getAppFolder(AppSelectorInterface $selector) : string 
+    public function getAppFolder(AppSelectorInterface|string $selector) : string 
     {
-        return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $selector->getAppAlias());
+        $alias = is_string($selector) ? $selector : $selector->getAppAlias();
+        $pathInVendor = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $alias);
+        $pathInVendorLC = mb_strtolower($pathInVendor);
+        $pathToVendor = $this->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR;
+        switch (true) {
+            case is_dir($pathToVendor . $pathInVendorLC):
+                return $pathInVendorLC;
+            case is_dir($pathToVendor . $pathInVendor):
+                return $pathInVendor;
+        }
+        return $pathInVendorLC;         
     }
 
     /**
@@ -498,5 +506,13 @@ class Workbench implements WorkbenchInterface
             $this->communicator = new Communicator($this);
         }
         return $this->communicator;
+    }
+
+    public function getMutator() : MutatorInterface
+    {
+        if ($this->mutator === null) {
+            $this->mutator = new Mutator($this);
+        }
+        return $this->mutator;
     }
 }

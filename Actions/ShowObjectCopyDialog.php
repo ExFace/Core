@@ -2,6 +2,8 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -123,9 +125,18 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
                         $relPath->appendRelation($fltrAttr->getRelation());
                         
                     }
-                    $revRelPath = $relPath->reverse();
-                    if (! in_array($revRelPath->toString(), $copyRelAliases)) {
-                        $dataChild->setDoNotPrefill(true);
+                    // Try to reverse the relation to see, if we need to disable the prefill fo the dialog,
+                    // but do not bother if anything goes wrong. This did actually happen when copying
+                    // object actions when examining the mutation table - that is linked via a custom
+                    // attribute with a relation and that did not produce reverse relations a its
+                    // right object (the object action).
+                    try {
+                        $revRelPath = $relPath->reverse();
+                        if (!in_array($revRelPath->toString(), $copyRelAliases)) {
+                            $dataChild->setDoNotPrefill(true);
+                        }
+                    } catch (MetaRelationNotFoundError $e) {
+                        $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
                     }
                 }
             }

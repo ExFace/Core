@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
@@ -37,9 +36,9 @@ interface ConditionInterface extends ConditionalExpressionInterface
     /**
      * Returns the value to compare to
      *
-     * @return mixed
+     * @return string|int|float|bool
      */
-    public function getValue() : ?string;
+    public function getValue() : mixed;
     
     /**
      * 
@@ -50,10 +49,10 @@ interface ConditionInterface extends ConditionalExpressionInterface
     /**
      * Changes right side of the condition.
      *
-     * @param string|NULL $value
+     * @param string|int|float|bool $value
      * @return ConditionInterface
      */
-    public function setValue(?string $value) : ConditionInterface;
+    public function setValue(mixed $value) : ConditionInterface;
     
     /**
      * Removes the right side of the condition (as if it was never set).
@@ -79,12 +78,6 @@ interface ConditionInterface extends ConditionalExpressionInterface
      * @return string|boolean
      */
     public static function sanitizeComparator(string $value) : string;
-    
-    /**
-     *
-     * @return DataTypeInterface
-     */
-    public function getDataType() : DataTypeInterface;
     
     /**
      * Returns the attribute_alias to filter if the filter is based upon an attribute or FALSE otherwise

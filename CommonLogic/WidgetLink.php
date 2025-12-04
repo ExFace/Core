@@ -2,6 +2,8 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -32,7 +34,9 @@ use Throwable;
  * 
  * - `~self` - references the widget the link is defined in
  * - `~parent` - references the immediate parent of `~self`
- * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets. 
+ * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets
+ * - `~data` - references the enclosing data widget (e.g. `DataTable`). Only works for widgets, that are parts
+ * of data widgets like `Filter`, `DataColumn`, `DataConfigurator`, etc.
  * 
  * You can make a widget link "optional" by adding a trailing `?`. This will make sure, the linked value
  * us only used if it is not empty. Thus, the widget, that contains the link will not be emptied if the
@@ -49,6 +53,7 @@ use Throwable;
  * - `~self!mycol` - references the column `mycol` in the data of the current widget
  * - `~parent!mycol` - references the column `mycol` of the current widgets parent
  * - `~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
+ * - `~data!mycol` - references the column `mycol` of the enclosing data widget (e.g. for a cell widget of that table)
  * 
  * @author andrej.kabachnik
  *
@@ -61,7 +66,8 @@ class WidgetLink implements WidgetLinkInterface
     private $targetPageAlias = null;
     private $targetPage = null;
     private $targetWidgetId = null;
-    private $widget_id_space = null;
+    private $targetWidgetIdWithSpace = null;
+    private $targetWidget = null;
     private $targetColumnId = null;
     private $targetRowNumber = null;
     private $ifNotEmpty = false;
@@ -111,12 +117,12 @@ class WidgetLink implements WidgetLinkInterface
     private static function removeLinkFromCache(WidgetLinkInterface $link) : bool
     {
         $targetPageAlias = $link->getOrLoadTargetPageAlias();
-        if(!key_exists($targetPageAlias, self::$linkCache)) {
+        if(! key_exists($targetPageAlias, self::$linkCache)) {
             return false;
         }
         
-        $targetWidgetId = $link->getTargetWidgetId() ?? '';
-        if(!key_exists($targetWidgetId, self::$linkCache[$targetPageAlias])) {
+        $targetWidgetId = $link->targetWidgetId ?? '';
+        if(! key_exists($targetWidgetId, self::$linkCache[$targetPageAlias])) {
             return  false;
         }
         
@@ -142,7 +148,7 @@ class WidgetLink implements WidgetLinkInterface
     private static function addLinkToCache(WidgetLinkInterface $link) : void
     {
         $targetPageAlias = $link->getOrLoadTargetPageAlias();
-        $targetWidgetId = $link->getTargetWidgetId() ?? '';
+        $targetWidgetId = $link->targetWidgetId ?? '';
         
         self::$linkCache[$targetPageAlias][$targetWidgetId][] = $link;
     }
@@ -178,7 +184,7 @@ class WidgetLink implements WidgetLinkInterface
     public static function getLinksOnPage(UiPageInterface $page) : array
     {
         $result = [];
-        $pageAlias = $page->getAlias() ?? '';
+        $pageAlias = $page->getAliasWithNamespace() ?? '';
         
         foreach (self::$linkCache[$pageAlias] as $linksPerWidget) {
             $result = array_merge($result, $linksPerWidget);
@@ -199,13 +205,24 @@ class WidgetLink implements WidgetLinkInterface
         $page = $widget->getPage();
         $pageAlias = $page !== null ? ($page->getAlias() ?? '') : '';
         $widgetId = $widget->getId() ?? '';
+        $result = [];
+
+        if(null === $linksPerId = (self::$linkCache[$pageAlias] ?? null)) {
+            return $result;
+        } 
         
-        if( key_exists($pageAlias, self::$linkCache) && 
-            key_exists($widgetId, self::$linkCache[$pageAlias])) {
-            return self::$linkCache[$pageAlias][$widgetId];
+        $idHit = $linksPerId[$widgetId] ?? null;
+        if ($idHit === null) {
+            foreach ($linksPerId as $links) {
+                foreach ($links as $link) {
+                    if ($widget === $link->getTargetWidget()) {
+                        $result[] = $link;
+                    }
+                }
+            }
         }
         
-        return [];
+        return $result;
     }
 
     /**
@@ -313,7 +330,22 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getTargetWidgetId() : string
     {
-        return ($this->getTargetWidgetIdSpace() ? $this->getTargetWidgetIdSpace() . $this->getTargetPage()->getWidgetIdSpaceSeparator() : '') . $this->targetWidgetId;
+        if ($this->targetWidgetIdWithSpace === null) {
+            $targetSpace = $this->getTargetWidgetIdSpace();
+            if ($targetSpace !== '') {
+                $targetSpace .= $this->getTargetPage()->getWidgetIdSpaceSeparator();
+            }
+            // If the target widget id already includes the correct id space, do not add it another
+            // time. Such double id spaces had caused rare problems with user-specified ids, that
+            // hat their id space already attached. These problems occurred in particular with
+            // ~input links, but should not happen anymore since ~input links will now explicitly
+            // cache the widget and not only its id.
+            if ($targetSpace !== '' && StringDataType::startsWith($this->targetWidgetId, $targetSpace)) {
+                $targetSpace = '';
+            }
+            $this->targetWidgetIdWithSpace = $targetSpace . $this->targetWidgetId;
+        }
+        return $this->targetWidgetIdWithSpace;
     }
 
     /**
@@ -329,37 +361,69 @@ class WidgetLink implements WidgetLinkInterface
         if ($value === '') {
             $value = null;
         }
+        $this->targetWidget = null;
+        $this->targetWidgetId = null;
+
         // Handle magic refs
         switch ($value) {
+            // ~self
             case WidgetLinkInterface::REF_SELF:
                 if ($this->hasSourceWidget()) {
-                    $value = $this->getSourceWidget()->getId();
+                    $targetWidget = $this->getSourceWidget();
                     break;
                 }
                 throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_SELF . '" only available if the links source widget is known!');
+            // ~parent
             case WidgetLinkInterface::REF_PARENT:
                 if ($this->hasSourceWidget() && $this->getSourceWidget()->hasParent()) {
-                    $value = $this->getSourceWidget()->getParent()->getId();
+                    $targetWidget = $this->getSourceWidget()->getParent();
                     break;
                 }
                 throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is known and it has a parent!');
+            // ~input
             case WidgetLinkInterface::REF_INPUT:
                 if ($this->hasSourceWidget()) {
                     $src = $this->getSourceWidget();
-                    if ($src instanceof iUseInputWidget && $input = $src->getInputWidget()) {
-                        $value = $input->getId();
+                    if ($src instanceof iUseInputWidget && $targetWidget = $src->getInputWidget()) {
                         break;
                     }
                 }
                 throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is a button (or any other widget with an input widget) and the input widget is known!');
+            // ~data
+            case WidgetLinkInterface::REF_DATA:
+                if (null !== $widget = $this->getSourceWidget()) {
+                    $idSpace = $widget->getIdSpace();
+                    // Get the closest parent, that is a data widget. If there is a Button along the way, check, if 
+                    // it belongs to a different id space, than our source widget - if so, we have reached the boundary
+                    // of the current page or dialog and did not find a suitable data widget!
+                    while ($widget->hasParent()) {
+                        $widget = $widget->getParent();
+                        if ($widget instanceof iShowData) {
+                            $targetWidget = $widget;
+                            break 2; // exit switch() successfully
+                        }
+                        if ($widget instanceof iTriggerAction) {
+                            if ($widget->getIdSpace() !== $idSpace) {
+                                break; // exit while() and continue to exception
+                            }
+                        }
+                    }
+                }
+                throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_DATA . '" only available for widgets, that are part of data widgets - e.g. filters, configurators, columns, etc.!');
         }
 
-        // Check if the widget id has strage characters
+        if ($targetWidget !== null) {
+            $this->targetWidget = $targetWidget;
+            $value = $targetWidget->getIdAutogenerated();
+        }
+
+        // Check if the widget id has strange characters
         if ($value !== null && ! self::isValidWidgetId($value)) {
             throw new InvalidArgumentException('Widget id "' . $value . '" is not valid: only alphanumeric characters, "_" and "." are allowed!');
         }
         
         $this->targetWidgetId = $value;
+        $this->targetWidgetIdWithSpace = null;
         return $this;
     }
 
@@ -370,10 +434,13 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getTargetWidget() : WidgetInterface
     {
+        if ($this->targetWidget !== null) {
+            return $this->targetWidget;
+        }
         try {
             $widget = $this->getTargetPage()->getWidget($this->getTargetWidgetId());
         } catch (Throwable $e) {
-            throw new WidgetNotFoundError('Cannot resolve widget link "' . $this->__tostring() . '" in resource "' . $this->getTargetPage()->getAliasWithNamespace() . '"!');
+            throw new WidgetNotFoundError('Cannot resolve widget link "' . $this->__tostring() . '" in resource "' . $this->getTargetPage()->getAliasWithNamespace() . '"!', null, $e);
         }
         if (! $widget) {
             throw new WidgetNotFoundError('Cannot find widget "' . $this->getTargetWidgetId() . '" in resource "' . $this->getTargetPage()->getAliasWithNamespace() . '"!');
@@ -401,7 +468,7 @@ class WidgetLink implements WidgetLinkInterface
     public function getOrLoadTargetPageAlias() : string
     {
         if($this->targetPageAlias === null) {
-            return $this->getTargetPage()->getAlias() ?? '';
+            return $this->getTargetPage()->getAliasWithNamespace() ?? '';
         }
         
         return $this->targetPageAlias;
@@ -492,11 +559,12 @@ class WidgetLink implements WidgetLinkInterface
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->setProperty('widget_id', $this->targetWidgetId);
+        // If we have a cached target widget, get its current id (might even be different from the original widget id
+        // if set by a user explicitly)
+        $uxon->setProperty('widget_id', $this->targetWidget ? $this->targetWidget->getId() : $this->targetWidgetId);
         $uxon->setProperty('page_alias', $this->getTargetPage()->getAliasWithNamespace());
-        $uxon->setProperty('widget_id_space', $this->widget_id_space);
         if ($this->targetColumnId !== null) {
-        $uxon->setProperty('column_id', $this->targetColumnId);
+            $uxon->setProperty('column_id', $this->targetColumnId);
         }
         if ($this->targetRowNumber !== null) {
             $uxon->setProperty('row_number', $this->targetRowNumber);

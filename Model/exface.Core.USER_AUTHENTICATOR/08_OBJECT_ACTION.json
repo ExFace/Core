@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "User authentication: Disable",
+            "_EXPORT_SUMMARY": "User authentication: Disable [DisableUserAuthenticator]",
             "CREATED_ON": "2020-05-19 14:43:54",
             "MODIFIED_ON": "2023-10-20 19:31:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -95,7 +95,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "User authentication: Enable",
+            "_EXPORT_SUMMARY": "User authentication: Enable [EnableUserAuthenticator]",
             "CREATED_ON": "2020-05-19 14:44:37",
             "MODIFIED_ON": "2023-10-20 19:32:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -125,7 +125,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "User authentication: Reset",
+            "_EXPORT_SUMMARY": "User authentication: Reset [ResetUserAuthenticator]",
             "CREATED_ON": "2023-10-20 19:28:14",
             "MODIFIED_ON": "2023-10-20 19:28:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

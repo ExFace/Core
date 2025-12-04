@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Actions;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
@@ -10,7 +12,9 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\ServiceParameterInterface;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use Sabre\Xml\Service;
 
 class ServiceParameter implements ServiceParameterInterface
 {
@@ -27,6 +31,8 @@ class ServiceParameter implements ServiceParameterInterface
     private $empty = false;
     
     private $defaultValue = null;
+
+    private $emptyExpression = null;
     
     private $dataType = null;
     
@@ -170,6 +176,10 @@ class ServiceParameter implements ServiceParameterInterface
     
     /**
      * Set to TRUE to mark the parameter as empty.
+     * 
+     * This will render the parameter, but it will be empty - whereas if it is just not defined, it will not be
+     * rendered. This is mainly important for webservice or remote function calls rendered from parameter 
+     * definitions and not from templates with placeholders.
      *
      * @uxon-property empty
      * @uxon-type boolean
@@ -303,8 +313,11 @@ class ServiceParameter implements ServiceParameterInterface
     }
     
     /**
+     * More details about the use of this parameter, examples, syntax, etc.
      * 
-     * {@inheritDoc}
+     * @uxon-property description
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::setDescription()
      */
     public function setDescription(string $value) : ServiceParameterInterface
@@ -334,6 +347,77 @@ class ServiceParameter implements ServiceParameterInterface
     public function setGroup(string $value) : ServiceParameterInterface
     {
         $this->group = $value;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ServiceParameterInterface::getEmptyExpression()
+     */
+    public function getEmptyExpression() : ?ExpressionInterface
+    {
+        return $this->emptyExpression;
+    }
+
+    /**
+     * The value to be used to indicate, that the parameter is empty (e.g. NULL instead of an empty string)
+     * 
+     * In contrast to `default_value`, the `empty_expression` tells the service, that the parameter is
+     * explicitly empty. Most services will expect NULL in this case, but some might need a special
+     * character or value like `-1`. 
+     * 
+     * If this option is not set, empty values will be passed as-is. This means, that empty strings received
+     * from the user input will not be turned into `null` values. To change this quickly, set `empty_as_null`
+     * to `true` - this is simpler, than to define an `empty_expression`.
+     * 
+     * Accepted values:
+     * 
+     * - Number or boolean value (e.g. `1` or `false`)
+     * - `null` or `=NullValue()` to indicate, that any empty value must be turned into `null`
+     * - Quoted string (e.g. `'empty'`)
+     * - Formula (e.g. `=Today()` or `=GetConfig()`) - calculation result will be used if empty value passed to parameter
+     * 
+     * @uxon-property empty_expression
+     * @uxon-type metamodel:formula|string|number|boolean
+     * 
+     * @see ServiceParameterInterface::setEmptyExpression()
+     */
+    public function setEmptyExpression($stringOrExpression) : ServiceParameterInterface
+    {
+        switch (true) {
+            case $stringOrExpression instanceof ExpressionInterface:
+                $this->emptyExpression = $stringOrExpression;
+                break;
+            case $stringOrExpression === null:
+                $this->emptyExpression = ExpressionFactory::createFromString($this->getWorkbench(), '=NullValue()');
+                break;
+            case is_string($stringOrExpression) && ! Expression::detectQuotedString($stringOrExpression):
+                $this->emptyExpression = ExpressionFactory::createFromString($this->getWorkbench(), json_encode($stringOrExpression));
+                break;
+            default:
+                $this->emptyExpression = ExpressionFactory::createFromString($this->getWorkbench(), $stringOrExpression);
+                break;
+        }
+        return $this;
+    }
+
+    /**
+     * Set to TRUE to force any empty value to be turned to `null`
+     * 
+     * @uxon-property empty_as_null
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return ServiceParameterInterface
+     */
+    protected function setEmptyAsNull(bool $trueOrFalse) : ServiceParameterInterface
+    {
+        if ($trueOrFalse === true) {
+            $this->setEmptyExpression(null);
+        } else {
+            $this->emptyExpression = null;
+        }
         return $this;
     }
 }

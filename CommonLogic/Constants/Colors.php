@@ -178,21 +178,23 @@ abstract class Colors
     const GREY_SLATEGRAY = 'SlateGray';
     const GREY_DARKSLATEGRAY = 'DarkSlateGray';
     const BLACK = 'Black';
-    
-    /**
-     * Cache for getSemanticColors() etc.
-     * 
-     * @var array
-     */
-    protected static $cache = [];
-    
+
     /**
      * Returns TRUE if the given HTML color is dark and FALSE otherwise.
-     * 
+     *
      * @param string $color
+     * @param float  $weight
+     * Pass an optional weight [0..1] to favor a certain outcome:
+     * - `0` means the return value is always `false` (is not dark).
+     * - Values `(0..1)` weigh the contrast of the input color to black or white
+     * and return the closest result. For example `0.4` would prefer white, but
+     * will return black if the contrast is large enough.
+     * - `1` means the return value is always `true` (is dark).
+     *
+     * Default value is `0.5`, i.e. equal weight for black and white.
      * @return boolean
      */
-    public static function isDark($color) {
+    public static function isDark(string $color, float $weight = 0.5) {
         if ($color === self::SEMANTIC_ERROR) {
             return true;
         }
@@ -208,8 +210,11 @@ abstract class Colors
         $c_b = hexdec( substr( $hex, 4, 2 ) );
         
         $brightness = ( ( $c_r * 299 ) + ( $c_g * 587 ) + ( $c_b * 114 ) ) / 1000;
+
+        $weight = max(min($weight, 1), 0);
+        $weight = (1 - $weight) * 2;
         
-        return $brightness > 155 ? false : true;
+        return $brightness * $weight > 155 ? false : true;
     }
     
     /**
@@ -404,28 +409,21 @@ abstract class Colors
      */
     public static function isSemantic(string $value) : bool
     {
-        return substr($value, 0, 1) === '~';
+        return mb_substr($value, 0, 1) === '~';
     }
     
     /**
      * Returns an array with semantic color names (e.g. ~ERROR)
-     * @return array
+     * 
+     * @return string[]
      */
     public static function getSemanticColors() : array
     {
-        $class = get_called_class();
-        if (!array_key_exists($class, static::$cache)) {
-            $reflection            = new \ReflectionClass($class);
-            foreach ($reflection->getConstants() as $color) {
-                if (! $color) {
-                    continue;
-                }
-                if (self::isSemantic($color) === true) {
-                    static::$cache[$class]['semantic'] = $reflection->getConstants();
-                }
-            }
-        }
-        
-        return static::$cache[$class]['semantic'];
+        return [
+            self::SEMANTIC_ERROR,
+            self::SEMANTIC_WARNING,
+            self::SEMANTIC_OK,
+            self::SEMANTIC_INFO
+        ];
     }
 }

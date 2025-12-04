@@ -2,13 +2,12 @@
 namespace exface\Core\Facades\DocsFacade\Placeholders;
 
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
-use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractMarkdownPlaceholderResolver;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
-use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
-class NavButtonResolver extends AbstractPlaceholderResolver implements PlaceholderResolverInterface
+class NavButtonResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
     private $pagePath = null;
 

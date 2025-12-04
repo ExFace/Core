@@ -77,6 +77,14 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return MetaAttributeListInterface|Attribute[]
      */
     public function getAttributes();
+
+    /**
+     * Adds the given attribute to this object
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return MetaObjectInterface
+     */
+    public function addAttribute(MetaAttributeInterface $attribute) : MetaObjectInterface;
     
     /**
      * Returns an attribute matching the given attribute alias.
@@ -150,18 +158,26 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      *
      * Inherited elements become property of the extended object and loose any connection 
      * to their parents (i.e. changing an attribute on the parent object will not 
-     * effect the respective inherited attribute of the extended object). However, using 
+     * affect the respective inherited attribute of the extended object). However, using 
      * the method `getObjectInheritedFrom()` of an inherited element, it can be determined, 
      * whether the element is inherited and from which object.
      * 
      * Relations are handled similarly. For example, if we have a relation from `ORDER` to `COMPANY` 
      * called `CONTRACTOR` and we extend the object `CLIENT` from `COMPANY`, the `CONTRACTOR` relation 
      * of `ORDER` will still point to `COMPANY`, there will be no relation to `CLIENT` automatically.
-     *
+     * 
+     * Behaviors are inherited too, but they need to be explicitly registered for the new object.
+     * By default, this will be done automatically while extending the parent object, but you can
+     * explicitly prevent this by setting $registerBehaviors to false if you plan to modify the
+     * resulting object later. Make sure to register all behaviors after all modifications are done!
+     * For example, the SQL model loader registers inherited behaviors after all attributes of the
+     * inheriting object are loaded.
+     * 
      * @param MetaObjectInterface $parent
+     * @param bool $registerBehaviors
      * @return void
      */
-    public function extendFromObject(MetaObjectInterface $parent);
+    public function extendFromObject(MetaObjectInterface $parent, bool $registerBehaviors = true) : void;
     
     /**
      * Finds a relation to a specific object.

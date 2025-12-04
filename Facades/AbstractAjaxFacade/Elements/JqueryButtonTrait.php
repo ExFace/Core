@@ -32,9 +32,8 @@ use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
- * 
- * @method Button getWidget()
- * @method AbstractAjaxFacade getFacade()
+ *
+ * @method \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade getFacade()
  * 
  * @author Andrej Kabachnik
  *
@@ -216,8 +215,6 @@ trait JqueryButtonTrait {
                             default:
                                 throw new WidgetConfigurationError($this, 'Invalid row value "' . $val . '" in input_data of ' . $this->getWidget()->getWidgetType());
                         }
-                    } else {
-                        
                     }
                 }
                 $customDataRows .= '{' . $jsRow . '},';
@@ -537,6 +534,13 @@ JS;
         $firstDialogActionIdx = null;
         $steps = $action->getActions();
         $lastActionIdx = count($steps) - 1;
+        $useInputOfActionIdx = null;
+
+        // check if a result index is specified
+        if ($action instanceof ActionChain){
+            $useInputOfActionIdx = $action->getUseInputDataOfAction();
+        }
+
         foreach ($steps as $i => $step) {
             // For front-end action their JS code will be called directly
             if ($this->isActionFrontendOnly($step)) {
@@ -578,18 +582,31 @@ JS;
         
         // Render JS for the chain
         // Starting with the front-end-actions BEFORE the first server-action
-        $js = 'var oChainThis = this; ';
+        // The first one wil get the input data of the chain
+        $js = "var oChainThis = this; var oRunningInput = $jsRequestData;";
         for ($i = 0; $i < $firstServerActionIdx; $i++) {
-            $js .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
+            $js .= $this->buildJsClickFunction($steps[$i], 'oRunningInput') . "\n\n";
+            // TODO how to update oRunningInput with the result of the front-end actions???
         }
-        // Now prepare the front-end-actions AFTER the last server-action and save their
-        // code into $onSuccess in order to perform it after the server request
-        $onSuccess = '';
+        // Now BEFORE we call the FIRST server action we need to prepare the front-end-actions
+        // AFTER the LAST server-action and save their code into $onServerSuccess in order to perform
+        // it after the server request.
+        $onServerSuccess = '';
         for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
+            // Save the server result and every subsequent action result to the running input variable to pass it
+            // as input data to the next action - unless we are explicitly using the result of one of the
+            // previous actions.
+            // TODO not sure, if this will work if the input-data index is somewhere in-between the server actions
+            // TODO this will actually only pass the server result to the next action, but not the client-action
+            // results from one to another. 
+            if (! ($useInputOfActionIdx !== null && $useInputOfActionIdx < $i)) {
+                $onServerSuccess .= "oRunningInput = oResultData;";
+            }
+            
             // Make sure the on-success code has the same `this` in the JS as the code
             // executed immediately. After all, the action handlers cannot know, that
             // they are called within a chain.
-            $onSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], $jsRequestData)} }).call(oChainThis); \n\n";
+            $onServerSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], 'oRunningInput')} }).call(oChainThis); \n\n";
         }
         
         // TODO Multiple server actions in the middle are not supported yet
@@ -600,7 +617,7 @@ JS;
         // Now send the server-action stuff to the server and do the remaining JS-part of the chain
         // after a successful response was received.
         $serverAction = $steps[$firstServerActionIdx];
-        $js .= $this->buildJsClickOfflineWrapper($serverAction, $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
+        $js .= $this->buildJsClickOfflineWrapper($serverAction, $this->buildJsClickCallServerAction($action, $jsRequestData, $onServerSuccess, 'oResultData'), $onServerSuccess);
         
         return $js;
     }
@@ -678,6 +695,7 @@ JS;
 
                     [{
                         trigger_widget_id: "{$widget->getId()}",
+                        page_alias: "{$widget->getPage()->getAliasWithNamespace()}",
                         action_alias: "{$action->getAliasWithNamespace()}",
                         effects: [ $effectsJs ],
                         refresh_widgets: [ $refreshIds ],
@@ -725,18 +743,23 @@ JS;
     }
 
     /**
+     * Returns JS code to call a server action via AJAX
+     * 
+     * The $jsOnSuccess will be called after the AJAX calls succeeds and will have access to the received data
+     * in $oResultDataJsVar JS variable.
      * 
      * @param ActionInterface $action
-     * @param AbstractJqueryElement $input_element
+     * @param string $jsRequestData
+     * @param string $jsOnSuccess
      * @return string
      */
-    protected function buildJsClickCallServerAction(ActionInterface $action, string $jsRequestData, string $jsOnSuccess = '') : string
+    protected function buildJsClickCallServerAction(ActionInterface $action, string $jsRequestData, string $jsOnSuccess = '', string $oResultDataJsVar = 'oResultData') : string
     {
         $widget = $this->getWidget();
         
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
-        $output .= "
+        $output = "
 						if ({$this->getInputElement()->buildJsValidator()}) {
                             {$this->buildJsRequestDataCheckSize($jsRequestData, $this->getAjaxPostSizeMax())}
 							{$this->buildJsBusyIconShow()}
@@ -749,6 +772,7 @@ JS;
 									data: {$jsRequestData}
 								},
 								success: function(data, textStatus, jqXHR) {
+								    var {$oResultDataJsVar};
                                     if (typeof data === 'object') {
                                         response = data;
                                     } else {
@@ -759,6 +783,7 @@ JS;
     										response.error = data;
     									}
                                     }
+                                    {$oResultDataJsVar} = response;
 				                   	if (response.success !== undefined){
 										{$this->buildJsCloseDialog()}
 				                       	{$this->buildJsBusyIconHide()}
@@ -1164,8 +1189,7 @@ JS;
 
             $( document ).off( "{$actionperformed}.{$this->getId()}" );
             $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
-                var sTriggerWidgetId = "{$targetEl->getWidget()->getId()}";
-                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
+                if (oParams.page_alias !== '{$targetEl->getWidget()->getPage()->getAliasWithNamespace()}' || oParams.trigger_widget_id !== '{$targetEl->getWidget()->getId()}') {
                     return;
                 }
                 // Avoid errors if widget was removed already
@@ -1183,7 +1207,7 @@ JS;
         return <<<JS
 
             {$beforeJs}
-            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments())}
+            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments(), $jsRequestData)}
             {$afterJs}
 JS;
     }
@@ -1199,7 +1223,7 @@ JS;
      * 
      * @see AbstractJqueryElement::buildJsCallFunction()
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
     {
         switch (true) {
             case $functionName === null:
@@ -1208,7 +1232,7 @@ JS;
             case $functionName === Button::FUNCTION_FOCUS:
                 return "$('#{$this->getId()}').focus()";
         }
-        return parent::buildJsCallFunction($functionName, $parameters);
+        return parent::buildJsCallFunction($functionName, $parameters, $jsRequestData);
     }
     
     protected function buildJsRequestDataCheckSize(string $jsRequestData, int $bytes = null) : string

@@ -29,7 +29,7 @@ trait iSupportLazyLoadingTrait {
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
-    public function getLazyLoading($default = true) : bool
+    public function getLazyLoading($default = true) : ?bool
     {
         return $this->lazy_loading ?? $default;
     }

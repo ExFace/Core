@@ -190,7 +190,8 @@ class SecurityManager implements SecurityManagerInterface
      */
     public function getUser(AuthenticationTokenInterface $token) : UserInterface
     {
-        if (($user = ($this->userCache[$token->getUsername()] ?? null)) !== null) {
+        $user = $this->userCache[$token->getUsername()] ?? null;
+        if ($user !== null) {
             return $user;    
         }
         

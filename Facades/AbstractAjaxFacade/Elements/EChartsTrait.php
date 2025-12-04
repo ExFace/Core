@@ -2981,7 +2981,7 @@ JS;
         }
         newSeriesArray.push(currentSeries);
     }
-    var dataset = [{source: splitDatasetArray[0]}]
+    var dataset = [{source: splitDatasetArray[0]}];
     for (var i = 1; i < formatNames.length; i++) {
         var set = {};
         set.source = splitDatasetArray[i];
@@ -2990,8 +2990,9 @@ JS;
     var newOptions = {
         dataset: dataset,
         series: newSeriesArray
-    }
-    {$this->buildJsEChartsVar()}.setOption(newOptions)
+    };
+
+    {$this->buildJsEChartsVar()}.setOption(newOptions);
     
 JS;
     }

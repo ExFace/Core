@@ -1,6 +1,137 @@
 # Release history
 
-## 1.29 - in development
+## 1.33 - 13.11.2025
+
+New features:
+
+- UXON snippet mutations
+- Much improved `Gantt` widget now able to display multiple bars per row
+- Added `AzureGraphApiEmailConnector` to send Emails via Microsoft GraphAPI
+- Added PostreSQL connector & query builder
+- New widget `InputColorPalette` - a color picker with a palette of preset colors
+- New formulas:
+  - `=TimeDiff()`
+  - `=RowExpressionValue()`
+
+Improvements:
+
+- One-Time-Links in the HttpFileServerFacade now use the permalink framework
+- Improved profiler in traced server requests
+- Improved handling of column widths in widget setups for tables
+- Added option `read_all` to improve performance of lookup-mappings
+- `FileAttachmentBehavior` can now generate and save file storage paths via formula in `file_path_calculation `
+- `CallActionBehavior` can now read required data in-advance from a configurable `input_data_event_alias`
+- Improved data imports via [axenox.ETL](https://github.com/axenox/etl) app
+  - Added profiler tab to data flow step run details
+  - Improved performance of duplicate checks in API-to-DataSheet flow steps
+
+## 1.32 - 08.10.2025
+
+Global news:
+
+- All new AI testing framework in [axenox GenAI](https://github.com/axenox/GenAI) app.
+- Completely reworked administration UI for automated tests in [axenox.BDT](https://github.com/axenox/bdt) app.
+
+New features:
+
+- Action `CalculateData` to let server apply mappers to arbitrary data and simply return the result.
+- Model builder configuration options to selectively update existing parts of the model when re-running th model 
+  builder for an existing object or app. For example, to overwrite data type settings like maximum string length.
+- Built-in SQL admin now can show MS SQL execution plans
+- Mentions (e.g. hash-tags or @-mentions) for `InputMarkdown` widget
+- Widgets created from others via `extend_widget` now can be modified using mutations - much more flexible, that 
+  simply overwriting properties previously.
+- `SoftDeleteBehavior` will now hide rows marked as deleted from read operations automatically. However, this can be reverted using the new `filter_deleted_on_read` property.
+- Many new options for `HttpConnector` and `CallWebService` action:
+  - Customize cURL parameters via `curl_options`
+  - Service parameters can now have custom `empty_expression` and `empty_as_null` to
+    normalize empty values
+  - Simplified parameter configuration if a separate metaobject is created to describe the data structure of a web 
+    service or a set of webservices. Parametes can now be created semi-automatically from attributes via 
+    `parameters_use_attributes` or `parameters_for_all_attributes`.
+  - `timeout` option for the `HttpConnector`
+  - Support for XPath-like attribute addresses in JSON-based `CallWebService` actions
+- New formulas:
+  - `=ObjectProperty()` returns metaobject name, alias, data address, etc.
+  - `=RowUID()` returns the value of the UID attribute for the current row.
+  - `=Distinct()` to keep only unique values in a list
+
+Improvements:
+
+- The UI5 facade will now remember the last applied widget setup and re-apply it automatically every time the page 
+  is opened again.
+- Widget `InputButton` can now be used to generate values (e.g. a human readable id of something) with a server 
+  action. It will now update its value if it gets a new version of it from the server when performing its button action.
+- Improved action authorization policy restrictions. Added `apply_if_input_columns_exists` to allow separate sets of 
+  policies for differnt input structures (e.g. input mapped from different objects).
+- New configuration options for `CallActionBehavior`: `input_data_event_alias` and `input_data_mapper`.
+
+Important fixes:
+
+- Fixed lots of edge cases with `InputComboTable`s inside `DataSpreadSheet`
+- Fixed unwanted dialog refreshes in UI5 on non-critical actions
+- Fixed issues with uploads to file storages with `FlysystemConnector` when files did not have an extension or had duplicate filenames.
+- Fixed issues on strictly case sensitive servers like Google Cloud AppEngine.
+
+## 1.31 - 18.09.2025
+
+New features:
+
+- Widget setups. Users can now save their setup for tables - columns, sorters, etc. (currently only in UI5 facade)
+- CLI task queue to run regular CLI commands, not just actions
+- Many new features for DataSpreadSheets based on JExcel
+  - If a related object is selected in a dropdown, all columns showing data from that relation are auto-updated
+  - Filters can now use widget links to other columns in the same spreadsheet: e.g. `=~data!OtherCol`
+  - Conditional properties `disabled_if` and `required_if` also support references to other columns
+- Data addresses in meta objects now support default values for placeholders: `[#MYATTR|?NA#]`.
+- Ability to apply `mutations` when using `extend_widget`
+- AI agents can now have multiple versions similarly to data flows
+- Action `DownloadZIP` to download multiple attachments in a ZIP archive
+- Formula `=Distinct()`
+
+Improvements:
+
+- Data type option `empty_text` now supported in most JS formatters
+- SelfUpdate action can now be run in containers, where PHP is not available globally
+- Task queues can now prevent parallel execution of the same task - see `skip_task_if_already_running`
+- Ability to use attribute data addresses in parameters of the `CallWebservice` action: `parameters_use_attributes`, `parameters_for_all_attributes`, etc.
+- Improvements for HTTP connectors: e.g. `timeout` option
+- Option `default_time` to change the time assumed when selecting a data in an `InputDateTime`
+
+## 1.30 - 07.08.2025
+
+New features:
+
+- SQL installers can now execute PHP plugins from inside SQL migrations
+
+Improvements:
+
+- Many improvements for the mutation framework
+- Option `auto_column_width` for table widgets
+- Improved handling of action effects in widgets, that produce subsheets
+- Added debug tooltips for conditional properties like `disabled_if` and `required_if`
+- Improved notes an tracking logic in OpenAPI based webserivces
+
+## 1.29 - 19.06.2025
+
+New features:
+
+- Mutation framework to selectively change things in other apps
+- `apply_if_exists` and `apply_if_not_exists` for action authorization policies
+- New formulas `=isActionAuthorized()`, `=ObjectName()`
+
+Improvements:
+
+- CustomAttributeDefinitionBehavior now supports placeholders in attribute models, making them even more flexible!
+- `hidden_if_access_denied` now can evaluate expected input data of Button widgets making it much more accurate. You can control its logic by using different values for this property: `to_action_for_button_input_data`, `to_action_generally`, etc. 
+- Further improved attribute list icons in object editor
+- Improved policy debug dialogs
+- DataTable `row_grouper` can now work with formulas and custom data columns
+- Debug tooltips for widgets now include all sorts of `_if` proerties
+
+Important fixes:
+
+- SingleWidget-snippets now working properly
 
 ## 1.28 - 13.05.2025
 

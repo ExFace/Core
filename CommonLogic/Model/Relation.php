@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
@@ -164,7 +165,12 @@ class Relation implements MetaRelationInterface
     }
 
     /**
-     * 
+     * The object, that this relation points to
+     *
+     * @uxon-property related_object_alias
+     * @uxon-type metamodel:object
+     * @uxon-required true
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightObject()
      */
@@ -201,7 +207,11 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * The key attribute of the related object (its UID by default)
+     *
+     * @uxon-property related_object_key_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyAttribute()
      */
@@ -251,7 +261,12 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * The cardinality of the relation: N1, 11, 1N or NM
+     *
+     * @uxon-property cardinality
+     * @uxon-type [N1,11,1N,NM]
+     * @uxon-default N1
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getCardinality()
      */
@@ -537,7 +552,12 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * Delete the object of this attribute whenever the related attribute is deleted
+     *
+     * @uxon-property delete_with_related_object
+     * @uxon-type boolean
+     * @uxon-default false
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setLeftObjectToBeDeletedWithRightObject()
      */
@@ -557,7 +577,12 @@ class Relation implements MetaRelationInterface
     }
     
     /**
-     * 
+     * Check to copy the object of this attribute whenever the related object is being copied
+     *
+     * @uxon-property copy_with_related_object
+     * @uxon-type boolean
+     * @uxon-default false
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isLeftObjectToBeCopiedWithRightObject()
      */
@@ -627,5 +652,38 @@ class Relation implements MetaRelationInterface
         
         return $uxon;
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getAttributeDefinedIn()
+     */
+    public function getAttributeDefinedIn() : MetaAttributeInterface
+    {
+        $attr = $this->getLeftKeyAttribute();
+        if ($attr->isRelation() === true && $attr->getRelation() === $this) {
+            return $attr;
+        }
+        return $this->getRightKeyAttribute();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isDefinedInLeftObject()
+     */
+    public function isDefinedInLeftObject() : bool
+    {
+        return $this->getAttributeDefinedIn()->getObject() === $this->getLeftObject();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isDefinedInRightObject()
+     */
+    public function isDefinedInRightObject() : bool
+    {
+        return ! $this->isDefinedInLeftObject();
+    }
 }
-?>

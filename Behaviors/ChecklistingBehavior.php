@@ -6,12 +6,11 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractValidatingBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
-use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
-use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Exceptions\DataSheets\DataSheetErrorMultiple;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -174,16 +173,16 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
         return $dataCheckList;
     }
 
-
+    /**
+     * @inheritDoc
+     * @see AbstractValidatingBehavior::processValidationResult()
+     */
     protected function processValidationResult(
         DataSheetEventInterface $event, 
-        ?DataCheckFailedErrorMultiple $result, 
-        BehaviorLogBook $logbook): void
+        ?DataSheetErrorMultiple $result, 
+        BehaviorLogBook         $logbook): void
     {
-        $transaction = $this->clearPreviousChecklistItems(
-            $event->getDataSheet(), 
-            $this->getRelevantUxons($event, $logbook),
-            $logbook);
+        $transaction = $this->clearPreviousChecklistItems($event, $logbook);
 
         if(!$result) {
             $logbook->addLine('The data did not match any of the data checks.');
@@ -192,7 +191,12 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
         
         $outputSheets = [];
         foreach ($result->getAllErrors() as $error) {
+            if(!$error instanceof DataCheckFailedError) {
+                continue;
+            }
+            
             $check = $error->getCheck();
+            
             if(!$check instanceof DataCheckWithOutputData) {
                 continue;
             }
@@ -217,12 +221,9 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             if($outputSheet === null || $outputSheet->countRows() === 0) {
                 continue;
             }
-
-            $logbook->addDataSheet('Output-'.$metaObjectAlias, $outputSheet);
-            $logbook->addLine('Working on sheet for '.$metaObjectAlias.'...');
-            $logbook->addLine('Writing data to cache.');
-            $count = $outputSheet->dataUpdate(true, $transaction);
-            $logbook->addLine('Added '.$count.' lines to cache.');
+            $logbook->addDataSheet('Checklist data '.$metaObjectAlias, $outputSheet);
+            $outputSheet->dataUpdate(true, $transaction);
+            $logbook->addLine('Saved **'.$outputSheet->countRows().'** checklist rows to ' . $outputSheet->getMetaObject()->__toString());
         }
         $logbook->addIndent(-1);
     }
@@ -236,13 +237,17 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
      * 
      * @param DataSheetInterface $eventSheet
      * @param array              $uxons
-     * @param BehaviorLogBook    $logBook
+     * @param BehaviorLogBook    $logbook
      * @return DataTransactionInterface
      */
-    protected function clearPreviousChecklistItems(DataSheetInterface $eventSheet, array $uxons, BehaviorLogBook $logBook) : DataTransactionInterface
+    protected function clearPreviousChecklistItems(DataSheetEventInterface $event, BehaviorLogBook $logbook) : DataTransactionInterface
     {
         $keyAliases = [];
-        foreach ($uxons as $uxon) {
+        $eventSheet = $event->getDataSheet();
+
+        $logbook->addLine('Cleaning up current checklist data');
+        $logbook->addIndent(+1);
+        foreach ($this->getRelevantUxons($event, $logbook) as $uxon) {
             if(empty($uxon) || !$uxon instanceof UxonObject) {
                 continue;
             }
@@ -267,7 +272,6 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
                 $deleteSheet->addRow([$keyAlias => $key]);
             }
 
-            $logBook->addLine('Key-Alias is '.$keyAlias.'.');
             // We filter by affected UID rather than by native UID to ensure that our delete operation finds all cached outputs,
             // especially if they were part of the source transaction.
             $deleteSheet->getFilters()->addConditionFromValueArray($keyAlias, $deleteSheet->getColumnValues($keyAlias));
@@ -275,10 +279,11 @@ class ChecklistingBehavior extends AbstractValidatingBehavior
             // that actually matched the current round of validations. This way we essentially clean up stale data.
             // Remove the UID column, because otherwise dataDelete() ignores filters and goes by UID.
             $deleteSheet->getColumns()->remove($deleteSheet->getUidColumn());
-            $logBook->addLine('Deleting data with matching keys from cache.');
             $count = $deleteSheet->dataDelete($transaction);
-            $logBook->addLine('Deleted '.$count.' lines from checklist.');
+            $logbook->addLine('Deleted '. ($count > 0 ? "**$count**" : $count) .' rows of checklist data from ' . $deleteSheet->getMetaObject()->__toString() . ' matching `' . $keyAlias . '`.');
         }
+
+        $logbook->addIndent(-1);
         
         return $transaction;
     }

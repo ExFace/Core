@@ -65,9 +65,9 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Page Group: Add Pages",
+            "_EXPORT_SUMMARY": "Page Group: Add Pages [ShowPageAddToGroupDialog]",
             "CREATED_ON": "2020-03-11 12:10:31",
-            "MODIFIED_ON": "2021-12-10 18:01:40",
+            "MODIFIED_ON": "2025-11-21 11:17:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea63914dcf49f8a2e30205857feb80",
@@ -86,6 +86,11 @@
                             "widget_type": "InputHidden",
                             "attribute_alias": "UID",
                             "id": "page_group_id_field"
+                        },
+                        {
+                            "widget_type": "InputHidden",
+                            "attribute_alias": "APP",
+                            "id": "app_id_field"
                         },
                         {
                             "id": "page_table",
@@ -145,11 +150,19 @@
                                     "attribute_alias": "APP__LABEL"
                                 },
                                 {
-                                    "data_column_name": "PAGE_GROUP_UID",
+                                    "data_column_name": "_PAGE_GROUP_UID",
                                     "hidden": true,
                                     "cell_widget": {
                                         "widget_type": "Display",
                                         "value": "=page_group_id_field"
+                                    }
+                                },
+                                {
+                                    "data_column_name": "_APP_UID",
+                                    "hidden": true,
+                                    "cell_widget": {
+                                        "widget_type": "Display",
+                                        "value": "=app_id_field"
                                     }
                                 }
                             ],
@@ -173,8 +186,12 @@
                                 "input_mapper": {
                                     "column_to_column_mappings": [
                                         {
-                                            "from": "PAGE_GROUP_UID",
+                                            "from": "_PAGE_GROUP_UID",
                                             "to": "PAGE_GROUP"
+                                        },
+                                        {
+                                            "from": "_APP_UID",
+                                            "to": "APP"
                                         },
                                         {
                                             "from": "UID",

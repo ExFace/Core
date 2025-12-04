@@ -5,6 +5,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\DataTable;
@@ -55,6 +56,8 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
      * @var string|null
      */
     private $group_by_column_id = null;
+
+    private $group_by_expression = null;
     
     /**
      * 
@@ -108,7 +111,7 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
     }
     
     /**
-     * Specifies an existing column for grouping - presuming the column has an explicit id.
+     * Specifies an existing column for grouping - presuming the column widget has an explicit id.
      * 
      * Using column ids groups can be created over calculated columns. For columns with
      * attributes from the meta model, specifying the attribute_alias is simpler.
@@ -125,6 +128,22 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
         $this->group_by_column_id = $value;
         return $this;
     }
+
+    /**
+     * Group rows by a data column with this expression: formula, custom column name - anything
+     *
+     * @uxon-property group_by_expression
+     * @uxon-type metamodel:formula|string
+     *
+     * @param string $value
+     * @return DataRowGrouper
+     */
+    public function setGroupByExpression($value)
+    {
+        $this->group_by_column = null;
+        $this->group_by_expression = $value;
+        return $this;
+    }
     
     /**
      * 
@@ -138,24 +157,53 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
     {
         if ($this->group_by_column === null) {
             $table = $this->getDataTable();
-            if (! is_null($this->group_by_attribute_alias)) {
-                if (! is_null($this->group_by_column_id)) {
-                    throw new WidgetConfigurationError($this->getDataTable(), 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
-                }
-                if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
-                    try {
-                        $col = $this->getDataTable()->createColumnFromAttribute($this->getMetaObject()->getAttribute($this->group_by_attribute_alias), null, true);
-                        $table->addColumn($col);
-                    } catch (\Throwable $e) {
-                        throw new WidgetLogicError($this->getDataTable(), 'No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.', null, $e);
+            switch (true) {
+                case $this->group_by_attribute_alias !== null:
+                    if (! is_null($this->group_by_column_id)) {
+                        throw new WidgetConfigurationError($table, 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
                     }
-                }
-            } elseif (! is_null($this->group_by_column_id)) {
-                if (! $col = $this->getDataTable()->getColumn($this->group_by_column_id)) {
-                    throw new WidgetNotFoundError('Cannot find the column "' . $this->group_by_column_id . '" to group rows by!', '6Z5MAVK');
-                }
-            } else {
-                throw new WidgetConfigurationError($this->getDataTable(), 'No column to group by can be found for DataRowGrouper!', '6Z5MAVK');
+                    if (! $col = $table->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
+                        try {
+                            $col = $table->createColumnFromAttribute($this->getMetaObject()->getAttribute($this->group_by_attribute_alias), null, true);
+                            $table->addColumn($col);
+                        } catch (\Throwable $e) {
+                            throw new WidgetLogicError($table, 'No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.', null, $e);
+                        }
+                    }
+                    break;
+                case $this->group_by_expression !== null:
+                    if ($this->group_by_column_id !== null || $this->group_by_attribute_alias !== null) {
+                        throw new WidgetConfigurationError($table, 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
+                    }
+                    $col = $table->getColumnByExpression($this->group_by_expression);
+                    if (! $col) {
+                        $col = $table->getColumnByDataColumnName($this->group_by_expression);
+                    }
+                    if (! $col) {
+                        try {
+                            $colExpr = ExpressionFactory::createFromString($this->getWorkbench(), $this->group_by_expression, $this->getMetaObject(), false);
+                            $colUxon = new UxonObject([
+                                'hidden' => true
+                            ]);
+                            if ($colExpr->isUnknownType()) {
+                                $colUxon->setProperty('data_column_name', $this->group_by_expression);
+                            } else {
+                                $colUxon->setProperty('calculation', $this->group_by_expression);
+                            }
+                            $col = $table->createColumnFromUxon($colUxon, null, true);
+                            $table->addColumn($col);
+                        } catch (\Throwable $e) {
+                            throw new WidgetLogicError($table, 'No data column "' . $this->group_by_expression . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.', null, $e);
+                        }
+                    }
+                    break;
+                case $this->group_by_column_id !== null:
+                    if (! $col = $table->getColumn($this->group_by_column_id)) {
+                        throw new WidgetNotFoundError('Cannot find the column "' . $this->group_by_column_id . '" to group rows by!', '6Z5MAVK');
+                    }
+                    break;
+                default:
+                    throw new WidgetConfigurationError($table, 'No column to group by can be found for DataRowGrouper!', '6Z5MAVK');
             }
             $this->group_by_column = $col;
         }
@@ -271,18 +319,32 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
         $this->group_by_attribute_alias = $alias;
         return $this;
     }
-    
+
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject([
-            'group_by_attribute_alias' => $this->getGroupByAttributeAlias()
-        ]);
-        
+        $uxon = new UxonObject([]);
+
+        if (null !== $val = $this->group_by_attribute_alias) {
+            $uxon->setProperty('group_by_attribute_alias', $val);
+        }
+        if (null !== $val = $this->group_by_column_id) {
+            $uxon->setProperty('group_by_column_id', $val);
+        }
+        if (null !== $val = $this->group_by_expression) {
+            $uxon->setProperty('group_by_expression', $val);
+        }
+        if (null !== $val = $this->hide_caption) {
+            $uxon->setProperty('hide_caption', $val);
+        }
+        if (null !== $val = $this->show_counter) {
+            $uxon->setProperty('show_counter', $val);
+        }
+
         return $uxon;
     }
     

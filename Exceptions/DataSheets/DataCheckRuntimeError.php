@@ -2,6 +2,7 @@
 
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataCheckInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
@@ -11,14 +12,13 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * This type of error is thrown whenever a data check encounters a runtime issue that prevents it
  * from performing correctly.
  */
-class DataCheckRuntimeError 
-    extends \UnexpectedValueException 
-    implements DataCheckExceptionInterface
+class DataCheckRuntimeError extends RuntimeException implements DataCheckExceptionInterface
 {
     use DataSheetExceptionTrait;
+    use DataSheetValueExceptionTrait;
 
     private ?DataCheckInterface $check = null;
-    private ?DataSheetInterface $badData = null;
+    private $badRowIndexes = null;
 
     /**
      *
@@ -29,17 +29,13 @@ class DataCheckRuntimeError
      * @param DataCheckInterface|null $check
      * @param DataSheetInterface|null $badData
      */
-    public function __construct(DataSheetInterface $data_sheet, $message, $alias = null, $previous = null, DataCheckInterface $check = null, DataSheetInterface $badData = null)
+    public function __construct(DataSheetInterface $data_sheet, $message, $alias = null, $previous = null, DataCheckInterface $check = null, array $badRowIndexes = null)
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setDataSheet($data_sheet);
-        if ($check !== null) {
-            $this->check = $check;
-        }
-        if ($badData !== null) {
-            $this->badData = $badData;
-        }
+        $this->check = $check;
+        $this->badRowIndexes = $badRowIndexes;
     }
 
     /**
@@ -59,7 +55,11 @@ class DataCheckRuntimeError
      */
     public function getBadData() : ?DataSheetInterface
     {
-        return $this->badData;
+        if ($this->badRowIndexes === null) {
+            return null;
+        }
+        $badRows = $this->getDataSheet()->getRowsByIndex($this->badRowIndexes);
+        return $this->getDataSheet()->copy()->removeRows()->addRows($badRows, false, false);
     }
 
     /**
@@ -79,5 +79,23 @@ class DataCheckRuntimeError
     public function getDefaultLogLevel() : string
     {
         return LoggerInterface::ERROR;
+    }
+
+    /**
+     * @inheritDoc
+     * @see DataSheetValueExceptionInterface::getMessageTitleWithoutLocation()
+     */
+    public function getMessageTitleWithoutLocation(): string
+    {
+        return parent::getMessage();
+    }
+
+    /**
+     * @inheritDoc
+     * @see DataSheetValueExceptionInterface::getRowIndexes()
+     */
+    public function getRowIndexes(): ?array
+    {
+        return $this->badRowIndexes;
     }
 }

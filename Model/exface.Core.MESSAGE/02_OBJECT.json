@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "Message [exface.Core.MESSAGE]",
             "CREATED_ON": "2016-12-16 11:48:53",
-            "MODIFIED_ON": "2021-07-29 09:54:07",
+            "MODIFIED_ON": "2025-07-23 10:24:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11e6c3859abc5faea3e40205857feb80",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -121,7 +121,19 @@
                     },
                     {
                         "attribute_alias": "DESCRIPTION",
-                        "height": "max"
+                        "width": "max",
+                        "height": "max",
+                        "widget_type": "InputMarkdown",
+                        "stencils": [
+                            {
+                                "type": "HtmlTag",
+                                "caption": "Keyboard",
+                                "hint": "Keyboard key",
+                                "icon_text": "BT",
+                                "html_tag": "kbd",
+                                "css_style": "background-color: #f1f5f9;  border: 1px solid #cbd5e1;  border-radius: 4px;  padding: 4px 10px;  font-size: 14px;  font-family: inherit;  color: #1e293b;  cursor: default;  transition: background-color 0.2s ease, color 0.2s ease;"
+                            }
+                        ]
                     },
                     {
                         "attribute_alias": "TYPE"

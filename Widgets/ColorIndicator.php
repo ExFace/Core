@@ -1,9 +1,12 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Interfaces\Widgets\iHaveHintScale;
 use exface\Core\Interfaces\Widgets\WidgetPropertyScaleInterface;
 use exface\Core\Widgets\Parts\WidgetPropertyBinding;
@@ -318,5 +321,18 @@ class ColorIndicator extends Display implements iHaveColor, iHaveHintScale
             $this->hintScale = new WidgetPropertyScale($this, $this->getValueDataType(), $uxon);
         }
         return $this->hintScale;
+    }
+
+    /**
+     * @inheritDoc
+     * @see iHaveColorScale::getColorScale()
+     */
+    public function getColorScale(): array
+    {
+        if(!$this->hasColorScale()) {
+            return [];
+        }
+        
+        return parent::getColorScale();
     }
 }

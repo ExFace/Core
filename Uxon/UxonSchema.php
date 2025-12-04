@@ -7,9 +7,13 @@ use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -151,7 +155,21 @@ class UxonSchema implements UxonSchemaInterface
         
         return $rootPrototypeClass;
     }
-    
+
+    /**
+     * @inheritDoc
+     * @see UxonSchemaInterface
+     */
+    public function createValidationObject(
+        UxonObject $uxon, 
+        string $prototype = null, 
+        UiPageInterface $page = null,
+        mixed $parent = null
+    ): mixed
+    {
+        return null;
+    }
+
     protected function getDefaultPrototypeClass() : string
     {
         return '';
@@ -291,11 +309,19 @@ class UxonSchema implements UxonSchemaInterface
         if ($cache = $this->getCache($prototypeClass, 'properties')) {
             return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
         }
-        
-        $ds = $this->loadPropertiesSheet($prototypeClass);
-        
-        $this->prototypePropCache[$prototypeClass] = $ds;
-        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
+
+        try {
+            $ds = $this->loadPropertiesSheet($prototypeClass);
+            $this->prototypePropCache[$prototypeClass] = $ds;
+            $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
+            $logHint = $e instanceof ExceptionInterface ? ' See Log-ID ' . $e->getId() : ' See logs for details';
+            $ds->addRow([
+                'PROPERTY' => '// ERROR: cannot read prototype annotations!' . $logHint
+            ]);
+        }
         
         return $ds;
     }
@@ -312,7 +338,6 @@ class UxonSchema implements UxonSchemaInterface
      */
     protected function loadPropertiesSheet(string $prototypeClass, string $aliasOfAnnotationObject = 'exface.Core.UXON_PROPERTY_ANNOTATION') : DataSheetInterface
     {
-        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $aliasOfAnnotationObject);
         $ds->getColumns()->addMultiple([
             'PROPERTY',
@@ -322,12 +347,12 @@ class UxonSchema implements UxonSchemaInterface
             'REQUIRED',
             'TRANSLATABLE'
         ]);
+        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
         try {
             $ds->dataRead();
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-            // TODO
+            throw new RuntimeException('Cannot read UXON properties from file "' . $filepathRelative . '". ' . $e->getMessage(), null, $e);
         }
         
         return $ds;
@@ -598,8 +623,12 @@ class UxonSchema implements UxonSchemaInterface
     public function getMetaObject(UxonObject $uxon, array $path, MetaObjectInterface $rootObject = null) : MetaObjectInterface
     {
         $objectAlias = $this->getPropertyValueRecursive($uxon, $path, 'object_alias', ($rootObject !== null ? $rootObject->getAliasWithNamespace() : ''));
-        if ($objectAlias === '' && $rootObject !== null) {
-            return $rootObject;
+        if ($objectAlias === '') {
+            if ($rootObject !== null) {
+                return $rootObject;
+            } else {
+                return MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.DUMMY');
+            }
         }
         return $this->getWorkbench()->model()->getObject($objectAlias);
     }

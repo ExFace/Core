@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authorization;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
+use exface\Core\CommonLogic\Model\ExistsCondition;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
@@ -42,6 +44,8 @@ use exface\Core\Factories\ConditionGroupFactory;
 /**
  * Policy for access to actions.
  * 
+ * ## Targets
+ * 
  * Possible targets:
  * 
  * - User role - policy applies to users with this role only
@@ -66,7 +70,7 @@ use exface\Core\Factories\ConditionGroupFactory;
  * - `apply_if_target_app_matches_page_app` - means, a policy targeting an app is
  * applied to actions performed on pages of that app
  * 
- * Additional conditions:
+ * ## Additional conditions
  * 
  * - `command_line_task`, `http_task`, `scheduler_task` - if set, the policy only 
  * applies to the respective task type (`true`) or is explicitly not applicable 
@@ -77,52 +81,56 @@ use exface\Core\Factories\ConditionGroupFactory;
  * require a trigger widget - e.g. `exface.Core.Login` or similar.
  * - `exclude_actions` - list of action selectors not to apply this policy to
  * 
+ * ### Data-driven conditions
+ * 
+ * A policy can be applied to certain input data only. If any of these conditions is defined and
+ * the action has no input data or the input data does not match all conditions, the policy will
+ * become `NotApplicable`.
+ * 
+ * The conditions are evaluated in the following order and can be used in combinations:
+ * 
+ * 1. `apply_if_input_columns_exist` - only apply this policy if there is input data and that input
+ * data has ALL listed columns - the policy will become `NotApplicable` if at least one expression is 
+ * missing. This is handy for editor actions with different types of prefill.
+ * 2. `apply_if` - conditions (filters) to evaluate when authorizing - the policy
+ * will become `NotApplicable` if the condition group evaluates to FALSE.
+ * 3. `apply_if_exists` - a data sheet, that will be read when authorizing - the
+ * policy will become `NotApplicable` if it is empty.
+ * 4. `apply_if_not_exists` - a data sheet, that will be read when authorizing - the
+ * policy will become `NotApplicable` if it is NOT empty.
+ * 
  * @author Andrej Kabachnik
  *
  */
 class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
 {
     use ImportUxonObjectTrait;
-    
+
     private $workbench = null;
-    
     private $name = '';
-    
     private $userRoleSelector = null;
-    
     private $actionSelector = null;
-    
     private $metaObjectSelector = null;
-    
     private $pageGroupSelector = null;
-    
     private $facadeSelector = null;
-    
     private $appUid = null;
-    
     private $conditionUxon = null;
-    
     private $effect = null;
-    
     private $actionTriggerWidgetMatch = null;
-    
     private $excludeActionSelectors = [];
-    
     private $cliTasks = null;
-    
     private $scheduledTasks = null;
-    
     private $httpTasks = null;
-    
     private $appUidAppliesToAction = true;
-    
     private $appUidAppliesToObject = false;
-    
     private $appUidAppliesToPage = false;
-    
     private $applyIfUxon = null;
-    
     private $applyIfConditionGroup = null;
+    private $applyIfExistsUxon = null;
+    private $applyIfExists = null;
+    private $applyIfNotExistsUxon = null;
+    private $applyIfNotExists = null;
+    private $applyIfInputColumnsExist = null;
     
     /**
      * 
@@ -179,6 +187,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, TaskInterface $task = null): PermissionInterface
     {
         $applied = false;
+        $appliedExplanation = null;
         
         try {
             if ($action === null) {
@@ -308,25 +317,106 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
-            // Match additional conditions
+            // Match apply_if... of all sorts
+            
+            $hasInputData = $task !== null && $task->hasInputData() === true;
+            $inputData = null;
+            $inputDataMapped = null;
+            $requiredCols = $this->getApplyIfInputColumnsExist();
+            $applyIfExists = $this->getApplyIfExists();
+            $applyIfNotExists = $this->getApplyIfNotExists();
+            $needsInputData = ! empty($requiredCols) || $this->hasApplyIf() || $applyIfExists !== null || $applyIfNotExists !== null;
+            $explainInputData = '';
+            if ($hasInputData === true && $needsInputData === true) {
+                $inputData = $task->getInputData();
+                $explainInputData = ' ' . $inputData->getMetaObject()->__toString();
+                if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
+                    $inputDataMapped = $mapper->map($inputData);
+                    $explainInputData = ' ' . $inputData->getMetaObject()->__toString() . ' mapped from' . $explainInputData;
+                } else {
+                    $inputDataMapped = $inputData;
+                }
+            }
+            
+            // Match apply_if_input_columns_exist
+            if (null !== $requiredCols) {
+                if (! $hasInputData) {
+                    return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_input_columns_exist` not met: no input data!');
+                }
+                
+                foreach ($requiredCols as $expr) {
+                    if (! $inputDataMapped->getColumns()->getByExpression($expr)) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_input_columns_exist` not met: "' . $expr . '" not found in input data of' . $explainInputData . '!');
+                    }
+                }
+                $applied = true;
+            }
+            
             // IDEA added placeholders for input data???
+            // Match apply_if
             if ($this->hasApplyIf() === true) {
                 $object = $object ?? $this->findObject($action);
                 $conditionGrp = $this->getApplyIf($object);
-                if ($task !== null && $task->hasInputData()) {
-                    if ($conditionGrp->evaluate($task->getInputData()) === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched in context of action input data');
-                    } else {
-                        $applied = true;
+                if ($hasInputData) {                    
+                    // We need to collect and merge missing data for the policy AFTER applying input mappers,
+                    // to ensure that we are working with the right metaobject.
+                    $collector = DataCollector::fromConditionGroup($conditionGrp, $inputDataMapped->getMetaObject());
+                    $checkData = $collector->collectFrom($inputDataMapped)->getRequiredData();
+                    
+                    foreach ($checkData->getRows() as $rowIdx => $row) {
+                        if ($conditionGrp->evaluate($checkData, $rowIdx, false) === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched by action input data' . $explainInputData . '!');
+                        }
                     }
+                    $applied = true;
                 } else {
-                    if ($conditionGrp->evaluate() === false) {
-                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
-                    } else {
-                        $applied = true;
+                    // TODO better to add something like $conditionGrp->isStatic() and check that here.
+                    try {
+                        if ($conditionGrp->evaluate() === false) {
+                            return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` not matched with no action input data!');
+                        } else {
+                            $applied = true;
+                        }
+                    } catch (InvalidArgumentException $e) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` cannot be evaluated without action input data: ' . $e->getMessage());
                     }
                 }
             }
+
+            // Match apply_if_exists
+            if (null !== $applyIfExists) {
+                if ($hasInputData) {
+                    if (! $applyIfExists->evaluate($inputDataMapped)) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_exists` not matched by action input data. ' . $applyIfExists->explain($inputDataMapped));
+                    } else {
+                        $appliedExplanation = $applyIfExists->explain($inputDataMapped);
+                        $applied = true;
+                    }
+                } else {
+                    // Not applicable without input data
+                    // In the beginning, we had an Indeterminate here, but that lead to false-permits if it happened
+                    // in permit-policies because it resulted in Indeterminate{P}
+                    return PermissionFactory::createNotApplicable($this, 'Input data missing for apply_if_exists');
+                }
+            }
+
+            // Match apply_if_not_exists
+            if (null !== $applyIfNotExists) {
+                if ($hasInputData) {
+                    if ($applyIfNotExists->evaluate($inputDataMapped)) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if_not_exists` matched by at least one row of action input data. ' . $applyIfNotExists->explain($inputDataMapped));
+                    } else {
+                        $appliedExplanation = $applyIfNotExists->explain($inputDataMapped);
+                        $applied = true;
+                    }
+                } else {
+                    // Not applicable without input data
+                    // See discussion at same place in apply_if_exists for details
+                    return PermissionFactory::createNotApplicable($this, 'Input data missing for apply_if_not_exists');
+                }
+            }
+            
+            // Match other conditions
             
             // Match page
             if ($this->pageGroupSelector !== null) {            
@@ -386,7 +476,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         }
         
         // If all targets are applicable, the permission is the effect of this condition.
-        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this);
+        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $appliedExplanation);
     }
     
     /**
@@ -752,6 +842,134 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->applyIfUxon = $value;
         $this->applyIfConditionGroup = null;
+        return $this;
+    }
+
+    /**
+     * @return ExistsCondition|null
+     */
+    protected function getApplyIfExists() : ?ExistsCondition
+    {
+        if ($this->applyIfExists === null && $this->applyIfExistsUxon !== null) {
+            $this->applyIfExists = new ExistsCondition($this->workbench, $this->applyIfExistsUxon);;
+        }
+        return $this->applyIfExists;
+    }
+
+    /**
+     * Only apply this policy if at least on row of data defined here exists for every input row of the action
+     *
+     * Here you can define a data sheet to check if this policy is applicable to a specific row of input data.
+     * You can use placeholders to include values from the input data in the filters of the lookup-sheet.
+     *
+     * For example, this can be used to build access control lists (ACLs) for a `PRODUCT` object. Assume, we have
+     * a table `PRODUCT_ACL` with `USER_ROLE`, `CATEGORY` and `MANAGER_GROUP`. It sais, that a user role can edit
+     * product data if there is an entry in the ACL table for that role and at least one category of that product.
+     *
+     * However, some products are explicitly managed by a `MANAGER_GROUP`. So in our ACL table we can make some of
+     * the rules apply only if the product belongs to a certain manager group. Technically, this means, the ACL
+     * rule will apply if it has no `MANAGER_GROUP` or the product has the same group as the rule.
+     *
+     * Here is how to create a corresponding allowing permission. The placeholders in the values refer to the
+     * input data of our action - in this example the input data is assumed to be based on `PRODUCT`.
+     *
+     * ```
+     * {
+     *  "apply_if_exists": {
+     *      "data_sheet": {
+     *          "object_alias": "my.App.PRODUCT_ACL",
+     *          "filters": {
+     *              "operator": "AND",
+     *              "conditions": [
+     *                  {"expression": "CATEGORY", "comparator": "[", "value": "[#PRODUCT_CATEGORIES__CATEGORY:LIST_DISTINCT#]"},
+     *                  {"expression": "ROLE", "comparator": "[", "value": "=User('USER_ROLE_USERS__USER_ROLE:LIST_DISTINCT')"}
+     *              ],
+     *              "nested_groups": [
+     *                  {
+     *                      "operator": "OR",
+     *                      "conditions": [
+     *                          {"expression": "MANAGER_GROUP", "comparator": "==", "value": ""},
+     *                          {"expression": "MANAGER_GROUP", "comparator": "==", "value": "[#MANAGER_GROUP#]"}
+     *                      ]
+     *                  }
+     *              ]
+     *          }
+     *      }
+     *  }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property apply_if_exists
+     * @uxon-type \exface\Core\CommonLogic\Model\ExistsCondition
+     * @uxon-template {"data_sheet": {"object_alias": "", "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "==", "value": ""}]}}}
+     *
+     * @uxon-placeholder [#<metamodel:attribute>#]
+     * @uxon-placeholder [#<metamodel:formula>#]
+     *
+     * @return ExistsCondition|null
+     */
+    protected function setApplyIfExists(UxonObject $uxon) : ActionAuthorizationPolicy
+    {
+        $this->applyIfExistsUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return ExistsCondition|null
+     */
+    protected function getApplyIfNotExists() : ?ExistsCondition
+    {
+        if ($this->applyIfNotExists === null && $this->applyIfNotExistsUxon !== null) {
+            $this->applyIfNotExists = new ExistsCondition($this->workbench, $this->applyIfNotExistsUxon, true);
+        }
+        return $this->applyIfNotExists;
+    }
+
+    /**
+     * Only apply this policy if no row of data defined here exists for any input row of the action
+     *
+     * This is the exact opposite of `apply_if_exists`. It uses the same logic, but makes the policy
+     * inapplicable if anything is found.
+     *
+     * @uxon-property apply_if_not_exists
+     * @uxon-type \exface\Core\CommonLogic\Model\ExistsCondition
+     * @uxon-template {"data_sheet": {"object_alias": "", "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "==", "value": ""}]}}}
+     *
+     * @return ExistsCondition|null
+     */
+    protected function setApplyIfNotExists(UxonObject $uxon) : ActionAuthorizationPolicy
+    {
+        $this->applyIfNotExistsUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function getApplyIfInputColumnsExist() : ?array
+    {
+        return $this->applyIfInputColumnsExist;
+    }
+
+    /**
+     * Only apply if the input data has ALL of these expressions as columns
+     * 
+     * The policy will become `NotApplicable` if at least one column is missing. 
+     * 
+     * **Note:** this does not check if the columns are empty. The policy will apply even if the input data
+     * has no rows or the data for the required columns is missing in rows.
+     * 
+     * @uxon-property apply_if_input_columns_exist
+     * @uxon-type metamodel:expression[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $arrayOfExpressions
+     * @return AuthorizationPolicyInterface
+     */
+    protected function setApplyIfInputColumnsExist(UxonObject $arrayOfExpressions) : AuthorizationPolicyInterface
+    {
+        $this->applyIfInputColumnsExist = $arrayOfExpressions->toArray();
         return $this;
     }
 }

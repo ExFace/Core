@@ -65,7 +65,7 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "User: My Account",
+            "_EXPORT_SUMMARY": "User: My Account [ShowUserAccountDialog]",
             "CREATED_ON": "2020-03-23 13:17:24",
             "MODIFIED_ON": "2023-06-05 12:28:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -124,7 +124,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "User: Change My Password",
+            "_EXPORT_SUMMARY": "User: Change My Password [ShowChangePasswordDialog]",
             "CREATED_ON": "2020-03-31 12:54:59",
             "MODIFIED_ON": "2022-06-02 10:24:48",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
@@ -189,7 +189,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "User: Disable",
+            "_EXPORT_SUMMARY": "User: Disable [DisableUser]",
             "CREATED_ON": "2020-06-07 15:59:54",
             "MODIFIED_ON": "2025-01-17 10:57:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -220,7 +220,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "User: Enable",
+            "_EXPORT_SUMMARY": "User: Enable [EnableUser]",
             "CREATED_ON": "2020-06-07 19:52:45",
             "MODIFIED_ON": "2025-01-17 10:57:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -250,7 +250,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "User: Mass edit",
+            "_EXPORT_SUMMARY": "User: Mass edit [ShowUserMassEditDialog]",
             "CREATED_ON": "2020-07-15 09:14:19",
             "MODIFIED_ON": "2024-04-22 17:20:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -443,7 +443,7 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "User: Mass import",
+            "_EXPORT_SUMMARY": "User: Mass import [ShowUserImportDialog]",
             "CREATED_ON": "2024-02-13 12:28:04",
             "MODIFIED_ON": "2024-02-14 11:51:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",

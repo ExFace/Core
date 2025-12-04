@@ -120,7 +120,7 @@ class NumberDataType extends AbstractDataType
         try {
             $number = self::cast($string);
         } catch (\Throwable $e) {
-            throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
+            throw $this->createValidationParseError($string, $e->getMessage(), null, $e->getCode(), $e);
         }
         
         if ($string === $this->getEmptyFormat()) {
@@ -129,11 +129,11 @@ class NumberDataType extends AbstractDataType
         
         if (! $this->isValueEmpty($number)) {
             if (! is_null($this->getMin()) && $number < $this->getMin()) {
-                throw $this->createValidationError($number . ' is less than the minimum of ' . $this->getMin() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+                throw $this->createValidationRuleError($number, $number . ' is less than the minimum of ' . $this->getMin() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!', false);
             }
             
             if (! is_null($this->getMax()) && $number > $this->getMax()) {
-                throw $this->createValidationError($number . ' is greater than the maximum of ' . $this->getMax() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+                throw $this->createValidationRuleError($number, $number . ' is greater than the maximum of ' . $this->getMax() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!', false);
             }
         }
         
@@ -431,7 +431,7 @@ class NumberDataType extends AbstractDataType
      */
     public function getEmptyFormat() : string
     {
-        return $this->emptyFormat ?? '';
+        return $this->emptyFormat ?? $this->getEmptyText() ?? '';
     }
     
     /**
@@ -664,5 +664,19 @@ class NumberDataType extends AbstractDataType
         }
         
         return $uxon;
+    }
+
+    /**
+     * @param $value
+     * @return string|null
+     */
+    public function getValidationErrorReason($value) : ?string
+    {
+        $customText = parent::getValidationErrorReason($value);
+        if (! $customText) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+            $customText = $translator->translate('DATATYPE.DATE.ERROR_INVALID_VALUE', ['%value%' => $value]);
+        }
+        return $customText;
     }
 }

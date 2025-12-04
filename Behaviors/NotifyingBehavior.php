@@ -39,7 +39,7 @@ use exface\Core\Templates\Placeholders\OptionalPlaceholders;
  * or action by setting the `notify_on_event` or `notify_on_action` options. Other `notify_*` 
  * options can be used to add further conditions. 
  * 
- * **NOTE:** If the message is based on data (i.e. on data events or actions) and the reciepient
+ * **NOTE:** If the message is based on data (i.e. on data events or actions) and the recipient
  * is a user, it will only be sent if this user is authorized to read the data. You can change
  * this via `notify_if_data_authorized`.
  * 
@@ -51,7 +51,7 @@ use exface\Core\Templates\Placeholders\OptionalPlaceholders;
  * channels. The available configuration options for each notification depend on the message
  * type of the selected channel.
  * 
- * In any case, the contents of the notificaionts can contain the follwing placeholders
+ * In any case, the contents of the notifications can contain the following placeholders
  * at any position (see `notifications` property for more details):
  * 
  * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
@@ -67,7 +67,7 @@ use exface\Core\Templates\Placeholders\OptionalPlaceholders;
  * 
  * You can make the behavior send notifications on certain conditions only:
  * 
- * - `notify_if_attributes_change` - will only send a notification if one of these attribtues 
+ * - `notify_if_attributes_change` - will only send a notification if one of these attributes 
  * is changed
  * - `notify_if_data_matches_conditions` - will only send notifications if the `notify_on_event` 
  * contains data and that data matches the provided conditions. In case only some of the data 

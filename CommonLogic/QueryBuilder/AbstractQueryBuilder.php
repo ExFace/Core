@@ -16,6 +16,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ArrayDataType;
+use exface\Core\Templates\Modifiers\IfNullModifier;
 use exface\Core\Uxon\QueryBuilderSchema;
 use exface\Core\Factories\ExpressionFactory;
 
@@ -319,10 +320,11 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
 
     /**
      * Returns a filter query part with the given alias
-     *
-     * @return QueryPartFilter
+     * 
+     * @param string $alias
+     * @return QueryPartFilter|null
      */
-    protected function getFilter($alias)
+    protected function getFilter(string $alias) : ?QueryPartFilter
     {
         return $this->getFilters()->findFilterByAlias($alias);
     }
@@ -381,8 +383,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         $qpart = new QueryPartAttribute($attribute_alias, $this);
         $this->aggregations[$attribute_alias] = $qpart;
-        // IDEA move this to the build_sql_query methods since we probably do not always need to add the attribute
-        $this->addAttribute($attribute_alias);
         return $qpart;
     }
 
@@ -474,10 +474,10 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         $qpart = new QueryPartValue($attribute_alias, $this);
         if (empty ($values)) {
-            throw new QueryBuilderException("Empty set of values passed for attribute \"{$attribute_alias}\" for an update operation");
+            throw new QueryBuilderException("Empty set of values passed for attribute \"{$attribute_alias}\" for an update of " . $this->getMainObject()->__toString());
         }
         if (! empty($uids_for_values) && count($values) !== count($uids_for_values)) {
-            throw new QueryBuilderException("Invalid values passed for attribute \"{$attribute_alias}\" for an update operation");
+            throw new QueryBuilderException("Cannot determine UIDs for values of attribute \"{$attribute_alias}\" for an update of {$this->getMainObject()->__toString()}: got " . count($values) . ' values and ' . count($uids_for_values) . ' UIDs');
         }
         $qpart->setValues($values);
         $qpart->setUids($uids_for_values);
@@ -686,22 +686,46 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     protected function replacePlaceholdersByFilterValues($string)
     {
         foreach (StringDataType::findPlaceholders($string) as $ph) {
-            if (StringDataType::startsWith($ph, '=')) {
-                $expr = ExpressionFactory::createFromString($this->getWorkbench(), $ph);
-                if (! $expr->isFormula() && ! $expr->isStatic()) {
-                    throw new QueryBuilderException('Only static formulas can be used as placeholder in "' . $string . '"! Placeholder "' . $ph . '" is not a static formula!');
-                }
-                $string = str_replace('[#' . $ph . '#]', $expr->evaluate(), $string);
-            } elseif ($ph_filter = $this->getFilter($ph)) {
-                if (! is_null($ph_filter->getCompareValue())) {
-                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getDataType()->parse($ph_filter->getCompareValue()), $string);
-                } else {
-                    // If at least one filter does not have a value, return false
-                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in data address "' . $string . '"!');
-                }
-            } else {
-                // If at least one placeholder does not have a corresponding filter or is a static formula, return false
-                throw new QueryBuilderException('Missing filter for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+            $defaultValue = null;
+            $phAlias = IfNullModifier::stripFilter($ph);
+            if ($phAlias !== $ph) {
+                $defaultValue = IfNullModifier::findDefaultValue($ph);
+            }
+            switch (true) {
+                // Formula placeholder
+                case StringDataType::startsWith($phAlias, '='):
+                    $expr = ExpressionFactory::createFromString($this->getWorkbench(), $phAlias);
+                    if (! $expr->isFormula() && ! $expr->isStatic()) {
+                        throw new QueryBuilderException('Only static formulas can be used as placeholder in "' . $string . '"! Placeholder "' . $ph . '" is not a static formula!');
+                    }
+                    $phVal = $expr->evaluate() ?? $defaultValue;
+                    $string = str_replace('[#' . $ph . '#]', $phVal, $string);
+                    break;
+                // Existing filters
+                case $phFilter = $this->getFilter($phAlias):
+                    $phVal = $phFilter->getCompareValue();
+                    switch (true) {
+                        // Filter value - parse according to data type of the filter
+                        case $phVal !== null:
+                            $phVal = $phFilter->getDataType()->parse($phVal);
+                            break;
+                        // Default value - no parsing, take the default as-is
+                        case $defaultValue !== null:
+                            $phVal = $defaultValue;
+                            break;
+                        // If at least one filter does not have a value, return false
+                        default:
+                            throw new QueryBuilderException('Missing filter value in "' . $phFilter->getAlias() . '" needed for placeholder "' . $ph . '" in data address "' . $string . '"!');
+                    }
+                    $string = str_replace('[#' . $ph . '#]', $phVal, $string);
+                    break;
+                // Missing filters with defaults
+                case $defaultValue !== null:
+                    $string = str_replace('[#' . $ph . '#]', $defaultValue, $string);
+                    break;
+                // Exit with error if at least one placeholder has neither of the above
+                default:
+                    throw new QueryBuilderException('Missing filter for placeholder "' . $ph . '" in SQL "' . $string . '"!');
             }
         }
         return $string;

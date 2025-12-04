@@ -4,6 +4,9 @@ namespace exface\Core\Communication\Messages;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\CommonLogic\Communication\AbstractMessage;
 
+/**
+ * Generic text message, which can be sent through any communication channel
+ */
 class TextMessage extends AbstractMessage
 {
     private $text = null;
@@ -31,19 +34,5 @@ class TextMessage extends AbstractMessage
     {
         $this->text = $value;
         return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        if ($this->text !== null) {
-            $uxon->setProperty('text', $this->text);
-        }
-        return $uxon;
     }
 }

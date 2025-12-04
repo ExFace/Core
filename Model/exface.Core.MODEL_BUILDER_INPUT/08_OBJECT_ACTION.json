@@ -65,9 +65,9 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Model Builder Input: Model Builder",
+            "_EXPORT_SUMMARY": "Model Builder Input: Model Builder [ShowModelBuilderDialog]",
             "CREATED_ON": "2017-11-28 21:19:28",
-            "MODIFIED_ON": "2018-04-20 11:40:57",
+            "MODIFIED_ON": "2025-10-06 18:41:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7d481a51d0ba4a3da0205857feb80",
@@ -125,6 +125,13 @@
                                 "value": ""
                             },
                             "value": "=modelbuilder_object_selector!DATA_ADDRESS"
+                        },
+                        {
+                            "attribute_alias": "BUILDER_CONFIG_UXON",
+                            "widget_type": "InputUxon",
+                            "hide_caption": true,
+                            "height": 8,
+                            "root_prototype": "exface\\Core\\CommonLogic\\ModelBuilders\\AbstractModelBuilder"
                         }
                     ],
                     "buttons": [

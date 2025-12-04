@@ -16,6 +16,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Allows to create additional "custom" attributes in master data and store their values in a single JSON column.
@@ -242,9 +243,9 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      *
      * NOTE: This is the default behavior, because it is flexible and fast.
      *
-     * @param string $definitionObjectAlias
-     * @param BehaviorLogBook $logBook
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface[]
+     * @param CustomAttributesDefinition $definition
+     * @param BehaviorLogBook            $logBook
+     * @return MetaAttributeInterface[]
      */
     protected function loadAttributesFromDefinition(CustomAttributesDefinition $definition, BehaviorLogBook $logBook) : array
     {
@@ -328,7 +329,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
             $attribute->setSortable(true);
             $attribute->setEditable(true);
             $attribute->setWritable(true);
-            $targetObject->getAttributes()->add($attribute);
+            $targetObject->addAttribute($attribute);
         }
         $logBook->addIndent(-1);
 
@@ -422,7 +423,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      * 
      * @uxon-property attributes_defaults
      * @uxon-type \exface\Core\CommonLogic\Model\Attribute
-     * @uxon-template {"groups": [""], "writable": true, "copyable": true, "editable": true, "required": false, "filterable": true, "sortable": true, "aggregatable": false, "value_list_delimiter": ","}
+     * @uxon-template {"groups": [""], "writable": true, "copyable": true, "editable": true, "required": false, "filterable": true, "sortable": true, "aggregatable": false}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
      * @return CustomAttributesJsonBehavior
@@ -450,9 +451,7 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
             "required" => false,
             "filterable" => true,
             "sortable" => true,
-            "aggregatable" => false,
-            // DEFAULTS
-            "value_list_delimiter" => EXF_LIST_SEPARATOR,
+            "aggregatable" => false
         ]);
     }
 }

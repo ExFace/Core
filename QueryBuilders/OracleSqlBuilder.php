@@ -34,6 +34,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_PLSQL = 'PL/SQL';
+    const SQL_DIALECT_ORACLE = 'Oracle';
+    
     /**
      * 
      * @param QueryBuilderSelectorInterface $selector
@@ -51,7 +54,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['PL/SQL', 'Oracle'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_PLSQL, self::SQL_DIALECT_ORACLE], parent::getSqlDialects());
     }
 
     /**
@@ -224,7 +227,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $enrichment_select = substr($enrichment_select, 2);
             $enrichment_join = implode(' ', $enrichment_joins);
             $enrichment_order_by = $enrichment_order_by ? ' ORDER BY ' . substr($enrichment_order_by, 2) : '';
-            $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+            $distinct = $this->isSelectDistinct() ? 'DISTINCT ' : '';
             $select_comment = $select_comment ? "\n" . $select_comment : '';
             
             // build the query itself
@@ -315,9 +318,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
             $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
             
-            $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+            $distinct = $this->isSelectDistinct() ? 'DISTINCT ' : '';
             
-            if (($group_by && $where) || $this->getSelectDistinct()) {
+            if (($group_by && $where) || $this->isSelectDistinct()) {
                 $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by;
             } else {
                 $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by;
@@ -397,9 +400,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         }
         
         if ($totals_core_select) {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having . ") EXFCOREQ";
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having . ") EXFCOREQ";
         } else {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
         }
         
         // See if changes to the query occur while the query was built (e.g. query parts are

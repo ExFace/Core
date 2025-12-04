@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
-use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Widgets\Parts\DataRowGrouper;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Widgets\Traits\DataTableTrait;
@@ -87,14 +87,15 @@ use exface\Core\Interfaces\Widgets\iCanBeDragAndDropSource;
  * - Set the `cell_widget` for a column to an active Input widget.
  *
  * @author Andrej Kabachnik
- *        
+ *
+ * @method \exface\Core\Widgets\DataTableConfigurator getConfiguratorWidget()
  */
 class DataTable extends Data implements 
-    iCanEditData, 
+    iCanEditData,
     iFillEntireContainer, 
     iSupportMultiSelect, 
-    iHaveContextMenu, 
-    iTakeInput, 
+    iHaveContextMenu,
+    iTakeInputAsDataSubsheet,
     iCanWrapText,
     iCanBeDragAndDropSource
 {
@@ -110,6 +111,62 @@ class DataTable extends Data implements
      */
     const FUNCTION_EMPTY = 'empty';
 
+    /**
+     * Applies a given setup to the table
+     * 
+     * This function relies on provided input data!
+     * 
+     * Arguments:
+     * 1. UxonDataColumn -> column of the input data in which the setup is stored
+     *
+     * @uxon-property apply_setup
+     *
+     * @var string
+     */
+    const FUNCTION_APPLY_SETUP = 'apply_setup';
+
+    /**
+     * Dumps the current setup (whatever the user has changed in it) to input data sheet
+     * 
+     * This function will modify its input data and fill it with properties of the current setup.
+     *
+     * Arguments:
+     * 1. SETUP_UXON: The name of the column where the setup UXON will be stored
+     * 2. PAGE: the name of the column for the current page UID
+     * 3. WIDGET_ID: the name of the column for the current widget ID
+     * 4. PROTOTYPE_FILE: the name of the column for the prototype file to use e.g. 'exface/core/Mutations/Prototypes/DataTableSetup.php'
+     * 5. OBJECT: the name of the column for the object of the datatable
+     * 6. PRIVATE_FOR_USER: the name of the column for the current user UID
+     *
+     * @uxon-property dump_setup
+     *
+     * @var string
+     */
+    const FUNCTION_DUMP_SETUP = 'dump_setup';
+
+    /**
+     * Tracks changes made to the current table setup, by marking the table as changed in a JS property (_exfConfigChanged).
+     * If a quick select menu for widget setups exists, it will indicate changes with an (*) 
+     *
+     * Arguments: None
+     *
+     * @uxon-property track_setup_changes
+     *
+     * @var string
+     */
+    const FUNCTION_TRACK_CHANGES = 'track_setup_changes';
+
+    /**
+     * Resets the tracking of changes made to the current table setup. Sets _exfConfigChanged to false and resets the quick select indicator.
+     *
+     * Arguments: None
+     *
+     * @uxon-property reset_tracked_setup_changes
+     *
+     * @var string
+     */
+    const FUNCTION_RESET_CHANGE_TRACKING = 'reset_setup_change_tracking';
+
     private $show_filter_row = null;
 
     private $show_row_numbers = false;
@@ -123,6 +180,8 @@ class DataTable extends Data implements
     private $multi_select_saved_on_nav = null;
 
     private $auto_row_height = true;
+    
+    private $auto_columnn_width = true;
 
     private $row_details_container = null;
 
@@ -414,7 +473,7 @@ class DataTable extends Data implements
      *
      * @return boolean
      */
-    public function getAutoRowHeight()
+    public function getAutoRowHeight() : bool
     {
         return $this->auto_row_height;
     }
@@ -430,9 +489,37 @@ class DataTable extends Data implements
      * @param boolean $value            
      * @return \exface\Core\Widgets\DataTable
      */
-    public function setAutoRowHeight($value)
+    public function setAutoRowHeight(bool $value)
     {
-        $this->auto_row_height = BooleanDataType::cast($value);
+        $this->auto_row_height = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function getAutoColumnWidth() : bool
+    {
+        return $this->auto_columnn_width;
+    }
+
+    /**
+     * Set to FALSE to prevent automatic width adjustment for columns.
+     * 
+     * The exact behavior of this depends on the facade used, but most facades will distribute columns
+     * evenly in this case. 
+     * 
+     * @uxon-property auto_column_width
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param boolean $value
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setAutoColumnWidth(bool $value)
+    {
+        $this->auto_columnn_width = $value;
         return $this;
     }
 

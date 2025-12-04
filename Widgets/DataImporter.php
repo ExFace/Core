@@ -123,7 +123,6 @@ class DataImporter extends AbstractWidget implements
     iHaveToolbars, 
     iHaveButtons, 
     iCanWrapText, 
-    iCanBeRequired,
     iCanBeEditable
 {
     use iHaveColumnsAndColumnGroupsTrait;
@@ -311,7 +310,7 @@ class DataImporter extends AbstractWidget implements
         });
         $cols = [];
         foreach ($attrs as $attr) {
-            $cols[] = $this->createColumnFromAttribute($attr);
+            $cols[] = $this->createColumnFromAttribute($attr, null, null, true);
         }
         return $cols;
     }

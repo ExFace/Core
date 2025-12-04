@@ -22,19 +22,29 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
 	}
 
     private $uxon = null;
+    private string|null $affectedProperty = null;
 
     /**
      *
-     * @param UxonObject $uxon            
-     * @param string $message            
-     * @param string $alias            
-     * @param \Throwable $previous            
+     * @param UxonObject  $uxon
+     * @param string      $message
+     * @param null        $alias
+     * @param null        $previous
+     * @param string|null $affectedProperty
      */
-    public function __construct(UxonObject $uxon, $message, $alias = null, $previous = null)
+    public function __construct(
+        UxonObject $uxon, 
+        string $message, 
+        $alias = null, 
+        $previous = null, 
+        string $affectedProperty = null
+    )
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->uxon = $uxon;
+        
+        $this->affectedProperty = $affectedProperty;
     }
 
     /**
@@ -57,7 +67,7 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
         $debug_widget = $this->parentCreateDebugWidget($debug_widget);
         if ($debug_widget->findChildById('uxon_tab') === false) {
             $uxon_tab = $debug_widget->createTab();
-            $uxon_tab->setId('UXON');
+            $uxon_tab->setId('uxon_tab');
             $uxon_tab->setCaption('UXON');
             $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
                 'widget_type' => 'InputUxon',
@@ -69,5 +79,20 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
             $debug_widget->addTab($uxon_tab);
         }
         return $debug_widget;
+    }
+
+    /**
+     * @inerhitDoc 
+     * @see UxonExceptionInterface::getPath()
+     */
+    public function getPath(): array
+    {
+        $path = $this->uxon?->getPath() ?? [];
+        
+        if($this->affectedProperty !== null) {
+            $path[] = $this->affectedProperty;
+        }
+        
+        return $path;
     }
 }

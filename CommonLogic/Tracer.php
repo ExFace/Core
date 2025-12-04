@@ -3,10 +3,14 @@ namespace exface\Core\CommonLogic;
 
 use axenox\ETL\Events\Flow\OnAfterETLStepRun;
 use axenox\ETL\Events\Flow\OnBeforeETLStepRun;
+use exface\Core\CommonLogic\Debugger\Profiler;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
+use exface\Core\Events\Mutations\OnMutationsAppliedEvent;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -50,6 +54,8 @@ class Tracer extends Profiler
 {
     const FOLDER_NAME_TRACES = 'traces';
     
+    const DEFAULT_MAX_DURATION = 60;
+    
     private $logHandler = null;
     
     private $filePath = null;
@@ -71,14 +77,44 @@ class Tracer extends Profiler
      */
     public function __construct(WorkbenchInterface $workbench, int $startOffsetMs = 0)
     {
-        parent::__construct($workbench, $startOffsetMs);
+        parent::__construct($workbench, $startOffsetMs, 1, 'Request');
         $this->registerLogHandlers();
         $this->registerEventHandlers();
-        $this->getWorkbench()->eventManager()->addListener(OnContextInitEvent::getEventName(), function(OnContextInitEvent $event){
-            if ($event->getContext() instanceof DebugContext) {
-                $event->getContext()->startTracing($this);
-            }
-        });
+        
+        $this->getWorkbench()->eventManager()->addListener(
+            OnContextInitEvent::getEventName(),
+            [$this, 'onContextInit']
+        );
+    }
+
+    /**
+     * Initializes this instance, once the parent context is ready.
+     * If the system has been tracing for longer than the configured limit,
+     * tracing will be stopped.
+     * 
+     * @param OnContextInitEvent $event
+     * @return void
+     */
+    public function onContextInit(OnContextInitEvent $event) : void
+    {
+        $context = $event->getContext();
+        if (!($context instanceof DebugContext)) {
+            return;
+        }
+
+        $traceCurrDuration = $context->getTraceDuration();
+        $config = $this->getWorkbench()->getConfig();
+        
+        $traceMaxDuration = $config->hasOption('DEBUG.TRACE_MAX_TIME_SECONDS') ?
+            $config->getOption('DEBUG.TRACE_MAX_TIME_SECONDS') : self::DEFAULT_MAX_DURATION;
+
+        // Max trace duration may not cancel tracing for the current request, but will prevent future
+        // requests from being traced.
+        if($traceCurrDuration === false || $traceCurrDuration >= $traceMaxDuration) {
+            $context->stopTracing();
+        } else {
+            $context->startTracing($this);
+        }
     }
     
     /**
@@ -205,14 +241,20 @@ class Tracer extends Profiler
         ]);
 
         // ETL Steps
-        $event_manager->addListener(OnBeforeETLStepRun::getEventName(), [
-            $this,
-            'startETLStep'
-        ]);
-        $event_manager->addListener(OnAfterETLStepRun::getEventName(), [
-            $this,
-            'stopETLStep'
-        ]);
+        // FIXME hook up ETL stuff only if the ETL app is really installed?
+        // Maybe make a static event listener for OnBeforeTracerInit?
+        if (class_exists('\\axenox\\ETL\\Events\\Flow\\OnBeforeETLStepRun')) {
+            $event_manager->addListener(OnBeforeETLStepRun::getEventName(), [
+                $this,
+                'startETLStep'
+            ]);
+        }
+        if (class_exists('\\axenox\\ETL\\Events\\Flow\\OnAfterETLStepRun')) {
+            $event_manager->addListener(OnAfterETLStepRun::getEventName(), [
+                $this,
+                'stopETLStep'
+            ]);
+        }
         
         // Performance summary
         $event_manager->addListener(OnBeforeStopEvent::getEventName(), [
@@ -255,7 +297,13 @@ class Tracer extends Profiler
             $this,
             'logEvent'
         ]);
-        
+
+        // Mutations
+        $event_manager->addListener(OnMutationsAppliedEvent::getEventName(), [
+            $this,
+            'logMutationsApplied'
+        ]);
+
         return $this;
     }
     
@@ -272,13 +320,22 @@ class Tracer extends Profiler
                 $name .= ': ' . $this->sanitizeLapName($event->getQuery()->toString(false));
                 break;
             case $event instanceof ActionEventInterface:
-                $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+                $action = $event->getAction();
+                $name = 'Action "' . $action->getAliasWithNamespace() . '"';
+                try {
+                    $name .= ' on ' . $action->getMetaObject()->getAliasWithNamespace();
+                } catch (ActionObjectNotSpecifiedError $e) {
+                    // Leave the name as-is for actions, that do not have an object
+                }
                 break;
             case $event instanceof CommunicationMessageEventInterface:
                 $name = 'Communication message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
                 break;
             case $event instanceof BehaviorEventInterface:
                 $name = PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior()) . ' "' . $event->getBehavior()->getName() . '" of "' . $event->getBehavior()->getObject()->getAliasWithNamespace() . '"';
+                break;
+            case $event instanceof OnMutationsAppliedEvent:
+                $name = 'Mutations applied to ' . $event->getSubjectName();
                 break;
             default:
                 $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
@@ -320,6 +377,13 @@ class Tracer extends Profiler
     {
         $this->start($event, $this->getLapName($event), 'event');
     }
+
+    public function logMutationsApplied(onmutationsAppliedEvent $event)
+    {
+        $lapName = $this->getLapName($event);
+        $this->start($event, $lapName, 'event');
+        $this->getWorkbench()->getLogger()->info($lapName, array(), $event);
+    }
     
     /**
      * 
@@ -345,7 +409,7 @@ class Tracer extends Profiler
     public function stopAction(ActionEventInterface $event)
     {
         try {
-            $ms = $this->stop($event->getAction());
+            $ms = $this->stop($event->getAction())->getTimeTotalMs();
         } catch (\Throwable $e) {
             // FIXME event-not-started exceptions are thrown here when perforimng
             // CallContext actions. Need to find out why, than reenable the following
@@ -355,7 +419,7 @@ class Tracer extends Profiler
         }
         
         try {
-            $duration = $ms !== null ? ' in ' . $ms . ' ms' : '';
+            $duration = $ms !== null ? ' in ' . TimeDataType::formatMs($ms) : '';
             $this->getWorkbench()->getLogger()->debug($this->getLapName($event) . ' time measurement ended' . $duration . '.', array());
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
@@ -380,10 +444,10 @@ class Tracer extends Profiler
     public function stopCommunication(OnMessageSentEvent $event)
     {
         try {
-            $ms = $this->stop($event->getMessage());
+            $ms = $this->stop($event->getMessage())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
             } else {
                 $duration = '';
             }
@@ -411,10 +475,10 @@ class Tracer extends Profiler
     public function stopBehavior(OnBehaviorAppliedEvent $event)
     {
         try {
-            $ms = $this->stop($event->getBehavior());
+            $ms = $this->stop($event->getBehavior())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
             } else {
                 $duration = '';
             }
@@ -440,10 +504,10 @@ class Tracer extends Profiler
     public function stopETLStep(OnAfterETLStepRun $event) : void
     {
         try {
-            $ms = $this->stop($event->getStep());
+            $ms = $this->stop($event->getStep())->getTimeTotalMs();
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
             } else {
                 $duration = '';
             }
@@ -473,12 +537,12 @@ class Tracer extends Profiler
         try {
             $query = $event->getQuery();
             
-            $ms = $this->stop($query);
+            $ms = $this->stop($query)->getTimeTotalMs();
             $this->dataQueriesCnt++;
             
             $name = $this->getLapName($event);
             if ($ms !== null) {
-                $duration = ' (' . $ms . ' ms)';
+                $duration = ' (' . TimeDataType::formatMs($ms) . ')';
                 $this->dataQueriesTotalMS += $ms;
             } else {
                 $duration = '';
@@ -512,7 +576,7 @@ class Tracer extends Profiler
     public function stopConnection(OnConnectEvent $event)
     {
         try {
-            $ms = $this->stop($event->getConnection());
+            $ms = $this->stop($event->getConnection())->getTimeTotalMs();
             $this->connectionsTotalMS += $ms;
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
@@ -525,7 +589,10 @@ class Tracer extends Profiler
      * @return void
      */
     public function stopWorkbench(OnBeforeStopEvent $event = null) {
-        $this->getWorkbench()->getLogger()->notice('Request summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
+        $this->getWorkbench()->getLogger()->notice(
+            'Request summary: ' . TimeDataType::formatMs($this->getTimeTotalMs()) . ' total, '
+            . $this->conncetionsCnt . ' connections opened in ' . TimeDataType::formatMs($this->connectionsTotalMS) . ', '
+            . $this->dataQueriesCnt . ' data queries in ' . TimeDataType::formatMs($this->dataQueriesTotalMS), [], $this);
         $this->logHandler->flush();
     }
     

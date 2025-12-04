@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Mutations\MutatorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -70,10 +71,10 @@ interface WorkbenchInterface extends TaskHandlerInterface
     
     /**
      *
-     * @param AppSelectorInterface $selector
+     * @param AppSelectorInterface|string $selector
      * @return string
      */
-    public function getAppFolder(AppSelectorInterface $selector) : string;
+    public function getAppFolder(AppSelectorInterface|string $selector) : string;
     
     /**
      * Returns the core app
@@ -158,4 +159,9 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return CommunicatorInterface
      */
     public function getCommunicator() : CommunicatorInterface;
+
+    /**
+     * @return MutatorInterface
+     */
+    public function getMutator() : MutatorInterface;
 }

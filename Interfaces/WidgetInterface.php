@@ -118,13 +118,21 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function setId($value);
 
     /**
-     * Retruns the id space of this widget.
-     * 
-     * @see getIdSpace() for details.
+     * Reruns the id space of this widget.
      *
      * @return string
      */
     public function getIdSpace();
+
+    /**
+     * Returns TRUE if the id space was set explicitly for this widget.
+     * 
+     * Knowing this is handy because when traversing widget trees the id space will definitely remain unchanged
+     * until one of the child-widgets has its own space specified.
+     * 
+     * @return bool
+     */
+    public function isIdSpaceSpecified() : bool;
 
     /**
      * Sets the id space for this widget, so that it's explicitly specified id only needs to 
@@ -316,6 +324,17 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function hasParent();
 
     /**
+     * Returns all parent widgets matching the given filter callback.
+     *
+     * The $filter function must have the following signature: `function(WidgetInterface $parent) : bool`
+     *
+     * @param callable $filter
+     * @param int|null $maxResults
+     * @return WidgetInterface[]
+     */
+    public function getParents(callable $filter, ?int $maxResults = null) : array;
+
+    /**
      * Sets the parent widget
      *
      * @param WidgetInterface $widget            
@@ -434,21 +453,35 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     /**
      * Returns an iterator over all direct children of the current widget.
      *
+     *  **NOTE:** this will return ALL child widgets, not only those in a container. This is an important
+     *  difference to `Container::getWidgetsRecursive()`! For example, `Dialog::getChildrenRecursive()` will
+     *  return widgets from ShowDialog actions of its Buttons as children, but the `Dialog::getWidgetsRecursive()`
+     *  will not, because they are not widgets contained in that dialog. However, action widgets are children
+     *  from the point of view of a widget tree.
+     *
      * @return WidgetInterface[]
      */
     public function getChildren() : \Iterator;
-    
+
     /**
      * Returns an iterator over all children of the current widget including with their children,
-     * childrens children, etc. as a flat array of widgets
+     * childrens children, etc. as a flat array of widgets.
      * 
-     * If provided, depth limits the number of recursion levels.
+     * **NOTE:** this will return ALL child widgets, not only those in a container. This is an important
+     * difference to `Container::getWidgetsRecursive()`! For example, `Dialog::getChildrenRecursive()` will 
+     * return widgets from ShowDialog actions of its Buttons as children, but the `Dialog::getWidgetsRecursive()`
+     * will not, because they are not widgets contained in that dialog. However, action widgets are children
+     * from the point of view of a widget tree. 
      *
-     * @param int|NULL $depth
-     * 
-     * @return WidgetInterface[]
+     * If provided, $depth limits the number of recursion levels. The separate $depthIdSpaces
+     * argument allows to limit the number of traversed id spaces - by default 1, so only
+     * children from the same id space are returned.
+     *
+     * @param int|null $depth
+     * @param int|null $depthIdSpaces
+     * @return \Iterator
      */
-    public function getChildrenRecursive(?int $depth = null) : \Iterator;
+    public function getChildrenRecursive(?int $depth = null, ?int $depthIdSpaces = 1) : \Iterator;
     
     /**
      * Returns true if current widget has at least one child and FALSE otherwise.

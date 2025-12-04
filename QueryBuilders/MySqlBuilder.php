@@ -33,6 +33,8 @@ class MySqlBuilder extends AbstractSqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_MYSQL = 'MySQL';
+    
     /**
      *
      * @param QueryBuilderSelectorInterface $selector
@@ -51,7 +53,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['MySQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_MYSQL], parent::getSqlDialects());
     }
     
     /**
@@ -125,10 +127,6 @@ class MySqlBuilder extends AbstractSqlBuilder
         /* @var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
-            // First see, if the attribute has some kind of special data type (e.g. binary)
-            if (strcasecmp(($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? ''), 'binary') === 0) {
-                $this->addBinaryColumn($qpart->getAlias());
-            }
             
             switch (true) {
                 // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
@@ -203,7 +201,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         }
         $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
         
-        $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+        $distinct = $this->isSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             $limitRows = $this->getLimit();
@@ -214,7 +212,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             $limit = ' LIMIT ' . $limitRows . ' OFFSET ' . $this->getOffset();
         }
         
-        if ($this->isEnrichmentAllowed() && (($group_by && $where) || $this->getSelectDistinct())) {
+        if ($this->isEnrichmentAllowed() && (($group_by && $where) || $this->isSelectDistinct())) {
             $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
         } else {
             $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $order_by . $having . $limit;
@@ -298,9 +296,9 @@ class MySqlBuilder extends AbstractSqlBuilder
         }
         
         if ($totals_core_select) {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having . ") EXFCOREQ";
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} {$totals_select} FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having . ") EXFCOREQ";
         } else {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
         }
         
         // See if changes to the query occur while the query was built (e.g. query parts are
@@ -349,7 +347,7 @@ class MySqlBuilder extends AbstractSqlBuilder
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
         $sql_data_type = ($dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? null) === null ? null : mb_strtolower($dataAddressProps[static::DAP_SQL_DATA_TYPE]);
-        if ($sql_data_type === 'binary' && $data_type instanceof BinaryDataType) {
+        if ($sql_data_type === static::DAP_SQL_DATA_TYPE_BINARY && $data_type instanceof BinaryDataType) {
             $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
             switch ($data_type->getEncoding()) {
                 case BinaryDataType::ENCODING_BASE64:
@@ -447,7 +445,11 @@ class MySqlBuilder extends AbstractSqlBuilder
         $resultJson = $initialJson;
 
         foreach ($keyValuePairs as $attributePath => $attributeValue) {
-            $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+            if ($attributeValue === null || $attributeValue === 'null') {
+                $resultJson = "JSON_REMOVE(" . $resultJson . ", '" . $attributePath . "')";
+            } else {
+                $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+            }
         }
 
         return $resultJson;

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -24,6 +26,14 @@ use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 
+/**
+ * A column for a data sheet
+ * 
+ * In most cases a column will only require an `expression`. Alternatively you can use the more specific `formula` 
+ * (for a calculated column) or an `attribute_alias` (in case it is bound to data).
+ * 
+ * The `name` and `data_type` of the column will be determined automatically, but you can also overwrite them if needed.
+ */
 class DataColumn implements DataColumnInterface
 {
     const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_]';
@@ -55,6 +65,8 @@ class DataColumn implements DataColumnInterface
     private $formula = null;
 
     private $writable = null;
+    
+    private ?UxonObject $nestedSheetTemplateUxon = null;
 
     function __construct($expression, DataSheetInterface $data_sheet, $name = '')
     {
@@ -204,9 +216,12 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * Mark the column as hidden
+     * 
+     * @uxon-property hidden
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setHidden()
      */
     public function setHidden($value)
@@ -224,6 +239,11 @@ class DataColumn implements DataColumnInterface
     public function getDataType()
     {
         if (null === $this->data_type) {
+            // If we have a nested data template, we obviously will need a nested data type
+            if ($this->nestedSheetTemplateUxon !== null) {
+                $this->data_type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DataSheetDataType::class);
+                return $this->data_type;
+            }
             // Determine the data type from the columns expression.
             // However, attributes need some special treatment as we need to detect columns
             // with subsheets - that is, attributes, that represent a reverse relation.
@@ -254,9 +274,11 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * Alias of the data type for the column
+     * 
+     * @uxon-property data_type
+     * @uxon-type metamodel:datatype
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setDataType()
      */
     public function setDataType($data_type_or_string)
@@ -275,7 +297,6 @@ class DataColumn implements DataColumnInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getAttribute()
      */
     public function getAttribute()
@@ -481,6 +502,16 @@ class DataColumn implements DataColumnInterface
     }
     
     /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isNestedData()
+     */
+    public function isNestedData() : bool
+    {
+        return ($this->nestedSheetTemplateUxon !== null) || ($this->getDataType() instanceof DataSheetDataType);
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isFormula()
@@ -513,17 +544,46 @@ class DataColumn implements DataColumnInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setHidden($uxon->getProperty('hidden'));
-        if ($uxon->hasProperty('data_type')) {
-            $this->setDataType($uxon->getProperty('data_type'));
+        if (null !== $val = $uxon->getProperty('name')) {
+            $this->setName($val);
         }
-        $this->setFormula($uxon->getProperty('formula'));
-        $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
+        if (null !== $val = $uxon->getProperty('expression')) {
+            $this->setExpression($val);
+        }
+        if (null !== $val = $uxon->getProperty('hidden')) {
+            $this->setHidden($val);
+        }
+        if (null !== $val = $uxon->getProperty('data_type')) {
+            $this->setDataType($val);
+        }
+        if (null !== $val = $uxon->getProperty('formula')) {
+            $this->setFormula($val);
+        }
+        if (null !== $val = $uxon->getProperty('attribute_alias')) {
+            $this->setAttributeAlias($val);
+        }
         if ($uxon->hasProperty('totals')) {
             foreach ($uxon->getProperty('totals') as $u) {
                 $total = DataColumnTotalsFactory::createFromUxon($this, $u);
                 $this->getTotals()->add($total);
             }
+        }
+        if(null !== $val = $uxon->getProperty('nested_data')) {
+            $this->setNestedDataTemplate($val);
+        }
+        
+        $otherProps = array_diff(array_keys($uxon->toArray()), [
+            'name',
+            'expression',
+            'hidden',
+            'data_type',
+            'formula',
+            'attribute_alias',
+            'totals',
+            'nested_data'
+        ]);
+        if (! empty($otherProps)) {
+            throw new UxonParserError($uxon, 'Unknown UXON property "' . implode('", "', $otherProps) . '" found for data column "' . $this->getName() . '"');
         }
     }
 
@@ -1069,5 +1129,95 @@ class DataColumn implements DataColumnInterface
     public function isWritable() : bool
     {
         return $this->writable ?? $this->isAttribute() && $this->getAttribute()->isWritable();
+    }
+
+    /**
+     * @return string
+     */
+    public function getValueListDelimiter() : string
+    {
+        $delim = null;
+        if ($this->hasAggregator() && StringDataType::startsWith($this->getAggregator()->getFunction()->__toString(), 'LIST')) {
+            $args = $this->getAggregator()->getArguments();
+            $delim = $args[0] ?? null;
+        }
+        if ($delim === null) {
+            if ($this->isAttribute()) {
+                $delim = $this->getAttribute()->getValueListDelimiter();
+            }
+        }
+        return $delim ?? EXF_LIST_SEPARATOR;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasValueLists() : bool
+    {
+        $delim = $this->getValueListDelimiter();
+        foreach ($this->getValues() as $value) {
+            if (mb_strpos($value, $delim) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return DataColumnInterface
+     */
+    public function splitRowsWithValueLists() : DataColumnInterface
+    {
+        $delim = $this->getValueListDelimiter();
+        $splitRows = [];
+        $thisName = $this->getName();
+        $dataSheet = $this->getDataSheet();
+        foreach ($this->getValues() as $rowIdx => $value) {
+            if (! mb_strpos($value, $delim) !== false) {
+                continue;
+            }
+            $row = $dataSheet->getRow($rowIdx);
+            foreach (explode($delim, $value) as $v) {
+                $splitRow = $row;
+                $splitRow[$thisName] = $v;
+                $splitRows[$rowIdx][] = $splitRow;
+            }
+        }
+        $newRowIdx = 0;
+        foreach ($splitRows as $rowIdx => $rows) {
+            foreach ($rows as $i => $row) {
+                $newRowIdx = $newRowIdx + $rowIdx + $i;
+                if ($i === 0) {
+                    $this->setValue($newRowIdx, $row[$thisName]);
+                } else {
+                    $dataSheet->addRow($row, false, false, $newRowIdx);
+                }
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * A template for nested data in this column
+     * 
+     * @uxon-property nested_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":""}]}
+     * 
+     * @see DataColumnInterface::setNestedDataTemplate()
+     */
+    public function setNestedDataTemplate(UxonObject $dataSheetUxon) : DataColumnInterface
+    {
+        $this->nestedSheetTemplateUxon = $dataSheetUxon;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataColumnInterface::getNestedDataTemplate()
+     */
+    public function getNestedDataTemplateUxon() : ?UxonObject
+    {
+        return $this->nestedSheetTemplateUxon;
     }
 }

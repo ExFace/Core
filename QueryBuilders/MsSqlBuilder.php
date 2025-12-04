@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
@@ -9,6 +11,9 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -33,6 +38,8 @@ use exface\Core\DataTypes\ComparatorDataType;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    const SQL_DIALECT_TSQL = 'T-SQL';
+    const SQL_DIALECT_MSSQL = 'MSSQL';
     /**
      * Set to TRUE to add `WITH (NOLOCK)` in SELECT queries based on this object (also affects all JOINs!)
      * 
@@ -86,7 +93,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['T-SQL', 'MSSQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_TSQL, self::SQL_DIALECT_MSSQL], parent::getSqlDialects());
     }
 
     /**
@@ -155,12 +162,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         /*	@var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
-            
-            // First see, if the attribute has some kind of special data type (e.g. binary)
-            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '', 'binary') === 0) {
-                $this->addBinaryColumn($qpart->getAlias());
-            }
-            
+
             switch (true) {
                 // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
                 // Otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
@@ -218,7 +220,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
         }
         // Core SELECT
-        $select = implode(', ', array_unique(array_filter($selects)));
+        $selects = array_unique(array_filter($selects));
+        if ($this->isSelectFirstColumnOnly()) {
+            $select = $selects[0];
+        } else {
+            $select = implode(', ', $selects);
+        }
         $select_comment = $select_comment ? "\n" . $select_comment : '';
         
         // Enrichment SELECT
@@ -232,7 +239,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
-        $useEnrichment = ($group_by && $where) || $this->getSelectDistinct();
+        $useEnrichment = ($group_by && $where) || $this->isSelectDistinct();
         
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
@@ -249,7 +256,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
         
-        $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+        $distinct = $this->isSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             $limitRows = $this->getLimit();
@@ -420,9 +427,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         
         if ($totals_core_select) {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
         } else {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
         }
         
         if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
@@ -468,6 +475,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
         foreach ($this->getAttributes() as $qpart) {
             $colKey = $qpart->getColumnKey();
             $type = $qpart->getDataType();
+            
+            // Format dates.
             switch (true) {
                 case $type instanceof DateTimeDataType:
                 case $type instanceof DateDataType:
@@ -475,12 +484,26 @@ class MsSqlBuilder extends AbstractSqlBuilder
                         $val = $row[$colKey];
                         if ($val instanceof \DateTime) {
                             $val = $type::formatDateNormalized($val);
-                            $rows[$nr][$qpart->getColumnKey()] = $val;
+                            $rows[$nr][$colKey] = $val;
                         }
                     }
                     break;
             }
+
+            // Decode HTML entities.
+            if($qpart->hasAggregator()) {
+                $aggregator = $qpart->getAggregator()->__toString();
+                if( $aggregator === AggregatorFunctionsDataType::LIST_ALL || 
+                    $aggregator === AggregatorFunctionsDataType::LIST_DISTINCT
+                ) {
+                    foreach ($rows as $nr => $row) {
+                        $val = $row[$colKey];
+                        $rows[$nr][$colKey] = html_entity_decode($val);
+                    }
+                }
+            }
         }
+        
         return $rows;
     }
     
@@ -503,7 +526,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // buildSqlSelectSubselect() or buildSqlSelectGrouped() for subselects and regular
                 // columns a bit differently.
                 
-                // Make sure to cast any non-string things to nvarchar BEFORE they are concatennated
+                // Make sure to cast any non-string things to nvarchar BEFORE they are concatenated
                 if (! ($qpart->getAttribute()->getDataType() instanceof StringDataType)) {
                     $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
                 }
@@ -566,6 +589,17 @@ class MsSqlBuilder extends AbstractSqlBuilder
                         }
                         $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAliasWithRelationPath(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
                     }
+                    // ... and if we know, that the rows have UIDs, add a UID filter to the subquery making sure,
+                    // it will always only return values matching the UID of the main query. Actually, this should 
+                    // mostly be the case anyway, but there were case with complex SQL_JOIN_ON configs, where the
+                    // subquery here returned basically ALL available rows and not only those matching the UID of
+                    // the main row.
+                    if ($this->getMainObject()->hasUidAttribute() && ! $this->isAggregated() && ! $this->isAggregatedToSingleRow()) {
+                        $uidAddress = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
+                        $dot = $this->getAliasDelim();
+                        $subq->addFilterWithCustomSql($this->getMainObject()->getUidAttributeAlias(), $this->getMainTableAlias() . $dot . $uidAddress);
+                    }
+                    // Now build the SQL for the subquery
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
                     $subSql = $subSqlFrom . StringDataType::substringAfter($subSql, $subSqlFrom);
@@ -606,6 +640,43 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return $subselect;
     }
+
+    protected function buildSqlWhereSubquery(QueryPartFilter $qpart, $rely_on_joins = true)
+    {
+        // This is a workaround for SQL errors due to unclosed FOR XML wrappers in HAVING clauses.
+        // The problem occurs when filtering over an aggregated attribute, that has a relation path with
+        // more than one reverse relation. In this case, the WHERE gets a nested subselect with a HAVING 
+        // clause (not quite sure, if that is correct) and inside that clause there is `SELECT [text()] = `
+        // but no `FOR XML`. 
+        // The workaround simply removes the aggregator from the filter in this case. It produces different
+        // results - e.g. the filter value cannot contain a delimited list, but only a single value. But it works
+        // for a lot of cases - in particular for table columns with a filter in the header.
+        if ($qpart->hasAggregator()) {
+            $aggr = $qpart->getAggregator();
+            $aggrFunc = $aggr->getFunction()->__toString();
+            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
+                $relPath = $qpart->getAttribute()->getRelationPath();
+                $revRelCnt = 0;
+                foreach ($relPath->getRelations() as $rel) {
+                    if ($rel->isReverseRelation()) {
+                        $revRelCnt++;
+                    }
+                }
+                if ($revRelCnt > 1) {
+                    $alias = DataAggregation::stripAggregator($qpart->getAlias());
+                    $condUxon = $qpart->getCondition()->exportUxonObject();
+                    $condAlias = $condUxon->getProperty('expression');
+                    $condUxon->setProperty('expression', DataAggregation::stripAggregator($condAlias));
+                    $condNoAggr = ConditionFactory::createFromUxon($this->getWorkbench(), $condUxon);
+                    $qpartNoAggr = new QueryPartFilter($alias, $this, $condNoAggr);
+                    return parent::buildSqlWhereSubquery($qpartNoAggr, $rely_on_joins);
+                }
+            }
+        }
+        
+        // In all other cases, use the default SQL builder logic
+        return parent::buildSqlWhereSubquery($qpart, $rely_on_joins);
+    }
     
     /**
      * 
@@ -636,6 +707,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
+        $inJson = strcasecmp($dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? '', static::DAP_SQL_DATA_TYPE_JSON) === 0;
         switch (true) {
             case $data_type instanceof StringDataType:
                 $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
@@ -644,7 +716,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                    // Escape MS SQL strings with `N'text'` - the N makes it UNICODE compatible!
+                    $value = $value === null ? 'NULL' : "N'{$this->escapeString($value)}'";
                 }
                 break;
             case $data_type instanceof DateTimeDataType:
@@ -657,7 +730,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // Use CONVERT() instead of string dates like '2023-06-20 23:50:00'
                 // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
                 // But do not convert non-strings like `NULL` or custom SQL statements
-                if ("'" === mb_substr($value, 0, 1)) {
+                if ("'" === mb_substr($value, 0, 1) && ! $inJson) {
                     $value = "CONVERT(datetime, {$value}, {$format})";
                 }
                 break;
@@ -666,7 +739,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
                 // But do not convert non-strings like `NULL` or custom SQL statements
                 $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
-                if ("'" === mb_substr($value, 0, 1)) {
+                if ("'" === mb_substr($value, 0, 1) && ! $inJson) {
                     $value = "CONVERT(date, {$value}, 23)";
                 }
                 break;
@@ -687,6 +760,16 @@ class MsSqlBuilder extends AbstractSqlBuilder
             return ' (NOLOCK) AS ' . $alias;
         }
         return ' AS ' . $alias;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '[' . $tableOrPredicateAlias . ']';
     }
     
     /**
@@ -851,6 +934,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $resultJson = $initialJson;
 
         foreach ($keyValuePairs as $attributePath => $attributeValue) {
+            // If we need to remove a key from a JSON object, we need to call JSON_MODIFY(xx, yy, null) in MS SQL
+            if ($attributeValue === null) {
+                $attributeValue = 'null';
+            }
             $resultJson = "JSON_MODIFY(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
         }
 
@@ -870,5 +957,54 @@ CASE
     ELSE '{}'
 END 
 SQL;
+    }
+
+    /**
+     * MS SQL CREATE statements need some special treatment for IDENTITY columns
+     * 
+     * @see AbstractSqlBuilder::create()
+     */
+    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        $uidWritable = false;
+        if ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            $isIdentity =  (true === BooleanDataType::cast($uidAttr->getDataAddressProperty(static::DAP_SQL_IDENTITY_COLUMN)))
+                || (true === BooleanDataType::cast($uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_AUTO_INCREMENT)));
+
+            if ($isIdentity === true) {
+                $foundUidValues = false;
+                foreach ($this->getValues() as $qpart) {
+                    if ($qpart->getAttribute() === $uidAttr) {
+                        $uidQpart = $qpart;
+                        if (! empty(array_filter($qpart->getValues()))) {
+                            $foundUidValues = true;
+                        }
+                        break;
+                    }
+                }
+                $uidWritable = $uidAttr->isWritable();
+                if ($foundUidValues === true) {
+                    $beforeSQL = $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_BEFORE);
+                    $afterSQL = $uidAttr->getDataAddressProperty(static::DAP_SQL_INSERT_BEFORE);
+                    if (! $beforeSQL && ! $afterSQL) {
+                        $table = $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE);
+                        $uidQpart->setDataAddressProperty(static::DAP_SQL_INSERT_BEFORE, "
+                            SET IDENTITY_INSERT {$table} ON;
+                        ");
+                        $uidQpart->setDataAddressProperty(static::DAP_SQL_INSERT_AFTER, "
+                            SET IDENTITY_INSERT {$table} OFF;
+                        ");
+                    }
+                } else {
+                    $uidAttr->setWritable(false);
+                }
+            }
+        }
+        $result = parent::create($data_connection);
+        if ($uidWritable === true) {
+            $uidAttr->setWritable(true);
+        }
+        return $result;
     }
 }

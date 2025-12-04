@@ -33,13 +33,15 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
     private $uxon = null;
     
     private $triggerWidget = null;
+
+    private $uid = null;
     
     /**
      * 
      * @param MetaObjectInterface $object
      * @param ActionInterface $action
      */
-    public function __construct(string $prototype, string $actionAlias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon = null, WidgetInterface $triggerWidget = null)
+    public function __construct(string $prototype, string $actionAlias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon = null, WidgetInterface $triggerWidget = null, string $uid = null)
     {
         $this->prototype = $prototype;
         $this->object = $object;
@@ -48,6 +50,7 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
         $this->object = $object;
         $this->uxon = $uxon;
         $this->triggerWidget = $triggerWidget;
+        $this->uid = $uid;
     }
     
     /**
@@ -95,6 +98,11 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
     public function getActionAliasWithNamespace() : string
     {
         return $this->app->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getActionAlias();
+    }
+
+    public function getActionUid() : ?string
+    {
+        return $this->uid;
     }
     
     /**

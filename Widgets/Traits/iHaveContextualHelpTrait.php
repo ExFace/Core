@@ -152,6 +152,8 @@ trait iHaveContextualHelpTrait {
         $table->setLazyLoading(false);
         $table->setPaginate(false);
         $table->setNowrap(false);
+        // Disable widget setups to prevent recursion due to tables inside the setups table buttons
+        $table->setConfiguratorSetupsEnabled(false);
         $table->setRowGrouper(UxonObject::fromArray(array(
             'group_by_attribute_alias' => 'GROUP',
             'hide_caption' => true

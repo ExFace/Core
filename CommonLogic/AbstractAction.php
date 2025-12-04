@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Actions\ActionConfirmationList;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
@@ -21,6 +22,8 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -86,6 +89,7 @@ abstract class AbstractAction implements ActionInterface
     private $id = null;
 
     private $alias = null;
+    private $aliasWithNamespace = null;
 
     private $name = null;
     
@@ -187,9 +191,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getAlias()
     {
-        if (is_null($this->alias)) {
-            $class = explode('\\', get_class($this));
-            $this->alias = end($class);
+        if ($this->alias === null) {
+            $this->aliasWithNamespace = null;
+            $this->alias = $this->getAliasOfPrototype(false);
         }
         return $this->alias;
     }
@@ -205,6 +209,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setAlias($value)
     {
+        // TODO Refactor this method to except an alias with namespace (as the `alias` property in UXON does).
+        // Currently it takes the alias without namespace and only works because SqlModelLoader and ActionFactory
+        // have some custom logic to put the correct part of the alias in here.
         $this->alias = $value;
         return $this;
     }
@@ -217,7 +224,10 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
+        if ($this->aliasWithNamespace === null) {
+            $this->aliasWithNamespace = $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
+        }
+        return $this->aliasWithNamespace;
     }
 
     /**
@@ -229,6 +239,21 @@ abstract class AbstractAction implements ActionInterface
     public function getNamespace()
     {
         return $this->getApp()->getAliasWithNamespace();
+    }
+
+    /**
+     * @see ActionInterface::getAliasOfPrototype()
+     */
+    public function getAliasOfPrototype(bool $withNamespace = true) : string
+    {
+        $classNsParts = explode('\\', get_class($this));
+        $alias = end($classNsParts);
+        if ($withNamespace === false) {
+            return $alias;
+        } else {
+            $selector = new ActionSelector($this->getWorkbench(), '\\' . get_class($this));
+            return $selector->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias;
+        }
     }
 
     /**
@@ -312,7 +337,7 @@ abstract class AbstractAction implements ActionInterface
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {        
         $logbook = $this->getLogBook($task);
-        $logbook->startLogginEvents();
+        $logbook->startLoggingEvents();
 
         // Start a new transaction if none passed
         if (is_null($transaction)) {
@@ -1235,13 +1260,13 @@ abstract class AbstractAction implements ActionInterface
                 if ($check->isApplicable($sheet)) {
                     try {
                         $check->check($sheet);
-                        $logbook->addLine('Check `' . $check->__toString() . '` passed');
+                        $logbook->addLine('PASSED check `' . $check->__toString() . '` not matched on any rows');
                     } catch (DataCheckExceptionInterface $e) {
                         $eHint = '';
-                        if (null !== $e->getBadData()) {
-                            $eHint = ' on ' . $e->getBadData()->countRows() . ' rows';
+                        if (null !== $e->getRowIndexes()) {
+                            $eHint = ' on row indexes ' . implode(', ', $e->getRowIndexes())    ;
                         }
-                        $logbook->addLine('Check `' . $check->__toString() . '` failed' . $eHint);
+                        $logbook->addLine('**FAILED** check `' . $check->__toString() . '` matched' . $eHint);
                         throw new ActionInputError($this, $e->getMessage(), null, $e);
                     }
                 } else {
@@ -1284,6 +1309,11 @@ abstract class AbstractAction implements ActionInterface
      * 
      * By default, an action accepts data of any object and attempts to deal with it.
      * Many of the core actions are actually agnostic to objects.
+     *
+     * A note on **inheritance**: if you have an object REPORT and an EXTENDED_REPORT, that
+     * inherits from REPORT, input data of EXTENDED_REPORT will work for an action with
+     * REPORT as `input_object_alias`, but not the other way around. That is because, an
+     * EXTENDED_REPORT might have more attributes, that might be required for its actions.
      * 
      * @uxon-property input_object_alias
      * @uxon-type metamodel:object
@@ -1366,6 +1396,7 @@ abstract class AbstractAction implements ActionInterface
             $actionAP->authorize($this, null, $userOrToken);
             return true;
         } catch (AuthorizationExceptionInterface $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             return false;
         }
     }
@@ -1499,10 +1530,35 @@ abstract class AbstractAction implements ActionInterface
     {
         $button = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
         $name = $button ? $button->getCaption() : $this->getName();
+        $handlesChanges = $this instanceof iModifyData;
         $effects = [];
-        $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name);
-        if ($button) {
+        $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name, $handlesChanges);
+        // If the action is bound to a button, it might also affect objects of the buttons input widget (e.g. dialog)
+        // and those of the input of the button that opened that dialog, etc.
+        if ($button !== null) {
             $effects = array_merge($effects, $this->getEffectsFromTriggerWidget($button, $this->getMetaObject(), $name, RelationPathFactory::createForObject($this->getMetaObject())));
+        }
+        // Totally independently, we need to examine the input widget of the button. If it has data widgets, that
+        // produce subsheets, the action will obviosly also save their changes if it handles changes at all
+        if ($handlesChanges === true && ($button instanceof iUseInputWidget)) {
+            $actionObj = $this->getMetaObject();
+            $buttonInput = $button->getInputWidget();
+            $inputDataObj = $buttonInput->getMetaObject();
+            // This can happen in containers only - their data might include subsheets
+            if ($buttonInput instanceof iContainOtherWidgets) {
+                foreach ($buttonInput->getInputWidgets() as $input) {
+                    if (($input instanceof iTakeInputAsDataSubsheet) && $input->isSubsheetForObject($inputDataObj)) {
+                        $relPathFromParent = $input->getObjectRelationPathFromParent();
+                        // If we know the relation from the object of the action, create an effect with this relation.
+                        // If not, just create an unrelated object effect. 
+                        if ($relPathFromParent && $input->getParent()->getMetaObject()->is($actionObj)) {
+                            $effects[] = ActionEffectFactory::createForEffectedRelation($this, $relPathFromParent, $name, $handlesChanges);
+                        } else {
+                            $effects[] = ActionEffectFactory::createForEffectedObject($this, $input->getMetaObject(), $name, $handlesChanges);
+                        }
+                    }
+                }
+            }
         }
         return $effects;
     }
@@ -1705,6 +1761,7 @@ abstract class AbstractAction implements ActionInterface
             $uxon->setProperty('effected_object', $effectedObject->getAliasWithNamespace());
         }
         $this->customEffects[] = new ActionEffect($this, $uxon);
+        return $this;
     }
     
     /**
@@ -1830,8 +1887,14 @@ abstract class AbstractAction implements ActionInterface
     protected function setInputInvalidIf(UxonObject $arrayOfDataChecks) : AbstractAction
     {
         $this->getInputChecks()->removeAll();
+
+        // If the action is targeting a single object explicitly, make sure the data checks will
+        // be only applicable to that object (unless explicitly bound to another one in their
+        // configuration)
+        $onlyForObject = $this->hasInputObjectRestriction() ? $this->getInputObjectExpected() : null;
+
         foreach($arrayOfDataChecks as $uxon) {
-            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
+            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon, $onlyForObject));
         }
         return $this;
     }
@@ -1892,6 +1955,8 @@ abstract class AbstractAction implements ActionInterface
     /**
      * Make the action ask for confirmation when its button is pressed
      * 
+     * Set to FALSE to disable built-in confirmations (e.g. for an `exface.Core.DeleteObject`).
+     * 
      * @uxon-property confirmation_for_action
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
      * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
@@ -1929,6 +1994,8 @@ abstract class AbstractAction implements ActionInterface
 
     /**
      * Make the action warn the user if it is to be performed when unsaved changes are still visible
+     * 
+     * Set to FALSE to disable built-in confirmations.
      * 
      * @uxon-property confirmation_for_unsaved_data
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
@@ -1993,5 +2060,15 @@ abstract class AbstractAction implements ActionInterface
             $this->getConfirmations()->addFromUxon($uxon);
         }
         return $this;
+    }
+
+    /**
+     * Returns <action name> [<alias with namespace>]
+     * 
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return '"' . $this->getName() . '"' . ' [' . $this->getAliasWithNamespace() . ']';
     }
 }

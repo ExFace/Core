@@ -196,9 +196,9 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      * Checks nested filter groups recursively.
      *
      * @param string $alias            
-     * @return QueryPartFilter || boolean
+     * @return QueryPartFilter|null
      */
-    public function findFilterByAlias($alias)
+    public function findFilterByAlias(string $alias) : ?QueryPartFilter
     {
         foreach ($this->getFilters() as $f) {
             if ($f->getAlias() == $alias)
@@ -206,11 +206,11 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
         }
         
         foreach ($this->getNestedGroups() as $g) {
-            if ($f = $g->findFilterByAlias($alias))
+            if (null !== $f = $g->findFilterByAlias($alias))
                 return $f;
         }
         
-        return false;
+        return null;
     }
     
     /**

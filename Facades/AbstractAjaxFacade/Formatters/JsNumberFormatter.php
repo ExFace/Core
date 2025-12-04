@@ -51,8 +51,8 @@ JS;
         $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
         $suffix = $dataType->getSuffix();
         $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
-        $emptyFormatJs = json_encode($this->getDataType()->getEmptyFormat() ?? '');
-        
+        $emptyFormatJs = json_encode($this->getDataType()->getEmptyFormat());
+
         return <<<JS
         function(mNumber) {
             var fNum, sNum, sTsdSep;
@@ -61,7 +61,7 @@ JS;
             var sSuffix = $suffixJs;
             var sEmpty = $emptyFormatJs;
                     
-            if ((mNumber === null || mNumber === undefined || mNumber === '') && sEmpty !== '') {
+            if (({$this->getJsEmptyCheck('mNumber')}) && sEmpty !== '') {
                 return sEmpty;
             }
 			fNum = {$this->buildJsFormatParser('mNumber')};
@@ -222,10 +222,10 @@ JS;
         
         $checksOk = [];
         if ($type->getMin() !== null) {
-            $checksOk[] = "parseFloat(mVal) >= {$type->getMin()}";
+            $checksOk[] = "nVal >= {$type->getMin()}";
         }
         if ($type->getMax() !== null) {
-            $checksOk[] = "parseFloat(mVal) <= {$type->getMax()}";
+            $checksOk[] = "nVal <= {$type->getMax()}";
         }
         $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
         
@@ -233,6 +233,10 @@ JS;
         return <<<JS
 function(mVal) {
                 var bEmpty = (mVal === null || mVal === undefined || mVal.toString() === '' || mVal.toString() === $nullStr);
+                var nVal = {$this->buildJsFormatParser('mVal')};
+                if (bEmpty === false && isNaN(nVal)) {
+                    return false;
+                }
                 return (bEmpty || ($checksOkJs));
             }($jsValue)
 JS;

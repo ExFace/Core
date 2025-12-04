@@ -617,10 +617,16 @@ class GenericTask implements TaskInterface
                     break;
                 case 'meta_object': 
                 case 'object_alias': 
-                    $this->setMetaObjectSelector($val); 
+                    if ($val) {
+                        $this->setMetaObjectSelector($val);
+                    }
                     break;
                 case 'widget_id':
                     $this->setWidgetIdTriggeredBy($val);
+                    break;
+                case 'timeout':
+                case 'cmd':
+                    $this->setParameter($prop, $val);
                     break;
             }
         }
@@ -631,7 +637,7 @@ class GenericTask implements TaskInterface
             'action', 'action_alias',
             'page', 'page_selector', 'page_alias',
             'meta_object', 'object_alias',
-            'widget_id'
+            'widget_id', 'cmd', 'timeout'
         ]);
         return;
     }

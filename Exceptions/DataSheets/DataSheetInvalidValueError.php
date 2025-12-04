@@ -3,7 +3,6 @@ namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Exceptions\DataSheetValueExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
@@ -19,6 +18,8 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  */
 class DataSheetInvalidValueError extends DataSheetRuntimeError implements DataSheetValueExceptionInterface
 {
+    use DataSheetValueExceptionTrait;
+
     private $columnName = null;
     private $rowIndexes = null;
     private $messageWithoutRowNumbers = null;
@@ -46,8 +47,8 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError implements DataSh
         if ($customMessage === null && $this->columnName !== null) {
             $col = $data_sheet->getColumns()->get($this->columnName);
             if ($col) {
-                $this->messageWithoutRowNumbers = $this->generateMessage($col);
-                $customMessage = $this->generateMessage($col, $this->getRowNumbers());
+                $this->messageWithoutRowNumbers = $this->generateMessageForColumn($col);
+                $customMessage = $this->generateMessageForColumn($col, $this->getRowNumbers());
                 $this->setUseExceptionMessageAsTitle(true);
                 $this->setLogLevel($this->getDefaultLogLevel());
                 $this->setAlias($this->getDefaultAlias());
@@ -55,52 +56,6 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError implements DataSh
         }
         
         parent::__construct($data_sheet, $customMessage, $alias, $previous);
-    }
-    
-    /**
-     * 
-     * @param DataColumnInterface $col
-     * @param array $rowNumbers
-     * @return string|NULL
-     */
-    protected function generateMessage(DataColumnInterface $col, array $rowNumbers = null) : ?string
-    {
-        $colCaption = $col->getAttribute()->getName();
-        if ($rowNumbers !== null) {
-            $rowNoList = implode(', ', $rowNumbers);
-            try {
-                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate(
-                    'DATASHEET.ERROR.INVALID_VALUES_ON_ROWS', 
-                    [
-                        '%object%'=> $col->getMetaObject()->getName(), 
-                        '%column%' => $colCaption, 
-                        '%rows%' => $rowNoList
-                    ]
-                );
-            } catch (\Throwable $e) {
-                $col->getWorkbench()->getLogger()->logException($e);
-                $message = 'Invalid values for "' . $colCaption . '" on row(s) ' . $rowNoList;
-            }
-        } else {
-            try {
-                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate(
-                    'DATASHEET.ERROR.INVALID_VALUES', 
-                    [
-                        '%object%'=> $col->getMetaObject()->getName(), 
-                        '%column%' => $colCaption
-                    ]
-                );
-            } catch (\Throwable $e) {
-                $col->getWorkbench()->getLogger()->logException($e);
-                $message = 'Invalid values for "' . $colCaption . '"';
-            }
-        }
-        
-        if (null !== $msg = $col->getDataType()->getValidationErrorMessage()) {
-            $message = StringDataType::endSentence($message) . ' ' . $msg->getTitle();
-        }
-        
-        return $message;
     }
     
     /**
@@ -148,15 +103,6 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError implements DataSh
     public function getRowIndexes() : ?array
     {
         return $this->rowIndexes;
-    }
-    
-    /**
-     * {@inheritDoc}
-     * @see DataSheetValueExceptionInterface::getRowNumbers()
-     */
-    public function getRowNumbers() : ?array
-    {
-        return $this->rowIndexes === null ? null : array_map(function(int $rowIdx){ return $rowIdx + 1; }, $this->rowIndexes);
     }
 
     /**

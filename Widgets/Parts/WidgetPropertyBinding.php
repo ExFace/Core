@@ -3,6 +3,7 @@ namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -83,7 +84,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getPropertyName()
+     * @see WidgetPropertyBindingInterface::getPropertyName
      */
     public function getPropertyName() : string
     {
@@ -97,7 +98,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      * @uxon-type metamodel:attribute
      * 
      * @param string $alias
-     * @return \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface
+     * @return WidgetPropertyBindingInterface
      */
     protected function setAttributeAlias(string $alias) : WidgetPropertyBindingInterface
     {
@@ -130,7 +131,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
         $relPathPrefix = $path. RelationPath::RELATION_SEPARATOR;
         if ($this->attributeAlias !== null) {
             if (! StringDataType::startsWith($this->attributeAlias, $relPathPrefix)) {
-                $this->getAttributeAlias = $relPathPrefix . $this->attributeAlias;
+                $this->attributeAlias = $relPathPrefix . $this->attributeAlias;
             }
         }
         return $this;
@@ -143,7 +144,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      * @uxon-type string
      * 
      * @param string $name
-     * @return \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface
+     * @return WidgetPropertyBindingInterface
      */
     protected function setDataColumnName(string $name) : WidgetPropertyBindingInterface
     {
@@ -162,7 +163,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      * @uxon-type metamodel:formula
      * 
      * @param string $formula
-     * @return \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface
+     * @return WidgetPropertyBindingInterface
      */
     protected function setCalculation(string $formula) : WidgetPropertyBindingInterface
     {
@@ -196,7 +197,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::isBoundToAttribute()
+     * @see WidgetPropertyBindingInterface::isBoundToAttribute
      */
     public function isBoundToAttribute() : bool
     {
@@ -206,7 +207,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::isBoundToDataColumn()
+     * @see WidgetPropertyBindingInterface::isBoundToDataColumn
      */
     public function isBoundToDataColumn() : bool
     {
@@ -216,7 +217,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getAttributeAlias()
+     * @see WidgetPropertyBindingInterface::getAttributeAlias
      */
     public function getAttributeAlias() : ?string
     {
@@ -226,7 +227,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::prepareDataSheetToRead()
+     * @see WidgetPropertyBindingInterface::prepareDataSheetToRead
      */
     public function prepareDataSheetToRead(DataSheetInterface $dataSheet)
     {
@@ -242,7 +243,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::prepareDataSheetToPrefill()
+     * @see WidgetPropertyBindingInterface::prepareDataSheetToPrefill
      */
     public function prepareDataSheetToPrefill(DataSheetInterface $dataSheet)
     {
@@ -252,7 +253,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::prefill()
+     * @see WidgetPropertyBindingInterface::prefill
      */
     public function prefill(DataSheetInterface $dataSheet)
     {
@@ -342,7 +343,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getDataColumnName()
+     * @see WidgetPropertyBindingInterface::getDataColumnName
      */
     public function getDataColumnName()
     {
@@ -375,7 +376,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::setValue()
+     * @see WidgetPropertyBindingInterface::setValue
      */
     public function setValue($value) : WidgetPropertyBindingInterface
     {
@@ -398,7 +399,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getValue()
+     * @see WidgetPropertyBindingInterface::getValue
      */
     public function getValue() : ?string
     {
@@ -408,7 +409,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getValueExpression()
+     * @see WidgetPropertyBindingInterface::getValueExpression
      */
     public function getValueExpression() : ?ExpressionInterface
     {
@@ -421,7 +422,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::hasValue()
+     * @see WidgetPropertyBindingInterface::hasValue
      */
     public function hasValue() : bool
     {
@@ -431,7 +432,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::isEmpty()
+     * @see WidgetPropertyBindingInterface::isEmpty
      */
     public function isEmpty() : bool
     {
@@ -441,7 +442,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getMetaObject()
+     * @see WidgetPropertyBindingInterface::getMetaObject
      */
     public function getMetaObject() : MetaObjectInterface
     {
@@ -451,7 +452,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getDataType()
+     * @see WidgetPropertyBindingInterface::getDataType
      */
     public function getDataType() : ?DataTypeInterface
     {
@@ -507,7 +508,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::getAggregator()
+     * @see WidgetPropertyBindingInterface::getAggregator
      */
     public function getAggregator(): ?AggregatorInterface
     {
@@ -525,7 +526,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::hasAggregator()
+     * @see WidgetPropertyBindingInterface::hasAggregator
      */
     public function hasAggregator() : bool
     {

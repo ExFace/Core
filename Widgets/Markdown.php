@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use cebe\markdown\GithubMarkdown;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Shows markdown contents rendered as HTML.
@@ -19,6 +20,14 @@ use exface\Core\DataTypes\MarkdownDataType;
 class Markdown extends Html
 {
     private $renderMermaidDiagrams = false;
+    private $openLinksIn = null;
+    private $openLinksInPopupWidth = null;
+    private $openLinksInPopupHeight = null;
+    
+    const OPEN_LINKS_IN_SELF = 'self';
+    const OPEN_LINKS_IN_POPUP = 'popup';
+    const OPEN_LINKS_IN_NEW_TAB = 'new_tab';
+    
     
     /**
      * @return string $markdown
@@ -77,5 +86,105 @@ CSS;
     {
         $this->renderMermaidDiagrams = $value;
         return $this;
+    }
+    
+    /**
+     * This determines how hyperlinks will open when clicked.
+     *  self: opens the hyperlink in the same window.
+     *  popup: opens the hyperlink in popup.
+     *  new_tab: opens the hyperlink in a new browser tab.
+     * 
+     * @uxon-property open_links_in
+     * @uxon-type [self,new_tab,popup]
+     * @uxon-default popup
+     * @uxon-template popup
+     * 
+     * @param string $value
+     * @return $this
+     */
+    public function setOpenLinksIn(string $value) : Markdown
+    {
+        $constName = 'static::OPEN_LINKS_IN_' . strtoupper($value);
+        if (!defined($constName)) {
+                throw new WidgetConfigurationError($this, 'Invalid value: ' . $value . '. Only self, popup or new_tab are allowed!' );
+        } 
+            
+        $this->openLinksIn = $value;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOpenLinksIn(string $default = self::OPEN_LINKS_IN_POPUP) : string
+    {
+        return $this->openLinksIn ?? $default;
+    }
+
+    /**
+     * Sets the width of the popup window. Only works with "$open_links_in: popup" and the "open_links_in_popup_height" property.
+     *
+     * @uxon-property open_links_in_popup_width
+     * @uxon-type number
+     * @uxon-default 800
+     *
+     * @param number $value
+     * @return Markdown
+     */
+    public function setOpenLinksInPopupWidth($value) : Markdown
+    {
+        $this->openLinksInPopupWidth = $value;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getOpenLinksInPopupWidth(?int $default = 800) : ?int {
+        return $this->openLinksInPopupWidth ?? $default;
+    }
+
+    /**
+     * Sets the height of the popup window. Only works with "$open_links_in: popup" and the "open_links_in_popup_width" property.
+     *
+     * @uxon-property open_links_in_popup_height
+     * @uxon-type number
+     * @uxon-default 800
+     *
+     * @param number $value
+     * @return Markdown
+     */
+    public function setOpenLinksInPopupHeight($value) : Markdown
+    {
+        $this->openLinksInPopupHeight = $value;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getOpenLinksInPopupHeight(?int $default = 800) : ?int
+    {
+        return $this->openLinksInPopupHeight ?? $default;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Widgets\Html::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if ($this->openLinksIn !== null) {
+            $uxon->setProperty('open_links_in', $this->getOpenLinksIn());
+        }
+        if ($this->openLinksInPopupWidth !== null) {
+            $uxon->setProperty('open_links_in_popup_width', $this->getOpenLinksInPopupWidth());
+        }
+        if ($this->openLinksInPopupHeight !== null) {
+            $uxon->setProperty('open_links_in_popup_height', $this->getOpenLinksInPopupHeight());
+        }
+        return $uxon;
     }
 }

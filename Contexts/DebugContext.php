@@ -4,6 +4,7 @@ namespace exface\Core\Contexts;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\Constants\Colors;
+use exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
@@ -48,8 +49,16 @@ class DebugContext extends AbstractContext
     const OPERATION_START_TRACING_JS = 'startTracingJs';
 
     const OPERATION_STOP_TRACING_JS = 'stopTracingJs';
+
+    const OPERATION_START_SHOW_HIDDEN = 'startShowingHidden';
+
+    const OPERATION_STOP_SHOW_HIDDEN = 'stopShowingHidden';
     
-    private $tracing = false;
+    const CFG_DEBUG_TRACE = 'DEBUG.TRACE';
+    
+    const VAR_TRACE_STARTED = 'trace_started';
+    
+    const VAR_SHOW_HIDDEN = 'DEBUG.SHOW_HIDDEN';
     
     private $intercepting = false;
     
@@ -86,24 +95,41 @@ class DebugContext extends AbstractContext
      */
     public function isTracing() : bool
     {
-        return $this->tracing || ($this->tracer !== null && ! $this->tracer->isDisabled());
+        if($this->getWorkbench()->isStarted()) {
+            $config = $this->getWorkbench()->getConfig();
+            return $config->hasOption(self::CFG_DEBUG_TRACE) && 
+                $config->getOption(self::CFG_DEBUG_TRACE);
+        }
+        
+        return false;
     }
-    
+
     /**
      * Starts the tracer for the current context scope
-     * 
+     *
      * @uxon-operation startTracing
      *
+     * @param Tracer|null $tracer
      * @return string
      */
     public function startTracing(Tracer $tracer = null) : string
     {
-        $this->tracing = true;
         $this->tracer = $tracer;
         $config = $this->getWorkbench()->getConfig();
-        if ($config->getOption('DEBUG.TRACE') === false) {
-            $config->setOption('DEBUG.TRACE', true, AppInterface::CONFIG_SCOPE_SYSTEM);
+        
+        if ($config->getOption(self::CFG_DEBUG_TRACE) === false) {
+            $this->getScopeInstallation()->setVariable(
+                self::VAR_TRACE_STARTED,
+                time()
+            );
+            
+            $config->setOption(
+                self::CFG_DEBUG_TRACE,
+                true,
+                AppInterface::CONFIG_SCOPE_SYSTEM
+            );
         }
+        
         $this->excludeDebugContextFromTrace();
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_STARTED');
     }
@@ -117,8 +143,17 @@ class DebugContext extends AbstractContext
      */
     public function stopTracing() : string
     {
-        $this->tracing = false;
-        $this->getWorkbench()->getConfig()->setOption('DEBUG.TRACE', false, AppInterface::CONFIG_SCOPE_SYSTEM);
+        $this->getScopeInstallation()->setVariable(
+            self::VAR_TRACE_STARTED,
+            null
+        );
+        
+        $this->getWorkbench()->getConfig()->setOption(
+            self::CFG_DEBUG_TRACE,
+            false,
+            AppInterface::CONFIG_SCOPE_SYSTEM
+        );
+        
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_STOPPED');
     }
     
@@ -146,6 +181,32 @@ class DebugContext extends AbstractContext
     {
         $this->getScope()->unsetVariable('DEBUG.TRACE_JS');
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_JS_STOPPED');
+    }
+
+    /**
+     * Starts the front-end tracer for the current context scope
+     *
+     * @uxon-operation startTracingJs
+     *
+     * @return string
+     */
+    public function startShowingHidden() : string
+    {
+        $this->getWorkbench()->getContext()->getScopeUser()->setVariable(self::VAR_SHOW_HIDDEN, true);
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.SHOW_HIDDEN_STARTED');
+    }
+
+    /**
+     * Stops the front-end tracer for the current context scope
+     *
+     * @uxon-operation stopTracingJs
+     *
+     * @return string
+     */
+    public function stopShowingHidden() : string
+    {
+        $this->getWorkbench()->getContext()->getScopeUser()->unsetVariable(self::VAR_SHOW_HIDDEN);
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.SHOW_HIDDEN_STOPPED');
     }
 
     public function isTracingJs() : bool
@@ -286,13 +347,9 @@ class DebugContext extends AbstractContext
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon){
-        if ($uxon->hasProperty('tracing')){
-            $this->tracing = $uxon->getProperty('tracing');
-        }
         if ($uxon->hasProperty('intercepting')) {
             $this->intercepting = $uxon->getProperty('intercepting');
         }
-        return;
     }
     
     /**
@@ -341,6 +398,8 @@ class DebugContext extends AbstractContext
     public function getContextBarPopup(Container $container)
     {
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $isTracing = $this->isTracing();
+        $isShowingHidden = $this->getWorkbench()->getContext()->getScopeUser()->getVariable(self::VAR_SHOW_HIDDEN);
         $menu = WidgetFactory::createFromUxonInParent($container, new UxonObject([
             'widget_type' => 'Menu',
             'caption' => $this->getName(),
@@ -352,8 +411,8 @@ class DebugContext extends AbstractContext
                         'alias' => 'exface.Core.CallContext',
                         'context_scope' => $this->getScope()->getName(),
                         'context_alias' => $this->getAliasWithNamespace(),
-                        'operation' => $this->isTracing() ? self::OPERATION_STOP_TRACING : self::OPERATION_START_TRACING,
-                        'icon' => $this->isTracing() ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
+                        'operation' => $isTracing ? self::OPERATION_STOP_TRACING : self::OPERATION_START_TRACING,
+                        'icon' => $isTracing ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
                     ]
                 ],
                 // Trace front-end errors
@@ -531,6 +590,17 @@ class DebugContext extends AbstractContext
     }
 JS
                     ]
+                ],
+                // Soft-delete transparency
+                [
+                    'caption' => $translator->translate('CONTEXT.DEBUG.SHOW_HIDDEN'),
+                    'action' => [
+                        'alias' => 'exface.Core.CallContext',
+                        'context_scope' => $this->getScope()->getName(),
+                        'context_alias' => $this->getAliasWithNamespace(),
+                        'operation' => $isShowingHidden ? self::OPERATION_STOP_SHOW_HIDDEN : self::OPERATION_START_SHOW_HIDDEN,
+                        'icon' => $isShowingHidden ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
+                    ]
                 ], 
                 // Clear cache
                 [
@@ -598,5 +668,29 @@ JS
             }
         }
         return parent::handle($task, $operation);
+    }
+
+    /**
+     * @return InstallationContextScope
+     */
+    protected function getScopeInstallation() : InstallationContextScope
+    {
+        return $this->getWorkbench()->getContext()->getScopeInstallation();
+    }
+
+    /**
+     * Get the duration in SECONDS since tracing was last started in this context.
+     * Returns FALSE if this context is not currently tracing.
+     * 
+     * @return float|false
+     */
+    public function getTraceDuration() : float|false
+    {
+        $traceStarted = $this->getScopeInstallation()->getVariable(self::VAR_TRACE_STARTED);
+        if($traceStarted === null) {
+            return false;
+        }
+        
+        return time() - $traceStarted;
     }
 }

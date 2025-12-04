@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -76,6 +77,18 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // But if the button calls an object action from the meta model, that has checks/mappers
         // defined, they will not be part of the imported UXON and need to be added manually here.
         if (null !== $showWidgetAction = $this->getPrefillTriggerAction($task)) {
+            // Make sure, the original ShowWidget action is authorized with the current set of data.
+            // This is important to prevent reading prefill data for things, that the user actually cannot
+            // open due to policies applying to ShowWidget/Dialog actions, that cause the prefill.
+            if ($this->getWorkbench()->isInstalled()) {
+                try {
+                    $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+                } catch (throwable $e) {
+                    $this->getWorkbench()->getLogger()->logException($e);
+                }
+                $actionAP->authorize($showWidgetAction, $task);
+            }
+
             // Inherit all checks
             // IDEA should we only get checks, that are different from those alread in the prefill action?
             foreach ($showWidgetAction->getInputChecks() as $check) {

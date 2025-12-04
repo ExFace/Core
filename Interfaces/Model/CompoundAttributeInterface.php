@@ -31,7 +31,16 @@ interface CompoundAttributeInterface extends MetaAttributeInterface
      * @return CompoundAttributeInterface
      */
     public function addComponentAttribute(MetaAttributeInterface $attribute, string $valuePrefix, string $valueSuffix) : CompoundAttributeInterface;
-    
+
+    /**
+     * Merge the given values array to a compound value with the components prefixes and suffixes added
+     *
+     * @param array $values
+     * @throws RuntimeException
+     * @return string
+     */
+    public function mergeValues(array $values) : string;
+
     /**
      * Returns an associative array with component indexes as keys and the respective value parts.
      * 

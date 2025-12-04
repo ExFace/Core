@@ -17,7 +17,7 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
  * @author Andrej Kabachnik
  * 
  */
-class ConditionalPropertyConditionGroup implements WidgetPartInterface
+class ConditionalPropertyConditionGroup implements WidgetPartInterface, \Stringable
 {
     use ImportUxonObjectTrait;
     
@@ -203,5 +203,17 @@ class ConditionalPropertyConditionGroup implements WidgetPartInterface
     public function getConditionalProperty() : ConditionalProperty
     {
         return $this->conditionalProperty;
+    }
+
+    public function __toString(): string
+    {
+        $result = '';
+        foreach ($this->getConditions() as $cond) {
+            $result .= ($result ? ' ' . $this->getOperator() . ' ' : '') . $cond->__toString();
+        }
+        foreach ($this->getConditionGroups() as $group) {
+            $result .= ($result ? ' ' . $this->getOperator() . ' ' : '') . '( ' . $group->__toString() . ' )';
+        }
+        return $result;
     }
 }

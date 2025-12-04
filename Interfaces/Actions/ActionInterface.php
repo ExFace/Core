@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
-use exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -56,7 +55,8 @@ interface ActionInterface extends
     iCanBeConvertedToUxon, 
     TaskHandlerInterface, 
     iCanGenerateDebugWidgets,
-    iHaveIcon
+    iHaveIcon,
+    \Stringable
 {
     
     /**
@@ -540,4 +540,14 @@ interface ActionInterface extends
      * @return ActionConfirmationListInterface|\exface\Core\Interfaces\Widgets\ConfirmationWidgetInterface[]
      */
     public function getConfirmations() : ActionConfirmationListInterface;
+
+    /**
+     * Returns the alias of the action prototype.
+     * 
+     * E.g. `exface.Core.ShowDialog` for all dialog actions.
+     * 
+     * @param bool $withNamespace
+     * @return string
+     */
+    public function getAliasOfPrototype(bool $withNamespace = true) : string;
 }

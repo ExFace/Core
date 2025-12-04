@@ -17,7 +17,6 @@ use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Uxon\DataSheetLookupMappingSchema;
-use RuntimeException;
 
 /**
  * Looks up a value in a separate data sheet and places it in the to-column
@@ -29,6 +28,14 @@ use RuntimeException;
  * You can think of it as a column-to-column mapping, which uses an additional step reading
  * a third data sheet (called `lookup`) and maps data from that lookup sheet to the to-sheet
  * instead of getting its values from the from-sheet directly.
+ * 
+ * ## Reading lookup data
+ * 
+ * This mapper searches for lookup values for the entire from-data. This means, there will be
+ * one read operation per input DataSheet. This is fine for most actions, but may produce significant
+ * overhead if there are a lot of separate mappings performed - e.g. when importing data row-by-row.
+ * An alternative would be to `read_all` available data at once and do the lookups in-memory. This
+ * will only conduct a single read operation, but will read all data of the lookup action.
  * 
  * ## Things to keep in mind
  * 
@@ -107,6 +114,9 @@ class LookupMapping extends AbstractDataSheetMapping
     private $toExpression = null;
     private $createRowInEmptyData = true;
     private $matchesUxon = null;
+    private $readAll = false;
+    
+    private $lookupCache = null;
 
     private $ignoreIfMissingFromColumn = false;
     private ?UxonObject $notFoundErrorUxon = null;
@@ -155,6 +165,7 @@ class LookupMapping extends AbstractDataSheetMapping
     protected function setLookupColumn($string) : LookupMapping
     {
         $this->lookupExpressionString = $string;
+        $this->clearCache();
         return $this;
     }
 
@@ -209,38 +220,114 @@ class LookupMapping extends AbstractDataSheetMapping
         
         $log = "Lookup `{$lookupExpr->__toString()}` -> `{$toExpr->__toString()}`.";
 
-        $matches = $this->getMatches();
-        $lookupSheet = DataSheetFactory::createFromObject($this->getLookupObject());
-        $lookupCol = $lookupSheet->getColumns()->addFromExpression($lookupExpr);
-        foreach ($matches as $i => $match) {
-            $matchLookupCol = $lookupSheet->getColumns()->addFromExpression($match['lookup']);
-            $matches[$i]['lookup_datatype'] = $matchLookupCol->getDataType();
-        }
-        foreach($matches as $match) {
-            $fromExpr = ExpressionFactory::createForObject($fromSheet->getMetaObject(), $match['from']);
-            if (! $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)) {
-                // If not enough data, but explicitly configured to ignore it, exit here
-                if ($this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType())) {
-                    if ($logbook !== null) $logbook->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
-                    return $toSheet;
-                }
-                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Missing column "' . $match['from'] . '" in from-data for a lookup mapping!');
-            }
-            $lookupSheet->getFilters()->addConditionFromValueArray($match['lookup'], $fromCol->getValues());
-        }
-        $lookupSheet->dataRead();
-
         // See if the target column will be a subsheet. We need to create column slightly differently
         // for subsheets (the attribute_alias is the reverse relation) and for regular columns 
         // (attribute_alias points to the specific attribute)
         $isSubsheet = false;
+        $isRequired = false;
         if (! $toCol = $toSheet->getColumns()->getByExpression($toExpr)) {
             if ($this->needsSubsheet($toExpr)) {
                 $isSubsheet = true;
+                // Currently there is no way to tell, if at least one row is required in a subsheet,
+                // so we assume, that they are never required.
+                // TODO perhaps, an explicit `required` property of the lookup mapping could solve this issue.
+                $isRequired = false;
                 $toCol = $toSheet->getColumns()->addFromExpression($toExpr->getAttribute()->getRelationPath()->getRelationFirst()->getAlias());
+                $subsheetTpl = [
+                    'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
+                    'rows' => []
+                ];
             } else {
+                $isRequired = $toExpr->isMetaAttribute() ? $toExpr->getAttribute()->isRequired() : false;
                 $toCol = $toSheet->getColumns()->addFromExpression($toExpr);
             }
+        } else {
+            if ($this->needsSubsheet($toExpr)) {
+                $isSubsheet = true;
+            }
+        }
+
+        // Get the lookup data - either from cache or by reading it
+        $readAll = $this->willReadAll();
+        $matchesLookup = [];
+        if ($this->lookupCache === null) {
+            $matches = $this->getMatches();
+            $lookupSheet = DataSheetFactory::createFromObject($this->getLookupObject());
+            $lookupCol = $lookupSheet->getColumns()->addFromExpression($lookupExpr);
+            // Add lookup columns for every match
+            foreach ($matches as $i => $match) {
+                $matchLookupCol = $lookupSheet->getColumns()->addFromExpression($match['lookup']);
+                $matchesLookup[$i] = [
+                    'lookupCol' => $matchLookupCol,
+                ];
+            }
+        } else {
+            $lookupSheet = $this->lookupCache['lookupSheet'];
+            $lookupCol = $this->lookupCache['lookupCol'];
+            $matches = $this->lookupCache['matches'];
+            $matchesLookup = $this->lookupCache['matchesLookup'];
+        }
+
+        // Prepare from-data keys to compare with lookup data
+        $matchesFrom = [];
+        $fromColsHaveValues = false;
+        foreach ($matches as $i => $match) {
+            $fromExpr = ExpressionFactory::createForObject($fromSheet->getMetaObject(), $match['from']);
+            if (! $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)) {
+                // If not enough data, but explicitly configured to ignore it, exit here
+                if ($this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType())) {
+                    $logbook?->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
+                    return $toSheet;
+                }
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Missing column "' . $match['from'] . '" in from-data for a lookup mapping!');
+            }
+            /* TODO pre-parse all from values to speed up comparison later on
+            $fromType = $fromCol->getDataType();
+            $fromVals = [];
+            foreach ($fromCol->getValues() as $fromVal) {
+                $fromVals[] = $fromType->parse($fromVal);
+            }
+            $matchesFrom[$i] = [
+                'fromCol' => $fromCol,
+                'fromValsParsed' => $fromVals
+            ];*/
+            
+            // If there are no from values
+            if ($fromCol->isEmpty(true) === false) {
+                $fromColsHaveValues = true;
+            }            
+            // Add a filter to the lookup-sheet if not told to read it all anyhow
+            if ($readAll === false) {
+                $lookupSheet->getFilters()->addConditionFromValueArray($match['lookup'], $fromCol->getValues());
+            }
+        }
+        
+        // If none of the from-columns have values, we do not need to read any data - it will be empty anyway!
+        // In this case, ALL from-rows are definitely unmatched, so we can directly check, if we need an error
+        // and exit here. This will also prevent worst-cases like reading all available lookup data just because
+        // the filters do not have values.
+        if ($fromColsHaveValues === false) {
+            $toColVals = [];
+            if ($isRequired === true) {
+                $this->handleUnmatchedRows($fromSheet->getRows(), $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
+            }
+            $logbook?->addLine($log);
+            return $toSheet;
+        }
+        
+        // Read the lookup data if not using cache or cache not filled yet
+        if ($readAll === false || $this->lookupCache === null) {
+            $lookupSheet->dataRead();
+        }
+        
+        // Fill the cache if required
+        if ($readAll === true && $this->lookupCache === null) {
+            $this->lookupCache = [
+                'lookupSheet' => $lookupSheet,
+                'lookupCol' => $lookupCol,
+                'matches' => $matches,
+                'matchesLookup' => $matchesLookup
+            ];
         }
 
         $lookupColName = $lookupCol->getName();
@@ -253,18 +340,26 @@ class LookupMapping extends AbstractDataSheetMapping
 
         // For every row in the from-sheet we will create a row in the to-sheet
         $unmatchedRows = [];
-        foreach ($fromSheet->getRows() as $i => $fromRow) {
-            $toColVals[$i] = null;
+        foreach ($fromSheet->getRows() as $iFromRow => $fromRow) {
+            $toColVals[$iFromRow] = null;
+            // Collect all from-values into a single string to quickly find out
+            $fromRowValsJoined = '';
+            foreach ($matches as $match) {
+                $fromRowValsJoined .= trim($fromRow[$match['from']] ?? '');
+            }
             // Look for matching lookup rows for this from-row
             foreach ($lookupSheet->getRows() as $lookupRow) {
-                $prevVal = $toColVals[$i];
+                $prevVal = $toColVals[$iFromRow];
                 // If any of the keys DO NOT match, continue with next lookup row
-                foreach ($matches as $match) {
+                foreach ($matches as $iMatch => $match) {
                     // Convert both values to the data type of the lookup side so
                     // that both are in the same format
-                    $matchType = $match['lookup_datatype'];
+                    $matchType = $matchesLookup[$iMatch]['lookupCol']->getDataType();
                     $matchVal = $lookupRow[$match['lookup']];
                     $fromVal = $fromRow[$match['from']];
+                    // TODO move parsing from-data up to where from data is checked
+                    // to avoid parsing the from-value over and over for every lookup
+                    // row and for every match
                     try {
                         $fromVal = $matchType->parse($fromVal);
                     } catch (DataTypeExceptionInterface $e) {
@@ -279,41 +374,43 @@ class LookupMapping extends AbstractDataSheetMapping
                 // Now we have the value we were looking for
                 $lookupVal = $lookupRow[$lookupColName];
                 // If it belongs into a subsheet, make sure the value is saved as an array representation
-                // of a data sheet. Otherwise save it as-is.
+                // of a data sheet. Otherwise, save it as-is.
                 if ($isSubsheet) {
                     if (! is_array($prevVal)) {
-                        $toColVals[$i] = [
-                            'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
-                            'rows' => []
-                        ];
+                        // Copy the template. Remember, that assigning arrays in PHP will do copy-on-wirte
+                        $toColVals[$iFromRow] = $subsheetTpl;
                     }
                     if ($lookupVal !== null && $lookupVal !== '') {
                         foreach (explode($toValDelim, $lookupVal) as $val) {
-                            $toColVals[$i]['rows'][] = [$toExpr->getAttribute()->getAlias() => $val];
+                            $toColVals[$iFromRow]['rows'][] = [$toExpr->getAttribute()->getAlias() => $val];
                         }
                     }
                 } else {
                     if ($prevVal === null) {
-                        $toColVals[$i] = $lookupVal;
+                        $toColVals[$iFromRow] = $lookupVal;
                     } else {
-                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $i);
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $iFromRow);
                     }
                 }
             }
             
             // If row could not be matched to any lookup row, we might have to respond.
-            if($toColVals[$i] === null) {
-                if($isSubsheet) {
-                    $logbook->addLine('**ERROR**: Unmatched row `' . $i . '` is sub-sheet.');
-                    $toColVals[$i] = [
-                        'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
-                        'rows' => []
-                    ];
-                } else {
+            if(null === ($toColVals[$iFromRow] ?? null)) {
+                // If we do not have a lookup-value, that is perfectly fine if we did not have a
+                // from-value either.
+                if (! $isRequired && '' === trim($fromRowValsJoined)) {
+                    // In case of subsheets, leaving the cell empty will actually not change anything. To really
+                    // set it to an empty value, we need an empty subsheet here.
+                    if ($isSubsheet) {
+                        $toColVals[$iFromRow] = $subsheetTpl;
+                    }
+                }
+                // Otherwise this from-row is a miss, and we need to handle it according to `if_not_found`
+                else {
                     // Cache unmatched row.
-                    $unmatchedRows[$i] = $fromRow;
+                    $unmatchedRows[$iFromRow] = $fromRow;
                     // Some configurations require, that we stop processing after encountering our first unmatched row.
-                    if($this->stopOnFirstMiss) {
+                    if ($this->stopOnFirstMiss) {
                         break;
                     }
                 }
@@ -322,8 +419,8 @@ class LookupMapping extends AbstractDataSheetMapping
 
         $this->handleUnmatchedRows($unmatchedRows, $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
         $toCol->setValues($toColVals);
-        
-        if ($logbook !== null) $logbook->addLine($log);
+
+        $logbook?->addLine($log);
         
         return $toSheet;
     }
@@ -494,6 +591,7 @@ class LookupMapping extends AbstractDataSheetMapping
     protected function setLookupObjectAlias(string $aliasOrUid) : LookupMapping
     {
         $this->lookupObjectAlias = $aliasOrUid;
+        $this->clearCache();
         return $this;
     }
 
@@ -551,6 +649,7 @@ class LookupMapping extends AbstractDataSheetMapping
     protected function setMatches(UxonObject $uxon) : LookupMapping
     {
         $this->matchesUxon = $uxon;
+        $this->clearCache();
         return $this;
     }
 
@@ -719,5 +818,43 @@ class LookupMapping extends AbstractDataSheetMapping
     protected function getIfNotFoundFallbackValue() : ?string
     {
         return $this->fallbackValue;
+    }
+
+    /**
+     * @return void
+     */
+    protected function clearCache() : void
+    {
+        $this->lookupCache = null;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function willReadAll() : bool
+    {
+        return $this->readAll;
+    }
+
+    /**
+     * Set to TRUE to read ALL possible lookup data and perform lookups in-memory instead of reading for every from-data sheet separately
+     * 
+     * This mapper searches for lookup values for the entire from-data. This means, there will be
+     * one read operation per input DataSheet. This is fine for most actions, but may produce significant
+     * overhead if there are a lot of separate mappings performed - e.g. when importing data row-by-row.
+     * An alternative would be to `read_all` available data at once and do the lookups in-memory. This
+     * will only conduct a single read operation, but will read all data of the lookup action.
+     * 
+     * @uxon-property read_all
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setReadAll(bool $trueOrFalse) : LookupMapping
+    {
+        $this->readAll = $trueOrFalse;
+        return $this;
     }
 }

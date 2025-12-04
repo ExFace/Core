@@ -147,7 +147,9 @@ class ConditionalProperty implements WidgetPartInterface
     {
         $logicalOp = mb_strtoupper($logicalOp);
         if ($this->conditionGroup === null) {
-            $this->conditionGroup = ConditionGroupFactory::createForObject($this->getBaseObject(), $logicalOp);
+            $this->conditionGroup = new ConditionalPropertyConditionGroup($this, new UxonObject([
+                'operator' => $logicalOp
+            ]));
         } elseif ($this->conditionGroup->getOperator() !== $logicalOp) {
             throw new WidgetLogicError($this->getWidget(), 'Cannot change the logical operator of a conditional property after it has been initialized!');
         }
@@ -168,16 +170,15 @@ class ConditionalProperty implements WidgetPartInterface
     protected function setConditions(UxonObject $arrayOfConditions) : ConditionalProperty
     {
         if ($this->conditionGroup === null) {
-            $this->conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), new UxonObject([
+            $this->conditionGroup = new ConditionalPropertyConditionGroup($this, new UxonObject([
                 'conditions' => $arrayOfConditions->toArray()
-            ]), $this->getBaseObject());
+            ]));
         } else {
-            $this->conditionGroup = ConditionGroupFactory::createFromUxon(
-                $this->getWorkbench(), 
+            $this->conditionGroup = new ConditionalPropertyConditionGroup(
+                $this,
                 $this->conditionGroup->exportUxonObject()->extend(new UxonObject([
                     'conditions' => $arrayOfConditions->toArray()
-                ])),
-                $this->getBaseObject()
+                ]))
             );
         }
         return $this;
@@ -197,17 +198,16 @@ class ConditionalProperty implements WidgetPartInterface
     protected function setConditionGroups(UxonObject $arrayOfCondGroups) : ConditionalProperty
     {
         if ($this->conditionGroup === null) {
-            $this->conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), new UxonObject([
+            $this->conditionGroup = new ConditionalPropertyConditionGroup($this,  UxonObject([
                 'condition_groups' => $arrayOfCondGroups->toArray()
-            ]), $this->getBaseObject());
+            ]));
         } else {
-            $this->conditionGroup = ConditionGroupFactory::createFromUxon(
-                $this->getWorkbench(),
+            $this->conditionGroup = new ConditionalPropertyConditionGroup(
+                $this,
                 $this->conditionGroup->exportUxonObject()->extend(new UxonObject([
                     'condition_groups' => $arrayOfCondGroups->toArray()
                 ])),
-                $this->getBaseObject()
-                );
+            );
         }
         return $this;
     }

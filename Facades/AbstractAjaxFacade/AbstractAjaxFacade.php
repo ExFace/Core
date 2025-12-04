@@ -3,6 +3,8 @@ namespace exface\Core\Facades\AbstractAjaxFacade;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\DataTypes\ListDataType;
+use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
@@ -91,8 +93,6 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
 
     private $class_namespace = '';
     
-    private $data_type_formatters = [];
-    
     private $pageTemplateFilePath = null;
     
     private $sematic_colors = [];
@@ -132,7 +132,11 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     public function buildJs(\exface\Core\Widgets\AbstractWidget $widget)
     {
         $instance = $this->getElement($widget);
-        return $instance->buildJs();
+        try {
+            return $instance->buildJs();
+        } catch (\Throwable $e) {
+            throw new WidgetLogicError($widget, 'Cannot render widget JavaScript! ' . $e->getMessage(), null, $e);
+        }
     }
 
     /**
@@ -143,7 +147,11 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     public function buildHtml(WidgetInterface $widget)
     {
         $instance = $this->getElement($widget);
-        return $instance->buildHtml();
+        try {
+            return $instance->buildHtml();
+        } catch (\Throwable $e) {
+            throw new WidgetLogicError($widget, 'Cannot render widget HTML! ' . $e->getMessage(), null, $e);
+        }
     }
 
     /**
@@ -213,19 +221,24 @@ HTML;
         
         return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
     }
-    
+
     /**
-     * 
+     *
      * @param WidgetInterface $widget
      * @return AbstractJqueryElement
+     * @throws WidgetFacadeRenderingError
      */
     protected function createElement(WidgetInterface $widget) : AbstractJqueryElement
     {
-        $elem_class = $this->getElementClassForWidget($widget);
-        $instance = new $elem_class($widget, $this);
-        
-        if ($widget instanceof CustomWidgetInterface) {
-            $instance = $widget->createFacadeElement($this, $instance);
+        try {
+            $elem_class = $this->getElementClassForWidget($widget);
+            $instance = new $elem_class($widget, $this);
+
+            if ($widget instanceof CustomWidgetInterface) {
+                $instance = $widget->createFacadeElement($this, $instance);
+            }
+        } catch (\Throwable $e) {
+            throw new WidgetFacadeRenderingError($widget, $this, 'Cannot create facade element for widget ' . $widget->getWidgetType() . '! ' . $e->getMessage(), null, $e);
         }
         
         return $instance;
@@ -499,7 +512,7 @@ HTML;
                 
                 if ($result->isDownload()) {
                     $json = [
-                        "success" => $result->getMessage() ? $result->getMessage() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]),
+                        "success" => $result->getMessage() ? $result->getMessage() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $uri]),
                         "download" => $uri->__toString()
                     ];
                 } else {
@@ -571,6 +584,34 @@ HTML;
             $colName = $col->getName();
             $colType = $col->getDataType();
             switch (true) {
+                // Normalize nested data to JSON objects
+                case $col->isNestedData():
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName] ?? null;
+                        switch (true) {
+                            // Skip empty values - do not even add a key to the row to keep backwards
+                            // compatibility with times where reading nested data was not possible
+                            case $val === null:
+                            case $val === '':
+                                continue 2;
+                            // Transform UXON to array to ensure a nested structure in the ned
+                            case $val instanceof UxonObject:
+                                $json = $val->toArray();
+                                break;
+                            // Keep arrays as-is
+                            case is_array($val):
+                                $json = $val;
+                                break;
+                            // Leave all other values as-is.
+                            // TODO but wouldn't we need to parse a JSON string to an array here? What to do if
+                            // that fails though?
+                            default:
+                                $json = $val;
+                                break;
+                        }
+                        $rows[$i][$colName] = $json;
+                    }
+                    break;
                 case $colType instanceof HtmlDataType:
                     // FIXME #xss-protection sanitize HTML here!
                     break;
@@ -1145,5 +1186,15 @@ HTML;
             $html .= "<script src=$script></script>\n";
         }
         return $html;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see HtmlPageFacadeInterface::buildUrlToWidget()
+     */
+    public function buildUrlToWidget(WidgetInterface $widget, DataSheetInterface $prefillData = null) : string
+    {
+        $page = $widget->getPage();
+        return $this->buildUrlToPage($page);
     }
 }

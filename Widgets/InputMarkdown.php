@@ -1,6 +1,10 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\TextMention;
+use exface\Core\Widgets\Parts\TextStencil;
+
 /**
  * Markdown editor
  * 
@@ -17,6 +21,10 @@ class InputMarkdown extends InputText
     
     private string $mode = self::MODE_MARKDOWN;
     private bool $allowImages = false;
+    private array $stencils = [];
+    private ?UxonObject $stencilsUxon = null;
+    private array $mentions = [];
+    private ?UxonObject $mentionsUxon = null;
     
     /**
      * Set the editor to a "Word-like" WYSIWYG mode or to raw markdown mode.
@@ -72,5 +80,84 @@ class InputMarkdown extends InputText
     public function getAllowImages() : bool
     {
         return  $this->allowImages;
+    }
+
+    /**
+     * @return TextStencil[]
+     */
+    public function getStencils() : array
+    {
+        if (empty($this->stencils) && $this->stencilsUxon !== null) {
+            foreach ($this->stencilsUxon->getPropertiesAll() as $uxon) {
+                $type = $uxon->getProperty('type');
+                if (! empty($type)) {
+                    $class = '\\exface\\Core\\Widgets\\Parts\\' . $type . 'Stencil';
+                    if (! class_exists($class)) {
+                        $class = null;
+                    }
+                }
+                $class = $class ?? '\\exface\\Core\\Widgets\\Parts\\TextStencil';
+                $this->stencils[] = new $class($this, $uxon);
+            }
+        }
+        return $this->stencils;
+    }
+
+    /**
+     * Array of stencils (templates), that will be available through the toolbar of the editor
+     * 
+     * @uxon-property stencils
+     * @uxon-type \exface\Core\Widgets\Parts\TextStencil[]
+     * @uxon-template [{"type": "HtmlTag", "caption": "", "hint": ""}]
+     * 
+     * @param UxonObject $arrayOfUxons
+     * @return $this
+     */
+    protected function setStencils(UxonObject $arrayOfUxons) : InputMarkdown
+    {
+        $this->stencilsUxon = $arrayOfUxons;
+        return $this;
+    }
+
+    /**
+     * @return TextMention[]
+     */
+    public function getMentions() : array
+    {
+        if (empty($this->mentions) && $this->mentionsUxon !== null) {
+            foreach ($this->mentionsUxon->getPropertiesAll() as $uxon) {
+                $this->mentions[] = new TextMention($this, $uxon);
+            }
+        }
+        return $this->mentions;
+    }
+
+    /**
+     * An array of mentions, it is a widget that can automatically suggest values for a given object and insert them as mention tags in Markdown.
+     *
+     * @uxon-property mentions
+     * @uxon-type \exface\Core\Widgets\Parts\TextMention[]
+     * @uxon-template [{"caption": "", "tag_prefix": "", "tag_text_regex": "%.*%i", "tag_color": "", "autosuggest_object_alias": "", "autosuggest_filter_attribute_alias": ""}]
+     *
+     * @param UxonObject $arrayOfUxons
+     * @return $this
+     */
+    protected function setMentions(UxonObject $arrayOfUxons) : InputMarkdown
+    {
+        $this->mentionsUxon = $arrayOfUxons;
+        return $this;
+    }
+    
+    public function getChildren(): \Iterator
+    {
+        yield from parent::getChildren();
+        foreach ($this->getMentions() as $mention) {
+            yield $mention->getAutosuggestButton();
+            /* TODO
+            if ($mention->hasClickAction()) {
+                yield $mention->getClickButton();
+            }
+            */
+        }
     }
 }

@@ -3,12 +3,9 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
@@ -21,6 +18,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * A condition is a simple conditional predicate to compare two expressions.
@@ -68,8 +66,6 @@ class Condition implements ConditionInterface
     private $value_set = false;
 
     private $comparator = null;
-
-    private $data_type = null;
     
     private $ignoreEmptyValues = null;
 
@@ -146,7 +142,7 @@ class Condition implements ConditionInterface
      * {@inheritdoc}
      * @see ConditionInterface::getValue()
      */
-    public function getValue() : ?string
+    public function getValue() : mixed
     {
         return $this->value;
     }
@@ -169,7 +165,7 @@ class Condition implements ConditionInterface
      * 
      * @see ConditionInterface::setValue()
      */
-    public function setValue(?string $value) : ConditionInterface
+    public function setValue(mixed $value) : ConditionInterface
     {
         $this->unsetValue();
         if (Expression::detectFormula($value)) {
@@ -187,15 +183,10 @@ class Condition implements ConditionInterface
         // only use an explicitly set comparater here and not let the comparater be guessed, as that could guess a wrong comparator
         // when the value is not set yet. For example that happens in a autosuggest action request with an filter parameter containing an IN filter
         // like in a Prefill of an InputComboTable with multi-select
-        if ($this->getDataType()->isValueEmpty($value) && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
+        if (($value === null || $value === '') && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
             return $this;
         }
         $this->value_set = true;
-        try {
-            $value = $this->getDataType()->parse($value);
-        } catch (\Throwable $e) {
-            throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
-        }
         $this->value = $value;
         return $this;
     }
@@ -340,53 +331,83 @@ class Condition implements ConditionInterface
      * The comparison operator used in this condition
      * 
      * ## Scalar (single value) comparators
-     * 
-     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
-     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+     *
+     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different
+     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case
      * insensitive for strings
      * - `!=` - yields TRUE if `IS` would result in FALSE
-     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
-     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
+     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the
+     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020.
      * - `!==` - the inverse of `EQUALS`
      * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
      * comparable types: e.g. numbers or dates.
-     * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
+     * - `<=` - yields TRUE if the left value is less than or equal to the right one.
      * Both values must be of comparable types: e.g. numbers or dates.
      * - `>` - yields TRUE if the left value is greater than the right one. Both values must be of
      * comparable types: e.g. numbers or dates.
-     * - `>=` - yields TRUE if the left value is greater than or equal to the right one. 
+     * - `>=` - yields TRUE if the left value is greater than or equal to the right one.
      * Both values must be of comparable types: e.g. numbers or dates.
-     * 
+     *
      * ## List comparators
-     * 
+     *
+     * ### Comparing entire lists
+     *
      * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
      * value equals at least on of the values in the list within the right value. The list on the
      * right side must consist of numbers or strings separated by commas or the attribute's value
      * list delimiter if filtering over an attribute. The right side can also be another type of
      * expression (e.g. a formula or widget link), that yields such a list.
-     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
-     * list within the right value. The list on the right side must consist of numbers or strings separated 
-     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the
+     * list within the right value. The list on the right side must consist of numbers or strings separated
+     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can
      * also be another type of expression (e.g. a formula or widget link), that yields such a list.
-     * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least 
+     * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least
      * one element, that is present in both lists.
      * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
-     * - `[[` - subset - compares two lists with each other. Becomes true when all elements of the left list 
+     * - `[[` - subset - compares two lists with each other. Becomes true when all elements of the left list
      * are in the right list too
-     * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in 
+     * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in
      * the right list.
-     * 
-     * ## Range comparators
-     * 
-     * - `..` - range between two values - e.g. `1 .. 5`
+     *
+     * ### EACH comparators
+     *
+     * The following comparators yield TRUE if **EACH** of the values of the left list yields TRUE
+     * when compared to at least one value of the right list using the respective scalar comparator.
+     *
+     * - `[=` - each value left is at least one value on the right
+     * - `[!=` - at least one value on the left does not match any value on the right
+     * - `[==` - each value left equals at least one value on the right exactly
+     * - `[!==` - at least one value on the left does not exactly equal any value on the right
+     * - `[<` - each value left is less than any value on the right
+     * - `[<=` - each value left is less than or equals any value on the right
+     * - `[>` - each value left is greater than any value on the right
+     * - `[>=` - each value left is greater than or equals value on the right
+     *
+     * ### ANY comparators
+     *
+     * Similarly, the following comparators will yield TRUE if **ANY** of the values of the left list yields TRUE
+     * when compared to at least one value of the right list using the respective scalar comparator.
+     *
+     * - `]=` - at least one value left is at least one value on the right
+     * - `]!=` - none of the left values match any value on the right
+     * - `]==` - at least one value left equals at least one value on the right exactly
+     * - `]!==` - none of the left values equals exactly any value on the right
+     * - `]<` - at least one value left is less than any value on the right
+     * - `]<=` - at least one value left is less than or equals any value on the right
+     * - `]>` - at least one value left is greater than any value on the right
+     * - `]>=` - at least one value left is greater than or equals value on the right
+     *
+     *  ## Range comparators
+     *
+     *  - `..` - range between two values - e.g. `1 .. 5`
      * 
      * @uxon-property comparator
      * @uxon-type metamodel:comparator
      * @uxon-default =
      * 
      * @param string $value
-     * @throws UnexpectedValueException
      * @return ConditionInterface
+     *@throws UnexpectedValueException
      */
     protected function setComparator(string $value) : ConditionInterface
     {
@@ -414,19 +435,6 @@ class Condition implements ConditionInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see ConditionInterface::getDataType()
-     */
-    public function getDataType() : DataTypeInterface
-    {
-        if ($this->data_type === null) {
-            $this->data_type = DataTypeFactory::createBaseDataType($this->exface);
-        }
-        return $this->data_type;
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionInterface::getAttributeAlias()
@@ -447,7 +455,7 @@ class Condition implements ConditionInterface
      */
     public function toString() : string
     {
-        return $this->getExpression()->toString() . ' ' . $this->getComparator() . ' ' . $this->getValue();
+        return $this->getExpression()->__toString() . ' ' . $this->getComparator() . ' ' . $this->getValue() ?? EXF_LOGICAL_NULL;
     }
 
     /**
@@ -555,7 +563,7 @@ class Condition implements ConditionInterface
                     $value = $uxon->getProperty('value_right');
                     break;
                 }
-                // Otherwise continue with the next case
+            // Otherwise continue with the next case
             case $uxon->hasProperty('value_right') === true:
                 $val = $uxon->getProperty('value_right');
                 $expression = ExpressionFactory::createForObject($obj, $val, $expressionUnknownAsString);
@@ -563,7 +571,7 @@ class Condition implements ConditionInterface
                     $value = $uxon->getProperty('value_left');
                     break;
                 }
-                // Otherwise continue with the next case
+            // Otherwise continue with the next case
             default:
                 throw new UxonParserError($uxon, 'Cannot parse condition UXON: no expression found!');
         }
@@ -676,24 +684,45 @@ class Condition implements ConditionInterface
         if ($data_sheet === null && $row_number !== null) {
             throw new RuntimeException('Cannot evaluate a condition: do data provided!');
         }
-        
-        // For string expressions or onknown expression types, check if they match a column in the data sheet.
-        // If so, treat them as column ref.
-        // TODO this is a little confusiong. Actually, left expressions in conditions never seem to be unknown
-        // although this would be correct in this case. Need a better way to distinguish column refs and strings
-        // here
+
+        // Get the value of the left expression
         $leftExpr = $this->getExpression();
-        if (($leftExpr->isString() || $leftExpr->isUnknownType()) && $data_sheet && $leftCol = $data_sheet->getColumns()->getByExpression($leftExpr)) {
-            $leftVal = $leftCol->getValue($row_number);
-        } else {
-            $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
+        $leftCol = null;
+        // If working in data context, see if that data has a matching column
+        if ($data_sheet !== null) {
+            $leftCol = $data_sheet->getColumns()->getByExpression($leftExpr);
         }
+        // Depending on the context and on the expression type, we now need to decide, if we evaluate
+        // the expression or take the value to compare from the context (e.g. from data)
+        switch (true) {
+            // If the data sheet includes a matching column AND it is fresh, take the value from there
+            case $leftCol && $leftCol->isFresh():
+                $leftVal = $leftCol->getValue($row_number);
+                break;
+            // For strings and unknown expressions, ALWAYS take the current column value if there is one - even if not fresh
+            // TODO this is a little confusiong. Actually, left expressions in conditions never seem to be unknown
+            // although this would be correct in this case. Need a better way to distinguish column refs and strings
+            // here
+            case ($leftExpr->isString() || $leftExpr->isUnknownType()) && $leftCol:
+                $leftVal = $leftCol->getValue($row_number);
+                break;
+            // Otherwise evaluate the expression
+            // IMPORTANT: evaluating formulas and constants in conditions on-the-fly allows to filter data, that
+            // does not explicitly include corresponding columns. This reduces additional read operations and simlifies
+            // filtering of data without UIDs.
+            default:
+                $leftVal = $leftExpr->evaluate($data_sheet, $row_number);
+                break;
+        }
+
+        // Get the value of the right expression
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
 
-        $listDelimiter = $this->getExpression()->isMetaAttribute() ? $this->getExpression()->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        // Determine the expected list delimiter in case we will be working with lists
+        $listDelimiter = $leftExpr->isMetaAttribute() ? $leftExpr->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
         
         // Normalize empty values according to the data type of the expression
-        $dataType = $this->getExpression()->getDataType();
+        $dataType = $leftExpr->getDataType();
         if ($dataType->isValueEmpty($leftVal)) {
             $leftVal = null;
         }
@@ -717,12 +746,21 @@ class Condition implements ConditionInterface
      */
     protected function compare($leftVal, string $comparator, $rightVal, string $listDelimiter = EXF_LIST_SEPARATOR) : bool
     {
+        // Normalize NULL values
         if ($rightVal === EXF_LOGICAL_NULL) {
             $rightVal = null;
         }
         if ($leftVal === EXF_LOGICAL_NULL) {
             $leftVal = null;
         }
+        // Normalize booleans
+        if (is_bool($rightVal) && ! is_bool($leftVal)) {
+            $leftVal = BooleanDataType::cast($leftVal);
+        } elseif (is_bool($leftVal) && ! is_bool($rightVal)) {
+            $rightVal = BooleanDataType::cast($rightVal);
+        }
+
+        // Do compare
         switch ($comparator) {
             case ComparatorDataType::IS:
                 return $rightVal === null || mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) !== false;
@@ -861,5 +899,10 @@ class Condition implements ConditionInterface
     public function appliesToAggregatedValues() : bool
     {
         return $this->applyToAggregates;
+    }
+
+    public function getRequiredExpressions(?MetaObjectInterface $object = null) : array
+    {
+        return [$this->getExpression()];
     }
 }

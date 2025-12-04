@@ -23,8 +23,9 @@ class EventManager implements EventManagerInterface
     private $dispatcher = null;
 
     private $priorityMinVals = [];
-
     private $priorityMaxVals = [];
+    
+    private $oneTimeListeners = [];
 
     /**
      * 
@@ -46,6 +47,32 @@ class EventManager implements EventManagerInterface
     {
         $priority = $this->sanitizePriority($eventName, $priority);
         $this->dispatcher->addListener(mb_strtoupper($eventName), $listener_callable, $priority ?? 0);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::addListenerOnce()
+     */
+    public function addListenerOnce(string $eventName, callable $listener, ?int $priority = null) : EventManagerInterface
+    {
+        // Wrapper that will remove itself after the first execution
+        $listenerWrapper = null;
+
+        $listenerWrapper = function ($event) use (&$listenerWrapper, $eventName, $listener) {
+            // Call the real listener
+            $result = $listener($event);
+
+            // Remove wrapper so it won't run again UNLESS it explicitly returned FALSE to indicate, that it did
+            // not do its work yet
+            if ($result !== false) {
+                $this->removeListener($eventName, $listenerWrapper);
+            }
+        };
+
+        // Register the wrapper
+        $this->addListener($eventName, $listenerWrapper, $priority);
         return $this;
     }
 

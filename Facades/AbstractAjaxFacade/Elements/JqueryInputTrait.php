@@ -39,7 +39,7 @@ trait JqueryInputTrait
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsCallFunction()
      */
-    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    public function buildJsCallFunction(string $functionName = null, array $parameters = [], ?string $jsRequestData = null) : string
     {
         switch (true) {
             case $functionName === Input::FUNCTION_FOCUS:
@@ -51,7 +51,7 @@ trait JqueryInputTrait
             case $functionName === Input::FUNCTION_UNREQUIRE:
                 return "setTimeout(function(){ {$this->buildJsSetRequired(false)} }, 0);";
         }
-        return parent::buildJsCallFunction($functionName, $parameters);
+        return parent::buildJsCallFunction($functionName, $parameters, $jsRequestData);
     }
     
     /**

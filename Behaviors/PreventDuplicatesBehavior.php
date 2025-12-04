@@ -27,6 +27,7 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPoint;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use Throwable;
 
 /**
@@ -129,35 +130,25 @@ use Throwable;
 class PreventDuplicatesBehavior extends AbstractBehavior
 {
     const ON_DUPLICATE_ERROR = 'ERROR';
-    
     const ON_DUPLICATE_UPDATE = 'UPDATE';
-    
     const ON_DUPLICATE_IGNORE = 'IGNORE';
     
     const LOCATED_IN_EVENT_DATA = 'event_data';
-    
     const LOCATED_IN_DATA_SOURCE = 'data_source';
     
     private $onDuplicateMultiRow = null;
-    
     private $onDuplicateSingleRow = null;
-    
     private $onDuplicateUpdateColumns = null;
     
     private $compareAttributeAliases = [];
-    
-    private $allowEmptyValuesForAttributeAliases = [];
-    
     private $compareWithConditions = null;
-    
     private $compareCaseSensitive = false;
+    private bool $compareToSoftDeletedToo = false;
     
     private $errorCode = null;
-    
     private $errorText = null;
     
     private $ignoreDataSheets = [];
-
     private $needRestoreDataSheets = [];
     
     /**
@@ -249,6 +240,11 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+
+        // Disable soft-delete behavior if soft-deleted rows are duplicates too
+        if ($this->getCompareToSoftDeletedRows()) {
+            $this->makeSoftDeletesVisible($object);
+        }
         
         $mode = $this->getMode($eventSheet);
         $logbook->addLine('Received ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
@@ -314,7 +310,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
-        if (in_array($eventSheet, $this->ignoreDataSheets)) {
+        if (in_array($eventSheet, $this->ignoreDataSheets, true)) {
             return;
         }
         
@@ -337,6 +333,11 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+
+        // Disable soft-delete behavior if soft-deleted rows are duplicates too
+        if ($this->getCompareToSoftDeletedRows()) {
+            $this->makeSoftDeletesVisible($object);
+        }
         
         $mode = $this->getMode($eventSheet);
         $logbook->addLine('Received ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
@@ -480,7 +481,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     // to inherit system attributes from the duplicate! The UID is required to
                     // perform the update, but other things like the timestamp from the TimestampingBehavior
                     // should also be overwritten by values from the duplicate to be updated.
-                    if (null === $row[$uidColName] ?? null) {
+                    // NOTE: treat NULL and '' as empty here, not just NULL alone!
+                    if ('' === ($row[$uidColName] ?? '')) {
                         $matchedRow = $match->getMatchedRow();
                         foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
                             $row[$systemAttr->getAlias()] = $matchedRow[$systemAttr->getAlias()];
@@ -591,6 +593,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function getDuplicatesMatcher(DataSheetInterface $eventSheet, string $mode, BehaviorLogBook $logbook, bool $treatUidMatchesAsDuplicates = true) : DataMatcherInterface
     {   
+        // TODO this method was completely moved to the DuplicatesMatcher. Need to use it here.
         $eventDataCols = $eventSheet->getColumns();
         $logbook->addSection('Searching for potential duplicates');
         
@@ -617,10 +620,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 throw new BehaviorRuntimeError($this, 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!', '7PNKJ50', null, $logbook);
             } 
             
+            ## TODO #DataCollector to be used here
             $eventRows = $eventSheet->getRows();
             $missingAttrSheet = DataSheetFactory::createFromObject($this->getObject());
             $missingAttrSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn());
-            $missingCols = [];
             foreach ($missingAttrs as $attr) {
                 $logbook->addLine($attr->getAliasWithRelationPath(), 1);
                 $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);
@@ -753,12 +756,23 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * current user is not allowed to see all the data! The behavior must throw an error even if the
      * user would not see the potential duplicate if reading the data regularly.
      * 
-     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $dataSheet
+     * @see \exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait - trait with similar functionality,
+     * which can be disabled though
+     * 
+     * @param DataSheetInterface $dataSheet
      * @return DataSheetInterface
      */
     protected function readBypassingDataAuthorization(DataSheetInterface $dataSheet) : DataSheetInterface
     {
-        $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        if ($this->getWorkbench()->isInstalled() === false) {
+            return $dataSheet;
+        }
+        try {
+            $dataAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        } catch (throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $dataSheet;
+        }
         $wasDisabled = $dataAP->isDisabled();
         $dataAP->setDisabled(true);
         try {
@@ -1060,6 +1074,57 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     protected function setOnDuplicateUpdateColumns(array $value) : PreventDuplicatesBehavior
     {
         $this->onDuplicateUpdateColumns = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function getCompareToSoftDeletedRows() : bool
+    {
+        return $this->compareToSoftDeletedToo;
+    }
+
+    /**
+     * Set to TRUE to treat soft-deleted rows as duplicates too - see SoftDeleteBehavior
+     * 
+     * By default, the `PrevntDuplicatesBehavior` will not treat soft-deleted rows in a special way. If they are
+     * visible to the user, they will be visible for the behavior too and will be treated as duplicates. If not -
+     * they will not be detected as duplicates. However, you can explicitly make the behavior treat soft-deletes
+     * as potential duplicates by setting `compare_to_soft_deleted_rows` to TRUE. Should the `PrevntDuplicatesBehavior`
+     * go for an update, the soft-deletes will be "undeleted".
+     * 
+     * @uxon-property compare_to_soft_deleted_rows
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    protected function setCompareToSoftDeletedRows(bool $value) : PreventDuplicatesBehavior
+    {
+        $this->compareToSoftDeletedToo = $value;
+        return $this;
+    }
+
+    /**
+     * Temporarily disables all SoftDeleteBehaviors on our object until this behavior is done
+     * 
+     * @param MetaObjectInterface $object
+     * @return $this
+     */
+    protected function makeSoftDeletesVisible(MetaObjectInterface $object) : PreventDuplicatesBehavior
+    {
+        // Disable soft delete behavior
+        $object->getBehaviors()->disableTemporarily(true, SoftDeleteBehavior::class);
+        // Re-enable it when this behavior is done
+        $this->getWorkbench()->eventManager()->addListenerOnce(OnBehaviorAppliedEvent::getEventName(), function(OnBehaviorAppliedEvent $event) use ($object) {
+            if ($event->getBehavior() !== $this) {
+                // Not our case. DO NOT remove the one-time listener - wait for this particular behavior!
+                return false;
+            }
+            $object->getBehaviors()->disableTemporarily(false, SoftDeleteBehavior::class);
+        });
         return $this;
     }
 }

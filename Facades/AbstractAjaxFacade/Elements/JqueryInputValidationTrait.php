@@ -85,7 +85,7 @@ JS;
 JS;
             }
         }
-        if ($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf()) {
+        if (($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf())) {
             return <<<JS
 
                         if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs } }
@@ -113,13 +113,22 @@ JS;
     {
         $widget = $this->getWidget();
         $formatter = $this->getFacade()->getDataTypeFormatter($type);
-        $typeValidationDisabled = ($widget instanceof Input) && $widget->getDisableValidation();
+        if ($widget instanceof Input) {
+            $typeValidationDisabled = $widget->getDisableValidation();
+            $multipleValuesAllowed = $widget->getMultipleValuesAllowed() === true;
+            $hasAggregator = $widget->hasAggregator();
+        } else {
+            $typeValidationDisabled = false;
+            $multipleValuesAllowed = false;
+            $hasAggregator = false;
+        }
         $js = '';
         
         // If the input allows multiple values as a delimited list, apply the validation to each
         // part of the list - in particular to check string length for each value individually
         switch (true) {
-            case ($type instanceof StringDataType) && ($widget instanceof Input) && $widget->getMultipleValuesAllowed() === true && $typeValidationDisabled === false:
+            case $typeValidationDisabled === false && $hasAggregator === true:
+            case $typeValidationDisabled === false && ($type instanceof StringDataType) && $multipleValuesAllowed === true:
                 $partValidator = $formatter->buildJsValidator('part');
                 $js .= <<<JS
 

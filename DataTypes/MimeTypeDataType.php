@@ -15,6 +15,10 @@ use exface\Core\CommonLogic\UxonObject;
  */
 class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
 {
+    const JSON = 'application/json';
+    const URLENCODED = 'application/x-www-form-urlencoded';
+    const MARKDOWN = 'text/markdown';
+    
     private $mimeTypes = null;
     
     /**
@@ -291,6 +295,17 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
             case stripos($type, 'image') === 0: return true;
         }
         return false;
+    }
+
+    /**
+     * Returns TRUE if the given MIME type is JSON
+     * 
+     * @param string $type
+     * @return bool
+     */
+    public static function isJson(string $type) : bool
+    {
+        return mb_stripos($type, 'json') !== false;
     }
     
     /**

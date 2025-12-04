@@ -24,6 +24,8 @@ interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvert
     
     const REF_INPUT = '~input';
     
+    const REF_DATA = '~data';
+    
     /**
      * Returns the page alias of the target page of the link.
      * 

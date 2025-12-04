@@ -374,7 +374,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      */
     protected function escapeSqlStringValue(string $value) : string
     {
-        return addslashes($value);
+        return $this->getDataConnection()->escapeString($value);
     }
     
     /**
@@ -656,5 +656,9 @@ SQL;
                 . '" with MySQL DB installer: only instances of "MySqlConnector" supported!');
         }
         return $connection;
+    }
+    protected function getTableDumpSchema(string $tableName) : string
+    {
+        return "";
     }
 }

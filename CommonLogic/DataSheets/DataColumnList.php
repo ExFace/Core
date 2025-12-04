@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Model\MetaAttributeListInterface;
  */
 class DataColumnList extends EntityList implements DataColumnListInterface
 {
+    private $columnsExpressionsCache = null;
 
     /**
      * Adds a data sheet
@@ -45,6 +46,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         $data_sheet = $this->getDataSheet();
         $existingColumn = $this->get($key);
         if (! $existingColumn || $existingColumn->getExpressionObj()->toString() !== $column->getExpressionObj()->toString()) {
+            $this->columnsExpressionsCache = null;
             if ($column->getDataSheet() !== $data_sheet) {
                 $column_original = $column;
                 $column = $column_original->copy();
@@ -153,7 +155,9 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         $col = DataColumnFactory::createFromString($data_sheet, $expression_or_string, $name);
         $col->setHidden($hidden);
         $this->add($col);
-        return $col;
+        // TODO geb 2025-10-08: If this list contains a column with the same identity this function returns
+        // TODO                 an orphaned instance. This is unexpected behavior and should probably be fixed.
+        return $col; 
     }
 
     /**
@@ -208,10 +212,23 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     public function getByExpression($expression_or_string, bool $checkType = false)
     {
         if ($expression_or_string instanceof ExpressionInterface) {
-            $exprString = $expression_or_string->toString();
+            $exprString = $expression_or_string->__toString();
         } else {
             $exprString = $expression_or_string;
         }
+
+        // Look in the pre-cached column name to expression map first (for speed)
+        $colExprs = $this->getColumnsExpressions();
+        if (false !== $colName = array_search($exprString, $colExprs, true)) {
+            return $this->get($colName);
+        }
+
+        // If we did not find the expression in the column-expression map, continue with
+        // looking into each column individually. Keep in mind, that in theory column
+        // expressions might change over time without telling the column list. So on
+        // rare occasions, the column-expression map and the real column expressions might
+        // diverge. This is why we still need to ask every column personally if we did
+        // not find anything in the map.
         
         // FIXME #unknown-column-types shouldn't we double-check the column-type here?
         // Especially the second round searching below produces strange results
@@ -227,7 +244,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         
         // First check if there is a column with exactly the same expression
         foreach ($this->getAll() as $col) {
-            if ($col->getExpressionObj()->toString() === $exprString) {
+            if ($col->getExpressionObj()->__toString() === $exprString) {
                 return $col;
             }
         }
@@ -360,5 +377,41 @@ class DataColumnList extends EntityList implements DataColumnListInterface
             }
         }
         return true;
+    }
+
+    /**
+     * Returns a map with column names as keys and expression strings as values.
+     *
+     * This method can be used to quickly find columns by expression without traversing all column objects. The
+     * expressions are cached for performance.
+     *
+     * @return string[]
+     */
+    public function getColumnsExpressions() : array
+    {
+        if ($this->columnsExpressionsCache === null) {
+            $this->columnsExpressionsCache = [];
+            foreach ($this->getAll() as $column) {
+                $this->columnsExpressionsCache[$column->getName()] = $column->getExpressionObj()->__toString();
+            }
+        }
+        return $this->columnsExpressionsCache;
+    }
+
+    /**
+     * @inheritDoc
+     * @see DataColumnListInterface::getMultiple()
+     */
+    public function getMultiple(array $keys) : array
+    {
+        $result = [];
+
+        foreach ($keys as $key) {
+            if(($col = $this->get($key)) !== null) {
+                $result[] = $col;
+            }
+        }
+
+        return $result;
     }
 }

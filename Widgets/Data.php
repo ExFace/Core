@@ -135,6 +135,8 @@ class Data
     private $quickSearchWidget = null;
     
     private $quickSearchEnabled = null;
+    
+    private $configuratorSetupsEnabled = null;
 
     // Widget functions
 
@@ -218,6 +220,15 @@ class Data
                 // If it's a calculated column, add the corresponding expression column
                 if ($col->isCalculated() && ! $col->getCalculationExpression()->isEmpty() && ! $col->getCalculationExpression()->isReference()) {
                     $data_sheet->getColumns()->addFromExpression($col->getCalculationExpression(), $col->getDataColumnName());
+                }
+                
+                if ($col->hasNestedData()) {
+                    if(false === $nestedCol = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias())) {
+                        $nestedCol = $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias());
+                    }
+                    
+                    $nestedCol->setNestedDataTemplate($col->getNestedDataTemplateUxon());
+                    continue;
                 }
                 
                 $cellWidget = $col->getCellWidget();
@@ -330,6 +341,13 @@ class Data
                 }
             }
         }
+
+        // Buttons can have prefill logic too - e.g. when the have complex disabled_if or hidden_if and
+        // need data for that.
+        foreach ($this->getButtons() as $button) {
+            $button->prepareDataSheetToPrefill($data_sheet);
+        }
+
         return $data_sheet;
     }
     
@@ -660,6 +678,12 @@ class Data
         // IDEA yield column groups? They are actually the direct children...
         foreach ($this->getColumns() as $col) {
             yield $col;
+        }
+        // Yield nested sheet column groups separately as they are not contained in $this->getColumns()
+        foreach ($this->getColumnGroups() as $group) {
+            if ($group instanceof DataColumnSubsheet) {
+                yield $group;
+            }
         }
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
@@ -1478,5 +1502,32 @@ class Data
         // Objects used in the configurator - e.g. filters, sorters, etc.
         $objs = array_merge($objs, $this->getConfiguratorWidget()->getMetaObjectsEffectingThisWidget());
         return array_unique($objs);
+    }
+    
+    public function getConfiguratorSetupsEnabled() : bool
+    {
+        return $this->configuratorSetupsEnabled ?? true;
+    }
+
+    /**
+     * Set to FALSE to disable saving/loading widget setups for users
+     * 
+     * By default, user-side setup management is enabled for most data widgets. This means, a user can
+     * save and restore configurator settings if the current facades support this feature. Using this property
+     * you can explicitly disable setups for a single widget. 
+     * 
+     * This is the same as setting `setups_enabled` to FALSE in the `configurator_widget`.
+     * 
+     * @uxon-property configurator_setups_enabled
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setConfiguratorSetupsEnabled(bool $trueOrFalse) : Data
+    {
+        $this->configuratorSetupsEnabled = $trueOrFalse;
+        return $this;
     }
 }

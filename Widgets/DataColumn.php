@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
@@ -18,6 +19,7 @@ use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
+use exface\Core\Interfaces\Widgets\iCanBeBoundToCalculation;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iTakeInput;
@@ -70,7 +72,7 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * @author Andrej Kabachnik
  *        
  */
-class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText
+class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText, iCanBeBoundToCalculation
 {
     use iHaveAttributeGroupTrait;
     
@@ -130,6 +132,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $mergeCells = false;
 
     private $dataTypeUxon = null;
+    
+    private ?UxonObject $nestedDataSheetUxon = null;
 
     public function getAttributeAlias()
     {
@@ -431,9 +435,67 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                     $type->setPrecisionMax(3);
                 }
             }
+            
+            // if the cell widget is a combo table, check if other columns depend on values related to the combos object
+            // and add them to the table (if the are not in there already)
+            if ($cellWidget instanceof InputComboTable) {
+                foreach ($this->getDependentColumns($cellWidget->getAttributeAlias()) as $dependant) {
+                    if($dependant->isBoundToAttribute()) {
+
+                        $dependantExpression = $dependant->getExpression(); //example: RELATED_OBJ__NAME
+                        $dependantExpression->setMetaObject($dependant->getMetaObject());
+                        $currentObject = $this->getExpression()->getAttributeAlias(); // example: RELATED_OBJ
+                        $rebasedExpr = $dependantExpression->rebase($currentObject);
+
+                        // create a new column for the combo table
+                        $depCol = $cellWidget->getTable()->createColumnFromUxon(new UxonObject([
+                            'attribute_alias' => $rebasedExpr 
+                        ]));
+
+                        // only add the column if it is not already in the table
+                        if ($cellWidget->getTable()->getColumnByDataColumnName($depCol->getDataColumnName()) == null) {
+                            $cellWidget->getTable()->addColumn($depCol);
+                        }
+                    }
+                }
+            }
         }
         return $this->cellWidget;
     }
+
+    
+    /**
+     * 
+     * Returns an array of columns in the current data-widget that are dependent on the provided column.
+     * 
+     * @param string $alias
+     * @return DataColumn[]
+     */
+    public function getDependentColumns(string $alias) : array
+    {
+        $cols = [];
+        foreach ($this->getDataWidget()->getColumns() as $col) {
+            if ($col === $this) {
+                continue;
+            }
+            if ($col->isBoundToAttribute() === true) {
+                // Example:
+                // Relation: Item
+                // Affected column: Item__Flag
+                $attr = $col->getAttribute();
+                if ($attr->isRelated()) {
+                    $depRelPath = $attr->getRelationPath()->__toString();
+
+                    if (StringDataType::startsWith($depRelPath, $alias)) {
+                        $cols[] = $col;
+                    }
+                }
+
+            }
+        }
+        return $cols;
+    }
+
 
     /**
      * Returns TRUE if the column is editable and FALSE otherwise.
@@ -455,16 +517,54 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return $action->isAuthorized() === true;
         }
         
+        // Otherwise inherit editable state from the enclosing column group
         $groupIsEditable = $this->getDataColumnGroup()->isEditable();
         if ($groupIsEditable === true) {
-            if ($this->isBoundToAttribute()) {
-                return $this->getAttribute()->isEditable();
-            } else {
-                return true;
+
+            // IMPORTANT: cannot use $this->getCellWidget() in this method, because that would call it recursively!
+
+            // Treat hidden columns as non-editable by default
+            if ($this->isHidden()) {
+                return false;
             }
+
+            // Disabled columns without conditions are obviously also not editable
+            if ($this->isDisabled() && $this->getDisabledIf() === null) {
+                return false;
+            }
+
+            // For attributes, see if the attribute should be editable
+            if ($this->isBoundToAttribute()) {
+                $attr = $this->getAttribute();
+                // Not editable if attribute is not editable
+                if ($attr->isEditable() === false) {
+                    return false;
+                }
+                // Not editable by default if attribute is related. If it should be, the user MUST set editable explicitly
+                if ($attr->isRelated()) {
+                    return false;
+                }
+            } else {
+                if ($this->isCalculated()) {
+                    // Also not editable if calculated and NOT bound to an attribute
+                    return false;
+                }
+            }
+            
+            return true;
         }
         
         return false;
+    }
+
+    /**
+     * Returns TRUE if the column has a cell_widget configuration
+     * 
+     * @return bool
+     */
+    protected function hasCustomCellWidget() : bool
+    {
+        return $this->cellWidgetUxon !== null;
     }
     
     /**
@@ -473,7 +573,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * In particular, this will make the default editor of an attribute be used
      * as cell widget (instead of the default display widget).
      * 
-     * If not set explicitly, the editable state of the column group will be inherited.
+     * If not set explicitly, the column will try to guess if it should be editable automatically:
+     * 
+     * - If it is hidden, it is not editable by default
+     * - If the column is bound to an attribute, it will be editable automatically unless the attribute is
+     * not editable itself or the attribute is related (has a relation path)
+     * - Columns not bound to an attribute will be editable unless they are calculations
+     * - Any column will not be editable of course, if the entire widget or at least the column group is
+     * marked as non-editable.
      * 
      * Explicitly definig an active editor as the cell widget will also set the
      * column editable automatically.
@@ -860,16 +967,24 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
+        
         // TODO add properties specific to this widget here
         if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
+        
         if ($this->isCalculated()) {
             $uxon->setProperty('calculation', $this->getCalculationExpression()->toString());
         }
+        
         if ($this->editable_if_access_to_action_alias !== null) {
             $uxon->setProperty('editable_if_access_to_action', $this->editable_if_access_to_action_alias);
         }
+        
+        if($this->nestedDataSheetUxon !== null) {
+            $uxon->setProperty('nested_data', $this->nestedDataSheetUxon);
+        }
+        
         return $uxon;
     }
     
@@ -1062,10 +1177,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * @uxon-property calculation
      * @uxon-type metamodel:expression
      * 
-     * @param string $expression
-     * @return DataColumn
+     * @see iCanBeBoundToCalculation::setCalculation()
      */
-    public function setCalculation(string $expression) : DataColumn
+    public function setCalculation(string $expression) : iCanBeBoundToCalculation
     {
         $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
         return $this;
@@ -1073,7 +1187,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
-     * @return bool
+     * @see iCanBeBoundToCalculation::isCalculated()
      */
     public function isCalculated() : bool
     {
@@ -1082,7 +1196,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
-     * @return ExpressionInterface|NULL
+     * @see iCanBeBoundToCalculation::setCalculation()
      */
     public function getCalculationExpression() : ?ExpressionInterface
     {
@@ -1175,11 +1289,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getHint(bool $includeDebugInfo = true) : ?string
     {
+        $foundDebugContext = $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class);
         if ($this->customHint !== null) {
             $hint = $this->customHint;
             
             // Dev-hint
-            if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            if ($includeDebugInfo === true && $foundDebugContext === true) {
                 $hint = 
                 ($hint ? StringDataType::endSentence($hint) : '') 
                 . $this->getHintDebug();
@@ -1187,7 +1302,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return $hint;
         }
         $addition = '';
-        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+        if ($includeDebugInfo === true && $foundDebugContext === true && null !== $group = $this->getAttributeGroupAlias()) {
             $addition .= "\n- Attribute group: `{$group}`";
         } 
         return $this->getCellWidget()->getHint($includeDebugInfo) . $addition;
@@ -1241,5 +1356,37 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->mergeCells = $value;
         return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getNestedDataTemplateUxon() : ?UxonObject
+    {
+        return $this->nestedDataSheetUxon;
+    }
+
+    /**
+     * A template for nested data in this column
+     * 
+     * @uxon-property nested_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":""}]}
+     * 
+     * @param UxonObject $data
+     * @return DataColumn
+     */
+    public function setNestedData(UxonObject $data) : DataColumn
+    {
+        $this->nestedDataSheetUxon = $data;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasNestedData() : bool
+    {
+        return $this->nestedDataSheetUxon !== null;
     }
 }

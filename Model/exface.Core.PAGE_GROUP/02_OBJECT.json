@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Page Group [exface.Core.PAGE_GROUP]",
             "CREATED_ON": "2020-02-08 21:31:18",
-            "MODIFIED_ON": "2022-04-28 18:14:36",
+            "MODIFIED_ON": "2025-11-21 15:43:02",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba4bb25832b2cfe4b318306b9a",
@@ -169,10 +169,10 @@
                                                                 "attribute_alias": "PAGE__MENU_VISIBLE"
                                                             },
                                                             {
-                                                                "attribute_alias": "PAGE__TEMPLATE__LABEL"
+                                                                "attribute_alias": "APP__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "PAGE__APP__LABEL"
+                                                                "attribute_alias": "PAGE__TEMPLATE__LABEL"
                                                             }
                                                         ],
                                                         "sorters": [
@@ -205,6 +205,37 @@
                                                                 "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus",
                                                                 "action_alias": "exface.Core.DeleteObject"
+                                                            },
+                                                            {
+                                                                "caption": "Open page",
+                                                                "bind_to_double_click": true,
+                                                                "action": {
+                                                                    "alias": "exface.core.ShowObjectEditDialog",
+                                                                    "object_alias": "exface.Core.PAGE",
+                                                                    "input_mapper": {
+                                                                        "from_object_alias": "exface.Core.PAGE_GROUP_PAGES",
+                                                                        "to_object_alias": "exface.Core.PAGE",
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "PAGE",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                "caption": "Change app",
+                                                                "action": {
+                                                                    "alias": "exface.core.ShowMassEditDialog",
+                                                                    "dialog": {
+                                                                        "widgets": [
+                                                                            {
+                                                                                "attribute_alias": "APP"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
                                                             }
                                                         ]
                                                     }

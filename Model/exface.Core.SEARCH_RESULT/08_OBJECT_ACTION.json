@@ -1,0 +1,207 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "LABEL"
+        },
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "_EXPORT_SUMMARY": "Search result: Usage in model [ShowModelSearchDialog]",
+            "CREATED_ON": "2025-11-28 09:21:08",
+            "MODIFIED_ON": "2025-11-28 10:01:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f08a973138cd908a97025041000001",
+            "OBJECT": "0x11ee8692965c23ce8692025041000001",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "ALIAS": "ShowModelSearchDialog",
+            "NAME": "Usage in model",
+            "SHORT_DESCRIPTION": "Where is this used? Find mentions of the alias of this entity in the metamodel.",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "icon": "search",
+                "input_mappers": [
+                    {
+                        "from_object_alias": "exface.Core.OBJECT",
+                        "to_object_alias": "exface.Core.SEARCH_RESULT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "=Concatenate('\"', ALIAS_WITH_NS, '\"')",
+                                "to": "_search_query"
+                            }
+                        ]
+                    },
+                    {
+                        "from_object_alias": "exface.Core.OBJECT_ACTION",
+                        "to_object_alias": "exface.Core.SEARCH_RESULT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "=Concatenate('\"', ALIAS_WITH_NS, '\"')",
+                                "to": "_search_query"
+                            }
+                        ]
+                    },
+                    {
+                        "from_object_alias": "exface.Core.ATTRIBUTE_GROUP",
+                        "to_object_alias": "exface.Core.SEARCH_RESULT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "ALIAS_WITH_NS",
+                                "//from": "=Concatenate('] ', Concatenate('\"', ALIAS_WITH_NS, '\"'), Concatenate(',__', ALIAS_WITH_NS), Concatenate(',', ALIAS_WITH_NS, '__'))",
+                                "to": "_search_query"
+                            }
+                        ]
+                    }
+                ],
+                "dialog": {
+                    "object_alias": "exface.Core.SEARCH_RESULT",
+                    "widgets": [
+                        {
+                            "data_column_name": "_search_query",
+                            "widget_type": "InputHidden",
+                            "display_only": true,
+                            "multiple_values_allowed": true,
+                            "multiple_values_delimiter": ",",
+                            "id": "search_query_field"
+                        },
+                        {
+                            "widget_type": "DataTable",
+                            "filters": [
+                                {
+                                    "attribute_alias": "UXON",
+                                    "value": "=search_query_field"
+                                },
+                                {
+                                    "attribute_alias": "APP"
+                                },
+                                {
+                                    "attribute_alias": "OBJECT_TYPE"
+                                },
+                                {
+                                    "attribute_alias": "INSTANCE_NAME"
+                                }
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": "OBJECT_NAME"
+                                },
+                                {
+                                    "attribute_alias": "INSTANCE_NAME"
+                                },
+                                {
+                                    "attribute_alias": "ATTRIBUTE_NAME"
+                                },
+                                {
+                                    "attribute_alias": "APP__ALIAS"
+                                },
+                                {
+                                    "attribute_alias": "INSTANCE_ALIAS"
+                                },
+                                {
+                                    "attribute_alias": "TABLE_NAME",
+                                    "hidden": true
+                                }
+                            ],
+                            "buttons": [
+                                {
+                                    "~snippet": "exface.Core.SearchResultEditButton",
+                                    "parameters": {
+                                        "table_name_column": "TABLE_NAME"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

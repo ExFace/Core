@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataTypes;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -44,14 +45,14 @@ abstract class AbstractDataType implements DataTypeInterface
     private $defaultDisplayUxon = null;
     
     private $validationErrorCode = null;
-    
     private $validationErrorText = null;
-    
     private $validationErrorMessage = null;
+    private $validationErrorReason = null;
     
     private $value = null;
     
     private $sensitive = false;
+    private ?string $emptyText = null;
 
     public function __construct(DataTypeSelectorInterface $selector, $value = null, UxonObject $configuration = null)
     {
@@ -201,7 +202,7 @@ abstract class AbstractDataType implements DataTypeInterface
         try {
             return static::cast($value);
         } catch (\Throwable $e) {
-            throw $this->createValidationError($e->getMessage(), null, $e);
+            throw $this->createValidationParseError($value, null, null, null, $e);
         }
     }
     
@@ -215,10 +216,38 @@ abstract class AbstractDataType implements DataTypeInterface
      * 
      * @return \exface\Core\Exceptions\DataTypes\DataTypeValidationError
      */
-    protected function createValidationError(string $message, string $code = null, \Throwable $previous = null) : DataTypeValidationError
+    protected function createValidationRuleError($value, ?string $message = null, ?bool $showMessageToUsers = null, ?string $code = null, \Throwable $previous = null) : DataTypeValidationError
+    {
+        // TODO add a custom default text here indicating, that the value is does not match the rules
+        return $this->createValidationParseError($value, $message, $showMessageToUsers, $code, $previous);
+    }
+    
+    public function createValidationParseError($value, ?string $message = null, ?bool $showMessageToUsers = null, ?string $code = null, \Throwable $previous = null) : DataTypeValidationError
     {
         $code = $this->getValidationErrorCode() ? $this->getValidationErrorCode() : $code;
-        return new DataTypeValidationError($this, $message, $code, $previous);
+        if ($message && $showMessageToUsers) {
+            return (new DataTypeValidationError($this, $message, $code, $previous, $value))->setUseExceptionMessageAsTitle(true);
+        } 
+        if (! $message) {
+            $reasonText = $this->getValidationErrorReason($value);
+            switch (true) {
+                case $reasonText !== null:
+                    $message = $reasonText;
+                    $showMessageToUsers = true;
+                    break;
+                case $previous !== null:
+                    $message = $previous->getMessage();
+                    break;
+                default:
+                    $message = 'Invalid value "' . $value . '" for data type "' . $this->getAliasWithNamespace() . '"';
+            }
+        }
+        $e = new DataTypeValidationError($this, $message, $code, $previous, $value);
+        if ($showMessageToUsers) {
+            $e->setUseExceptionMessageAsTitle(true);
+        }
+        
+        return $e;
     }
 
     /**
@@ -284,6 +313,9 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function setAlias($string)
     {
+        if (mb_strpos($string, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) !== false) {
+            $string = StringDataType::substringAfter($string, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string, false, true);
+        }
         $this->alias = $string;
     }
     
@@ -412,6 +444,21 @@ abstract class AbstractDataType implements DataTypeInterface
         $this->defaultEditorUxon = $defaultEditorUxon;
         return $this;
     }
+
+    /**
+     * Default widget configuration for editing this attribute
+     *
+     * @uxon-property default_editor_widget
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-template {"widget_type": ""}
+     *
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
+     */
+    protected function setDefaultEditorWidget(UxonObject $uxon) : DataTypeInterface
+    {
+        return $this->setDefaultEditorUxon($uxon);
+    }
     
     /**
      *
@@ -446,11 +493,16 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultDisplayWidget()
+     * Default widget configuration for displaying this attribute
+     * 
+     * @uxon-property default_display_widget
+     * @uxon-type \exface\Core\Widgets\Display
+     * @uxon-template {"widget_type": ""}
+     * 
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
      */
-    public function setDefaultDisplayWidget(UxonObject $uxon) : DataTypeInterface
+    protected function setDefaultDisplayWidget(UxonObject $uxon) : DataTypeInterface
     {
         return $this->setDefaultDisplayUxon($uxon);
     }
@@ -495,6 +547,32 @@ abstract class AbstractDataType implements DataTypeInterface
         $this->validationErrorText = $string;
         return $this;
     }
+
+    /**
+     * @return string|null
+     */
+    protected function getValidationErrorText() : ?string
+    {
+        return $this->validationErrorText;
+    }
+
+    /**
+     * @param $value
+     * @return DataTypeInterface
+     */
+    protected function setValidationErrorReason($value) : DataTypeInterface
+    {
+        $this->validationErrorReason = $value;
+        return $this;
+    }
+
+    public function getValidationErrorReason($value) : ?string
+    {
+        if ($this->validationErrorReason !== null && $value !== null) {
+            return StringDataType::replacePlaceholders($this->validationErrorReason, ['value' => $value]);
+        }
+        return $this->validationErrorReason;
+    }
     
     /**
      * 
@@ -506,8 +584,8 @@ abstract class AbstractDataType implements DataTypeInterface
         if ($this->validationErrorMessage === null) {
             if ($this->validationErrorCode !== null) {
                 $this->validationErrorMessage = MessageFactory::createFromCode($this->getWorkbench(), $this->validationErrorCode);
-            } elseif ($this->validationErrorText !== null) {
-                $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $this->validationErrorText);
+            } elseif (null !== $errorText = $this->getValidationErrorText()) {
+                $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $errorText);
             } elseif ('' !== $generatedMessage = $this->getValidationDescription()) {
                 $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $generatedMessage);
             }
@@ -623,5 +701,24 @@ abstract class AbstractDataType implements DataTypeInterface
             return '';
         }
         return $val;
+    }
+
+    /**
+     * @inerhitDoc 
+     * @see DataTypeInterface::getEmptyText()
+     */
+    public function getEmptyText(): ?string
+    {
+        return $this->emptyText;
+    }
+
+    /**
+     * @inerhitDoc
+     * @see DataTypeInterface::setEmptyText()
+     */
+    public function setEmptyText(?string $emptyText): DataTypeInterface
+    {
+        $this->emptyText = $emptyText;
+        return $this;
     }
 }
