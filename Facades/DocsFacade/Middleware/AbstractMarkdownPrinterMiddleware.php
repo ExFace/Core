@@ -84,7 +84,7 @@ abstract class AbstractMarkdownPrinterMiddleware implements MarkdownPrinterMiddl
         return $response;
     }
 
-    protected function shouldSkip(ServerRequestInterface $request): bool
+    public function shouldSkip(ServerRequestInterface $request): bool
     {
         return ! StringDataType::endsWith(
             $request->getUri()->getPath(),
