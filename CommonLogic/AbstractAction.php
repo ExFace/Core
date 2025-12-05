@@ -1143,8 +1143,12 @@ abstract class AbstractAction implements ActionInterface
             // If there is neither task nor preset data, create a new data sheet
             $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
             $diagram .= "\n\t Task(Task) -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
+        } elseif ($this->meta_object !== null) {
+            // If there is neither task nor preset data, create a new data sheet
+            $sheet = DataSheetFactory::createFromObject($this->meta_object);
+            $diagram .= "\n\t ActionObject[Action object] -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } else {
-            throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
+            throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!', '83VYCXZ');
         }
         
         // Replace the `Input data` section of the logbook
