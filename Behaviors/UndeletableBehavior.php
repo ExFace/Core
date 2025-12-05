@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.
+ * You must provide at least one condition for this behavior to function.
  * 
  * ## Examples
  * 

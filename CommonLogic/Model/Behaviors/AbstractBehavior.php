@@ -247,6 +247,16 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function register() : BehaviorInterface
     {
+        $behaviorList = $this->getObject()->getBehaviors();
+        $classList = [];
+        foreach ($behaviorList as $behavior) {
+            $classList[] = get_class($behavior);
+        }
+        
+        foreach ($this->getDependencies() as $dependency) {
+            $dependency->apply($this, $behaviorList, $classList);
+        }
+        
         $this->registerEventListeners();
         $this->setRegistered(true);
         return $this;
@@ -429,5 +439,10 @@ abstract class AbstractBehavior implements BehaviorInterface
     {
         $this->name = $name;
         return $this;
+    }
+    
+    protected function getDependencies() : array
+    {
+        return [];
     }
 }
