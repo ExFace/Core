@@ -196,7 +196,7 @@ class PostgreSqlBuilder extends MySqlBuilder
         return <<<SQL
 
 CASE 
-    WHEN {$columnName} IS NOT NULL AND JSON_VALID({$columnName})
+    WHEN {$columnName} IS NOT NULL AND {$columnName} IS JSON
     THEN {$columnName}
     ELSE '{}'
 END 

@@ -427,7 +427,7 @@
         {
             "_EXPORT_SUMMARY": "App [LABEL]",
             "CREATED_ON": "2019-07-12 07:48:09",
-            "MODIFIED_ON": "2025-12-01 11:28:37",
+            "MODIFIED_ON": "2025-12-03 09:36:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11e9a47961dc814a96fae4b318306b9a",
@@ -453,8 +453,8 @@
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "@MySQL: CONCAT([#NAME#], ' [', [#ALIAS#], ']')",
+                "@pgSQL: ([#NAME#] || ' [' || [#ALIAS#] || ']')",
                 "@T-SQL: (CASE WHEN [#NAME#] IS NULL THEN NULL ELSE CONCAT([#NAME#], ' [', [#ALIAS#], ']') END)",
-                "@pgSQL: [#NAME#] || ' [' || [#ALIAS#] || ']'",
                 ""
             ],
             "OBJECT": "0x35370000000000000000000000000000",
