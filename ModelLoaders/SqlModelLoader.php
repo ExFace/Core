@@ -2022,21 +2022,15 @@ SQL;
             return $message;
         }
 
-        $message->setTitle($row['title']);
-        $message->setType($row['type']);
-
-        if ($row['hint']) {
-            $message->setHint($row['hint']);
-        }
-        if ($row['description']) {
-            $message->setDescription($row['description']);
-        }
         if ($row['app_oid']) {
-            $message->setAppSelector($row['app_oid']);
+            $selector = $row['app_oid'];
+            unset($row['app_oid']);
+            $row['app_selector'] = $selector;
         }
+
+        $message->importUxonObject(UxonObject::fromArray($row));
 
         $this->getWorkbench()->eventManager()->dispatch(new OnMessageLoadedEvent($message));
-
         return $message;
     }
 
