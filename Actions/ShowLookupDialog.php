@@ -272,20 +272,30 @@ class ShowLookupDialog extends ShowDialog
     /**
      * Returns TRUE if two columns from different tables are the same from the point of view of the user
      *
-     * @param DataColumn $col1
-     * @param DataColumn $col2
+     * @param DataColumn $existingCol
+     * @param DataColumn $newCol
      * @param bool $compareCaption
      * @return bool
      */
-    protected function isSameColumn(DataColumn $col1, DataColumn $col2, bool $compareCaption = true) : bool
+    protected function isSameColumn(DataColumn $existingCol, DataColumn $newCol, bool $compareCaption = true) : bool
     {
-        if ($compareCaption === true && $col1->getCaption() === $col2->getCaption()) {
+        // Compare captions if required - but only for visible columns!
+        if ($compareCaption === true 
+            && $newCol->isHidden() === false 
+            && $existingCol->isHidden() === false 
+            && $existingCol->getCaption() === $newCol->getCaption()
+        ) {
             return true;
         }
-        if ($col1 === $col2->getDataColumnName()) {
+        
+        // If the data column name is the same, the columns are definitely the same
+        if ($existingCol->getDataColumnName() === $newCol->getDataColumnName()) {
             return true;
         }
-        if ($col1->isBoundToAttribute() && $col2->isBoundToAttribute() && $col1->getAttributeAlias() === $col2->getAttributeAlias()) {
+        
+        // If they are bound to the same attribute - too. However compare the entire attribute alias including
+        // potential aggregators!
+        if ($existingCol->isBoundToAttribute() && $newCol->isBoundToAttribute() && $existingCol->getAttributeAlias() === $newCol->getAttributeAlias()) {
             return true;
         }
         return false;
