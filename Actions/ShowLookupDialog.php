@@ -223,6 +223,8 @@ class ShowLookupDialog extends ShowDialog
                         // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
                         // different attributes, but having the same caption, we should NOT put them both in the
                         // table! Similarly, avoid columns with different captions, but same content!
+                        // On the other hand, keeping hidden columns is important here because live-refs to columns
+                        // of InputComboTables MUST also work with the data of the lookup dialog
                         foreach ($data_table->getColumns() as $existingCol) {
                             if ($this->isSameColumn($existingCol, $col, true)) {
                                 continue 2;
@@ -279,7 +281,8 @@ class ShowLookupDialog extends ShowDialog
      */
     protected function isSameColumn(DataColumn $existingCol, DataColumn $newCol, bool $compareCaption = true) : bool
     {
-        // Compare captions if required - but only for visible columns!
+        // Compare captions if required - but only for visible columns! Keeping hidden columns is important
+        // because live-refs to columns of InputComboTables MUST also work with the data of the lookup dialog
         if ($compareCaption === true 
             && $newCol->isHidden() === false 
             && $existingCol->isHidden() === false 
