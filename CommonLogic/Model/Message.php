@@ -17,7 +17,9 @@ use exface\Core\Interfaces\Model\MessageInterface;
  */
 class Message implements MessageInterface
 {
-    use ImportUxonObjectTrait;
+    use ImportUxonObjectTrait {
+        importUxonObject as importUxonObjectDefault;
+    }
     
     private $workbench = null;
     
@@ -253,6 +255,20 @@ class Message implements MessageInterface
             $this->getWorkbench()->model()->getModelLoader()->loadMessageData($this);
         }
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
+    {
+        foreach ($this->callGettersViaUxon($uxon) as $prop => $value) {
+            if($value !== null && $value !== '') {
+                $skip_property_names[] = $prop;
+            }
+        }
+        
+        $this->importUxonObjectDefault($uxon, $skip_property_names);
     }
 
     /**

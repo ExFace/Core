@@ -436,6 +436,11 @@ MD);
     public function setUseExceptionMessageAsTitle(bool $value) : ExceptionInterface
     {
         $this->useExceptionMessageAsTitle = $value;
+
+        if ($this->messageModel !== null) {
+            $this->messageModel->setTitle($this->getMessage());
+        }
+        
         return $this;
     }
 
