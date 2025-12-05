@@ -278,6 +278,15 @@ class DocsFacade extends AbstractHttpFacade
     }
 
     /**
+     * @param string $pathRelativeToVendor
+     * @return string
+     */
+    public static function buildUrlToFile(string $pathRelativeToVendor) : string
+    {
+        return 'api/docs/' . FilePathDataType::normalize($pathRelativeToVendor, '/');
+    }
+
+    /**
      * 
      * @param string $htmlString
      * @param string $requestUri

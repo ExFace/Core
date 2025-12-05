@@ -53,41 +53,6 @@ trait ImportUxonObjectTrait {
             }
         }
     }
-
-    /**
-     * Takes all properties found in a given UXON, calls them as getters on this instance and returns an array 
-     * with values for all properties that pointed to a valid getter.
-     * 
-     * @param UxonObject $uxon
-     * @return array
-     * ```
-     *  [
-     *      "prop_name_1" => value1,
-     *      // ...
-     *      "prop_name_x" => valueX
-     *  ] 
-     * ```
-     */
-    protected function callGettersViaUxon(UxonObject $uxon) : array
-    {
-        if ($this instanceof WorkbenchDependantInterface) {
-            $uxon->setSnippetResolver(UxonSnippetFactory::getSnippetResolver($this->getWorkbench()));
-        }
-        
-        $result = [];
-        
-        foreach ($uxon->getPropertiesAll() as $prop => $val) {
-            $getterCamelCased = 'get' . StringDataType::convertCaseUnderscoreToPascal($prop);
-            if (method_exists($this, $getterCamelCased)) {
-                $result[$prop] = call_user_func(array(
-                    $this,
-                    $getterCamelCased
-                ));
-            }
-        }
-        
-        return $result;
-    }
     
     /**
      *
