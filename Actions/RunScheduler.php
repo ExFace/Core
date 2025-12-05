@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Actions\ServiceParameter;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
@@ -46,7 +47,13 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
      */
     protected function performImmediately(TaskInterface $task, DataTransactionInterface $transaction, ResultMessageStreamInterface $result) : array
     {
-        return [];
+        $taskNames = [];
+        $ignoreSchedule = false;
+        if ($task->hasParameter('task')) {
+            $taskNames[] = $task->getParameter('task');
+            $ignoreSchedule = true;
+        }
+        return [$taskNames, $ignoreSchedule ];
     }
     
     /**
@@ -54,10 +61,10 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractActionDeferred::performDeferred()
      */
-    protected function performDeferred() : \Generator
+    protected function performDeferred(array $taskNames = [], bool $ignoreSchedule = false) : \Generator
     {
         yield 'Running the scheduler at ' . DateTimeDataType::formatDateLocalized((new \DateTime()), $this->getWorkbench()) . ':' . PHP_EOL;
-        $scheduledDs = $this->getScheduledTasks();
+        $scheduledDs = $this->getScheduledTasks($taskNames);
         $cnt = 0;
         $router = new TaskQueueBroker($this->getWorkbench());
         foreach ($scheduledDs->getRows() as $rowNo => $row) {
@@ -69,7 +76,7 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
             }
             
             $lastRunTime = new \DateTime($row['LAST_RUN'] ?? $row['FIRST_RUN']);
-            if (CronDataType::isDue($row['SCHEDULE'], $lastRunTime)) {
+            if ($ignoreSchedule || CronDataType::isDue($row['SCHEDULE'], $lastRunTime)) {
                 $cnt++;
                 try {
                     
@@ -108,8 +115,12 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
             yield 'No scheduled tasks to run now' . PHP_EOL;
         }
     }
-    
-    protected function getScheduledTasks() : DataSheetInterface
+
+    /**
+     * @param string[]|null $taskNames
+     * @return DataSheetInterface
+     */
+    protected function getScheduledTasks(?array $taskNames = null) : DataSheetInterface
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.SCHEDULER');
         $ds->getColumns()->addMultiple([
@@ -124,6 +135,9 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
             'MODIFIED_ON',
             'ENABLED'
         ]);
+        if (! empty($taskNames)) {
+            $ds->getFilters()->addConditionFromValueArray('NAME', $taskNames);
+        }
         $ds->dataRead();
         return $ds;
     }
@@ -145,7 +159,12 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
      */
     public function getCliOptions(): array
     {
-        return [];
+        return [
+            new ServiceParameter($this, new UxonObject([
+                'name' => 'task',
+                'description' => 'Name of the scheduler item to run - if set, it will be forced to run regardless of its schedule'
+            ]))
+        ];
     }
 
 }
