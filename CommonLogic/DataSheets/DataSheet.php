@@ -3196,7 +3196,7 @@ class DataSheet implements DataSheetInterface
             try {
                 $collector->collectFrom($this, $logbook);
                 $checkSheet = $collector->getRequiredData();
-                if ($checkSheet !== $this) {
+                if ($checkSheet !== $this && $logbook !== null) {
                     $logbook->addDataSheet('Extract-data', $checkSheet);
                 }
             } catch (\Throwable $e) {
