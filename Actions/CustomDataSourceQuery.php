@@ -2,11 +2,13 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\DataTypes\SqlDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -17,8 +19,10 @@ use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Interfaces\DataSources\TextualQueryConnectorInterface;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\QueryBuilders\AbstractSqlBuilder;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\ConfigPlaceholders;
+use exface\Core\Templates\Placeholders\TaskParamsPlaceholders;
 use exface\Core\Templates\Placeholders\TranslationPlaceholders;
 use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
@@ -33,9 +37,58 @@ use exface\Core\Templates\Placeholders\FormulaPlaceholders;
  * **NOTE:** Since this action is mainly used trigger some internal functionality in the data
  * source (e.g. database stored procedures, etc.), it is generally concidered as a data
  * changing action. In particular, it will automatically have `effects` on its object and
- * possibly other meta objects - just like the action `UpdateData` would do.  
+ * possibly other meta objects - just like the action `UpdateData` would do.
+ *
+ * ## Placeholders
  * 
- * ## Example
+ * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+ * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
+ * from the given app
+ * - `[#~input:column_name#]` - will be replaced by the value from `column_name` of the input data sheet
+ * - `[#~task:param_name#]` - will be replaced by the value from the parameter of the handled task (e.g. CLI option)
+ * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification. This means, 
+ * static formulas will always work, while data-driven formulas will only work on notifications that have data sheets 
+ * present!
+ * - Placeholders without a prefix will be replaced by input data from columns with the same name. This is
+ * the way placeholders worked in very early versions of this action.
+ * 
+ * ### SQL dialect tags
+ *
+ * Specifically SQL data sources allow to define queries for different SQL dialects. Use dialect tags like 
+ * `@T-SQL:` or `@MySQL:` and `@OTHER` at the beginning of a line to make the following statement be only executed
+ * on data connections, that support this dialect.
+ *
+ * Here is an example from the action `exface.Core.WebserviceRequestCleanup` object, which uses different syntax
+ * for Microsoft's T-SQL:
+ *
+ * ```
+ * @T-SQL: DELETE FROM dbo.etl_webservice_request
+ *  WHERE oid in (
+ *      SELECT TOP [#=GetConfig('CLEANUP.WEBSERVICE_REQUESTS.DELETE_BATCH', 'axenox.ETL')#]
+ *          oid
+ *      FROM dbo.etl_webservice_request
+ *      WHERE created_on < '[#=DateAdd(Today(), -1 * GetConfig('CLEANUP.WEBSERVICE_REQUESTS.DAYS_TO_KEEP', 'axenox.ETL'))#]'
+ *      ORDER BY created_on asc
+ *  );
+ *
+ * @OTHER: DELETE FROM etl_webservice_request
+ *  WHERE created_on < '[#=DateAdd(Today(), -1 * GetConfig('CLEANUP.WEBSERVICE_REQUESTS.DAYS_TO_KEEP', 'axenox.ETL'))#]'
+ *  ORDER BY created_on ASC
+ *  LIMIT [#=GetConfig('CLEANUP.WEBSERVICE_REQUESTS.DELETE_BATCH', 'axenox.ETL')#]
+ * 
+ * ```
+ * 
+ * Multi-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`)
+ * MUST be placed at the beginning of a new line (illustrated by the pipes in the example
+ * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is considered to
+ * be the data address in this dialect.
+ *
+ * Every SQL connector supports its own dialect as specified in the respective documentation. Should a data address 
+ * contain multiple supported dialects, the query builder will use it's internal priority to select the best fit.
+ *
+ * The default dialect-tag and `@OTHER:` can be used to define a fallback for all dialects not explicitly addressed.
+ * 
+ * ## Examples
  * 
  * ### Run static SQL on the current connection of a data source
  * 
@@ -78,14 +131,10 @@ use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery, iModifyData
 {
     private $queries = [];
-
     private $queryAttributeAlias = null;
-
+    
     private $data_connection = null;
-
     private $dataSource = null;
-
-    private $aplicable_to_object_alias = null;
 
     /**
      *
@@ -107,9 +156,9 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      */
     public function getQueries(TaskInterface $task): array
     {
-        $data = $task->getInputData();
         $queryAttributeScripts = [];
         if ($this->getQueryAttributeAlias()) {
+            $data = $this->getInputDataSheet($task);
             $queryAttributeScripts = $data->getColumnValues($this->getQueryAttributeAlias());
         }
         return array_merge($this->queries, $queryAttributeScripts);
@@ -124,6 +173,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      *  - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
      *  from the given app
      *  - `[#~input:column_name#]` - will be replaced by the value from `column_name` of the input data sheet
+     *  - `[#~task:param_name#]` - will be replaced by the value from the parameter of the handled task (e.g. CLI option)
      *  - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
      *  This means, static formulas will always work, while data-driven formulas will only work on notifications
      *  that have data sheets present!
@@ -269,6 +319,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     {
         $affectedRows = 0;
         $data_sheet = $this->getInputDataSheet($task);
+        $connection = $this->getDataConnection();
         $logbook = $this->getLogBook($task);
         
         $queries = $this->getQueries($task);
@@ -277,6 +328,9 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         $logbook->addIndent(+1);
         $inputRowNos = array_keys($data_sheet->getRows());
         foreach ($queries as $query) {
+            if ($connection instanceof SqlDataConnectorInterface) {
+                $query = SqlDataType::findSqlDialect($query, [$connection->getSqlDialect(), AbstractSqlBuilder::SQL_DIALECT_OTHER]);
+            }
             $logbook->addLine('Query `' . StringDataType::truncate($query, 70) . '`');
             $logbook->addIndent(+1);
             $queryRuns = [];
@@ -284,7 +338,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
             $renderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench()));
-            $renderer->addPlaceholder(new ExcludedPlaceholders('~notification:', '[#', '#]'));
+            $renderer->addPlaceholder(new TaskParamsPlaceholders($task));
             if (! empty($inputRowNos)) {
                 foreach ($inputRowNos as $rowNo) {
                     $rowRenderer = clone $renderer;
@@ -314,7 +368,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             $affectedRows = 0;
             $logbook->addLine('Will perform ' . count($queryRuns) . ' DB queries.');
             foreach ($queryRuns as $queryRun){
-                $queryObj = $this->getDataConnection()->runCustomQuery($queryRun);
+                $queryObj = $connection->runCustomQuery($queryRun);
                 $logbook->addLine('Query `' . StringDataType::truncate($queryRun, 70) . '` affected `' . $queryObj->countAffectedRows() . '`');
                 $affectedRows += $queryObj->countAffectedRows();
             }

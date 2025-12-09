@@ -475,22 +475,36 @@ class DataCollector implements DataCollectorInterface
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     protected function willReadMissingFromData() : bool
     {
         return $this->readMissingData;
     }
 
+    /**
+     * @inheritDoc
+     * @see DataCollectorInterface::setReadMissingData()
+     */
     public function setReadMissingData(bool $trueOrFalse) : DataCollectorInterface
     {
         $this->readMissingData = $trueOrFalse;
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     protected function willIgnoreUnreadableColumns() : bool
     {
         return $this->ignoreUnreadable;
     }
-
+    
+    /**
+     * @inheritDoc
+     * @see DataCollectorInterface::setIgnoreUnreadableColumns()
+     */
     public function setIgnoreUnreadableColumns(bool $trueOrFalse) : DataCollectorInterface
     {
         $this->ignoreUnreadable = $trueOrFalse;

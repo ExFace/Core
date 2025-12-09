@@ -287,7 +287,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-        return; 
     }
     
     /**
@@ -384,7 +383,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-        return; 
     }
 
     /**
@@ -652,14 +650,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if ($this->hasCustomConditions()) {
             $customConditionsFilters = ConditionGroupFactory::createForDataSheet($mainSheet, $this->getCompareWithConditions()->getOperator());
             foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
-                if ($mainSheet->getColumns()->getByExpression($cond->getExpression())) {
-                    $customConditionsFilters->addCondition($cond);
-                } else {
-                    $logbook->addLine('Ignoring condition: ´'  . $customConditionsFilters->__toString() . '´ in `compare_with_conditions` because required column is NOT part of event data sheet!');
-                }
+                $customConditionsFilters->addCondition($cond);
             }
             $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $customConditionsFilters->__toString());
-            $mainSheet = $mainSheet->extract($customConditionsFilters);
+            $mainSheet = $mainSheet->extract($customConditionsFilters, true, $logbook);
         } else {
             $logbook->addLine('Will search for duplicates for all rows, no filtering required');
         }
@@ -793,12 +787,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function createDuplicatesError(DataSheetInterface $dataSheet, DataMatcherInterface $matcher, BehaviorLogBook $logbook) : DataSheetDuplicatesError
     {
-        $logbook->addLine('Sending an error about the duplicates');
         $object = $dataSheet->getMetaObject();
         $labelAttributeAlias = $object->getLabelAttributeAlias();
         $rows = $dataSheet->getRows();
-        $errorRowDescriptor = '';
-        $errorMessage = '';
         $duplValues = [];
         $duplRowNos = $matcher->getMatchedRowIndexes();
         foreach ($duplRowNos as $duplRowNo) {
@@ -812,8 +803,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         //remove duplicate values that were added by using the LabelAttributeAlias to create error values
         $duplValues = array_unique($duplValues);
         $errorRowDescriptor = implode(', ', $duplValues);
-        $logbook->addLine('Found duplicates for ' . count($duplValues) . ' rows: ' . implode(', ', $duplRowNos));
-        
+        $logbook->addLine('Found duplicates for ' . count($duplValues) . ' rows with these number: `' . implode('`, `', $duplRowNos) . '`');
+        $logbook->addLine('Sending an error about the duplicates');
+
         try {
             $customErrorText = $this->getDuplicateErrorText();
             if ($customErrorText !== null) {
@@ -824,13 +816,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             
             }
             $customErrorCode = $this->getDuplicateErrorCode();
-            $ex = new DataSheetDuplicatesError($dataSheet, $errorMessage, $customErrorCode);
+            $ex = new DataSheetDuplicatesError($dataSheet, $errorMessage, $customErrorCode, null, $logbook);
             if ($customErrorText !== null || $customErrorCode === null) {
                 $ex->setUseExceptionMessageAsTitle(true);
             }
         } catch (\Exception $e) {
             $this->getWorkbench()->getLogger()->logException($e);
-            $ex = new DataSheetDuplicatesError($dataSheet, 'Cannot update/create data, as it contains duplicates of already existing data!', $this->getDuplicateErrorCode());
+            $ex = new DataSheetDuplicatesError($dataSheet, 'Cannot update/create data, as it contains duplicates of already existing data!', $this->getDuplicateErrorCode(), null, $e);
         }
         
         return $ex;

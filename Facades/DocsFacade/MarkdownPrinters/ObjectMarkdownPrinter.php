@@ -4,6 +4,7 @@ namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Exceptions\Model\MetaRelationBrokenError;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -131,10 +132,14 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
             $relation = "";
             if ($attribute->isRelation()) {
                 $relationObject = $attribute->getRelation();
-                $rightObject = $relationObject->getRightObject();
+                try {
+                    $rightObject = $relationObject->getRightObject();
 
-                $this->addRelation($rightObject->getId());
-                $relation = $this->createLink($rightObject);
+                    $this->addRelation($rightObject->getId());
+                    $relation = $this->createLink($rightObject);
+                } catch (MetaRelationBrokenError $e) {
+                    $relation = 'Related object `' . $relationObject->getRightObjectId() . '` not found!';
+                }
             }
 
 
