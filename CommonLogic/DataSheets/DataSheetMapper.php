@@ -935,10 +935,14 @@ class DataSheetMapper implements DataSheetMapperInterface
      * - `none` - no columns will be inherited, even no system columns!
      * - `own_attributes` - only columns for direct attributes of the from-object will be inherited
      * - `own_system_attributes` - only system attributes of the from-object will be inherited. This
-     * is very usefull if you just need the UID and everything else required for a potential update.
+     * is very useful if you just need the UID and everything else required for a potential update.
      * - `all_system_attributes` - only system attributes of the from-object and any related objects
      * present in the from-sheet. This is a good choice for data sheets, that update their main object 
      * along with certain attributes of related objects.
+     * - `matching_attributes` - any attributes with the same alias - even if the objects are very
+     * different. This will really just comparre the aliases, nothing else, not even the data type.
+     * But this strategy helps quickly transforming non-related objects with similar business values
+     * into each-other.
      * 
      * @uxon-property inherit_columns
      * @uxon-type [all,none,own_attributes,own_system_attributes,all_system_attributes,matching_attributes]
