@@ -8,6 +8,9 @@ use exface\Core\Interfaces\Model\BehaviorDependencyInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 
+/**
+ * Ensures that a given list of behavior is PRESENT or ABSENT from the metaobject of the subject.
+ */
 class RequireBehaviors implements BehaviorDependencyInterface
 {
     private array $requiredBehaviorClasses;
@@ -24,17 +27,25 @@ class RequireBehaviors implements BehaviorDependencyInterface
             }
         }
     }
-    
-    public function apply(
-        BehaviorInterface $toBehavior, 
-        BehaviorListInterface $behaviors, 
-        array $behaviorClasses
+
+    /**
+     * @inheritDoc
+     */
+    public function resolve(
+        BehaviorInterface     $subjectBehavior, 
+        BehaviorListInterface $otherBehaviors, 
+        array                 $behaviorClasses
     ) : void
     {
+        $selfClass = get_class($subjectBehavior);
         $missingBehaviors = [];
         $conflictingBehaviors = [];
         
         foreach ($this->requiredBehaviorClasses as $requiredBehaviorClass) {
+            if($requiredBehaviorClass === $selfClass) {
+                continue;
+            }
+            
             if(!in_array($requiredBehaviorClass, $behaviorClasses)) {
                 $missingBehaviors[] = StringDataType::substringAfter(
                     $requiredBehaviorClass,
@@ -47,6 +58,10 @@ class RequireBehaviors implements BehaviorDependencyInterface
         }
 
         foreach ($this->forbiddenBehaviorClasses as $forbiddenBehaviorClass) {
+            if($forbiddenBehaviorClass === $selfClass) {
+                continue;
+            }
+            
             if(in_array($forbiddenBehaviorClass, $behaviorClasses)) {
                 $conflictingBehaviors[] = StringDataType::substringAfter(
                     $forbiddenBehaviorClass,
@@ -62,8 +77,8 @@ class RequireBehaviors implements BehaviorDependencyInterface
             return;
         }
         
-        $msg = 'Could not register behavior "' . $toBehavior->getAliasWithNamespace() . '" on object "' .
-            $toBehavior->getObject()->getAliasWithNamespace() . '".';
+        $msg = 'Could not register behavior "' . $subjectBehavior->getAliasWithNamespace() . '" on object "' .
+            $subjectBehavior->getObject()->getAliasWithNamespace() . '".';
         
         if(!empty($missingBehaviors)) {
             $msg .= ' Missing REQUIRED behaviors: ' . json_encode($missingBehaviors) . '.';
@@ -73,6 +88,6 @@ class RequireBehaviors implements BehaviorDependencyInterface
             $msg .= ' Detected CONFLICTING behaviors: ' . json_encode($conflictingBehaviors) . '.';
         }
 
-        throw new BehaviorConfigurationError($toBehavior, $msg);
+        throw new BehaviorConfigurationError($subjectBehavior, $msg);
     }
 }
