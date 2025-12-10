@@ -38,8 +38,14 @@ interface DataCollectorInterface extends WorkbenchDependantInterface
      * After this method was called, you can use `getRequiredData()` and `getRequiredColumns()` to actually
      * access the values of all the required expressions.
      * 
-     * Returns an enriched copy of the provided data sheet if reading missing data or simply the data sheet
-     * itself (no copy!) if it already included everything reqired.
+     * If the given sheet already has all required data, this will just return it directly (no copy!).
+     * 
+     * NOTE: if the given sheet has modified (unsaved) data, collecting missing values will NOT overwrite these
+     * modifications. The resulting sheet will contain the modified values + freshly read ones, which may actually be
+     * an inconsistent state from the point of view of business logic. However, this behavior is intended because
+     * it makes the collector work independently of the provided data - after all, if the provided data has
+     * modification AND all required columns, we will definitely keep modifications, and it would be pretty strange
+     * if the same data would lose its modifications just because we require one more column.
      *
      * @param DataSheetInterface $dataSheet
      * @return DataCollectorInterface
