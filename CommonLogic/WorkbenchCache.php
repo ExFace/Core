@@ -260,4 +260,15 @@ class WorkbenchCache implements WorkbenchCacheInterface
     {
         return function_exists('apcu_clear_cache');
     }
+
+    /**
+     * Calculates a valid cache key from the given string: removes reserved characters, etc.
+     * @param string $name
+     * @return string
+     */
+    public static function createCacheKey(string $name) : string
+    {
+        $reservedChars = ['{', '}', '(', ')', '/', '\\', '@', ':'];
+        return str_replace($reservedChars, '_', $name);
+    }
 }
