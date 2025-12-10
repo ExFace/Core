@@ -1,5 +1,36 @@
 # Release history
 
+## 1.34 - 10.12.2025
+
+New features:
+
+- Installation on PostgreSQL now possible
+- Log entries now have clickable links to related documentation
+- New widget `InputCode` with syntax highlighting an automatic code formatting
+- Background task to clean up webservice logs in DataFlowFacade
+- AI news
+    - Log analyzer agent to help with errors and log messages
+    - Multiple new AI tools: `GetPrintPreviewTool`, `GetUxonPrototypeTool`, `GetObjectTool`, `GetCodeTool`
+    - `ToolCallConcept` to include prerenderd tool calls in system prompt
+- UI5 facade news
+  - AI chat widget
+  - Quick-select menu for widget setups
+  - Dialog sidebars
+  - Adaptive text colors in `ColorIndicator` and `ProgressBar` widgets
+- Deployer news: live logs for OTA updates via `axenox.PackageManager.SelfUpdate` action
+
+Improvements:
+
+- Data widgets can skip `autoload_data` if located in an inactive tab (set the property to `if_visible`)
+- Scheduler items can now be force-started
+- Caching for custom attribute definitions in `CustomAttributeDefinitionBehavior` for improved performance
+- Many improvements in `Gantt` widget
+- Improved `SoftDeleteBehavior` to better interact with other behaviors
+- Added option to `PreventDuplicatesBehavior` to control if soft-deleted items are duplicates or not
+- Better display of SQL statements in log entries using the new `InputCode` widget
+- Separated installers for different web servers: Apache, Microsoft IIS and nginx
+- Ability to link page group assignments with apps explicitly
+
 ## 1.33 - 13.11.2025
 
 New features:
