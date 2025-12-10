@@ -19,7 +19,9 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
- * Collects required data for rows of a given data sheet
+ * Collects required data for rows of a given data sheet.
+ * 
+ * 
  *
  * @see DataCollectorInterface
  */
@@ -96,6 +98,15 @@ class DataCollector implements DataCollectorInterface
                 $this->resultSheet = $dataSheet;
                 break;
             case $dataSheet->hasUidColumn(true):
+                // Read missing data for a COPY of the given data sheet. However, the copy only needs to keep
+                // column really required for our collector - keeping them all might mean reading them all again
+                // which would cause unnecessary overhead. On the other hand, keeping just the UID would mean
+                // losing unsaved changes - see method description for more details.
+                // It is important to keep all required columns because they might have modified (unsaved) data,
+                // so if we would read them again, we would read "old" data. For this reason, it is also important
+                // to keep columns, that are not required explicitly, but are needed for required formulas - if
+                // these have changes, the formula would have a different result from what we would read from the
+                // data source.
                 $this->resultSheet = $this->extractRequiredColumns($dataSheet);
                 $this->readMissingDataWithUid($this->resultSheet, $logBook);
                 break;
@@ -426,22 +437,23 @@ class DataCollector implements DataCollectorInterface
     }
 
     /**
-     * @return string[]
-     */
-    protected function getRequiredExpressionStrings() : array
-    {
-        return array_keys($this->getRequiredExpressions());
-    }
-
-    /**
+     * Returns TRUE if the given expression is either required explicitly or needed for any of the required formulas
+     * 
      * @param ExpressionInterface|string $expr
      * @return bool
      */
     protected function isRequired(ExpressionInterface|string $expr) : bool
     {
-        $reqStrings = $this->getRequiredExpressionStrings();
         $exprStr = $expr instanceof ExpressionInterface ? $expr->__toString() : $expr;
-        return in_array($exprStr, $reqStrings, true);        
+        foreach ($this->getRequiredExpressions() as $reqExpr) {
+            if ($reqExpr->__toString() === $exprStr) {
+                return true;
+            }
+            if (in_array($exprStr, $reqExpr->getRequiredAttributes(), true) === true) {
+                return true;
+            }
+        }     
+        return false;
     }
 
     /**
@@ -539,7 +551,28 @@ class DataCollector implements DataCollectorInterface
     {
         return $this->workbench;
     }
-    
+
+    /**
+     * Returns a copy of the given data sheet, which only has column required for this collector
+     * 
+     * A column is required if
+     * - Its expression is required explicitly
+     * - It is an attribute column and any of the required column (e.g. formulas) need that attribute
+     * 
+     * It is important to keep all required columns because they might have modified (unsaved) data,
+     * so if we would read them again, we would read "old" data. For this reason, it is also important
+     * to keep columns, that are not required explicitly, but are needed for required formulas - if
+     * these have changes, the formula would have a different result from what we would read from the
+     * data source.
+     * 
+     * The optional argument $keepSystemCols allows to force keeping/removing system columns, that are not
+     * explicitly required. If not specified, system columns of not-aggregated data sheets will be kept and
+     * those of data sheets with aggregations will be removed.
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param bool|null $keepSystemCols
+     * @return DataSheetInterface
+     */
     protected function extractRequiredColumns(DataSheetInterface $dataSheet, ?bool $keepSystemCols = null) : DataSheetInterface
     {
         $keepSystemCols = $keepSystemCols ?? ! ($dataSheet->hasAggregations() || $dataSheet->hasAggregateAll());
