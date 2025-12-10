@@ -485,7 +485,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $logBook->addDataSheet('Custom attribute values', $lookupSheet);
 
         // Put the looked up values into the event data
-        $delim = $lookupAliasCol->getAttribute()->getValueListDelimiter();
+        $delim = $lookupAliasCol->getValueListDelimiter();
         foreach ($lookupSheet->getRows() as $row) {
             $key = $row[$lookupKeyCol->getName()];
             $eventRowIdx = $eventSheet->getUidColumn()->findRowByValue($key);
@@ -493,6 +493,9 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
                 continue;
             }
             $customAttrAlias = $row[$lookupAliasName];
+            if ($customAttrAlias === null) {
+                throw new BehaviorRuntimeError($this, 'Cannot lookup custom attribute values for ' . $thisObj->__toString() . '. Empty values detected in `' . $lookupAliasName . '` column of ' . $lookupSheet->getMetaObject()->__toString() . ', but these values are required by the CustomAttributesLookupBehavior as `values_attribute_alias_column`!');
+            }
             $val = $eventSheet->getCellValue($customAttrAlias, $eventRowIdx);
             $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
             if ($relPathToEventRequired) {

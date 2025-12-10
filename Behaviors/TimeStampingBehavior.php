@@ -14,6 +14,7 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
@@ -230,7 +231,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
      * 
      * @return bool
      */
-    protected function getCheckForConflictsOnUpdate() : bool
+    public function getCheckForConflictsOnUpdate() : bool
     {
         return $this->checkForConflictsOnUpdate;
     }
@@ -433,10 +434,14 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
         }
         
         $widget = $event->getMessageList()->getParent();
+        if (! $widget instanceof iContainOtherWidgets) {
+            return;
+        }
+        
         $disabledDefaultValue = false;
         $disabledFixedValue = false;
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        foreach ($widget->getChildrenRecursive() as $child) {
+        foreach ($widget->getWidgetsRecursive() as $child) {
             if ($child instanceof iShowSingleAttribute) {
                 if ($child->getAttributeAlias() === 'DEFAULT_VALUE') {
                     $child->setValue(null);

@@ -61,7 +61,7 @@ class DataSheetDataType extends AbstractDataType
             }
         }
         
-        throw new DataTypeValidationError($this, 'Cannot parse ' . gettype($value) . ' as data sheet!');
+        throw new DataTypeValidationError($this, 'Cannot parse ' . gettype($value) . ' as data sheet!', null, null, $value);
     }
     
     /**

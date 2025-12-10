@@ -11,11 +11,11 @@ interface iHaveColumns extends WidgetInterface
 {
     /**
      * 
-     * @param \exface\Core\Widgets\DataColumn $column
+     * @param DataColumn $column
      * @param integer|null $position
      * @return iHaveColumns
      */
-    public function addColumn(\exface\Core\Widgets\DataColumn $column, int $position = NULL) : iHaveColumns;
+    public function addColumn(DataColumn $column, int $position = NULL) : iHaveColumns;
 
     /**
      * 
@@ -40,7 +40,7 @@ interface iHaveColumns extends WidgetInterface
     /**
      *
      * @param string $widgetId
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * @return DataColumn|NULL
      */
     public function getColumn(string $widgetId) : ?DataColumn;
     
@@ -48,14 +48,14 @@ interface iHaveColumns extends WidgetInterface
      * Returns the first column with a matching attribute alias.
      *
      * @param string $alias_with_relation_path
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * @return DataColumn|NULL
      */
     public function getColumnByAttributeAlias(string $alias_with_relation_path) : ?DataColumn;
     
     /**
      *
      * @param string $data_sheet_column_name
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * @return DataColumn|NULL
      */
     public function getColumnByDataColumnName(string $data_sheet_column_name) : ?DataColumn;
     
@@ -94,16 +94,16 @@ interface iHaveColumns extends WidgetInterface
      * The column is not automatically added to the column group - use addColumn() explicitly!
      *
      * @param UxonObject $uxon
-     * @return \exface\Core\Widgets\DataColumn
+     * @return DataColumn
      */
     public function createColumnFromUxon(UxonObject $uxon) : DataColumn;
     
     /**
      * Returns the UID column as DataColumn
      *
-     * @return \exface\Core\Widgets\DataColumn
+     * @return DataColumn|null
      */
-    public function getUidColumn() : DataColumn;
+    public function getUidColumn() : ?DataColumn;
     
     /**
      * Returns TRUE if this data widget has a UID column or FALSE otherwise.

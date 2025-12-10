@@ -133,6 +133,7 @@ class DataUrlParamReader implements MiddlewareInterface
         if (count($rows) === 1) {
             $row = reset($rows);
             foreach ($row as $field => $val) {
+                $attr = null;
                 if (ArrayDataType::isAssociative($row) === false) {
                     throw new FacadeRequestParsingError('Cannot parse URL parameter "data": invalid row format!');
                 }
@@ -150,11 +151,12 @@ class DataUrlParamReader implements MiddlewareInterface
                         $result_before = $result;
                         foreach ($result_before as $nr => $r){
                             unset($result[$nr]);
-                            $result = array_values($result);
+                            
                             foreach ($val as $v) {
                                 $result[] = array_merge($r, [$field => $v]);
                             }
                         }
+                        $result = array_values($result);
                     } else {
                         $result[0][$field] = implode(EXF_LIST_SEPARATOR, $val);
                     }

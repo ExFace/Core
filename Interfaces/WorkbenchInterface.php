@@ -71,10 +71,10 @@ interface WorkbenchInterface extends TaskHandlerInterface
     
     /**
      *
-     * @param AppSelectorInterface $selector
+     * @param AppSelectorInterface|string $selector
      * @return string
      */
-    public function getAppFolder(AppSelectorInterface $selector) : string;
+    public function getAppFolder(AppSelectorInterface|string $selector) : string;
     
     /**
      * Returns the core app

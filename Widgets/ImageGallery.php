@@ -767,4 +767,12 @@ class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTa
         }
         return array_unique($cols);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEditable(): bool
+    {
+        return $this->isDownloadEnabled();
+    }
 }

@@ -50,7 +50,14 @@ class CommandRunner
                     yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exit . '.';
                     // If caller wants hard failure, throw AFTER emitting the error marker
                     if (! $silent) {
-                        throw new RuntimeException('CLI command "' . $process->getCommandLine() . '" failed: ' . ($stderr !== '' ? $stderr : 'no error output'));
+                        $errorMessage = '';
+                        if (preg_match('/LogID:\s*([A-Z0-9]+)/', $stdout, $matches)) {
+                            $logId = $matches[1];
+                            $errorMessage = "LogID: $logId\n";
+                        } else {
+                            $errorMessage =  "no error output.\n";
+                        }
+                        throw new RuntimeException('CLI command "' . $process->getCommandLine() . '" failed: ' . ($stderr !== '' ? $stderr : $errorMessage));
                     }
                 }                
             };

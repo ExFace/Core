@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Attribute group [exface.Core.ATTRIBUTE_GROUP]",
             "CREATED_ON": "2025-03-10 12:29:45",
-            "MODIFIED_ON": "2025-03-12 12:02:19",
+            "MODIFIED_ON": "2025-11-28 10:04:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11efa02af7c78a6aa02a025041000001",
@@ -164,6 +164,12 @@
                                 }
                             }
                         ]
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.ShowModelSearchDialog",
+                        "close_dialog": false
                     }
                 ]
             },

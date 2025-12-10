@@ -351,14 +351,14 @@ class MetaObject implements MetaObjectInterface
                     // Otherwise it's not clear to the user, at what point the 
                     // relation was required.
                     $this->setAttributeCache($alias, false);
-                    throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '": invalid relation path "' . $rel_parts[0] . '"!', null, $e);
+                    throw new MetaAttributeNotFoundError($this, 'Attribute `' . $alias . '` not found for object "' . $this->getAliasWithNamespace() . '": invalid relation path "' . $rel_parts[0] . '"!', null, $e, $alias);
                 } catch (MetaAttributeNotFoundError $e) {
                     // Catch attribute-not-found errors from other objects and
                     // wrap them into an error for this object. Otherwise it's
                     // not clear to the user, at what point the attribute was
                     // required.
                     $this->setAttributeCache($alias, false);
-                    throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
+                    throw new MetaAttributeNotFoundError($this, 'Attribute `' . $alias . '` not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e, $alias);
                 }
             }
             
@@ -375,13 +375,13 @@ class MetaObject implements MetaObjectInterface
                         return $attr;
                     } catch (MetaAttributeNotFoundError $e) {
                         $this->setAttributeCache($alias, false);
-                        throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
+                        throw new MetaAttributeNotFoundError($this, 'Attribute `' . $alias . '` not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e, $alias);
                     }
                 }
             }
             $this->setAttributeCache($alias, false);
         }
-        throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
+        throw new MetaAttributeNotFoundError($this, 'Attribute `' . $alias . '` not found for object "' . $this->getAliasWithNamespace() . '"!', null, null, $alias);
     }
     
     /**
@@ -480,7 +480,7 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::extendFromObject()
      */
-    public function extendFromObject(MetaObjectInterface $parent)
+    public function extendFromObject(MetaObjectInterface $parent, bool $registerBehaviors = true) : void
     {
         // Do nothing, if trying to extend itself
         if ($parent->getId() === $this->getId()) {
@@ -497,7 +497,7 @@ class MetaObject implements MetaObjectInterface
         
         // Inherit data address
         $this->setDataAddress($parent->getDataAddress());
-        $this->setDataAddressProperties($parent->getDataAddressProperties());
+        $this->setDataAddressProperties($parent->getDataAddressProperties()->copy());
         // The inheriting object will only be readable/writable if it is marked as such itself
         // and the parent is readable or writable respectively.
         if ($this->isReadable() === true && $parent->isReadable() === false){
@@ -552,14 +552,13 @@ class MetaObject implements MetaObjectInterface
         // Inherit behaviors
         foreach ($parent->getBehaviors()->getAll() as $key => $behavior) {
             $copy = $behavior->copy()->setObject($this);
-            $this->getBehaviors()->add($copy, $key);
+            $this->getBehaviors()->add($copy, $key, $registerBehaviors);
         }
         
         // TODO Inherit actions here?
 
         // Reset the cache because it might get filled when inheriting relation and attributes
         $this->attributes_alias_cache = [];
-        return;
     }
 
     /**
@@ -1308,7 +1307,7 @@ class MetaObject implements MetaObjectInterface
             foreach ($this->attribute_groups as $g) {
                 if (StringDataType::endsWith($g->getAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias, false)) {
                     if ($foundByAlias !== null) {
-                        throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguos! Found multiple groups for selector "' . $alias . '": ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
+                        throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguos! Found multiple groups for selector `' . $alias . '`: ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
                     }
                     $foundByAlias = $g;
                 }
@@ -1318,7 +1317,7 @@ class MetaObject implements MetaObjectInterface
             }
         }
         if ($grp === null) {
-            throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $alias . '" not found for object ' . $this->__toString() . '!');
+            throw new MetaAttributeGroupNotFoundError($this, 'Attribute group `' . $alias . '` not found for object ' . $this->__toString() . '!');
         }
         return $grp;
     }

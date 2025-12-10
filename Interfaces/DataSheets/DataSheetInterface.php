@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\DataSheets;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Interfaces\Debug\DataLogBookInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -11,7 +12,6 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
-use exface\Core\CommonLogic\DataSheets\DataSheetList;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -121,16 +121,29 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function joinLeft(DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
 
     /**
-     * Imports data from matching columns of the given sheet.
-     * If the given sheet has the same columns, as this one, their
-     * values will be copied to this sheet. If this sheet has columns with formulas, they will get calculated
-     * for the imported rows if `calculateFormulas` is `true`.
+     * Replaces data if this sheet with data in matching columns of the given sheet.
+     * 
+     * This only works if all columns have the same amount of cells. 
+     * 
+     * Also keep in mind, that row UIDs are not checked. On the one hand, this allows to use this method on data
+     * sheets without UID columns, but on the other hand partial imports (if the "other" sheet does not have all the
+     * columns of this sheet) will probably produce broken data if row order differs between the sheets.
+     * 
+     * This method will not add any column to this sheet. It will only replace values of existing columns. In case this 
+     * sheet has columns, not present in the other sheet:
+     * - calculated columns (formulas) will be recalculated based on the new state of the data
+     * - other types columns will keep their values unchanged
+     * 
+     * If any of the imported columns are based on formulas, they will also be recalculated. However, you can
+     * disable this via $calculateFormulas if you just need the values. This may have side-effects though because
+     * the columns will still be based on their formulas and will probably get recalculated with the next read
+     * operation.
      * 
      * @param DataSheetInterface $other_sheet
      * @param bool $calculateFormulas
      * @return DataSheetInterface
      */
-    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas) : DataSheetInterface;
+    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true) : DataSheetInterface;
 
     /**
      * Returns the values a column of the data sheet as an array
@@ -395,6 +408,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function hasSorters() : bool;
 
     /**
+     * Returns indexes (keys) of all rows
+     * @return int[]
+     */
+    public function getRowIndexes() : array;
+
+    /**
      * Returns multiple rows of the data sheet as an array of associative array (e.g.
      * [rownum => [col1 => val1, col2 => val2, ...] ])
      * By default returns all rows. Use the arguments to select only a range of rows.
@@ -536,9 +555,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Removes all or specified rows of the data sheet without changing anything in the column structure
      *
      * @param int[]|NULL $rowIndexes
+     * @param bool $reindex
      * @return DataSheetInterface
      */
-    public function removeRows(array $rowIndexes = null) : DataSheetInterface;
+    public function removeRows(array $rowIndexes = null, bool $reindex = true) : DataSheetInterface;
 
     /**
      * Removes a single row of the data sheet.
@@ -559,11 +579,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *      $dataSheet->removeRow($r);
      *  }
      * ```
-     *
-     * @param integer $row_number            
+     * 
+     * @param int $row_number
+     * @param bool $reindex
      * @return DataSheetInterface
      */
-    public function removeRow(int $row_number) : DataSheetInterface;
+    public function removeRow(int $row_number, bool $reindex = true) : DataSheetInterface;
 
     /**
      * Removes all rows with the given value in the UID column.
@@ -739,7 +760,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param bool $readMissingData
      * @return DataSheetInterface
      */
-    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
+    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false, ?DataLogBookInterface $logbook = null) : DataSheetInterface;
 
     /**
      * Returns the indexes of rows matching the given conditions (starting with 0)
@@ -748,7 +769,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param bool $readMissingData
      * @return int[]
      */
-    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array;
+    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false, ?DataLogBookInterface $logbook = null) : array;
     
     /**
      * Returns a copy of this data sheet, that only contains system columns
@@ -838,4 +859,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @throws DataNotFoundError if none or more then one row is within the datasheet
      */
     public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array;
+
+    /**
+     * Returns a copy of this sheet containing only the rows with the provided indexes
+     * 
+     * 
+     * 
+     * @param int[] $rowIndexes
+     * @return DataSheetInterface
+     */
+    public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface;
 }

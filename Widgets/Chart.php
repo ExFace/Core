@@ -95,8 +95,6 @@ class Chart extends AbstractWidget implements
     
     const VALUE_LEGEND_INACTIVE = '~legend_disabled';
     
-    private $autoload_disabled_hint = null;
-    
     /**
      * @var ChartAxis[]
      */
@@ -395,7 +393,6 @@ class Chart extends AbstractWidget implements
         foreach ($this->getAxes() as $axis) {
             $axis->prepareDataWidget($dataWidget);
         }
-        if ($dat)
         $dataWidget->setPaginate(false);
         return $this;
     }

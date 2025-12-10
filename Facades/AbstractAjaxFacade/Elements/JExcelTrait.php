@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\InputSelect;
@@ -32,6 +34,7 @@ use exface\Core\Widgets\Text;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
@@ -58,6 +61,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * - validateCell(cell, iCol, iRow, mValue, bParseValue) : mixed
  * - validateAll() : void
  * - refreshConditionalProperties();
+ * - isDropdownValueValid (iCol, iRow, mValue = null) : bool // checks if the current dropdown value (or a passed parameter) is valid in the filter context
  * - convertArrayToData(aDataArray) : array
  * - convertDataToArray(aDataRows) : array
  * - setDisabled(bDisable) : bool
@@ -243,6 +247,35 @@ JS;
         }
         return $includes;
     }
+
+    /**
+     * adds a button to add one or more rows to the spreadsheet
+     * 
+     * @param ButtonGroup $btnGrp
+     * @param int $index
+     */
+    protected function addNewRowsButton(ButtonGroup $btnGrp, int $index = 0) : void
+    {        
+        $widget = $this->getWidget();
+        $translator = $widget->getWorkbench()->getCoreApp()->getTranslator();
+
+        if ($this->getAllowAddRows()){
+            $btnGrp->addButton($btnGrp->createButton(new UxonObject([
+                    'widget_type' => 'Button',
+                    'icon' => 'plus',
+                    'caption' => $translator->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION'),
+                    'align' => 'right',
+                    'action' => [
+                        'alias' => 'exface.Core.CustomFacadeScript',
+                        'script' => <<<JS
+                            {$this->buildJsJqueryElement()}[0].exfWidget.showAddRowsDialogue();
+    JS
+                    ]
+                ])), $index);
+        }
+
+    }
+
     
     /**
      * Returns the jQuery element for jExcel - e.g. $('#element_id') in most cases.
@@ -261,7 +294,7 @@ JS;
     {
         return <<<JS
 
-<div id="{$this->getId()}"></div>
+<div id="{$this->getId()}" class="{$this->buildCssWidgetClass()}"></div>
 
 JS;
     }
@@ -422,7 +455,7 @@ JS;
 
                 // refresh the conditional properties of spreadsheet onchange
                 // dont conditionize while lazy loading is in progress, otherwise disabled cells do not load data
-                if (!instance.isLazyLoadingInProgress){
+                if (!instance.isLazyLoadingInProgress && value != oldValue){
                     instance.exfWidget.refreshConditionalProperties();
                 }
             }, 0);
@@ -478,26 +511,84 @@ JS;
             var iXEnd = iXStart;
             var oColOpts = {};
 
-            el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
-                aPastedData.push(aRow[0].split("\\t"));
-            });
-            iXEnd = iXStart + aPastedData[0].length;
+            // Issue: in csv, umatched double quotes treat everything after it as a string (until the next quotes), breaking the parsing logic here
+            // see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/helpers.js#L102
+            // paste event itself apparently ALSO uses parseCSV -> so they need to be replaced or escaped before 
+            // paste function: (see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/copyPaste.js#L221)
 
-            for (var i = iXStart; i <= iXEnd; i++) {
-                oColOpts = el.jspreadsheet.options.columns[i];
-                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
-                    if (typeof(oColOpts.filter) == 'function') {
-                        oDropdownVals[i - iXStart] = oColOpts.filter(el, null, (i - iXStart), null, oColOpts.source);
-                    } else {
-                        oDropdownVals[i - iXStart] = oColOpts.source;
+            // people had similar issues with Jexcel before:
+            // https://github.com/jspreadsheet/ce/issues/1139
+            // https://github.com/jspreadsheet/ce/issues/176 (exactly the same use case/issue)
+            // this works as a workaround, but might cause other issues?
+            //  data = data.replace(/"{1,3}/g, '″');
+
+            // OLD PARSING
+            // el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
+            //     aPastedData.push(aRow[0].split("\\t"));
+            // });
+
+            let aPreprocessedData = [];
+
+            // preprocess data to allow singular double quotation marks in cells
+            // split input by new line 
+            data.split("\\n").forEach(function(line){
+                
+                // skip empty lines and trim line endings 
+                if (line.trim() === '') return; 
+                line = line.trimEnd();
+
+                // split input by tab and trim each cell
+                let cells = line.split("\\t").map(function(cell) {
+                    cell = cell.trim();
+
+                    // if the cell contains an uneven number of quotation marks,
+                    // assume it is wanted and escape them by wrapping the cell in double quotes
+                    // - csv standard: https://stackoverflow.com/questions/17808511/how-to-properly-escape-a-double-quote-in-csv
+                    let quoteCount = (cell.match(/"/g) || []).length;
+                    if (quoteCount % 2 === 1) {
+                        cell = '"' + cell.replace(/"/g, '""') + '"';
                     }
+
+                    return cell;
+                });
+
+                aPastedData.push(cells);
+            });
+
+
+            // if pasted data contains dropdown columns, get the source arrays
+            // this way, we can then set the actual value (id) and not just the label on paste
+            var iPastedColIdx = 0;
+            var iTableColIdx = iXStart;
+            while (iPastedColIdx < aPastedData[0].length && iTableColIdx < el.jspreadsheet.options.columns.length) {
+                var oColOpts = el.jspreadsheet.options.columns[iTableColIdx];
+
+                // skip hidden columns in the table (otherwise the pasted indices will be messed up)
+                if (oColOpts !== undefined && oColOpts.type === 'hidden') {
+                    iTableColIdx++;
+                    continue;
                 }
-            };
+
+                // only process autocomplete columns with a source
+                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    
+                    // dropdown validation is now handled via isDropdownValueValid, so we dont need to filter here
+                    // otherwise we might run into issues with dynamic filters here (?)
+
+                    // save unfiltered dropdown source
+                    oDropdownVals[iPastedColIdx] = oColOpts.source;
+                }
+
+                iPastedColIdx++;
+                iTableColIdx++;
+            }
 
             if (oDropdownVals === {}) {
                 return selectedCells;
             }
 
+            // for each value in a dropdown column, set the id not the label value
+            // if no fitting id is found, set empty
             aPastedData.forEach(function(aRow) {  
                 var aValRows, mVal, oValRow, bKeyFound;
                 for (var iCol in oDropdownVals) {
@@ -625,11 +716,24 @@ JS;
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
         },
         restoreInitValue: function(iCol, iRow) {
+
+            var oJExcel = this.getJExcel();
             var mInitVal = this.getInitValue(iCol, iRow);
+
+            // if a dropdown cell with a filter is being restored, check if the intital value is still valid in the current context
+            // otherwise set empty
+            if (oJExcel.getColumnOptions(iCol).type == 'autocomplete' 
+                && typeof(oJExcel.getColumnOptions(iCol).filter) == 'function'
+                && !this.isDropdownValueValid(iCol, iRow, mInitVal))
+            {
+                 mInitVal = '';
+            }
+
             if (mInitVal === undefined) {
                 mInitVal = '';
             }
-            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal);            
+
+            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal, true);            
         },
         hasChanged: function(iCol, iRow, mValue){
             var mInitVal = this.getInitValue(iCol, iRow);
@@ -754,9 +858,54 @@ JS;
             });
         },
         refreshConditionalProperties: function() {
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+            let numRows = oJExcel.getData().length;
+
             for (i in this._cols) {
                 this._cols[i].conditionize(this);
             }
+
+            // if a dropdown source has filters, check if the set value is in the filtered source (jexcel by default just consideres the unfiltered source array)
+            // if not, set to empty
+            for (i = 0; i < oJExcel.getConfig().columns.length; i++) {
+                if (oJExcel.getColumnOptions(i).type == 'autocomplete' && typeof(oJExcel.getColumnOptions(i).filter) == 'function' ) {
+                    for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+                        
+                        // Clear the cell if value is not in filtered source array
+                        if (!this.isDropdownValueValid(i, rowIndex)){
+                            oJExcel.setValueFromCoords(i, rowIndex, '', true);
+                        }
+                    }
+                }
+            }
+        },
+        isDropdownValueValid: function(iCol, iRow, mValue = null) {
+
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+
+            // if data is not loaded yet, or column is not filtered, dont validate. otherwise all dropdowns would be emptied  
+            if (!{$this->buildJsJqueryElement()}[0].exfWidget.bLoaded || oJExcel.getColumnOptions(iCol).source.length === 0 || typeof(oJExcel.getColumnOptions(iCol).filter) != 'function'){
+                return true;
+            }
+
+            let aFilteredSrc = oJExcel.getColumnOptions(iCol).filter(null, null, iCol, iRow, oJExcel.getColumnOptions(iCol).source);
+            let mCellValue = (mValue !== null) ? mValue : oJExcel.getValueFromCoords(iCol, iRow);
+
+            
+            // empty values are always valid
+            if (mCellValue === null || mCellValue === undefined || mCellValue === '') {
+                return true;
+            }
+
+            // value is invalid if it does not match any id or name in the filtered source 
+            // (check name, in case inital value is passed as parameter (label))
+            if (!aFilteredSrc.some(entry => entry.id == mCellValue || entry.name == mCellValue)) {
+                return false;
+            }
+
+            return true;
         },
         convertArrayToData: function(aDataArray) {
             var aData = [];
@@ -986,7 +1135,29 @@ JS;
                     console.warn('Relation key ' + sColRelationKey + ' not found in dropdown source');
                 }
             }
+        },
+        showAddRowsDialogue: function() {
+            let oJExcel = this.getJExcel();
+
+            // prompt for number of rows to add
+            let sInputNumber = window.prompt('{$this->getWidget()->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT')}', "1"); 
+            let iParsedNumber = Number(sInputNumber);
+
+            if (iParsedNumber !== NaN && iParsedNumber > 0) {
+                
+                // if nothing is selected, add rows at the end
+                // otherwise at end of selection
+                let iLastRow = oJExcel.getData().length;
+                let aSelectedRows = oJExcel.getSelectedRows(true);
+                if (aSelectedRows.length > 0) {
+                    iLastRow = aSelectedRows[aSelectedRows.length -1];
+                }
+
+                // insert rows
+                oJExcel.insertRow(iParsedNumber, iLastRow, false);
+            } 
         }
+
     };
     
     {$this->buildJsInitPlugins()}
@@ -1082,7 +1253,8 @@ JS;
 JS;
             }
 
-            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && $cellWidget->getLazyLoading()) ? 'true' : 'false';
+            // only set lazy loading set to true if explicitly set (e.g. in uxon)
+            $lazyLoadingFlagJs = (($cellWidget instanceof InputComboTable) && ($cellWidget->getLazyLoading(null) === true)) ? 'true' : 'false';
             $wasLazyLoaded = 'false';
 
             $lazyLoadingRequestJs = json_encode("");
@@ -1624,13 +1796,15 @@ JS;
             throw new FacadeLogicError('TODO');
         }
         $filterJs = '';
-        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false) {
+
+        // only use lazy loading is it is explicitly set (e.g. in uxon)
+        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading(null) !== true) {
+
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 if ($cellWidget instanceof InputComboTable) {
                     $srcSheet = $cellWidget->getOptionsDataSheet();
-                    $table = $cellWidget->getTable()->getColumns();
 
                     // See if the widget has additional filters
                     // If so, add any attributes required for them to the $srcSheet
@@ -1717,10 +1891,24 @@ JS;
                     $srcData[] = $data;
                 }
             } else {
+
                 $srcData = [];
-                foreach ($cellWidget->getSelectableOptions() as $key => $val) {
-                    $srcData[] = ['id' => $key, 'name' => $val];
-                }                
+
+                if ($cellWidget->getValueDataType() instanceof NumberEnumDataType) {
+    
+                    // Having numerical ids (0 specifically) seems to cause problems with JExcel; seems to be an unfortunate implementation on their side
+                    // 0 gets replaced with an empty value when selecting via the dropdown (probably a truthy check somewhere, all other numerical values are fine) 
+                    // -> their example dropdown sources are also strings and not 0-indexed https://bossanova.uk/jspreadsheet/v4/examples/dropdown-and-autocomplete
+                    foreach ($cellWidget->getSelectableOptions() as $key => $val) {
+                        // use strignified ids in this case
+                        $srcData[] = ['id' => strval($key), 'name' => $val]; 
+                    }       
+                }
+                else{
+                    foreach ($cellWidget->getSelectableOptions() as $key => $val) {
+                        $srcData[] = ['id' => $key, 'name' => $val]; 
+                    } 
+                }         
             }
             $srcJson = json_encode($srcData);
         } else {
@@ -1765,24 +1953,28 @@ JS;
                     
                             var oEffect = {};
                             var aUsedObjectAliases = {$effectedAliasesJs};
-                            let iColIdx = {$this->buildJsJqueryElement()}[0].exfWidget.getColumnIndex('{$dataCol->getDataColumnName()}');
+                            var oDomEl = {$this->buildJsJqueryElement()}[0];
+                            if (oDomEl === undefined) {
+                                return;
+                            }
+                            var oWidget = oDomEl.exfWidget;
+                            let iColIdx = oWidget.getColumnIndex('{$dataCol->getDataColumnName()}');
                             if (iColIdx === -1) {
                                 return;
                             }
 
                             var fnRefresh = function() {
-                                {$this->buildJsJqueryElement()}[0].exfWidget.refreshDropdown(iColIdx);
+                                oWidget.refreshDropdown(iColIdx);
                             };
                         
                             for (var i = 0; i < oParams.effects.length; i++) {
                                 oEffect = oParams.effects[i];
                                 if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-                                    // refresh immediately if directly affected or delayed if it is an indirect effect
+                                    // refresh immediately if directly affected
+                                    // (indirect effects waere causing issues in some dialogues with filters)
                                     if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
                                         fnRefresh();
-                                    } else {
-                                        setTimeout(fnRefresh, 100);
-                                    }
+                                    } 
                                     return;
                                 }
                             }
@@ -2022,6 +2214,11 @@ JS;
     if (jqCtrl.length === 0) {
         return;
     }
+
+    // when re-setting data (e.g. zwischenspeichern), the element doesnt get destroyed, 
+    // so we need to set the loading flag again
+    jqCtrl[0].exfWidget.bLoaded = false;
+
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
         jqCtrl[0].exfWidget._initData = oData.rows;
@@ -2035,7 +2232,23 @@ JS;
     }
     jqCtrl.jspreadsheet('setData', aData);
     {$this->buildJsResetSelection('jqCtrl')};
-    jqCtrl[0].exfWidget.refreshConditionalProperties();
+
+    // Wait for setData to finish rendering before setting loaded and refreshing
+    setTimeout(function() {
+        jqCtrl[0].exfWidget.bLoaded = true;
+        jqCtrl[0].exfWidget.refreshConditionalProperties();
+    },0);
+
+    /*
+        TODO: When re-setting data (zwischenspeichern), validation seems to briefly fail (cells flash red)
+        this is likely some timing issue with retrieving/setting the data (?)
+
+        If we refresh the conditional properties here while bLoaded is still set to false, it fixes this issue, 
+        but then the data is not correctly conditionized on initial load..
+
+    */
+    
+    
 }()
 
 JS;
@@ -2243,20 +2456,31 @@ JS;
         // otherwise return values from seleted indices
 
         if ($filterTargetIsSpreadsheet === true){
-            // if target is the spreadsheet itself, get filter value from current spreadsheet row
+            // if filter target is the spreadsheet itself, get filter value from current spreadsheet row
             return <<<JS
 
 (function(oWidget){
-        var aAllRows = oWidget.getData(); 
-        var aVals = [];
 
-        if (aAllRows[y]['{$col->getDataColumnName()}'] === undefined) {
-            console.warn('Column {$col->getDataColumnName()} does not exist in the current spreadsheet'); 
-        } else {
-            aVals.push(aAllRows[y]['{$col->getDataColumnName()}']); 
+        if (oWidget && oWidget.bLoaded === true){
+
+            var aAllRows = oWidget.getData(); 
+            var aVals = [];
+
+            // skip automatically added empty rows (when adding new rows is allowed)
+            if (aAllRows.length === 0 || aAllRows[y] === undefined){
+                return "";
+            }
+
+            if (aAllRows[y]['{$col->getDataColumnName()}'] === undefined) {
+                console.warn('Column {$col->getDataColumnName()} does not exist in the current spreadsheet'); 
+            } else {
+                aVals.push(aAllRows[y]['{$col->getDataColumnName()}']); 
+            }
+
+            return aVals.join('{$delimiter}');
         }
 
-        return aVals.join('{$delimiter}');
+        return '';
 })({$this->buildJsJqueryElement()}[0].exfWidget)
 JS;
         } else{
@@ -2441,9 +2665,9 @@ JS;
                 $link = $expr->getWidgetLink($cellWidget);
                 if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
 
-                    // check if current spreadsheet is target to enable live relations
-                    $targetWidget = $expr->getWidgetLink($cellWidget)->getTargetWidgetId(); 
-                    $isTargetWidget = ($targetWidget === $this->getWidget()->getId()) ? true : false;
+                    // check if current spreadsheet is filter target to enable live relations
+                    $targetWidget = $expr->getWidgetLink($cellWidget)->getTargetWidget()->getId(); 
+                    $isTargetWidget = ($targetWidget === $this->getWidget()->getId(true)) ? true : false;
 
                     $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId(), null, $isTargetWidget);
                 }

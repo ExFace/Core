@@ -102,6 +102,8 @@ class InputButton extends Input
     
     private $valueSelectedOnFocus = true;
     
+    private ?bool $updateValueWithActionResult = null;
+    
     /**
      * The button next to the input: it's action, icon, etc.
      * 
@@ -220,5 +222,35 @@ class InputButton extends Input
     public function getValueSelectedOnFocus() : bool
     {
         return $this->valueSelectedOnFocus;
+    }
+
+    /**
+     * Set to FALSE or TRUE to prevent or force the input widget from updating its value if the action result includes a column with the same name
+     * 
+     * By default, the input will be updated if the widget is based on the object of the action or a derivative
+     * and the result data of the action contains the data column of the input (e.g. the same `attribute_alias`).
+     * 
+     * @uxon-property update_value_with_action_result
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setUpdateValueWithActionResult(bool $trueOrFalse) : InputButton
+    {
+        $this->updateValueWithActionResult = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function willUpdateValueWithActionResult() : bool
+    {
+        if ($this->updateValueWithActionResult !== null) {
+            return $this->updateValueWithActionResult;
+        }
+        $action = $this->getButton()->getAction();
+        return $action && $this->getMetaObject()->is($action->getMetaObject());
     }
 }

@@ -44,6 +44,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     private ?UxonObject $definitionFiltersUxon = null;
     private ?UxonObject $definitionSortersUxon = null;
     private ?UxonObject $definitionDefaults = null;
+    private ?string $hash = null;
 
     /**
      * 
@@ -70,7 +71,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
      * Returns the instance of the CustomAttributeDefinitionBehavior, that is responsible for
      * instantiating custom attributes.
      * 
-     * @throws \exface\Core\Exceptions\Behaviors\BehaviorConfigurationError
+     * @throws BehaviorConfigurationError
      * @return CustomAttributeDefinitionBehavior
      */
     public function getDefinitionBehavior() : CustomAttributeDefinitionBehavior
@@ -79,7 +80,8 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
         if(! $definitionBehavior instanceof CustomAttributeDefinitionBehavior) {
             throw new BehaviorConfigurationError(
                 $this->getStorageBehavior(),
-                'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . '" on MetaObject "' . $definitionObjectAlias . '"!',
+                'Could not find behavior of type "' . CustomAttributeDefinitionBehavior::class . 
+                '" on MetaObject "' . $this->getDefinitionsObject()->getAliasWithNamespace() . '"!',
             );
         }
         return $definitionBehavior;
@@ -96,7 +98,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     }
 
     /**
-     * Returns the meta object, where the custom attributes are defined
+     * Returns the metaobject, where the custom attributes are defined
      * 
      * @return MetaObjectInterface
      */
@@ -117,6 +119,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
      */
     protected function setObjectAlias(string $aliasWithNamespace) : CustomAttributesDefinition
     {
+        $this->hash = null;
         $this->definitionObject = MetaObjectFactory::createFromString($this->getStorageBehavior()->getWorkbench(), $aliasWithNamespace);
         return $this;
     }
@@ -145,6 +148,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
      */
     protected function setFilters(UxonObject $uxon) : CustomAttributesDefinition
     {
+        $this->hash = null;
         $this->definitionFiltersUxon = $uxon;
         return $this;
     }
@@ -157,7 +161,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     {
         return $this->definitionFiltersUxon;
     }
-    
+
     /**
      * Array of sorters to apply when reading custom attribute definitions.
      * 
@@ -170,6 +174,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
      */
     protected function setSorters(UxonObject $uxon) : CustomAttributesDefinition
     {
+        $this->hash = null;
         $this->definitionSortersUxon = $uxon;
         return $this;
     }
@@ -216,6 +221,7 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
      */
     public function setAttributeDefaults(UxonObject $uxon) : CustomAttributesDefinition
     {
+        $this->hash = null;
         $this->definitionDefaults = $uxon;
         return $this;
     }
@@ -227,5 +233,23 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     public function getAttributeDefaults() : ?UxonObject
     {
         return $this->definitionDefaults;
+    }
+
+    /**
+     * Hashes a concatenation of this instances datasheet template and attribute defaults.
+     * The hash is generated using `xxh128` and is 32 characters (i.e. 128 bits) long.
+     * 
+     * Repeated calls make use of caching.
+     * 
+     * @return string|null
+     */
+    public function getHash(): ?string
+    {
+        if($this->hash === null) {
+            $data = $this->getDataSheetTemplateUxon()->toJson() . $this->getAttributeDefaults()->toJson();
+            $this->hash = hash('xxh128', $data);
+        }
+
+        return $this->hash;
     }
 }

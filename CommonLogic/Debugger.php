@@ -1,13 +1,14 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\CommonLogic\Debugger\ExceptionMarkdownRenderer;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\CommonLogic\Debugger\ExceptionRenderer;
+use exface\Core\CommonLogic\Debugger\ExceptionHtmlRenderer;
 use Symfony\Component\ErrorHandler\ErrorHandler;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\CommonLogic\Debugger\CommunicationInterceptor;
@@ -71,18 +72,36 @@ class Debugger implements DebuggerInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DebuggerInterface::printException()
      */
-    public static function printException(\Throwable $exception, $use_html = true)
+    public static function printException(\Throwable $exception, $use_html = false) : string
     {
-        $renderer = new ExceptionRenderer($exception);
+        $renderer = new ExceptionHtmlRenderer($exception);
         if ($use_html) {
             $output = $renderer->renderHtml(false);
         } else {
-            $output = strip_tags($renderer->renderHtml());
+            $output = $renderer->renderAsString();
         }
         return $output;
+    }
+
+    /**
+     * @param $exception
+     * @return string
+     */
+    public static function printExceptionAsHtml($exception) : string
+    {
+        return static::printException($exception, true);
+    }
+
+    /**
+     * @param \Throwable $exception
+     * @return string
+     */
+    public static function printExceptionAsMarkdown(\Throwable $exception) : string
+    {
+        $renderer = new ExceptionMarkdownRenderer($exception);
+        return $renderer->render();
     }
 
     /**
@@ -114,6 +133,11 @@ class Debugger implements DebuggerInterface
             return $dumper->dump($cloner->cloneVar($anything), true, ['maxDepth' => $expand_depth]);
         } else {
             $dumper = new CliDumper();
+            // No colors
+            $dumper->setColors(false);
+            // If DUMP_LIGHT_ARRAY is set, then arrays are dumped in a shortened format similar to PHP's short array notation
+            // $dumper->setFlags(CliDumper::DUMP_LIGHT_ARRAY);
+
             return $dumper->dump($cloner->cloneVar($anything), true);
         }
     }

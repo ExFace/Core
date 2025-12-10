@@ -2,8 +2,8 @@
 namespace exface\Core\CommonLogic\DataSheets\Matcher;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\DataSheets\DataMatcherInterface;
 use exface\Core\Interfaces\DataSheets\DataMatchInterface;
+use exface\Core\Interfaces\DataSheets\TwoSheetMatcherInterface;
 
 /**
  * Default implementation of a row matcher to compare rows between two data sheets
@@ -23,7 +23,7 @@ use exface\Core\Interfaces\DataSheets\DataMatchInterface;
  * @author Andrej Kabachnik
  *
  */
-class DataRowMatcher implements DataMatcherInterface
+class DataRowMatcher implements TwoSheetMatcherInterface
 {
     private $mainSheet = null;
     

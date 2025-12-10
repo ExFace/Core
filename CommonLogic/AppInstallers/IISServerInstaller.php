@@ -2,71 +2,16 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Selectors\SelectorInterface;
-use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataTypes\ServerSoftwareDataType;
 
 /**
- * This installer takes care of file permissions, web.config an other settings required to run on Microsoft IIS.
+ * This installer takes care of file permissions, web.config and other settings required to run on Microsoft IIS.
  * 
  * @author Ralf Mulansky
  *        
  */
-class IISServerInstaller extends AbstractAppInstaller
+class IISServerInstaller extends AbstractServerInstaller
 {
-    private $webConfigInstaller = null;
-    
-    private $webConfigVersion = null;
-    
-    /**
-     * 
-     * @param SelectorInterface $selectorToInstall
-     */
-    public function __construct(SelectorInterface $selectorToInstall)
-    {
-        parent::__construct($selectorToInstall);
-        
-        // Web.config for IIS servers
-        $iisVersion = ServerSoftwareDataType::getServerSoftwareVersion();
-        switch (true) {
-            case $iisVersion < '10.0':
-                $tpl = 'default8.Web.config';
-                $this->webConfigVersion = '8.5+';
-                break;
-            default: 
-                $tpl = 'default.Web.config';
-                $this->webConfigVersion = '10+';
-                break;
-        }
-        $webconfigInstaller = new FileContentInstaller($this->getSelectorInstalling());
-        $webconfigInstaller
-        ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'Web.config']))
-        ->setFileTemplatePath($tpl)
-        ->setMarkerBegin("\n<!-- BEGIN [#marker#] -->")
-        ->setMarkerEnd("<!-- END [#marker#] -->");;
-        $this->webConfigInstaller = $webconfigInstaller;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\InstallerInterface::backup()
-     */
-    public function backup(string $absolute_path) : \Iterator
-    {
-        yield from $this->webConfigInstaller->backup($absolute_path);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
-     */
-    public function uninstall() : \Iterator
-    {
-        yield from $this->webConfigInstaller->uninstall();
-    }
-
     /**
      * 
      * {@inheritDoc}
@@ -74,18 +19,14 @@ class IISServerInstaller extends AbstractAppInstaller
      */
     public function install(string $source_absolute_path): \Iterator
     {
-        $indentOuter = $this->getOutputIndentation();
-        $indent = $indentOuter . $indentOuter;
-        
-        yield $indentOuter . "Server configuration for Microsoft IIS " . ServerSoftwareDataType::getServerSoftwareVersion() ?? 'UNKNOWN VERSION' . PHP_EOL;
-        
-        $this->webConfigInstaller->setOutputIndentation($indent);
-        yield $indent . 'Using web.config template for IIS ' . $this->webConfigVersion . PHP_EOL;
-        yield from $this->webConfigInstaller->install($source_absolute_path);
-        $this->webConfigInstaller->setOutputIndentation($indentOuter);
-        
+        yield from parent::install($source_absolute_path);
+
         $fm = $this->getWorkbench()->filemanager();
         $user = 'IUSR';
+        
+        $indentOuter = $this->getOutputIndentation();
+        $indent = $indentOuter . $indentOuter;
+
         yield $indent . $this->setPermissionsForPath($fm->getPathToDataFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToLogFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToConfigFolder(), $user) . PHP_EOL;
@@ -95,6 +36,11 @@ class IISServerInstaller extends AbstractAppInstaller
         
         $user = 'IIS_IUSRS';
         yield $indent . $this->setPermissionsForPath($fm->getPathToDataFolder(), $user) . PHP_EOL;
+    }
+
+    protected function getServerFamily() : string
+    {
+        return 'Microsoft IIS';
     }
     
     /**
@@ -113,15 +59,32 @@ class IISServerInstaller extends AbstractAppInstaller
         }
         return "Permission for the user '{$user}' and folder/file '{$shortPath}' changed!";
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller::setOutputIndentation()
-     */
-    public function setOutputIndentation(string $value) : AbstractAppInstaller
+
+    protected function getConfigFileName(): string
     {
-        $this->webConfigInstaller->setOutputIndentation($value);
-        return parent::setOutputIndentation($value);
+        return 'Web.config';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function getConfigTemplatePathRelative(): string
+    {
+        // Web.config for IIS servers
+        $iisVersion = ServerSoftwareDataType::getServerSoftwareVersion();
+        return match (true) {
+            $iisVersion < '10.0' => 
+                'default8.Web.config',
+            default => 
+                'default.Web.config',
+        };
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function stringToComment(string $comment): string
+    {
+        return "<!-- {$comment} -->";
     }
 }

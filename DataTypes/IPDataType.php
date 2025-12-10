@@ -478,7 +478,7 @@ class IPDataType extends TextDataType
                 }
             }
         }
-        throw new DataTypeValidationError($this, "Value '{$ip}' is not a valid input for IpDataType.");
+        throw new DataTypeValidationError($this, "Value '{$ip}' is not a valid input for IpDataType.", null, null, $string);
     }
     
     /**

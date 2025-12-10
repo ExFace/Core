@@ -8,6 +8,8 @@ use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Mutations\AppliedMutationInterface;
 use exface\Core\Mutations\AppliedMutation;
+use exface\Core\Mutations\AppliedMutationOnArray;
+use exface\Core\Mutations\AppliedMutationOnUxon;
 
 /**
  * Allows to modify UXON configurations using JSONpath based operations
@@ -109,7 +111,7 @@ class GenericUxonMutation extends AbstractMutation
         if (! $subject instanceof UxonObject) {
             throw new InvalidArgumentException('Cannot apply UXON mutation to ' . get_class($subject));
         }
-        $stateBefore = $subject->toJson(true);
+        $stateBefore = $subject->toArray();
 
         $jsonObj = new JsonObject($subject->toArray());
         // append
@@ -142,8 +144,8 @@ class GenericUxonMutation extends AbstractMutation
         }
 
         $subject->replace($jsonObj->getValue());
-        $stateAfter = $subject->toJson(true);
-        return new AppliedMutation($this, $subject, $stateBefore, $stateAfter);
+        $stateAfter = $subject->toArray();
+        return new AppliedMutationOnArray($this, $subject, $stateBefore, $stateAfter);
     }
 
     /**

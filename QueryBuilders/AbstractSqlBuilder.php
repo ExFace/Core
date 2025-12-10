@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\SqlDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -52,86 +54,86 @@ use exface\Core\Templates\Modifiers\IfNullModifier;
  * A query builder for generic SQL syntax.
  *
  * ## Data addresses
- * 
- * Object data addresses can be a table or view name or any custom SQL usable within the FROM clause. 
- * 
- * Attribute addresses can be column names or any custom SQL usable in the SELECT clause. 
- * 
+ *
+ * Object data addresses can be a table or view name or any custom SQL usable within the FROM clause.
+ *
+ * Attribute addresses can be column names or any custom SQL usable in the SELECT clause.
+ *
  * Custom SQL must be enclosed in parentheses `(``)` to ensure it is correctly
  * distinguished from table/column names. Custom SQLs may include placeholders as described
  * below.
- * 
+ *
  * ### Placeholders
- * 
+ *
  * Placeholders can be used within custom SQL data addresses to include reuse other parts of the
- * model or include runtime information of the query builder like the current set of filters. They 
- * will be replaced by their values when the query is built, so the data source will never get to 
+ * model or include runtime information of the query builder like the current set of filters. They
+ * will be replaced by their values when the query is built, so the data source will never get to
  * see them.
- * 
+ *
  * #### Object-level placeholders
- * 
+ *
  * On object level the `[#~alias#]` placeholder will be replaced by the alias of
  * the current object. This is especially useful to prevent table alias collisions
  * in custom subselects:
- * 
+ *
  * `(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )`
- * 
+ *
  * This way you can control which uses of my_table are unique within the
  * generated SQL.
- * 
+ *
  * You can also use placeholders for filters like in many other query builders:
- * e.g. `[#my_attribute_alias#]` for the value of a filter on the 
+ * e.g. `[#my_attribute_alias#]` for the value of a filter on the
  * `attribute my_attribute_alias` of the current object - making it a
  * mandatory filter).
- * 
+ *
  * #### Attribute-level placeholders
- * 
+ *
  * On attribute level any other attribute alias can be used as placeholder
  * additionally to `[#~alias#]`. Thus, attribute addresses can be reused. This
  * is handy if an attribute builds upon other attributes. E.g. a percentage
  * would be an attribute being calculated from two other attributes. This can
  * easily be done via attribute placeholders in it's data address:
- * 
+ *
  * `([#RELATION_TO_OBJECT1__ATTRIBUTE1#]/[#RELATION_TO_OBJECT2__ATTRIBUTE2#])`
- * 
+ *
  * You can even use relation paths here! It will even work if the placeholders
  * point to attributes, that are based on custom SQL statements themselves.
  * Just keep in mind, that these expressions may easily become complex and
  * kill query performance if used carelessly.
- * 
+ *
  * ### Multi-dialect data addresses
- * 
+ *
  * If an app is meant to run on different database engines, custom SQL addresses may
  * require engine-specific syntax. In this case, dialect tags like `@T-SQL:` or `@PL/SQL:`
  * can be used to define variants of SQL statements in a single address field.
- * 
+ *
  * Here is an example from the `exface.Core.QUEUED_TASK` object, which uses
  * JSON function with different syntax in MySQL and Microsoft's T-SQL:
- * 
+ *
  * ```
  *  |@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))
  *  |@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')
  *  |
  * ```
- * 
- * Multi-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`) 
+ *
+ * Multi-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`)
  * MUST be placed at the beginning of a new line (illustrated by the pipes in the example
- * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is considered to 
- * be the data address in this dialect. 
- * 
+ * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is considered to
+ * be the data address in this dialect.
+ *
  * Every SQL query builder supports one or more dialects listed in the respective
  * documentation: e.g. a MariaDB query builder would support `@MariaDB:` and `@MySQL`.
- * Should a data address contain multiple supported dialects, the query builder will 
+ * Should a data address contain multiple supported dialects, the query builder will
  * use it's internal priority to select the best fit.
- * 
+ *
  * The default dialect-tag and `@OTHER:` can be used to define a fallback for all
  * dialects not explicitly addressed.
- * 
+ *
  * ### JSON support
- * 
+ *
  * You can use JSON path expressions in data addresses to access data inside JSON columns: e.g.
  * `myColumn::$.prop1` will select the value of `prop1` saved in a JSON inside `myColumn`.
- * 
+ *
  * Most SQL databases support JSON path queries to access data inside JSON columns. However, every
  * SQL dialect has its own syntax - typically functions like `JSON_VALUE(column, jsonPath)` or
  * `JSON_SET(column, jsonPath, value)` or similar. The common syntax introduced above will be
@@ -142,14 +144,16 @@ use exface\Core\Templates\Modifiers\IfNullModifier;
  */
 abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 {
+    const SQL_DIALECT_OTHER = 'OTHER';
+    
     /**
      * Custom where statement automatically appended to direct selects for this object (not if the object's table is joined!).
-     * 
+     *
      * Useful for generic tables, where different meta objects are stored and
      * distinguished by specific keys in a special column. The value of
      * `SQL_SELECT_WHERE` should contain the `[#~alias#]` placeholder: e.g.
      * `[#~alias#].mycolumn = 'myvalue'`.
-     * 
+     *
      * You can also use attribute aliases as placeholders: e.g. `[#MY_ATTRIBUTE#]`
      * or even `[#RELATION__RELATED_ATTRIBUTE#]`. Keep in mind, that using relations
      * will produce JOINs or subselects in the resulting SQL, which will ALWAYS
@@ -160,10 +164,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_SELECT_WHERE = 'SQL_SELECT_WHERE';
-    
+
     /**
      * Custom SQL to use in FROM statements.
-     * 
+     *
      * Use a custom SELECT here and a table name as the data address to write to the table
      * directly while selecting from some complex view-like statement.
      *
@@ -172,10 +176,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_READ_FROM = 'SQL_READ_FROM';
-    
+
     /**
      * Tells the query builder what type the SQL column has.
-     * 
+     *
      * This is only needed for complex types that require conversion: e.g. binary,
      * LOB, etc. Refer to the description of the specific query builder for concrete
      * usage instructions.
@@ -187,10 +191,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     const DAP_SQL_DATA_TYPE = 'SQL_DATA_TYPE';
     const DAP_SQL_DATA_TYPE_BINARY = 'binary';
     const DAP_SQL_DATA_TYPE_JSON = 'json';
-    
+
     /**
      * Defines a custom time zone for a datetime or time column if it differs from the connection setting
-     * 
+     *
      * When reading from such a column, the workbench will convert the value to the server time
      * zone if the time zones differ. When writing, it will do the opposite. If no `SQL_TIME_ZONE`
      * is set, the time zone of the data connection will be used.
@@ -200,11 +204,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type timezone
      */
     const DAP_SQL_TIME_ZONE = 'SQL_TIME_ZONE';
-    
+
     /**
-     * Custom SQL SELECT clause for this attribute. 
-     * 
-     * It replaces the entire select generator and will be used as-is except for replacing placeholders. 
+     * Custom SQL SELECT clause for this attribute.
+     *
+     * It replaces the entire select generator and will be used as-is except for replacing placeholders.
      * The placeholder `[#~alias#]` is supported as well as placeholders for other attributes.
      * This is usefull to write wrappers for columns (e.g. `NVL([#~alias#].MY_COLUMN, 0)`.
      * If the wrapper is placed here, the data address would remain writable, while
@@ -218,10 +222,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_SELECT = 'SQL_SELECT';
-    
+
     /**
      * Replaces the data address for SELECT queries.
-     * 
+     *
      * In contrast to `SQL_SELECT`, this property will be processed by the generator
      * just like a data address would be (including all placeholders). In particular,
      * the table alias will be generated automatically, while in `SQL_SELECT` it
@@ -232,15 +236,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_SELECT_DATA_ADDRESS = 'SQL_SELECT_DATA_ADDRESS';
-    
+
     /**
      * Replaces the ON-part for JOINs generated from this attribute.
-     * 
+     *
      * This only works for attributes, that represent a forward (n-1) relation! The
-     * option supports these placeholders: 
+     * option supports these placeholders:
      * - `[#~left_alias#]` or `[#~right_alias#]` - alias of the table on left/right side of the JOIN
      * - `[#~left:MYATTR#]` or `[#~right:MYATTR#]` - alias of any attribute of the left/right object
-     * 
+     *
      * ## Examples
      *
      * - `[#~left:PAGE#] = [#~right:UID#] AND [#~right:IN_MENU#] = 1` - JOIN on an attribute with an additional
@@ -256,39 +260,39 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-target attribute
      * @uxon-type string
      * @uxon-template [#~left_alias#].col1 = [#~right_alias#].col3
-     * 
+     *
      * @uxon-placeholder [#~left_alias#]
      * @uxon-placeholder [#~right_alias#]
      * @uxon-placeholder [#~left:<metamodel:attribute>#]
      * @uxon-placeholder [#~right:<metamodel:attribute>#]
      */
     const DAP_SQL_JOIN_ON = 'SQL_JOIN_ON';
-    
+
     /**
      * Custom SQL INSERT statement used instead of the value - typically a wrapper for the value.
-     * 
+     *
      * The placeholders `[#~alias#]` and `[#~value#]` are supported in addition to
      * attribute placeholders. This is usefull to write wrappers for values
      * (e.g. `to_clob('[#~value#]')` to save a string value to an Oracle CLOB column)
      * or generators (e.g. you could use `UUID()` in MySQL to have a column always created
      * with a UUID). If you need to use a generator only if no value is given explicitly,
      * use something like this: `IF([#~value#]!='', [#~value#], UUID())`.
-     * 
+     *
      * NOTE: if you use a custom `SQL_INSERT` to generate a primary key, you generate it
      * into a variable using `SQL_INSERT_BEFORE` place the variable into `SQL_INSERT` and
      * select that variable in `SQL_INSERT_AFTER`. It should now be correctly returned by
      * the query builder.
-     * 
+     *
      * Here is an example of the use of an ID-table in MS SQL. Note the `@insertId` being
      * selected with the name of the primary key column at the end.
-     * 
+     *
      * ```
      *  {
      *      "SQL_INSERT": "@insertedId",
      *      "SQL_INSERT_BEFORE": "DECLARE @insertedId int; EXEC generator; SELECT @insertedId = ID FROM ...;",
      *      "SQL_INSERT_AFTER": "SELECT @insertedId AS Id;"
      *  }
-     *  
+     *
      * ```
      *
      * @uxon-property SQL_INSERT
@@ -296,18 +300,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_INSERT = 'SQL_INSERT';
-    
+
     /**
      * SQL statement to be executed before every INSERT - e.g. to initialize a variable used in `SQL_INSERT`
-     * 
+     *
      * @uxon-property SQL_INSERT_BEFORE
      * @uxon-target attribute
      * @uxon-type string
-     * 
+     *
      * @var string
      */
     const DAP_SQL_INSERT_BEFORE = 'SQL_INSERT_BEFORE';
-    
+
     /**
      * SQL statement to be executed after every INSERT - e.g. to deal with a variable used in `SQL_INSERT`
      *
@@ -318,7 +322,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @var string
      */
     const DAP_SQL_INSERT_AFTER = 'SQL_INSERT_AFTER';
-    
+
     /**
      * Replaces the data address for INSERT queries.
      *
@@ -327,10 +331,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_INSERT_DATA_ADDRESS = 'SQL_INSERT_DATA_ADDRESS';
-    
+
     /**
      * Set to TRUE to generate a UUID on INSERT that is optimized for column indexing (recommended for UUID primary keys)
-     * 
+     *
      * If you need UUIDs as primary keys, you can use this built-in generator, that reorders a
      * natively generated time-based UUID in a way, that it is more-or-less sequential (later
      * generated UUIDs are larger when compared to previous ones) - this makes them better
@@ -344,23 +348,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Set to TRUE to make sure the query build will use the native auto-increment logic of the DB
-     * 
+     *
      * @uxon-property SQL_INSERT_UUID_OPTIMIZED
      * @uxon-target attribute
      * @uxon-type boolean
      */
     const DAP_SQL_INSERT_AUTO_INCREMENT = 'SQL_INSERT_AUTO_INCREMENT';
-    
+
     /**
-     * Custom SQL for UPDATE statements to use instead of the value - typically some wrapper for the value. 
-     * 
+     * Custom SQL for UPDATE statements to use instead of the value - typically some wrapper for the value.
+     *
      * The `SQL_UPDATE` property is usefull to write wrappers for values (e.g.
      * `to_clob('[#~value#]')` to save a string value to an Oracle CLOB column) or
      * generators (e.g. you could use `NOW()` in MySQL to have a column always updated
      * with the current date). If you need to use a generator only if no value is given
      * explicitly, use something like this: `IF([#~value#]!='', [#~value#], UUID())`.
-     * 
-     * `SQL_UPDATE` supports the placeholders `[#~alias#]` and `[#~value#]` in addition to 
+     *
+     * `SQL_UPDATE` supports the placeholders `[#~alias#]` and `[#~value#]` in addition to
      * placeholders for other attributes.
      *
      * @uxon-property SQL_UPDATE
@@ -368,7 +372,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_UPDATE = 'SQL_UPDATE';
-    
+
     /**
      * Replaces the data address for UPDATE queries.
      *
@@ -377,17 +381,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_UPDATE_DATA_ADDRESS = 'SQL_UPDATE_DATA_ADDRESS';
-    
+
     /**
-     * An entire custom WHERE clause with place with static placeholders `[#~alias#]` and `[#~value#]`. 
-     * 
-     * It is particularly usefull for attribute with custom SQL in the data address, that you 
-     * do not want to calculate within the WHERE clause: e.g. if you have an attribute, which 
-     * concatenates `col1` and `col2` via SQL, you could use the following: 
-     * 
+     * An entire custom WHERE clause with place with static placeholders `[#~alias#]` and `[#~value#]`.
+     *
+     * It is particularly usefull for attribute with custom SQL in the data address, that you
+     * do not want to calculate within the WHERE clause: e.g. if you have an attribute, which
+     * concatenates `col1` and `col2` via SQL, you could use the following:
+     *
      * `SQL_WHERE`: `([#~alias#].col1 LIKE '[#~value#]%' OR [#~alias#].col2 LIKE '[#~value#]%')`
-     * 
-     * However, this property has a major drawback: the comparator is being hardcoded. Use 
+     *
+     * However, this property has a major drawback: the comparator is being hardcoded. Use
      * `SQL_WHERE_DATA_ADDRESS` instead, unless you really require multiple columns.
      *
      * @uxon-property SQL_WHERE
@@ -395,10 +399,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_WHERE = 'SQL_WHERE';
-    
+
     /**
      * Replaces the data address in the WHERE clause.
-     * 
+     *
      * The comparator and the value will added automatically be the generator.
      * Supports the `[#~alias#]` placeholder in addition to placeholders for other
      * attributes. This is usefull to write wrappers to be used in filters: e.g.
@@ -409,10 +413,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_WHERE_DATA_ADDRESS = 'SQL_WHERE_DATA_ADDRESS';
-    
+
     /**
-     * A custom ORDER BY clause. 
-     * 
+     * A custom ORDER BY clause.
+     *
      * This option currently does not support any placeholders!
      *
      * @uxon-property SQL_ORDER_BY
@@ -420,17 +424,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_ORDER_BY = 'SQL_ORDER_BY';
-    
+
     const OPERATION_READ = 'read';
-    
+
     const OPERATION_WRITE = 'write';
 
     // Config
-    
+
     // Reserved (forbidden) words in SQL in general
     // @see https://en.wikipedia.org/wiki/List_of_SQL_reserved_words
     private $reserved_words = ['ALL', 'AS', 'CHECK', 'COLUMN', 'CREATE', 'DEFAULT', 'DISTINCT', 'ELSE', 'FOR', 'FROM', 'GRANT', 'GROUP', 'HAVING', 'IN', 'INTO', 'IS', 'LIKE', 'NOT', 'NULL', 'ON', 'OR', 'ORDER', 'SELECT', 'TABLE', 'THEN', 'TO', 'UNION', 'UNIQUE', 'WHERE', 'WITH'];
-    
+
     // Aliases
     private $short_alias_remove_chars = array(
         '.',
@@ -443,26 +447,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         ' ',
         '='
     );
-    
+
     private $short_alias_replacer = '_';
-    
+
     private $short_alias_prefix = 'S';
-    
+
     private $short_aliases = array();
-    
+
     private $short_alias_index = 0;
-    
+
     // Runtime vars
     private $select_distinct = false;
-    
+
     private $select_first_column_only = false;
-    
+
     private $query_id = null;
-    
+
     private $subquery_counter = 0;
-    
+
     private $customFilterSqlPredicates = [];
-    
+
     private $dirtyFlag = false;
 
     /**
@@ -501,11 +505,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $this->select_first_column_only = $trueOrFalse;
         return $this;
     }
-    
+
     abstract function buildSqlQuerySelect();
-    
+
     abstract function buildSqlQueryTotals();
-    
+
     /**
      * Function to build an sql UPDATE query with the given SET and WHERE parts.
      *
@@ -517,7 +521,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return 'UPDATE ' . $this->buildSqlFrom(static::OPERATION_WRITE) . $sqlSet . $sqlWhere;
     }
-    
+
     /**
      * Function to build an sql DELETE query with the given WHERE part.
      *
@@ -531,12 +535,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return 'DELETE FROM ' . $this->buildSqlFrom(static::OPERATION_WRITE) . ($joins ?? '') . $sqlWhere;
     }
-    
+
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildSqlQuerySelect();
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
+            $q->setDialect($this->getSqlDialectDefault());
             $q->setSql($query);
             // first do the main query
             $qr = $data_connection->query($q);
@@ -547,7 +552,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         } else {
             $rows = [];
         }
-        
+
         // then do the totals query if needed
         $result_totals = [];
         if ($this->hasTotals() === true) {
@@ -555,7 +560,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
-                $result_total_count = $result_total_count ?? $totals[0]['EXFCNT'];
+                $result_total_count = $result_total_count ?? $totals[0][$this->buildSqlAliasForRowCounter()];
                 // now save the custom totals.
                 foreach ($this->getTotals() as $qpart) {
                     $result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
@@ -563,7 +568,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $qrt->freeResult();
         }
-        
+
         $rowCount = count($rows);
         $hasMoreRows = ($this->getLimit() > 0 && $rowCount > $this->getLimit());
         if ($hasMoreRows === true) {
@@ -572,14 +577,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         } else {
             $affectedCounter = $rowCount;
         }
-        
+
         if ($result_total_count === null && $hasMoreRows === false) {
             $result_total_count = $rowCount + $this->getOffset();
         }
-        
+
         return new DataQueryResultData($rows, $affectedCounter, $hasMoreRows, $result_total_count, $result_totals);
     }
-    
+
     /**
      * Transforms the query result into rows of the future data sheet.
      *
@@ -591,10 +596,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function getReadResultRows(SqlDataQuery $query) : array
     {
-        if (! $rows = $query->getResultArray()) {  
+        if (! $rows = $query->getResultArray()) {
             return [];
         }
-        
+
         // TODO filter away the EXFRN column!
         foreach ($this->short_aliases as $short_alias) {
             $full_alias = $this->getFullAlias($short_alias);
@@ -649,7 +654,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                     break;
                 // Handle compound attributes
-                case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface: 
+                case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface:
                     $qpartChilds = $qpart->getCompoundChildren();
                     $qpartChildFirstInDB = null;
                     $qpartChildsFormulas = [];
@@ -692,16 +697,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
             }
         }
-        
+
         return $rows;
     }
-    
+
     /**
      * Returns the time zone to be used in an SQL statement depending to the time zone settings of the server, the data
      * connection an eventually the data address property `SQL_TIME_ZONE` of an attribute.
-     * 
+     *
      * Returns NULL if no time zone conversion is neccessary
-     * 
+     *
      * @param string $tzWorkbench
      * @param string|NULL $tzConnection
      * @param string|NULL $tzColumn
@@ -715,7 +720,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     return null;
                 }
                 return $tzColumn;
-            case $tzConnection !== null: 
+            case $tzConnection !== null:
                 if (strcasecmp($tzConnection, $tzWorkbench) === 0) {
                     return null;
                 }
@@ -723,7 +728,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return null;
     }
-    
+
     /**
      * Checks if writing operations (create, update, delete) are possible for the current query.
      *
@@ -740,10 +745,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($this->isSqlStatement($addr)) {
             throw new QueryBuilderException('The data address of the object "' . $this->getMainObject()->getAlias() . '" seems to be a view. Cannot write to SQL views!');
         }
-        
+
         return $result;
     }
-    
+
     /**
      * {@inheritdoc}
      *
@@ -757,16 +762,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $this->isWritable()) {
             return new DataQueryResultData([], 0);
         }
-        
+
         $mainObj = $this->getMainObject();
-        
+
         $values = array();
         $columns = array();
         $valuesForJsonCols = [];
         $before_each_insert_sqls = [];
         $after_each_insert_sqls = [];
         $uidQpart = null;
-        
+        $uidAddress = null;
+
         // add values
         $rowPlaceholders = [];
         foreach ($this->getValues() as $qpart) {
@@ -786,6 +792,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $before_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
             $after_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
             $column = $attrAddress ? $attrAddress : $attrInsertAddress;
+            $dataType = $qpart->getDataType();
             if ((! $column || $this->isSqlStatement($column)) && ! $custom_insert_sql) {
                 continue;
             }
@@ -805,20 +812,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($attr->isWritable() === false) {
                 continue;
             }
-            
+
             // Prepare arrays with column aliases and values to implode them later when building the query
             // Make sure, every column is only addressed once! So the keys of both array actually need to be the column aliases
             // to prevent duplicates
             $columnIsJson = $this->isJsonDataAddress($column) && ! $custom_insert_sql;
             if ($columnIsJson === true) {
                 list($column, $jsonPath) = $this->parseJsonDataAddress($column);
-            } 
-            
+            }
+
             $columns[$column] = $column;
-            
+
             foreach ($qpart->getValues() as $row => $value) {
                 try {
-                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
+                    $valueSql = $this->prepareInputValue($value, $dataType, $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . StringDataType::truncate($value, 100, false), null, $e);
                 }
@@ -826,14 +833,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If the value is to be put into a JSON inside a column, store the prepared value in a separate
                 // array for later use and skip further processing for this value.
                 if ($columnIsJson === true) {
-                    if ($value === "''") {
-                        $value = null;
+                    if ($dataType::isValueEmpty($value)) {
+                        $valueSql = 'null';
                     }
-                    $valuesForJsonCols[$row][$column][$jsonPath] = $value;
+                    $valuesForJsonCols[$row][$column][$jsonPath] = $valueSql;
                     continue;
                 }
 
-                $phs = array_merge(['~alias' => $mainObj->getAlias(), '~value' => $value], $rowPlaceholders[$row]);
+                $phs = array_merge(['~alias' => $mainObj->getAlias(), '~value' => $valueSql], $rowPlaceholders[$row]);
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     // NOTE: if you just write some kind of generator here, it
@@ -843,21 +850,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // INSERT_SQL must include something like IF('[#~value#]'!=''...)
                     $insert_sql = $this->replacePlaceholdersInSqlAddress($custom_insert_sql, null, $phs, $mainObj->getAlias());
                 } else {
-                    $insert_sql = $value;
+                    $insert_sql = $valueSql;
                 }
 
                 $values[$row][$column] = $insert_sql;
-                
+
                 if ($before_each_insert_sql) {
                     $before_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($before_each_insert_sql, null, $phs, $mainObj->getAlias());
                 }
-                
+
                 if ($after_each_insert_sql) {
                     $after_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($after_each_insert_sql, null, $phs, $mainObj->getAlias());
                 }
             }
         }
-        
+
         // If there is no UID column, but the UID attribute has a custom insert statement, add it at this point manually
         // This is important because the UID will mostly not be marked as a mandatory attribute in order to preserve the
         // possibility of mixed creates and updates among multiple rows. But an empty non-required attribute will never
@@ -899,11 +906,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($uidQpart) {
             $uidAddress = $this->buildSqlDataAddress($uidQpart);
         }
-        
+
         if ($uidIsOptimizedUUID && $uidCustomSqlInsert) {
             throw new QueryBuilderException('Invalid SQL data address configuration for UID of object "' . $mainObj->getAliasWithNamespace() . '": Cannot use SQL_INSERT and SQL_INSERT_UUID_OPTIMIZED at the same time!');
         }
-        
+
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
         // into a variable because all sorts of last_insert_id() function will not return such a value.
         $uidValuesProvided = $uidQpart !== null && $uidQpart->hasValues();
@@ -912,15 +919,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 '~alias' => $mainObj->getAlias(),
                 '~value' => $this->prepareInputValue('', $uidQpart->getDataType(), $uidQpart->getDataAddressProperties())
             ]);
-            
+
             $columns[$uidAddress] = $uidAddress;
             foreach ($values as $nr => $row) {
                 $values[$nr][$uidAddress] = $uidCustomSqlInsert;
             }
         }
-        
-        $insertedIds = [];
-        $insertedCounter = 0;
+
+        // We will need to UID column key to get the newly generated UID when we run each INSERT.
+        $uidColKey = null;
+        $uidAttr = null;
+        // If there was a UID part in the query, use that. But even if the UID was not explicitly
+        // part of the query, but the object HAS a UID, add a UID column to the result
+        if ($uidQpart) {
+            $uidColKey = $uidQpart->getColumnKey();
+            $uidAttr = $uidQpart->getAttribute();
+        } elseif ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            $uidColKey = DataColumn::sanitizeColumnName($uidAttr->getAlias());
+        }
+
 
         // We now have the following prepared data:
         // - $values - array of rows, where each row is an array with SQL column for keys and their respective prepared values
@@ -929,6 +947,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // FIXME how to handle JSON data here? 
         // - create a JSON in PHP and put it into the $values/$columns?
         // - use native SQL functions to update the JSON after the regular INSERT?
+        $insertedIds = [];
+        $insertedCounter = 0;
         foreach ($values as $rowIdx => $row) {
             // See if a UID (primary key) is provided
             $customUid = null;
@@ -938,12 +958,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Remember the value to ensure it is returned as the created UID later.
                     case $uidValuesProvided === false && $uidIsOptimizedUUID === true:
                         $customUid = UUIDDataType::generateSqlOptimizedUuid();
-                        $row[$uidAddress] = $customUid;
+                        $row[$uidAddress] = $this->prepareInputValue($customUid,$uidQpart->getDataType(),$uidQpart->getDataAddressProperties());
                         break;
-                    // If there is a non-empty UID value provided AND it is not an SQL statement, use
-                    // that value directly
-                    case $uidValuesProvided === true && $row[$uidAddress] !== null && $row[$uidAddress] !== '' && $this->isSqlStatement($uidAddress) === false:
-                        $customUid = $row[$uidAddress];
+                    // If there is a non-empty UID value provided AND the data address is not an SQL statement, use
+                    // that value. Use it as-is if it is an SQL statement, escape it properly otherwise.
+                    case $uidValuesProvided === true 
+                    && (null !== $customUidData = ($row[$uidAddress] ?? null)) 
+                    && $customUidData !== '' 
+                    && $this->isSqlStatement($uidAddress) === false:
+                        // Here we need to distinguish between plain values and SQL statements. Since we are talking about
+                        // IDs here, detecting parenthesis like in data addresses should be OK. However, should we 
+                        // really have UID values with `(` or `)` in SQL columns (which would be really strange), this if()
+                        // here will prevent parsing.
+                        if ($this->isSqlStatement($customUidData)) {
+                            $customUid = $customUidData;
+                        } else {
+                            $customUid = $this->prepareInputValue($customUidData, $uidQpart->getDataType(), $uidQpart->getDataAddressProperties());
+                        }
                         break;
                 }
             }
@@ -957,11 +988,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $output[$column] = $row[$column];
                 }
             }
-            
+
             $insertColumns = implode(', ', $columns);
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
-            
+
             $beforeSql = $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '');
             if ($beforeSql || $afterSql) {
@@ -971,10 +1002,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $customUid = $query->getResultArray()[0][$uidAddress];
                     }
                 }
-            } else {            
-                $query = $data_connection->runSql($sql);
+            } else {
+                $query = new SqlDataQuery();
+                $query->setDialect($this->getSqlDialectDefault());
+                $query->setSql($sql);
+                // In order to return newly create primary keys (UIDs), some SQL engines need to know which
+                // columns to return actually - so if we do not generate a custom UID here, we need to tell
+                // the query, where to get the UID values after the INSERT.
+                if ($customUid === null) {
+                    switch (true) {
+                        case $uidAddress:
+                            $query->setPrimaryKeyColumns([$uidAddress]);
+                            break;
+                        case $uidAttr && $uidAttr->isReadable():
+                            $query->setPrimaryKeyColumns([$this->buildSqlDataAddress($uidAttr)]);
+                            break;
+                    }
+                }
+                $query = $data_connection->query($query);
             }
-            
+
             // Now get the primary key of the last insert. If it was not provided by PHP, assume it to be 
             // an auto-increment by means of the database.
             if ($customUid !== null) {
@@ -984,20 +1031,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $insertedId = $query->getLastInsertId();
             }
 
-
             // Remember inserted ids for this row if it really was inserted
             if ($cnt = $query->countAffectedRows()) {
                 $insertedCounter += $cnt;
-                $uidColKey = null;
-                // If there was a UID part in the query, use that. But even if the UID was not explicitly
-                // part of the query, but the objecdt HAS a UID, add a UID column to the result
-                if ($uidQpart) {
-                    $uidColKey = $uidQpart->getColumnKey();
-                    $uidAttr = $uidQpart->getAttribute();
-                } elseif ($this->getMainObject()->hasUidAttribute()) {
-                    $uidAttr = $this->getMainObject()->getUidAttribute();
-                    $uidColKey = DataColumn::sanitizeColumnName($uidAttr->getAlias());
-                }
                 // Get the values for the UID either from the last inserted id provided by the SQL
                 // engine or derive it from the data in case of compound attributes.
                 if ($uidColKey !== null) {
@@ -1023,15 +1059,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                 }
             }
-            
+
             $query->freeResult();
         }
-        
+
         // IDEA do bulk inserts instead of separate queries. The problem is:
         // there seems to be no easy way to get all the insert ids of a bulk
         // insert. The code below worked but only returned the first id.
         // Perhaps, some possibility will be found in future.
-        
+
         /*foreach ($values as $rowIdx => $row) {
          foreach ($row as $val) {
          $values[$rowIdx] = implode(',', $row);
@@ -1055,10 +1091,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
          if ($affected_rows) {
          $insert_ids[] = $last_id;
          }*/
-        
+
         return new DataQueryResultData($insertedIds, $insertedCounter);
     }
-    
+
+    /**
+     * Returns the SET clause for the give query part
+     *
+     * @param QueryPartValue $qpart
+     * @param string|null $tableAlias
+     * @param string|null $tableColumn
+     * @return string
+     */
+    protected function buildSqlSet(QueryPartValue $qpart, ?string $tableAlias = null, ?string $tableColumn = null) : string
+    {
+        $tableAlias ??= $this->getShortAlias($qpart->getQuery()->getMainObject()->getAlias());
+        $tableColumn ??= $this->buildSqlDataAddress($qpart, self::OPERATION_WRITE);
+        return $tableAlias . $this->getAliasDelim() . $tableColumn;
+    }
+
     /**
      * Performs SQL update queries.
      * Depending on the number of rows to be updated, there will be one or more queries performed.
@@ -1081,7 +1132,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $this->isWritable()) {
             return new DataQueryResultData([], 0);
         }
-            
+
         // Filters -> WHERE
         // Since UPDATE queries generally do not support joins, tell the build_sql_where() method not to rely on joins in the main query
         $where = $this->buildSqlWhere($this->getFilters(), false);
@@ -1089,7 +1140,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $where) {
             throw new QueryBuilderException('Cannot perform update on all objects "' . $this->getMainObject()->getAlias() . '"! Forbidden operation!');
         }
-        
+
         // Attributes -> SET
         $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
         // Array of SET statements for the single-value-query which updates all rows matching the given filters
@@ -1104,14 +1155,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $subqueries_qparts = array();
         foreach ($this->getValues() as $qpart) {
             $attr = $qpart->getAttribute();
+            $dataType = $qpart->getDataType();
             if ($attr->getRelationPath()->toString()) {
                 $subqueries_qparts[] = $qpart;
                 continue;
             }
-            
+
             $attrAddress = $this->buildSqlDataAddress($attr);
             // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
-            if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->isSqlStatement($attrAddress)) {
+            if ($this->isSqlStatement($attrAddress) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)) {
                 continue;
             }
             // Make sure, that attributes stored as JSON have a custom data address property telling everyone the
@@ -1120,22 +1172,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($this->isJsonDataAddress($attrAddress) && $qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) === null) {
                 $qpart->setDataAddressProperty(self::DAP_SQL_DATA_TYPE, self::DAP_SQL_DATA_TYPE_JSON);
             }
-            
+
             if ($qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)){
                 $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS));
             } else {
-                $column = $table_alias . $this->getAliasDelim() . $attrAddress;
+                $column = $this->buildSqlSet($qpart, $table_alias, $attrAddress);
             }
-            
+
             $custom_update_sql = $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE);
-            
+
             // If there is only a single row and there is no UID for it, it will become an update-by-filter
             // Otherwise we will do an UPDATE with a WHERE over the UID-column
             if (count($qpart->getValues()) == 1 && (! $qpart->hasUids() || '' === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? '')) {
                 $values = $qpart->getValues();
                 $value = reset($values);
                 try {
-                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
+                    $valueSql = $this->prepareInputValue($value, $dataType, $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                 }
@@ -1146,9 +1198,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 } else {
                     if($this->isJsonDataAddress($column)) {
                         list($column, $jsonPath) = $this->parseJsonDataAddress($column);
-                        $jsonColumnsByFilter[$column][$jsonPath] = $value;
+                        // Remove the JSON property if the value is empty!
+                        if ($dataType::isValueEmpty($value)) {
+                            $valueSql = 'null';
+                        }
+                        $jsonColumnsByFilter[$column][$jsonPath] = $valueSql;
                     } else {
-                        $updates_by_filter[] = $column . ' = ' . $value;
+                        $updates_by_filter[] = $column . ' = ' . $valueSql;
                     }
                 }
             } else {
@@ -1163,10 +1219,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if ($qpart->getAttribute()->isWritable() === false) {
                     continue;
                 }
-                
+
                 foreach ($qpart->getValues() as $row_nr => $value) {
                     try {
-                        $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
+                        $valueSql = $this->prepareInputValue($value, $dataType, $qpart->getDataAddressProperties());
                     } catch (\Throwable $e) {
                         throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row_nr . ' of SQL UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                     }
@@ -1187,13 +1243,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
                         if($this->isJsonDataAddress($column)) {
                             // Remove the JSON property if the value is empty!
-                            if ($value === "''" || $value === 'null') {
-                                $value = null;
+                            if ($dataType::isValueEmpty($value)) {
+                                $valueSql = 'null';
                             }
                             list($jsonColumn, $jsonPath) = $this->parseJsonDataAddress($column);
-                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$jsonColumn][$jsonPath] = $value;
+                            $jsonColumnsByUid[$qpart->getUids()[$row_nr]][$jsonColumn][$jsonPath] = $valueSql;
                         } else {
-                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
+                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $valueSql;
                         }
                     }
                 }
@@ -1213,7 +1269,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $updates_by_uid[$uid][$columnName] = $columnName . ' = ' . $this->buildSqlJsonEncodeAsFlat($keyValuePairs, $this->buildSqlJsonInitial($columnName));
             }
         }
-        
+
         // Execute UPDATE statements
         // First the rows, that can be updated filtering over 
         if (! empty($updates_by_uid)) {
@@ -1244,15 +1300,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $affected_rows = $query->countAffectedRows();
             $query->freeResult();
         }
-        
+
         // Execute Subqueries
         foreach ($this->splitByMetaObject($subqueries_qparts) as $subquery) {
             $subquery->update($data_connection);
         }
-        
+
         return new DataQueryResultData([], $affected_rows ?? 0);
     }
-    
+
     /**
      * Splits the a seta of query parts of the current query into multiple separate queries, each of them containing only query
      * parts with direct attributes of one single object.
@@ -1289,7 +1345,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $queries;
     }
-    
+
     /**
      * Escapes a given value in the proper way for it's data type.
      * The result can be safely used in INSERT
@@ -1348,7 +1404,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $value;
     }
-    
+
     /**
      * Escapes a given string in order to use it in sql queries
      *
@@ -1363,7 +1419,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return preg_replace('~[\x00\x0A\x0D\x1A\x22\x27\x5C]~u', '\\\$0', $string);
         }
     }
-    
+
     /**
      * {@inheritdoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
@@ -1383,35 +1439,35 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $where) {
             throw new QueryBuilderException('Cannot delete all data from "' . $this->main_object->getAlias() . '". Forbidden operation!');
         }
-        
+
         $sql = $this->buildSqlQueryDelete($where, implode(' ', $joins));
         $query = $data_connection->runSql($sql);
-        
+
         return new DataQueryResultData([], $query->countAffectedRows());
     }
-    
+
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::count()
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result = $data_connection->runSql($this->buildSqlQueryCount());
-        $cnt = $result->getResultArray()[0]['EXFCNT'];
+        $cnt = $result->getResultArray()[0][$this->buildSqlAliasForRowCounter()];
         $result->freeResult();
         return new DataQueryResultData([], $cnt, true, $cnt);
     }
-    
+
     /**
-     * 
+     *
      * @return string
      */
     protected function buildSqlQueryCount() : string
     {
         return $this->buildSqlQueryTotals();
     }
-    
+
     /**
      * Creats a SELECT statement for an attribute (qpart).
      * The parameters override certain parts of the statement: $aggregator( $select_from.$select_column AS $select_as ).
@@ -1443,7 +1499,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param AggregatorInterface|bool $aggregator set to FALSE to remove grouping completely
      * @param bool $make_groupable set to TRUE to force the result to be compatible with GROUP BY
      * @param bool $addComments
-     * 
+     *
      * @return string
      */
     protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null, $addComments = true)
@@ -1453,12 +1509,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $add_nvl = false;
         $attribute = $qpart->getAttribute();
         $address = $this->buildSqlDataAddress($qpart);
-        
+
         // skip attributes with no select (e.g. calculated from other values via formatters)
         if (! $address && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT) && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)) {
             return '';
         }
-        
+
         if (! $select_from) {
             // if it's a relation, we need to select from a joined table except for reverse relations
             if ($select_from = $attribute->getRelationPath()->toString()) {
@@ -1474,12 +1530,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $select_from .= $this->getQueryId();
         }
-        
+
         $select_as = $this->getShortAlias($select_as ?? $qpart->getColumnKey());
         $select_from = $this->getShortAlias($select_from);
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         $make_groupable = $make_groupable ?? $this->isSubquery();
-        
+
         // Skip reverse relations without a specific attribute (e.g. `ATTRIBUTE` of `exface.Core.ATTRIBUTE`
         // which is the reverse of `RELATION_TO_ATTRIBUTE`). SQL builders do not support nested objects
         // for now! Technically such a query would produce recursion on buildSqlSelectSubselect() -> buildSqlSelect().
@@ -1499,7 +1555,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 return '';
             }
         }
-        
+
         // build subselects for reverse relations if the body of the select is not specified explicitly
         if (! $select_column && $qpart->getUsedRelations(RelationTypeDataType::REVERSE)) {
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
@@ -1526,12 +1582,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 case $this->isJsonDataAddress($address):
                     list ($address, $jsonPath) = $this->parseJsonDataAddress($address);
                     $column = $this->buildSqlSelect(
-                        $qpart, 
-                        $select_from, 
-                        $address, 
+                        $qpart,
+                        $select_from,
+                        $address,
                         false, // Do not use an alias
                         false, // Do not aggregate inside JSON_VALUE()!
-                        $make_groupable, 
+                        $make_groupable,
                         false
                     );
                     $output = $this->buildSqlJsonRead($column, $jsonPath);
@@ -1553,7 +1609,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
             }
         }
-        
+
         if ($add_nvl) {
             // do some prettyfying
             // return zero for number fields if the subquery does not return anything
@@ -1561,17 +1617,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = $this->buildSqlSelectNullCheck($output, 0);
             }
         }
-        
+
         if ($output === '*') {
             return $output;
         }
-        
+
         if ($select_as) {
             $output = "\n" . $output . $this->buildSqlAsForSelects($select_as);
         }
         return $comment . $output;
     }
-    
+
     /**
      * Adds a wrapper to a select statement, that should take care of the returned value if the statement
      * itself returns null (like IFNULL(), NVL() or COALESCE() depending on the SQL dialect).
@@ -1584,11 +1640,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return $this->buildSqlSelectNullCheckFunctionName() . '(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
     }
-    
+
     protected function buildSqlSelectNullCheckFunctionName(){
         return 'COALESCE';
     }
-    
+
     /**
      * Builds subselects for reversed relations
      *
@@ -1602,7 +1658,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $rev_rel) {
             return '';
         }
-            
+
         /*
          * if there is at least one reverse relation, we need to build a subselect. This is a bit tricky since
          * "normal" and reverse relations can be mixed in the chain of relations for a certain attribute. Imagine,
@@ -1617,7 +1673,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $reg_rel_path = $rel_path->getSubpath(0, $rel_path->getIndexOf($rev_rel));
         /** @var MetaRelationPathInterface complete path of the first reverse relation */
         $rev_rel_path = $reg_rel_path->copy()->appendRelation($rev_rel);
-        
+
         // build a subquery
         /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
         $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
@@ -1625,7 +1681,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $relq->setMainObject($rev_rel->getRightObject());
         $relq->setQueryId($this->getNextSubqueryId());
         $relq->setSelectFirstColumnOnly(true);
-        
+
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
 
@@ -1636,20 +1692,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($aggr === AggregatorFunctionsDataType::MAX_OF || $aggr === AggregatorFunctionsDataType::MIN_OF) {
                 $relq->setLimit(1, 0);
                 $relq->addSorter(
-                    $qpart->getAggregator()->getArguments()[0], 
+                    $qpart->getAggregator()->getArguments()[0],
                     $aggr === AggregatorFunctionsDataType::MAX_OF ? SortingDirectionsDataType::DESC : SortingDirectionsDataType::ASC,
                     false
                 );
                 $relq_attribute_alias = DataAggregation::stripAggregator($relq_attribute_alias);
             }
         }
-        
+
         if ($this->getMainObject()->isExactly($relq->getMainObject()) && $qpart->getAlias() === $relq_attribute_alias) {
             throw new QueryBuilderException('Cannot build SQL query: found circular self-reference "' . $relq_attribute_alias . '" for object ' . $this->getMainObject()->__toString());
         }
-        
+
         $relq->addAttribute($relq_attribute_alias);
-        
+
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
         // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
         // over ORDER oder ORDER->CUSTOMER would be applied to the base query and ar not neeede in the subquery any more.
@@ -1680,8 +1736,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 // attach to the target key in the core query if there are no regular relations preceeding the reversed one
                 $junction_attribute = $rev_rel->getLeftKeyAttribute();
-            } 
-            
+            }
+
             // The junction filter needs to be an EQUALS, since we want to compare by SQL "=" to whatever we define
             // without any quotes. 
             $junctionQpart = null;
@@ -1727,15 +1783,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
-        
+
         $output = '(' . $relq->buildSqlQuerySelect() . ')';
-        
+
         return $output;
     }
-    
+
     /**
      * Returns the SQL for y in `<subselect> WHERE x = y`
-     * 
+     *
      * @param QueryPart $qpart
      * @param MetaAttributeInterface $junctionAttribute
      * @param string $select_from
@@ -1745,10 +1801,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return '(' . $select_from . $this->getAliasDelim() . $this->buildSqlDataAddress($junctionAttribute) . ')';
     }
-    
+
     /**
-     * Builds a group function for the SQL select statement (e.g. "SUM(field)") from an ExFace aggregator function. 
-     * 
+     * Builds a group function for the SQL select statement (e.g. "SUM(field)") from an ExFace aggregator function.
+     *
      * This method translates ExFace aggregators to SQL und thus will probably differ between SQL dialects.
      *
      * @param QueryPartAttribute $qpart
@@ -1762,16 +1818,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $aggregator = $aggregator ?? $qpart->getAggregator();
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
-        
+
         // Can't just list binary values - need to transform them to strings first!
         $aggrFunc = $aggregator->getFunction()->__toString();
         if ($this->isBinaryColumn($qpart) && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc == AggregatorFunctionsDataType::LIST_DISTINCT)) {
             $select = $this->buildSqlSelectBinaryAsHEX($select);
         }
-        
+
         return $this->buildSqlGroupByExpression($qpart, $select, $aggregator);
     }
-    
+
     /**
      * Returns the SQL to transform the given binary SELECT predicate into something like 0x12433.
      *
@@ -1782,7 +1838,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return 'CONCAT(\'0x\', LOWER(HEX(' . $select_from . ')))';
     }
-    
+
     /**
      *
      * @param QueryPartAttribute $qpart
@@ -1793,10 +1849,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
         $output = '';
-        
+
         $args = $aggregator->getArguments();
         $function_name = $aggregator->getFunction()->getValue();
-        
+
         switch ($function_name) {
             case AggregatorFunctionsDataType::SUM:
             case AggregatorFunctionsDataType::AVG:
@@ -1804,7 +1860,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case AggregatorFunctionsDataType::MAX:
             case AggregatorFunctionsDataType::MIN:
                 $output = $function_name . '(' . $sql . ')';
-                break; 
+                break;
             case AggregatorFunctionsDataType::MAX_OF:
             case AggregatorFunctionsDataType::MIN_OF:
                 // MIN_OF/MAX_OF is handled in buildSqlSelectSubselect()
@@ -1831,32 +1887,32 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             default:
                 break;
         }
-        
+
         return $output;
     }
-    
+
     protected function buildSqlGroupByListDelimiter(QueryPartAttribute $qpart = null) {
         return ($qpart === null ? EXF_LIST_SEPARATOR : rtrim($qpart->getAttribute()->getValueListDelimiter(), " ")) . ' ';
     }
-    
+
     protected function buildSqlFrom(string $operation = self::OPERATION_READ)
     {
         // Replace static placeholders
         $alias = $this->getMainObject()->getAlias();
         $table = str_replace('[#~alias#]', $alias, $this->buildSqlDataAddress($this->getMainObject(), $operation));
         $from = $table . $this->buildSqlAsForTables($this->getMainTableAlias());
-        
+
         // Replace dynamic palceholders
         $from = $this->replacePlaceholdersByFilterValues($from);
-        
+
         return $from;
     }
-    
+
     protected function getMainTableAlias() : string
     {
         return $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
     }
-    
+
     /**
      * Returns an SQL snippet to give a table an alias: e.g. ' MYTABLE' or ' AS "MYTABLE"'.
      *
@@ -1867,7 +1923,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return ' ' . $alias;
     }
-    
+
     /**
      * Returns an SQL snippet to give a SELECT column an alias: e.g. ' MYCOL' or ' AS "MYCOL"'.
      *
@@ -1876,9 +1932,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlAsForSelects(string $alias) : string
     {
-        return ' AS "' . $alias . '"';
+        return ' AS ' . $this->escapeAlias($alias);
     }
-    
+
+    /**
+     * Escapes an SQL alias propertly: e.g. `"myalias"` for MySQL, `[myAlias]` for MS SQL
+     *
+     * @param string $tableOrPredicateAlias
+     * @return string
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
+    }
+
     /**
      *
      * @param QueryPart $qpart
@@ -1888,7 +1955,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlJoins(QueryPart $qpart, $left_table_alias = '')
     {
         $joins = array();
-        
+
         if ($qpart instanceof QueryPartFilterGroup) {
             // This extra if for the filter groups is a somewhat strange solutions for reverse relation filters being ignored within groups. It seems, that
             // if you use $qpart->getUsedRelations() on a FilterGroup and just continue with the "else" part of this if, reverse relations are being ignored.
@@ -1901,7 +1968,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         } else {
             $rels = $qpart->getUsedRelations();
-            
+
             if (count($rels) === 0 && $qpart->getAttribute()->getObjectId() == $this->getMainObject()->getId() && $left_table_alias) {
                 // Special treatment if we are joining attributes of the main object to an explicitly specified table alias.
                 // This is necessary when putting some special attributes of the main object (i.e. those with custom
@@ -1950,7 +2017,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $joins;
     }
-    
+
     /**
      * Builds string for sql join on.
      * When $leftKeyAttr and $rightKeyAttr are compound attributes, string is build for each component and
@@ -2013,7 +2080,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $join;
     }
-    
+
     /**
      * LEFT vs. INNER JOIN etc.
      *
@@ -2029,7 +2096,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
          }*/
         return 'LEFT';
     }
-    
+
     /**
      * E.g. `table_alias.data_address`
      *
@@ -2065,7 +2132,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $join_side;
     }
-    
+
     /**
      * Builds the SQL HAVING clause based on the filter group of this query.
      * This is similar to buildSqlWhereCondition but it takes care of filters
@@ -2083,22 +2150,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $having = '';
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
-        
+
         foreach ($qpart->getFilters() as $qpart_fltr) {
             if ($fltr_string = $this->buildSqlHavingCondition($qpart_fltr, $rely_on_joins)) {
                 $having .= "\n " . ($having ? $op . " " : '') . $fltr_string;
             }
         }
-        
+
         foreach ($qpart->getNestedGroups() as $qpart_grp) {
             if ($grp_string = $this->buildSqlHaving($qpart_grp, $rely_on_joins)) {
                 $having .= "\n " . ($having ? $op . " " : '') . "(" . $grp_string . ")";
             }
         }
-        
+
         return $having;
     }
-    
+
     /**
      * Builds the SQL for a condition within the HAVING clause. This is similar
      * to buildSqlWhereCondition() but it takes care of filters with aggregators.
@@ -2115,7 +2182,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $this->checkFilterBelongsInHavingClause($qpart, $rely_on_joins)) {
             return '';
         }
-        
+
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $this->getOptimizedComparator($qpart);
@@ -2135,7 +2202,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $staticVal = $attr->getCalculationExpression()->evaluate();
             return $this->buildSqlWhereComparator($qpart, "'{$this->escapeString($staticVal)}'", $comp, $val, $rely_on_joins);
         }
-        
+
         // Doublecheck that the attribut is known
         if (! ($select || $customWhereClause) || ($ignoreEmptyValues && $val === '')) {
             if ($val === '') {
@@ -2145,7 +2212,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             throw new QueryBuilderException('Illegal SQL HAVING clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
         }
-        
+
         // build the HAVING clause
         if ($customWhereClause) {
             // check if it has an explicit where clause. If not try to filter based on the select clause
@@ -2160,10 +2227,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Do the actual comparing
             $output = $this->buildSqlWhereComparator($qpart, $subj, $comp, $val, $rely_on_joins);
         }
-        
+
         return $output;
     }
-    
+
     /**
      * Builds a where statement for a group of filters, concatennating the conditions with the goups logical operator
      * (e.g.
@@ -2175,9 +2242,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlWhere(QueryPartFilterGroup $qpart, $rely_on_joins = true)
     {
         $where = '';
-        
+
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
-        
+
         foreach ($qpart->getFilters() as $qpart_fltr) {
             switch (true) {
                 // Turn a compound filter into a filter group unless it has a custom SQL_WHERE
@@ -2189,25 +2256,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // Render all other filters regularly and append them if they produce any SQL
                 case $fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins):
                     $where .= "\n" . $this->buildSqlComment("buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100, false, true) . ", " . $rely_on_joins . ")")
-                           . "\n " . ($where ? $op . " " : '') . $fltr_string;
+                        . "\n " . ($where ? $op . " " : '') . $fltr_string;
                     break;
             }
         }
-        
+
         foreach ($qpart->getNestedGroups() as $qpart_grp) {
             if ($grp_string = $this->buildSqlWhere($qpart_grp, $rely_on_joins)) {
                 $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
             }
         }
-        
+
         // Add custom SQL WHERE predicates at top level if there are any.
         if (! empty($this->customFilterSqlPredicates) && $qpart === $this->getFilters()) {
             $where = ($where ? '(' . $where  . ') AND ' : '') . $this->buildSqlWhereCustomPredicates();
         }
-        
+
         return $where;
     }
-    
+
     /**
      * Translates the given condition group operator into it's SQL version: EXF_LOGICAL_AND => AND, etc.
      *
@@ -2232,7 +2299,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $op;
     }
-    
+
     /**
      * Returns TRUE if the given filter query part belongs in the HAVING clause
      * of the current query rather than the WHERE clause.
@@ -2250,7 +2317,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return $qpart->getAggregator() && ! $qpart->getFirstRelation(RelationTypeDataType::REVERSE) ? true : false;
     }
-    
+
     /**
      * Builds a single filter condition for the where clause (e.g.
      * " table.column LIKE '%string%' ")
@@ -2264,18 +2331,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($this->checkFilterBelongsInHavingClause($qpart, $rely_on_joins)) {
             return '';
         }
-        
+
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $this->getOptimizedComparator($qpart);
-        
+
         $select = $this->buildSqlDataAddress($attr);
         $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);
         $customWhereAddress = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE_DATA_ADDRESS);
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         $ignoreEmptyValues = !$qpart->getCondition() || $qpart->getCondition()->willIgnoreEmptyValues();
-        
+
         // If the attribute has no data address AND is a static calculation, generate a 
         // static WHERE clause that compares the result of the static expression evaluation 
         // and the value provided. This ensures, that such comparisons behave roughly the 
@@ -2285,7 +2352,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $staticVal = $attr->getCalculationExpression()->evaluate();
             return $this->buildSqlWhereComparator($qpart, "'{$this->escapeString($staticVal)}'", $comp, $val, $rely_on_joins);
         }
-        
+
         // Doublecheck that the filter actually can be used
         if (! ($select || $customWhereClause) || ($ignoreEmptyValues && $val === '')) {
             if ($val === '') {
@@ -2301,7 +2368,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             return false;
         }
-        
+
         if (! $customWhereClause && ($qpart->getFirstRelation(RelationTypeDataType::REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0))) {
             // Use subqueries for attributes with reverse relations (unless a custom WHERE is defined)
             // or in case we know, tha main query will not have any joins (e.g. UPDATE queries)
@@ -2327,7 +2394,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $output;
     }
-    
+
     protected function getOptimizedComparator(QueryPartFilter $qpart)
     {
         $val = $qpart->getCompareValue();
@@ -2335,25 +2402,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $comp = $qpart->getComparator();
         $type = $qpart->getDataType();
         $compIsOrIsNot = ($comp === ComparatorDataType::IS || $comp === ComparatorDataType::IS_NOT);
-        
+
         switch (true) {
             // always use the equals comparator for foreign keys! It's faster!
             case $attr->isRelation() && $compIsOrIsNot && ! ($type instanceof StringDataType):
             case $this->getMainObject()->hasUidAttribute() && $attr->isExactly($this->getMainObject()->getUidAttribute()) && $compIsOrIsNot:
-            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
+                // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
             case ($type instanceof NumberDataType) && is_numeric($val) && $compIsOrIsNot:
-            // also use equals for the BOOLEAN data type
+                // also use equals for the BOOLEAN data type
             case ($type instanceof BooleanDataType) && $compIsOrIsNot:
-            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
+                // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
             case ($type instanceof DateDataType) && $compIsOrIsNot:
                 $comp = $comp === ComparatorDataType::IS ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
                 break;
         }
         return $comp;
     }
-    
+
     /**
-     * 
+     *
      * @param QueryPartAttribute $qpart
      * @param string $subject
      * @param string $comparator
@@ -2370,7 +2437,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $dataAddressProps = $qpart->getDataAddressProperties();
         $value_list_delimiter = $qpart->getValueListDelimiter();
         $valueIsSQL = $valueIsSQL ?? $qpart->isValueDataAddress();
-        
+
         if($this->isJsonDataAddress($subject)) {
             [$column, $path] = $this->parseJsonDataAddress($subject);
             $subject = $this->buildSqlJsonRead($column, $path);
@@ -2387,7 +2454,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 case $comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN:
                     // If it's a single value, cast it to the data type to make sure, it's a valid value.
                     switch (true) {
-                        
+
                         case ($data_type instanceof DateDataType):
                         case ($data_type instanceof NumberDataType):
                         case ($data_type instanceof BooleanDataType):
@@ -2397,12 +2464,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             $value = $data_type::cast($value);
                     }
                     break;
-                    
+
                 default:
                     $values = explode($value_list_delimiter, $value ?? '');
                     $value = '';
                     $valueNullChecks = [];
-                    
+
                     foreach ($values as $nr => $val) {
                         // If there is an empty string among the values or one of the empty-comparators,
                         // this means that the value may or may not be empty (NULL). NULL is not a valid
@@ -2419,7 +2486,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $val = trim($val);
                         $values[$nr] = $this->prepareWhereValue($val, $data_type, $dataAddressProps);
                     }
-                    
+
                     switch (true) {
                         // If there is only one value, it is better to use = than IN - it is exactly the same
                         // and often is significantly faster. Keep in mind thogh, that the null-check will not
@@ -2459,7 +2526,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return '/* ' . $subject . ' cannot pass comparison to "' . $valueRaw . '" via comparator "' . $comparator . '": wrong data type! */' . "\n"
                 . '1 = 0';
         }
-        
+
         if (is_null($value) || (! $valueIsSQL && $this->prepareWhereValue($value, $data_type, $dataAddressProps) === EXF_LOGICAL_NULL)){
             switch ($comparator) {
                 case EXF_COMPARATOR_EQUALS:
@@ -2469,7 +2536,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     return $subject . ' IS NOT NULL';
             }
         }
-        
+
         // If everything is OK, build the SQL
         switch (true) {
             case $comparator === EXF_COMPARATOR_IN:
@@ -2515,9 +2582,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $output;
     }
-    
+
     /**
-     * 
+     *
      * @param mixed $value
      * @param DataTypeInterface $data_type
      * @param string[] $dataAddressProps
@@ -2542,7 +2609,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $output;
     }
-    
+
     /**
      * Builds a WHERE clause with a subquery (e.g. "column IN ( SELECT ... )" ).
      *
@@ -2566,34 +2633,34 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Otherwise, all relations (starting from the first one) must be put into the subquery, because there are no joins in the main one
             $start_rel = $qpart->getFirstRelation();
         }
-        
+
         if (! $start_rel) {
             return '';
         }
-        
+
         $qpart_rel_path = $qpart->getAttribute()->getRelationPath();
         /** @var MetaRelationPathInterface $prefix_rel_path part of the relation part up to the first reverse relation */
         $prefix_rel_path = $qpart_rel_path->getSubpath(0, $qpart_rel_path->getIndexOf($start_rel));
-        
+
         // build a subquery
         /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
         $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
         $relq->setMainObject($start_rel->getRightObject());
         $relq->setQueryId($this->getNextSubqueryId());
-        
+
         // What kind of subquery structure?
         $comp = $qpart->getComparator();
         switch (true) {
             // See if we just need to check if the subuqery EXISTS. That is the case if it is a `IS NULL` 
             // or `IS NOT NULL` applied to the right-side key of the relation
-            case $qpart->getCompareValue() === EXF_LOGICAL_NULL 
-            && ($comp === ComparatorDataType::EQUALS || $comp === ComparatorDataType::EQUALS_NOT) 
-            && $qpart->getFirstRelation() === $start_rel 
-            && $start_rel->isReverseRelation()
-            // Shouldn't the same logic apply to any not-nullable column of the right-most related table?
-            // After all, if we check if a required attribute of a reverser relation is NULL, doesn't it
-            // automatically mean, that no matching row exists?
-            && $qpart->getAttribute()->is($start_rel->getRightKeyAttribute()):
+            case $qpart->getCompareValue() === EXF_LOGICAL_NULL
+                && ($comp === ComparatorDataType::EQUALS || $comp === ComparatorDataType::EQUALS_NOT)
+                && $qpart->getFirstRelation() === $start_rel
+                && $start_rel->isReverseRelation()
+                // Shouldn't the same logic apply to any not-nullable column of the right-most related table?
+                // After all, if we check if a required attribute of a reverser relation is NULL, doesn't it
+                // automatically mean, that no matching row exists?
+                && $qpart->getAttribute()->is($start_rel->getRightKeyAttribute()):
                 $relqFilterComp = ComparatorDataType::EQUALS;
                 $junctionOp = ($comp === ComparatorDataType::EQUALS ? 'NOT ' : '') . 'EXISTS';
                 break;
@@ -2607,12 +2674,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $relqFilterComp = $comp;
                 $junctionOp = 'IN';
         }
-        
+
         if ($start_rel->isReverseRelation()) {
             // If we are dealing with a reverse relation, build a subquery to select foreign keys from rows of the joined tables,
             // that match the given filter
             $rel_filter_alias = $qpart->getAttribute()->rebase($qpart_rel_path->getSubpath($qpart_rel_path->getIndexOf($start_rel) + 1))->getAliasWithRelationPath();
-            
+
             // Remember to keep the aggregator of the attribute filtered over. Since we are interested in a list of keys, the
             // subquery should GROUP BY these kees.
             if ($qpart->getAggregator()) {
@@ -2621,7 +2688,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // without any aggregation, and it should yield the same results
                 $rel_filter_alias .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
                 $relq->addAggregation($start_rel->getRightKeyAttribute()->getAlias());
-                
+
                 // If we are in a WHERE subquery of a filter with an aggregator, this means, we want to filter
                 // over the aggregated value. However, there might be other filters, that affect this aggregated
                 // value: e.g. as SUM over transactions for a product will be different depending on the store
@@ -2654,14 +2721,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
             }
             $relqKeyPart = $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
-            
+
             // If the key attribute does not have a data address, but we use a custom join we can
             // select all (*) - that's OK because custom JOINs use WHERE EXISTS
             if ($this->buildSqlDataAddress($relqKeyPart) === ''
                 && ! $relqKeyPart->getDataAddressProperty(self::DAP_SQL_SELECT)
                 && ! $relqKeyPart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)
                 && $relqKeyPart->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
-                    $relqKeyPart->setDataAddressProperty(self::DAP_SQL_SELECT, '*');
+                $relqKeyPart->setDataAddressProperty(self::DAP_SQL_SELECT, '*');
             }
 
             if (! $prefix_rel_path->isEmpty()) {
@@ -2678,7 +2745,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $junction = $junctionTableAlias . $this->getAliasDelim() . $junctionDataAddress;
                 }
             }
-                
+
             // Add the filter relative to the first reverse relation with the same $value and $comparator
             switch (true) {
                 // If using `EXISTS` or `NOT EXISTS` we do not need `column IN` in front of the subquery,
@@ -2717,7 +2784,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $customJoinOn = $this->replacePlaceholdersInSqlJoin(
                     $customJoinOn,
                     $relq->getMainTableAlias(),
-                    $this->getMainTableAlias(), 
+                    $this->getMainTableAlias(),
                     $start_rel,
                     $relq
                 );
@@ -2726,7 +2793,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $sql = (stripos($junctionOp, 'EXISTS') !== false ? $junctionOp : 'EXISTS') . ' (' . $relq->buildSqlQuerySelect() . ')';
                 return $sql;
             }
-                
+
         } else {
             // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
             $relq->addFilter($qpart->rebase($relq, $start_rel->getAliasWithModifier()));
@@ -2739,20 +2806,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (stripos($junctionOp, 'EXISTS') !== false) {
             $junction = '';
         }
-        
+
         $output = "$junction $junctionOp ({$relq->buildSqlQuerySelect()})";
-        
+
         return $output;
     }
-    
+
     /**
-     * Builds the contents of an ORDER BY statement for one column. 
-     * 
+     * Builds the contents of an ORDER BY statement for one column.
+     *
      * E.g. `APP DESC` to sort via the attribute alias `APP` of the meta object
      * `exface.Core.OBJECT`). By default the ORDER clause will contain column
      * aliases (i.e. `APP` and not `app_oid` in the example above). Override
      * this method in a specific query builder to change this.
-     * 
+     *
      * The result does not contain the words "ORDER BY", the
      * results of multiple calls to this method with different attributes can
      * be concatennated into a comple ORDER BY clause.
@@ -2771,7 +2838,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $select_from = $this->getShortAlias($this->getMainObject()->getAlias());
                 break;
         }
-        
+
         switch (true) {
             case $customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY):
                 $phs = StringDataType::findPlaceholders($customOrderBy);
@@ -2793,17 +2860,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             default:
                 $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
-        
         return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
     }
-    
+
     /**
      * Builds the contents of an GROUP BY statement for one column (e.g.
      * "ATTRIBUTE.ALIAS" to group by the
      * the column ALIAS of the table ATTRIBUTE). The result does not contain the words "GROUP BY", thus
      * the results of multiple calls to this method with different attributes can be concatennated into
      * a comple GROUP BY clause.
-     * 
+     *
      * @param QueryPartSorter $qpart
      * @param string $select_from
      * @return string
@@ -2826,7 +2892,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $output;
     }
-    
+
     /**
      * Shortens an alias (or any string) to $getShortAliasMaxLength() by cutting off the rest and appending
      * a unique id.
@@ -2850,12 +2916,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $short_alias = $this->short_alias_prefix . str_pad($this->short_alias_index, 3, '0', STR_PAD_LEFT) . $this->short_alias_replacer . substr($this->getCleanAlias($full_alias), - 1 * ($this->getShortAliasMaxLength() - 3 - 1 - 1));
             $this->short_aliases[$full_alias] = $short_alias;
         }
-        
+
         return $short_alias;
     }
-    
+
     /**
-     * 
+     *
      * @param string $alias
      * @return string
      */
@@ -2865,9 +2931,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $output = str_replace($this->getShortAliasForbiddenChars(), '_', $alias);
         return $output;
     }
-    
+
     /**
-     * 
+     *
      * @param string $short_alias
      * @return string
      */
@@ -2879,7 +2945,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $full_alias;
     }
-    
+
     /**
      * Returns TRUE if the given string is complex SQL-statement (= not a simple column references)
      * and FALSE otherwise.
@@ -2896,7 +2962,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return mb_strpos($string, '(') !== false && mb_strpos($string, ')') !== false;
     }
-    
+
     /**
      * Returns TRUE if the give string is a SELECT statement and FALSE otherwise.
      *
@@ -2910,9 +2976,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return stripos($string, 'SELECT ') !== false;
     }
-    
+
     /**
-     * 
+     *
      * @param string|NULL
      * @return string|NULL
      */
@@ -2924,23 +2990,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $hex_value = bin2hex($value);
         return ($hex_value ? '0x' : '') . $hex_value;
     }
-    
+
     public function getQueryId()
     {
         return $this->query_id;
     }
-    
+
     public function setQueryId($value)
     {
         $this->query_id = $value;
         return $this;
     }
-    
+
     protected function getNextSubqueryId()
     {
         return ++ $this->subquery_counter;
     }
-    
+
     /**
      * Appends a custom where statement pattern to the given original where statement.
      * Replaces the [#~alias#] placeholder with the $table_alias if given or the main table alias otherwise
@@ -2954,10 +3020,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function appendCustomWhere($original_where_statement, $custom_statement, $table_alias = null, $operator = 'AND')
     {
         $table_alias = $table_alias ?? $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+        // TODO cannot use [#attribute#] placeholders here - their alias is not properly set without knowing the
+        // relaion path
         $customWhere = $this->replacePlaceholdersInSqlAddress($custom_statement, null, ['~alias' => $table_alias]);
         return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . $customWhere;
     }
-    
+
     /**
      *
      * @param QueryPartAttribute $qpart
@@ -2973,9 +3041,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return $related_to_aggregator;
     }
-    
+
     /**
-     * 
+     *
      * @param string $data_address
      * @param RelationPath $relation_path
      * @param array $static_placeholders
@@ -2987,17 +3055,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $data_address = $this->findSqlDialect($data_address);
         $original_data_address = $data_address;
-        
+
         if (! empty($static_placeholders)){
             $static_phs = array_map(function($ph){return '[#' . $ph . '#]';}, array_keys($static_placeholders));
             $static_values = array_values($static_placeholders);
             $data_address = str_replace($static_phs, $static_values, $data_address);
         }
-        
+
         if ($relation_path){
             $prefix = $relation_path->toString();
         }
-        
+
         $baseObj = $relation_path !== null ? $relation_path->getEndObject() : $this->getMainObject();
         foreach (StringDataType::findPlaceholders($data_address) as $ph) {
             $phAlias = IfNullModifier::stripFilter($ph);
@@ -3010,9 +3078,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $data_address = StringDataType::replacePlaceholder($data_address, $ph, $formula->evaluate());
                 continue;
             }
-            $ph_has_relation = $baseObj->hasAttribute($phAlias) && ! $baseObj->getAttribute($phAlias)->getRelationPath()->isEmpty() ? true : false;                
+            $ph_has_relation = $baseObj->hasAttribute($phAlias) && ! $baseObj->getAttribute($phAlias)->getRelationPath()->isEmpty() ? true : false;
             $ph_attribute_alias = RelationPath::join($prefix, $phAlias);
-            
+
             // If the placeholder is not part of the query already, create a new query part.
             if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {
                 $qpart->setUsedInPlaceholders(true);
@@ -3067,12 +3135,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @return string
      */
     protected function replacePlaceholdersInSqlJoin(
-        string $sqlJoin, 
-        string $leftTableAlias, 
-        string $rightTableAlias, 
-        MetaRelationInterface $relation, 
-        ?self $leftSubquery = null, 
-        ?self $rightSubquery = null, 
+        string $sqlJoin,
+        string $leftTableAlias,
+        string $rightTableAlias,
+        MetaRelationInterface $relation,
+        ?self $leftSubquery = null,
+        ?self $rightSubquery = null,
         ?string &$joinedTableSQL = null
     ) : string
     {
@@ -3080,7 +3148,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $rightQuery = $rightSubquery ?? $this;
         $leftTableAlias = $leftTableAlias ?? $leftQuery->getShortAlias($relation->getLeftObject()->getAlias() . $leftQuery->getQueryId());
         $rightTableAlias = $rightTableAlias ?? $rightQuery->getShortAlias($relation->getRightObject()->getAlias() . $rightQuery->getQueryId());
-        
+
         // Switch left and right side if a reverse relation is actually defined on its left side!
         // Indeed, in the JOIN we always look from left to right. However, all the SQL customization properties
         // are part of the attribute, that defines the relation, so we need to look for that attribute regardless
@@ -3096,16 +3164,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $sqlJoin = str_replace('~right', '~left', $sqlJoin);
             $sqlJoin = str_replace('~tmp', '~right', $sqlJoin);
         }
-        
+
         $phs = StringDataType::findPlaceholders($sqlJoin);
         $phVals = [];
         foreach ($phs as $ph) {
             switch (true) {
                 case StringDataType::startsWith($ph, '~left:'):
                     $phVals[$ph] = $leftQuery->replacePlaceholdersInSqlAddress(
-                        '[#' . StringDataType::substringAfter($ph, '~left:') . '#]', 
-                        null, 
-                        null, 
+                        '[#' . StringDataType::substringAfter($ph, '~left:') . '#]',
+                        null,
+                        null,
                         $leftTableAlias
                     );
                     break;
@@ -3169,10 +3237,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     throw new PlaceholderNotFoundError('Invalid placeholder "' . $ph . '" in custom SQL_JOIN_ON of object ' . $leftQuery->getMainObject()->__toString() . ': ' . $sqlJoin);
             }
         }
-        
+
         return StringDataType::replacePlaceholders($sqlJoin, $phVals);
     }
-    
+
     /**
      * The SQL builder can join of related objects as long as they are located in the same database.
      *
@@ -3199,7 +3267,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         return false;
     }
-    
+
     /**
      * Returns the alias delimiter (e.g. the dot in MYTABLE.FIELD).
      *
@@ -3212,7 +3280,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return '.';
     }
-    
+
     /**
      *
      * @param string $attribute_alias
@@ -3229,7 +3297,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Add a custom WHERE predicate to be added via AND to the auto-generated ones
-     * 
+     *
      * @param string $sqlPredicate
      * @return $this
      */
@@ -3246,7 +3314,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return implode(' AND ', $this->customFilterSqlPredicates);
     }
-    
+
     /**
      * Returns the maximum number of characters allowed in a field or table alias.
      *
@@ -3258,7 +3326,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return 30;
     }
-    
+
     /**
      *
      * @return array
@@ -3267,7 +3335,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return $this->short_alias_remove_chars;
     }
-    
+
     /**
      *
      * @param array $value
@@ -3278,12 +3346,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $this->short_alias_remove_chars = $value;
         return $this;
     }
-    
+
     protected function getShortAliases() : array
     {
         return $this->short_aliases;
     }
-    
+
     /**
      *
      * @return array
@@ -3292,7 +3360,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return $this->reserved_words;
     }
-    
+
     /**
      *
      * @param array $value
@@ -3303,9 +3371,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $this->reserved_words = $value;
         return $this;
     }
-    
-    
-    
+
+
+
     /**
      * Returns TRUE if the resulting data can be assumed to contain only a single UID
      * of the provided object per row.
@@ -3318,12 +3386,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * of the query will be used automatically.
      *
      * Technically, this method checks for the following conditions:
-     * 
+     *
      * 1. Is the query aggregated by an attribute based on the UID column of the given object
-     * 2. Is the query aggregated by an attribute, that is part of the relation path to the object 
+     * 2. Is the query aggregated by an attribute, that is part of the relation path to the object
      * (if that is known). That is, if we have ORDERS aggregated by CUSTOMER the attribute
      * CUSTOMER__ADDRESS__COUNTRY is group safe as all orders in an aggregated row have the
-     * same customer and thus the same address and country. 
+     * same customer and thus the same address and country.
      * 3. Is there an equals-filter, over the UID of the given object or anohter attribute with the same data address
      * 4. Is there an equals-filter over a forward-relation to the given object
      *
@@ -3338,7 +3406,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($filterGroup === null) {
             $filterGroup = $this->getFilters();
         }
-        
+
         // The whole logic only works if multiple conditions or condition groups are combined via AND!
         if ($filterGroup->getOperator() !== EXF_LOGICAL_AND) {
             // If it's not AND expclicitly, it's AND-equivalent if the operator is OR or XOR and there
@@ -3347,11 +3415,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 return false;
             }
         }
-        
+
         if ($aggregations === null) {
             $aggregations = $this->getAggregations();
         }
-        
+
         // Condition (1) - see method doc
         if ($object->hasUidAttribute()) {
             $uidDataAddress = $this->buildSqlDataAddress($object->getUidAttribute());
@@ -3361,7 +3429,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
-        
+
         // Condition (2) - see method doc
         if ($relPathFromQuery !== null) {
             foreach ($aggregations as $qpart) {
@@ -3376,9 +3444,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
-        
+
         foreach ($filterGroup->getFilters() as $qpart) {
-            
+
             // TODO The current checks do not really ensure, that the object is unique. Need a better idea!
             $isFilterEquals = false;
             if ($qpart->getComparator() == EXF_COMPARATOR_IS || $qpart->getComparator() == EXF_COMPARATOR_EQUALS) {
@@ -3389,7 +3457,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $isFilterEquals = true;
                 }
             }
-            
+
             if ($isFilterEquals) {
                 $filterAttr = $qpart->getAttribute();
                 // Condition (3) - see method doc
@@ -3404,16 +3472,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
-        
+
         foreach ($filterGroup->getNestedGroups() as $qpart) {
             if ($qpart->getOperator() === EXF_LOGICAL_AND && $this->isObjectGroupSafe($object, $qpart) === true) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * Returns an SQL commentary containing the given text.
      *
@@ -3424,7 +3492,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return '/* ' . str_replace(['/*', '*/'], '', $text) . ' */';
     }
-    
+
     /**
      * Returns TRUE if the query will only return a single line because of aggregation:
      * i.d. all SELECTs have group functions and there is no explicit GROUB BY.
@@ -3436,45 +3504,45 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (empty($this->getAggregations()) === false) {
             return false;
         }
-        
+
         foreach ($this->getAttributes() as $qpart) {
             if (! $qpart->getAggregator()) {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
-     * 
+     *
      * @return bool
      */
     public function isAggregated() : bool
     {
         return ! empty($this->getAggregations());
     }
-    
+
     /**
-     * 
+     *
      * @return bool
      */
     protected function isSubquery() : bool
     {
         return $this->query_id > 0;
     }
-    
+
     /**
      * Returns the SQL data address for the given query part, meta object or attribute.
-     * 
+     *
      * Detects multi-dialect data addresses and extracts the dialect, that fits best
      * according to getSqlDialects(). If multiple tags fit, the first tag in getSqlDialects()
      * wins - that way query builders can define the priority of dialect tags.
-     * 
+     *
      * @param object $qpartOrModelElement
-     * 
+     *
      * @throws QueryBuilderException
-     * 
+     *
      * @return string
      */
     protected function buildSqlDataAddress(object $qpartOrModelElement, string $operation = self::OPERATION_READ) : string
@@ -3487,79 +3555,71 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $qpartOrModelElement instanceof MetaObjectInterface:
                 $addr = $qpartOrModelElement->getDataAddress();
                 if ($operation === self::OPERATION_READ && $customFrom = $qpartOrModelElement->getDataAddressProperty(static::DAP_SQL_READ_FROM)) {
-                    $addr = $customFrom;   
+                    $addr = $customFrom;
                 }
                 break;
             default:
                 throw new QueryBuilderException('Cannot get data address from ' . get_class($qpartOrModelElement) . ': expecting query part, meta object or attribute!');
         }
-        
+
         if ($addr === '' || $addr === null) {
             return $addr ?? '';
         }
-        
+
         return $this->findSqlDialect($addr);
     }
 
     /**
      * Retruns the current SQL dialect from a multi-dialect statement
-     * 
-     * See class-level comment on "Multi-dialect data addresses". 
-     * 
+     *
+     * See class-level comment on "Multi-dialect data addresses".
+     *
      * If the given SQL is a multi-dialect statement, this method will strip all non-applicable dialects and return
      * only the SQL for the dialect of this particular query builder.
-     * 
+     *
      * ```
      *  |@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))
      *  |@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')
      *  |
      * ```
-     * 
+     *
      * In the above example, this method would return the first life in the `MySqlBuilder` and the second one for `MsSqlBuilder`.
-     * 
+     *
      * @param string $sql
      * @throws \exface\Core\Exceptions\QueryBuilderException
      * @return string
      */
     protected function findSqlDialect(string $sql) : string
     {
-        if (StringDataType::startsWith($sql, '@')) {
-            $stmts = preg_split('/(^|\R)@/', $sql);
-            $tags = $this->getSqlDialects();
-            // Start with the first supported tag and see if it matches any statement. If not,
-            // proceed with the next tag, etc.
-                foreach ($tags as $tag) {
-                    $tag = $tag . ':';
-                    foreach ($stmts as $stmt) {
-                    if (StringDataType::startsWith($stmt, $tag, false)) {
-                        return trim(StringDataType::substringAfter($stmt, $tag));
-                    }
-                }
-            }
-            // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($sql, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
-        }
-        return $sql;
+        return SqlDataType::findSqlDialect($sql, $this->getSqlDialects());
     }
-    
+
     /**
      * Returns the names of SQL dialect-tags supported by this query builder in multi-dialect statements.
-     * 
-     * Override this method to add new dialects. Keep in mind, that 
-     * 
+     *
+     * Override this method to add new dialects. Keep in mind, that
+     *
      * @return string[]
      */
     protected function getSqlDialects() : array
     {
-        return ['OTHER'];
+        return [self::SQL_DIALECT_OTHER];
     }
-    
+
+    /**
+     * @return string
+     */
+    protected function getSqlDialectDefault() : string
+    {
+        return $this->getSqlDialects()[0];
+    }
+
     protected function setDirty(bool $trueOrFalse) : AbstractSqlBuilder
     {
         $this->dirtyFlag = $trueOrFalse;
         return $this;
     }
-    
+
     protected function isDirty() : bool
     {
         return $this->dirtyFlag;
@@ -3567,12 +3627,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Returns TRUE if the given data address points to data inside a JSON value and FALSE otherwise
-     * 
+     *
      * TODO this method should go into an ISupportJSONQueries interface for query builders in order
      * to allow other code to understand, if structured data can be handled. The exact syntax of
      * a JSON address is up to the query builder, but we will probably need to distinguish between
      * those, that can handle JSON and others.
-     * 
+     *
      * @param string $str
      * @return bool
      */
@@ -3583,15 +3643,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Splits the given JSON data address into a SQL column and a JSON path.
-     * 
+     *
      * Use like this:
-     * 
+     *
      * ```
      * list($column, $jsonPath) = $this->parseJsonDataAddress('myCol::$.prop1')
      * // $column = "myCol"
      * // $jsonPath = "$.prop1"
      * ```
-     * 
+     *
      * @param string $str
      * @return string[] containing $column and $jsonPath
      */
@@ -3603,14 +3663,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Override this method to implement a DB specific JSON reader
-     * 
+     *
      * @param string $address
      * @param string $jsonPath
      * @return string
      */
     protected function buildSqlJsonRead(string $address, string $jsonPath) : string
     {
-        
+
         if ($this->isAggregated()) {
             // If aggregating, we cannot do any prechecks because they do not contain any aggregator,
             // so we really need to use the data address as-is here.
@@ -3673,7 +3733,7 @@ SQL;
 
     /**
      * Override this method to implement a DB specific JSON writer
-     * 
+     *
      * @param string $address
      * @param string $jsonPath
      * @param string $escapedValue
@@ -3707,5 +3767,15 @@ SQL;
             $this->addAttribute($attribute_alias);
         }
         return $qpart;
+    }
+
+    /**
+     * Returns the column alias to select the global row counter - EXFCNT by default
+     *
+     * @return string
+     */
+    protected function buildSqlAliasForRowCounter() : string
+    {
+        return 'EXFCNT';
     }
 }

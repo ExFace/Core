@@ -374,7 +374,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      */
     protected function escapeSqlStringValue(string $value) : string
     {
-        return addslashes($value);
+        return $this->getDataConnection()->escapeString($value);
     }
     
     /**

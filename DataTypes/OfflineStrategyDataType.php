@@ -21,16 +21,39 @@ class OfflineStrategyDataType extends StringDataType implements EnumDataTypeInte
 {
     use EnumStaticDataTypeTrait;
     
+    /**
+     * Use the action queue and send the action to the server in background when connected again
+     */
     const ENQUEUE = 'enqueue';
     
+    /**
+     * Constantly sync data in background using PWA data sets
+     */
     const PRESYNC = 'presync';
-    
+
+    /**
+     * If offline, try to use the service worker caches making previously loaded data available offline
+     */ 
     const USE_CACHE = 'use_cache';
-    
+
+    /**
+     * Skip the action offline
+     */
     const SKIP = 'skip';
-    
+
+    /** 
+     * Allow the action online only
+     */
     const ONLINE_ONLY = 'online_only';
-    
+
+    /** 
+     * Ignore the action completely - don't even save it to the PWA model!
+     */
+    const IGNORE = 'ignore';
+
+    /** 
+     * JS-only actions need no special treatment offline
+     */
     const CLIENT_SIDE = 'client_side';
     
     private $labels = [];

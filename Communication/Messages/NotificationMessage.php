@@ -4,6 +4,7 @@ namespace exface\Core\Communication\Messages;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Widgets\Markdown;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\Communication\AbstractMessage;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
@@ -46,6 +47,7 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
             $textUxon = new UxonObject([
                 'widget_type' => 'Markdown',
                 'hide_caption' => true,
+                'open_links_in' => Markdown::OPEN_LINKS_IN_NEW_TAB,
                 'value' => $this->getText() ? $this->getText() : $this->getTitle()
             ]);
             $this->widgetUxon = $textUxon;
@@ -143,35 +145,6 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     public function setSubject(string $value) : NotificationMessage
     {
         return $this->setTitle($value);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Communication\AbstractMessage::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        if ($this->title !== null) {
-            $uxon->setProperty('title', $this->title);
-        }
-        if ($this->getIcon() !== null) {
-            $uxon->setProperty('icon', $this->getIcon());
-        }
-        if ($this->getIconSet() !== null) {
-            $uxon->setProperty('icon_set', $this->getIconSet());
-        }
-        if ($this->text !== null) {
-            $uxon->setProperty('text', $this->text);
-        }
-        if ($this->widgetUxon !== null) {
-            $uxon->setProperty('body_widget', $this->widgetUxon);
-        }
-        if ($this->buttonsUxon !== null) {
-            $uxon->setProperty('buttons', $this->buttonsUxon);
-        }
-        return $uxon;
     }
 
     public function getFolder() : ?string

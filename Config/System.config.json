@@ -1,4 +1,6 @@
 {
+    "INSTALLER.SERVER_INSTALLER.CLASS": "",
+  
 	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\SqlModelLoader",
 	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
 	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
@@ -114,6 +116,9 @@
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate",
 			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
     	],
+        "exface.Core.Model.OnBeforeSnippetLoaded": [
+          "\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"
+        ],
     	"exface.Core.Model.OnMessageLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
     	],
@@ -176,8 +181,8 @@
 	},
 	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": [
 		"npm-asset/dexie/dist/dexie.min.js",
-    	"exface/Core/Facades/AbstractPWAFacade/sw_tools.js",
-    	"exface/Core/Facades/AbstractPWAFacade/exfPWA.js"
+    	"exface/core/Facades/AbstractPWAFacade/sw_tools.js",
+    	"exface/core/Facades/AbstractPWAFacade/exfPWA.js"
     ],
     
     "FACADES.HTTPTASKFACADE.ALLOW_HTTP_BASIC_AUTH": true,
@@ -217,8 +222,8 @@
 		"Access-Control-Allow-Headers": "",
 		"Access-Control-Expose-Headers": ""
 	},
-	
-    "INSTALLER.SERVER_INSTALLER.CLASS": "",
 
-	"MUTATIONS.ENABLED": false
+	"MUTATIONS.ENABLED": false,
+  
+    "BEHAVIORS.SOFTDELETE.FILTER_DELETED_ON_READ": "auto"
 }

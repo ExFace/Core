@@ -21,7 +21,12 @@ namespace exface\Core\Interfaces;
  * To start tracking, you need to create a new instance and pass an associative array as the base dataset:
  *
  * ```
- *
+ * $data = [
+ *      'key1' => 'val1',
+ *      //...
+ *      'keyN' => 'valN'
+ * ];
+ * 
  * $dataTracker = new DataTracker($data);
  *
  * ```

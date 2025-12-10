@@ -39,6 +39,8 @@ use exface\Core\DataTypes\ComparatorDataType;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    const SQL_DIALECT_TSQL = 'T-SQL';
+    const SQL_DIALECT_MSSQL = 'MSSQL';
     /**
      * Set to TRUE to add `WITH (NOLOCK)` in SELECT queries based on this object (also affects all JOINs!)
      * 
@@ -92,7 +94,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['T-SQL', 'MSSQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_TSQL, self::SQL_DIALECT_MSSQL], parent::getSqlDialects());
     }
 
     /**
@@ -426,9 +428,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         
         if ($totals_core_select) {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
         } else {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
         }
         
         if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
@@ -832,7 +834,8 @@ SQL;*/
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                    // Escape MS SQL strings with `N'text'` - the N makes it UNICODE compatible!
+                    $value = $value === null ? 'NULL' : "N'{$this->escapeString($value)}'";
                 }
                 break;
             case $data_type instanceof DateTimeDataType:
@@ -875,6 +878,16 @@ SQL;*/
             return ' (NOLOCK) AS ' . $alias;
         }
         return ' AS ' . $alias;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '[' . $tableOrPredicateAlias . ']';
     }
     
     /**

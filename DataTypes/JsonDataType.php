@@ -1,10 +1,13 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\CommonLogic\Debugger;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\DataTypes\JsonSchemaValidationError;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use JsonSchema\Validator;
 
 class JsonDataType extends TextDataType
@@ -102,9 +105,9 @@ class JsonDataType extends TextDataType
                 $instance = $this::decodeJson($stringOrArrayOrObject, false);
             }
         } catch (DataTypeCastingError $e) {
-            throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
+            throw $this->createValidationParseError($stringOrArrayOrObject, null, null, $e->getCode(), $e);
         } catch (\Throwable $e) {
-            throw $this->createValidationError('Invalid value "' . $stringOrArrayOrObject . '" for data type ' . $this->getAliasWithNamespace() . '!', null, $e);
+            throw $this->createValidationParseError($stringOrArrayOrObject, 'Invalid value "' . $stringOrArrayOrObject . '" for data type ' . $this->getAliasWithNamespace() . '!', false,null, $e);
         }
         return $this::encodeJson($instance, $this->getPrettify());
     }
@@ -147,7 +150,9 @@ class JsonDataType extends TextDataType
         }
         $result = json_encode($anything, $options);
         if ($result === false && $anything !== false) {
-            throw new DataTypeCastingError('Cannot encode "' . gettype($anything) . '" as JSON: ' . json_last_error_msg() . ' in JSON encoder!');
+            $trunc = Debugger::printVariable($anything, false, 0);
+            $trunc = StringDataType::truncate($trunc ?? '', 60, false, true, true, true);
+            throw new DataTypeCastingError('Cannot encode ' . gettype($anything) . ' "' . $trunc . '" as JSON: ' . json_last_error_msg() . ' in JSON encoder!', null, null, $anything);
         }
         return $result;
     }
@@ -245,5 +250,46 @@ class JsonDataType extends TextDataType
         }
         
         return $validator->isValid();
+    }
+
+    /**
+     * Convert a given metamodel data type to a JSON schema type
+     * 
+     * @link https://cswr.github.io/JsonSchema/spec/basic_types/
+     *
+     * @param DataTypeInterface $dataType
+     * @return array|string[]
+     */
+    public static function convertDataTypeToJsonSchemaType(DataTypeInterface $dataType) : array
+    {
+        switch (true) {
+            case $dataType instanceof IntegerDataType:
+            case $dataType instanceof TimeDataType:
+                return ['type' => 'integer'];
+            case ($dataType instanceof NumberDataType) && $dataType->getBase() === 10:
+                return ['type' => 'number'];
+            case $dataType instanceof BooleanDataType:
+                return ['type' => 'boolean'];
+            case $dataType instanceof ArrayDataType:
+                return ['type' => 'array'];
+            case $dataType instanceof EnumDataTypeInterface:
+                return ['type' => 'string', 'enum' => $dataType->getValues()];
+            case $dataType instanceof DateTimeDataType:
+                return ['type' => 'string', 'format' => 'datetime'];
+            case $dataType instanceof DateDataType:
+                return ['type' => 'string', 'format' => 'date'];
+            case $dataType instanceof BinaryDataType:
+                if ($dataType->getEncoding() == 'base64') {
+                    return ['type' => 'string', 'format' => 'byte'];
+                } else {
+                    return ['type' => 'string', 'format' => 'binary'];
+                }
+            case $dataType instanceof StringDataType:
+                return ['type' => 'string'];
+            case $dataType instanceof HexadecimalNumberDataType:
+                return ['type' => 'string'];
+            default:
+                throw new InvalidArgumentException('Datatype: ' . $dataType->getAlias() . ' not recognized.');
+        }
     }
 }

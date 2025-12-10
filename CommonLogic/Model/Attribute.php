@@ -963,6 +963,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
         if ($this->default_display_uxon instanceof UxonObject){
             $copy->setDefaultDisplayUxon($this->default_display_uxon->copy());
         }
+
+        // Copy data address properties to decouple the copy from its parent
+        if ($this->data_address_properties instanceof UxonObject){
+            $copy->setDataAddressProperties($this->data_address_properties->copy());
+        }
         
         return $copy;
     }
@@ -1471,6 +1476,16 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
             'name' => $this->getName(),
             'data_address' => $this->getDataAddress()
         ]);
+        
+        if ($this->default_display_uxon !== null) {
+            $uxon->setProperty('default_display_widget', $this->default_display_uxon);
+        }
+        if ($this->default_editor_uxon !== null) {
+            $uxon->setProperty('default_editor_widget', $this->default_editor_uxon);
+        }
+        if ($this->custom_data_type_uxon !== null) {
+            $uxon->setProperty('data_type', $this->custom_data_type_uxon);
+        }
 
         // TODO add other UXON properties here
 

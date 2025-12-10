@@ -16,6 +16,7 @@ class DataColumnSetupRule extends AbstractMutation
 {
     private ?string $expression = null;
     private ?bool $show = null;
+    private ?string $width = null;
     private array $changes = [];
 
     /**
@@ -54,17 +55,32 @@ class DataColumnSetupRule extends AbstractMutation
     }
 
     /**
-     * Target column calculation - used to identify the column to set up
+     * Custom column width set by user by resizing columns (e.g. '100px') 
      *
-     * @uxon-property calculation
-     * @uxon-type metamodel:formula
+     * @uxon-property custom_width
+     * @uxon-type string
      *
-     * @param string $formula
+     * @param string $customWidth
      * @return $this
      */
-    protected function setCalculation(string $formula): DataColumnSetupRule
+    protected function setCustomWidth(string $customWidth): DataColumnSetupRule
     {
-        $this->expression = $formula;
+        $this->width = $customWidth;
+        return $this;
+    }
+
+    /**
+     * Target column name - used to identify the column to set up
+     *
+     * @uxon-property column_name
+     * @uxon-type string
+     *
+     * @param string $column_name
+     * @return $this
+     */
+    protected function setColumnName(string $column_name): DataColumnSetupRule
+    {
+        $this->expression = $column_name;
         return $this;
     }
 

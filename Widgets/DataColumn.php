@@ -132,6 +132,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $mergeCells = false;
 
     private $dataTypeUxon = null;
+    
+    private ?UxonObject $nestedDataSheetUxon = null;
 
     public function getAttributeAlias()
     {
@@ -965,16 +967,24 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
+        
         // TODO add properties specific to this widget here
         if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
+        
         if ($this->isCalculated()) {
             $uxon->setProperty('calculation', $this->getCalculationExpression()->toString());
         }
+        
         if ($this->editable_if_access_to_action_alias !== null) {
             $uxon->setProperty('editable_if_access_to_action', $this->editable_if_access_to_action_alias);
         }
+        
+        if($this->nestedDataSheetUxon !== null) {
+            $uxon->setProperty('nested_data', $this->nestedDataSheetUxon);
+        }
+        
         return $uxon;
     }
     
@@ -1346,5 +1356,37 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->mergeCells = $value;
         return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getNestedDataTemplateUxon() : ?UxonObject
+    {
+        return $this->nestedDataSheetUxon;
+    }
+
+    /**
+     * A template for nested data in this column
+     * 
+     * @uxon-property nested_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":""}]}
+     * 
+     * @param UxonObject $data
+     * @return DataColumn
+     */
+    public function setNestedData(UxonObject $data) : DataColumn
+    {
+        $this->nestedDataSheetUxon = $data;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasNestedData() : bool
+    {
+        return $this->nestedDataSheetUxon !== null;
     }
 }

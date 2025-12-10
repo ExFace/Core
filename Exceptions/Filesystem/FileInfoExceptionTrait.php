@@ -39,8 +39,9 @@ trait FileInfoExceptionTrait
             $tab->setColumnsInGrid(1);
             $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
                 'widget_type' => 'Markdown',
-                'value' => $this->toMarkdown(),
-                'width' => 'max'
+                'hide_caption' => true,
+                'width' => 'max',
+                'value' => $this->toMarkdown()
             ])));
         }
         

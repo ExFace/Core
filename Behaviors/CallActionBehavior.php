@@ -6,6 +6,9 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -26,6 +29,7 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Debug\DataLogBookInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -43,6 +47,23 @@ use Throwable;
  * 
  * It is also possible to make this behavior replace the original action, that triggers it. Use `event_prevent_default`
  * to prevent the operation of on-before events.
+ * 
+ * ## Action input data
+ * 
+ * The action being called will receive the data of the trigger-event as input. So, if the action is called 
+ * `OnUpdateData`, it will receive the data in the state after the update. If the action has an `input_mapper`
+ * or internal logic to read missing data, it will read the "new" updated data.
+ * 
+ * If you want, you can use `input_data_event_alias` or `input_data_event_aliases` to explicitly fetch the
+ * input data from another event - typically the on-before version of the trigger. In the above example,
+ * you could get the input data `OnBeforeUpdateData` to pass the "old" data to the triggered action. However,
+ * if the action needs to read missing data, it will still see the "new" data because it is run `OnUpdatedata`
+ * (= after the update). In this case, you will need to load all required data explicitly by defining an
+ * `input_data_mapper` in the behavior. That will be applied at the time of the input-data-event and will 
+ * "see" the "old" in our case.
+ * 
+ * Another typical example for the use of `input_data_event_alias` is the `OnDeleteData` event, where you will
+ * oftnen need to collect required data before the main object is actually deleted.
  * 
  * ## Transaction handling and errors
  * 
@@ -126,27 +147,25 @@ class CallActionBehavior extends AbstractBehavior
 
     use ICanBypassDataAuthorizationTrait;
     
-    private $eventAliases = [];
-    
-    private $eventPreventDefault = null;
+    private array $eventAliases = [];
+    private ?bool $eventPreventDefault = null;
 
     private $action = null;
-    
     private $actionConfig = null;
     
-    private $onlyIfAttributesChange = [];
+    private array $onlyIfAttributesChange = [];
+    private ?UxonObject $onlyIfDataMatchesConditionGroupUxon = null;
+
+    private bool $isHandling = false;
+    private array $ignoreDataSheets = [];
+	private array $ignoreLogbooks = [];
+
+    private bool $onFailError = true;
+    private bool $commitBeforeAction = false;
     
-    private $onlyIfDataMatchesConditionGroupUxon = null;
-    
-    private $ignoreDataSheets = [];
-	
-	private $ignoreLogbooks = [];
-    
-    private $onFailError = true;
-    
-    private $isHandling = false;
-    
-    private $commitBeforeAction = false;
+    private array $inputDataEventAliases = [];
+    private ?UxonObject $inputDataMapperUxon = null;
+    private array $inputDataFromEvents = [];
     
     /**
      *
@@ -159,6 +178,10 @@ class CallActionBehavior extends AbstractBehavior
         // call-action listener even if both listen the OnBeforeUpdateData event
         if ($this->hasRestrictionOnAttributeChange()) {
             $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
+        }
+
+        foreach ($this->getInputDataEventAliases() as $event) {
+            $this->getWorkbench()->eventManager()->addListener($event, [$this, 'onEventSaveInputData'], $this->getPriority());
         }
         
         foreach ($this->getEventAliases() as $event) {
@@ -177,6 +200,10 @@ class CallActionBehavior extends AbstractBehavior
     {
         foreach ($this->getEventAliases() as $event) {
             $this->getWorkbench()->eventManager()->removeListener($event, [$this, 'onEventCallAction']);
+        }
+
+        foreach ($this->getInputDataEventAliases() as $event) {
+            $this->getWorkbench()->eventManager()->removeListener($event, [$this, 'onEventSaveInputData']);
         }
 
         if ($this->hasRestrictionOnAttributeChange()) {
@@ -220,14 +247,9 @@ class CallActionBehavior extends AbstractBehavior
     /**
      * Call the action when any of these events happen
      * 
-     * Technically, any type of event selector will do - e.g.: 
-     * - `exface.Core.DataSheet.OnBeforeCreateData`
-     * - `\exface\Core\Events\DataSheet\OnBeforeCreateData`
-     * - OnBeforeCreateData::class (in PHP)
-     * 
      * @uxon-property event_aliases
      * @uxon-type metamodel:event[]
-     * @uxon-template [""]
+     * @uxon-template ["exface.Core.DataSheet.OnCreateData"]
      * 
      * @param string $aliasWithNamespace
      * @return CallActionBehavior
@@ -240,11 +262,6 @@ class CallActionBehavior extends AbstractBehavior
 
     /**
      * Call the action when this event happens.
-     * 
-     * Technically, any type of event selector will do - e.g.: 
-     * - `exface.Core.DataSheet.OnBeforeCreateData`
-     * - `\exface\Core\Events\DataSheet\OnBeforeCreateData`
-     * - OnBeforeCreateData::class (in PHP)
      * 
      * @uxon-property event_alias
      * @uxon-type metamodel:event
@@ -328,7 +345,7 @@ class CallActionBehavior extends AbstractBehavior
 		}
         
         $logbook->addDataSheet('Event data', $eventSheet);
-        $logbook->addLine('Found input data for object ' . $eventSheet->getMetaObject()->__toString());
+        $logbook->addLine('Found event data for object ' . $eventSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
@@ -336,6 +353,19 @@ class CallActionBehavior extends AbstractBehavior
             $logbook->addLine('**Skipped** because of `only_if_attributes_change`');
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
+        }
+        
+        if (null !== $customInputEvent = $this->getInputDataEventAlias($event)) {
+            $inputSheet = $this->getInputDataSavedFromEvent($customInputEvent);
+            if ($inputSheet !== null) {
+                $logbook->addLine('Found input data from other event `' . $customInputEvent . '` for object ' . $eventSheet->getMetaObject()->__toString());
+                $logbook->addDataSheet('Input data', $inputSheet);
+            } else {
+                $logbook->addLine('Expecting input data from other event `' . $customInputEvent . '`, but did not find any');
+                $inputSheet = $eventSheet;
+            }
+        } else {
+            $inputSheet = $eventSheet;
         }
         
         $logbook->addLine('Option `event_prevent_default` is `' . $this->getEventPreventDefault() . '`');
@@ -349,14 +379,18 @@ class CallActionBehavior extends AbstractBehavior
             if ($this->hasRestrictionConditions()) {
                 $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
                 $logbook->addLine($this->getOnlyIfDataMatchesConditions()->__toString());
-                $inputSheet = $eventSheet->extract($this->getOnlyIfDataMatchesConditions(), true);
+                $inputSheet = $inputSheet->extract($this->getOnlyIfDataMatchesConditions(), true);
                 if ($inputSheet->isEmpty()) {
                     $logbook->addLine('**Skipped** because of `only_if_data_matches_conditions`');
                     $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
                     return;
                 }
-            } else {
-                $inputSheet = $eventSheet;
+            }
+            
+            // Apply the input mapper if one is defined ant the input data was not fetched from a different event,
+            // where the mapper was applied already. 
+            if ($customInputEvent === null && null !== $mapper = $this->getInputDataMapper($inputSheet->getMetaObject())) {
+                $inputSheet = $mapper->map($inputSheet, null, $logbook);
             }
             
             // Now perform the action
@@ -502,6 +536,42 @@ class CallActionBehavior extends AbstractBehavior
         }
     }
     
+    public function onEventSaveInputData(DataSheetEventInterface $event) : void
+    {
+        if ($this->isDisabled()) {
+            return;
+        }
+
+        if ($this->isHandling === true) {
+            return;
+        }
+
+        $eventSheet = $event->getDataSheet();
+
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
+        if (! $eventSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
+        $ignoreKey = array_search($eventSheet, $this->ignoreDataSheets, true);
+        if ($ignoreKey !== false && null !== $logbook = ($this->ignoreLogbooks[$ignoreKey] ?? null)) {
+            $logbook->addSection('Proceeding with event' . $event::getEventName());
+        } else {
+            $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        }
+        
+        if (null !== $mapper = $this->getInputDataMapper($eventSheet->getMetaObject())) {
+            $inputSheet = $mapper->map($eventSheet, null, $logbook);
+        } else {
+            $inputSheet = $eventSheet;
+        }
+        
+        $this->inputDataFromEvents[$event::getEventName()] = $inputSheet;
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+    }
+    
     /**
      * 
      * @return string[]
@@ -642,6 +712,127 @@ class CallActionBehavior extends AbstractBehavior
     protected function setEventPreventDefault(string $value) : CallActionBehavior
     {
         $this->eventPreventDefault = $value;
+        return $this;
+    }
+    
+    protected function getInputDataSavedFromEvent(string $eventAlias) : ?DataSheetInterface
+    {
+        return $this->inputDataFromEvents[$eventAlias] ?? null;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getInputDataEventAliases() : array
+    {
+        return $this->inputDataEventAliases;
+    }
+
+    /**
+     * @param EventInterface $actionEvent
+     * @return string|null
+     */
+    protected function getInputDataEventAlias(EventInterface $actionEvent) : ?string
+    {
+        $key = array_search($actionEvent::getEventName(), $this->eventAliases, true);
+        if ($key === false) {
+            return null;
+        }
+        return $this->inputDataEventAliases[$key] ?? null;
+    }
+
+    /**
+     * Get the input data for the action from other events before those calling the action
+     * 
+     * Sometimes the event, that triggers the action, does not provide access to the desired input data for
+     * the action: e.g. if you want an action to be performend `OnDeleteData`, the action will not be able
+     * to load missing data because the affected row was already deleted. In this case, you can collect
+     * the input data earlier - e.g. `OnBeforeDeleteData` and use that data for the action instead of
+     * the data attached to the action trigger event.
+     *
+     * If you use an `input_data_mapper`, it will be applied when retrieving the input data from its event
+     * and not when the action is triggered. Thus, the mapper "sees" the data at the time of `input_data_event_alias`
+     * and not at the time of `event_alias`.
+     * 
+     * If the behavior reacts to multiple `event_aliases`, you will also need multiple `input_data_event_aliases`.
+     * The first-trigger event will receive input data from the first input-data-event, the second - from the second
+     * one, etc.
+     *
+     * @uxon-property input_data_event_aliases
+     * @uxon-type metamodel:event[]
+     * @uxon-template ["exface.Core.DataSheet.OnBeforeCreateData"]
+     * 
+     * @param string $value
+     * @return $this
+     */
+    protected function setInputDataEventAliases(UxonObject $arrayOfEventAliases) : CallActionBehavior
+    {
+        $this->inputDataEventAliases = $arrayOfEventAliases->toArray();
+        return $this;
+    }
+
+    /**
+     * Get the input data for the action from this event before the one calling the action.
+     * 
+     * If you have multiple `event_alias`, use `input_data_event_aliases` instead!
+     * 
+     * Sometimes the event, that triggers the action, does not provide access to the desired input data for
+     * the action: e.g. if you want an action to be performend `OnDeleteData`, the action will not be able
+     * to load missing data because the affected row was already deleted. In this case, you can collect
+     * the input data earlier - e.g. `OnBeforeDeleteData` and use that data for the action instead of 
+     * the data attached to the action trigger event.
+     * 
+     * If you use an `input_data_mapper`, it will be applied when retrieving the input data from its event
+     * and not when the action is triggered. Thus, the mapper "sees" the data at the time of `input_data_event_alias`
+     * and not at the time of `event_alias`.
+     * 
+     * @uxon-property input_data_event_alias
+     * @uxon-type metamodel:event
+     * 
+     * @param string $value
+     * @return $this
+     */
+    protected function setInputDataEventAlias(string $value) : CallActionBehavior
+    {
+        $this->inputDataEventAliases[] = $value;
+        return $this;
+    }
+
+    /**
+     * @param MetaObjectInterface $fromObject
+     * @return DataSheetMapperInterface|null
+     */
+    protected function getInputDataMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
+    {
+        if ($this->inputDataMapperUxon === null) {
+            return null;
+        }
+        $action = $this->getAction();
+        try {
+            if ($action) {
+                $toObject = $this->getAction()->getMetaObject();
+            } else {
+                $toObject = $this->getObject();
+            }
+        } catch (ActionObjectNotSpecifiedError $e) {
+            $toObject = $this->getObject();
+        }
+        return DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $this->inputDataMapperUxon, $fromObject, $toObject);
+    }
+
+    /**
+     * A mapper to apply to the input data before passing it to the action
+     *
+     * @uxon-property input_data_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
+     * 
+     * @param UxonObject|null $mapper
+     * @return $this
+     */
+    protected function setInputDataMapper(?UxonObject $mapper) : CallActionBehavior
+    {
+        $this->inputDataMapperUxon = $mapper;
         return $this;
     }
 }

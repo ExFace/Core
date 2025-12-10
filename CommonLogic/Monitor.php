@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\CommonLogic\Debugger\Profiler;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -178,7 +179,7 @@ class Monitor extends Profiler
         
         $ms = null;
         if ($this->actionsEnabled) {
-            $ms = $this->stop($event->getAction());
+            $ms = $this->stop($event->getAction())->getTimeTotalMs();
         }        
         $this->addRowFromAction($event->getAction(), $event->getTask(), $ms);
         return;
@@ -322,7 +323,7 @@ class Monitor extends Profiler
                 'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
                 'TIME' => $item['time'],
                 'DATE' => DateDataType::cast($item['time']),
-                'DURATION' => $this->getDurationTotal()
+                'DURATION' => $this->getTimeTotalMs()
             ]);
             $ds->dataCreate();
             
