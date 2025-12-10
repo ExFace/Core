@@ -9,6 +9,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\ModelBuilders\PostgreSqlModelBuilder;
+use exface\Core\QueryBuilders\PostgreSqlBuilder;
 
 /**
  * Data source connector for PostgreSQL databases
@@ -26,6 +27,12 @@ class PostgreSqlConnector extends AbstractSqlConnector
      */
     protected function performConnect()
     {
+        /*
+         * Params described in https://www.php.net/manual/en/function.pg-connect.php
+         * The currently recognized parameter keywords are: host, hostaddr, port, dbname (defaults to value of user), 
+         * user, password, connect_timeout, options, tty (ignored), sslmode, requiressl (deprecated in favor of sslmode), 
+         * and service. Which of these arguments exist depends on your PostgreSQL version.
+         */
         $params = [
             'host=' . $this->getHost(),
             'user=' . $this->getUser(),
@@ -153,7 +160,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
             }
 
             if (!pg_query($this->getCurrentConnection(), 'BEGIN')) {
-                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error());
+                throw new DataConnectionTransactionStartError($this, 'Failed to start transaction: ' . pg_last_error($this->getCurrentConnection()));
             }
 
             $this->setTransactionStarted(true);
@@ -169,7 +176,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'COMMIT')) {
-            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error());
+            throw new DataConnectionCommitFailedError($this, 'Failed to commit transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);
@@ -183,7 +190,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
         }
 
         if (!pg_query($this->getCurrentConnection(), 'ROLLBACK')) {
-            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error());
+            throw new DataConnectionRollbackFailedError($this, 'Failed to rollback transaction: ' . pg_last_error($this->getCurrentConnection()));
         }
 
         $this->setTransactionStarted(false);
@@ -258,5 +265,15 @@ class PostgreSqlConnector extends AbstractSqlConnector
     public function getModelBuilder()
     {
         return new PostgreSqlModelBuilder($this);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getSqlDialect()
+     */
+    public function getSqlDialect(): string
+    {
+        return PostgreSqlBuilder::SQL_DIALECT_PGSQL;
     }
 }

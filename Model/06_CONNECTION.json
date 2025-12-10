@@ -82,7 +82,7 @@
             "TIME_ZONE": null,
             "LABEL": "Local Vendor Folders",
             "CONNECTOR": "exface/Core/DataConnectors/LocalFileConnector.php",
-            "CONFIG": "$$~~c88scsE7nBfv0vLGqF/zPwinf0mo1a8jcSWYy29Wo6nAo1Fysl/Vbgwm5k90VFSR+984v8wNEjFFo/6rc4FP2mhbrB9A4PY=",
+            "CONFIG": "$$~~rtvXw94zJjUXqZJdxxUJSQ8+91cpmn5PsyMUfnaMEyAlPYdiS2XlG+gE8xvGXQgHcspcfaJgsa2DdFFmRm+Qa5jQ8SYVJkU=",
             "READONLY": 0,
             "ALIAS": "LOCAL_VENDOR_FOLDERS"
         },
@@ -112,7 +112,7 @@
             "TIME_ZONE": null,
             "LABEL": "Local file",
             "CONNECTOR": "exface/Core/DataConnectors/FileContentsConnector.php",
-            "CONFIG": "$$~~VKl/+SGrwe7V/7PChmSBe3ToUnlZt6TVt0VE6KtJ8BhqIB4Qt6RcnFLPjCjd+hiVYmUJuY2HIhc5e9wQAlIgARJompCaIjgj4Q==",
+            "CONFIG": "$$~~eEsDvEiPdaJVrQ5A3k/DmLm43Oh4sjnZbMNBuhN4gbfWt9CL0QOivf1Ze+xtdfua9fjPO3XZK+jGXh5TCuZHW3SyzsdafFXfgQ==",
             "READONLY": 0,
             "ALIAS": "LOCAL_FILE"
         },
@@ -187,7 +187,7 @@
             "TIME_ZONE": null,
             "LABEL": "Objects with FileBehavior",
             "CONNECTOR": "exface/Core/DataConnectors/DataSourceFileConnector.php",
-            "CONFIG": "$$~~w8qXHXa1sKoXbU9Q2jYFhXHzshZ8SB0uyPLgyuMQVq3dKrHFZexH+aHXyEJL8gBzU5uyXmfjmvMDfgZJyhywgZaYKbe6Yw+NyA==",
+            "CONFIG": "$$~~D76U58tQok+Vaw1dNtDdOyfyoSAphhiVVSNicx6Au8qdTFpHQhLAd4qg0hIUVlJjuIBZAwNsNVxSxsZcGRj07aKN/FBqNe3Fig==",
             "READONLY": 0,
             "ALIAS": "objects_with_filebehavior"
         },
@@ -202,7 +202,7 @@
             "TIME_ZONE": null,
             "LABEL": "Fake SMTP for Debugging",
             "CONNECTOR": "exface/Core/DataConnectors/SmtpToNotificationAdapter.php",
-            "CONFIG": "$$~~7csoVkYRVyQiy6ygPQ2iQINQDytAHHQCt578tKE6yQ7hwyXx1mzX6hvpcXIHORbqXXSQ/Vh8llzN3g3zOIi7RC5eaBBgT2teU8DvUE9cUw1vvvUJtR/7M0oWiLhZ",
+            "CONFIG": "$$~~mrV2T4IJvxvaHU4YnwrxxcIlmIAv3JPPacPjoPXYA+WReCcr30zNJGpSwjiZm8IupYG6zrUlnYZtAxKEeTKV4ezNrR3CHo+KVJyVPpwxP/6XflSKF6D0e2ICsvuE",
             "READONLY": 0,
             "ALIAS": "fake_smtp_for_debugging"
         }

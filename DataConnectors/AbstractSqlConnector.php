@@ -26,7 +26,6 @@ use exface\Core\Exceptions\DataSources\DataQueryFailedError;
  */
 abstract class AbstractSqlConnector extends AbstractDataConnector implements SqlDataConnectorInterface
 {
-
     private $current_connection;
 
     private $connected;

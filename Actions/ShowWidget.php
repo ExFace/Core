@@ -141,7 +141,11 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     {
         switch (true) {
             case $this->getWidgetUxon():
-                $widget = WidgetFactory::createFromUxon($this->getWidgetDefinedIn()->getPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
+                try {
+                    $widget = WidgetFactory::createFromUxon($this->getWidgetDefinedIn()->getPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
+                } catch (\Throwable $e) {
+                    throw new ActionConfigurationError($this, 'Cannot initialize widget for action ' . $this->__tostring() . '. ' . $e->getMessage(), null, $e);
+                }
                 break;
             case $this->widget_id && ! $this->page_alias:
                 $widget = $this->getWidgetDefinedIn()->getPage()->getWidget($this->widget_id);

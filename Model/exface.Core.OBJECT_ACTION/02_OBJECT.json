@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Object Action [exface.Core.OBJECT_ACTION]",
             "CREATED_ON": "2017-01-24 09:32:09",
-            "MODIFIED_ON": "2025-06-18 13:53:24",
+            "MODIFIED_ON": "2025-11-28 09:25:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6e217f7f91457a3d9e4b318306b9a",
@@ -332,67 +332,14 @@
                                         ]
                                     }
                                 ]
-                            },
-                            {
-                                "caption": "Usage",
-                                "widgets": [
-                                    {
-                                        "value": "=Concatenate('\"', ALIAS_WITH_NS, '\"')",
-                                        "widget_type": "InputHidden",
-                                        "display_only": true,
-                                        "id": "action_uxon_search_field"
-                                    },
-                                    {
-                                        "widget_type": "DataTable",
-                                        "object_alias": "exface.Core.SEARCH_RESULT",
-                                        "filters": [
-                                            {
-                                                "attribute_alias": "UXON",
-                                                "value": "=action_uxon_search_field"
-                                            },
-                                            {
-                                                "attribute_alias": "APP"
-                                            },
-                                            {
-                                                "attribute_alias": "OBJECT_TYPE"
-                                            },
-                                            {
-                                                "attribute_alias": "INSTANCE_NAME"
-                                            }
-                                        ],
-                                        "columns": [
-                                            {
-                                                "attribute_alias": "OBJECT_NAME"
-                                            },
-                                            {
-                                                "attribute_alias": "INSTANCE_NAME"
-                                            },
-                                            {
-                                                "attribute_alias": "ATTRIBUTE_NAME"
-                                            },
-                                            {
-                                                "attribute_alias": "APP__ALIAS"
-                                            },
-                                            {
-                                                "attribute_alias": "INSTANCE_ALIAS"
-                                            },
-                                            {
-                                                "attribute_alias": "TABLE_NAME",
-                                                "hidden": true
-                                            }
-                                        ],
-                                        "buttons": [
-                                            {
-                                                "~snippet": "exface.Core.SearchResultEditButton",
-                                                "parameters": {
-                                                    "table_name_column": "TABLE_NAME"
-                                                }
-                                            }
-                                        ]
-                                    }
-                                ]
                             }
                         ]
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.ShowModelSearchDialog",
+                        "close_dialog": false
                     }
                 ]
             },

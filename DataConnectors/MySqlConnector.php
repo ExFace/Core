@@ -15,6 +15,7 @@ use exface\Core\ModelBuilders\MySqlModelBuilder;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\QueryBuilders\MySqlBuilder;
 
 /**
  * Data source connector for MySQL databases
@@ -767,5 +768,15 @@ class MySqlConnector extends AbstractSqlConnector
             return false;
         }
         return $this->getDbase() === $otherConnection->getDbase();
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getSqlDialect()
+     */
+    public function getSqlDialect(): string
+    {
+        return MySqlBuilder::SQL_DIALECT_MYSQL;
     }
 }

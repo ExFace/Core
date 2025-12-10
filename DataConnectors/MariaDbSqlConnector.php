@@ -8,4 +8,13 @@ namespace exface\Core\DataConnectors;
  */
 class MariaDbSqlConnector extends MySqlConnector
 {
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getSqlDialect()
+     */
+    public function getSqlDialect(): string
+    {
+        return 'MariaDB';
+    }
 }

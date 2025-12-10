@@ -102,7 +102,7 @@ class MetaModelInstaller extends DataInstaller
         $this->addDataOfObject('exface.Core.PAGE_TEMPLATE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.ATTRIBUTE_COMPOUND', 'CREATED_ON', 'COMPOUND_ATTRIBUTE__OBJECT__APP');
         $this->addDataOfObject('exface.Core.PAGE_GROUP', 'CREATED_ON', 'APP', [], 'Security/PageGroups/[#=Transliterate(NAME, "' . $translitRule . '")#]/12_PAGE_GROUP.json');
-        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'PAGE__APP', [], 'Security/Page groups/[#=Transliterate(PAGE_GROUP__NAME, "' . $translitRule . '")#]/13_PAGE_GROUP_PAGES.json');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'APP', [], 'Security/Page groups/[#=Transliterate(PAGE_GROUP__NAME, "' . $translitRule . '")#]/13_PAGE_GROUP_PAGES.json');
         $this->addDataOfObject('exface.Core.USER_ROLE', 'CREATED_ON', 'APP', [], 'Security/UserRoles/[#ALIAS#]/14_USER_ROLE.json');
         $this->addDataOfObject('exface.Core.AUTHORIZATION_POINT', 'CREATED_ON', 'APP', [
             'DEFAULT_EFFECT',

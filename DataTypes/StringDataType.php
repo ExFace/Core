@@ -7,6 +7,7 @@ use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
+use Random\RandomException;
 use Transliterator;
 
 /**
@@ -552,14 +553,26 @@ class StringDataType extends AbstractDataType
     /**
      * Returns the given string in UTF-8 encoding.
      * 
-     * If no $originalEncoding is provided, mb_detect_encoding() will be used to attemt to detect it.
+     * If no $originalEncoding is provided, mb_detect_encoding() will be used to attempt to detect it.
      * 
      * @param string $string
      * @param string $originalEncoding
      * @return string
      */
-    public static function encodeUTF8(string $string, string $originalEncoding = null) {
-        return mb_convert_encoding($string, 'UTF-8', ($originalEncoding ?? mb_detect_encoding($string)));
+    public static function encodeUTF8(string $string, string $originalEncoding = null, bool $strict = false) : string
+    {
+        if ($originalEncoding === null) {
+            $originalEncoding = mb_detect_encoding($string, null, $strict);
+            if ($originalEncoding === false) {
+                try {
+                    $trunc = mb_substr($string, 0 , 60);
+                } catch (\Throwable $e) {
+                    $trunc = '<non-printable-string>';
+                }
+                throw new DataTypeCastingError('Cannot encode string "' . $trunc . '" into UTF-8!');
+            }
+        }
+        return mb_convert_encoding($string, 'UTF-8', $originalEncoding);
     }
     
     /**
@@ -795,5 +808,57 @@ class StringDataType extends AbstractDataType
     protected function getForceNullForEmptyValues() : bool
     {
         return $this->emptyAsNULL;
+    }
+
+    /**
+     * Scrambles the characters of a given string, while maintaining its basic structure.
+     *
+     * @param string $value
+     * @param string $keep
+     * Any characters that match this regex will not be scrambled.
+     * @param string $allowedChars
+     * Scrambled characters can turn into any character in this string.
+     * @param bool   $maintainCase
+     * If TRUE, scrambled characters will retain their case.
+     * @return string
+     * @throws RandomException
+     */
+    public static function scramble(
+        string $value, 
+        string $keep = "/[-_\\\\,.\/ ()\[\]\{\}=\"'@\:]/",
+        string $allowedChars = 'abcdefghijklmnopqrstuvwxyz0123456789',
+        bool $maintainCase = true
+    ) : string
+    {
+        $chars = mb_str_split($value);
+        $all = mb_str_split($allowedChars);
+        $allowedChars = array_values(array_filter($all, fn($char) => !is_numeric($char)));
+        $allowedCharsCount = count($allowedChars) - 1;
+        $allowedDigits = array_values(array_filter($all, fn($char) => is_numeric($char)));
+        $allowedDigitsCount = count($allowedDigits) - 1;
+
+        $result = [];
+
+        foreach ($chars as $i => $ch) {
+            if ($keep !== null && preg_match($keep, $ch)) {
+                // Keep original character
+                $result[$i] = $ch;
+            } else {
+                if(is_numeric($ch) && $allowedDigitsCount > 0) {
+                    // Replace with random number.
+                    $result[$i] = $allowedDigits[random_int(0, $allowedDigitsCount)];
+                } else {
+                    // Replace with a random character from the allowed set
+                    $scrambled = $allowedChars[random_int(0, $allowedCharsCount)];
+                    if($maintainCase) {
+                        $result[$i] = ctype_upper($ch) ? strtoupper($scrambled) : strtolower($scrambled);
+                    } else {
+                        $result[$i] = random_int(0,1) === 1 ? strtoupper($scrambled) : strtolower($scrambled);
+                    }
+                }
+            }
+        }
+
+        return implode('', $result);
     }
 }

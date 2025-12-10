@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "Communication template [exface.Core.COMMUNICATION_TEMPLATE]",
             "CREATED_ON": "2022-09-19 13:19:21",
-            "MODIFIED_ON": "2023-03-16 18:50:54",
+            "MODIFIED_ON": "2025-11-28 09:38:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed830be97308e4830b025041000001",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -211,6 +211,7 @@
                                         "buttons": [
                                             {
                                                 "caption": "Open behavior",
+                                                "bind_to_double_click": true,
                                                 "action": {
                                                     "alias": "exface.Core.ShowObjectEditDialog",
                                                     "object_alias": "exface.Core.OBJECT_BEHAVIORS",
@@ -236,6 +237,7 @@
                                             },
                                             {
                                                 "caption": "Open action",
+                                                "bind_to_double_click": true,
                                                 "action": {
                                                     "alias": "exface.Core.ShowObjectEditDialog",
                                                     "object_alias": "exface.Core.OBJECT_ACTION",

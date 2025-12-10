@@ -82,6 +82,7 @@ class OrderingBehavior extends AbstractBehavior
     private const KEY_LOADED = 'loaded';
     private const KEY_PRIORITY = 'priority';
     private const KEY_MAX_INDEX = 'maxIndex';
+    private const KEY_SAFE_INDEX = 'safeIndex';
     const KEY_GROUPS = 'changedGroups';
 
     // internal variables
@@ -95,8 +96,7 @@ class OrderingBehavior extends AbstractBehavior
     private mixed $orderBoundaryAliases = [];
     private int $nextInternalId = 0;
     private array $internalIdsInUse = [];
-
-
+    
     /**
      *
      * @see AbstractBehavior::registerEventListeners()
@@ -137,17 +137,29 @@ class OrderingBehavior extends AbstractBehavior
 
         return $this;
     }
-    
-    protected function beginWork(EventInterface $event): BehaviorLogBook|bool
+
+    /**
+     * @inheritDoc
+     */
+    protected function finishWork(EventInterface $event, BehaviorLogBook $logbook): bool
     {
-        if (!$event instanceof DataSheetEventInterface ||
-            !$event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
-            return false;
+        if($this->isInProgress()) {
+            $this->eventCache = [];
         }
         
-        return parent::beginWork($event);
+        return parent::finishWork($event, $logbook);
     }
 
+    /**
+     * @param EventInterface $event
+     * @return bool
+     */
+    protected function appliesToEvent(EventInterface $event) : bool
+    {
+        return 
+            $event instanceof DataSheetEventInterface &&
+            $event->getDataSheet()->getMetaObject()->isExactly($this->getObject());
+    }
 
     /**
      * Pre-process data, fill in missing values with actual data or meaningful proxies and shift indices
@@ -158,7 +170,12 @@ class OrderingBehavior extends AbstractBehavior
      */
     public function handleOnBefore(DataSheetEventInterface $event) : void
     {
-        if(!$logbook = $this->beginWork($event)) {
+        if(!$this->appliesToEvent($event)) {
+            return;
+        }
+
+        $logbook = $this->createLogBook($event);
+        if(!$this->beginWork($event, $logbook)) {
             return;
         }
         
@@ -202,14 +219,13 @@ class OrderingBehavior extends AbstractBehavior
         // If we are reacting to OnBeforeDelete, our work is done.
         if($event instanceof OnBeforeDeleteDataEvent) {
             // Cache data for next step.
-            $this->eventCache[] = [
+            $this->eventCache = [
                 self::KEY_EVENT_SHEET => $eventSheet,
                 self::KEY_LOADED => $loadedData,
                 self::KEY_SHIFTED => [],
                 self::KEY_GROUPS => $changedGroups
             ];
 
-            $this->finishWork($event, $logbook);
             return;
         }
         
@@ -260,14 +276,13 @@ class OrderingBehavior extends AbstractBehavior
         }
 
         // Cache data for next step.
-        $this->eventCache[] = [
+        $this->eventCache = [
             self::KEY_EVENT_SHEET => $eventSheet,
             self::KEY_LOADED => $loadedData,
             self::KEY_SHIFTED => $shiftedIndices,
             self::KEY_GROUPS => $changedGroups
         ];
 
-        $this->finishWork($event, $logbook);
     }
     
     /**
@@ -277,15 +292,23 @@ class OrderingBehavior extends AbstractBehavior
      */
     public function handleOnAfter(DataSheetEventInterface $event): void
     {
-        // Prevent recursion.
-        if (!$logbook = $this->beginWork($event)) {
+        if (!$this->appliesToEvent($event)) {
             return;
         }
-        
+        $logbook = $this->createLogBook($event);
+
         // Get datasheet.
         $eventSheet = $event->getDataSheet();
         $this->normalizeDataSheet($eventSheet);
         $logbook->addDataSheet('InputData', $eventSheet);
+
+        // Fetch cached data.
+        if($this->eventCache[self::KEY_EVENT_SHEET] === $eventSheet) {
+            $cachedData = $this->eventCache;
+        } else {
+            // If the event sheet does not match our cached sheet, we can ignore this call.
+            return;
+        }
         
         // Make sure it has a UID column.
         if ($eventSheet->hasUidColumn() === false) {
@@ -294,19 +317,6 @@ class OrderingBehavior extends AbstractBehavior
             return;
         }
 
-        // Fetch cached data.
-        $cachedData = null;
-        foreach ($this->eventCache as $cachedEventData) {
-            if($cachedEventData[self::KEY_EVENT_SHEET] === $eventSheet) {
-                $cachedData = $cachedEventData;
-                break;
-            }
-        }
-        
-        if($cachedData === null) {
-            throw new BehaviorRuntimeError($this, 'Could not load data from cache!', null, null, $logbook);
-        }
-        
         // Restore shifted indices. This is needed to restore indices of rows that did not
         // have a UID in the last step.
         $indexAlias = $this->getOrderNumberAttributeAlias();
@@ -369,7 +379,7 @@ class OrderingBehavior extends AbstractBehavior
             // If the pending index conflicts with the original data, we need to shift it.
             $indexColumn = $siblingData[self::KEY_LOADED]->getColumnValues($indexAlias);
             if(in_array($pendingIndex, $indexColumn)) {
-                $safeIndex = $siblingData[self::KEY_MAX_INDEX] - $startIndex + 1;
+                $safeIndex = $siblingData[self::KEY_SAFE_INDEX] - $startIndex + 1;
                 $newIndex = $pendingIndex + $safeIndex;
                 $pendingRow[$indexAlias] = $newIndex;
                 $shiftedIndices[$newIndex] = $pendingIndex;
@@ -440,38 +450,23 @@ class OrderingBehavior extends AbstractBehavior
     {
         $changedGroups = [];
         $uidAlias = $eventSheet->getUidColumnName();
-        $orderNumberAlias = $this->getOrderNumberAttributeAlias();
         
         foreach ($eventSheet->getRows() as $eventRow) {
             $uid = $eventRow[$uidAlias];
             $eventGroup = $this->getParentsForRow($eventRow);
-
-            // Empty UID means we have to process this group, because we cannot
-            // check for changes at this point.
-            if($uid === null || $uid === "") {
-                $changedGroups[] = $eventGroup;
-                continue;
-            }
-
-            $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $uid);
-            // If no loaded data exists, we must assume this entry is new
-            // and its group must be processed.
-            if(empty($loadedRow)) {
-                $changedGroups[] = $eventGroup;
-                continue;
-            }
+            
+            // Event groups must always be processed, to ensure that their group is
+            // well-ordered, regardless of user input.
+            $changedGroups[json_encode($eventGroup)] = $eventGroup;
 
             // If any of the parent aliases changed (i.e. the entry was moved to a different
             // group) both groups must be updated.
-            if(!$this->belongsToGroup($loadedRow, $eventGroup)) {
-                $changedGroups[] = $this->getParentsForRow($loadedRow);
-                $changedGroups[] = $eventGroup;
-                continue;
-            }
-
-            // If the ordering number changed, we have to process this group.
-            if($eventRow[$orderNumberAlias] != $loadedRow[$orderNumberAlias]) {
-                $changedGroups[] = $this->getParentsForRow($eventRow);
+            $loadedRow = $loadedData->getRowByColumnValue($uidAlias, $uid);
+            if( $loadedRow !== null &&
+                !$this->belongsToGroup($loadedRow, $eventGroup)
+            ) {
+                $loadedGroup = $this->getParentsForRow($loadedRow);
+                $changedGroups[json_encode($loadedGroup)] = $loadedGroup;
             }
         }
         
@@ -974,7 +969,7 @@ class OrderingBehavior extends AbstractBehavior
         foreach ($updateSheet->getRows() as $row) {
             $siblingData = $siblingCache->getData($this->getParentsForRow($row));
             $pendingIndex = $row[$indexAlias];
-            $safeIndex = $siblingData[self::KEY_MAX_INDEX] - $startIndex + 1;
+            $safeIndex = $siblingData[self::KEY_SAFE_INDEX] - $startIndex + 1;
             $row[$indexAlias] = $pendingIndex + $safeIndex;
             $shiftSheet->addRow($row, false, false);
         }
@@ -1174,11 +1169,18 @@ class OrderingBehavior extends AbstractBehavior
         BehaviorLogBook             $logbook) : void
     {
         $indexAlias = $this->getOrderNumberAttributeAlias();
+        $maxIndex = max($allSiblingsSheet->getColumnValues($indexAlias));
+        $loadedIndices = $loadedSiblingsSheet->getColumnValues($indexAlias);
+        $safeIndex = empty($loadedIndices) ? 
+            $maxIndex : 
+            max($maxIndex, max($loadedIndices) ?? $maxIndex);
+        
         $cacheEntry = [
             self::KEY_LOADED => $loadedSiblingsSheet,
             self::KEY_ALL => $allSiblingsSheet,
             self::KEY_PRIORITY => $priorityRows,
-            self::KEY_MAX_INDEX => max($allSiblingsSheet->getColumnValues($indexAlias))
+            self::KEY_MAX_INDEX => $maxIndex,
+            self::KEY_SAFE_INDEX => $safeIndex
         ];
 
         try {
@@ -1413,5 +1415,13 @@ class OrderingBehavior extends AbstractBehavior
     protected function setOrderIndexAttribute(string $alias) : OrderingBehavior
     {
         return $this->setOrderNumberAttribute($alias);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getPriority(): ?int
+    {
+        return parent::getPriority() ?? EventManagerInterface::PRIORITY_MIN;
     }
 }

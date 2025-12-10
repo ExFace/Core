@@ -16,6 +16,8 @@ interface iRenderTemplate extends ActionInterface
     /**
      * Renders HTML previews for all templates
      * 
+     * The array has filenames as keys and the printed HTML as values.
+     * 
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $inputData
      * @return string[]
      */

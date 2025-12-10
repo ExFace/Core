@@ -4,19 +4,13 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
-use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\TextDataType;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
-use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
@@ -38,6 +32,9 @@ class PostgreSqlBuilder extends MySqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_PGSQL = 'pgSQL';
+    const SQL_DIALECT_POSTGRESQL = 'PostgreSQL';
+    
     /**
      *
      * @param QueryBuilderSelectorInterface $selector
@@ -56,7 +53,7 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['pgSQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_PGSQL, self::SQL_DIALECT_POSTGRESQL], parent::getSqlDialects());
     }
     
     /**
@@ -129,13 +126,23 @@ class PostgreSqlBuilder extends MySqlBuilder
                         $value = $data_type->convertToHex($value, true);
                     }
                     if (stripos($value, '0x') === 0) {
-                        return "'" . substr($value, 2) . "'";
+                        return "'\x" . substr($value, 2) . "'";
                     } else {
                         return "'$value'";
                     }
                 default:
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
             }
+        } else if ($data_type instanceof TextDataType) {
+            if(!($data_type instanceof JsonDataType)) {
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
+                return stripcslashes($value);
+            }
+        } else if ($data_type instanceof HexadecimalNumberDataType) {
+            if ($value === null || $value === '') {
+                return 'NULL';
+            }
+            return "'" . substr($value, 2) . "'";
         }
         
         return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
@@ -189,7 +196,7 @@ class PostgreSqlBuilder extends MySqlBuilder
         return <<<SQL
 
 CASE 
-    WHEN {$columnName} IS NOT NULL AND JSON_VALID({$columnName})
+    WHEN {$columnName} IS NOT NULL AND {$columnName} IS JSON
     THEN {$columnName}
     ELSE '{}'
 END 
@@ -214,6 +221,21 @@ SQL;
     protected function buildSqlAliasForRowCounter() : string
     {
         return 'exfcnt';
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::decodeBinary()
+     */
+    protected function decodeBinary($value) : ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $hex = str_replace('-', '', $value);
+
+        // hex → binary data
+        return '0x' . $hex;
     }
     
     /**
@@ -286,5 +308,53 @@ SQL;
         }
 
         return $output;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeString()
+     */
+    protected function escapeString($string)
+    {
+        /* This did not work because it escaped `'` and `\` with backslashes.
+         * It is also not clear if excaping \x0A (= \n) and \x0D (= \r) is needed.
+        if (function_exists('mb_ereg_replace')) {
+            return mb_ereg_replace('[\x00\x0A\x0D\x1A\x27\x5C]', '\\\0', $string);
+        } else {
+            return preg_replace('~[\x00\x0A\x0D\x1A\x27\x5C]~u', '\\\$0', $string);
+        }*/
+
+        if ($string === null || $string === ''){
+            return '';
+        }
+        if (is_numeric($string)) return $string;
+
+        // Remove invisible ASCII control chars like \x00 (NUL), etc.
+        $toRemove = [
+            '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
+            '/%1[0-9a-f]/',             // url encoded 16-31
+            '/[\x00-\x08]/',            // 00-08
+            '/\x0b/',                   // 11
+            '/\x0c/',                   // 12
+            '/[\x0e-\x1f]/'             // 14-31
+        ];
+        foreach ($toRemove as $regex) {
+            $string = preg_replace($regex, '', $string );
+        }
+        // Escape single quotes with another single quote
+        $string = str_replace("'", "''", $string );
+
+        return $string;
     }
 }

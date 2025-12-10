@@ -2,6 +2,7 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\SqlDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -143,6 +144,8 @@ use exface\Core\Templates\Modifiers\IfNullModifier;
  */
 abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 {
+    const SQL_DIALECT_OTHER = 'OTHER';
+    
     /**
      * Custom where statement automatically appended to direct selects for this object (not if the object's table is joined!).
      *
@@ -538,6 +541,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $query = $this->buildSqlQuerySelect();
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
+            $q->setDialect($this->getSqlDialectDefault());
             $q->setSql($query);
             // first do the main query
             $qr = $data_connection->query($q);
@@ -954,12 +958,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Remember the value to ensure it is returned as the created UID later.
                     case $uidValuesProvided === false && $uidIsOptimizedUUID === true:
                         $customUid = UUIDDataType::generateSqlOptimizedUuid();
-                        $row[$uidAddress] = $customUid;
+                        $row[$uidAddress] = $this->prepareInputValue($customUid,$uidQpart->getDataType(),$uidQpart->getDataAddressProperties());
                         break;
-                    // If there is a non-empty UID value provided AND it is not an SQL statement, use
-                    // that value directly
-                    case $uidValuesProvided === true && $row[$uidAddress] !== null && $row[$uidAddress] !== '' && $this->isSqlStatement($uidAddress) === false:
-                        $customUid = $row[$uidAddress];
+                    // If there is a non-empty UID value provided AND the data address is not an SQL statement, use
+                    // that value. Use it as-is if it is an SQL statement, escape it properly otherwise.
+                    case $uidValuesProvided === true 
+                    && (null !== $customUidData = ($row[$uidAddress] ?? null)) 
+                    && $customUidData !== '' 
+                    && $this->isSqlStatement($uidAddress) === false:
+                        // Here we need to distinguish between plain values and SQL statements. Since we are talking about
+                        // IDs here, detecting parenthesis like in data addresses should be OK. However, should we 
+                        // really have UID values with `(` or `)` in SQL columns (which would be really strange), this if()
+                        // here will prevent parsing.
+                        if ($this->isSqlStatement($customUidData)) {
+                            $customUid = $customUidData;
+                        } else {
+                            $customUid = $this->prepareInputValue($customUidData, $uidQpart->getDataType(), $uidQpart->getDataAddressProperties());
+                        }
                         break;
                 }
             }
@@ -988,7 +1003,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                 }
             } else {
-                $query = (new SqlDataQuery())->setSql($sql);
+                $query = new SqlDataQuery();
+                $query->setDialect($this->getSqlDialectDefault());
+                $query->setSql($sql);
                 // In order to return newly create primary keys (UIDs), some SQL engines need to know which
                 // columns to return actually - so if we do not generate a custom UID here, we need to tell
                 // the query, where to get the UID values after the INSERT.
@@ -3574,23 +3591,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function findSqlDialect(string $sql) : string
     {
-        if (StringDataType::startsWith($sql, '@')) {
-            $stmts = preg_split('/(^|\R)@/', $sql);
-            $tags = $this->getSqlDialects();
-            // Start with the first supported tag and see if it matches any statement. If not,
-            // proceed with the next tag, etc.
-            foreach ($tags as $tag) {
-                $tag = $tag . ':';
-                foreach ($stmts as $stmt) {
-                    if (StringDataType::startsWith($stmt, $tag, false)) {
-                        return trim(StringDataType::substringAfter($stmt, $tag));
-                    }
-                }
-            }
-            // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($sql, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
-        }
-        return $sql;
+        return SqlDataType::findSqlDialect($sql, $this->getSqlDialects());
     }
 
     /**
@@ -3602,7 +3603,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function getSqlDialects() : array
     {
-        return ['OTHER'];
+        return [self::SQL_DIALECT_OTHER];
+    }
+
+    /**
+     * @return string
+     */
+    protected function getSqlDialectDefault() : string
+    {
+        return $this->getSqlDialects()[0];
     }
 
     protected function setDirty(bool $trueOrFalse) : AbstractSqlBuilder

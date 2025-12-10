@@ -7,6 +7,7 @@ In a nutshell, UXON declaratively describes, which widgets to place on a page (e
 ## Quick links
 
 - [UXON schemas](UXON_schemas.md) - widgets, actions and other things, that can be described with UXON
+<!-- TODO uncomment when dynamic markdown docs are ready: - [All available UXON prototypes](UXON_prototypes.md) -->
 - [Model aliases](UXON/Aliases.md) - connecting UXON to the meta model objects, attributes, prototypes, etc.
 - [Formulas](UXON/Formula_syntax.md) - calculating values on-the-fly like in Excel
 - [Other expressions](UXON/Expressions_and_formulas.md) - widget links, placeholders, etc.

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
@@ -152,8 +153,20 @@ return $debug_widget;
                 $messageHeaders .= "| ----------- | ----- |" . PHP_EOL;
                 foreach ($message->getHeaders() as $header => $values) {
                     foreach ($values as $value) {
+                        // Mask sensitive data: keys, secrets, etc.
                         if ($this->isSensitiveData($header, $value)) {
-                            $value = '***';
+                            // For debugging purposes we still need some bits of information. So keep the authorization
+                            // type and the first 2 chars of the secret to determine, WHICH secret is used if you
+                            // actually know the secrets
+                            if (strcasecmp($header, 'Authorization') === 0) {
+                                // For Authorization headers keep the authorization type: e.g. Bearer, Basic, etc.
+                                // Mask the value only!
+                                $type = StringDataType::substringBefore($value, ' ', $header);
+                                $value = ($type !== $header ? $type . ' ' : '') . '***';
+                            } else {
+                                // Otherwise mask everything leaving only the first two chars!
+                                $value = mb_substr($value, 0, 2) . '***';
+                            }
                         }
                         $value = $this->escapeMardownTableCellContents($value ?? '');
                         $messageHeaders .= "| $header | $value |" . PHP_EOL;
@@ -380,6 +393,7 @@ MD;
         switch (true) {
             case stripos($headerName, 'auth') !== false:
             case stripos($headerName, 'key') !== false:
+            case stripos($headerName, 'secret') !== false:
             case is_string($value) && stripos($value, '-----BEGIN CERTIFICATE-----') === 0:
                 return true;
         }

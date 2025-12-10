@@ -53,18 +53,18 @@
     "rows": [
         {
             "CREATED_ON": "2025-10-21 17:14:52",
-            "MODIFIED_ON": "2025-10-21 17:30:57",
+            "MODIFIED_ON": "2025-11-13 22:50:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f09297b1560e189297025041000001",
             "DESCRIPTION": "",
-            "ALIAS": "otl",
+            "ALIAS": "OTL",
             "PROTOTYPE_FILE": "exface/Core/Permalinks/OneTimeLink.php",
             "NAME": "OneTime-Links",
             "APP": "0x31000000000000000000000000000000",
             "OBJECT": null,
             "CONFIG_UXON": {
-                "example_params": "0x0a98eahsdfpua789023qwefa"
+                "example_params": "7a2aadee-60cc-4029-845d-125bf14623ad"
             }
         }
     ],

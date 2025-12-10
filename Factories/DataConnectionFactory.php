@@ -2,6 +2,7 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataConnectors\LocalFileConnector;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -104,6 +105,19 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
         if ($config !== null) {
             $instance->importUxonObject($config);
         }
+        
+        // This if() is a workaround for common errors on broken installations where the workbench cannot search
+        // for available files because of a missing/broken configuration of the LOCAL_VENDOR_FOLDERS connection.
+        // In particular, this prevents the CliFacade from loading available commands properly. This workaround
+        // will force-set the vendor folder as base for this particular connection.
+        if (
+            ($config === null || $config->isEmpty()) 
+            && $instance instanceof LocalFileConnector
+            && $instance->getAliasWithNamespace() === 'exface.Core.LOCAL_VENDOR_FOLDERS'
+        ) {
+            $instance->setUseVendorFolderAsBase(true);
+        }
+        
         return $instance;
     }
     

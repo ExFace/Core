@@ -129,7 +129,7 @@
         {
             "_EXPORT_SUMMARY": "Page: Mass Edit [ShowPageMassEditDialog]",
             "CREATED_ON": "2020-05-11 09:59:27",
-            "MODIFIED_ON": "2025-01-22 22:29:48",
+            "MODIFIED_ON": "2025-11-21 11:22:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea936e192716e4a9d10205857feb80",
@@ -241,6 +241,10 @@
                                                 },
                                                 {
                                                     "attribute_alias": "PAGE_GROUP"
+                                                },
+                                                {
+                                                    "attribute_alias": "APP",
+                                                    "caption": "Save assignment to app"
                                                 }
                                             ],
                                             "buttons": [
