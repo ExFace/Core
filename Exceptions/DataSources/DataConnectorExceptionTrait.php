@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions\DataSources;
 
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface;
@@ -52,5 +53,17 @@ trait DataConnectorExceptionTrait {
     {
         $this->connector = $connector;
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $connection = $this->getConnector();
+        $links['Data connector ' . $connection->getAliasWithNamespace()] = DocsFacade::buildUrlToDocsForUxonPrototype(get_class($connection));
+        return $links;
     }
 }

@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -93,27 +94,50 @@ abstract class AbstractBehavior implements BehaviorInterface
 
         return false;
     }
-    
-    public function isInProgress() : bool
+
+    /**
+     * @param EventInterface $event
+     * @return BehaviorLogBook
+     */
+    protected function createLogBook(EventInterface $event) :BehaviorLogBook
     {
-        return $this->isInProgress;
+        return new BehaviorLogBook($this->getAlias(), $this, $event);
     }
-    
-    protected function beginWork(EventInterface $event) : BehaviorLogBook|bool
+
+    /**
+     * Checks if this instance is already working. If it isn't, an onBeforeApplied event will
+     * be dispatched and this instance will be set to be working.
+     * 
+     * Returns TRUE if this instance wasn't working and work was started successfully.
+     * 
+     * @param EventInterface   $event
+     * @param LogBookInterface $logBook
+     * @return bool
+     */
+    protected function beginWork(EventInterface $event, LogBookInterface $logBook) : bool
     {
-        if($this->isInProgress) {
+        if($this->isInProgress()) {
             return false;
         }
+
         $this->isInProgress = true;
-        
-        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
-        return $logbook;
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logBook));
+        return true;
     }
-    
+
+    /**
+     * Checks if this instance is working. If it is, work will be concluded and an onAfterAppliedEvent 
+     * will be dispatched.
+     * 
+     * Returns TRUE if the instance was working before and work has been concluded.
+     * 
+     * @param EventInterface  $event
+     * @param BehaviorLogBook $logbook
+     * @return bool
+     */
     protected function finishWork(EventInterface $event, BehaviorLogBook $logbook) : bool
     {
-        $wasInProgress = $this->isInProgress;
+        $wasInProgress = $this->isInProgress();
         $this->isInProgress = false;
         
         if($wasInProgress) {
@@ -123,7 +147,15 @@ abstract class AbstractBehavior implements BehaviorInterface
             return false;
         }
     }
-    
+
+    /**
+     * @return bool
+     */
+    public function isInProgress() : bool
+    {
+        return $this->isInProgress;
+    }
+
     public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null, string $appSelectorOrString = null)
     {
         $this->object = $object;
@@ -351,6 +383,7 @@ abstract class AbstractBehavior implements BehaviorInterface
     public function setAppSelector($selectorOrString) : BehaviorInterface
     {
         $this->appSelectorOrString = $selectorOrString;
+        return $this;
     }
     
     /**
@@ -381,7 +414,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function __toString() : string
     {
-        return PhpClassDataType::findClassNameWithoutNamespace($this);
+        return $this->getName() . ' [' . $this->getAliasWithNamespace() . '] of ' . $this->getObject()->__toString();
     }
 
     public function getName() : string

@@ -399,4 +399,28 @@ class TimeDataType extends AbstractDataType
     {
         return date_default_timezone_get();
     }
+
+
+    /**
+     * Formats milliseconds as "x.xx ms" or "y.yy s" depending on the scale
+     * 
+     * @param float|null $milliseconds
+     * @param int $decimals
+     * @return string
+     */
+    public static function formatMs(?float $milliseconds, int $decimals = 1) : string
+    {
+        switch (true) {
+            case $milliseconds === null:
+                $formatted = '';
+                break;
+            case $milliseconds > 1000:
+                $formatted = round($milliseconds / 1000, $decimals) . ' s';
+                break;
+            default:
+                $formatted = round($milliseconds, $decimals) . ' ms';
+                break;
+        }
+        return $formatted;
+    }
 }

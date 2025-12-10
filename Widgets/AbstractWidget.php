@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Actions\ShowWidget;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -465,7 +467,6 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getChildren()
      */
     public function getChildren() : \Iterator
@@ -478,7 +479,7 @@ abstract class AbstractWidget implements WidgetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WidgetInterface::getChildrenRecursive()
      */
-    public function getChildrenRecursive(?int $depth = null) : \Iterator
+    public function getChildrenRecursive(?int $depth = null, ?int $depthIdSpaces = 1) : \Iterator
     {
         // Use a generator here because widgets with lot's of children (e.g. large editor dialogs)
         // will need to instantiate ALL their children first if we use an array. This is useless,
@@ -490,11 +491,26 @@ abstract class AbstractWidget implements WidgetInterface
             yield $child;
         }
         // Stop recursion if depth is reached
-        if ($depth === 0) {
+        if ($depth === 0 || $depthIdSpaces <= 0) {
             return;
         }
+        
+        if ($depthIdSpaces !== null) {
+            $idSpace = $this->getIdSpace();
+            $nestedIdSpaces = $depthIdSpaces;
+        } else {
+            $idSpace = null;
+            $nestedIdSpaces = null;
+        }
+        
         foreach ($this->getChildren() as $child) {
-            yield from $child->getChildrenRecursive($depth !== null ? ($depth - 1) : null);
+            if ($idSpace !== null) {
+                if ($child->isIdSpaceSpecified() && $child->getIdSpace() !== $idSpace) {
+                    $nestedIdSpaces = $depthIdSpaces - 1;
+                    continue;
+                }
+            }
+            yield from $child->getChildrenRecursive($depth !== null ? ($depth - 1) : null, $nestedIdSpaces);
             // Excplicitly continue - otherwise the foreach will break after the first yield from
             continue;
         }
@@ -624,7 +640,6 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getIdSpace()
      */
     public function getIdSpace()
@@ -637,6 +652,16 @@ abstract class AbstractWidget implements WidgetInterface
             }
         }
         return $this->id_space;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::isIdSpaceSpecified()
+     */
+    public function isIdSpaceSpecified() : bool
+    {
+        return $this->id_space !== null;
     }
 
     /**
@@ -1526,10 +1551,12 @@ abstract class AbstractWidget implements WidgetInterface
 
     /**
      * Returns an array of parent widgets with the given class or interface
+     * 
      * @param string $classOrInterface
-     * @return array
+     * @param int|null $maxResults
+     * @return WidgetInterface[]
      */
-    public function findParentsByClass(string $classOrInterface) : array
+    public function findParentsByClass(string $classOrInterface, ?int $maxResults = null) : array
     {
         $result  = [];
         $widget = $this;
@@ -1537,6 +1564,9 @@ abstract class AbstractWidget implements WidgetInterface
             $widget = $widget->getParent();
             if ($widget instanceof $classOrInterface) {
                 $result[] = $widget;
+                if (count($result) >= $maxResults) {
+                    break;
+                }
             }
         }
         
@@ -1755,18 +1785,26 @@ abstract class AbstractWidget implements WidgetInterface
             
             if (($trigger = $this->getParentByClass(iTriggerAction::class)) && $trigger->hasAction()) {
                 $action = $trigger->getAction();
-                $actionInfo = $action->getAliasWithNamespace() . ' (' . $action->getName() . ')';
+                $actionAlias = $action->getAliasWithNamespace();
+                $protoytypeAlias = $action->getAliasOfPrototype();
+                if ($protoytypeAlias !== $actionAlias) {
+                    $actionInfo = "`{$actionAlias}` ({$action->getName()}), based on prototype [{$protoytypeAlias}](" . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ')';
+                } else {
+                    $actionInfo = "[$actionAlias](" . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ") ({$action->getName()})";
+                }
             } else {
-                $actionInfo = 'exface.Core.ShowWidget (root)';
+                $actionInfo = '[exface.Core.ShowWidget](' . DocsFacade::buildUrlToDocsForUxonPrototype(ShowWidget::class) . ') (root)';
             }
             
+            $docsLink = DocsFacade::buildUrlToDocsForUxonPrototype($this);
             $tabContents = <<<MD
 
 # Widget `{$this->getWidgetType()}`
 
+- Widget type: [{$this->getWidgetType()}]($docsLink)
 - Widget ID: `{$this->getId()}`
 - Page: `{$this->getPage()->getAliasWithNamespace()}`
-- Called by action: `{$actionInfo}`
+- Called by action: {$actionInfo}
 
 ## Widget UXON
 

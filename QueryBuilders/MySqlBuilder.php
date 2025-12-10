@@ -33,6 +33,8 @@ class MySqlBuilder extends AbstractSqlBuilder
 {
     const MAX_BUILD_RUNS = 5;
     
+    const SQL_DIALECT_MYSQL = 'MySQL';
+    
     /**
      *
      * @param QueryBuilderSelectorInterface $selector
@@ -51,7 +53,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      */
     protected function getSqlDialects() : array
     {
-        return array_merge(['MySQL'], parent::getSqlDialects());
+        return array_merge([self::SQL_DIALECT_MYSQL], parent::getSqlDialects());
     }
     
     /**
@@ -294,9 +296,9 @@ class MySqlBuilder extends AbstractSqlBuilder
         }
         
         if ($totals_core_select) {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having . ") EXFCOREQ";
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} {$totals_select} FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having . ") EXFCOREQ";
         } else {
-            $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
+            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
         }
         
         // See if changes to the query occur while the query was built (e.g. query parts are
@@ -443,7 +445,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         $resultJson = $initialJson;
 
         foreach ($keyValuePairs as $attributePath => $attributeValue) {
-            if ($attributeValue === null) {
+            if ($attributeValue === null || $attributeValue === 'null') {
                 $resultJson = "JSON_REMOVE(" . $resultJson . ", '" . $attributePath . "')";
             } else {
                 $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";

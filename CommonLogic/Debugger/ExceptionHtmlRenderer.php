@@ -1,292 +1,29 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger;
 
-use exface\Core\Interfaces\Exceptions\iContainCustomTrace;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\DataTypes\StringDataType;
 
-if (!function_exists('get_debug_type')) {
-    function get_debug_type($value): string { return \Symfony\Polyfill\Php80::get_debug_type($value); }
-}
-
 /**
- * 
+ * Renders an exception as HTML - based on Symfony debugger component v4
  * 
  * @author Andrej Kabachnik
  *
  */
-class ExceptionRenderer
+class ExceptionHtmlRenderer extends AbstractExceptionRenderer
 {
-    private $message;
-    private $code;
-    private $previous;
-    private $trace;
-    private $traceAsString;
-    private $class;
-    private $file;
-    private $line;
     private $charset = null;
-    private $statusCode = null;
     
-    private $maxArgChars = 500;
-    private $maxArgArrayItems = 100;
-    
-    public function __construct(\Throwable $exception, string $charset = null, int $maxArgChars = 500, int $maxArgArrayItems = 100)
+    public function __construct(\Throwable $exception, int $maxArgChars = 500, int $maxArgArrayItems = 100, string $charset = null)
     {
-        $this->code = $exception->getCode();
-        $this->file = $exception->getFile();
-        $this->line = $exception->getLine();
         $this->charset = $charset;
-        $this->maxArgArrayItems = $maxArgArrayItems;
-        $this->maxArgChars = $maxArgChars;
-        
-        $this->setMessage($exception->getMessage());
-        $this->setTraceFromThrowable($exception);
-        $this->setClass(get_debug_type($exception));
-        
-        if ($exception instanceof ExceptionInterface) {
-            $this->statusCode = $exception->getStatusCode();
-        }
+        parent::__construct($exception, $maxArgChars, $maxArgArrayItems);
         
         $previous = $exception->getPrevious();
         if ($previous instanceof \Throwable) {
             $this->previous = new self($previous);
         }
     }
-    
-    public function toArray()
-    {
-        $exceptions = [];
-        foreach (array_merge([$this], $this->getAllPrevious()) as $exception) {
-            $exceptions[] = [
-                'message' => $exception->getMessage(),
-                'class' => $exception->getClass(),
-                'trace' => $exception->getTrace(),
-            ];
-        }
-        
-        return $exceptions;
-    }
-    
-    public function getStatusCode()
-    {
-        return $this->statusCode;
-    }
-    
-    public function getClass()
-    {
-        return $this->class;
-    }
-    
-    /**
-     * @return $this
-     */
-    protected function setClass($class)
-    {
-        $this->class = false !== strpos($class, "@anonymous\0") ? (get_parent_class($class) ?: key(class_implements($class)) ?: 'class').'@anonymous' : $class;
-        
-        return $this;
-    }
-    
-    public function getFile()
-    {
-        return $this->file;
-    }
-    
-    public function getLine()
-    {
-        return $this->line;
-    }
-    
-    public function getMessage()
-    {
-        return $this->message;
-    }
-    
-    /**
-     * @return $this
-     */
-    protected function setMessage($message)
-    {
-        if (false !== strpos($message, "@anonymous\0")) {
-            $message = preg_replace_callback('/[a-zA-Z_\x7f-\xff][\\\\a-zA-Z0-9_\x7f-\xff]*+@anonymous\x00.*?\.php(?:0x?|:[0-9]++\$)[0-9a-fA-F]++/', function ($m) {
-                return class_exists($m[0], false) ? (get_parent_class($m[0]) ?: key(class_implements($m[0])) ?: 'class').'@anonymous' : $m[0];
-            }, $message);
-        }
-        
-        $this->message = $message;
-        
-        return $this;
-    }
-    
-    public function getCode()
-    {
-        return $this->code;
-    }
-    
-    public function getPrevious()
-    {
-        return $this->previous;
-    }
-    
-    public function getAllPrevious()
-    {
-        $exceptions = [];
-        $e = $this;
-        while ($e = $e->getPrevious()) {
-            $exceptions[] = $e;
-        }
-        
-        return $exceptions;
-    }
-    
-    public function getTrace()
-    {
-        return $this->trace;
-    }
-    
-    public function setTraceFromThrowable(\Throwable $throwable)
-    {
-        $this->traceAsString = $throwable->getTraceAsString();
-        
-        if ($throwable instanceof iContainCustomTrace) {
-            // Wenn der Fehler einen custom Stacktrace enthaelt, dann diesen verwenden.
-            // Das ist notwendig, da es in PHP nicht moeglich ist den Stacktrace
-            // manuell zu setzen oder zu veraendern.
-            return $this->setTrace($throwable->getStacktrace(), null, null);
-        } else {
-            return $this->setTrace($throwable->getTrace(), $throwable->getFile(), $throwable->getLine());
-        }
-    }
-    
-    /**
-     * @return $this
-     */
-    public function setTrace($trace, $file, $line)
-    {
-        $this->trace = [];
-        $this->trace[] = [
-            'namespace' => '',
-            'short_class' => '',
-            'class' => '',
-            'type' => '',
-            'function' => '',
-            'file' => $file,
-            'line' => $line,
-            'args' => [],
-        ];
-        foreach ($trace as $entry) {
-            $class = '';
-            $namespace = '';
-            if (isset($entry['class'])) {
-                $parts = explode('\\', $entry['class']);
-                $class = array_pop($parts);
-                $namespace = implode('\\', $parts);
-            }
-            
-            $this->trace[] = [
-                'namespace' => $namespace,
-                'short_class' => $class,
-                'class' => isset($entry['class']) ? $entry['class'] : '',
-                'type' => isset($entry['type']) ? $entry['type'] : '',
-                'function' => isset($entry['function']) ? $entry['function'] : null,
-                'file' => isset($entry['file']) ? $entry['file'] : null,
-                'line' => isset($entry['line']) ? $entry['line'] : null,
-                'args' => isset($entry['args']) ? $this->flattenArgs($entry['args']) : [],
-            ];
-        }
-        
-        return $this;
-    }
-    
-    private function flattenArgs(array $args, int $level = 0, int &$count = 0): array
-    {
-        $result = [];
-        foreach ($args as $key => $value) {
-            if (++$count > $this->maxArgArrayItems) {
-                return ['array', '*SKIPPED over ' . $this->maxArgArrayItems . ' entries*'];
-            }
-            if ($value instanceof \__PHP_Incomplete_Class) {
-                // is_object() returns false on PHP<=7.1
-                $result[$key] = ['incomplete-object', $this->getClassNameFromIncomplete($value)];
-            } elseif (\is_object($value)) {
-                $result[$key] = ['object', \get_class($value)];
-            } elseif (\is_array($value)) {
-                if ($level > 10) {
-                    $result[$key] = ['array', '*DEEP NESTED ARRAY*'];
-                } else {
-                    $result[$key] = ['array', $this->flattenArgs($value, $level + 1, $count)];
-                }
-            } elseif (null === $value) {
-                $result[$key] = ['null', null];
-            } elseif (\is_bool($value)) {
-                $result[$key] = ['boolean', $value];
-            } elseif (\is_int($value)) {
-                $result[$key] = ['integer', $value];
-            } elseif (\is_float($value)) {
-                $result[$key] = ['float', $value];
-            } elseif (\is_resource($value)) {
-                $result[$key] = ['resource', get_resource_type($value)];
-            } else {
-                $result[$key] = ['string', (string) $value];
-            }
-        }
-        
-        return $result;
-    }
-    
-    private function getClassNameFromIncomplete(\__PHP_Incomplete_Class $value): string
-    {
-        $array = new \ArrayObject($value);
-        
-        return $array['__PHP_Incomplete_Class_Name'];
-    }
-    
-    public function getTraceAsString()
-    {
-        return $this->traceAsString;
-    }
-    
-    public function getAsString()
-    {
-        $message = '';
-        $next = false;
-        
-        foreach (array_reverse(array_merge([$this], $this->getAllPrevious())) as $exception) {
-            if ($next) {
-                $message .= 'Next ';
-            } else {
-                $next = true;
-            }
-            $message .= $exception->getClass();
-            
-            if ('' != $exception->getMessage()) {
-                $message .= ': '.$exception->getMessage();
-            }
-            
-            $message .= ' in '.$exception->getFile().':'.$exception->getLine().
-            "\nStack trace:\n".$exception->getTraceAsString()."\n\n";
-        }
-        
-        return rtrim($message);
-    }
-    
-    /**
-     * 
-     * @param \Exception $exception
-     */
-    public function setTraceFromException(\Exception $exception)
-    {
-        if ($exception instanceof iContainCustomTrace) {
-            // Wenn der Fehler einen custom Stacktrace enthaelt, dann diesen verwenden.
-            // Das ist notwendig, da es in PHP nicht moeglich ist den Stacktrace
-            // manuell zu setzen oder zu veraendern.
-            $this->setTrace($exception->getStacktrace(), null, null);
-        } else {
-            $this->setTrace($exception->getTrace(), $exception->getFile(), $exception->getLine());
-        }
-    }
-    
+
     /**
      * Gets the HTML content associated with the given exception.
      *
@@ -301,9 +38,9 @@ class ExceptionRenderer
             default:
                 $title = $this->escapeHtml($this->getMessage());
         }
-        
+
         $content = '';
-        
+
         $count = \count($this->getAllPrevious());
         $total = $count + 1;
         foreach ($this->toArray() as $position => $e) {
@@ -322,12 +59,12 @@ class ExceptionRenderer
                             </th></tr></thead>
                             <tbody>
 EOF
-                    , $ind, $total, $class, $message);
+                , $ind, $total, $class, $message);
             foreach ($e['trace'] as $trace) {
                 $content .= '<tr><td>';
                 if ($trace['function']) {
                     $content .= sprintf('at <span class="trace-class">%s</span><span class="trace-type">%s</span><span class="trace-method">%s</span>', $this->formatClass($trace['class']), $trace['type'], $trace['function']);
-                    
+
                     if (isset($trace['args'])) {
                         $content .= sprintf('(<span class="trace-arguments">%s</span>)', $this->formatArgs($trace['args']));
                     }
@@ -337,10 +74,10 @@ EOF
                 }
                 $content .= "</td></tr>\n";
             }
-            
+
             $content .= "</tbody>\n</table>\n</div>\n";
         }
-        
+
         return <<<EOF
 
         <div class="exception">
@@ -358,7 +95,16 @@ EOF
         </div>
 EOF;
     }
-    
+
+    /**
+     * @param bool $withHeader
+     * @return string
+     */
+    public function render(bool $withHeader = true) : string
+    {
+        return $this->renderHtml($withHeader);
+    }
+
     public function renderHtml(bool $withHeader = true) : string
     {
         $css = $this->renderCss();
@@ -376,9 +122,9 @@ EOF;
 
 HTML;
     }
-    
+
     protected function renderCss() : string
-    {        
+    {
         return <<<'EOF'
         
             .exception a { cursor: pointer; text-decoration: none; }
@@ -427,7 +173,7 @@ HTML;
             }
 EOF;
     }
-    
+
     /**
      * HTML-encodes a string.
      */
@@ -435,14 +181,14 @@ EOF;
     {
         return htmlspecialchars($str, \ENT_COMPAT | \ENT_SUBSTITUTE, $this->charset);
     }
-    
+
     private function formatClass(string $class): string
     {
         $parts = explode('\\', $class);
-        
+
         return sprintf('<abbr title="%s">%s</abbr>', $class, array_pop($parts));
     }
-    
+
     /**
      * Formats an array as a string.
      */
@@ -451,7 +197,7 @@ EOF;
         if ($this->maxArgChars === 0) {
             return '';
         }
-        
+
         $result = [];
         foreach ($args as $key => $item) {
             if ('object' === $item[0]) {
@@ -467,34 +213,34 @@ EOF;
             } else {
                 $formattedValue = str_replace("\n", '', $this->escapeHtml(StringDataType::truncate(var_export($item[1], true), $this->maxArgChars, false, false, true, true)));
             }
-            
+
             $result[] = \is_int($key) ? $formattedValue : sprintf("'%s' => %s", $this->escapeHtml($key), $formattedValue);
         }
-        
+
         return implode(', ', $result);
     }
-    
+
     private function formatPath(string $path, int $line): string
     {
         $file = null;
         $file = $this->escapeHtml(preg_match('#[^/\\\\]*+$#', $path, $file) ? $file[0] : $path);
         $fmt = ini_get('xdebug.file_link_format') ?: get_cfg_var('xdebug.file_link_format');
-        
+
         if (!$fmt) {
             return sprintf('<span class="block trace-file-path">in <span title="%s%3$s"><strong>%s</strong>%s</span></span>', $this->escapeHtml($path), $file, 0 < $line ? ' line '.$line : '');
         }
-        
+
         if (\is_string($fmt)) {
             $i = strpos($f = $fmt, '&', max(strrpos($f, '%f'), strrpos($f, '%l'))) ?: \strlen($f);
             $fmt = [substr($f, 0, $i)] + preg_split('/&([^>]++)>/', substr($f, $i), -1, \PREG_SPLIT_DELIM_CAPTURE);
-            
+
             for ($i = 1; isset($fmt[$i]); ++$i) {
                 if (0 === strpos($path, $k = $fmt[$i++])) {
                     $path = substr_replace($path, $fmt[$i], 0, \strlen($k));
                     break;
                 }
             }
-            
+
             $link = strtr($fmt[0], ['%f' => $path, '%l' => $line]);
         } else {
             try {
@@ -503,7 +249,7 @@ EOF;
                 return sprintf('<span class="block trace-file-path">in <span title="%s%3$s"><strong>%s</strong>%s</span></span>', $this->escapeHtml($path), $file, 0 < $line ? ' line '.$line : '');
             }
         }
-        
+
         return sprintf('<span class="block trace-file-path">in <a href="%s" title="Go to source"><strong>%s</string>%s</a></span>', $this->escapeHtml($link), $file, 0 < $line ? ' line '.$line : '');
     }
 }

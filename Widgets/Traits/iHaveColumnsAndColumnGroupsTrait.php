@@ -119,7 +119,7 @@ trait iHaveColumnsAndColumnGroupsTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getUidColumn()
      */
-    public function getUidColumn() : DataColumn
+    public function getUidColumn() : ?DataColumn
     {
         return $this->getColumnGroupMain()->getUidColumn();
     }
@@ -152,8 +152,11 @@ trait iHaveColumnsAndColumnGroupsTrait
         if (count($this->getColumnGroups()) == 1) {
             return $this->getColumnGroupMain()->getColumns();
         } else {
+            $thisObj = $this->getMetaObject();
             foreach ($this->getColumnGroups() as $group) {
-                $columns = array_merge($columns, $group->getColumns());
+                if ($group->getMetaObject()->is($thisObj)) {
+                    $columns = array_merge($columns, $group->getColumns());
+                }
             }
         }
         
@@ -365,34 +368,37 @@ trait iHaveColumnsAndColumnGroupsTrait
          */
         
         // Loop through all uxon elements in the columns array and separate columns and column groups
-        // This is nesseccary because column groups can be created in short notation (just like a regular
+        // This is necessary because column groups can be created in short notation (just like a regular
         // column with a nested column list and an optional caption).
-        // Additionally we will make sure, that all columns are within column groups, so we can jus instatiate
+        // Additionally, we will make sure, that all columns are within column groups, so we can jus instantiate
         // the groups, not each column separately. The actual instantiation of the corresponding widgets will
         // follow in the next step.
         foreach ($columns as $c) {
             if ($c instanceof UxonObject) {
-                if ($c->isArray()) {
+                $widgetType = $c->getProperty('widget_type') ?? '';
+                switch (true) {
                     // If the element is an array itself (nested in columns), it is a column group
-                    $column_groups[] = $c;
-                    $last_element_was_a_column_group = true;
-                } elseif (strcasecmp($c->getProperty('widget_type') ?? '', 'DataColumnGroup') === 0 || $c->hasProperty('columns')) {
-                    // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
+                    case $c->isArray():
+                    // If not, check to see if it's widget type is DataColumnGroup, or it has an array of columns itself
                     // If so, it still is a column group
-                    $column_groups[] = $c;
-                    $last_element_was_a_column_group = true;
-                } else {
+                    case strcasecmp($widgetType, 'DataColumnGroup') === 0:
+                    case strcasecmp($widgetType, 'DataColumnSubsheet') === 0:
+                    case $c->hasProperty('columns'):
+                        $column_groups[] = $c;
+                        $last_element_was_a_column_group = true;
+                        break;
                     // If none of the above applies, it is a regular column, so we need to put it into a column group
                     // We start a new group, if the last element added was a columnt group or append it to the last
                     // group if that was built from single columns already
-                    if (! count($column_groups) || $last_element_was_a_column_group) {
-                        $group = new UxonObject();
-                        $column_groups[] = $group;
-                    } else {
-                        $group = $column_groups[(count($column_groups) - 1)];
-                    }
-                    $group->appendToProperty('columns', $c);
-                    $last_element_was_a_column_group = false;
+                    default: 
+                        if (! count($column_groups) || $last_element_was_a_column_group) {
+                            $group = new UxonObject();
+                            $column_groups[] = $group;
+                        } else {
+                            $group = $column_groups[(count($column_groups) - 1)];
+                        }
+                        $group->appendToProperty('columns', $c);
+                        $last_element_was_a_column_group = false;
                 }
             } else {
                 throw new WidgetPropertyInvalidValueError($this, 'The elements of "columns" in a data widget must be objects or arrays, "' . gettype($c) . '" given instead!', '6T91RQ5');

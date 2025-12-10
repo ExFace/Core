@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\Selectors\FormulaSelector;
+use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
@@ -31,7 +33,6 @@ use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
-use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
@@ -555,26 +556,7 @@ class App implements AppInterface
                 return $string;
             case $selector->isFilepath():
                 // If the selector is a path, we need to get the class from the file.
-                $string = Filemanager::pathNormalize($string, FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
-                $vendorFolder = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToVendorFolder());
-                
-                if (StringDataType::startsWith($string, $vendorFolder)) {
-                    $relPath = substr($string, strlen($vendorFolder));
-                    $absPath = $string;
-                } else {
-                    $relPath = $string;
-                    $absPath = FilePathDataType::join([$vendorFolder, $relPath]);
-                }
-                
-                // We can be sure, the class name is the file name exactly
-                $className = FilePathDataType::findFileName($relPath);
-                // The namespace can be different, than the file path, so get it 
-                // directly from the path. Of course, we could fetch the entire class
-                // name from the file, but this is way slower because it requires
-                // tokenizing.
-                $namespace = PhpFilePathDataType::findNamespaceOfFile($absPath);
-                $class = $namespace . '\\' . $className;
-                
+                $class = PhpFilePathDataType::findClassInVendorFile($this->getWorkbench(), $string);                
                 return $class;
             case ($selector instanceof AliasSelectorInterface) && $selector->isAlias():
                 // If the selector is an alias, we should see, if it matches this app.
@@ -589,8 +571,17 @@ class App implements AppInterface
                 $componentAlias = substr($string, (strlen($appAlias)+1));
                 $subfolder = $this->getPrototypeClassSubNamespace($selector);
                 $classSuffix = $this->getPrototypeClassSuffix($selector);
-                $string = $appAlias . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $subfolder . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $componentAlias . $classSuffix;
-                return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
+                $class = str_replace(
+                    AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, 
+                    ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, 
+                    $appAlias
+                        . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR 
+                        . $subfolder 
+                        . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR 
+                        . $componentAlias 
+                        . $classSuffix
+                );
+                return $class;
         }
     }
     
@@ -665,6 +656,7 @@ class App implements AppInterface
         if ((! array_key_exists($selectorString, $this->selector_cache)) || (! array_key_exists($selectorClass, $this->selector_cache[$selectorString]))) {
             // has() will cache the class
             $has = false;
+            // FilePathDataType::findPathCaseInsensitive('exface/Core/Formulas/USER.php', $this->getWorkbench()->filemanager()->getPathToVendorFolder(), '/', false);
             if ($selector !== null) {
                 $has = $this->has($selector);
             } else {
@@ -737,11 +729,28 @@ class App implements AppInterface
                     $this->selector_cache[$selectorString][$selectorClass] = ['selector' => $selector, 'instance' => $instance];
                     return true;
                 } else {
+                    // Double-chek if it is a path, but incorrect case, for formula selectors because formulas
+                    // are ofthe written UPPERCASED.
+                    if ($selectorClass === FormulaSelector::class) {
+                        try {
+                            $path = str_replace(
+                                    ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR,
+                                    FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR,
+                                    $class
+                                ) . '.' . FileSelectorInterface::PHP_FILE_EXTENSION;
+                            $path = FilePathDataType::findPathCaseInsensitive($path, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
+                            $class = PhpFilePathDataType::findClassInVendorFile($this->getWorkbench(), $path);
+                            $this->selector_cache[$selectorString][$selectorClass] = ['selector' => $selector, 'class' => $class];
+                            return true;
+                        } catch (FileNotFoundError $e) {
+                            return false;
+                        }
+                    }
                     return false;
                 }
             }
         } catch(\Throwable $e) {
-            throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': cannot load prototype class!', null, $e);
+            throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': cannot load prototype class for selector "' . $selectorString . '" of class "' . $selectorClass . '"!', null, $e);
         }
         
         return false;

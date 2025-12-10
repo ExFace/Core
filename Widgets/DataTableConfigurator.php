@@ -95,6 +95,11 @@ class DataTableConfigurator extends DataConfigurator
         $this->columnsUxon = $arrayOfColumns;
         return $this;
     }
+    
+    public function getOptionalColumnsUxon() : ?UxonObject
+    {
+        return $this->columnsUxon;
+    }
 
     public function hasOptionalColumns() : bool
     {
@@ -104,19 +109,32 @@ class DataTableConfigurator extends DataConfigurator
     public function addOptionalColumn(DataColumn $column) : DataTableConfigurator
     {
         $alias = $column->getAttributeAlias();
+        $columnExists = false;
 
         $tab = $this->tabColumns; // Do not use getOptionalColumnsTab() here to avoid infinite loop
         foreach ($tab->getWidgets() as $existingColumn) {
             if($alias === $existingColumn->getAttributeAlias()) {
-                return $this;
+                $columnExists = true;
+                if($existingColumn->getVisibility() === WidgetVisibilityDataType::HIDDEN) {
+                    $existingColumn->importUxonObject($column->exportUxonObject());
+                }
+                break;
             }
         }
 
         $configuredWidget = $this->getWidgetConfigured();
         foreach($configuredWidget->getColumns() as $existingColumn) {
             if($alias === $existingColumn->getAttributeAlias()) {
-                return $this;
+                $columnExists = true;
+                if($existingColumn->getVisibility() === WidgetVisibilityDataType::HIDDEN) {
+                    $existingColumn->importUxonObject($column->exportUxonObject());
+                }
+                break;
             }
+        }
+        
+        if($columnExists) {
+            return $this;
         }
 
         $tab->addWidget($column);
@@ -216,6 +234,10 @@ class DataTableConfigurator extends DataConfigurator
             'paginate' => false,
             'configurator_setups_enabled' => false,
             'hide_caption' => true,
+            'lazy_loading_action' => [
+                'alias' => 'exface.Core.ReadData',
+                'offline_strategy' => OfflineStrategyDataType::IGNORE
+            ],
             'filters' => [
                 [
                     'attribute_alias' => 'PAGE',
@@ -255,9 +277,19 @@ class DataTableConfigurator extends DataConfigurator
             ],
             'columns' => [
                 [
+                    'data_column_name' => 'SETUP_APPLIED',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_ACTIVE'),
+                    'value' => '',
+                    'align' => 'Center',
+                    'readonly' => true,
+                    "cell_widget" => [
+                      "widget_type" => "Icon"
+                    ]
+                ], [
                     'attribute_alias' => 'NAME',
                 ], [
-                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG'
+                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG',
+                    'readonly' => true
                 ], [
                     'attribute_alias' => 'VISIBILITY',
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
@@ -265,165 +297,96 @@ class DataTableConfigurator extends DataConfigurator
                     'attribute_alias' => 'DESCRIPTION',
                     'nowrap' => false
                 ], [
+                    'attribute_alias' => 'PAGE',
+                    'hidden' => true
+                ], [
+                    'attribute_alias' => 'WIDGET_ID',
+                    'hidden' => true
+                ], [
                     'attribute_alias' => 'SETUP_UXON',
                     'hidden' => true
                 ], [
+                    'attribute_alias' => 'UID',
+                    'hidden' => true
+                ],[
                     'attribute_alias' => 'WIDGET_SETUP_USER__UID',
+                    'readonly' => true,
                     'hidden' => true
                 ], [
                     'attribute_alias' => 'WIDGET_SETUP_USER__MODIFIED_ON',
+                    'readonly' => true,
                     'hidden' => true
-                ]
-            ],
-            'buttons' => [
-                [
-                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY'),
-                    'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY_HINT'),
-                    'icon' => 'check-circle-o',
-                    'visibility' => WidgetVisibilityDataType::PROMOTED,
-                    'bind_to_double_click' => true,
-                    'action' => [
-                        'alias' => "exface.Core.CallWidgetFunction",
-                        "input_rows_min" => 1,
-                        "input_rows_max" => 1,
-                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
-                        'widget_id' => $this->getDataWidget()->getId(),
-                        'function' => "apply_setup([#SETUP_UXON#])"
-                    ]
-
-                ], 
-                [
-                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE'),
-                    'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_HINT'),
-                    'icon' => 'bookmark-o',
-                    'action' => [
-                        'alias' => "exface.core.ShowObjectCreateDialog",
-                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
-                        "input_rows_min" => 0,
-                        "input_rows_max" => 1,
-                        "input_object_alias" => "exface.Core.WIDGET_SETUP",
-                        "dialog" => [
-                            "width" => 1,
-                            "height" => "auto",
-                            "columns_in_grid" => 1,
-                            "widgets" => [
-                                [
-                                    "attribute_alias" => "NAME"
-                                ],
-                                [
-                                    "attribute_alias" => "DESCRIPTION",
-                                    "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_DESC_PLACEHOLDER")
-                                ]
-                            ],
-                            "buttons" => [
-                                [
-                                    "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_PROMPT_TITLE"),
-                                    "visibility" => "promoted",
-                                    "align" => "opposite",
-                                    "action" => [
-                                        "alias" => "exface.Core.ActionChain",
-                                        "actions" => [
-                                            [
-                                                "alias" => "exface.Core.CallWidgetFunction",
-                                                "widget_id" => $this->getDataWidget()->getIdAutogenerated(),
-                                                "widget_id_space" => UiPage::WIDGET_ID_SEPARATOR, // Root id space because we are using the autogenerated id!
-                                                "function" => "dump_setup(SETUP_UXON, PAGE, WIDGET_ID, PROTOTYPE_FILE, OBJECT, PRIVATE_FOR_USER)"
-                                            ],
-                                            [
-                                                "alias" => "exface.Core.ActionChain",
-                                                "actions" => [
-                                                    [
-                                                        "alias" => "exface.Core.CreateData"
-                                                    ],
-                                                    [
-                                                        "alias" => "exface.Core.CreateData",
-                                                        "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                                                        "input_mapper" => [
-                                                            "column_to_column_mappings" => [
-                                                                [
-                                                                    "from" => "UID",
-                                                                    "to" => "WIDGET_SETUP"
-                                                                ],
-                                                                [
-                                                                    "from" => "CREATED_BY_USER",
-                                                                    "to" => "USER"
-                                                                ]
-                                                            ]
-                                                        ]
-                                                    ]
-                                                ]
-                                            ]
-                                            
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-
-                    ]
-                ],
-                [
-                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE'),
-                    'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT'),
-                    'icon' => 'star',
-                    'hide_caption' => true,
-                    'action' => [
-                        "alias" => "exface.Core.SaveData",
-                        'offline_strategy' => OfflineStrategyDataType::ONLINE_ONLY,
-                        "object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                        "input_rows_min" => 1,
-                        "input_rows_max" => 1,
-                        "input_mapper" => [
-                            "from_object_alias" => "exface.Core.WIDGET_SETUP",
-                            "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
-                            "column_to_column_mappings" => [
-                                 [
-                                    "from" => "WIDGET_SETUP_USER__UID",
-                                    "to" => "UID"
-                                ],[
-                                    "from" => "WIDGET_SETUP_USER__MODIFIED_ON",
-                                    "to" => "MODIFIED_ON"
-                                ],[
-                                    "from" => "=Not(WIDGET_SETUP_USER__FAVORITE_FLAG)",
-                                    "to" => "FAVORITE_FLAG"
-                                ]
-                            ]
-                        ]
-                    ]
-                ], [
-                    'hide_caption' => true,
-                    'icon' => 'share',
-                    'action_alias' => 'exface.Core.WidgetSetupShareForUsers',
-                ],
-                [
-                    'hide_caption' => true,
-                    'action' => [
-                        'alias' => 'exface.Core.WidgetSetupEditForUsers',
-                        // Make sure to use system columns for prefill only. DO NOT use WIDGET_SETUP_USER__FAVORITE_FLAG
-                        // and similar because they will produce errors when trying to read missing data. These columns
-                        // only work here because of the user filter!
-                        'input_mapper' => [
-                            'inherit_columns' => DataSheetMapper::INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES
-                        ]
-                    ]
-                ], [
-                    'action_alias' => 'exface.Core.DeleteObject',
-                    'hide_caption' => true,
-                    'disabled_if' => [
-                        'operator' => 'AND',
-                        'conditions' => [
-                            [
-                                'value_left' => '=~input!VISIBILITY',
-                                'comparator' => ComparatorDataType::EQUALS_NOT,
-                                'value_right' => 'PRIVATE'
-                            ]
-                        ]
-                    ]
                 ]
             ]
         ]));
         $table->setHideHelpButton(true);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
+        $table->setButtons(new UxonObject([
+            [
+                'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY'),
+                'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_APPLY_HINT'),
+                'icon' => 'check-circle-o',
+                'visibility' => WidgetVisibilityDataType::PROMOTED,
+                'bind_to_double_click' => true,
+                'action' => $this->buildUxonForActionApplySetup()
+            ],
+            [
+                'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE'),
+                'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SAVE_HINT'),
+                'icon' => 'bookmark-o',
+                'action' => $this->buildUxonForActionSaveSetup(),
+                'id' => $this->getIdAutogenerated() . '_saveSetupBtn'
+            ],
+            [
+                'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE'),
+                'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT'),
+                'icon' => 'refresh',
+                'action' => $this->buildUxonForActionUpdateSetup(),
+                "disabled_if" => [
+                    "operator" => EXF_LOGICAL_OR,
+                    "conditions" => [
+                        [
+                            "value_left" => "=~input!VISIBILITY",
+                            "comparator" => "!==",
+                            "value_right" => "PRIVATE"
+                        ],
+                        [
+                            "value_left" => "=~input!UID",
+                            "comparator" => "==",
+                            "value_right" => ""
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE'),
+                'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_FAVORITE_HINT'),
+                'icon' => 'star',
+                'hide_caption' => true,
+                'action' => $this->buildUxonForActionFavoriteSetup()
+            ], [
+                'hide_caption' => true,
+                'icon' => 'share',
+                'action' => $this->buildUxonForActionShareSetup()
+            ],
+            [
+                'hide_caption' => true,
+                'action' => $this->buildUxonForActionEditSetup()
+            ], [
+                'action_alias' => 'exface.Core.DeleteObject',
+                'hide_caption' => true,
+                'disabled_if' => [
+                    'operator' => 'AND',
+                    'conditions' => [
+                        [
+                            'value_left' => '=~input!VISIBILITY',
+                            'comparator' => ComparatorDataType::EQUALS_NOT,
+                            'value_right' => 'PRIVATE'
+                        ]
+                    ]
+                ]
+            ]
+        ]));
         $tab->addWidget($table);
         return $tab;
     }
@@ -453,5 +416,178 @@ class DataTableConfigurator extends DataConfigurator
     public function hasSetups() : bool
     {
         return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
+    }
+
+    /**
+     * Returns the ID of the setups table, or null if setups are disabled
+     *
+     * @return string|null
+     */
+    public function getSetupsTableId() : ?string
+    {
+        if (!$this->hasSetups()){
+            return null;
+        }
+        else{
+            return $this->getSetupsTab()->getWidgetFirst()->getId();
+        }
+    }
+    
+    protected function buildUxonForActionSaveSetup() : array
+    {
+        return [
+            'alias' => "exface.core.ShowObjectCreateDialog",
+            'offline_strategy' => OfflineStrategyDataType::IGNORE,
+            "input_rows_min" => 0,
+            "input_rows_max" => 1,
+            "input_object_alias" => "exface.Core.WIDGET_SETUP",
+            "dialog" => [
+                "width" => 1,
+                "height" => "auto",
+                "columns_in_grid" => 1,
+                "widgets" => [
+                    [
+                        "attribute_alias" => "NAME"
+                    ],
+                    [
+                        "attribute_alias" => "DESCRIPTION",
+                        "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_DESC_PLACEHOLDER")
+                    ]
+                ],
+                "buttons" => [
+                    [
+                        "caption" => $this->translate("WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_NAME_PROMPT_TITLE"),
+                        "visibility" => "promoted",
+                        "align" => "opposite",
+                        'icon' => 'bookmark-o',
+                        "action" => [
+                            "alias" => "exface.Core.ActionChain",
+                            "offline_strategy" => OfflineStrategyDataType::IGNORE,
+                            'use_result_of_action' => 1,
+                            "actions" => [
+                                [
+                                    "alias" => "exface.Core.CallWidgetFunction",
+                                    "widget_id" => $this->getDataWidget()->getIdAutogenerated(),
+                                    "widget_id_space" => UiPage::WIDGET_ID_SEPARATOR, // Root id space because we are using the autogenerated id!
+                                    "function" => DataTable::FUNCTION_DUMP_SETUP . "(SETUP_UXON, PAGE, WIDGET_ID, PROTOTYPE_FILE, OBJECT, PRIVATE_FOR_USER)"
+                                ],
+                                [
+                                    "alias" => "exface.Core.ActionChain",
+                                    'use_result_of_action' => 0,
+                                    "actions" => [
+                                        [
+                                            "alias" => "exface.Core.CreateData"
+                                        ],
+                                        [
+                                            "alias" => "exface.Core.CreateData",
+                                            "object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                                            "input_mapper" => [
+                                                "column_to_column_mappings" => [
+                                                    [
+                                                        "from" => "UID",
+                                                        "to" => "WIDGET_SETUP"
+                                                    ],
+                                                    [
+                                                        "from" => "CREATED_BY_USER",
+                                                        "to" => "USER"
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                                [
+                                    'alias' => "exface.Core.CallWidgetFunction",
+                                    'widget_id' => $this->getDataWidget()->getIdAutogenerated(),
+                                    "widget_id_space" => UiPage::WIDGET_ID_SEPARATOR,
+                                    'function' => "apply_setup([#SETUP_UXON#])"
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+    }
+    
+    protected function buildUxonForActionUpdateSetup() : array
+    {
+        return [
+            'offline_strategy' => OfflineStrategyDataType::IGNORE,
+            "input_rows_min" => 1,
+            "input_rows_max" => 1,
+            "input_object_alias" => "exface.Core.WIDGET_SETUP",
+            "alias" => "exface.Core.ActionChain",
+            "actions" => [
+                [
+                    "alias" => "exface.Core.CallWidgetFunction",
+                    "widget_id" => $this->getDataWidget()->getIdAutogenerated(),
+                    "function" => "dump_setup(SETUP_UXON, PAGE, WIDGET_ID, PROTOTYPE_FILE, OBJECT, PRIVATE_FOR_USER, true)"
+                ],
+                [
+                    "alias" => "exface.Core.UpdateData",
+                    "object_alias" => "exface.Core.WIDGET_SETUP"
+                ]
+            ]
+        ];
+    }
+    
+    protected function buildUxonForActionApplySetup() : array
+    {
+        return [
+            'alias' => "exface.Core.CallWidgetFunction",
+            "input_rows_min" => 1,
+            "input_rows_max" => 1,
+            'offline_strategy' => OfflineStrategyDataType::IGNORE,
+            'widget_id' => $this->getDataWidget()->getIdAutogenerated(),
+            'function' => "apply_setup([#SETUP_UXON#])"
+        ];
+    }
+    
+    protected function buildUxonForActionShareSetup() : array
+    {
+        return [
+            'alias' => "exface.Core.WidgetSetupShareForUsers"
+        ];
+    }
+
+    protected function buildUxonForActionEditSetup() : array
+    {
+        return [
+            'alias' => 'exface.Core.WidgetSetupEditForUsers',
+            // Make sure to use system columns for prefill only. DO NOT use WIDGET_SETUP_USER__FAVORITE_FLAG
+            // and similar because they will produce errors when trying to read missing data. These columns
+            // only work here because of the user filter!
+            'input_mapper' => [
+                'inherit_columns' => DataSheetMapper::INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES
+            ]
+        ];
+    }
+    
+    protected function buildUxonForActionFavoriteSetup() : array
+    {
+        return [
+            "alias" => "exface.Core.SaveData",
+            'offline_strategy' => OfflineStrategyDataType::IGNORE,
+            "object_alias" => "exface.Core.WIDGET_SETUP_USER",
+            "input_rows_min" => 1,
+            "input_rows_max" => 1,
+            "input_mapper" => [
+                "from_object_alias" => "exface.Core.WIDGET_SETUP",
+                "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
+                "column_to_column_mappings" => [
+                    [
+                        "from" => "WIDGET_SETUP_USER__UID",
+                        "to" => "UID"
+                    ],[
+                        "from" => "WIDGET_SETUP_USER__MODIFIED_ON",
+                        "to" => "MODIFIED_ON"
+                    ],[
+                        "from" => "=Not(WIDGET_SETUP_USER__FAVORITE_FLAG)",
+                        "to" => "FAVORITE_FLAG"
+                    ]
+                ]
+            ]
+        ];
     }
 }

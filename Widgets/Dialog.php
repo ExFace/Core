@@ -454,4 +454,17 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         }
         return $result;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see Container::getMetaObjectsEffectingThisWidget()
+     */
+    public function getMetaObjectsEffectingThisWidget() : array
+    {
+        $objects = parent::getMetaObjectsEffectingThisWidget();
+        if ($this->hasHeader()) {
+            $objects = array_merge($objects, $this->getHeader()->getMetaObjectsEffectingThisWidget());
+        }
+        return array_unique($objects);
+    }
 }

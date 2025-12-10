@@ -2,6 +2,7 @@
 namespace exface\Core\Facades;
 
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
+use exface\Core\Factories\PermalinkFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
@@ -17,7 +18,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
-use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Filesystem\DataSourceFileInfo;
@@ -27,6 +27,9 @@ use exface\Core\CommonLogic\Filesystem\InMemoryFile;
 use GuzzleHttp\Psr7\ServerRequest;
 use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
+use Symfony\Component\Cache\Psr16Cache;
+
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -495,11 +498,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     public static function buildUrlToOneTimeLink(WorkbenchInterface $workbench, string $url, bool $relativeToSiteRoot = true) : string
     {
+        // TODO call OneTimeLink permalink prototype in future
         $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
-        $cache = $facade->getOtlCachePool();        
-        $rand = UUIDDataType::generateUuidV4('');      
-        $cache->set($rand, $url);        
-        $otl = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_OTL . '/' . urlencode($rand);
+        $permalink = PermalinkFactory::fromUrlOrSelector($workbench, \exface\Core\Permalinks\OneTimeLink::class);
+        $permalinkSlug = $permalink->withUrl($url)->buildRelativeRedirectUrl();
+        $otl = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_OTL . '/' . urlencode($permalinkSlug);
         return $relativeToSiteRoot ? $otl : $workbench->getUrl() . '/' . $otl;
     }
     
@@ -509,18 +512,12 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @return ResponseInterface
      */
     public function createResponseFromOneTimeLinkIdent(string $ident) : ResponseInterface
-    {        
-        $exface = $this->getWorkbench();
-        $cache = $this->getOtlCachePool();
-        $url = $cache->get($ident, null);
-        if (null === $url) {
-            $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
-            return new Response(404, $this->buildHeadersCommon());
-        }
-        $request = new ServerRequest('GET', $url);
-        $response = $this->createResponse($request);
-        $cache->delete($ident);        
-        return $response;
+    {
+        // TODO call OneTimeLink permalink prototype in future
+        $permalink = PermalinkFactory::fromUrlOrSelector($this->getWorkbench(), \exface\Core\Permalinks\OneTimeLink::class);
+        $redirectUrl = $permalink->withUrl($ident)->buildRelativeRedirectUrl();
+        $request = new ServerRequest('GET', $redirectUrl);
+        return $this->createResponse($request);
     }
     
     /**
@@ -611,6 +608,16 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function getOtlCachePool() : CacheInterface
     {
-        return $this->getWorkbench()->getCache()->getPool(self::CACHE_POOL_OTL);
+        $wbCache = $this->getWorkbench()->getCache();
+        //on an azure app service cli php instances and instances initiated via nginx have different acpu caches.
+        //this causes an issue with background process initiaded by cli which call onetimelinks because the call initiates
+        //a different php instance which has a different acpu pool and can not access the onetimelink
+        //therefore the pool is specifically created (if it does not exists yet) here as no acpu cache and added to the workbench cache
+        if (! $wbCache->hasPool(self::CACHE_POOL_OTL)) {
+            $filePool = new Psr16Cache(new PhpFilesAdapter(self::CACHE_POOL_OTL, 0, $this->getWorkbench()->filemanager()->getPathToCacheFolder()));
+            $wbCache->addPool(self::CACHE_POOL_OTL, $filePool);
+            return $filePool;
+        }
+        return $wbCache->getPool(self::CACHE_POOL_OTL);
     }
 }

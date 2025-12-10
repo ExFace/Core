@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Communication;
 
+use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
@@ -10,7 +11,6 @@ use exface\Core\Communication\Recipients\UserRoleRecipient;
 use exface\Core\Communication\Recipients\UserRecipient;
 use exface\Core\Factories\UserFactory;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Uxon\CommunicationMessageSchema;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\ExpressionFactory;
@@ -37,7 +37,7 @@ use exface\Core\Factories\CommunicationFactory;
  */
 abstract class AbstractMessage implements CommunicationMessageInterface, iCanGenerateDebugWidgets
 {
-    use ImportUxonObjectTrait;
+    use ICanBeConvertedToUxonTrait;
     
     private $workbench = null;
     
@@ -352,17 +352,17 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
+        $uxon = $this->importedUxon ?? new UxonObject();
         if (null !== $val = $this->getChannelSelector()) {
             $uxon->setProperty('channel', $val->toString());
         }
-        if (null !== $this->recipientAddresses) {
+        if (! empty($this->recipientAddresses)) {
             $uxon->setProperty('recipients', new UxonObject($this->recipientAddresses));
         }
-        if (null !== $this->recipientRoleSelectors) {
+        if (! empty($this->recipientRoleSelectors)) {
             $uxon->setProperty('recipient_roles', new UxonObject($this->recipientRoleSelectors));
         }
-        if (null !== $this->recipientUserSelectors) {
+        if (! empty($this->recipientUserSelectors)) {
             $uxon->setProperty('recipient_users', new UxonObject($this->recipientUserSelectors));
         }
         if (! empty($excludes = $this->getRecipientsToExclude())) {
@@ -422,6 +422,7 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('communication_message_tab');
             $uxon_tab->setCaption('Communication message');
+            $uxon_tab->setColumnsInGrid(1);
             $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
                 'widget_type' => 'InputUxon',
                 'disabled' => true,

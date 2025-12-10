@@ -1,11 +1,13 @@
 <?php
 namespace exface\Core\Interfaces\DataSources;
 
+use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
-interface ModelBuilderInterface
+interface ModelBuilderInterface extends iCanBeConvertedToUxon
 {
 
     /**
@@ -50,6 +52,6 @@ interface ModelBuilderInterface
      * @return DataConnectionInterface
      */
     public function getDataConnection() : DataConnectionInterface;
-}
 
-?>
+    public function getLogbook() : LogBookInterface;
+}

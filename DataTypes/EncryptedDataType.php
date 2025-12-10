@@ -306,6 +306,16 @@ class EncryptedDataType extends StringDataType
     {
         return parent::getValidationErrorMessage() ?? $this->getInnerDataType()->getValidationErrorMessage();
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::(getValidationErrorReason)
+     */
+    public function getValidationErrorReason($value) : ?string
+    {
+        return parent::getValidationErrorReason($value) ?? $this->getInnerDataType()->getValidationErrorReason($value);
+    }
     
     /**
      * 

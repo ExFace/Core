@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS `exf_page` (
   `default_menu_position` varchar(100) DEFAULT NULL,
   `replace_page_oid` binary(16) DEFAULT NULL,
   `replace_page_alias` varchar(100) DEFAULT NULL,
-  `auto_update_disabled` tinyint(1) NOT NULL DEFAULT '0'
+  `auto_update_disabled` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`oid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
 -- DOWN

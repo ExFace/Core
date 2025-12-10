@@ -212,6 +212,17 @@ abstract class Formula implements FormulaInterface
 
         return $dataType;
     }
+
+    /**
+     * Returns TRUE if the argument with the given index (starting with 0) is not NULL
+     * 
+     * @param int $argIdx
+     * @return bool
+     */
+    protected function hasArgument(int $argIdx) : bool
+    {
+        return $this->getTokenStream()->getArgument($argIdx) !== null;
+    }
     
     public function getDataType()
     {

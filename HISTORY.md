@@ -1,5 +1,78 @@
 # Release history
 
+## 1.33 - 13.11.2025
+
+New features:
+
+- UXON snippet mutations
+- Much improved `Gantt` widget now able to display multiple bars per row
+- Added `AzureGraphApiEmailConnector` to send Emails via Microsoft GraphAPI
+- Added PostreSQL connector & query builder
+- New widget `InputColorPalette` - a color picker with a palette of preset colors
+- New formulas:
+  - `=TimeDiff()`
+  - `=RowExpressionValue()`
+
+Improvements:
+
+- One-Time-Links in the HttpFileServerFacade now use the permalink framework
+- Improved profiler in traced server requests
+- Improved handling of column widths in widget setups for tables
+- Added option `read_all` to improve performance of lookup-mappings
+- `FileAttachmentBehavior` can now generate and save file storage paths via formula in `file_path_calculation `
+- `CallActionBehavior` can now read required data in-advance from a configurable `input_data_event_alias`
+- Improved data imports via [axenox.ETL](https://github.com/axenox/etl) app
+  - Added profiler tab to data flow step run details
+  - Improved performance of duplicate checks in API-to-DataSheet flow steps
+
+## 1.32 - 08.10.2025
+
+Global news:
+
+- All new AI testing framework in [axenox GenAI](https://github.com/axenox/GenAI) app.
+- Completely reworked administration UI for automated tests in [axenox.BDT](https://github.com/axenox/bdt) app.
+
+New features:
+
+- Action `CalculateData` to let server apply mappers to arbitrary data and simply return the result.
+- Model builder configuration options to selectively update existing parts of the model when re-running th model 
+  builder for an existing object or app. For example, to overwrite data type settings like maximum string length.
+- Built-in SQL admin now can show MS SQL execution plans
+- Mentions (e.g. hash-tags or @-mentions) for `InputMarkdown` widget
+- Widgets created from others via `extend_widget` now can be modified using mutations - much more flexible, that 
+  simply overwriting properties previously.
+- `SoftDeleteBehavior` will now hide rows marked as deleted from read operations automatically. However, this can be reverted using the new `filter_deleted_on_read` property.
+- Many new options for `HttpConnector` and `CallWebService` action:
+  - Customize cURL parameters via `curl_options`
+  - Service parameters can now have custom `empty_expression` and `empty_as_null` to
+    normalize empty values
+  - Simplified parameter configuration if a separate metaobject is created to describe the data structure of a web 
+    service or a set of webservices. Parametes can now be created semi-automatically from attributes via 
+    `parameters_use_attributes` or `parameters_for_all_attributes`.
+  - `timeout` option for the `HttpConnector`
+  - Support for XPath-like attribute addresses in JSON-based `CallWebService` actions
+- New formulas:
+  - `=ObjectProperty()` returns metaobject name, alias, data address, etc.
+  - `=RowUID()` returns the value of the UID attribute for the current row.
+  - `=Distinct()` to keep only unique values in a list
+
+Improvements:
+
+- The UI5 facade will now remember the last applied widget setup and re-apply it automatically every time the page 
+  is opened again.
+- Widget `InputButton` can now be used to generate values (e.g. a human readable id of something) with a server 
+  action. It will now update its value if it gets a new version of it from the server when performing its button action.
+- Improved action authorization policy restrictions. Added `apply_if_input_columns_exists` to allow separate sets of 
+  policies for differnt input structures (e.g. input mapped from different objects).
+- New configuration options for `CallActionBehavior`: `input_data_event_alias` and `input_data_mapper`.
+
+Important fixes:
+
+- Fixed lots of edge cases with `InputComboTable`s inside `DataSpreadSheet`
+- Fixed unwanted dialog refreshes in UI5 on non-critical actions
+- Fixed issues with uploads to file storages with `FlysystemConnector` when files did not have an extension or had duplicate filenames.
+- Fixed issues on strictly case sensitive servers like Google Cloud AppEngine.
+
 ## 1.31 - 18.09.2025
 
 New features:

@@ -43,7 +43,6 @@ class OnBeforeMetaObjectBehaviorLoadedEvent extends AbstractEvent implements Met
         $this->object = $object;
         $this->behaviorUid = $behaviorUid;
         $this->appUid = $appUid;
-        $this->object = $object;
         $this->uxon = $uxon;
     }
     

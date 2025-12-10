@@ -1,8 +1,12 @@
 <?php
 namespace exface\Core\Exceptions\Actions;
 
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
+use exface\Core\Interfaces\Exceptions\ActionExceptionInterface;
 use exface\Core\Widgets\DebugMessage;
 
 /**
@@ -35,21 +39,18 @@ trait ActionExceptionTrait {
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::getAction()
      */
-    public function getAction()
+    public function getAction() : ActionInterface
     {
         return $this->action;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::setAction()
+     * @param ActionInterface $value
+     * @return $this
      */
-    public function setAction(ActionInterface $value)
+    protected function setAction(ActionInterface $value) : ActionExceptionInterface
     {
         $this->action = $value;
         return $this;
@@ -63,5 +64,24 @@ trait ActionExceptionTrait {
     {
         $error_message = parent::createDebugWidget($error_message);
         return $this->getAction()->createDebugWidget($error_message);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = parent::getLinks();
+        $action = $this->getAction();
+        $prototypeClass = get_class($action);
+        $links['Action prototype `' . $prototypeClass . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($prototypeClass);
+        try {
+            $obj = $action->getMetaObject();
+            $links['Metaobject ' . $obj->__toString()] = DocsFacade::buildUrlToDocsForMetaObject($obj->getAliasWithNamespace());
+        } catch (\Throwable $e) {
+            // Do nothing - we just can't link an object if there is none
+        }
+        return $links;
     }
 }

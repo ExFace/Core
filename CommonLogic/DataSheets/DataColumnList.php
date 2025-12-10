@@ -155,7 +155,9 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         $col = DataColumnFactory::createFromString($data_sheet, $expression_or_string, $name);
         $col->setHidden($hidden);
         $this->add($col);
-        return $col;
+        // TODO geb 2025-10-08: If this list contains a column with the same identity this function returns
+        // TODO                 an orphaned instance. This is unexpected behavior and should probably be fixed.
+        return $col; 
     }
 
     /**

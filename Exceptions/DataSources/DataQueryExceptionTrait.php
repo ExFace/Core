@@ -31,7 +31,7 @@ trait DataQueryExceptionTrait {
      * @see \exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface::getQuery()
      * @return DataQueryInterface
      */
-    public function getQuery()
+    public function getQuery() : DataQueryInterface
     {
         return $this->query;
     }
@@ -42,7 +42,7 @@ trait DataQueryExceptionTrait {
      *
      * @see \exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface::setQuery()
      */
-    public function setQuery(DataQueryInterface $query)
+    protected function setQuery(DataQueryInterface $query)
     {
         $this->query = $query;
         return $this;

@@ -87,7 +87,6 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
     protected function guessDataType(MetaObjectInterface $object, string $data_type, $length = null, $number_scale = null) : DataTypeInterface
     {
         $data_type = trim($data_type);
-        $details = [];
         $type = trim(StringDataType::substringBefore($data_type, '(', $data_type));
         if ($type !== $data_type) {
             $details = explode(',', substr($data_type, (strlen($type)+1), -1));
@@ -140,7 +139,6 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
     {
         $uxon = parent::getDataTypeConfig($type, $source_data_type, $length, $scale);
         
-        $source_data_type = strtoupper($source_data_type);
         $source_data_type = mb_strtoupper($source_data_type);
         switch (true) {
             case $source_data_type === 'TINYBLOB':

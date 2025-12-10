@@ -35,8 +35,11 @@ interface DataCollectorInterface extends WorkbenchDependantInterface
     /**
      * Loads all required data into the collector eventually reading missing columns - but NOT modifying the given sheet
      *
-     * After this method was called, you can use getRequiredData() and getRequiredColumns() to actually
+     * After this method was called, you can use `getRequiredData()` and `getRequiredColumns()` to actually
      * access the values of all the required expressions.
+     * 
+     * Returns an enriched copy of the provided data sheet if reading missing data or simply the data sheet
+     * itself (no copy!) if it already included everything reqired.
      *
      * @param DataSheetInterface $dataSheet
      * @return DataCollectorInterface

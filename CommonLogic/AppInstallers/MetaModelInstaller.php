@@ -102,7 +102,7 @@ class MetaModelInstaller extends DataInstaller
         $this->addDataOfObject('exface.Core.PAGE_TEMPLATE', 'CREATED_ON', 'APP');
         $this->addDataOfObject('exface.Core.ATTRIBUTE_COMPOUND', 'CREATED_ON', 'COMPOUND_ATTRIBUTE__OBJECT__APP');
         $this->addDataOfObject('exface.Core.PAGE_GROUP', 'CREATED_ON', 'APP', [], 'Security/PageGroups/[#=Transliterate(NAME, "' . $translitRule . '")#]/12_PAGE_GROUP.json');
-        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'PAGE__APP', [], 'Security/Page groups/[#=Transliterate(PAGE_GROUP__NAME, "' . $translitRule . '")#]/13_PAGE_GROUP_PAGES.json');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'APP', [], 'Security/Page groups/[#=Transliterate(PAGE_GROUP__NAME, "' . $translitRule . '")#]/13_PAGE_GROUP_PAGES.json');
         $this->addDataOfObject('exface.Core.USER_ROLE', 'CREATED_ON', 'APP', [], 'Security/UserRoles/[#ALIAS#]/14_USER_ROLE.json');
         $this->addDataOfObject('exface.Core.AUTHORIZATION_POINT', 'CREATED_ON', 'APP', [
             'DEFAULT_EFFECT',
@@ -280,9 +280,9 @@ class MetaModelInstaller extends DataInstaller
             }
 
             if($errorCount > 0) {
-                yield $indent . '...please check the configuration of the permalinks listed above.' . PHP_EOL . PHP_EOL;
+                yield $indent . 'Permalinks marked as INVALID were processed, but did not pass validation - check their configuration!' . PHP_EOL . PHP_EOL;
             } else {
-                yield $indent . '...all permalinks verified successfully.' . PHP_EOL . PHP_EOL;
+                yield $indent . 'Permalinks verified successfully.' . PHP_EOL . PHP_EOL;
             }
         }
     }

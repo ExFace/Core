@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -27,11 +29,13 @@ class BehaviorLogBook extends DataLogBook
         $this->behavior = $behavior;
         $this->addSection($behavior->getName());
         $this->addIndent(1);
-        $this->addLine(PhpClassDataType::findClassNameWithoutNamespace($behavior) . ' of ' . $behavior->getObject()->__toString());
+        $prototypeLink = '[' . PhpClassDataType::findClassNameWithoutNamespace($behavior) . '](' . DocsFacade::buildUrlToDocsForUxonPrototype($behavior) . ')';
+        $behaviorObjLink = '[' . MarkdownDataType::escapeString($behavior->getObject()->__toString()) . '](' . DocsFacade::buildUrlToDocsForMetaObject($behavior->getObject()) . ')';
+        $this->addLine($prototypeLink . ' of object ' . $behaviorObjLink);
         $this->addLine('Behavior instance "' . spl_object_id($behavior) . '"');
         if ($event !== null) {
             $eventObj = $this->getObjectOfEvent($event);
-            $this->addLine('Reacting to event `' . $event::getEventName() . '`' . ($eventObj !== null ? ' for object ' . $eventObj->__toString() : '') . ' (event instance "' . spl_object_id($event) . '")');
+            $this->addLine('Reacting to event `' . $event::getEventName() . '`' . ($eventObj !== null ? ' for object [' . MarkdownDataType::escapeString($eventObj->__toString()) . '](' . DocsFacade::buildUrlToDocsForMetaObject($eventObj) . ')' : '') . ' (event instance "' . spl_object_id($event) . '")');
         }
         $this->addIndent(-1);
     }

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
-use exface\Core\DataTypes\PhpFilePathDataType;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Action\OnActionFailedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
@@ -20,6 +20,7 @@ use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Events\Transaction\OnBeforeTransactionCommitEvent;
 use exface\Core\Events\Transaction\OnBeforeTransactionRollbackEvent;
 use exface\Core\Events\Transaction\OnTransactionStartEvent;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\EventManagerInterface;
@@ -42,18 +43,15 @@ class ActionLogBook implements DataLogBookInterface
     
     private $logBook = null;
     
-    private $autoSectionsAdded = false;
-    
     private $flowDiagram = null;
 
     private $eventStack = [];
 
     private int $eventCount = 0;
-    private int $maxStackDepth = 9;
+    private int $maxStackDepth = 10;
     private int $maxEventCount = 500;
     
     private $eventStackIndent = 0;
-
     private $eventStackProcessed = false;
 
     /**
@@ -72,11 +70,11 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook = new DataLogBook($title);
         $this->logBook->addSection('Action ' . $action->getAliasWithNamespace() . ' "' . $action->getName() . '"');
         $this->logBook->addIndent(1);
-        $this->logBook->addLine('Prototype class: ' . get_class($action));
+        $this->logBook->addLine('Prototype class: [' . MarkdownDataType::escapeString(get_class($action)) . '](' . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ')');
         try {
-            $this->logBook->addLine('Action object: ' . $action->getMetaObject()->__toString());
+            $this->logBook->addLine('Action object: [' . MarkdownDataType::escapeString($action->getMetaObject()->__toString()) . '](' . DocsFacade::buildUrlToDocsForMetaObject($action->getMetaObject()) . ')');
         } catch (\Throwable $e) {
-            $this->logBook->addLine('Action object not found');
+            $this->logBook->addLine('Action object not defined');
         }
         if ($task->isTriggeredByWidget()) {
             try {
@@ -91,7 +89,7 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook->addIndent(-1);
     }
 
-    public function startLogginEvents() : void
+    public function startLoggingEvents() : void
     {
         $eventMgr = $this->action->getWorkbench()->eventManager();
         // Action
@@ -238,7 +236,7 @@ class ActionLogBook implements DataLogBookInterface
                         $eventName = '';
                     } else {
                         $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
-                        $eventName = "`{$eventName}`";
+                        $eventName = "`{$eventName}` ";
                     }
                     $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
                     break;

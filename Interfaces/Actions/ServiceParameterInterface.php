@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
@@ -59,6 +60,26 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
      * @return ServiceParameterInterface
      */
     public function setDefaultValue($string) : ServiceParameterInterface;
+
+    /**
+     * @return ExpressionInterface|null
+     */
+    public function getEmptyExpression() : ?ExpressionInterface;
+
+    /**
+     * The value to be used to indicate, that the parameter is empty (e.g. NULL instead of an empty string)
+     * 
+     * Accepted values:
+     * 
+     * - Number or boolean value (e.g. `1` or `false`)
+     * - `null` or `=NullValue()` to indicate, that any empty value must be turned into `null`
+     * - Quoted string (e.g. `'empty'`)
+     * - Formula (e.g. `=Today()` or `=GetConfig()`) - calculation result will be used if empty value passed to parameter
+     * 
+     * @param ExpressionInterface|null|int|float|bool $stringOrExpression
+     * @return ServiceParameterInterface
+     */
+    public function setEmptyExpression($stringOrExpression) : ServiceParameterInterface;
     
     /**
      *
