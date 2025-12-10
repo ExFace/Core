@@ -96,7 +96,7 @@ class DataCollector implements DataCollectorInterface
                 $this->resultSheet = $dataSheet;
                 break;
             case $dataSheet->hasUidColumn(true):
-                $this->resultSheet = $dataSheet->extractSystemColumns();
+                $this->resultSheet = $this->extractRequiredColumns($dataSheet);
                 $this->readMissingDataWithUid($this->resultSheet, $logBook);
                 break;
             default:
@@ -189,9 +189,9 @@ class DataCollector implements DataCollectorInterface
 
     /**
      * @param DataSheetInterface $dataSheet
-     * @return array|null
+     * @return ExpressionInterface[]
      */
-    protected function getMissingExpressions(DataSheetInterface $dataSheet) : ?array
+    protected function getMissingExpressions(DataSheetInterface $dataSheet) : array
     {
         $missing = [];
         foreach ($this->getRequiredExpressions() as $expr) {
@@ -403,6 +403,7 @@ class DataCollector implements DataCollectorInterface
 
     /**
      * @inheritDoc
+     * @see DataCollectorInterface::getRequiredExpressions()
      */
     public function getRequiredExpressions(): array
     {
@@ -422,6 +423,25 @@ class DataCollector implements DataCollectorInterface
             }
         }
         return $this->requiredExpressions ?? [];
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getRequiredExpressionStrings() : array
+    {
+        return array_keys($this->getRequiredExpressions());
+    }
+
+    /**
+     * @param ExpressionInterface|string $expr
+     * @return bool
+     */
+    protected function isRequired(ExpressionInterface|string $expr) : bool
+    {
+        $reqStrings = $this->getRequiredExpressionStrings();
+        $exprStr = $expr instanceof ExpressionInterface ? $expr->__toString() : $expr;
+        return in_array($exprStr, $reqStrings, true);        
     }
 
     /**
@@ -518,5 +538,28 @@ class DataCollector implements DataCollectorInterface
     public function getWorkbench()
     {
         return $this->workbench;
+    }
+    
+    protected function extractRequiredColumns(DataSheetInterface $dataSheet, ?bool $keepSystemCols = null) : DataSheetInterface
+    {
+        $keepSystemCols = $keepSystemCols ?? ! ($dataSheet->hasAggregations() || $dataSheet->hasAggregateAll());
+        $copy = $dataSheet->copy();
+        $reqStrings = [];
+        foreach ($this->getRequiredExpressions() as $expr) {
+            $reqStrings[] = $expr->__toString();
+            foreach ($expr->getRequiredAttributes() as $attrStr) {
+                $reqStrings[] = $attrStr;
+            }
+        }
+        foreach ($copy->getColumns() as $col) {
+            if ($keepSystemCols && $col->isAttribute() && $col->getAttribute()->isSystem()) {
+                continue;
+            }
+            $colExprStr = $col->getExpressionObj()->__toString();
+            if (! in_array($colExprStr, $reqStrings, true)) {
+                $copy->getColumns()->remove($col);
+            }
+        }
+        return $copy;
     }
 }
