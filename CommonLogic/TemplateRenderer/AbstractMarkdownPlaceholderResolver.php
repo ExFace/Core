@@ -34,12 +34,13 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
                 }
     
                 $folderIndex = $filePath . DIRECTORY_SEPARATOR . 'index.md';
-                $title = ucfirst($file);
-                $link = null;
     
                 if (file_exists($folderIndex)) {
                     $title = MarkdownDataType::findHeadOfFile($folderIndex);
                     $link = $relativePath . $this->relativePath($folderIndex, $directory);
+                } else {
+                    $title = ucfirst(str_replace('_', ' ', $file));
+                    $link = null;
                 }
     
                 $items[] = [

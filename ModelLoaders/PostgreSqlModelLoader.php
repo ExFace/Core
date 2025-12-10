@@ -2,12 +2,11 @@
 namespace exface\Core\ModelLoaders;
 
 use exface\Core\CommonLogic\AppInstallers\PostgreSqlDatabaseInstaller;
+use exface\Core\DataConnectors\PostgreSqlConnector;
 use exface\Core\Interfaces\AppInstallerInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\DataConnectors\MsSqlConnector;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
-use exface\Core\CommonLogic\AppInstallers\MsSqlDatabaseInstaller;
 
 /**
  * Loads metamodel entities from a Microsoft SQL Server datatabse.
@@ -26,7 +25,19 @@ class PostgreSqlModelLoader extends SqlModelLoader
     protected function buildSqlUuidSelector($field_name) : string
     {
         // In PostgreSQL casting to `::text` should normalize all letters to lowercase
-        return "CONCAT('0x', REPLACE({$field_name}::text, '-', ''))";
+        return "('0x' || REPLACE({$field_name}::text, '-', ''))";
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see SqlModelLoader::buildSqlEscapedUid()
+     */
+    protected function buildSqlEscapedUid(string $uid) : string
+    {
+        $uid = parent::buildSqlEscapedUid($uid);
+        // Convert 0x6876846 -> 6876846-547547-
+        $hex = substr($uid, 2);
+        return "'{$hex}'";
     }
     
     /**
@@ -52,8 +63,8 @@ SQL;
      */
     public function setDataConnection(DataConnectionInterface $connection)
     {
-        if (! ($connection instanceof MsSqlConnector)) {
-            throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a MsSqlConnector or a derivative.');
+        if (! ($connection instanceof PostgreSqlConnector)) {
+            throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a PostgreSqlConnector or a derivative.');
         }
         return parent::setDataConnection($connection);
     }
@@ -82,5 +93,15 @@ SQL;
             $this->installer = $installer;
         }
         return $this->installer;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\ModelLoaders\SqlModelLoader::escapeAlias()
+     */
+    protected function escapeAlias(string $tableOrPredicateAlias) : string
+    {
+        return '"' . $tableOrPredicateAlias . '"';
     }
 }

@@ -588,9 +588,9 @@
         {
             "_EXPORT_SUMMARY": "Action [LABEL]",
             "CREATED_ON": "2020-05-11 09:47:00",
-            "MODIFIED_ON": "2025-06-04 17:36:07",
+            "MODIFIED_ON": "2025-12-01 13:18:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea936c5bdb6107a9d10205857feb80",
             "SORTABLEFLAG": 1,
             "FILTERABLEFLAG": 1,
@@ -614,7 +614,17 @@
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "@MySQL: CONCAT( (SELECT [#~alias#]_o.object_name FROM exf_object [#~alias#]_o WHERE [#~alias#]_o.oid = [#~alias#].object_oid), ': ', [#~alias#].name, ' [', [#~alias#].alias, ']')",
-                "@T-SQL: (CASE WHEN [#~alias#].name IS NULL THEN NULL ELSE CONCAT( (SELECT [#~alias#]_o.object_name FROM exf_object [#~alias#]_o WHERE [#~alias#]_o.oid = [#~alias#].object_oid), ': ', [#~alias#].name, ' [', [#~alias#].alias, ']') END)"
+                "@T-SQL: (CASE WHEN [#~alias#].name IS NULL THEN NULL ELSE CONCAT( (SELECT [#~alias#]_o.object_name FROM exf_object [#~alias#]_o WHERE [#~alias#]_o.oid = [#~alias#].object_oid), ': ', [#~alias#].name, ' [', [#~alias#].alias, ']') END)",
+                "@pgSQL: (",
+                "    SELECT [#~alias#]_o.object_name",
+                "    FROM exf_object [#~alias#]_o",
+                "    WHERE [#~alias#]_o.oid = [#~alias#].object_oid",
+                ")",
+                "|| ': '",
+                "|| [#~alias#].name",
+                "|| ' ['",
+                "|| [#~alias#].alias",
+                "|| ']'"
             ],
             "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "FORMATTER": "",

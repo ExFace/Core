@@ -16,6 +16,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Allows to create additional "custom" attributes in master data and store their values in a single JSON column.
@@ -242,9 +243,9 @@ class CustomAttributesJsonBehavior extends AbstractBehavior
      *
      * NOTE: This is the default behavior, because it is flexible and fast.
      *
-     * @param string $definitionObjectAlias
-     * @param BehaviorLogBook $logBook
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface[]
+     * @param CustomAttributesDefinition $definition
+     * @param BehaviorLogBook            $logBook
+     * @return MetaAttributeInterface[]
      */
     protected function loadAttributesFromDefinition(CustomAttributesDefinition $definition, BehaviorLogBook $logBook) : array
     {

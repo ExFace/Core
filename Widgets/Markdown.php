@@ -96,8 +96,8 @@ CSS;
      * 
      * @uxon-property open_links_in
      * @uxon-type [self,new_tab,popup]
-     * @uxon-defaul self
-     * @uxon-template self
+     * @uxon-default popup
+     * @uxon-template popup
      * 
      * @param string $value
      * @return $this
@@ -114,11 +114,11 @@ CSS;
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getOpenLinksIn() : ?string
+    public function getOpenLinksIn(string $default = self::OPEN_LINKS_IN_POPUP) : string
     {
-        return $this->openLinksIn;
+        return $this->openLinksIn ?? $default;
     }
 
     /**
@@ -126,7 +126,7 @@ CSS;
      *
      * @uxon-property open_links_in_popup_width
      * @uxon-type number
-     * @uxon-defaul 1200
+     * @uxon-default 800
      *
      * @param number $value
      * @return Markdown
@@ -140,8 +140,8 @@ CSS;
     /**
      * @return int|null
      */
-    public function getOpenLinksInPopupWidth() : ?int {
-        return $this->openLinksInPopupWidth;
+    public function getOpenLinksInPopupWidth(?int $default = 800) : ?int {
+        return $this->openLinksInPopupWidth ?? $default;
     }
 
     /**
@@ -149,7 +149,7 @@ CSS;
      *
      * @uxon-property open_links_in_popup_height
      * @uxon-type number
-     * @uxon-defaul 800
+     * @uxon-default 800
      *
      * @param number $value
      * @return Markdown
@@ -163,8 +163,28 @@ CSS;
     /**
      * @return int|null
      */
-    public function getOpenLinksInPopupHeight() : ?int
+    public function getOpenLinksInPopupHeight(?int $default = 800) : ?int
     {
-        return $this->openLinksInPopupHeight;
+        return $this->openLinksInPopupHeight ?? $default;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Widgets\Html::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if ($this->openLinksIn !== null) {
+            $uxon->setProperty('open_links_in', $this->getOpenLinksIn());
+        }
+        if ($this->openLinksInPopupWidth !== null) {
+            $uxon->setProperty('open_links_in_popup_width', $this->getOpenLinksInPopupWidth());
+        }
+        if ($this->openLinksInPopupHeight !== null) {
+            $uxon->setProperty('open_links_in_popup_height', $this->getOpenLinksInPopupHeight());
+        }
+        return $uxon;
     }
 }

@@ -236,4 +236,17 @@ class Tab extends Panel
         
         return $this->activeIf;
     }
+
+    /**
+     * Returns true if this tab is currently active.
+     * 
+     * @return bool
+     */
+    public function isActive() : bool
+    {
+        $tabIndex = $this->getTabIndex();
+        $activeTabIndex = $this->getTabs()->getActiveTabIndex();
+        
+        return ($tabIndex === $activeTabIndex);
+    }
 }

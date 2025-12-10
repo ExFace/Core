@@ -1,8 +1,13 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\ErrorMessage;
@@ -48,6 +53,8 @@ trait ExceptionTrait {
     private $useExceptionMessageAsTitle = false;
 
     private $statusCode = null;
+    
+    private array $links = [];
 
     public function __construct($message, $alias = null, $previous = null)
     {
@@ -71,7 +78,7 @@ trait ExceptionTrait {
      */
     public function createWidget(UiPageInterface $page)
     {
-        // Make sure, the widget is generated only once. Otherwise different parts of the code might get different widgets (with different ids).
+        // Make sure, the widget is generated only once. Otherwise, different parts of the code might get different widgets (with different ids).
         if (! is_null($this->exception_widget)) {
             return $this->exception_widget;
         }
@@ -97,24 +104,25 @@ trait ExceptionTrait {
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $page = $debug_widget->getPage();
+        $translator = $debug_widget->getWorkbench()->getCoreApp()->getTranslator();
         // Add a tab with a user-friendly error description
         if ($debug_widget->findChildById('error_tab') === false) {
             $error_tab = $debug_widget->createTab();
             $error_tab->setId('error_tab');
             $error_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION'));
-            if ($this->getAlias()) {
+            if ($msgCode = $this->getAlias()) {
                 try {
                     $msgModel = $this->getMessageModel($page->getWorkbench());
-                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-                        ->setHeadingLevel(2)
-                        ->setWidth(WidgetDimension::MAX)
-                        ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $msgModel->getTitle());
-                    $error_tab->addWidget($error_heading);
-                    $error_text = WidgetFactory::create($page, 'Markdown', $error_tab)
-                        ->setWidth(WidgetDimension::MAX)
+                    
+                    $error_heading = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setHideCaption(true)
-                        ->setValue("> {$this->getMessage()}");
-                    $error_tab->addWidget($error_text);
+                        ->setWidth(WidgetDimension::MAX)
+                        ->setValue(<<<MD
+# {$translator->translate('ERROR.CAPTION')} {$msgCode}: {$msgModel->getTitle()}
+
+> {$this->getMessage()}
+MD);
+                    $error_tab->addWidget($error_heading);
                     if ($hint = $msgModel->getHint()) {
                         $error_hint = WidgetFactory::create($page, 'Message', $error_tab)
                         ->setText($hint)
@@ -127,23 +135,38 @@ trait ExceptionTrait {
                         ->setWidth(WidgetDimension::MAX)
                         ->setHideCaption(true)
                         ->setOpenLinksIn('popup')
-                        ->setOpenLinksInPopupWidth(1200)
-                        ->setOpenLinksInPopupHeight(800)
-                        ->setValue($msgModel->getDescription());
+                        ->setValue($msgModel->getDescription() . $this->getLinksAsMarkdown());
                     $error_tab->addWidget($error_descr);
                 } catch (\Throwable $e) {
-                    $debug_widget->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e));
-                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-                        ->setHeadingLevel(2)
+                    $eRenderer = new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e);
+                    $debug_widget->getWorkbench()->getLogger()->logException($eRenderer);
+                    $error_heading = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setWidth(WidgetDimension::MAX)
-                        ->setValue($this->getMessage());
+                        ->setHideCaption(true)
+                        ->setValue(<<<MD
+# Failed to render error properly
+
+Could not format error **{$msgCode}** properly: 
+
+> {$eRenderer->getMessage()} in `{$eRenderer->getFile()}` on line `{$eRenderer->getLine()}`
+
+## Original error
+
+> {$this->getMessage()}
+
+MD);
                     $error_tab->addWidget($error_heading);
                 }
             } else {
-                $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-                    ->setHeadingLevel(2)
+                $error_heading = WidgetFactory::create($page, 'Markdown', $error_tab)
                     ->setWidth(WidgetDimension::MAX)
-                    ->setValue($this->getMessage());
+                    ->setHideCaption(true)
+                    ->setValue(<<<MD
+# Internal error
+
+> {$this->getMessage()}
+
+MD);
                 $error_tab->addWidget($error_heading);
             }
             
@@ -156,13 +179,14 @@ trait ExceptionTrait {
         if ($debug_widget->findChildById('stacktrace_tab') === false) {
             $stacktrace_tab = $debug_widget->createTab();
             $stacktrace_tab->setId('stacktrace_tab');
-            $stacktrace_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.STACKTRACE_CAPTION'));
+            $stacktrace_tab->setCaption($translator->translate('ERROR.STACKTRACE_CAPTION'));
             $stacktrace_widget = WidgetFactory::createFromUxonInParent($stacktrace_tab, new UxonObject([
                 'width' => '100%',
-                'height' => '100%'
-            ]), 'Html');
+                'height' => '100%',
+                'hide_caption' => true,
+            ]), 'Markdown');
             $stacktrace_tab->addWidget($stacktrace_widget);
-            $stacktrace_widget->setHtml($page->getWorkbench()->getDebugger()->printException($this));
+            $stacktrace_widget->setValue($page->getWorkbench()->getDebugger()->printExceptionAsMarkdown($this));
             $debug_widget->addTab($stacktrace_tab);
         }
         
@@ -177,7 +201,7 @@ trait ExceptionTrait {
             }
             $context_tab = $debug_widget->createTab();
             $context_tab->setId('context_tab');
-            $context_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CONTEXT_CAPTION'));
+            $context_tab->setCaption($translator->translate('ERROR.CONTEXT_CAPTION'));
             $context_tab->addWidget(WidgetFactory::createFromUxonInParent($context_tab,  new UxonObject([
                 'widget_type' => 'InputUxon',
                 'disabled' => true,
@@ -196,6 +220,18 @@ trait ExceptionTrait {
         }
         
         return $debug_widget;
+    }
+    
+    protected function getLinksAsMarkdown(int $headingLevel = 2) : string
+    {
+        $md = '';
+        foreach ($this->getLinks() as $title => $url) {
+            $md .= "\n- [{$title}]({$url})";
+        }
+        if ($md !== '') {
+            $md = "\n\n" . MarkdownDataType::makeHeading('Documentation links') . "\n" . $md;
+        }
+        return $md;
     }
     
     /**
@@ -401,6 +437,72 @@ trait ExceptionTrait {
     public function setUseExceptionMessageAsTitle(bool $value) : ExceptionInterface
     {
         $this->useExceptionMessageAsTitle = $value;
+
+        if ($this->messageModel !== null) {
+            $this->messageModel->setTitle($this->getMessage());
+        }
+        
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ExceptionInterface::addLink()
+     */
+    public function addLink(string $title, string $url) : ExceptionInterface
+    {
+        $this->links[$title] = $url;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ExceptionInterface::getLinks()
+     */
+    public function getLinks() : array
+    {
+        $links = $this->links;
+        if ($prev = $this->getPrevious()) {
+            if ($prev instanceof ExceptionInterface) {
+                // For our own exceptions, just generate links recursively
+                $links = array_merge($prev->getLinks(), $links);
+            } else {
+                // For other types of exceptions, see if they happened in one of our UXON prototypes. If so,
+                // add a link to this prototype docs. This should help in cases like invalid return types
+                // because a required UXON property not set.
+                try {
+                    $prevFileClass = $prev->getTrace()[0]['class'] ?? null;
+                    if ($prevFileClass) {
+                        $prevFileClass = '\\' . ltrim($prevFileClass, '\\');
+                        if ($prevFileClass && is_a($prevFileClass, iCanBeConvertedToUxon::class, true)) {
+                            $links['UXON prototype `' . PhpClassDataType::findClassNameWithoutNamespace($prevFileClass) . '`'] = DocsFacade::buildUrlToDocsForUxonPrototype($prevFileClass);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Do nothing - we were just trying to find some editional information
+                }
+            }
+        }
+        
+        if ($this->messageModel !== null && $msgDocsPath = $this->messageModel->getDocsPath()) {
+            $filename = FilePathDataType::findFileName($msgDocsPath, false);
+            $links[str_replace('_', ' ', $filename)] = DocsFacade::buildUrlToFile($msgDocsPath);
+        }
+        
+        return array_unique($links);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ExceptionInterface::findPrevious()
+     */
+    public function findPrevious(string $classOrInterface) : ?\Throwable
+    {
+        while ($prev = $this->getPrevious()) {
+            if ($prev instanceof $classOrInterface) {
+                return $prev;
+            }
+        }
+        return null;
     }
 }

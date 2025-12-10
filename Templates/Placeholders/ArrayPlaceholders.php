@@ -2,6 +2,7 @@
 namespace exface\Core\Templates\Placeholders;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
 
 /**
  * Replaces placeholders with values provided as a placeholder=>value array.
@@ -16,6 +17,8 @@ use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
  */
 class ArrayPlaceholders extends AbstractPlaceholderResolver
 {
+    use SanitizedPlaceholderTrait;
+    
     private $placeholders = [];
     
     /**
@@ -40,7 +43,7 @@ class ArrayPlaceholders extends AbstractPlaceholderResolver
         foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
             $key = $this->stripPrefix($placeholder);
             if (array_key_exists($key, $this->placeholders)) {
-                $vals[$placeholder] = $this->placeholders[$key];
+                $vals[$placeholder] = $this->sanitizeValue($this->placeholders[$key]);
             }
         }
         return $vals;

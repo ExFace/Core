@@ -79,10 +79,11 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
         $baseRenderer = new DocsTemplateRenderer($this->getWorkbench());
 
         $fileCnt = 0;
+        $vendorPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder();
         foreach ($this->getMarkdownFiles($rootPath) as $file) {
             $fileRenderer = $baseRenderer->copy();
             $fileRenderer->addPlaceholder(new ImageNumberResolver($file));
-            $fileRenderer->addPlaceholder(new SubPageListResolver($file));
+            $fileRenderer->addPlaceholder(new SubPageListResolver($file, $vendorPath));
             $fileRenderer->addPlaceholder(new NavButtonResolver($file));
             $fileRenderer->addPlaceholder(new ImageReferenceResolver($file));
             $fileRenderer->addPlaceholder(new ImageListResolver($file));

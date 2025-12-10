@@ -106,4 +106,25 @@ class UrlDataType extends StringDataType
         }
         return self::substringBefore($stringOrUri, '?', $stringOrUri);
     }
+    
+    public static function findUrlParams($stringOrUri) : array
+    {
+        if (! $stringOrUri instanceof UriInterface) {
+            $uri = new Uri($stringOrUri);
+        } else {
+            $uri = $stringOrUri;
+        }
+        return static::parseUrlParams($uri->getQuery());
+    }
+
+    /**
+     * @param string $URIquery
+     * @return array
+     */
+    public static function parseUrlParams(string $URIquery) : array
+    {
+        $params = [];
+        parse_str($URIquery, $params);
+        return $params;
+    }
 }
