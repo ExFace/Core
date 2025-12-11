@@ -6,6 +6,8 @@ use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\IntegerDataType;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataWriteEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataWriteEvent;
 use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetListInterface;
@@ -1203,6 +1205,15 @@ class DataSheet implements DataSheetInterface
             }
             $processed_relations[$rel_path] = true;
         }
+
+        $eventBefore = $update_ds->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataWriteEvent($update_ds, $transaction, $create_if_uid_not_found));
+        if ($eventBefore->isPreventUpdate() === true) {
+            // IDEA not sure, if it would be correct to fire OnUpdateData here?
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $update_ds->countRows();
+        }
         
         // Add filters to the query
         $query->setFiltersConditionGroup($update_ds->getFilters());
@@ -1760,6 +1771,15 @@ class DataSheet implements DataSheetInterface
             if ($req_col->hasEmptyValues()) {
                 throw new DataSheetMissingRequiredValueError($this, null, null, null, $req_col, $req_col->findEmptyRows());
             }
+        }
+
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataWriteEvent($this, $transaction, $update_if_uid_found));
+        if ($eventBefore->isPreventCreate() === true) {
+            // IDEA not sure, if it would be correct to fire OnCreateData here?
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $this->countRows();
         }
         
         // Add values to the query and/or create subsheets
