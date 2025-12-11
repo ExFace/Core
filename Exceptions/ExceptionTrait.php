@@ -104,6 +104,11 @@ trait ExceptionTrait {
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $page = $debug_widget->getPage();
+
+        // Appends the exception ID only once for preventing IDs like: DebugMessage_ID_ID_ID...
+        if (!str_contains($debug_widget->getId(), $this->getId())) {
+            $debug_widget->setId($debug_widget->getId() . '_' . $this->getId());
+        }
         $translator = $debug_widget->getWorkbench()->getCoreApp()->getTranslator();
         // Add a tab with a user-friendly error description
         if ($debug_widget->findChildById('error_tab') === false) {
@@ -204,6 +209,7 @@ MD);
             $context_tab->setCaption($translator->translate('ERROR.CONTEXT_CAPTION'));
             $context_tab->addWidget(WidgetFactory::createFromUxonInParent($context_tab,  new UxonObject([
                 'widget_type' => 'InputUxon',
+                "id" => $debug_widget->getId() . '_' . $context_tab->getId() . '_InputUxon',
                 'disabled' => true,
                 'width' => '100%',
                 'height' => '100%',
