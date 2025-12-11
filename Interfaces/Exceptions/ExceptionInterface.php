@@ -38,10 +38,10 @@ use exface\Core\Interfaces\Model\MessageInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWidgets
+interface ExceptionInterface extends \Throwable, iCanBeConvertedToUxon, iCanGenerateDebugWidgets
 {
     /**
-     * Creates a blawidget with detailed information about this exception.
+     * Creates a widget with detailed information about this exception.
      *
      * @param UiPageInterface $page            
      * @return ErrorMessage
@@ -142,4 +142,12 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
      * @return string[]
      */
     public function getLinks() : array;
+
+    /**
+     * Searches the exception stack for the given exception class or interface
+     * 
+     * @param string $classOrInterface
+     * @return \Throwable|null
+     */
+    public function findPrevious(string $classOrInterface) : ?\Throwable;
 }

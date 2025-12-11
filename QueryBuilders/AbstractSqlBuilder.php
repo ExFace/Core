@@ -2,6 +2,7 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\SqlDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -3590,23 +3591,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function findSqlDialect(string $sql) : string
     {
-        if (StringDataType::startsWith($sql, '@')) {
-            $stmts = preg_split('/(^|\R)@/', $sql);
-            $tags = $this->getSqlDialects();
-            // Start with the first supported tag and see if it matches any statement. If not,
-            // proceed with the next tag, etc.
-            foreach ($tags as $tag) {
-                $tag = $tag . ':';
-                foreach ($stmts as $stmt) {
-                    if (StringDataType::startsWith($stmt, $tag, false)) {
-                        return trim(StringDataType::substringAfter($stmt, $tag));
-                    }
-                }
-            }
-            // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($sql, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
-        }
-        return $sql;
+        return SqlDataType::findSqlDialect($sql, $this->getSqlDialects());
     }
 
     /**

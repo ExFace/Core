@@ -292,21 +292,4 @@ class JsonDataType extends TextDataType
                 throw new InvalidArgumentException('Datatype: ' . $dataType->getAlias() . ' not recognized.');
         }
     }
-
-    /**
-     * Wraps given code in a markdown code block
-     * 
-     * @param string $code
-     * @param string|null $language
-     * @return string
-     */
-    public static function escapeCodeBlock(string $code, ?string $language = null) : string
-    {
-        return <<<MD
-
-```{$language}
-{$code}
-```
-MD;
-    }
 }

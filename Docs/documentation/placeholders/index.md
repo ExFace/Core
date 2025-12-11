@@ -1,4 +1,4 @@
-# Placeholder System Documentation
+# Placeholders in Markdown docs
 
 Placeholders are used to dynamically inject content into Markdown files.  
 A placeholder block must always begin with a `<!-- BEGIN` tag and end with a corresponding `<!-- END PlaceholderName -->` tag.  
@@ -18,6 +18,7 @@ If you believe there is an error in the generated content, please contact the so
 
 ```html
 <!-- BEGIN PlaceholderName:option1=value1&option2=value2 -->
+[#PlaceholderName#]
 <!-- END PlaceholderName -->
 ```
 
@@ -37,12 +38,21 @@ Example
 
 ```html
 <!-- BEGIN NavButtons:noprint=true -->
+<!-- noprint:start -->
+
+
+<!-- noprint:end -->
 <!-- END NavButtons -->
 ```
 
 ## Supported Placeholders
-- [SubPageList](SubPageListPlaceholder.md)
-- [ImageCaptionNr](ImageCaptionNumberPlaceholder.md)
-- [ImageList](ImageListPlaceholder.md)
-- [NavButtons](NavButtonsPlaceholder.md)
-- [ImageRef](ImageReferencePlaceholder.md)
+
+<!-- BEGIN SubPageList:depth=1 -->
+  - [ImageCaptionNr Placeholder](ImageCaptionNumberPlaceholder.md)
+  - [ImageList Placeholder](ImageListPlaceholder.md)
+  - [ImageRef Placeholder](ImageReferencePlaceholder.md)
+  - [NavButtons Placeholder](NavButtonsPlaceholder.md)
+  - [SubPageList Placeholder](SubPageListPlaceholder.md)
+
+
+<!-- END SubPageList -->

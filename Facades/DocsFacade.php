@@ -254,7 +254,7 @@ class DocsFacade extends AbstractHttpFacade
         if (is_string($prototypeSelector)) {
             $selectorString = $prototypeSelector;
         } else {
-            $selectorString = get_class($prototypeSelector);
+            $selectorString = '\\' . ltrim(get_class($prototypeSelector), '\\');
         }
         return 'api/docs/exface/Core/Docs/UXON/UXON_prototypes.md?selector=' . urlencode($selectorString);
     }
@@ -275,6 +275,15 @@ class DocsFacade extends AbstractHttpFacade
                 throw new InvalidArgumentException('Cannot generate docs URL for meta object: expecting object/selector instance or alias, got "' . gettype($aliasOrUid) . '"');
         }
         return 'api/docs/exface/Core/Docs/creating_metamodels/Available_metaobjects.md?selector=' . urlencode($selectorString);
+    }
+
+    /**
+     * @param string $pathRelativeToVendor
+     * @return string
+     */
+    public static function buildUrlToFile(string $pathRelativeToVendor) : string
+    {
+        return 'api/docs/' . FilePathDataType::normalize($pathRelativeToVendor, '/');
     }
 
     /**
