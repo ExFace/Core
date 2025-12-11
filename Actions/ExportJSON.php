@@ -17,6 +17,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
@@ -36,6 +37,7 @@ use exface\Core\Interfaces\DataSheets\PivotColumnInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Widgets\DataTableConfigurator;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -414,6 +416,16 @@ class ExportJSON extends ReadData implements iExportData
                 break;
             default:
                 $widgets = [];
+        }
+        
+        // Add optional columns, that are really exported
+        if (($exportedWidget instanceof iHaveConfigurator) && ($configurator = $exportedWidget->getConfiguratorWidget()) instanceof DataTableConfigurator) {
+            /** @var $column \exface\Core\Widgets\DataColumn */
+            foreach ($configurator->getOptionalColumns() as $column) {
+                if ($exportedSheet->getColumns()->has($column->getDataColumnName())) {
+                    $widgets[] = $column;
+                }
+            }
         }
 
         foreach ($additionalColumns as $sheetCol) {
