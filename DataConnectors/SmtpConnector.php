@@ -443,7 +443,7 @@ MD;
      */
     protected function getScheme() : string
     {
-        return $this->scheme ?? ($this->getTls() ? 'smpts://' : 'smpt://');
+        return $this->scheme ?? ($this->getTls() ? 'smtps://' : 'smpt://');
     }
     
     /**
