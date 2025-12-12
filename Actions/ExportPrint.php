@@ -29,7 +29,8 @@ use exface\Core\Widgets\Value;
  */
 class ExportPrint extends ExportJSON
 {
-    private array $alignedCols = [];
+    private array $colAlignments = [];
+    private array $colTypes = [];
     private $writer = null;
     private bool $autoPrint = true;
 
@@ -124,6 +125,7 @@ HTML);
             if ($widget->isHidden()) {
                 continue;
             }
+            
             // Name der Spalte
             if ($this->getUseAttributeAliasAsHeader() === true && ($widget instanceof iShowDataColumn) && $widget->isBoundToDataColumn()) {
                 $colHeader = $widget->getAttributeAlias();
@@ -132,6 +134,15 @@ HTML);
             }
             $colId = $widget->getDataColumnName();
 
+            switch (true) {
+                case $widget instanceof DataColumn:
+                    $this->colTypes[$colId] = $widget->getDataType();
+                    break;
+                case $widget instanceof Value:
+                    $this->colTypes[$colId] = $widget->getValueDataType();
+                    break;
+            }
+
             if ($colHeader === '' || $colHeader === null) {
                 $colHeader = $colId;
             }
@@ -139,7 +150,7 @@ HTML);
             // See if we need some special alignment
             $align = $this->buildCssAlign($widget);
             if ($align !== null) {
-                $this->alignedCols[$colId] = $align;
+                $this->colAlignments[$colId] = $align;
             }
             
             // The name of the column should be unique
@@ -212,13 +223,18 @@ HTML);
         foreach ($dataSheet->getRows() as $row) {
             $htmlRow = '';
             foreach ($headerKeys as $key) {
+                $val = $row[$key] ?? null;
+                $dataType = $this->colTypes[$key] ?? null;
+                if ($dataType !== null) {
+                    $val = $dataType->format($val);
+                }
                 $style = '';
-                if (null !== $align = $this->alignedCols[$key]) {
+                if (null !== $align = $this->colAlignments[$key]) {
                     $style = 'text-align:' . $align . ';';
                 }
                 $htmlRow .= <<<HTML
 
-                    <td style="{$style}">{$row[$key]}</td>
+                    <td style="{$style}">{$val}</td>
 HTML;
             }
             fwrite($fileHandle, <<<HTML
