@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca3bd09db0c9aa3bd025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/ModelValidatingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/ModelValidatingBehavior.php",
             "CONFIG_UXON": null,
             "OBJECT": "0x11e60ad7563429b089840050568905af",
             "APP": "0x31000000000000000000000000000000",
@@ -83,7 +83,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef8e1ea5a47b628e1e025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/TranslatableBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/TranslatableBehavior.php",
             "CONFIG_UXON": {
                 "translation_subfolder": "Behaviors",
                 "translation_filename_attribute_alias": "TRANSLATION_FILENAME",

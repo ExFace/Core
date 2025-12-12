@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb866298f22c428662025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/CacheClearingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/CacheClearingBehavior.php",
             "CONFIG_UXON": null,
             "OBJECT": "0x32350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
@@ -83,7 +83,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec87ff3af4d3ac87ff025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/PreventDuplicatesBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/PreventDuplicatesBehavior.php",
             "CONFIG_UXON": {
                 "disabled": true,
                 "duplicate_error_code": "73A6BVD",
@@ -116,7 +116,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef93e0dc0ae97e93e0025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/ValidatingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/ValidatingBehavior.php",
             "CONFIG_UXON": {
                 "invalid_if_on_update": [
                     {
