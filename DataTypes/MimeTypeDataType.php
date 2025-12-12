@@ -110,6 +110,13 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
         return $mime ?? $default;
     }
     
+    public static function guessExtensionOfMimeType(string $mime, string $default = 'txt') : string
+    {
+        $mime = mb_strtolower(trim($mime));
+        $ext = array_search($mime, static::getMimeTypesByExtension(), true);
+        return $ext === false ? $default : $ext;
+    }
+    
     protected static function getMimeTypesByExtension() : array
     {
         return [
