@@ -1894,8 +1894,8 @@ JS;
 
                 $srcData = [];
 
-                if ($cellWidget->getValueDataType() instanceof NumberEnumDataType) {
-    
+                if ($cellWidget->getValueDataType() instanceof NumberEnumDataType || $cellWidget->getValueDataType() instanceof BooleanDataType) {
+
                     // Having numerical ids (0 specifically) seems to cause problems with JExcel; seems to be an unfortunate implementation on their side
                     // 0 gets replaced with an empty value when selecting via the dropdown (probably a truthy check somewhere, all other numerical values are fine) 
                     // -> their example dropdown sources are also strings and not 0-indexed https://bossanova.uk/jspreadsheet/v4/examples/dropdown-and-autocomplete
