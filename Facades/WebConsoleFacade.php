@@ -192,7 +192,7 @@ class WebConsoleFacade extends AbstractHttpFacade
      */
     protected function setupStreaming() : WebConsoleFacade
     {
-        ob_end_clean();
+        @ob_end_clean();
         
         if (ini_get("zlib.output_compression") == 1) {
             ini_set('zlib.output_compression', 'Off');
@@ -201,8 +201,8 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
         
         set_time_limit(0);
-        ob_implicit_flush(true);
-        ob_end_flush();
+        @ob_implicit_flush(true);
+        @ob_end_flush();
         
         return $this;
     }    
