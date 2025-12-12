@@ -167,7 +167,7 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": null,
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "exface/Core/Facades/HttpFileServerFacade.php",
+            "TARGET_FACADE": "exface/core/Facades/HttpFileServerFacade.php",
             "TARGET_APP": null
         },
         {
@@ -211,7 +211,7 @@
             },
             "TARGET_ACTION_MODEL": null,
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "exface/Core/Facades/HttpTaskFacade.php",
+            "TARGET_FACADE": "exface/core/Facades/HttpTaskFacade.php",
             "TARGET_APP": null
         }
     ],

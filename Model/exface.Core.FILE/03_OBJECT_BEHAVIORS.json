@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8415c67741bddafce74e5434dc47d",
-            "BEHAVIOR": "exface/Core/Behaviors/TimeStampingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/TimeStampingBehavior.php",
             "CONFIG_UXON": {
                 "updated_on_attribute_alias": "MODIFIED_ON"
             },
@@ -85,7 +85,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec947bde10227a947b025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/FileBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/FileBehavior.php",
             "CONFIG_UXON": {
                 "filename_attribute": "FILENAME",
                 "contents_attribute": "CONTENTS",

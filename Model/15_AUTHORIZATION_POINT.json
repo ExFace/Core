@@ -103,7 +103,7 @@
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\UiPageAuthorizationPolicy",
-            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Page_AP.md",
+            "DOCS": "exface/core/Docs/Security/Authorization/Authorization_points/Page_AP.md",
             "TARGET_APP_APPLICABLE": 0
         },
         {
@@ -125,7 +125,7 @@
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPolicy",
-            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Context_AP.md",
+            "DOCS": "exface/core/Docs/Security/Authorization/Authorization_points/Context_AP.md",
             "TARGET_APP_APPLICABLE": 0
         },
         {
@@ -147,7 +147,7 @@
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\HttpRequestAuthorizationPolicy",
-            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Facade_AP.md",
+            "DOCS": "exface/core/Docs/Security/Authorization/Authorization_points/Facade_AP.md",
             "TARGET_APP_APPLICABLE": 0
         },
         {
@@ -169,7 +169,7 @@
             "DEFAULT_EFFECT_IN_APP": "P",
             "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPolicy",
-            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Action_AP.md",
+            "DOCS": "exface/core/Docs/Security/Authorization/Authorization_points/Action_AP.md",
             "TARGET_APP_APPLICABLE": 1
         },
         {
@@ -191,7 +191,7 @@
             "DEFAULT_EFFECT_IN_APP": "P",
             "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\DataAuthorizationPolicy",
-            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Data_AP.md",
+            "DOCS": "exface/core/Docs/Security/Authorization/Authorization_points/Data_AP.md",
             "TARGET_APP_APPLICABLE": 1
         },
         {
@@ -213,7 +213,7 @@
             "DEFAULT_EFFECT_IN_APP": "P",
             "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\CommandLineAuthorizationPolicy",
-            "DOCS": "exface/Core/Docs/Security/Authorization/Authorization_points/Facade_AP.md",
+            "DOCS": "exface/core/Docs/Security/Authorization/Authorization_points/Facade_AP.md",
             "TARGET_APP_APPLICABLE": 0
         }
     ],

@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0bdbe35734cb4bdbe025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/CustomAttributeDefinitionBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/CustomAttributeDefinitionBehavior.php",
             "CONFIG_UXON": {
                 "name_attribute": "NAME",
                 "alias_attribute": "OBJECT__ALIAS",

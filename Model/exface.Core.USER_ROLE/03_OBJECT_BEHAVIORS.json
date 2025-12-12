@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9a0e4f8c29fd8abc0205857feb80",
-            "BEHAVIOR": "exface/Core/Behaviors/UndeletableBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/UndeletableBehavior.php",
             "CONFIG_UXON": {
                 "condition_group": {
                     "operator": "AND",
@@ -94,7 +94,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebbd69fbcdbb00bd69025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/AliasGeneratingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/AliasGeneratingBehavior.php",
             "CONFIG_UXON": {
                 "source_attribute_alias": "NAME",
                 "target_attribute_alias": "ALIAS",

@@ -45,7 +45,7 @@ class UxonPrototypeMarkdownPrinter
     /**
      * Examples:
      * - `\exface\Core\CommonLogic\DataSheets\DataSheet`
-     * - `exface/Core/CommonLogic/DataSheets/DataSheet.php`
+     * - `exface/core/CommonLogic/DataSheets/DataSheet.php`
      * 
      * @param string $prototypeClassOrFilepath
      */
