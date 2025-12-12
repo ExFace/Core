@@ -192,6 +192,7 @@ class WebConsoleFacade extends AbstractHttpFacade
      */
     protected function setupStreaming() : WebConsoleFacade
     {
+        // Silence PHP notices if buffer empty
         @ob_end_clean();
         
         if (ini_get("zlib.output_compression") == 1) {
