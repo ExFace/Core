@@ -53,6 +53,8 @@
 	"ACTION.EXPORTXLSX.FILTER": "Used filters",
 	"ACTION.EXPORTXLSX.SHEET_DATA": "Data",
 	"ACTION.EXPORTXLSX.SHEET_LEGEND": "Legend",
+    "ACTION.EXPORTPRINT.NAME": "Print",
+    "ACTION.EXPORTPRINT.RESULT": "Opening a separate tab for printing",
 
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",

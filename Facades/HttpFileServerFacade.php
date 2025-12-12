@@ -146,6 +146,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         
         switch (true) {
+            // temp/path/to/file
             case $mode === self::URL_PATH_TEMP:
                 $filename = urldecode(implode('/', $pathParts));
                 $fileInfo = new LocalFileInfo($this->getWorkbench()->filemanager()->getPathToCacheFolder() . '/' . $filename);
@@ -155,6 +156,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
                     @unlink($fileInfo->getPathAbsolute());
                 });
                 break;
+            // obj_alias/uid
+            // TODO this is a bit too simple - what about files within a single folder? The would end up here too.
             case count($pathParts) === 2:
                 $objSel = urldecode($pathParts[0]);
                 $uid = urldecode($pathParts[1]);
@@ -171,8 +174,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 }
                 $fileInfo = DataSourceFileInfo::fromObjectSelectorAndUID($this->getWorkbench(), $objSel, $uid);
                 break;
+            // just path/to/file
             default:
                 $fileInfo = new LocalFileInfo($pathParts[0]);
+                $cachePath = $this->getWorkbench()->filemanager()->getPathToCacheFolder() . DIRECTORY_SEPARATOR . $pathParts[0];
+                // If the file cannot be found directly, see if it is in the temp/ folder
+                if (! $fileInfo->exists() && file_exists($cachePath)) {
+                    $fileInfo = new LocalFileInfo($cachePath);
+                }
                 break;
         }
         
@@ -391,6 +400,40 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public static function buildUrlToDownloadFile(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
     {
         // TODO route downloads over api/files and add an authorization point - see handle() method
+        $urlPath = static::buildUrlPathToFile($workbench, $absolutePath, self::URL_PATH_TEMP);
+
+        if ($relativeToSiteRoot) {
+            return $urlPath;
+        } else {
+            return $workbench->getUrl() . $urlPath;
+        }
+    }
+
+    /**
+     * @param WorkbenchInterface $workbench
+     * @param FileInfoInterface $fileInfo
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public static function buildUrlToViewFile(WorkbenchInterface $workbench, FileInfoInterface $fileInfo, bool $relativeToSiteRoot = true)
+    {
+        $urlPath = static::buildUrlPathToFile($workbench, $fileInfo->getPathAbsolute(), self::URL_PATH_VIEW);
+
+        if ($relativeToSiteRoot) {
+            return $urlPath;
+        } else {
+            return $workbench->getUrl() . $urlPath;
+        }
+    }
+
+    /**
+     * @param WorkbenchInterface $workbench
+     * @param string $absolutePath
+     * @param string $innerPath
+     * @return string
+     */
+    protected static function buildUrlPathToFile(WorkbenchInterface $workbench, string $absolutePath, string $innerPath = self::URL_PATH_TEMP) : string
+    {
         $installationPath = FilePathDataType::normalize($workbench->getInstallationPath());
         $absolutePath = FilePathDataType::normalize($absolutePath);
         if (StringDataType::startsWith($absolutePath, $installationPath) === false) {
@@ -404,19 +447,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
             $urlEnd = urlencode(StringDataType::substringAfter($absolutePath, $cachePath));
             // IMPORTANT: Decode `/` characters back because Apache and nginx will treat urlencoded 
-            // slashes in the path differently and will issues 404 errors themselves.
+            // slashes in the path differently and will issue 404 errors themselves.
             $urlEnd = str_replace('%2F', '/', $urlEnd);
-            $urlPath = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_TEMP . '/' . $urlEnd;
+            $urlPath = $facade->getUrlRouteDefault() . '/' . $innerPath . '/' . $urlEnd;
         } else {
             $urlPath = $relativePath;
         }
-
-        if ($relativeToSiteRoot) {
-            return $urlPath;
-        } else {
-            return $workbench->getUrl() . $urlPath;
-        }
-    }    
+        return $urlPath;
+    }
     
     /**
      * Generates a URL to download a file represented by the given meta object and UID
@@ -449,9 +487,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public static function buildUrlToViewData(MetaObjectInterface $object, string $uid, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
     {
         $url = static::buildUrlForObjectUid($object, $uid, self::URL_PATH_VIEW, $urlEncodeUid);
-        if ($urlParams) {
-            $url .= '?'. $urlParams;
-        }
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
     

@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -206,7 +207,8 @@ class ExportJSON extends ReadData implements iExportData
             case 'text/csv': return 'csv';
             case 'text/plain': return 'txt';
             case 'application/vnd.openxmlformats-officedocument. spreadsheetml.sheet': return 'xlsx';
-            // TODO add more from https://wiki.selfhtml.org/wiki/MIME-Type/%C3%9Cbersicht#X
+            default:
+                return MimeTypeDataType::guessExtensionOfMimeType($this->getMimeType());
         }
         return '';
     }
@@ -258,9 +260,9 @@ class ExportJSON extends ReadData implements iExportData
         $lazyExport = $this->isLazyExport($dataSheetMaster);
         $rowsOnPage = $this->getLimitRowsPerRequest();
         
-        // If there we expect to do split requests, we MUST sort over a unique attribute!
+        // If we expect to do split requests, we MUST sort over a unique attribute!
         // Otherwise, the results of subsequent requests may contain data in different order
-        // resulting in dublicate or missing rows from the point of view of the entire
+        // resulting in duplicate or missing rows from the point of view of the entire
         // (combined) export.
         if ($rowsOnPage > 0) {
             if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
