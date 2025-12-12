@@ -54,8 +54,7 @@ class ExportPrint extends ExportJSON
         if (null === $message = $this->getResultMessageText()) {
             $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTPRINT.RESULT');
         }
-        
-        $resultLink = ResultFactory::createUriResult($task, $url, $this->translate('RESULT'));
+        $resultLink = ResultFactory::createUriResult($task, $url, $message);
         $resultLink->setDownload(false);
         $resultLink->setOpenInNewWindow(true);
         return $resultLink;
