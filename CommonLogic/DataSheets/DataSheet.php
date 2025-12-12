@@ -790,14 +790,24 @@ class DataSheet implements DataSheetInterface
             } catch (Throwable $e) {
                 throw new DataSheetReadError($this, $e->getMessage(), null, $e);
             }
+            // If the result is an array, double-check to see if the number of elements matches the number of rows
             if (is_array($vals)) {
-                // See if the expression returned more results, than there were rows. If so, it was also performed on
-                // the total rows. In this case, we need to slice them off and pass to set_column_values() separately.
-                // This only works, because evaluating an expression cannot change the number of data rows! This justifies
-                // the assumption, that any values after count_rows() must be total values.
-                if ($this->countRows() < count($vals)) {
-                    $totals = array_slice($vals, $this->countRows());
-                    $vals = array_slice($vals, 0, $this->countRows());
+                switch (true) {
+                    // See if the expression returned more results, than there were rows. If so, it was also performed on
+                    // the total rows. In this case, we need to slice them off and pass to set_column_values() separately.
+                    // This only works, because evaluating an expression cannot change the number of data rows! This justifies
+                    // the assumption, that any values after count_rows() must be total values.
+                    case $this->countRows() < count($vals):
+                        $totals = array_slice($vals, $this->countRows());
+                        $vals = array_slice($vals, 0, $this->countRows());
+                        break;
+                    // If the expression returns fewer rows, we do not know, how to distribute them - unless it is
+                    // actually a single value, which means we can place it in every row.
+                    case $this->countRows() > count($vals):
+                        $uniqueVals = array_unique($vals);
+                        if (count($uniqueVals) === 1) {
+                            $vals = array_pad($vals, $this->countRows(), $uniqueVals[0]);
+                        }
                 }
             }
             $this->setColumnValues($name, $vals, $totals);
