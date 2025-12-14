@@ -3,8 +3,9 @@ namespace exface\Core\Actions;
 
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -220,13 +221,24 @@ HTML);
     protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
     {
         $fileHandle = $this->getWriter();
+        $errors = [];
         foreach ($dataSheet->getRows() as $row) {
             $htmlRow = '';
             foreach ($headerKeys as $key) {
                 $val = $row[$key] ?? null;
                 $dataType = $this->colTypes[$key] ?? null;
                 if ($dataType !== null) {
-                    $val = $dataType->format($val);
+                    try {
+                        $val = $dataType->format($val);
+                    } catch (DataTypeValidationError|DataTypeCastingError $e) {
+                        // Do nothing - just skip formatting
+                        $msg = $e->getMessage();
+                        if (! array_key_exists($msg, $errors)) {
+                            $errors[$msg] = ['exception' => $e, 'count' => 1];
+                        } else {
+                            $errors[$msg]['count']++;
+                        }
+                    }
                 }
                 $style = '';
                 if (null !== $align = $this->colAlignments[$key]) {
@@ -243,6 +255,10 @@ HTML;
                     {$htmlRow}
                 </tr>
 HTML);
+        }
+        foreach ($errors as $msg => $err) {
+            $e = $err['exception'];
+            $this->getWorkbench()->getLogger()->logException(new ActionRuntimeError($this, 'Failed to format ' . $err['count'] . ' exported values. ' . $e->getMessage()));
         }
     }
 
