@@ -44,6 +44,9 @@ class ExportPrint extends ExportJSON
     {
         parent::init();
         $this->setIcon(Icons::PRINT_);
+        
+        // Disable default formatting for enums because we are going to format ALL values anyway!
+        $this->setFormatEnumsAsLabels(false);
     }
 
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
@@ -258,7 +261,7 @@ HTML);
         }
         foreach ($errors as $msg => $err) {
             $e = $err['exception'];
-            $this->getWorkbench()->getLogger()->logException(new ActionRuntimeError($this, 'Failed to format ' . $err['count'] . ' exported values. ' . $e->getMessage()));
+            $this->getWorkbench()->getLogger()->logException(new ActionRuntimeError($this, 'Failed to format ' . $err['count'] . ' exported values. ' . $e->getMessage(), null, $e));
         }
     }
 
