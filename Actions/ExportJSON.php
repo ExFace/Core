@@ -87,23 +87,18 @@ use exface\Core\Widgets\DataTableConfigurator;
 class ExportJSON extends ReadData implements iExportData
 {
     private $downloadable = true;
-    
     private $filename = null;
-
     private ?string $filePathAbsolute = null;
-    
     protected $mimeType = null;
 
     private $writer = null;
     
     private $useAttributeAliasAsHeader = false;
+    private $formatEnums = true;
     
     private $limitRowsPerRequest = 10000;
-    
     private $limitTimePerRequest = 300;
-    
     private $firstRowWritten = false;
-    
     private $lazyExport = null;
 
     private $exportMapper = null;
@@ -281,6 +276,7 @@ class ExportJSON extends ReadData implements iExportData
         $rowOffset = 0;
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
+        $pageSheet = null;
         do {
             if ($pageSheet === null) {
                 $pageSheet = $dataSheetMaster->copy();
@@ -302,15 +298,17 @@ class ExportJSON extends ReadData implements iExportData
             $pageSheet->setRowsOffset($rowOffset);
             $pageSheet->dataRead();
             
-            foreach ($pageSheet->getColumns() as $col) {
-                $type = $col->getDataType();
-                if ($type instanceof EnumDataTypeInterface) {
-                    $values = $col->getValues();
-                    $newValues = [];
-                    foreach ($values as $val) {
-                        $newValues[] = $type->getLabelOfValue($val);
+            if ($this->willFormatEnumsAsLabels()) {
+                foreach ($pageSheet->getColumns() as $col) {
+                    $type = $col->getDataType();
+                    if ($type instanceof EnumDataTypeInterface) {
+                        $values = $col->getValues();
+                        $newValues = [];
+                        foreach ($values as $val) {
+                            $newValues[] = $type->getLabelOfValue($val);
+                        }
+                        $col->setValues($newValues);
                     }
-                    $col->setValues($newValues);
                 }
             }
 
@@ -826,5 +824,28 @@ class ExportJSON extends ReadData implements iExportData
         $this->exportMapper = $mapper;
         return $this;
     }
+
+    /**
+     * @return bool
+     */
+    protected function willFormatEnumsAsLabels() : bool
+    {
+        return $this->formatEnums;
+    }
+
+    /**
+     * Set to FALSE to keep raw values for enumerations - e.g. the status id instead of its name
+     * 
+     * @uxon-property format_enums_as_labels
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setFormatEnumsAsLabels(bool $trueOrFalse) : ExportJSON
+    {
+        $this->formatEnums = $trueOrFalse;
+        return $this;
+    }
 }
-?>
