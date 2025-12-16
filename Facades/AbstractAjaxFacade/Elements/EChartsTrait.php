@@ -49,7 +49,7 @@ use exface\Core\DataTypes\NumberDataType;
  *      ```
  * 2. Add the following lines to the config of the facade:
  *      ```
- *      "LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
+ *      "LIBS.ECHARTS.ECHARTS_JS": "exface/core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
  *      "LIBS.TINYCOLOR.JS": "npm-asset/tinycolor2/dist/tinycolor-min.js",
  *      "LIBS.TINYGRADIENT.JS": "npm-asset/tinygradient/browser.js",
  *      "WIDGET.CHART.COLORS": ["#c23531", "#2f4554", "#61a0a8", "#d48265", "#91c7ae", "#749f83", "#ca8622", "#bda29a",

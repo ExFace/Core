@@ -72,7 +72,7 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f08a973138cd908a97025041000001",
             "OBJECT": "0x11ee8692965c23ce8692025041000001",
-            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "ALIAS": "ShowModelSearchDialog",
             "NAME": "Usage in model",
             "SHORT_DESCRIPTION": "Where is this used? Find mentions of the alias of this entity in the metamodel.",

@@ -21,7 +21,7 @@ INSERT IGNORE INTO `exf_data_type` (
 	'TimeZone',
 	0x31000000000000000000000000000000,
 	'Time zone',
-	'exface/Core/DataTypes/TimeZoneDataType.php',
+	'exface/core/DataTypes/TimeZoneDataType.php',
 	NULL,
 	'{"widget_type":"InputSelect"}',
 	NULL,
@@ -63,4 +63,3 @@ UPDATE exf_data_connection
 		
 ALTER TABLE `exf_data_connection`
 	DROP COLUMN `time_zone`;
-

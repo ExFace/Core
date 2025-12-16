@@ -52,7 +52,7 @@ INSERT IGNORE INTO `exf_auth_point` (
      1,
      0,
      1,
-     'exface/Core/Docs/Security/Authorization/Authorization_points/Data_AP.md'
+     'exface/core/Docs/Security/Authorization/Authorization_points/Data_AP.md'
  );
 
 -- DOWN

@@ -80,11 +80,11 @@ class OneTimeLink extends AbstractPermalink
     private function getPermalinkUid() : string
     {
         $permalink = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PERMALINK');
-        $permalink->getFilters()->addConditionFromString('PROTOTYPE_FILE', 'exface/Core/Permalinks/OneTimeLink.php', ComparatorDataType::EQUALS);
+        $permalink->getFilters()->addConditionFromString('PROTOTYPE_FILE', 'exface/core/Permalinks/OneTimeLink.php', ComparatorDataType::EQUALS);
         $permalink->getColumns()->addMultiple(['UID', 'ALIAS', 'APP__ALIAS']);
         $permalink->dataRead();
         if ($permalink->countRows() === 0) {
-            throw new RuntimeException('One Time Link Permalink cannot be found (prototype "exface/Core/Permalinks/OneTimeLink.php"');
+            throw new RuntimeException('One Time Link Permalink cannot be found (prototype "exface/core/Permalinks/OneTimeLink.php"');
         }
             
         $row = $permalink->getRow();

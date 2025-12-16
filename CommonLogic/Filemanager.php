@@ -210,7 +210,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToLogDetailsFolder()
+    public function getPathToLogDetailsFolder(?string $date = null) : string
     {
         if (is_null($this->path_to_log_detail_folder)) {
             $this->path_to_log_detail_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG_DETAILS;
@@ -218,7 +218,11 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
                 mkdir($this->path_to_log_detail_folder);
             }
         }
-        return $this->path_to_log_detail_folder;
+        $path = $this->path_to_log_detail_folder;
+        if ($date !== null) {
+            $path .= DIRECTORY_SEPARATOR . $date;
+        }
+        return $path;
     }
     
     /**
