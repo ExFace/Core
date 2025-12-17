@@ -20,7 +20,7 @@ trait VersionedSelectorTrait
     public function getVersion() : string
     {
         if ($this->version === null) {
-            $version = explode($this->toString(), VersionedSelectorInterface::VERSION_SEPARATOR, 2)[1];
+            $version = explode(VersionedSelectorInterface::VERSION_SEPARATOR, $this->toString(), 2)[1];
             $this->version = $version;
         }
         return $this->version;

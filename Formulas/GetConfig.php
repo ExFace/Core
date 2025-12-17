@@ -9,6 +9,10 @@ use exface\Core\CommonLogic\Model\Formula;
  * 
  * Searches the core config by default. To access the config of another app, pass the app alias
  * as the second parameter.
+ * 
+ * Examples:
+ * 
+ * `=GetConfig('CLEANUP.WEBSERVICE_REQUESTS.DELETE_BATCH', 'axenox.ETL')`
  *  
  */
 class GetConfig extends Formula

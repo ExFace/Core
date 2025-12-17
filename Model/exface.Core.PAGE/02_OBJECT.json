@@ -106,7 +106,7 @@
                 "widget_type": "Dialog",
                 "widgets": [
                     {
-                        "widget_type": "tabs",
+                        "widget_type": "Tabs",
                         "tabs": [
                             {
                                 "caption": "Page Properties",

@@ -19,7 +19,9 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
- * Collects required data for rows of a given data sheet
+ * Collects required data for rows of a given data sheet.
+ * 
+ * 
  *
  * @see DataCollectorInterface
  */
@@ -96,7 +98,16 @@ class DataCollector implements DataCollectorInterface
                 $this->resultSheet = $dataSheet;
                 break;
             case $dataSheet->hasUidColumn(true):
-                $this->resultSheet = $dataSheet->extractSystemColumns();
+                // Read missing data for a COPY of the given data sheet. However, the copy only needs to keep
+                // column really required for our collector - keeping them all might mean reading them all again
+                // which would cause unnecessary overhead. On the other hand, keeping just the UID would mean
+                // losing unsaved changes - see method description for more details.
+                // It is important to keep all required columns because they might have modified (unsaved) data,
+                // so if we would read them again, we would read "old" data. For this reason, it is also important
+                // to keep columns, that are not required explicitly, but are needed for required formulas - if
+                // these have changes, the formula would have a different result from what we would read from the
+                // data source.
+                $this->resultSheet = $this->extractRequiredColumns($dataSheet);
                 $this->readMissingDataWithUid($this->resultSheet, $logBook);
                 break;
             default:
@@ -189,9 +200,9 @@ class DataCollector implements DataCollectorInterface
 
     /**
      * @param DataSheetInterface $dataSheet
-     * @return array|null
+     * @return ExpressionInterface[]
      */
-    protected function getMissingExpressions(DataSheetInterface $dataSheet) : ?array
+    protected function getMissingExpressions(DataSheetInterface $dataSheet) : array
     {
         $missing = [];
         foreach ($this->getRequiredExpressions() as $expr) {
@@ -403,6 +414,7 @@ class DataCollector implements DataCollectorInterface
 
     /**
      * @inheritDoc
+     * @see DataCollectorInterface::getRequiredExpressions()
      */
     public function getRequiredExpressions(): array
     {
@@ -422,6 +434,26 @@ class DataCollector implements DataCollectorInterface
             }
         }
         return $this->requiredExpressions ?? [];
+    }
+
+    /**
+     * Returns TRUE if the given expression is either required explicitly or needed for any of the required formulas
+     * 
+     * @param ExpressionInterface|string $expr
+     * @return bool
+     */
+    protected function isRequired(ExpressionInterface|string $expr) : bool
+    {
+        $exprStr = $expr instanceof ExpressionInterface ? $expr->__toString() : $expr;
+        foreach ($this->getRequiredExpressions() as $reqExpr) {
+            if ($reqExpr->__toString() === $exprStr) {
+                return true;
+            }
+            if (in_array($exprStr, $reqExpr->getRequiredAttributes(), true) === true) {
+                return true;
+            }
+        }     
+        return false;
     }
 
     /**
@@ -475,22 +507,36 @@ class DataCollector implements DataCollectorInterface
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     protected function willReadMissingFromData() : bool
     {
         return $this->readMissingData;
     }
 
+    /**
+     * @inheritDoc
+     * @see DataCollectorInterface::setReadMissingData()
+     */
     public function setReadMissingData(bool $trueOrFalse) : DataCollectorInterface
     {
         $this->readMissingData = $trueOrFalse;
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     protected function willIgnoreUnreadableColumns() : bool
     {
         return $this->ignoreUnreadable;
     }
-
+    
+    /**
+     * @inheritDoc
+     * @see DataCollectorInterface::setIgnoreUnreadableColumns()
+     */
     public function setIgnoreUnreadableColumns(bool $trueOrFalse) : DataCollectorInterface
     {
         $this->ignoreUnreadable = $trueOrFalse;
@@ -504,5 +550,49 @@ class DataCollector implements DataCollectorInterface
     public function getWorkbench()
     {
         return $this->workbench;
+    }
+
+    /**
+     * Returns a copy of the given data sheet, which only has column required for this collector
+     * 
+     * A column is required if
+     * - Its expression is required explicitly
+     * - It is an attribute column and any of the required column (e.g. formulas) need that attribute
+     * 
+     * It is important to keep all required columns because they might have modified (unsaved) data,
+     * so if we would read them again, we would read "old" data. For this reason, it is also important
+     * to keep columns, that are not required explicitly, but are needed for required formulas - if
+     * these have changes, the formula would have a different result from what we would read from the
+     * data source.
+     * 
+     * The optional argument $keepSystemCols allows to force keeping/removing system columns, that are not
+     * explicitly required. If not specified, system columns of not-aggregated data sheets will be kept and
+     * those of data sheets with aggregations will be removed.
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param bool|null $keepSystemCols
+     * @return DataSheetInterface
+     */
+    protected function extractRequiredColumns(DataSheetInterface $dataSheet, ?bool $keepSystemCols = null) : DataSheetInterface
+    {
+        $keepSystemCols = $keepSystemCols ?? ! ($dataSheet->hasAggregations() || $dataSheet->hasAggregateAll());
+        $copy = $dataSheet->copy();
+        $reqStrings = [];
+        foreach ($this->getRequiredExpressions() as $expr) {
+            $reqStrings[] = $expr->__toString();
+            foreach ($expr->getRequiredAttributes() as $attrStr) {
+                $reqStrings[] = $attrStr;
+            }
+        }
+        foreach ($copy->getColumns() as $col) {
+            if ($keepSystemCols && $col->isAttribute() && $col->getAttribute()->isSystem()) {
+                continue;
+            }
+            $colExprStr = $col->getExpressionObj()->__toString();
+            if (! in_array($colExprStr, $reqStrings, true)) {
+                $copy->getColumns()->remove($col);
+            }
+        }
+        return $copy;
     }
 }

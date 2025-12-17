@@ -2000,14 +2000,16 @@ SQL;
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadMessageData()
      */
-    public function loadMessageData(MessageInterface $message) : MessageInterface
+    public function loadMessageData(MessageInterface $message, bool $overwrite = false) : MessageInterface
     {
         $messageCode = MessageCodeDataType::cast($message->getCode());
 
         if (! array_key_exists($messageCode, $this->messages_loaded)) {
             $sql = <<<SQL
 /* Load message */
-SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS {$this->escapeAlias('app_oid')}
+SELECT 
+        *,
+        {$this->buildSqlUuidSelector('app_oid')} AS {$this->escapeAlias('app_oid')}
     FROM exf_message
     WHERE code = '{$messageCode}'
 SQL;
@@ -2021,22 +2023,24 @@ SQL;
         if (empty($row)) {
             return $message;
         }
-
-        $message->setTitle($row['title']);
-        $message->setType($row['type']);
-
-        if ($row['hint']) {
-            $message->setHint($row['hint']);
+        
+        $uxon = new UxonObject([
+            'title' => $row['title']
+        ]);
+        if ($val = $row['hint']) {
+            $uxon->setProperty('hint', $val);
         }
-        if ($row['description']) {
-            $message->setDescription($row['description']);
+        if ($val = $row['description']) {
+            $uxon->setProperty('description', $val);
         }
-        if ($row['app_oid']) {
-            $message->setAppSelector($row['app_oid']);
+        if ($val = $row['docs_path']) {
+            $uxon->setProperty('docs_path', $val);
         }
+        
+        $message->setAppSelector($row['app_oid']);
+        $message->importUxonObject($uxon, [], $overwrite);
 
         $this->getWorkbench()->eventManager()->dispatch(new OnMessageLoadedEvent($message));
-
         return $message;
     }
 

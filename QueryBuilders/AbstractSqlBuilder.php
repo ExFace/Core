@@ -2,6 +2,8 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\SqlDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -1610,10 +1612,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
 
         if ($add_nvl) {
-            // do some prettyfying
+            // do some prettifying
             // return zero for number fields if the subquery does not return anything
-            if ($qpart->getDataType() instanceof NumberDataType) {
-                $output = $this->buildSqlSelectNullCheck($output, 0);
+            if (null !== $nullValue = $this->buildSqlSelectNullCheckFallback($qpart)) {
+                $output = $this->buildSqlSelectNullCheck($output, $nullValue);
             }
         }
 
@@ -2829,14 +2831,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
     {
-        switch ($select_from) {
-            case '':
-                $select_from = '';
-                break;
-            case null:
-                $select_from = $this->getShortAlias($this->getMainObject()->getAlias());
-                break;
-        }
+        $comment = "\n" . $this->buildSqlComment("buildSqlOrderBy(" . $qpart->getAlias() . ", " . $select_from . ")") . "\n";
+        $select_from ??= $this->getShortAlias($this->getMainObject()->getAlias());
 
         switch (true) {
             case $customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY):
@@ -2859,7 +2855,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             default:
                 $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
-        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
+        return $comment . ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
     }
 
     /**
@@ -2875,7 +2871,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlGroupBy(QueryPart $qpart, $select_from = null)
     {
-        $output = '';
         if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
             // Seems like SQL statements are not supported in the GROUP BY clause in general
             throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
@@ -3590,23 +3585,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function findSqlDialect(string $sql) : string
     {
-        if (StringDataType::startsWith($sql, '@')) {
-            $stmts = preg_split('/(^|\R)@/', $sql);
-            $tags = $this->getSqlDialects();
-            // Start with the first supported tag and see if it matches any statement. If not,
-            // proceed with the next tag, etc.
-            foreach ($tags as $tag) {
-                $tag = $tag . ':';
-                foreach ($stmts as $stmt) {
-                    if (StringDataType::startsWith($stmt, $tag, false)) {
-                        return trim(StringDataType::substringAfter($stmt, $tag));
-                    }
-                }
-            }
-            // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($sql, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
-        }
-        return $sql;
+        return SqlDataType::findSqlDialect($sql, $this->getSqlDialects());
     }
 
     /**
@@ -3792,5 +3771,22 @@ SQL;
     protected function buildSqlAliasForRowCounter() : string
     {
         return 'EXFCNT';
+    }
+
+    /**
+     * Returns the COALESCE(, x) fallback value to be used for the given query part or NULL if no null-check is required
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return string|int|float|null
+     */
+    protected function buildSqlSelectNullCheckFallback(QueryPartAttribute $qpart) : string|int|float|null
+    {
+        $dataType = $qpart->getDataType();
+        switch (true) {
+            case $dataType instanceof NumberDataType && ! $dataType instanceof HexadecimalNumberDataType:
+                return 0;
+            // IDEA add other COALESCE() values here in future
+        }
+        return null;
     }
 }

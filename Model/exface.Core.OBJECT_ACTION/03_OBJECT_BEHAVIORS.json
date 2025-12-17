@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaadf88812bfb8adf80205857feb80",
-            "BEHAVIOR": "exface/Core/Behaviors/TranslatableBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/TranslatableBehavior.php",
             "CONFIG_UXON": {
                 "translation_subfolder": "Actions",
                 "translation_filename_attribute_alias": "ALIAS_WITH_NS",
@@ -95,7 +95,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb88d6e3b9d89c88d6025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/CacheClearingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/CacheClearingBehavior.php",
             "CONFIG_UXON": null,
             "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",

@@ -72,7 +72,7 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb914ba92efe4e914b025041000001",
             "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
-            "ACTION_PROTOTYPE": "exface/Core/Actions/CreateData.php",
+            "ACTION_PROTOTYPE": "exface/core/Actions/CreateData.php",
             "ALIAS": "DisableScheduler",
             "NAME": "Turn OFF",
             "SHORT_DESCRIPTION": "",
@@ -117,7 +117,7 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb894cf55655ba894c025041000001",
             "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
-            "ACTION_PROTOTYPE": "exface/Core/Actions/DeleteObject.php",
+            "ACTION_PROTOTYPE": "exface/core/Actions/DeleteObject.php",
             "ALIAS": "EnableScheduler",
             "NAME": "Turn ON",
             "SHORT_DESCRIPTION": "",
@@ -154,6 +154,62 @@
                         ]
                     }
                 ]
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "Scheduler: Run scheduler now [SchedulerRunNow]",
+            "CREATED_ON": "2025-12-05 13:15:57",
+            "MODIFIED_ON": "2025-12-05 13:15:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f08d2c275801d28d2c025041000001",
+            "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
+            "ALIAS": "SchedulerRunNow",
+            "NAME": "Run scheduler now",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "icon": "clock-o",
+                "widget": {
+                    "widget_type": "Console",
+                    "disabled": true,
+                    "start_commands": [
+                        "action exface.Core:RunScheduler"
+                    ],
+                    "working_directory_path": "vendor/bin"
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "Scheduler: Start selected [SchedulerStartSeleted]",
+            "CREATED_ON": "2025-12-05 13:17:48",
+            "MODIFIED_ON": "2025-12-05 13:19:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f0826269a0f3b48262025041000001",
+            "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
+            "ALIAS": "SchedulerStartSeleted",
+            "NAME": "Start selected",
+            "SHORT_DESCRIPTION": "Force-run selected scheduler regardless of whether it is due or not",
+            "CONFIG_UXON": {
+                "icon": "play",
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "widget": {
+                    "widget_type": "Console",
+                    "disabled": true,
+                    "start_commands": [
+                        "action exface.Core:RunScheduler --task=\"[#NAME#]\""
+                    ],
+                    "working_directory_path": "vendor/bin"
+                }
             },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": 0,

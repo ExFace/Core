@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -107,9 +108,7 @@ use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
  *
  */
 class UneditableBehavior extends AbstractBehavior
-{
-    private $conditionGroupUxon = null;
-    
+{    
     private $preventEditIfUxon = null;
     
     private $dataCheckList = null;
@@ -159,7 +158,9 @@ class UneditableBehavior extends AbstractBehavior
             return;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $logbook->addDataSheet('Event data', $eventDataSheet);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
         $dataSheet = $eventDataSheet->copy();
         
@@ -182,7 +183,7 @@ class UneditableBehavior extends AbstractBehavior
         foreach ($this->getDataChecks() as $check) {
             if ($check->isApplicable($dataSheet)) {
                 try {
-                    $check->check($dataSheet);
+                    $check->check($dataSheet, $logbook);
                 } catch (DataCheckExceptionInterface $e) {
                     if (null !== ($badData = $e->getBadData()) && $badData->countRows() === 1) {
                         $rows = $badData->getRows();
@@ -210,7 +211,6 @@ class UneditableBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
-        return;
     }
     
     /**

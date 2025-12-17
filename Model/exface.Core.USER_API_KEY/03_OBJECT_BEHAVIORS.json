@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ee9cfc0a0342fe9cfc025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/PasswordHashingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/PasswordHashingBehavior.php",
             "CONFIG_UXON": {
                 "password_attribute_alias": "KEY_HASH"
             },

@@ -103,6 +103,8 @@ class InputCustom extends Input implements CustomWidgetInterface
     private $includeCss = [];
     
     private $includeJs = [];
+
+    private $includeJsModules = [];
     
     private $placeholders = [];
     
@@ -334,6 +336,10 @@ class InputCustom extends Input implements CustomWidgetInterface
             foreach ($this->getIncludeJs() as $url) {
                 $incl[] = '<script type="text/javascript" src="' . $url . '"></script>';
             }
+
+            foreach ($this->getIncludeJsModules() as $url) {
+                $incl[] = '<script type="module" src="' . $url . '"></script>';
+            }
         }
         
         return $incl;
@@ -420,6 +426,9 @@ class InputCustom extends Input implements CustomWidgetInterface
     /**
      * Include JavaScript files
      * 
+     * NOTE: This will only work for regular JS files. Those that need `type="module"` in HTML
+     * must be added via `include_js_modules`.
+     * 
      * @uxon-property include_js
      * @uxon-type array
      * @uxon-template ["// REPLACE WITH ABSOLUTE URL OR RELATIVE TO INSTALLATION"]
@@ -433,6 +442,35 @@ class InputCustom extends Input implements CustomWidgetInterface
             $this->includeJs = $urls->toArray();
         } else {
             $this->includeJs = $urls;
+        }
+        return $this;
+    }
+
+    /**
+     *
+     * @return string[]
+     */
+    public function getIncludeJsModules() : array
+    {
+        return $this->includeJsModules;
+    }
+
+    /**
+     * Include JavaScript modules - i.e. `<script type="module" src="url"></script>`
+     *
+     * @uxon-property include_js_modules
+     * @uxon-type array
+     * @uxon-template ["// REPLACE WITH ABSOLUTE URL OR RELATIVE TO INSTALLATION"]
+     *
+     * @param UxonObject|string[] $urls
+     * @return InputCustom
+     */
+    public function setIncludeJsModules($urls) : InputCustom
+    {
+        if ($urls instanceof UxonObject) {
+            $this->includeJsModules = $urls->toArray();
+        } else {
+            $this->includeJsModules = $urls;
         }
         return $this;
     }

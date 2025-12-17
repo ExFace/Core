@@ -138,7 +138,7 @@ class ObjectAttributeMutation extends AbstractMutation
      */
     protected function setChangeDescription(string $attributeDescription): ObjectAttributeMutation
     {
-        $this->changedAttributes['description'] = $attributeDescription;
+        $this->changedAttributes['SHORT_DESCRIPTION'] = $attributeDescription;
         return $this;
     }
 
