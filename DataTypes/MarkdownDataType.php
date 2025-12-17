@@ -249,4 +249,9 @@ class MarkdownDataType
 ```
 MD;
     }
+    
+    public static function makeHorizontalLine() : string
+    {
+        return "\n\n-------------------------------------\n\n";
+    }
 }

@@ -1,6 +1,6 @@
 # Initial configuration
 
-Check out `vendor/exface/Core/Config/System.config.json` for available global configuration options. Just copy any option into your `Config/System.config.json` to overwrite it. 
+Check out `vendor/exface/core/Config/System.config.json` for available global configuration options. Just copy any option into your `Config/System.config.json` to overwrite it. 
 
 Note that apps also can have their specific configuration files locateded in the apps folder. The `System.config.json` above contains the global configuration, that is valid for the entire installation with all its apps and users.
 

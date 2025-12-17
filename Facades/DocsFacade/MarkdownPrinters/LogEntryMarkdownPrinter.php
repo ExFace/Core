@@ -4,6 +4,7 @@ namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
 
@@ -27,9 +28,10 @@ class LogEntryMarkdownPrinter
      * and stores the cleaned value in upper case.
      */
     protected string $logId;
+    protected ?string $logFilePath = null;
 
     
-    public function __construct(WorkbenchInterface $workbench, string $logId, int $depth = 0)
+    public function __construct(WorkbenchInterface $workbench, string $logId, ?string $logFilePath = null, int $depth = 0)
     {
         $this->workbench = $workbench;
         
@@ -40,6 +42,7 @@ class LogEntryMarkdownPrinter
         }
         
         $this->logId = $logId;
+        $this->logFilePath = $logFilePath;
     }
     
     /**
@@ -56,12 +59,29 @@ class LogEntryMarkdownPrinter
     {
         $logId = $this->logId;
 
-        $logFileSheet = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.LOG');
-        $logFileCol = $logFileSheet->getColumns()->addFromExpression('PATHNAME_RELATIVE');
-        $logFileSheet->getFilters()->addConditionFromString('CONTENTS', $logId, ComparatorDataType::IS);
-        $logFileSheet->dataRead();
-
-        $logFile = $logFileCol->getValue(0);
+        // Find the message in the log file. 
+        // If we do not know the log file, search in all logs for the message id
+        if (! $this->logFilePath) {
+            $logFileSheet = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.LOG');
+            $logFileCol = $logFileSheet->getColumns()->addFromExpression('PATHNAME_RELATIVE');
+            $logFileSheet->getFilters()->addConditionFromString('CONTENTS', $logId, ComparatorDataType::IS);
+            $logFileSheet->dataRead();
+            $logFile = $logFileCol->getValue(0);
+            
+            // If the message cannot be found in the logs, try the traces
+            if (! $logFile) {
+                $logFileSheet = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.TRACE_LOG');
+                $logFileCol = $logFileSheet->getColumns()->addFromExpression('PATHNAME_RELATIVE');
+                $logFileSheet->getFilters()->addConditionFromString('CONTENTS', $logId, ComparatorDataType::IS);
+                $logFileSheet->dataRead();
+                $logFile = $logFileCol->getValue(0);
+                if (! $logFile) {
+                    throw new RuntimeException('Cannot file log message "' . $logId . '"');
+                }
+            }
+        } else {
+            $logFile = $this->logFilePath;
+        }
 
         $logEntrySheet = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.LOG_ENTRY');
         $logEntrySheet->getColumns()->addMultiple([
@@ -71,8 +91,10 @@ class LogEntryMarkdownPrinter
         $logEntrySheet->getFilters()->addConditionFromString('logfile', $logFile, ComparatorDataType::EQUALS);
         $logEntrySheet->dataRead();
 
+        // TODO throw errors if no message could be found or it has no details file or the file does not exist, etc.
+        
         $row = $logEntrySheet->getRow(0);
-        $detailsPath = $this->workbench->filemanager()->getPathToLogDetailsFolder(). '/' . $row['filepath'] . '.json';
+        $detailsPath = $this->workbench->filemanager()->getPathToLogDetailsFolder(). DIRECTORY_SEPARATOR . $row['filepath'] . '.json';
 
         $detailsJson = json_decode(file_get_contents($detailsPath), true);
         

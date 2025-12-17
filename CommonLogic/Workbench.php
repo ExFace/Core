@@ -489,6 +489,7 @@ class Workbench implements WorkbenchInterface
     {
         $url = $this->getConfig()->getOption('SERVER.BASE_URLS')->toArray()[0];
         if ($url !== null) {
+            $url = rtrim($url, '/') . '/';
             return $url;
         }
         

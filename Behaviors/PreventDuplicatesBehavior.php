@@ -1,7 +1,10 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataWriteEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataWriteEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
@@ -179,8 +182,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $eventMgr = $this->getWorkbench()->eventManager();
         // BEFORE create/update operation, split off data rows, that need different treatment because 
         // these they are duplicates
-        $eventMgr->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onBeforeCreateCheckDuplicates'], $beforePriority);
-        $eventMgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckDuplicates'], $beforePriority);
+        $eventMgr->addListener(OnBeforeCreateDataWriteEvent::getEventName(), [$this, 'onBeforeCreateCheckDuplicates'], $beforePriority);
+        $eventMgr->addListener(OnBeforeUpdateDataWriteEvent::getEventName(), [$this, 'onBeforeUpdateCheckDuplicates'], $beforePriority);
         // AFTER create/update include these rows back in the data sheet ot ensure it looks like the
         // original operation completed normally
         $eventMgr->addListener(OnCreateDataEvent::getEventName(), [$this, 'onOperationFinishedRestoreRows'], $afterPriority);    
@@ -197,22 +200,20 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     protected function unregisterEventListeners() : BehaviorInterface
     {
         $eventMgr = $this->getWorkbench()->eventManager();
-        $eventMgr->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onBeforeCreateCheckDuplicates']); 
-        $eventMgr->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckDuplicates']);
+        $eventMgr->removeListener(OnBeforeCreateDataWriteEvent::getEventName(), [$this, 'onBeforeCreateCheckDuplicates']); 
+        $eventMgr->removeListener(OnBeforeUpdateDataWriteEvent::getEventName(), [$this, 'onBeforeUpdateCheckDuplicates']);
         $eventMgr->removeListener(OnCreateDataEvent::getEventName(), [$this, 'onOperationFinishedRestoreRows']);
         $eventMgr->removeListener(OnUpdateDataEvent::getEventName(), [$this, 'onOperationFinishedRestoreRows']);
         
         return $this;
     }
-    
+
     /**
-     * 
-     * @param OnBeforeCreateDataEvent $event
-     * @throws DataSheetDuplicatesError
-     * @throws BehaviorRuntimeError
+     *
+     * @param OnBeforeCreateDataWriteEvent $event
      * @return void
      */
-    public function onBeforeCreateCheckDuplicates(OnBeforeCreateDataEvent $event)
+    public function onBeforeCreateCheckDuplicates(OnBeforeCreateDataWriteEvent $event)
     {
         if ($this->isDisabled()) {
             return ;
@@ -287,16 +288,14 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-        return; 
     }
-    
+
     /**
-     * 
-     * @param OnBeforeUpdateDataEvent $event
-     * @throws DataSheetDuplicatesError
+     *
+     * @param OnBeforeUpdateDataWriteEvent $event
      * @return void
      */
-    public function onBeforeUpdateCheckDuplicates(OnBeforeUpdateDataEvent $event)
+    public function onBeforeUpdateCheckDuplicates(OnBeforeUpdateDataWriteEvent $event)
     {
         if ($this->isDisabled()) {
             return;
@@ -384,7 +383,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-        return; 
     }
 
     /**
@@ -650,16 +648,25 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         // Extract rows from event data, that are relevant for duplicate search
         if ($this->hasCustomConditions()) {
-            $customConditionsFilters = ConditionGroupFactory::createForDataSheet($mainSheet, $this->getCompareWithConditions()->getOperator());
-            foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
-                if ($mainSheet->getColumns()->getByExpression($cond->getExpression())) {
-                    $customConditionsFilters->addCondition($cond);
+            $customConditions = $this->getCompareWithConditions();
+            DataCollector::fromConditionGroup($customConditions, $mainSheet->getMetaObject())
+                ->setIgnoreUnreadableColumns(true)
+                ->enrich($mainSheet);
+
+            $applicableConditions = ConditionGroupFactory::createForDataSheet($mainSheet, $customConditions->getOperator());
+            foreach ($customConditions->getConditions() as $cond) {
+                $col = $mainSheet->getColumns()->getByExpression($cond->getExpression());
+                if($col) {
+                    $applicableConditions->addCondition($cond);
+                    $mainSheet->getColumns()->add($col);
                 } else {
-                    $logbook->addLine('Ignoring condition: ´'  . $customConditionsFilters->__toString() . '´ in `compare_with_conditions` because required column is NOT part of event data sheet!');
+                    $logbook->addLine('Ignoring condition `' . $cond->__toString() . '` in `compare_with_conditions`' . 
+                    'because the required column is NOT present in the data sheet and could not be loaded.');
                 }
             }
-            $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $customConditionsFilters->__toString());
-            $mainSheet = $mainSheet->extract($customConditionsFilters);
+            
+            $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $applicableConditions->__toString());
+            $mainSheet = $mainSheet->extract($applicableConditions, false, $logbook);
         } else {
             $logbook->addLine('Will search for duplicates for all rows, no filtering required');
         }
@@ -793,12 +800,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function createDuplicatesError(DataSheetInterface $dataSheet, DataMatcherInterface $matcher, BehaviorLogBook $logbook) : DataSheetDuplicatesError
     {
-        $logbook->addLine('Sending an error about the duplicates');
         $object = $dataSheet->getMetaObject();
         $labelAttributeAlias = $object->getLabelAttributeAlias();
         $rows = $dataSheet->getRows();
-        $errorRowDescriptor = '';
-        $errorMessage = '';
         $duplValues = [];
         $duplRowNos = $matcher->getMatchedRowIndexes();
         foreach ($duplRowNos as $duplRowNo) {
@@ -812,8 +816,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         //remove duplicate values that were added by using the LabelAttributeAlias to create error values
         $duplValues = array_unique($duplValues);
         $errorRowDescriptor = implode(', ', $duplValues);
-        $logbook->addLine('Found duplicates for ' . count($duplValues) . ' rows: ' . implode(', ', $duplRowNos));
-        
+        $logbook->addLine('Found duplicates for ' . count($duplValues) . ' rows with these number: `' . implode('`, `', $duplRowNos) . '`');
+        $logbook->addLine('Sending an error about the duplicates');
+
         try {
             $customErrorText = $this->getDuplicateErrorText();
             if ($customErrorText !== null) {
@@ -824,13 +829,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             
             }
             $customErrorCode = $this->getDuplicateErrorCode();
-            $ex = new DataSheetDuplicatesError($dataSheet, $errorMessage, $customErrorCode);
+            $ex = new DataSheetDuplicatesError($dataSheet, $errorMessage, $customErrorCode, null, $logbook);
             if ($customErrorText !== null || $customErrorCode === null) {
                 $ex->setUseExceptionMessageAsTitle(true);
             }
         } catch (\Exception $e) {
             $this->getWorkbench()->getLogger()->logException($e);
-            $ex = new DataSheetDuplicatesError($dataSheet, 'Cannot update/create data, as it contains duplicates of already existing data!', $this->getDuplicateErrorCode());
+            $ex = new DataSheetDuplicatesError($dataSheet, 'Cannot update/create data, as it contains duplicates of already existing data!', $this->getDuplicateErrorCode(), null, $e);
         }
         
         return $ex;

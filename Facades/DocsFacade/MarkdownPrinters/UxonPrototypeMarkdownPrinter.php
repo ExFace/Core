@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
-use axenox\GenAI\Interfaces\MarkdownPrinterInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
@@ -9,6 +8,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -45,7 +45,7 @@ class UxonPrototypeMarkdownPrinter
     /**
      * Examples:
      * - `\exface\Core\CommonLogic\DataSheets\DataSheet`
-     * - `exface/Core/CommonLogic/DataSheets/DataSheet.php`
+     * - `exface/core/CommonLogic/DataSheets/DataSheet.php`
      * 
      * @param string $prototypeClassOrFilepath
      */
@@ -66,20 +66,30 @@ class UxonPrototypeMarkdownPrinter
             $filepathRelative = PhpFilePathDataType::findFileOfClass($prototypeClass);
         }
         
-        if (! is_a($prototypeClass, iCanBeConvertedToUxon::class, true)) {
-            throw new RuntimeException('Invalid UXON prototype "' . $prototypeClass . '"');
-        }
-        $schemaClass = $prototypeClass::getUxonSchemaClass() ?? UxonSchema::class;
-        $schema = new $schemaClass($selector->getWorkbench());
-
-        if ($schema instanceof QueryBuilderSchema) {
-            $metaObject = 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION';
-        } else {
-            $metaObject = 'exface.Core.UXON_PROPERTY_ANNOTATION';
+        switch (true) {
+            case is_a($prototypeClass, iCanBeConvertedToUxon::class, true):
+                $entityObject = 'exface.Core.UXON_ENTITY_ANNOTATION';
+                $schemaClass = $prototypeClass::getUxonSchemaClass() ?? UxonSchema::class;
+                $schema = new $schemaClass($selector->getWorkbench());
+                $componentType = mb_ucfirst($schema::getSchemaName());
+                if ($schema instanceof QueryBuilderSchema) {
+                    $propertyObject = 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION';
+                } else {
+                    $propertyObject = 'exface.Core.UXON_PROPERTY_ANNOTATION';
+                }
+                break;
+            case is_a($prototypeClass, FormulaInterface::class, true):
+                // $entityObject = 'exface.Core.FORMULA';
+                $entityObject = 'exface.Core.UXON_ENTITY_ANNOTATION';
+                $propertyObject = null;
+                $componentType = 'Formula';
+                break;
+            default:
+                throw new RuntimeException('Class "' . $prototypeClass . '" does not exist or is not a UXON prototype');
         }
 
         // Read prototypeClass annotations
-        $dsClass = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_ENTITY_ANNOTATION');
+        $dsClass = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $entityObject);
         $dsClass->getColumns()->addMultiple([
             'CLASSNAME',
             'TITLE',
@@ -94,51 +104,53 @@ class UxonPrototypeMarkdownPrinter
         $classInfo = $dsClass->getRow(0);
 
         // Read property annotations
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $metaObject);
-        $ds->getColumns()->addMultiple([
-            'PROPERTY',
-            'TYPE',
-            'TEMPLATE',
-            'DEFAULT',
-            'TITLE',
-            'REQUIRED',
-            'DESCRIPTION'
+        if ($propertyObject !== null) {
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $propertyObject);
+            $ds->getColumns()->addMultiple([
+                'PROPERTY',
+                'TYPE',
+                'TEMPLATE',
+                'DEFAULT',
+                'TITLE',
+                'REQUIRED',
+                'DESCRIPTION'
+            ]);
+            $ds->getFilters()->addConditionFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
+            $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
 
-        ]);
-        $ds->getFilters()->addConditionFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
-        $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
+            if ($schema instanceof QueryBuilderSchema) {
+                $ds->getColumns()->addFromExpression('TARGET');
+                $ds->getFilters()->addConditionFromString('TARGET', $schema->getLevel(), ComparatorDataType::EQUALS);
+            }
 
-        if ($schema instanceof QueryBuilderSchema) {
-            $ds->getColumns()->addFromExpression('TARGET');
-            $ds->getFilters()->addConditionFromString('TARGET', $schema->getLevel(), ComparatorDataType::EQUALS);
+            try {
+                $ds->dataRead();
+            } catch (\Throwable $e) {
+                // TODO
+            }
+
+            $propertyRows = $ds->getRows();
+        } else {
+            $propertyRows = [];
         }
-
-        try {
-            $ds->dataRead();
-        } catch (\Throwable $e) {
-            // TODO
-        }
-
-        $propertyRows = $ds->getRows();
         
         $alias = $classInfo['CLASSNAME'] ? $classInfo['CLASSNAME'] : StringDataType::substringAfter($prototypeClass, '\\', '', false, true);
-        $prototype_schema = $schema::getSchemaName();
-        $title = $classInfo['TITLE'];
+        $title = $classInfo['TITLE'] ?? $classInfo['NAME'];
         $description = $classInfo['DESCRIPTION'];
         
         $markdown = <<<MD
-{$this->buildMarkdownHeading($title, $this->headingLevel)}
+{$this->buildMarkdownHeading($componentType . ' ' . $alias, $this->headingLevel)}
 
-PHP class: {$prototypeClass}
-File path: {$filepathRelative}
+{$title}
+
+- PHP class: `{$prototypeClass}`
+- File path: `{$filepathRelative}`
 
 {$description}
 
-{$this->buildMarkdownHeading('Properties', $this->headingLevel + 1)}
-
 {$this->buildMarkdownTableForProperties($propertyRows, $this->headingLevel + 2)}
 
-{$this->buildMarkdownHeading('Presets', $this->headingLevel + 1)}
+{$this->buildMarkdownPresets([], $this->headingLevel + 2)}
 
 MD;
         return $markdown;
@@ -155,6 +167,9 @@ MD;
         $md = '';
         foreach ($propertyRows as $propertyRow) {
             $md .= "\n" . $this->buildMarkdownTableRowForProperties($propertyRow, $headingLevel);
+        }
+        if ($md !== '') {
+            $md = $this->buildMarkdownHeading('Properties', $this->headingLevel + 1) . "\n" . $md;
         }
         return $md;
     }
@@ -184,6 +199,13 @@ MD;
 {$propertyRow['TITLE']}{$links}
 {$propertyRow['DESCRIPTION']}
 MD;
+    }
+    
+    protected function buildMarkdownPresets(array $presetRows, int $headingLevel) : string
+    {
+        // TODO
+        // {$this->buildMarkdownHeading('Presets', $this->headingLevel + 1)}
+        return '';
     }
     
     public function getWorkbench()

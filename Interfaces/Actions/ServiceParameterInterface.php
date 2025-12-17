@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
+use exface\Core\CommonLogic\Actions\ServiceParameter;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
@@ -33,6 +34,12 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
      * @return bool
      */
     public function isRequired() : bool;
+
+    /**
+     * @param bool $value
+     * @return ServiceParameterInterface
+     */
+    public function setRequired(bool $value) : ServiceParameterInterface;
     
     public function isEmpty() : bool;
     

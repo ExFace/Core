@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Facades\DocsFacade;
@@ -436,6 +437,11 @@ MD);
     public function setUseExceptionMessageAsTitle(bool $value) : ExceptionInterface
     {
         $this->useExceptionMessageAsTitle = $value;
+
+        if ($this->messageModel !== null) {
+            $this->messageModel->setTitle($this->getMessage());
+        }
+        
         return $this;
     }
 
@@ -475,9 +481,14 @@ MD);
                 } catch (\Throwable $e) {
                     // Do nothing - we were just trying to find some editional information
                 }
-                
             }
         }
+        
+        if ($this->messageModel !== null && $msgDocsPath = $this->messageModel->getDocsPath()) {
+            $filename = FilePathDataType::findFileName($msgDocsPath, false);
+            $links[str_replace('_', ' ', $filename)] = DocsFacade::buildUrlToFile($msgDocsPath);
+        }
+        
         return array_unique($links);
     }
 

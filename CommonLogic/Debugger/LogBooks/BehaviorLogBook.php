@@ -31,7 +31,7 @@ class BehaviorLogBook extends DataLogBook
         $this->addIndent(1);
         $prototypeLink = '[' . PhpClassDataType::findClassNameWithoutNamespace($behavior) . '](' . DocsFacade::buildUrlToDocsForUxonPrototype($behavior) . ')';
         $behaviorObjLink = '[' . MarkdownDataType::escapeString($behavior->getObject()->__toString()) . '](' . DocsFacade::buildUrlToDocsForMetaObject($behavior->getObject()) . ')';
-        $this->addLine($prototypeLink . ' of ' . $behaviorObjLink);
+        $this->addLine($prototypeLink . ' of object ' . $behaviorObjLink);
         $this->addLine('Behavior instance "' . spl_object_id($behavior) . '"');
         if ($event !== null) {
             $eventObj = $this->getObjectOfEvent($event);

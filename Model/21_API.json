@@ -1,0 +1,125 @@
+{
+    "object_alias": "exface.Core.API",
+    "columns": [
+        {
+            "name": "_EXPORT_SUMMARY",
+            "hidden": true,
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "URL",
+            "attribute_alias": "URL"
+        },
+        {
+            "name": "FACADE",
+            "attribute_alias": "FACADE"
+        },
+        {
+            "name": "HEALTH_URL",
+            "attribute_alias": "HEALTH_URL"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "LAST_CALL_CODE",
+            "attribute_alias": "LAST_CALL_CODE"
+        },
+        {
+            "name": "LAST_CALL_ON",
+            "attribute_alias": "LAST_CALL_ON"
+        },
+        {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
+            "name": "METADATA_URL",
+            "attribute_alias": "METADATA_URL"
+        },
+        {
+            "name": "EXPLORER_URL",
+            "attribute_alias": "EXPLORER_URL"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "UXON",
+            "attribute_alias": "UXON"
+        }
+    ],
+    "rows": [
+        {
+            "_EXPORT_SUMMARY": "Built-in documentation",
+            "CREATED_ON": "2025-06-27 08:28:25",
+            "MODIFIED_ON": "2025-06-27 08:28:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f08cc2ee3ef2128cc2025041000001",
+            "URL": "api/docs",
+            "FACADE": "exface/core/Facades/DocsFacade.php",
+            "HEALTH_URL": "",
+            "NAME": "Built-in documentation",
+            "APP": "0x31000000000000000000000000000000",
+            "LAST_CALL_CODE": null,
+            "LAST_CALL_ON": null,
+            "TYPE": "WP",
+            "METADATA_URL": "",
+            "EXPLORER_URL": "",
+            "DESCRIPTION": "",
+            "UXON": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.API",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.API"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

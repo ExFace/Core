@@ -65,21 +65,25 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
 
     /**
      * Returns a normalized representation of the given string matching the data prototype, but 
-     * does not check any configurable resrictions of the data type instance.
+     * does not check any configurable restrictions of the data type instance.
      * 
      * In other words, the string is made data prototype conform. That's all we can do without
      * instantiating a concrete data type. On the other hand, any valid value of any data type
      * based on this prototype will pass casting without being modified.
      * 
-     * E.g. DateDataType::cast('21.9.1984') = 1984-09-21.
+     * E.g. `DateDataType::cast('21.9.1984')` = `1984-09-21`. This example also demonstrates
+     * the limitations of static casting - we attempt to normalize ANY date value, which also
+     * means we cannot deal with untypical formatting of dates. The `parse()` method is much
+     * more exact and has more possibilities. In other words, `cast()` cannot reliably reverse
+     * `format()` - only `parse()` can!
      * 
      * Note, that cast() does not normalize empty values: for most data types NULL and '' (empty
-     * string) are concidered empty values, but they are both valid from the point of view of
-     * cast() - so `cast(null) === null` and `cast('') === ''`. This is done intentially because
+     * string) are considered empty values, but they are both valid from the point of view of
+     * cast() - so `cast(null) === null` and `cast('') === ''`. This is done intentionally because
      * an empty string and NULL are actually different values an sometimes need to be treated
      * differently in data sources.
      * 
-     * @see DataTypeInterface::parse($string) for a similar, but more restrictive method for 
+     * @see DataTypeInterface::parse($string) for a similar, but more precise/restrictive method for 
      * instantiated types.
      * @see DataTypeInterface::isValueEmpty($string) for a type-specific check for empty values.
      *
@@ -111,15 +115,18 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
     public static function isValueLogicalNull($value) : bool;
     
     /**
-     * Returns a normalized representation of the given string mathing all the rules defined in the
+     * Returns a normalized representation of the given value matching all the rules defined in the
      * data type.
      * 
-     * While the static cast() method only makes the value compatible with the prototype, parse()
-     * will make sure it matches all rules of the data type - including those defined in it's model.
+     * This method can handle formatted values produced by `parse()` and turn the back to their
+     * normalized representation. This makes is an important difference between `cast()` and `parse()`.
+     * Another difference is that the static `cast()` method only makes the value compatible with the 
+     * prototype, `parse()` will make sure it matches all rules of the data type - including those 
+     * defined in its model.
      * 
-     * E.g. NumberDataType::cast(1,5523) = 1.5523, but exface.Core.NumberNatural->parse(1,5523) = 1,
+     * E.g. `NumberDataType::cast(1,5523)` = `1.5523`, but `exface.Core.NumberNatural->parse(1,5523)` = `1`,
      * because the natural number model not only casts anything to a number, but also rounds it to
-     * the a whole number.
+     * a whole number.
      *
      * @param mixed $value
      * 
