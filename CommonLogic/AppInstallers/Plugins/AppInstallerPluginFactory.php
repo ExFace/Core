@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers\Plugins;
 
-use exface\Core\Exceptions\FormulaError;
+use exface\Core\Exceptions\FormulaNotFoundError;
 use exface\Core\Factories\AbstractStaticFactory;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
@@ -35,7 +35,7 @@ abstract class AppInstallerPluginFactory extends AbstractStaticFactory
     {
         $tokenStream = new SymfonyTokenStream($expression);
         if(null ===  $functionName = $tokenStream->getFormulaName()) {
-            throw new FormulaError("Can not create formula for expression {$tokenStream->__toString()}. No formula name found.");
+            throw new FormulaNotFoundError("Can not create formula for expression {$tokenStream->__toString()}. No formula name found.");
         }
         
         $class = $nameSpace . '\\' . $functionName;

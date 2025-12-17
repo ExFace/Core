@@ -57,7 +57,7 @@ class User extends \exface\Core\CommonLogic\Model\Formula
                 if ($userObj->hasAttribute($property)) {
                     $attr = $userObj->getAttribute($property);
                     if ($attr->getDataType()->isSensitiveData()) {
-                        throw new FormulaError('Cannot show user property "' . $property . '" - it is concidered sensitive data!');
+                        throw new FormulaError($this, 'Cannot show user property "' . $property . '" - it is concidered sensitive data!');
                     }
                     return $user->getAttribute($property);
                 } else {

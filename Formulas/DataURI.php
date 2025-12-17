@@ -42,7 +42,7 @@ class DataURI extends Formula
                 $base64 = BinaryDataType::convertHexToBase64($binary);
                 break;
             default:
-                throw new FormulaError('Invalid value for 3d parameter of DataURI() formula: use `binary`, `base64` or `hex`!');
+                throw new FormulaError($this, 'Invalid value for 3d parameter of DataURI() formula: use `binary`, `base64` or `hex`!');
         }
         
         return BinaryDataType::convertBase64ToDataUri($base64, $mimeType);

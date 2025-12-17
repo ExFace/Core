@@ -65,13 +65,13 @@ class WriteSqlRowsToFiles extends AbstractSqlInstallerPlugin
         $contentArray = [];
         foreach ($selectResult as $row) {
             if(!key_exists($filePathColumn, $row)) {
-                throw new FormulaError('Cannot save to files: SELECT does not contain column "' . $filePathColumn . '" (should provide file paths)!');
+                throw new FormulaError($this, 'Cannot save to files: SELECT does not contain column "' . $filePathColumn . '" (should provide file paths)!');
             } else {
                 $pathArray[] = $row[$filePathColumn];
             }
 
             if(!key_exists($contentColumn, $row)) {
-                throw new FormulaError('Cannot save to files: SELECT does not contain column "' . $contentColumn . '" (should provide contents)!');
+                throw new FormulaError($this,'Cannot save to files: SELECT does not contain column "' . $contentColumn . '" (should provide contents)!');
             } else {
                 $contentArray[] = $row[$contentColumn];
             }
