@@ -84,11 +84,11 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
         $uKeyArray = [];
         foreach ($selectResult as $row) {
             if(!key_exists($uniqueKeyColumn, $row)) {
-                throw new FormulaError('Cannot load from files: SELECT does not contain column "' . $uniqueKeyColumn . '" (should provide unique keys)!');
+                throw new FormulaError($this,'Cannot load from files: SELECT does not contain column "' . $uniqueKeyColumn . '" (should provide unique keys)!');
             }
 
             if(!key_exists($filePathColumn, $row)) {
-                throw new FormulaError('Cannot load from files: SELECT does not contain column "' . $filePathColumn . '" (should provide file paths)!');
+                throw new FormulaError($this,'Cannot load from files: SELECT does not contain column "' . $filePathColumn . '" (should provide file paths)!');
             }
 
             $uKeyArray[] = $row[$uniqueKeyColumn];
@@ -118,7 +118,7 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
         }
         
         if(empty($sqlStatement)) {
-            throw new FormulaError('Cannot load from files: No files found at the specified paths! Check your paths or data source.');
+            throw new FormulaError($this,'Cannot load from files: No files found at the specified paths! Check your paths or data source.');
         }
 
         $this->getConnector()->runSql($sqlStatement, true);
@@ -139,12 +139,12 @@ class WriteFilesToSqlRows extends AbstractSqlInstallerPlugin
         string $directorySeparator) : DataQueryInterface
     {
         if (empty($pathArray)) {
-            throw new FormulaError('Cannot save to files: no paths specified!');
+            throw new FormulaError($this, 'Cannot save to files: no paths specified!');
         }
         
         foreach ($pathArray as $path) {
             if ($path === null || $path === '') {
-                throw new FormulaError('Cannot save to file: path is empty!');
+                throw new FormulaError($this, 'Cannot save to file: path is empty!');
             }
         }
         

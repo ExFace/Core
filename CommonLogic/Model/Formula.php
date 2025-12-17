@@ -86,7 +86,7 @@ abstract class Formula implements FormulaInterface
     {
         try {
             if ($this->__toString() === '') {
-                throw new FormulaError('Cannot evalute empty formula!');
+                throw new FormulaError($this, 'Cannot evalute empty formula!');
             }
             
             if ($this->isStatic()) {
@@ -120,7 +120,7 @@ abstract class Formula implements FormulaInterface
                 $onRow = $rowNumber !== null ? ' on row ' . $rowNumber : '';
                 $errorText .= ' for data of ' . $dataSheet->getMetaObject()->getAliasWithNamespace() . $onRow . '!';
             }
-            throw new FormulaError($errorText . ' ' . $e->getMessage(), null, $e);
+            throw new FormulaError($this, $errorText . ' ' . $e->getMessage(), null, $e, $args);
         }
     }
     
@@ -205,7 +205,7 @@ abstract class Formula implements FormulaInterface
         }
         $ds = $this->getDataSheet();
         if (! $ds) {
-            throw new FormulaError('Formula can not be evaluated statically because it requires data type detection for argument ' . ($argIdx+1));
+            throw new FormulaError($this, 'Formula can not be evaluated statically because it requires data type detection for argument ' . ($argIdx+1));
         }
         $attr = $ds->getMetaObject()->getAttribute($attrAlias);
         $dataType = $attr->getDataType();

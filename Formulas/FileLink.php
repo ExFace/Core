@@ -40,10 +40,10 @@ class FileLink extends \exface\Core\CommonLogic\Model\Formula
     public function run(string $objectAlias = '', string $uid = '', string $urlParams = null, bool $makeOneTimeLink = false)
     {
         if ($objectAlias === '') {
-            throw new FormulaError('Can not evaluate FileLink formula: no valid object provided!');
+            throw new FormulaError($this, 'Can not evaluate FileLink formula: no valid object provided!');
         }
         if ($uid === '') {
-            throw new FormulaError('Can not evaluate FileLink formula: no UID value provided!');
+            throw new FormulaError($this, 'Can not evaluate FileLink formula: no UID value provided!');
         }
         $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
 
