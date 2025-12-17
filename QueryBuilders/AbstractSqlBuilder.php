@@ -2,6 +2,7 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\SqlDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
@@ -1611,10 +1612,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
 
         if ($add_nvl) {
-            // do some prettyfying
+            // do some prettifying
             // return zero for number fields if the subquery does not return anything
-            if ($qpart->getDataType() instanceof NumberDataType) {
-                $output = $this->buildSqlSelectNullCheck($output, 0);
+            if (null !== $nullValue = $this->buildSqlSelectNullCheckFallback($qpart)) {
+                $output = $this->buildSqlSelectNullCheck($output, $nullValue);
             }
         }
 
@@ -3770,5 +3771,22 @@ SQL;
     protected function buildSqlAliasForRowCounter() : string
     {
         return 'EXFCNT';
+    }
+
+    /**
+     * Returns the COALESCE(, x) fallback value to be used for the given query part or NULL if no null-check is required
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return string|int|float|null
+     */
+    protected function buildSqlSelectNullCheckFallback(QueryPartAttribute $qpart) : string|int|float|null
+    {
+        $dataType = $qpart->getDataType();
+        switch (true) {
+            case $dataType instanceof NumberDataType && ! $dataType instanceof HexadecimalNumberDataType:
+                return 0;
+            // IDEA add other COALESCE() values here in future
+        }
+        return null;
     }
 }
