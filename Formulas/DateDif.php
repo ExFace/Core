@@ -45,7 +45,7 @@ class DateDif extends \exface\Core\CommonLogic\Model\Formula
             case self::UNIT_M: $diff = $interval->y * 12 + $interval->m; break;
             case self::UNIT_Y: $diff = $interval->y; break;
             default:
-                throw new FormulaError('Cannot evaluate formula "' . $this->__toString() . '": invalid unit "' . $unit . '" provided!');
+                throw new FormulaError($this, 'Cannot evaluate formula "' . $this->__toString() . '": invalid unit "' . $unit . '" provided!');
         }
         
         if ($date1 > $date2) {

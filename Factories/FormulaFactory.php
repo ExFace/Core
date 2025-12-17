@@ -2,11 +2,11 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\Formula;
+use exface\Core\Exceptions\FormulaNotFoundError;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\CommonLogic\Model\SymfonyTokenStream;
-use exface\Core\Exceptions\FormulaError;
 use exface\Core\CommonLogic\Model\EmptyTokenStream;
 
 abstract class FormulaFactory extends AbstractSelectableComponentFactory
@@ -35,14 +35,14 @@ abstract class FormulaFactory extends AbstractSelectableComponentFactory
      * 
      * @param WorkbenchInterface $workbench
      * @param FormulaTokenStreamInterface $tokenStream
-     * @throws FormulaError
+     * @throws FormulaNotFoundError
      * @return mixed
      */
     public static function createFromTokenStream(WorkbenchInterface $workbench, FormulaTokenStreamInterface $tokenStream)
     {
         $function_name = $tokenStream->getFormulaName();
         if ($function_name === null) {
-            throw new FormulaError("Can not create formula for expression {$tokenStream->__toString()}. No formula name found.");
+            throw new FormulaNotFoundError("Can not create formula for expression {$tokenStream->__toString()}. No formula name found.");
         }
         $selector = new FormulaSelector($workbench, $function_name);
         if ($tokenStream instanceof EmptyTokenStream) {
