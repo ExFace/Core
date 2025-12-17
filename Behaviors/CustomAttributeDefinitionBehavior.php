@@ -520,6 +520,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $this->getWorkbench(),
                 UxonObject::fromJson($cacheData['dataSheet'])
             );
+            $logBook->addLine('Loaded attribute definitions from cache.');
+            $logBook->addDataSheet('From Cache', $attributeDefinitionsSheet->copy());
         } else {
             // If loading from cache failed, we have to load from source.
             if (null === $tplUxon = $definition->getDataSheetTemplateUxon()) {
@@ -613,6 +615,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             } catch (\Throwable $e) {
                 throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e, $logBook);
             }
+            
+            $logBook->addLine('No cache detected. Loaded attribute definitions from source.');
+            $logBook->addDataSheet('From Source', $attributeDefinitionsSheet->copy());
         }
 
 
