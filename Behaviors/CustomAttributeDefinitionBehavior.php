@@ -27,6 +27,7 @@ use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
@@ -694,6 +695,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
             if ($requiredAlias !== null) {
                 $attr->setRequired($definitionRow[$requiredAlias]);
+            }
+            
+            if($groupsAlias !== null) {
+                $delimiter = $this->getObject()->getAttribute($groupsAlias)->getValueListDelimiter();
+                $groups = explode($delimiter, $definitionRow[$groupsAlias] ?? '');
+                foreach ($groups as $groupAlias) {
+                    try {
+                        $targetObject->getAttributeGroup($groupAlias)->add($attr);
+                    } catch (MetaAttributeGroupNotFoundError $e) {
+                        // Ignore missing attribute groups
+                    }
+                }
             }
             
             $attributes[] = $attr;
