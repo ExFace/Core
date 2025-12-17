@@ -2830,14 +2830,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
     {
-        switch ($select_from) {
-            case '':
-                $select_from = '';
-                break;
-            case null:
-                $select_from = $this->getShortAlias($this->getMainObject()->getAlias());
-                break;
-        }
+        $comment = "\n" . $this->buildSqlComment("buildSqlOrderBy(" . $qpart->getAlias() . ", " . $select_from . ")") . "\n";
+        $select_from ??= $this->getShortAlias($this->getMainObject()->getAlias());
 
         switch (true) {
             case $customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY):
@@ -2860,7 +2854,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             default:
                 $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
-        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
+        return $comment . ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
     }
 
     /**
@@ -2876,7 +2870,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlGroupBy(QueryPart $qpart, $select_from = null)
     {
-        $output = '';
         if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
             // Seems like SQL statements are not supported in the GROUP BY clause in general
             throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
