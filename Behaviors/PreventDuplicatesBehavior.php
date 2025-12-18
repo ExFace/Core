@@ -649,16 +649,20 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         // Extract rows from event data, that are relevant for duplicate search
         if ($this->hasCustomConditions()) {
             $customConditions = $this->getCompareWithConditions();
-            DataCollector::fromConditionGroup($customConditions, $mainSheet->getMetaObject())
+            // Copy the data for filtering to avoid adding columns, that are only required for the conditions
+            // This is important because conditions might also add related columns, so we might end up trying to update
+            // related objects or even create new ones for absolutely not reason!
+            $filterSheet = $mainSheet->copy();
+            DataCollector::fromConditionGroup($customConditions, $filterSheet->getMetaObject())
                 ->setIgnoreUnreadableColumns(true)
-                ->enrich($mainSheet);
+                ->enrich($filterSheet);
 
-            $applicableConditions = ConditionGroupFactory::createForDataSheet($mainSheet, $customConditions->getOperator());
+            $applicableConditions = ConditionGroupFactory::createForDataSheet($filterSheet, $customConditions->getOperator());
             foreach ($customConditions->getConditions() as $cond) {
-                $col = $mainSheet->getColumns()->getByExpression($cond->getExpression());
+                $col = $filterSheet->getColumns()->getByExpression($cond->getExpression());
                 if($col) {
                     $applicableConditions->addCondition($cond);
-                    $mainSheet->getColumns()->add($col);
+                    $filterSheet->getColumns()->add($col);
                 } else {
                     $logbook->addLine('Ignoring condition `' . $cond->__toString() . '` in `compare_with_conditions`' . 
                     'because the required column is NOT present in the data sheet and could not be loaded.');
@@ -666,7 +670,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             }
             
             $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $applicableConditions->__toString());
-            $mainSheet = $mainSheet->extract($applicableConditions, false, $logbook);
+            // Find rows, that match conditions in the $filterSheet. Since it was a copy of the $mainSheet, the row
+            // indexes will be the same, so we now just need to remove these row indexes main data
+            $filteredRowIdxs = $filterSheet->findRows($applicableConditions, false, $logbook);
+            $mainSheet = $mainSheet->extractRows($filteredRowIdxs, false);
         } else {
             $logbook->addLine('Will search for duplicates for all rows, no filtering required');
         }
