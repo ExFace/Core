@@ -572,4 +572,19 @@ class ActionLogBook implements DataLogBookInterface
     {
         return $this->logBook->getLinesInSection($section);
     }
+
+    /**
+     *
+     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $dataSheet
+     * @return string
+     */
+    public static function buildMermaidTitleForAction(ActionInterface $action, ?string $prefix = null) : string
+    {
+        try {
+            $objAlias = $action->hasMetaObject() ? $action->getMetaObject()->getAliasWithNamespace() : 'no object';
+        } catch (\Throwable $e) {
+            $objAlias = 'cannot get object';
+        }
+        return '"' . ($prefix ?? '') . $action->getName() . "\n({$objAlias})\"";
+    }
 }
