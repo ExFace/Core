@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\StringDataType;
@@ -3783,9 +3784,17 @@ SQL;
     {
         $dataType = $qpart->getDataType();
         switch (true) {
-            case $dataType instanceof NumberDataType && ! $dataType instanceof HexadecimalNumberDataType:
+            // No fallback value for hex number - in particular UIDs
+            case $dataType instanceof HexadecimalNumberDataType:
+                return null;
+            // No fallback for enums - at least if it is not part of the enum
+            case $dataType instanceof EnumDataTypeInterface:
+                if ($dataType instanceof NumberDataType && $dataType->isValidValue(0)) {
+                    return 0;
+                }
+                return null;
+            case $dataType instanceof NumberDataType:
                 return 0;
-            // IDEA add other COALESCE() values here in future
         }
         return null;
     }
