@@ -231,7 +231,17 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $diagram .= 'graph ' . (count($this->getActions()) > 3 ? 'TD' : 'LR');
         $diagram .= PHP_EOL . "{$lbId}T(Task)";
         foreach ($actions as $idx => $action) {
-            $diagram .= PHP_EOL . "{$lbId}{$idx}[{$action->getAliasWithNamespace()}]";
+            try {
+                if ($action->hasMetaObject()) {
+                    $details = "on {$action->getMetaObject()->getAliasWithNamespace()}";
+                } else {
+                    $details = "(no object)";
+                }
+            } catch (\Throwable $e) {
+                $details = "(can't read object)";
+            }
+            $name = $action->hasName() ? $action->getName() : $action->getAliasWithNamespace();
+            $diagram .= PHP_EOL . "{$lbId}{$idx}[{$name}\n{$details}]";
         }
         
         foreach ($actions as $idx => $action) {

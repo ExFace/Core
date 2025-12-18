@@ -295,6 +295,11 @@ interface ActionInterface extends
     public function getMetaObject();
 
     /**
+     * @return bool
+     */
+    public function hasMetaObject() : bool;
+
+    /**
      *
      * @param MetaObjectInterface $object            
      * @return ActionInterface
