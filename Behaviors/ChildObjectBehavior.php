@@ -432,18 +432,6 @@ class ChildObjectBehavior
         return $this;
     }
 
-
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject() : UxonObject
-    {
-        // TODO
-        return parent::exportUxonObject();
-    }
-
     /**
      * 
      * @return string[]
