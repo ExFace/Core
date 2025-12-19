@@ -759,7 +759,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         $cache = $this->getWorkbench()->getCache();
         if($cache->has($this->getKeyForTrackingCache())) {
-            return json_decode($cache->get($this->getKeyForTrackingCache()));
+            $json = $cache->get($this->getKeyForTrackingCache());
+            return $json !== null ? json_decode($json) : [];
         }
 
         return [];
