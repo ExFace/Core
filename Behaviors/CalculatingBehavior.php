@@ -159,18 +159,6 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        // TODO
-        return $uxon;
-    }
-
-    /**
      * Executes the action if applicable
      * 
      * @param EventInterface $event

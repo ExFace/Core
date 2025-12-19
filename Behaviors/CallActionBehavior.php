@@ -215,28 +215,6 @@ class CallActionBehavior extends AbstractBehavior
 
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        $uxon->setProperty('event_aliases', $this->getEventAliases());
-        $uxon->setProperty('action', $this->getAction()->exportUxonObject());
-        if ($this->getPriority() !== null) {
-            $uxon->setProperty('priority', $this->getPriority());
-        }
-        if ($this->hasRestrictionOnAttributeChange()) {
-            $uxon->setProperty('only_if_attributes_change', new UxonObject($this->getOnlyIfAttributesChange()));
-        }
-        if ($this->hasRestrictionOnAttributeChange()) {
-            $uxon->setProperty('only_if_data_matches_conditions', $this->onlyIfDataMatchesConditionGroupUxon);
-        }
-        return $uxon;
-    }
-
-    /**
-     * 
      * @return string[]
      */
     protected function getEventAliases() : array

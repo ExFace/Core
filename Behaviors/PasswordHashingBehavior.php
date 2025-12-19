@@ -154,18 +154,6 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
     {
         return $this->getObject()->getAttribute($this->getPasswordAttributeAlias());
     }
-
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        $uxon->setProperty('password_attribute_alias', $this->getPasswordAttributeAlias());
-        return $uxon;
-    }
     
     /**
      * 
