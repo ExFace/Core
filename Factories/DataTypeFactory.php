@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
@@ -80,10 +82,12 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      * @param string $alias
      * @param AppInterface $app
      * @param UxonObject $uxon
-     * @param string $name
-     * @param string $validation_error_code
-     * @param UxonObject $default_editor_uxon
-     * @param UxonObject $default_dispaly_uxon
+     * @param string|null $name
+     * @param string|null $validation_error_code
+     * @param UxonObject|null $default_editor_uxon
+     * @param UxonObject|null $default_dispaly_uxon
+     * 
+     * @throws DataTypeConfigurationError
      * 
      * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
@@ -121,7 +125,14 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
         if (! is_null($default_display_uxon) && ! $default_display_uxon->isEmpty()) {
             $data_type->setDefaultDisplayUxon($default_display_uxon);
         }
-        $data_type->importUxonObject($uxon);
+        try {
+            $data_type->importUxonObject($uxon);
+        } catch (\Throwable $e) {
+            if (! $e instanceof DataTypeExceptionInterface) {
+                $e = new DataTypeConfigurationError($type, 'Cannot initialize data type "' . $type->getAliasWithNamespace() . '". ' . $e->getMessage(), null, $e);
+            }
+            throw $e;
+        }
         return $data_type;
     }
     
@@ -129,20 +140,29 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      * 
      * @param WorkbenchInterface $workbench
      * @param UxonObject $uxon
-     * @throws DataTypeNotFoundError
      * @return DataTypeInterface
+     * 
+     * @throws DataTypeConfigurationError
+     * @throws DataTypeNotFoundError
      */
     public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon) : DataTypeInterface
     {
         $alias = $uxon->getProperty('alias');
         
         if (! $alias) {
-                throw new DataTypeNotFoundError('Cannot create data type from UXON: missing alias!');
-            }
+            throw new DataTypeNotFoundError('Cannot create data type from UXON: missing alias!');
+        }
         
         $selector = new DataTypeSelector($workbench, $alias);
         $type = static::create($selector);
-        $type->importUxonObject($uxon);
+        try {
+            $type->importUxonObject($uxon);
+        } catch (\Throwable $e) {
+            if (! $e instanceof DataTypeExceptionInterface) {
+                $e = new DataTypeConfigurationError($type, 'Cannot initialize data type "' . $type->getAliasWithNamespace() . '". ' . $e->getMessage(), null, $e);
+            }
+            throw $e;
+        }
         return $type;
     }
 }

@@ -19,7 +19,12 @@ To use a formula, simply start your value with `=` and use at least one formula 
 
 ## Scalar values
 
-Formulas support numeric values and strings. Strings must be quoted with `"` or `'`.
+The following types constant values can be used in formulas
+
+- numeric values: e.g `1`, `10.03` - always use dot `.` as decimal separator!
+- strings quoted with `"` or `'`
+- boolean values `true` and `false` (without quotes, case insensitive)
+- `null` or `NULL` for empty values. Alternatively you can use the formulas [=IsNull()](UXON_prototypes.md?selector=%5Cexface%5CCore%5CFormulas%5CIsNull), [=IfNull()](UXON_prototypes.md?selector=%5Cexface%5CCore%5CFormulas%5CIfNull)
 
 ## Model aliases
 

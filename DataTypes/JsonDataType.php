@@ -294,19 +294,15 @@ class JsonDataType extends TextDataType
     }
 
     /**
-     * Wraps given code in a markdown code block
+     * Sanitize a string for JsonPath by replacing all reserved characters `[$@.\[\]*,?]` with the character you
+     * provided.
      * 
-     * @param string $code
-     * @param string|null $language
+     * @param string $string
+     * @param string $replacement
      * @return string
      */
-    public static function escapeCodeBlock(string $code, ?string $language = null) : string
+    public static function sanitizeForJsonPath(string $string, string $replacement = '_') : string
     {
-        return <<<MD
-
-```{$language}
-{$code}
-```
-MD;
+        return preg_replace('/[\\\\\/$@.\[\]*,?]/', $replacement, $string);
     }
 }

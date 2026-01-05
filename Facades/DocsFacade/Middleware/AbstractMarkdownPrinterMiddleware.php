@@ -87,7 +87,8 @@ abstract class AbstractMarkdownPrinterMiddleware implements MarkdownPrinterMiddl
     {
         return ! StringDataType::endsWith(
             $request->getUri()->getPath(),
-            $this->fileUrl
+            $this->fileUrl,
+            false
         );
     }
     

@@ -645,7 +645,7 @@
         {
             "_EXPORT_SUMMARY": "Action alias [ACTION_ALIAS]",
             "CREATED_ON": "2021-02-02 10:25:10",
-            "MODIFIED_ON": "2021-02-02 10:25:10",
+            "MODIFIED_ON": "2025-12-16 02:26:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba4f78c70a348a4f7025041000001",
@@ -671,7 +671,8 @@
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].action_uxon, '$.alias'))",
-                "@T-SQL: JSON_VALUE([#~alias#].action_uxon, '$.alias')"
+                "@T-SQL: JSON_VALUE([#~alias#].action_uxon, '$.alias')",
+                "@pgSQL: ([#~alias#].action_uxon::jsonb ->> 'alias')"
             ],
             "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
             "FORMATTER": "",

@@ -28,7 +28,8 @@ class DataQueryFailedError extends RuntimeException implements DataQueryExceptio
         $this->setQuery($query);
     }
     
-    public function getDefaultLogLevel(){
+    public function getDefaultLogLevel()
+    {
         return LoggerInterface::CRITICAL;
     }
 }

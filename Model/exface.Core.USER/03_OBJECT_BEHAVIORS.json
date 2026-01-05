@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0aeb87fc18a2be19e4b318306b9a",
-            "BEHAVIOR": "exface/Core/Behaviors/PasswordHashingBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/PasswordHashingBehavior.php",
             "CONFIG_UXON": {
                 "password_attribute_alias": "PASSWORD"
             },
@@ -85,7 +85,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eab61cc92f42f2b61c0205857feb81",
-            "BEHAVIOR": "exface/Core/Behaviors/UndeletableBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/UndeletableBehavior.php",
             "CONFIG_UXON": {
                 "condition_group": {
                     "operator": "AND",
@@ -112,7 +112,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ee93a20a9d03c693a2025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/PreventDuplicatesBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/PreventDuplicatesBehavior.php",
             "CONFIG_UXON": {
                 "compare_attributes": [
                     "USERNAME"

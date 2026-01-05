@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\Configuration;
 
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\ExceptionTrait;
+use exface\Core\Interfaces\Exceptions\ConfigurationExceptionInterface;
 
 /**
  * This trait enables an exception to output configuration specific debug information.
@@ -25,12 +26,20 @@ trait ConfigurationExceptionTrait {
         $this->setConfiguration($configuration);
     }
 
-    public function getConfiguration()
+    /**
+     * {@inheritDoc}
+     * @see ConfigurationExceptionInterface::getConfiguration()
+     */
+    public function getConfiguration() : ConfigurationInterface
     {
         return $this->configuration;
     }
 
-    public function setConfiguration(ConfigurationInterface $value)
+    /**
+     * @param ConfigurationInterface $value
+     * @return $this
+     */
+    protected function setConfiguration(ConfigurationInterface $value)
     {
         $this->configuration = $value;
         return $this;

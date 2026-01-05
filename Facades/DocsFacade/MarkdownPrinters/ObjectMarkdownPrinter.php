@@ -3,9 +3,19 @@
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Exceptions\Model\MetaRelationBrokenError;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -17,46 +27,20 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 {
-
     protected WorkbenchInterface $workbench;
     
-    private string $objectId;
+    private string $objectIdOrAlias;
+    private int $headingLevel = 1;
 
     /**
      * Maximum depth of recursive relation traversal.
      *
      * Depth 0 would print only the root object, higher values include related objects.
      */
-    private int $depth = 3;
-
-    /**
-     * Current recursion depth for this printer instance.
-     */
-    private int $currentDepth = 0;
-
-    /**
-     * Parent printer that created this instance while walking relations.
-     *
-     * Null for the root printer.
-     */
-    private ?ObjectMarkdownPrinter $parent = null;
-
-    /**
-     * Queue of relation target object identifiers that still need to be processed.
-     *
-     * @var string[]
-     */
-    private array $relations = [];
-
-    /**
-     * List of relation target object identifiers that have already been processed.
-     *
-     * This is kept only on the root printer and shared through the tree in order
-     * to avoid infinite loops when relations form cycles.
-     *
-     * @var string[]
-     */
-    private array $finishedRelations = [];
+    private int $relationDepth = 0;
+    private ?string $relationType = RelationTypeDataType::REGULAR;
+    
+    private static array $printedObjects = [];
 
 
     /**
@@ -65,15 +49,12 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
      * When called from a parent printer the depth and current depth are inherited
      * so that the whole tree respects the same maximum depth.
      */
-    public function __construct(WorkbenchInterface $workbench, string $objectId, ObjectMarkdownPrinter $parent = null)
+    public function __construct(WorkbenchInterface $workbench, string $objectId, int $relationDepth = 1, int $headingLevel = 1)
     {
         $this->workbench = $workbench;
-        $this->objectId = $this->normalize($objectId);
-        if($parent){
-            $this->parent = $parent;
-            $this->currentDepth = $parent->getCurrentDepth() + 1;
-            $this->depth = $parent->getDepth();
-        }
+        $this->objectIdOrAlias = $this->normalize($objectId);
+        $this->headingLevel = $headingLevel;
+        $this->relationDepth = $relationDepth;
     }
 
     /**
@@ -82,32 +63,220 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
      */
     public function getMarkdown(): string
     {
-        if(!$this->objectId) return '';
-        $metaObject = MetaObjectFactory::createFromString($this->workbench, $this->objectId);
-        $this->addFinishedRelation($metaObject->getId());
+        $metaObject = MetaObjectFactory::createFromString($this->workbench, $this->objectIdOrAlias);
+        static::$printedObjects[] = $metaObject;
         
-        $markdown = '# ' . $metaObject->getAlias() . "\n\n";
+        $headingLevel = $this->headingLevel;
+        $heading = MarkdownDataType::buildMarkdownHeader('Metaobject "' . $metaObject->getName() . '"', $headingLevel);
         
-        $markdown .= "| Name | Alias | Data Type | Required | Relation |\n";
-        $markdown .= "|------|--------|------------|-----------|-----------|\n";
+        $description = $metaObject->getShortDescription();
         
-        $markdown.= implode("\n",$this->getAttributes($metaObject));
-        $markdown .= "\n\n";
+        $connectorClass = PhpClassDataType::findClassNameWithoutNamespace($metaObject->getDataConnection());
+        $connectorLink = DocsFacade::buildUrlToDocsForUxonPrototype($metaObject->getDataConnection());
+        $queryBuilder = QueryBuilderFactory::createForObject($metaObject);
+        $queryBuilderClass = PhpClassDataType::findClassNameWithoutNamespace($queryBuilder);
+        $queryBuilderLink = DocsFacade::buildUrlToDocsForUxonPrototype($queryBuilder);
         
-        if($this->depth >= $this->currentDepth){
-            foreach ($this->relations as $relation){
-                if(!in_array($relation, $this->getFinishedRelations(), true)){
-                    $childPrinter = new ObjectMarkdownPrinter($this->workbench, $relation, $this);
-                    $markdown .= $childPrinter->getMarkdown();
-                    $this->addFinishedRelation($relation);
+        $importantAttributes = '';
+        if ($metaObject->hasUidAttribute()) {
+            $importantAttributes .= PHP_EOL . "- UID attribute: **{$metaObject->getUidAttributeAlias()}**"; 
+        }
+        if ($metaObject->hasLabelAttribute()) {
+            $importantAttributes .= PHP_EOL . "- Label attribute: **{$metaObject->getLabelAttributeAlias()}**";
+        }
+        $importantAttributes = trim($importantAttributes);
+        
+        $attributesHeading = MarkdownDataType::buildMarkdownHeader("Attributes of \"{$metaObject->getName()}\"", $headingLevel + 1);
+        
+        $markdown = <<<MD
+
+{$heading} 
+
+- Alias: **{$metaObject->getAliasWithNamespace()}**
+- Data Source: **{$metaObject->getDataSource()->getName()}**, query builder: [{$queryBuilderClass}]($queryBuilderLink), connector: [{$connectorClass}]({$connectorLink})
+{$importantAttributes}
+
+{$description}
+
+{$attributesHeading}
+
+{$this->buildMdAttributesTable($metaObject->getAttributes())}
+
+{$this->buildMdAttributesSections($metaObject, $headingLevel+2)}
+
+{$this->buildMdBehaviorsSections($metaObject, 'Behaviors of "' . $metaObject->getName() . '"', $headingLevel+1)}
+
+{$this->buildMdRelatedObjects($metaObject->getRelations(), 'Related objects', $headingLevel)}
+MD;        
+        return $markdown;
+    }
+
+    /**
+     * @param MetaRelationInterface[] $relations
+     * @param string $heading
+     * @param int $headingLevel
+     * @return string
+     */
+    protected function buildMdRelatedObjects(array $relations, string $heading, int $headingLevel = 1) : string
+    {
+        $markdown = '';
+        $depth = $this->getRelationDepth();
+        if($depth > 0){
+            $onlyType = $this->getRelationType();
+            foreach ($relations as $relation) {
+                if ($onlyType !== null && $relation->getType()->__toString() !== $onlyType) {
+                    continue;
                 }
-                
+                if (in_array($relation->getRightObject(), static::$printedObjects, true)) {
+                    continue;
+                }
+                $relObj = $relation->getRightObject();
+                static::$printedObjects[] = $relObj;
+                $childPrinter = new ObjectMarkdownPrinter($this->workbench, $relObj, ($depth - 1), $headingLevel+1);
+                $markdown .= $childPrinter->getMarkdown();
             }
         }
-        
+        if ($markdown !== '') {
+            $markdown = MarkdownDataType::buildMarkdownHeader($heading, $headingLevel) . "\n\n" . $markdown;
+        }
         return $markdown;
-        
     }
+    
+    protected function buildMdAttributesSections(MetaObjectInterface $obj, int $headingLevel = 3) : string
+    {
+        $markdown = '';
+        foreach ($obj->getAttributes() as $attr) {
+            $markdown .= $this->buildMarkDownAttributeSection($attr, $headingLevel);
+        }
+        return $markdown;
+    }
+    
+    protected function buildMarkDownAttributeSection(MetaAttributeInterface $attr, int $headingLevel = 3) : string
+    {
+        $heading = MarkdownDataType::buildMarkdownHeader($attr->getName(), $headingLevel);
+        $dataType = $attr->getDataType();
+        $dataTypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($dataType);
+        return <<<MD
+
+{$heading}
+
+{$attr->getShortDescription()}
+
+Alias: **{$attr->getAlias()}**
+
+Properties: {$this->buildMdAttributeProperties($attr)}
+
+{$this->buildMdCodeblock($attr->getDataAddress(), 'Data address:')}
+
+{$this->buildMdUxonCodeblock($attr->getDataAddressProperties(), 'Data address properties:')}
+
+{$this->buildMdUxonCodeblock($attr->getCustomDataTypeUxon(), 'Configuration of data type [' . $dataType->getAliasWithNamespace() . '](' . $dataTypeLink . '):')}
+
+MD;
+
+    }
+    
+    protected function buildMdCodeblock(string $code, string $caption = '', int $maxCharsForInlineBlock = 60) : string
+    {
+        $code = trim($code);
+        if ($code === '') {
+            return '';
+        }
+        if (mb_strlen($code) <= $maxCharsForInlineBlock) {
+            $markdown = "$caption `{$code}`";
+        } else {
+            $markdown = <<<MD
+
+{$caption}
+
+```uxon
+{$code}
+```
+
+MD;
+        }
+        return $markdown;
+    }
+    
+    protected function buildMdUxonCodeblock(UxonObject $uxon, string $caption = '', int $maxCharsForInlineBlock = 60) : string
+    {
+        if ($uxon->isEmpty()) {
+            return '';
+        }
+        $json = $uxon->toJson(false);
+        if (mb_strlen($json) > $maxCharsForInlineBlock) {
+            $json = $uxon->toJson(true);
+        }
+        return $this->buildMdCodeblock($json, $caption, $maxCharsForInlineBlock);
+    }
+    
+    protected function buildMdBehaviorsSections(MetaObjectInterface $obj, ?string $heading = null, int $headingLevel = 2) : string
+    {
+        $behaviors = $obj->getBehaviors();
+        if ($behaviors->isEmpty()) {
+            return '';
+        }
+        $heading = MarkdownDataType::buildMarkdownHeader($heading, $headingLevel);
+        $subsections = '';
+        foreach ($behaviors as $behavior) {
+            $subsections .= $this->buildMdBehaviorSection($behavior, $headingLevel+1);
+        }
+        return <<<MD
+{$heading}
+
+{$subsections}
+MD;
+
+    }
+    
+    protected function buildMdBehaviorSection(BehaviorInterface $behavior, int $headingLevel = 3) : string
+    {
+        $heading = MarkdownDataType::buildMarkdownHeader($behavior->getName(), $headingLevel);
+        $prototypeClass = '\\' . get_class($behavior);
+        $prototypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($behavior);
+        return <<<MD
+
+{$heading}
+
+- Prototype: [$prototypeClass]($prototypeLink)
+
+```
+{$behavior->exportUxonObject()->toJson(true)}
+```
+MD;
+    }
+    
+    protected function buildMdAttributeProperties(MetaAttributeInterface $attr) : string
+    {
+        $properties = [];
+        if ($attr->isReadable()) {
+            $properties[] = 'readable';
+        }
+        if ($attr->isWritable()) {
+            $properties[] = 'writable';
+        }
+        if ($attr->isEditable()) {
+            $properties[] = 'editable';
+        }
+        if ($attr->isRequired()) {
+            $properties[] = 'required';
+        }
+        if ($attr->isHidden()) {
+            $properties[] = 'hidden';
+        }
+        if ($attr->isFilterable()) {
+            $properties[] = 'filterable';
+        }
+        if ($attr->isSortable()) {
+            $properties[] = 'sortable';
+        }
+        if ($attr->isAggregatable()) {
+            $properties[] = 'aggregatable';
+        }
+        $propertiesPills = '`' . implode('`, `', $properties) . '`';
+        return $propertiesPills;
+    }
+    
     /**
      * Returns a list of attribute strings in Markdown format.
      *| Name | Alias | Data Address | Data Type | Required | Relation |
@@ -115,33 +284,37 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
      * @param MetaObjectInterface $metaObject
      * @return string[]  
      */
-    protected function getAttributes(MetaObjectInterface $metaObject): array
-    {
-        
-        $attributes = $metaObject->getAttributes();
-        
+    protected function buildMdAttributesTable(MetaAttributeListInterface $attributes): string
+    {        
         $list = [];
-
         foreach ($attributes->getAll() as  $attribute ) {
             $name = $this->escapeCell($attribute->getName());
             $alias = $this->escapeCell($attribute->getAlias());
             //$dataAddress = $this->escapeCell($attribute->getDataAddress());
-            $dataType = $this->escapeCell($attribute->getDataType()->getName());
-            $required = $attribute->isRequired();
-            $relation = "";
+            $dataTypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($attribute->getDataType());
+            $dataType = $this->escapeCell("[{$attribute->getDataType()->getAliasWithNamespace()}]($dataTypeLink)");
+            $relationText = "";
             if ($attribute->isRelation()) {
-                $relationObject = $attribute->getRelation();
-                $rightObject = $relationObject->getRightObject();
-
-                $this->addRelation($rightObject->getId());
-                $relation = $this->createLink($rightObject);
+                $rel = $attribute->getRelation();
+                try {
+                    $relationText = $this->createLink($rel->getRightObject());
+                } catch (MetaRelationBrokenError $e) {
+                    $relationText = 'Related object `' . $rel->getRightObjectId() . '` not found!';
+                }
             }
 
 
-            $list[] = "| {$name} | {$alias}  | {$dataType} | {$required} | {$relation}  |";
+            $list[] = "| {$name} | {$alias}  | {$dataType} | {$relationText}  |";
         }
 
-        return $list;
+        $rows = implode("\n", $list);
+        return <<<MD
+
+| Name | Alias | Data Type | Relation to |
+|------|-------|-----------|-------------|
+{$rows}
+
+MD;        
     }
 
     /**
@@ -156,13 +329,8 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
     protected function createLink(MetaObjectInterface $metaObject): string
     {
         $alias = $this->escapeCell($metaObject->getAlias());
-
-        $link = '"' . $metaObject->getName() . '"['
-            . $metaObject->getNameSpace() . '.'
-            . $metaObject->getAlias() . ']';
-
-        return '[' . $alias . ']' .
-            '(Available_metaobjects.md?selector=' . urlencode($link) . ')';
+        $link = DocsFacade::buildUrlToDocsForMetaObject($metaObject);
+        return "[$alias]({$link})";
     }
 
 
@@ -204,119 +372,42 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         return substr($decoded, $start + 1, $end - $start - 1);
     }
 
-
-    /**
-     * Adds a relation target object identifier to the processing queue if it is not
-     * already in the queue and has not been processed before.
-     *
-     * @return ObjectMarkdownPrinter Provides fluent interface.
-     */
-    protected function addRelation(string $relation) : ObjectMarkdownPrinter
+    protected function getObjectSelectorString(): ?string
     {
-        if(!in_array($relation, $this->getFinishedRelations(), true)
-            && !in_array($relation, $this->relations, true)){
-            $this->relations[] = $relation;
-        }
-        return $this;
-    }
-
-    /**
-     * Marks a relation target object identifier as processed.
-     *
-     * For child printers this call is delegated to the root printer so that
-     * the finished list is shared for the whole recursion tree.
-     *
-     * @return ObjectMarkdownPrinter Provides fluent interface on the root printer.
-     */
-    public function addFinishedRelation(string $relation) : ObjectMarkdownPrinter
-    {
-        if($this->parent){
-            return $this->parent->addFinishedRelation($relation);
-        }else {
-            if(!in_array($relation, $this->finishedRelations, true)){
-                $this->finishedRelations[] = $relation;
-            }
-            return $this;
-        }
-    }
-
-    /**
-     * Marks multiple relation target object identifiers as processed.
-     *
-     * @param string[] $relations
-     * @return ObjectMarkdownPrinter
-     */
-    protected function addFinishedRelations(array $relations) : ObjectMarkdownPrinter
-    {
-        foreach ($relations as $relation){
-            $this->addFinishedRelation($relation);
-        }
-        return $this;
-    }
-
-    public function getObjectId(): ?string
-    {
-        return $this->objectId;
-    }
-
-    public function setObjectId(?string $objectId): ObjectMarkdownPrinter
-    {
-        $this->objectId = $objectId;
-        return $this;
+        return $this->objectIdOrAlias;
     }
 
     /**
      * Returns the maximum traversal depth configured for this printer tree.
      */
-    public function getDepth(): int
+    protected function getRelationDepth(): int
     {
-        return $this->depth;
+        return $this->relationDepth;
     }
-
-    /**
-     * Returns the current recursion depth of this printer instance.
-     */
-    public function getCurrentDepth(): int
-    {
-        return $this->currentDepth;
-    }
-
-    /**
-     * Returns the parent printer or null if this is the root printer.
-     */
-    public function getParent(): ?ObjectMarkdownPrinter
-    {
-        return $this->parent;
-    }
-
-    /**
-     * Returns the queue of relation target object identifiers that still need processing.
-     *
-     * @return string[]
-     */
-    public function getRelations(): array
-    {
-        return $this->relations;
-    }
-
-    /**
-     * Returns the list of relation target object identifiers that have been processed.
-     *
-     * For child printers this list is always read from the root printer so that
-     * all printers share the same finished set.
-     *
-     * @return string[]
-     */
-    public function getFinishedRelations(): array
-    {
-        if($this->parent){
-            return $this->parent->getFinishedRelations();
-        }else{
-            return $this->finishedRelations;
-        }
-    }
-
     
-    
-    
+    protected function getRelationType() : string
+    {
+        return $this->relationType;
+    }
+
+    /**
+     * Only include the following relation type (e.g. regular or reverse) or all relations (pass `null` here)
+     * @param string|null $relaitonType
+     * @return $this
+     */
+    public function includeRelationsOfType(?string $relaitonType) : ObjectMarkdownPrinter
+    {
+        $this->relationType = RelationTypeDataType::cast($relaitonType);
+        return $this;
+    }
+
+    /**
+     * @param int $depth
+     * @return $this
+     */
+    public function includeRelationDepth(int $depth) : ObjectMarkdownPrinter
+    {
+        $this->relationDepth = $depth;
+        return $this;
+    }
 }

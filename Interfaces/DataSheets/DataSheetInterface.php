@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\DataSheets;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Interfaces\Debug\DataLogBookInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -11,7 +12,6 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
-use exface\Core\CommonLogic\DataSheets\DataSheetList;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -754,13 +754,15 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function hasColumTotals() : bool;
     
     /**
-     * Returns a new data sheet with the same columns, but only containing rows, that match the given filter
+     * Returns a new data sheet with the same columns, but only containing rows, that match the given filter.
+     * 
+     * Rows are re-indexed, they will not keep their original indexes!
      * 
      * @param ConditionalExpressionInterface $filter
      * @param bool $readMissingData
      * @return DataSheetInterface
      */
-    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
+    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false, ?DataLogBookInterface $logbook = null) : DataSheetInterface;
 
     /**
      * Returns the indexes of rows matching the given conditions (starting with 0)
@@ -769,7 +771,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param bool $readMissingData
      * @return int[]
      */
-    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : array;
+    public function findRows(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false, ?DataLogBookInterface $logbook = null) : array;
     
     /**
      * Returns a copy of this data sheet, that only contains system columns

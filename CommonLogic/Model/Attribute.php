@@ -10,6 +10,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaObjectModelError;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -17,6 +18,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -220,30 +222,33 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
      */
     public function getDataType()
     {
-        switch (true) {
-            case $this->data_type !== null:
-                return $this->data_type;
-            case $this->data_type_selector !== null:
-                try {
+        try {
+            switch (true) {
+                case $this->data_type !== null:
+                    return $this->data_type;
+                case $this->data_type_selector !== null:
                     if ($this->data_type_selector instanceof DataTypeSelectorInterface) {
                         $this->data_type = DataTypeFactory::createFromSelector($this->data_type_selector)->copy();
                     } else {
                         $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type_selector)->copy();
                     }
-                    $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
-                } catch (\Throwable $e) {
-                    throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
-                }
-                break;
-            case $this->custom_data_type_uxon !== null:
-                try {
+                    try {
+                        $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
+                    } catch (\Throwable $e) {
+                        if (! $e instanceof DataTypeExceptionInterface) {
+                            $e = new DataTypeConfigurationError($this->data_type, $e->getMessage(), null, $e);
+                        }
+                        throw $e;
+                    }
+                    break;
+                case $this->custom_data_type_uxon !== null:
                     $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->getCustomDataTypeUxon());
-                } catch (\Throwable $e) {
-                    throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
-                }
-                break;
-            default: 
-                throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
+                    break;
+                default:
+                    throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
+            }
+        } catch (\Throwable $e) {
+            throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
         }
         
         // Make sure, numeric ids do not group their digits like normal integers

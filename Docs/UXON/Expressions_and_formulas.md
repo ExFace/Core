@@ -1,8 +1,6 @@
 # Expressions and formulas
 
-There are different types of expressons, that can be used within various parts of the model to reference other parts:
-
-## Overview
+There are different types of expressons, that can be used within various parts of the model to reference other parts.
 
 | Expression type | Example | Description |
 | --------------- | ------- | ----------- |

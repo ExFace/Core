@@ -879,7 +879,7 @@ class ConditionGroup implements ConditionGroupInterface
             } else {
                 $delimiter = EXF_LIST_SEPARATOR;
             }
-            $value = implode($delimiter, $value_list);
+            $value = implode($delimiter, array_unique($value_list));
         } else {
             $value = $value_list;
         }

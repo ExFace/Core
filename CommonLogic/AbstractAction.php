@@ -89,6 +89,7 @@ abstract class AbstractAction implements ActionInterface
     private $id = null;
 
     private $alias = null;
+    private $aliasWithNamespace = null;
 
     private $name = null;
     
@@ -190,9 +191,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getAlias()
     {
-        if (is_null($this->alias)) {
-            $class = explode('\\', get_class($this));
-            $this->alias = end($class);
+        if ($this->alias === null) {
+            $this->aliasWithNamespace = null;
+            $this->alias = $this->getAliasOfPrototype(false);
         }
         return $this->alias;
     }
@@ -208,6 +209,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setAlias($value)
     {
+        // TODO Refactor this method to except an alias with namespace (as the `alias` property in UXON does).
+        // Currently it takes the alias without namespace and only works because SqlModelLoader and ActionFactory
+        // have some custom logic to put the correct part of the alias in here.
         $this->alias = $value;
         return $this;
     }
@@ -220,7 +224,10 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
+        if ($this->aliasWithNamespace === null) {
+            $this->aliasWithNamespace = $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
+        }
+        return $this->aliasWithNamespace;
     }
 
     /**
@@ -232,6 +239,21 @@ abstract class AbstractAction implements ActionInterface
     public function getNamespace()
     {
         return $this->getApp()->getAliasWithNamespace();
+    }
+
+    /**
+     * @see ActionInterface::getAliasOfPrototype()
+     */
+    public function getAliasOfPrototype(bool $withNamespace = true) : string
+    {
+        $classNsParts = explode('\\', get_class($this));
+        $alias = end($classNsParts);
+        if ($withNamespace === false) {
+            return $alias;
+        } else {
+            $selector = new ActionSelector($this->getWorkbench(), '\\' . get_class($this));
+            return $selector->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias;
+        }
     }
 
     /**
@@ -334,7 +356,7 @@ abstract class AbstractAction implements ActionInterface
                 return $this->getInputDataSheet($task);
             }));
             $logbook->stopLoggingEvents();
-            $this->getWorkbench()->getLogger()->warning('Action "' . $this->getAliasWithNamespace() . '" failed', [], $this->getLogBook($task));
+            $this->getWorkbench()->getLogger()->warning('Action ' . $this->__toString() . ' failed', [], $this->getLogBook($task));
             throw $e;
         }
         
@@ -486,7 +508,7 @@ abstract class AbstractAction implements ActionInterface
             return $this->getInputDataSheet($result->getTask());
         }));
         
-        $this->getWorkbench()->getLogger()->notice('Action "' . $this->getAliasWithNamespace() . '" performed', [], $this->getLogBook($result->getTask()));
+        $this->getWorkbench()->getLogger()->notice('Action ' . $this->__toString() . ' performed', [], $this->getLogBook($result->getTask()));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
@@ -568,6 +590,16 @@ abstract class AbstractAction implements ActionInterface
             }
         }
         return $this->meta_object;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasMetaObject()
+     */
+    public function hasMetaObject() : bool
+    {
+        return $this->meta_object !== null || $this->hasInputDataPreset() || $this->isDefinedInWidget();
     }
 
     /**
@@ -1121,8 +1153,12 @@ abstract class AbstractAction implements ActionInterface
             // If there is neither task nor preset data, create a new data sheet
             $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
             $diagram .= "\n\t Task(Task) -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
+        } elseif ($this->meta_object !== null) {
+            // If there is neither task nor preset data, create a new data sheet
+            $sheet = DataSheetFactory::createFromObject($this->meta_object);
+            $diagram .= "\n\t ActionObject[Action object] -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } else {
-            throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
+            throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!', '83VYCXZ');
         }
         
         // Replace the `Input data` section of the logbook
@@ -1177,7 +1213,7 @@ abstract class AbstractAction implements ActionInterface
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $diagram .= " InputValidation[Input Validation]";
-        $diagram .= "\n\t InputValidation --> Action[\"Action: {$this->getName()}\"]";
+        $diagram .= "\n\t InputValidation --> Action[" . ActionLogBook::buildMermaidTitleForAction($this, 'Action: ') . "]";
         $logbook->addPlaceholderValue('input_diagram', $diagram);
         $inputData = $this->validateInputData($inputData, $logbook);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
@@ -2047,6 +2083,6 @@ abstract class AbstractAction implements ActionInterface
      */
     public function __toString() : string
     {
-        return '"' . $this->getName() . '"' . ' [' . $this->getAliasWithNamespace() . ']';
+        return $this->hasName() ? '"' . $this->getName() . '"' . ' [' . $this->getAliasWithNamespace() . ']' : '"' . $this->getAliasWithNamespace() . '"';
     }
 }

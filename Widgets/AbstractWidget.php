@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Actions\ShowWidget;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -1549,10 +1551,12 @@ abstract class AbstractWidget implements WidgetInterface
 
     /**
      * Returns an array of parent widgets with the given class or interface
+     * 
      * @param string $classOrInterface
-     * @return array
+     * @param int|null $maxResults
+     * @return WidgetInterface[]
      */
-    public function findParentsByClass(string $classOrInterface) : array
+    public function findParentsByClass(string $classOrInterface, ?int $maxResults = null) : array
     {
         $result  = [];
         $widget = $this;
@@ -1560,6 +1564,9 @@ abstract class AbstractWidget implements WidgetInterface
             $widget = $widget->getParent();
             if ($widget instanceof $classOrInterface) {
                 $result[] = $widget;
+                if ($maxResults > 0 && count($result) >= $maxResults) {
+                    break;
+                }
             }
         }
         
@@ -1778,18 +1785,26 @@ abstract class AbstractWidget implements WidgetInterface
             
             if (($trigger = $this->getParentByClass(iTriggerAction::class)) && $trigger->hasAction()) {
                 $action = $trigger->getAction();
-                $actionInfo = $action->getAliasWithNamespace() . ' (' . $action->getName() . ')';
+                $actionAlias = $action->getAliasWithNamespace();
+                $protoytypeAlias = $action->getAliasOfPrototype();
+                if ($protoytypeAlias !== $actionAlias) {
+                    $actionInfo = "`{$actionAlias}` ({$action->getName()}), based on prototype [{$protoytypeAlias}](" . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ')';
+                } else {
+                    $actionInfo = "[$actionAlias](" . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ") ({$action->getName()})";
+                }
             } else {
-                $actionInfo = 'exface.Core.ShowWidget (root)';
+                $actionInfo = '[exface.Core.ShowWidget](' . DocsFacade::buildUrlToDocsForUxonPrototype(ShowWidget::class) . ') (root)';
             }
             
+            $docsLink = DocsFacade::buildUrlToDocsForUxonPrototype($this);
             $tabContents = <<<MD
 
 # Widget `{$this->getWidgetType()}`
 
+- Widget type: [{$this->getWidgetType()}]($docsLink)
 - Widget ID: `{$this->getId()}`
 - Page: `{$this->getPage()->getAliasWithNamespace()}`
-- Called by action: `{$actionInfo}`
+- Called by action: {$actionInfo}
 
 ## Widget UXON
 
