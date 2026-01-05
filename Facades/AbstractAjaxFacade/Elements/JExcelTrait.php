@@ -679,6 +679,14 @@ JS;
         _initData: [],
         _disabled: $disabledJs,
         _valueGetterRow: null,
+        _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
+        getDoNotValidate: function(){
+            return this._doNotValidate;
+        },
+        setDoNotValidate: function(bVal){
+            // set to true, to disable at runtime validation until DataGetter() is called
+            this._doNotValidate = bVal;
+        },
         getJExcel: function(){
             return this._dom.jspreadsheet;
         },
@@ -781,6 +789,11 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
+
+            if (this.getDoNotValidate() === true) {
+                return true;
+            }
+
             var oColModel = this.getColumnModel(iCol);
             var fnValidator = oColModel.validator;
 
@@ -798,6 +811,11 @@ JS;
             if (mValue === '\u0000') {
                 mValue = '';
             }
+
+            if (this.getDoNotValidate() === true) {
+                return mValue;
+            }
+
             bParseValue = bParseValue === undefined ? false : true;
             if (bParseValue === true) {
                 mValue = oCol.parser ? oCol.parser(mValue) : mValue;
@@ -828,6 +846,11 @@ JS;
             return mValue;
         },
         validateAll: function() {
+
+            if (this.getDoNotValidate() === true) {
+                return;
+            }
+
             var aData = this.getJExcel().getData() || [];
             var iDataCnt = aData.length;
             var iSpareRows = {$this->getMinSpareRows()};
@@ -858,6 +881,11 @@ JS;
             });
         },
         refreshConditionalProperties: function() {
+
+            if (this.getDoNotValidate() === true) {
+                return;
+            }
+
             var oWidget = this;
             var oJExcel = oWidget.getJExcel();
             let numRows = oJExcel.getData().length;
@@ -881,6 +909,10 @@ JS;
             }
         },
         isDropdownValueValid: function(iCol, iRow, mValue = null) {
+
+            if (this.getDoNotValidate() === true) {
+                return true;
+            }
 
             var oWidget = this;
             var oJExcel = oWidget.getJExcel();
@@ -2183,6 +2215,17 @@ JS;
         return <<<JS
         (function(){ 
             var jqEl = {$this->buildJsJqueryElement()};
+
+            // if do_not_validate_dynamically is set to true,
+            // we only validate once when getting the data here
+            // then we set the flag back to true
+            if (jqEl[0].exfWidget.getDoNotValidate() === true){
+                jqEl[0].exfWidget.setDoNotValidate(false);
+                jqEl[0].exfWidget.refreshConditionalProperties();
+                jqEl[0].exfWidget.validateAll();
+                jqEl[0].exfWidget.setDoNotValidate(true);
+            }
+
             var aRows;
             if (jqEl.length === 0) return {};
             aRows = jqEl[0].exfWidget.getData();
