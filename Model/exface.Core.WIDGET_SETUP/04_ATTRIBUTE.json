@@ -226,7 +226,7 @@
         {
             "_EXPORT_SUMMARY": "Is part of app [APP]",
             "CREATED_ON": "2025-06-27 09:42:23",
-            "MODIFIED_ON": "2025-06-27 09:44:08",
+            "MODIFIED_ON": "2026-01-05 17:05:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f08fe2438603968fe2025041000001",
@@ -262,7 +262,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": null,
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": "If set, the setup will be exported with the app model. This is only possible for public setups!",
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
             },
