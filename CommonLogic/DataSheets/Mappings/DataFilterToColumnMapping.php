@@ -17,7 +17,7 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * to-sheet, that is created via the to-expression.
  * 
  * By setting the mapping-properties `to_single_row` and `to_single_row_separator` you can
- * make all values concatennated into a single value, that will be put in the first row of
+ * make all values concatenated into a single value, that will be put in the first row of
  * the to-sheet.
  * 
  * By default, all filter conditions (even those in nested condition groups) are used as
@@ -28,7 +28,7 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * unless `to_single_row` is set to `true`.
  * 
  * If `inherit_filters` is set in the mapper, matching filters will NOT be inherited by
- * defualt (because they are transformed to columns). If you want them to get inherited,
+ * default (because they are transformed to columns). If you want them to get inherited,
  * set `prevent_inheriting_filter` to `false` for this mapping.
  * 
  * @see DataColumnMappingInterface
@@ -38,13 +38,13 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  */
 class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterToColumnMappingInterface 
 {
-    private $comparator = null;
+    private ?string $comparator = null;
     
-    private $toSingleRowSeparator = null;
+    private ?string $toSingleRowSeparator = null;
     
-    private $toSingleRow = false;
+    private bool $toSingleRow = false;
     
-    private $removeFilter = true;
+    private bool $removeFilter = true;
     
     /**
      * 
@@ -59,7 +59,7 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
         $conditions = $this->findFilterConditions($fromSheet->getFilters(), $fromExpr, $this->getFromComparator());
         $values = [];
         foreach ($conditions as $cond) {
-            /* @var $cond \exface\Core\Interfaces\Model\ConditionInterface */
+            /* @var $cond ConditionInterface */
             if ($cond->getValue() === '' || $cond->getValue() === null) {
                 continue;
             }
@@ -107,15 +107,16 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
      */
     protected function findFilterConditions(ConditionGroupInterface $fromConditionGroup, ExpressionInterface $fromExpression, string $comparator = null) : array
     {
-        $exprString = $fromExpression->toString();
+        $exprString = $fromExpression->__toString();
+        $preventInheriting = $this->getPreventInheritingFilter();
         $result = [];
         
         foreach ($fromConditionGroup->getConditions() as $condition) {
-            $ccomp = $condition->getComparator();
-            if (strcasecmp($condition->getExpression()->toString(), $exprString) === 0) {
-                if ($comparator === $ccomp || ($comparator === null || $comparator === '')) {
+            $condComp = $condition->getComparator();
+            if (strcasecmp($condition->getExpression()->__toString(), $exprString) === 0) {
+                if ($comparator === $condComp || ($comparator === null || $comparator === '')) {
                     $result[] = $condition;
-                    if ($this->getPreventInheritingFilter()) {
+                    if ($preventInheriting) {
                         $fromConditionGroup->removeCondition($condition);
                     }
                 }
@@ -140,7 +141,7 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
     /**
      * Take only filters with this comparator.
      * 
-     * @uxon-property comparator
+     * @uxon-property from_comparator
      * @uxon-type metamodel:comparator
      * 
      * {@inheritDoc}
@@ -218,7 +219,7 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
      * 
      * @uxon-property prevent_inheriting_filter
      * @uxon-type boolean
-     * @uxon-default true     * 
+     * @uxon-default true 
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface::setPreventInheritingFilter()
