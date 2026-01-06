@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataFilterToFilterMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\JsonToRowsMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\LookupMapping;
 use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
@@ -53,8 +54,9 @@ use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
  * - `column_to_column_mappings` transfer values from columns of the from-sheet to columns
  * in the to-sheet. Their `from` expression can also be a calculation allowing to change
  * values within the mapping (e.g. `=(version + 1)` or even use static calculation like `=Now()`.
- * - `column_to_filter_mappings` create filters in the to-sheet from values of from-heet columns.
+ * - `column_to_filter_mappings` create filters in the to-sheet from values of from-sheet columns.
  * - `filter_to_column_mappings` fill to-sheet columns with values of from-sheet filters.
+ * - `filter_to_filter_mappings` create filters in the to-sheet from from-sheet filters.
  * - `data_to_subsheet_mappings` allow to create subsheets in the to-sheet from values of the from-sheet
  * - `subsheet_mappings` apply mappers to subsheets contained in the cells of nested data columns
  * - `joins` can join arbitrary data in a way similar to SQL JOINs
@@ -184,7 +186,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface
+    public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null, ?DataSheetInterface $toSheet = null) : DataSheetInterface
     {
         if (! $fromSheet->getMetaObject()->is($this->getFromMetaObject())){
             throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!', null, null, $logbook);
@@ -217,7 +219,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         // Create an empty to-sheet
-        $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
+        $toSheet = $toSheet ?? DataSheetFactory::createFromObject($this->getToMetaObject());
         
         // Inherit stuff
         $logbook->addLine('Inheriting: ');
@@ -755,6 +757,24 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         foreach ($uxon as $prop){
             $this->addMapping(new DataFilterToColumnMapping($this, $prop));
+        }
+        return $this;
+    }
+
+    /**
+     * Create filters in the to-sheet from from-sheet filters
+     *
+     * @uxon-property filter_to_filter_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataFilterToFilterMapping[]
+     * @uxon-template [{"from": "", "to": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setFilterToFilterMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataFilterToFilterMapping($this, $prop));
         }
         return $this;
     }
