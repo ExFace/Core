@@ -19,7 +19,7 @@ use exface\Core\DataTypes\StringDataType;
  * `thisPlacehlderName` is the name of the data placeholder and `ATTR` is the data column name in
  * the loaded data sheet.
  * 
- * Important onfiguration options:
+ * Important configuration options:
  * 
  * - `data_sheet` to load the data 
  * - `outer_template` to wrap all the rendered `row_templates` adding a common title or similar

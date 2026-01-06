@@ -33,7 +33,7 @@ class PlaceholderGroup implements PlaceholderResolverInterface
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->resolvers as $resolver) {
+        foreach ($this->getPlaceholderResolvers() as $resolver) {
             $vals = array_merge($vals, $resolver->resolve($placeholders));
         }
         return $vals;
@@ -48,5 +48,13 @@ class PlaceholderGroup implements PlaceholderResolverInterface
     {
         $this->resolvers[] = $resolver;
         return $this;
+    }
+
+    /**
+     * @return PlaceholderResolverInterface[]
+     */
+    protected function getPlaceholderResolvers() : array
+    {
+        return $this->resolvers;
     }
 }
