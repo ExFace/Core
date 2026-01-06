@@ -3020,7 +3020,7 @@
             ],
             "HINT": "",
             "TYPE": "ERROR",
-            "DOCS": "exface/Core/Docs/creating_metamodels/data_sources/SQL/Troubleshooting_MS_SQL.md"
+            "DOCS": "exface/core/Docs/creating_metamodels/data_sources/SQL/Troubleshooting_MS_SQL.md"
         },
         {
             "_EXPORT_SUMMARY": "809F0AU Not allowed to edit!",
@@ -3048,6 +3048,32 @@
             "CODE": "80YWY1Z",
             "TITLE": "Could not find required values in data",
             "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "83VYCXZ No input data for action",
+            "CREATED_ON": "2025-12-05 12:14:19",
+            "MODIFIED_ON": "2025-12-05 12:14:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f0bac68b39b5f0bac6025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "83VYCXZ",
+            "TITLE": "No input data for action",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs if an action expects input data, but was configured in a way, that it cannot find any. Whether an action needs input data depends on its internal logic, but where it can get some input data depends on its configuration. In most cases, you can avoid this error if you configure the action properly.",
+                "",
+                "An action will search for input data in the following order:",
+                "",
+                "1. Take the input data from the task it received",
+                "2. Otherwise see if there is an `input_data_preset` defined for the action",
+                "3. Otherwise assume empty input data unless the action has no metaobject (because the input data sheet can only exist for a specific object)",
+                "",
+                "If you want your action to use empty input data automatically, but you get this error - make sure it has an `object_alias`."
+            ],
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""

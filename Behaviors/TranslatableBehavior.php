@@ -450,19 +450,6 @@ class TranslatableBehavior extends AbstractBehavior
     }
     
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        // TODO
-        return $uxon;
-    }
-    
-    /**
      * Translates names, descriptions, etc. of UI pages and menu items whenever they are loaded.
      * 
      * @param OnUiMenuItemLoadedEvent $event

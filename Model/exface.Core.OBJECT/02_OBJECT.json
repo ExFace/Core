@@ -94,7 +94,7 @@
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
             "COMMENTS": "",
-            "DOCS": "exface/Core/Docs/understanding_the_metamodel/Meta_objects.md",
+            "DOCS": "exface/core/Docs/understanding_the_metamodel/Meta_objects.md",
             "NAME": "Meta Object",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",

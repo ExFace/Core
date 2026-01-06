@@ -223,6 +223,8 @@ class ShowLookupDialog extends ShowDialog
                         // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
                         // different attributes, but having the same caption, we should NOT put them both in the
                         // table! Similarly, avoid columns with different captions, but same content!
+                        // On the other hand, keeping hidden columns is important here because live-refs to columns
+                        // of InputComboTables MUST also work with the data of the lookup dialog
                         foreach ($data_table->getColumns() as $existingCol) {
                             if ($this->isSameColumn($existingCol, $col, true)) {
                                 continue 2;
@@ -272,20 +274,31 @@ class ShowLookupDialog extends ShowDialog
     /**
      * Returns TRUE if two columns from different tables are the same from the point of view of the user
      *
-     * @param DataColumn $col1
-     * @param DataColumn $col2
+     * @param DataColumn $existingCol
+     * @param DataColumn $newCol
      * @param bool $compareCaption
      * @return bool
      */
-    protected function isSameColumn(DataColumn $col1, DataColumn $col2, bool $compareCaption = true) : bool
+    protected function isSameColumn(DataColumn $existingCol, DataColumn $newCol, bool $compareCaption = true) : bool
     {
-        if ($compareCaption === true && $col1->getCaption() === $col2->getCaption()) {
+        // Compare captions if required - but only for visible columns! Keeping hidden columns is important
+        // because live-refs to columns of InputComboTables MUST also work with the data of the lookup dialog
+        if ($compareCaption === true 
+            && $newCol->isHidden() === false 
+            && $existingCol->isHidden() === false 
+            && $existingCol->getCaption() === $newCol->getCaption()
+        ) {
             return true;
         }
-        if ($col1 === $col2->getDataColumnName()) {
+        
+        // If the data column name is the same, the columns are definitely the same
+        if ($existingCol->getDataColumnName() === $newCol->getDataColumnName()) {
             return true;
         }
-        if ($col1->isBoundToAttribute() && $col2->isBoundToAttribute() && $col1->getAttributeAlias() === $col2->getAttributeAlias()) {
+        
+        // If they are bound to the same attribute - too. However compare the entire attribute alias including
+        // potential aggregators!
+        if ($existingCol->isBoundToAttribute() && $newCol->isBoundToAttribute() && $existingCol->getAttributeAlias() === $newCol->getAttributeAlias()) {
             return true;
         }
         return false;

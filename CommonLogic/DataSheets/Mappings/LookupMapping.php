@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Factories\DataSheetFactory;
@@ -259,6 +260,7 @@ class LookupMapping extends AbstractDataSheetMapping
                 $matchLookupCol = $lookupSheet->getColumns()->addFromExpression($match['lookup']);
                 $matchesLookup[$i] = [
                     'lookupCol' => $matchLookupCol,
+                    'lookupColName' => $matchLookupCol->getName(),
                 ];
             }
         } else {
@@ -273,32 +275,47 @@ class LookupMapping extends AbstractDataSheetMapping
         $fromColsHaveValues = false;
         foreach ($matches as $i => $match) {
             $fromExpr = ExpressionFactory::createForObject($fromSheet->getMetaObject(), $match['from']);
-            if (! $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)) {
-                // If not enough data, but explicitly configured to ignore it, exit here
-                if ($this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType())) {
-                    $logbook?->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
-                    return $toSheet;
-                }
-                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Missing column "' . $match['from'] . '" in from-data for a lookup mapping!');
-            }
-            /* TODO pre-parse all from values to speed up comparison later on
-            $fromType = $fromCol->getDataType();
-            $fromVals = [];
-            foreach ($fromCol->getValues() as $fromVal) {
-                $fromVals[] = $fromType->parse($fromVal);
-            }
-            $matchesFrom[$i] = [
-                'fromCol' => $fromCol,
-                'fromValsParsed' => $fromVals
-            ];*/
-            
-            // If there are no from values
-            if ($fromCol->isEmpty(true) === false) {
-                $fromColsHaveValues = true;
-            }            
-            // Add a filter to the lookup-sheet if not told to read it all anyhow
-            if ($readAll === false) {
-                $lookupSheet->getFilters()->addConditionFromValueArray($match['lookup'], $fromCol->getValues());
+            switch (true) {
+                // If it's a column in the from-data, use its values for filtering
+                case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
+                    $matchesFrom[$i] = [
+                        'fromCol' => $fromCol,
+                        'fromColName' => $fromCol->getName()
+                    ];
+                    /* TODO pre-parse all from values to speed up comparison later on
+                    $fromType = $fromCol->getDataType();
+                    $fromVals = [];
+                    foreach ($fromCol->getValues() as $fromVal) {
+                        $fromVals[] = $fromType->parse($fromVal);
+                    }
+                    $matchesFrom[$i]['fromValsParsed'] = $fromVals;
+                    */
+
+                    // If there are no from values
+                    if ($fromCol->isEmpty(true) === false) {
+                        $fromColsHaveValues = true;
+                    }
+                    // Add a filter to the lookup-sheet if not told to read it all anyhow
+                    if ($readAll === false) {
+                        $lookupSheet->getFilters()->addConditionFromValueArray($match['lookup'], $fromCol->getValues());
+                    }
+                    break;
+                // If it is a constant or a static formula - use its value
+                // IDEA maybe we can even evaluate non-static formulas with the help of the from-data???
+                // On the other hand, we are adding these expressions to the from-data automatically. Why bother here?
+                case $fromExpr->isStatic():
+                    $fromColsHaveValues = true;
+                    $staticVal = $fromExpr->evaluate();
+                    $matchesFrom[$i]['static'] = $staticVal;
+                    $lookupSheet->getFilters()->addConditionFromString($match['lookup'], $staticVal, ComparatorDataType::EQUALS);
+                    break;
+                default:
+                    // If not enough data, but explicitly configured to ignore it, exit here
+                    if ($this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType())) {
+                        $logbook?->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
+                        return $toSheet;
+                    }
+                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Missing column "' . $match['from'] . '" in from-data for a lookup mapping!');
             }
         }
         
@@ -326,7 +343,8 @@ class LookupMapping extends AbstractDataSheetMapping
                 'lookupSheet' => $lookupSheet,
                 'lookupCol' => $lookupCol,
                 'matches' => $matches,
-                'matchesLookup' => $matchesLookup
+                'matchesLookup' => $matchesLookup,
+                'matchesFrom' => $matchesLookup
             ];
         }
 
@@ -356,7 +374,11 @@ class LookupMapping extends AbstractDataSheetMapping
                     // that both are in the same format
                     $matchType = $matchesLookup[$iMatch]['lookupCol']->getDataType();
                     $matchVal = $lookupRow[$match['lookup']];
-                    $fromVal = $fromRow[$match['from']];
+                    if (is_array($matchesFrom[$iMatch]) && array_key_exists('static', $matchesFrom[$iMatch])) {
+                        $fromVal = $matchesFrom['static'];
+                    } else {
+                        $fromVal = $fromRow[$matchesFrom[$iMatch]['fromColName'] ?? $match['from']];
+                    }
                     // TODO move parsing from-data up to where from data is checked
                     // to avoid parsing the from-value over and over for every lookup
                     // row and for every match

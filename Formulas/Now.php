@@ -11,10 +11,10 @@ use exface\Core\Factories\DataTypeFactory;
  *
  * Examples:
  *
- * - `=NOW()` = 2020-03-25 21:00:55
- * - `=NOW('yyyy-MM-dd')` = 2020-03-25
- * - `=NOW('dd.MM.yyyy')` = 25.03.2020
- * - `=NOW('dd.MM.yyyy HH:mm:ss')` = 25.03.2020 21:00:55
+ * - `=Now()` = 2020-03-25 21:00:55
+ * - `=Now('yyyy-MM-dd')` = 2020-03-25
+ * - `=Now('dd.MM.yyyy')` = 25.03.2020
+ * - `=Now('dd.MM.yyyy HH:mm:ss')` = 25.03.2020 21:00:55
  *
  * See https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax for a complete guide to
  * the ICU date format syntax.
@@ -64,6 +64,10 @@ class Now extends \exface\Core\CommonLogic\Model\Formula
      */
     public function getDataType()
     {
-        return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateTimeDataType::class);
+        $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateTimeDataType::class);
+        // TODO if a custom format was given, pass it to the data type too!
+        // Otherwise, reading =Now('dd.MM.yyyy') in a data sheet will produce a date column, that still has the default
+        // format making widgets and template renderers reformat the value back to the default yyyy-MM-dd notation. 
+        return $type;
     }
 }

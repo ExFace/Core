@@ -151,6 +151,8 @@ class DataImporter extends AbstractWidget implements
     private $displayOnly = false;
     
     private $required = false;
+
+    private $doNotValidateDynamically = false;
     
     /**
      * 
@@ -186,6 +188,31 @@ class DataImporter extends AbstractWidget implements
     public function isRequired()
     {
         return $this->required;
+    }
+
+    /**
+     * [EXPERIMENTAL] Set TRUE to disable validation at runtime. The data will only be validated when the DataGetter is called, for example, before an action is performed with the data.
+     * This might help with performance when working with large spreadsheets.
+     * 
+     * @uxon-property do_not_validate_dynamically
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataImporter
+     */
+    public function setDoNotValidateDynamically(bool $value) : DataImporter
+    {
+        $this->doNotValidateDynamically = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getDoNotValidateDynamically() : bool
+    {
+        return $this->doNotValidateDynamically;
     }
     
     /**

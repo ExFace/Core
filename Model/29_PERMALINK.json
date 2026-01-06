@@ -59,7 +59,7 @@
             "UID": "0x11f09297b1560e189297025041000001",
             "DESCRIPTION": "",
             "ALIAS": "OTL",
-            "PROTOTYPE_FILE": "exface/Core/Permalinks/OneTimeLink.php",
+            "PROTOTYPE_FILE": "exface/core/Permalinks/OneTimeLink.php",
             "NAME": "OneTime-Links",
             "APP": "0x31000000000000000000000000000000",
             "OBJECT": null,

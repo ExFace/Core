@@ -27,6 +27,7 @@ use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
@@ -520,6 +521,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $this->getWorkbench(),
                 UxonObject::fromJson($cacheData['dataSheet'])
             );
+            $logBook->addLine('Loaded attribute definitions from cache.');
+            $logBook->addDataSheet('From Cache', $attributeDefinitionsSheet->copy());
         } else {
             // If loading from cache failed, we have to load from source.
             if (null === $tplUxon = $definition->getDataSheetTemplateUxon()) {
@@ -613,6 +616,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             } catch (\Throwable $e) {
                 throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e, $logBook);
             }
+            
+            $logBook->addLine('No cache detected. Loaded attribute definitions from source.');
+            $logBook->addDataSheet('From Source', $attributeDefinitionsSheet->copy());
         }
 
 
@@ -691,6 +697,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 $attr->setRequired($definitionRow[$requiredAlias]);
             }
             
+            if($groupsAlias !== null) {
+                $delimiter = $this->getObject()->getAttribute($groupsAlias)->getValueListDelimiter();
+                $groups = explode($delimiter, $definitionRow[$groupsAlias] ?? '');
+                foreach ($groups as $groupAlias) {
+                    try {
+                        $targetObject->getAttributeGroup($groupAlias)->add($attr);
+                    } catch (MetaAttributeGroupNotFoundError $e) {
+                        // Ignore missing attribute groups
+                    }
+                }
+            }
+            
             $attributes[] = $attr;
         }
 
@@ -741,7 +759,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         $cache = $this->getWorkbench()->getCache();
         if($cache->has($this->getKeyForTrackingCache())) {
-            return json_decode($cache->get($this->getKeyForTrackingCache()));
+            $json = $cache->get($this->getKeyForTrackingCache());
+            return $json !== null ? json_decode($json) : [];
         }
 
         return [];

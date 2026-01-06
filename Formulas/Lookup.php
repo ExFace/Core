@@ -39,7 +39,7 @@ class Lookup extends Formula
     public function run(string $expression = null, string $objectAlias = null, string $filters = null)
     {
         if ($expression === null || $expression === '' || $objectAlias === null || $objectAlias === '') {
-            throw new FormulaError('Invalid argument values for formula "' . $this->__toString() . '": first and second argument cannot be empty!');
+            throw new FormulaError($this, 'Invalid argument values for formula "' . $this->__toString() . '": first and second argument cannot be empty!');
         }
         
         $phs = $this->getRequiredPlaceholders();

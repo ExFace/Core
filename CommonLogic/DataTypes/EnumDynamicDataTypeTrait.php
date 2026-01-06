@@ -147,21 +147,29 @@ trait EnumDynamicDataTypeTrait {
      */
     public function parse($string)
     {
-        // Do not cast the value to aviod type mismatches with array keys (e.g. do not normalize numbers!)
+        // Do not cast the value to avoid type mismatches with array keys (e.g. do not normalize numbers!)
         $value = $string === null ? null : trim($string);
         
-        $valueInArray = array_key_exists($value, $this->values);
+        $matchesValue = array_key_exists($value, $this->values);
         
         // Convert all sorts of empty values to NULL except if they are explicitly
         // part of the enumeration: e.g. an empty string should become null if the
         // enumeration does not include the empty string explicitly.
         // TODO #null-or-NULL does the NULL constant need to pass parsing?
-        if (($this->isValueEmpty($value) || static::isValueLogicalNull($value)) && $valueInArray === false) {
+        if (($this->isValueEmpty($value) || static::isValueLogicalNull($value)) && $matchesValue === false) {
             return null;
         }
         
-        if (false === $valueInArray) {
-            throw $this->createValidationParseError($string, 'Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', false, '6XGN2H6');
+        if (false === $matchesValue) {
+            // If the given value is not in the enum, see if it matches one of the labels - if it does, return 
+            // the raw value. This makes handling all sorts of manual inputs easier - e.g. raw-input filter,
+            // spreadsheets, etc. After all, the parse() function is meant to be forgiving!
+            $matchInLabels = array_search($value, $this->getLabels(), true);
+            if ($matchInLabels !== false) {
+                $value = $matchInLabels;
+            } else {
+                throw $this->createValidationParseError($string, 'Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', false, '6XGN2H6');
+            }
         }
         
         return $value;

@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use axenox\ETL\Events\Flow\OnAfterETLStepRun;
 use axenox\ETL\Events\Flow\OnBeforeETLStepRun;
 use exface\Core\CommonLogic\Debugger\Profiler;
+use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
@@ -175,7 +176,7 @@ class Tracer extends Profiler
                 $this->getWorkbench(),
                 "Tracer", 
                 $this->getTraceFilePath(), 
-                $workbench->filemanager()->getPathToLogDetailsFolder(),
+                $workbench->filemanager()->getPathToLogDetailsFolder(DateDataType::now()),
                 LoggerInterface::DEBUG,
                 LoggerInterface::DEBUG,
                 LoggerInterface::DEBUG

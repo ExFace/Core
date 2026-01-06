@@ -292,4 +292,17 @@ class JsonDataType extends TextDataType
                 throw new InvalidArgumentException('Datatype: ' . $dataType->getAlias() . ' not recognized.');
         }
     }
+
+    /**
+     * Sanitize a string for JsonPath by replacing all reserved characters `[$@.\[\]*,?]` with the character you
+     * provided.
+     * 
+     * @param string $string
+     * @param string $replacement
+     * @return string
+     */
+    public static function sanitizeForJsonPath(string $string, string $replacement = '_') : string
+    {
+        return preg_replace('/[\\\\\/$@.\[\]*,?]/', $replacement, $string);
+    }
 }

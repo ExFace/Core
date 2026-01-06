@@ -153,9 +153,9 @@ class DataCheck implements DataCheckInterface
         }
         
         try {
-            return $data->findRows($filter, $readMissingData);
+            return $data->findRows($filter, $readMissingData, $logBook);
         } catch (DataSheetExtractError $e) {
-            $logBook->addLine('**ERROR** filtering data to check via `' . $filter->__toString() . '`. Assuming check does not apply');
+            $logBook?->addLine('**ERROR** filtering data to check via `' . $filter->__toString() . '`. Assuming check does not apply');
             $this->getWorkbench()->getLogger()->logException(new DataCheckRuntimeError($data, 'Cannot perform data check. ' . $e->getMessage(), null, $e, $this));
             return [];
         }

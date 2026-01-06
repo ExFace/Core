@@ -29,7 +29,7 @@ class IsActionAuthorized extends Formula
     public function run(?string $actionAliasOrUid = null, ?string $username = null): bool
     {
         if ($actionAliasOrUid === null) {
-            throw new FormulaError("No action provided for =IsActionAuthorized() formula");
+            throw new FormulaError($this, "No action provided for =IsActionAuthorized() formula");
         }
 
         // Get the action

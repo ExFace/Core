@@ -48,7 +48,7 @@ class PhpFilePathDataType extends FilePathDataType
      * 
      * Examples:
      * 
-     * - `/exface/Core/Behaviors/TimeStampingBehavior.php` results in 
+     * - `/exface/core/Behaviors/TimeStampingBehavior.php` results in 
      *      - real path: `/exface/core/Behaviors/TimeStampingBehavior.php`
      *      - class: `\exface\Core\Behaviors\TimeStampingBehavior`
      * 
@@ -64,7 +64,7 @@ class PhpFilePathDataType extends FilePathDataType
         $string = Filemanager::pathNormalize($pathRelOrAbs, $dirSep);
         $vendorFolder = Filemanager::pathNormalize($workbench->filemanager()->getPathToVendorFolder(), $dirSep);
 
-        // Calculate relative path as /exface/Core/Behaviors/TimeStampingBehavior.php
+        // Calculate relative path as /exface/core/Behaviors/TimeStampingBehavior.php
         // And absolute path
         if (StringDataType::startsWith($string, $vendorFolder . $dirSep)) {
             $relPath = mb_substr($string, mb_strlen($vendorFolder));
