@@ -2362,13 +2362,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
             }
-            // At this point we know, that the filter does not produce a WHERE clause, so the only
-            // option left is being a placeholder in the data address. If it's not the case, throw
-            // an error!
-            if (! in_array($qpart->getAlias(), StringDataType::findPlaceholders($this->buildSqlDataAddress($this->getMainObject())))) {
-                throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
+            
+            // At this point we know, that the filter does not produce a WHERE clause.
+            
+            // If it is not readable - ignore it here. It will probably be handled by some other logic - e.g. a Behavior
+            if ($qpart->getAttribute()->isReadable() === false) {
+                return false;
             }
-            return false;
+            // It might also be a placeholder in the data address - then just ignore it here
+            if (in_array($qpart->getAlias(), StringDataType::findPlaceholders($this->buildSqlDataAddress($this->getMainObject())), true)) {
+                return false;
+            }
+            
+            // In all other cases, throw an error!
+            throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
         }
 
         if (! $customWhereClause && ($qpart->getFirstRelation(RelationTypeDataType::REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0))) {
