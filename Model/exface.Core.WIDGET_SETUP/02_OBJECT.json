@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Widget setup [exface.Core.WIDGET_SETUP]",
             "CREATED_ON": "2025-06-27 09:42:23",
-            "MODIFIED_ON": "2025-06-27 11:01:47",
+            "MODIFIED_ON": "2026-01-05 17:03:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f086ea436aa07486ea025041000001",
@@ -125,13 +125,27 @@
                                         "widgets": [
                                             {
                                                 "attribute_alias": "DESCRIPTION",
-                                                "height": 4,
+                                                "height": 5,
                                                 "hide_caption": true
                                             }
                                         ]
                                     },
                                     {
-                                        "attribute_alias": "APP"
+                                        "attribute_alias": "VISIBILITY",
+                                        "id": "visibility_field"
+                                    },
+                                    {
+                                        "attribute_alias": "APP",
+                                        "disabled_if": {
+                                            "operator": "AND",
+                                            "conditions": [
+                                                {
+                                                    "value_left": "=visibility_field",
+                                                    "comparator": "!==",
+                                                    "value_right": "PUBLIC"
+                                                }
+                                            ]
+                                        }
                                     },
                                     {
                                         "attribute_alias": "PROTOTYPE_FILE",

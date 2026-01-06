@@ -6,10 +6,14 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
@@ -30,7 +34,10 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
 
     private $valuesSheetLookupUxon = null;
 
-    private $valueAttributeAliasColumnAlias = null;
+    private ?UxonObject $mapperUxon = null;
+    private ?DataSheetMapperInterface $mapper = null;
+
+    private $valueAttributeAliasColumnExprString = null;
     private $valueContentColumnAlias = null;
 
     private $additionalColumns = null;
@@ -127,7 +134,7 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
     }
 
     /**
-     * Custom data sheet to lookup the values of the attributes
+     * Custom data sheet to look up the values of the attributes
      * 
      * If not set, it will be generated automatically.
      * 
@@ -165,17 +172,17 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
      */
     protected function setValuesAttributeAliasColumn(string $col) : CustomAttributesLookup
     {
-        $this->valueAttributeAliasColumnAlias = $col;
+        $this->valueAttributeAliasColumnExprString = $col;
         return $this;
     }
 
     /**
-     * 
-     * @return string
+     *
+     * @return ExpressionInterface
      */
-    public function getValuesAttributeAliasColumnAlias() : string
+    public function getValuesAttributeAliasColumnExpression() : ExpressionInterface
     {
-        return $this->valueAttributeAliasColumnAlias;
+        return ExpressionFactory::createForObject($this->getObject(), $this->valueAttributeAliasColumnExprString);
     }
 
     /**
@@ -288,8 +295,8 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
         $uxon = new UxonObject([
             'object_alias' => $this->getObject()->getAliasWithNamespace(),
             'relation_to_behavior_object' => $this->getRelationPathToBehaviorObject()->toString(),
-            'values_attribute_alias_column' => $this->getValuesAttributeAliasColumnAlias(),
-            'values_content_column' => $this->getValuesContentColumnAlias()
+            'values_attribute_alias_column' => $this->valueAttributeAliasColumnExprString,
+            'values_content_column' => $this->valueContentColumnAlias
         ]);
         if (null !== $val = $this->getValuesDataSheetUxon()) {
             $uxon->setProperty('values_data_sheet', $val);
@@ -364,5 +371,35 @@ class CustomAttributesLookup implements iCanBeConvertedToUxon
     {
         $this->multipleValuesAggregator = $aggregator;
         return $this;
+    }
+
+    /**
+     * Allows to re-use filters, sorter, etc. from the original read data when reading lookup values
+     *
+     * @uxon-property reading_input_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "filter_to_filter_mappings": [{"from": "", "to": ""}]}
+     *
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setValuesInputMapper(UxonObject $uxon) : CustomAttributesLookup
+    {
+        $this->mapperUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return DataSheetMapperInterface|null
+     */
+    public function getValuesInputMapper() : ?DataSheetMapperInterface
+    {
+        if ($this->mapperUxon === null) {
+            return null;
+        }
+        if ($this->mapper === null) {
+            $this->mapper = DataSheetMapperFactory::createFromUxon($this->getObject()->getWorkbench(), $this->mapperUxon, $this->getBehaviorObject(), $this->getObject());
+        }
+        return $this->mapper;
     }
 }
