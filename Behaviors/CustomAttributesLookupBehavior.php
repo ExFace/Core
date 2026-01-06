@@ -377,6 +377,10 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
     {
         $thisObj = $this->getObject();
         $fakeRelAttr = new CustomAttribute($thisObj, $relPathToLookup->getEndObject(), $relPathToLookup->__toString() . $customAttr->getAlias());
+        $lookupAliasExpr = $this->getValuesLookup()->getValuesAttributeAliasColumnExpression();
+        if (! $lookupAliasExpr->isMetaAttribute()) {
+            throw new BehaviorConfigurationError($this, 'Cannot use custom SQL sorting/filtering if the values_attribute_alias_column is not an attribute alias');
+        }
         $fakeRelUxon = new UxonObject([
             'hidden' => true,
             'relation' => [
@@ -390,7 +394,7 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $fakeRel = $fakeRelAttr->getRelation();
         $fakeRelAttr->setDataAddressProperties(new UxonObject([
             'SQL_JOIN_ON' => "[#~left:{$relFromLookup->getRightKeyAttribute()->getAlias()}#] = [#~right:{$relFromLookup->getLeftKeyAttribute()->getAlias()}#] 
-                AND [#~right:{$this->getValuesLookup()->getValuesAttributeAliasColumnAlias()}#] = '{$customAttr->getAlias()}'"
+                AND [#~right:{$lookupAliasExpr->getAttributeAlias()}#] = '{$customAttr->getAlias()}'"
         ]));
         return $fakeRel;
     }
@@ -471,13 +475,17 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $lookupKeyCol = $lookupSheet->getColumns()->addFromExpression($relKeyLookupToEvent);
         $lookupContentCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesContentColumnAlias());
         $lookupContentName = $lookupContentCol->getName();
-        $lookupAliasCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesAttributeAliasColumnAlias());
+        $lookupAliasCol = $lookupSheet->getColumns()->addFromExpression($lookup->getValuesAttributeAliasColumnExpression());
         $lookupAliasName = $lookupAliasCol->getName();
 
         // Add more columns if required by the custom attribute definition
         $additionalCols = [];
         foreach ($lookup->getAdditionalColumns() as $lookupCol) {
             $additionalCols[] = $lookupSheet->getColumns()->addFromExpression($lookupCol->getLookupExpression(), null, true);
+        }
+        
+        if (null !== $lookupMapper = $this->getValuesLookup()->getValuesInputMapper()) {
+            $lookupSheet = $lookupMapper->map($eventSheet, null, $logBook, $lookupSheet);
         }
 
         // Read lookup data
