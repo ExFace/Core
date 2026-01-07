@@ -149,7 +149,7 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * Comparator to use in this condition.
      * 
      * ## Scalar (single value) comparators
-     *
+     * 
      * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different
      * data types. If the left value is a string, becomes TRUE if it contains the right value. Case
      * insensitive for strings
@@ -165,11 +165,11 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * comparable types: e.g. numbers or dates.
      * - `>=` - yields TRUE if the left value is greater than or equal to the right one.
      * Both values must be of comparable types: e.g. numbers or dates.
-     *
+     * 
      * ## List comparators
      *
-     * ### Comparing entire lists
-     *
+     * ### Comparing a scalar value to a list (IN, NOT IN)
+     * 
      * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
      * value equals at least on of the values in the list within the right value. The list on the
      * right side must consist of numbers or strings separated by commas or the attribute's value
@@ -179,6 +179,11 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * list within the right value. The list on the right side must consist of numbers or strings separated
      * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can
      * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+     * 
+     * Additionally, you can also use the **EACH** and **ANY** comparators below if with a scalar value on one side.
+     * 
+     * ### Comparing two lists
+     * 
      * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least
      * one element, that is present in both lists.
      * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
@@ -186,9 +191,9 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * are in the right list too
      * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in
      * the right list.
-     *
+     * 
      * ### EACH comparators
-     *
+     * 
      * The following comparators yield TRUE if **EACH** of the values of the left list yields TRUE
      * when compared to at least one value of the right list using the respective scalar comparator.
      *
@@ -200,12 +205,12 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * - `[<=` - each value left is less than or equals any value on the right
      * - `[>` - each value left is greater than any value on the right
      * - `[>=` - each value left is greater than or equals value on the right
-     *
+     * 
      * ### ANY comparators
-     *
+     * 
      * Similarly, the following comparators will yield TRUE if **ANY** of the values of the left list yields TRUE
      * when compared to at least one value of the right list using the respective scalar comparator.
-     *
+     * 
      * - `]=` - at least one value left is at least one value on the right
      * - `]!=` - none of the left values match any value on the right
      * - `]==` - at least one value left equals at least one value on the right exactly
@@ -214,9 +219,9 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * - `]<=` - at least one value left is less than or equals any value on the right
      * - `]>` - at least one value left is greater than any value on the right
      * - `]>=` - at least one value left is greater than or equals value on the right
-     *
+     * 
      *  ## Range comparators
-     *
+     * 
      *  - `..` - range between two values - e.g. `1 .. 5` 
      * 
      * @uxon-property comparator
