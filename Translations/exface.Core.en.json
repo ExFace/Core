@@ -496,6 +496,7 @@
 
 	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION": "add rows",
  	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT": "How many rows do you want to add?",
+	"WIDGET.JEXCEL.CONFIRM_PASTE_PROMPT": "The amount of pasted data might lead to performance issues, or unresponsiveness of the page.",
 	
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Close",
 	"WIDGET.DIALOG.HEADER": "Header",
