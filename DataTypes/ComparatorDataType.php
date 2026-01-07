@@ -34,15 +34,22 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * 
  * ### Comparing entire lists
  * 
+ * ### Comparing a scalar value to a list (IN, NOT IN)
+ * 
  * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
  * value equals at least on of the values in the list within the right value. The list on the
  * right side must consist of numbers or strings separated by commas or the attribute's value
  * list delimiter if filtering over an attribute. The right side can also be another type of
  * expression (e.g. a formula or widget link), that yields such a list.
- * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
- * list within the right value. The list on the right side must consist of numbers or strings separated 
- * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+ * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the
+ * list within the right value. The list on the right side must consist of numbers or strings separated
+ * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can
  * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+ * 
+ * Additionally, you can also use the **EACH** and **ANY** comparators below if with a scalar value on one side.
+ * 
+ * ### Comparing two lists
+ * 
  * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least 
  * one element, that is present in both lists.
  * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
@@ -78,7 +85,7 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * - `]<=` - at least one value left is less than or equals any value on the right
  * - `]>` - at least one value left is greater than any value on the right
  * - `]>=` - at least one value left is greater than or equals value on the right
- *
+ * 
  *  ## Range comparators
  *
  *  - `..` - range between two values - e.g. `1 .. 5`
