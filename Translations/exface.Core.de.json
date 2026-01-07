@@ -481,6 +481,7 @@
   
 	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION": "Zeilen hinzufügen",
  	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT": "Wie viele Zeilen möchten Sie hinzufügen?",
+	"WIDGET.JEXCEL.CONFIRM_PASTE_PROMPT": "Die Menge an eingefügten Daten könnte zu Performance-Problemen oder einem Absturz der Seite führen.",
 
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Schließen",
 	"WIDGET.DIALOG.HEADER": "Kopf-Bereich",
