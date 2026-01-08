@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -118,5 +119,22 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
             $newGrp->add($newObject->getAttribute($attr->getAliasWithRelationPath()));
         }
         return $newGrp;
+    }
+
+    /**
+     * Returns the modifier for an attribute group alias: e.g. `:SORT(alias, ASC)` from `~EDITABLE[:SORT(alias, ASC)]`
+     * 
+     * @param string $aliaWithModifier
+     * @return string|null
+     */
+    public static function findModifier(string $aliaWithModifier) : ?string
+    {
+        $aliaWithModifier = trim($aliaWithModifier);
+        $alias = StringDataType::substringBefore($aliaWithModifier, '[', $aliaWithModifier);
+        if ($alias !== $aliaWithModifier) {
+            $modifier = mb_substr($aliaWithModifier, mb_strlen($alias) + 1);
+            return StringDataType::substringBefore($modifier, ']', null);
+        }
+        return null;
     }
 }
