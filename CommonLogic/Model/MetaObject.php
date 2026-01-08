@@ -1290,7 +1290,18 @@ class MetaObject implements MetaObjectInterface
             return $grp;
         }
 
-        // If it is a local alias, try to get it via model loader
+        // If it is a local alias, see if we can load it
+        
+        // First of all, look for a modifier
+        // Grp1[:SORT(ATTRIBUTE__ALIAS, ASC)] - required!
+        // Grp1[:SORT(POS, ASC)]
+        // ~EDITABLE[:SORT(ATTRIBUTE__ALIAS, ASC)]&~CUSTOM
+        // (Grp1&Grp2)[:SORT(ATTRIBUTE__ALIAS, ASC)] - probably also ver useful!
+        // If there is a modifier, we should not cache to group. Next time it is request,
+        // we need to do the sorting again. Otherwise, adding attributes to the base (unsorted)
+        // group would not affect to cached sorted group.
+        
+        // Now that we have the local alias, try to get it via model loader
         $alias = $aliasWithRelationPath;
         $selector = new AttributeGroupSelector($this->getWorkbench(), $alias);
         if ($selector->isBuiltInGroup()) {
@@ -1300,6 +1311,7 @@ class MetaObject implements MetaObjectInterface
             $this->setLoadAttributeGroupsFromModel(false);
         }
         $grp = $this->attribute_groups[$alias] ?? null;
+        
         // If there is no direct match, see if the given alias simply lacks the namespace and try
         // without the namespace
         if ($grp === null && stripos($alias, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
@@ -1307,7 +1319,7 @@ class MetaObject implements MetaObjectInterface
             foreach ($this->attribute_groups as $g) {
                 if (StringDataType::endsWith($g->getAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias, false)) {
                     if ($foundByAlias !== null) {
-                        throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguos! Found multiple groups for selector `' . $alias . '`: ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
+                        throw new MetaAttributeNotFoundError($this, 'Attribute group ambiguous! Found multiple groups for selector `' . $alias . '`: ' . $g->getAliasWithNamespace(), ', ' . $foundByAlias->getAliasWithNamespace());
                     }
                     $foundByAlias = $g;
                 }
@@ -1316,6 +1328,8 @@ class MetaObject implements MetaObjectInterface
                 $grp = $foundByAlias;
             }
         }
+        
+        // If we still don't have a group here - throw an error!
         if ($grp === null) {
             throw new MetaAttributeGroupNotFoundError($this, 'Attribute group `' . $alias . '` not found for object ' . $this->__toString() . '!');
         }

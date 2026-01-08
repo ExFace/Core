@@ -510,6 +510,7 @@ JS;
             var iXStart = parseInt(x);
             var iXEnd = iXStart;
             var oColOpts = {};
+            var iMaxPastedCells = 10000; 
 
             // Issue: in csv, umatched double quotes treat everything after it as a string (until the next quotes), breaking the parsing logic here
             // see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/helpers.js#L102
@@ -555,7 +556,14 @@ JS;
                 aPastedData.push(cells);
             });
 
-
+            // if a very large spreadsheet (>10k cells) is pasted, give JS warning and option to cancel paste
+            if (aPastedData.length > 0 && aPastedData.length * aPastedData[0].length > iMaxPastedCells){
+                let bIsOk = window.confirm('{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.JEXCEL.CONFIRM_PASTE_PROMPT')}');
+                if (bIsOk === false){
+                    return false;
+                }
+            }
+            
             // if pasted data contains dropdown columns, get the source arrays
             // this way, we can then set the actual value (id) and not just the label on paste
             var iPastedColIdx = 0;

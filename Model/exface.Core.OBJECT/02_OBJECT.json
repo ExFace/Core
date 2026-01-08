@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object [exface.Core.OBJECT]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-11-28 09:30:43",
+            "MODIFIED_ON": "2026-01-07 11:26:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -447,6 +447,10 @@
                                         ],
                                         "columns": [
                                             {
+                                                "attribute_alias": "ENABLED_FLAG",
+                                                "caption": "On"
+                                            },
+                                            {
                                                 "attribute_alias": "NAME"
                                             },
                                             {
@@ -454,9 +458,6 @@
                                             },
                                             {
                                                 "attribute_alias": "PRIORITY"
-                                            },
-                                            {
-                                                "attribute_alias": "DISABLED_FLAG"
                                             },
                                             {
                                                 "attribute_alias": "APP__ALIAS"
