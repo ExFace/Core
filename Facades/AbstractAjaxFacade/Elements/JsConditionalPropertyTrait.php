@@ -65,7 +65,13 @@ trait JsConditionalPropertyTrait {
                     }
                 }
             }
-            $jsConditions[] = "exfTools.data.compareValues($leftJs, $rightJs, '{$condition->getComparator()}', '$delim')";
+            
+            $comparator = $condition->getComparator();
+            if(!str_starts_with($comparator, ']')) {
+                $comparator = ']' . $comparator;
+            }
+            
+            $jsConditions[] = "exfTools.data.compareValues($leftJs, $rightJs, '{$comparator}', '$delim')";
         }
         
         // Then just append condition groups evaluated by a recursive call to this method
