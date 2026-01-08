@@ -969,6 +969,12 @@ class OrderingBehavior extends AbstractBehavior
         foreach ($updateSheet->getRows() as $row) {
             $siblingData = $siblingCache->getData($this->getParentsForRow($row));
             $pendingIndex = $row[$indexAlias];
+            
+            // We don't have to shift rows without index.
+            if($pendingIndex === null) {
+                continue;
+            }
+            
             $safeIndex = $siblingData[self::KEY_SAFE_INDEX] - $startIndex + 1;
             $row[$indexAlias] = $pendingIndex + $safeIndex;
             $shiftSheet->addRow($row, false, false);
@@ -980,6 +986,8 @@ class OrderingBehavior extends AbstractBehavior
             $shiftSheet->getColumns()->removeByKey($indexAlias);
             $updateSheet->addRows($shiftSheet->getRows(), true, false);
             $updateSheet->dataSave($transaction);
+            // Update event sheet with new information, to avoid issues with lower priority behaviors.
+            $event->getDataSheet()->addRows($updateSheet->getRows(), true, false);
         } catch (DataSheetExceptionInterface $exception) {
             throw new BehaviorRuntimeError($this, 'Failed to apply changes: ' . $exception->getMessage(), null, $exception, $logBook);
         }
