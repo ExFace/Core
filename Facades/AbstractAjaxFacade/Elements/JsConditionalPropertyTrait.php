@@ -46,45 +46,12 @@ trait JsConditionalPropertyTrait {
         $jsConditions = [];
         
         // First evaluate the conditions
+        $prop = $conditionGroup->getConditionalProperty();
         foreach ($conditionGroup->getConditions() as $condition) {
-            $comparator = $condition->getComparator();
-            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $conditionGroup->getConditionalProperty());
-            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionGroup->getConditionalProperty());
-            
-            $leftExpr = $condition->getValueLeftExpression();
-            $leftTargetWidget = $leftExpr->isReference() ? $leftExpr->getWidgetLink($this->getWidget())->getTargetWidget() : null;
-            $rightExpr = $condition->getValueRightExpression();
-            $rightTargetWidget = $rightExpr->isReference() ? $rightExpr->getWidgetLink($this->getWidget())->getTargetWidget() : null;
-            
-            $delim = EXF_LIST_SEPARATOR;
-            // Try to get the possibly customized delimiter from the right side of the
-            // condition if it is an IN-condition
-            if ($comparator === ComparatorDataType::IN || $comparator === ComparatorDataType::NOT_IN) {
-                if ($rightTargetWidget !== null) {
-                    if (($rightTargetWidget instanceof iShowSingleAttribute) && $rightTargetWidget->isBoundToAttribute()) {
-                        $delim = $rightTargetWidget->getAttribute()->getValueListDelimiter();
-                    } elseif ($rightTargetWidget instanceof iHaveColumns && $colName = $rightExpr->getWidgetLink($this->getWidget())->getTargetColumnId()) {
-                        $targetCol = $rightTargetWidget->getColumnByDataColumnName($colName);
-                        if ($targetCol->isBoundToAttribute() === true) {
-                            $delim = $targetCol->getAttribute()->getValueListDelimiter();
-                        }
-                    }
-                }
-            }
-            
-            // Check if either expression is a reference to a widget, that supports multi-select or similar features.
-            // In those cases, the comparator needs to be a list comparator, in case more than one data-set must
-            // be evaluated.
-            // TODO Filters support multi-select, but do not expose that information. How to handle this?
-            $requiresListComparator =
-                $leftTargetWidget instanceof iSupportMultiSelect ||
-                ($leftTargetWidget instanceof Input && $leftTargetWidget->getMultipleValuesAllowed()) ||
-                $rightTargetWidget instanceof iSupportMultiSelect ||
-                ($rightTargetWidget instanceof Input && $rightTargetWidget->getMultipleValuesAllowed());
-
-            if ($requiresListComparator === true) {
-                $comparator = ComparatorDataType::convertToListComparator($comparator) ?? $comparator;
-            }
+            $comparator = $condition->getComparator(true);
+            $delim = $condition->getValueListDelimiter();
+            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $prop);
+            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $prop);
             
             $jsConditions[] = "exfTools.data.compareValues($leftJs, $rightJs, '{$comparator}', '$delim')";
         }
