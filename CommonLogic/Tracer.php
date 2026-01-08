@@ -359,14 +359,14 @@ class Tracer extends Profiler
         return $name;
     }
     
-    protected function sanitizeLapName(string $name, int $maxLength = 50) : string
+    protected function sanitizeLapName(string $name, int $maxLength = 60) : string
     {
         $str = str_replace(
             ["\r", "\n", "\t", "  "],
             [' ', ' ', '', ''],
             $name
         );
-        return mb_substr($str, 0, 50) . (strlen($str) > 50 ? '...' : '');
+        return mb_substr($str, 0, $maxLength) . (mb_strlen($str) > $maxLength ? '...' : '');
     }
     
     /**
