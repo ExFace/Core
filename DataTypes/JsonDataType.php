@@ -264,7 +264,6 @@ class JsonDataType extends TextDataType
     {
         switch (true) {
             case $dataType instanceof IntegerDataType:
-            case $dataType instanceof TimeDataType:
                 return ['type' => 'integer'];
             case ($dataType instanceof NumberDataType) && $dataType->getBase() === 10:
                 return ['type' => 'number'];
@@ -274,6 +273,8 @@ class JsonDataType extends TextDataType
                 return ['type' => 'array'];
             case $dataType instanceof EnumDataTypeInterface:
                 return ['type' => 'string', 'enum' => $dataType->getValues()];
+            case $dataType instanceof TimeDataType:
+                return ['type' => 'string', 'format' => 'time'];
             case $dataType instanceof DateTimeDataType:
                 return ['type' => 'string', 'format' => 'datetime'];
             case $dataType instanceof DateDataType:
