@@ -66,9 +66,15 @@ trait JsConditionalPropertyTrait {
                 }
             }
             
-            $comparator = $condition->getComparator();
-            if(!str_starts_with($comparator, ']')) {
-                $comparator = ']' . $comparator;
+            $requiresListComparator = true;
+            
+            // TODO see if at least one side is a live ref to a widget with iSupportMultiSelectInterface or Input with
+            // Input::getMultipleValuesAllowed()
+            // What about filters?
+            
+            if ($requiresListComparator === true) {
+                $comparator = $condition->getComparator();
+                $comparator = ComparatorDataType::convertToListComparator($comparator) ?? $comparator;
             }
             
             $jsConditions[] = "exfTools.data.compareValues($leftJs, $rightJs, '{$comparator}', '$delim')";
