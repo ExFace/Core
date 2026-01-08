@@ -381,7 +381,9 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::NOT_IN: 
                 $result = $trueIfAllListItemsMatch ? self::LIST_NOT_SUBSET : self::LIST_NOT_INTERSECTS; 
                 break;
-            case self::BETWEEN: $result = null; break;
+            case self::BETWEEN: 
+                $result = null; 
+                break;
             default:
                 $result = ($trueIfAllListItemsMatch ? '[' : ']') . $comparator;
                 break;
