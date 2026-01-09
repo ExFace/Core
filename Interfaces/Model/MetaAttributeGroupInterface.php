@@ -66,4 +66,16 @@ interface MetaAttributeGroupInterface extends MetaAttributeListInterface
      * @return MetaAttributeGroupInterface
      */
     public function withExptendedObject(MetaObjectInterface $newObject) : MetaAttributeGroupInterface;
+
+    /**
+     * Sorts this list based on a given property. 
+     * 
+     * The property name must have a matching getter, like `alias` and `getAlias()`. If no matching getter is found
+     * no sorting will be performed either.
+     * 
+     * @param string $property
+     * @param string $direction
+     * @return MetaAttributeGroupInterface
+     */
+    public function sortByProperty(string $property, string $direction) : MetaAttributeGroupInterface;
 }
