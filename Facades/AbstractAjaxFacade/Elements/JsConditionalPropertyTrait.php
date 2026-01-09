@@ -2,6 +2,9 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Widgets\Filter;
+use exface\Core\Widgets\Input;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -43,29 +46,14 @@ trait JsConditionalPropertyTrait {
         $jsConditions = [];
         
         // First evaluate the conditions
+        $prop = $conditionGroup->getConditionalProperty();
         foreach ($conditionGroup->getConditions() as $condition) {
-            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $conditionGroup->getConditionalProperty());
-            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionGroup->getConditionalProperty());
+            $comparator = $condition->getComparator(true);
+            $delim = $condition->getValueListDelimiter();
+            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $prop);
+            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $prop);
             
-            $delim = EXF_LIST_SEPARATOR;
-            // Try to get the possibly customized delimiter from the right side of the
-            // condition if it is an IN-condition
-            if ($condition->getComparator() === ComparatorDataType::IN || $condition->getComparator() === ComparatorDataType::NOT_IN) {
-                $rightExpr = $condition->getValueRightExpression();
-                if ($rightExpr->isReference() === true) {
-                    $rightLink = $rightExpr->getWidgetLink($this->getWidget());
-                    $targetWidget = $rightLink->getTargetWidget();
-                    if (($targetWidget instanceof iShowSingleAttribute) && $targetWidget->isBoundToAttribute()) {
-                        $delim = $targetWidget->getAttribute()->getValueListDelimiter();
-                    } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightLink->getTargetColumnId()) {
-                        $targetCol = $targetWidget->getColumnByDataColumnName($colName);
-                        if ($targetCol->isBoundToAttribute() === true) {
-                            $delim = $targetCol->getAttribute()->getValueListDelimiter();
-                        }
-                    }
-                }
-            }
-            $jsConditions[] = "exfTools.data.compareValues($leftJs, $rightJs, '{$condition->getComparator()}', '$delim')";
+            $jsConditions[] = "exfTools.data.compareValues($leftJs, $rightJs, '{$comparator}', '$delim')";
         }
         
         // Then just append condition groups evaluated by a recursive call to this method

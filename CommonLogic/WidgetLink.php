@@ -36,7 +36,8 @@ use Throwable;
  * - `~parent` - references the immediate parent of `~self`
  * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets
  * - `~data` - references the enclosing data widget (e.g. `DataTable`). Only works for widgets, that are parts
- * of data widgets like `Filter`, `DataColumn`, `DataConfigurator`, etc.
+ * of data widgets like `Filter`, `DataColumn`, `DataConfigurator`, etc. If used on a data widget itself, it
+ * will work the same as `~self`.
  * 
  * You can make a widget link "optional" by adding a trailing `?`. This will make sure, the linked value
  * us only used if it is not empty. Thus, the widget, that contains the link will not be emptied if the
@@ -392,6 +393,10 @@ class WidgetLink implements WidgetLinkInterface
             // ~data
             case WidgetLinkInterface::REF_DATA:
                 if (null !== $widget = $this->getSourceWidget()) {
+                    if ($widget instanceof iShowData) {
+                        $targetWidget = $widget;
+                        break;
+                    }
                     $idSpace = $widget->getIdSpace();
                     // Get the closest parent, that is a data widget. If there is a Button along the way, check, if 
                     // it belongs to a different id space, than our source widget - if so, we have reached the boundary

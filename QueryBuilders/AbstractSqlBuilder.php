@@ -541,6 +541,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildSqlQuerySelect();
+        $query = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $query;
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
             $q->setDialect($this->getSqlDialectDefault());
@@ -559,6 +560,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $result_totals = [];
         if ($this->hasTotals() === true) {
             $totals_query = $this->buildSqlQueryTotals();
+            $totals_query = $this->buildSqlComment('SELECT TOTAL ' . $this->getMainObject()->getAlias() . ':') . "\n" . $totals_query;
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
@@ -994,6 +996,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insertColumns = implode(', ', $columns);
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
+            $sql = $this->buildSqlComment('CREATE ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
 
             $beforeSql = $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '');
@@ -1290,6 +1293,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     )
                 );
                 $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $uidWhere);
+                $sql = $this->buildSqlComment('UPDATE ' . $this->getMainObject()->getAlias(). ':') . "\n" . $sql;
                 $query = $data_connection->runSql($sql);
                 $affected_rows += $query->countAffectedRows();
                 $query->freeResult();
@@ -1298,6 +1302,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Then those to be update filtering over other values (i.e. mass-updates without selection of specific rows)
         if (count($updates_by_filter) > 0) {
             $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
+            $sql = $this->buildSqlComment('UPDATE ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
             $query = $data_connection->runSql($sql);
             $affected_rows = $query->countAffectedRows();
             $query->freeResult();
@@ -1443,6 +1448,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
 
         $sql = $this->buildSqlQueryDelete($where, implode(' ', $joins));
+        $sql = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
         $query = $data_connection->runSql($sql);
 
         return new DataQueryResultData([], $query->countAffectedRows());
@@ -1455,7 +1461,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $result = $data_connection->runSql($this->buildSqlQueryCount());
+        $sql = $this->buildSqlQueryCount();
+        $sql = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
+        $result = $data_connection->runSql($sql);
         $cnt = $result->getResultArray()[0][$this->buildSqlAliasForRowCounter()];
         $result->freeResult();
         return new DataQueryResultData([], $cnt, true, $cnt);
