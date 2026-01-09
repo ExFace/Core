@@ -1272,6 +1272,22 @@ class MetaObject implements MetaObjectInterface
             return $grp;
         }
 
+        $modifiers = [];
+        $modifierGroups = [];
+        
+        // Extract modifiers.
+        if(preg_match_all('/\[(.*?)\]/', $aliasWithRelationPath, $modifierGroups) > 0) {
+            foreach ($modifierGroups[1] as $modifierGroup) {
+                $components = [];
+                if(preg_match_all('/[^,(]+(?:\([^)]*\))?/', $modifierGroup, $components) > 0) {
+                    $modifiers = array_merge($modifiers, $components[0]);
+                }
+            }
+
+            $aliasWithRelationPath = str_replace($modifierGroups[0], '', $aliasWithRelationPath);
+            $modifiers = array_unique($modifiers);
+        }
+        
         // See if the alias has a relation path
         if (null !== $relParts = RelationPath::slice($aliasWithRelationPath, -1)) {
             list($relStr, $alias) = $relParts;
@@ -1287,19 +1303,16 @@ class MetaObject implements MetaObjectInterface
             foreach ($relGrp->getAttributes() as $attr) {
                 $grp->add($this->getAttribute(RelationPath::join($relStr, $attr->getAliasWithRelationPath())));
             }
-            return $grp;
+            
+            if(!empty($modifiers)) {
+                // Clear cache.
+                $this->attribute_groups[$aliasWithRelationPath] = null;
+                // Apply modifiers.
+                return $this->applyModifiersToGroup($grp, $modifiers);
+            } else {
+                return  $grp;
+            }
         }
-
-        // If it is a local alias, see if we can load it
-        
-        // First of all, look for a modifier
-        // Grp1[:SORT(ATTRIBUTE__ALIAS, ASC)] - required!
-        // Grp1[:SORT(POS, ASC)]
-        // ~EDITABLE[:SORT(ATTRIBUTE__ALIAS, ASC)]&~CUSTOM
-        // (Grp1&Grp2)[:SORT(ATTRIBUTE__ALIAS, ASC)] - probably also ver useful!
-        // If there is a modifier, we should not cache to group. Next time it is request,
-        // we need to do the sorting again. Otherwise, adding attributes to the base (unsorted)
-        // group would not affect to cached sorted group.
         
         // Now that we have the local alias, try to get it via model loader
         $alias = $aliasWithRelationPath;
@@ -1333,7 +1346,47 @@ class MetaObject implements MetaObjectInterface
         if ($grp === null) {
             throw new MetaAttributeGroupNotFoundError($this, 'Attribute group `' . $alias . '` not found for object ' . $this->__toString() . '!');
         }
-        return $grp;
+        
+        if(!empty($modifiers)) {
+            // Clear cache.
+            $this->attribute_groups[$alias] = null;
+            $this->attribute_groups[$aliasWithRelationPath] = null;
+            // Apply modifiers.
+            return $this->applyModifiersToGroup($grp, $modifiers);
+        } else {
+            return $grp;
+        }
+    }
+
+    /**
+     * @param MetaAttributeGroupInterface $group
+     * @param array                       $modifiers
+     * @return MetaAttributeGroupInterface
+     */
+    protected function applyModifiersToGroup(MetaAttributeGroupInterface $group, array $modifiers) : MetaAttributeGroupInterface
+    {
+        // TODO Since we only support basic sorting, the classless approach is fine. IF we want to extend this,
+        // TODO we might need proper classes for these modifiers.
+        foreach ($modifiers as $modifier) {
+            $type = [];
+            $result = preg_match_all('/:(.*?)\(/', $modifier, $type);
+            if($result !== 1) {
+                continue;
+            }
+            $type = $type[1][0];
+            $args = substr($modifier, strpos($modifier, '(') + 1, -1);
+            $args = explode(',', $args);
+            
+            switch ($type) {
+                case 'SORT':
+                    $group->sortByProperty($args[0], $args[1]);
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        return $group;
     }
 
     /**
