@@ -500,7 +500,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     ) : array
     {
         $nameAlias = $this->getNameAttributeAlias();
+        $nameTpl = null;
         $aliasAlias = $this->getAliasAttributeAlias();
+        $aliasTpl = null;
         $typeAlias = $this->getTypeAttributeAlias();
         $storageKeyAlias = $this->getDataAddressAttributeAlias();
         $hintAlias = $this->getHintAttributeAlias();
@@ -595,12 +597,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
 
             // Extract placeholders.
+            if (array_key_exists('alias', $attrDefaults)) {
+                $aliasTpl = $attrDefaults['alias'];
+            }
+            if (array_key_exists('name', $attrDefaults)) {
+                $nameTpl = $attrDefaults['name'];
+            }
             $attrDefaultsJson = JsonDataType::encodeJson($attrDefaults);
-            $typePhs = StringDataType::findPlaceholders($attrDefaultsJson);
+            $attrUxonPhs = StringDataType::findPlaceholders($attrDefaultsJson);
             $typeModelsJson = JsonDataType::encodeJson($this->getTypeModelsAll());
-            $typePhs = array_merge($typePhs, StringDataType::findPlaceholders($typeModelsJson));
+            $attrUxonPhs = array_merge($attrUxonPhs, StringDataType::findPlaceholders($typeModelsJson));
 
-            foreach ($typePhs as $ph) {
+            foreach ($attrUxonPhs as $ph) {
                 switch (true) {
                     case $attributeDefinitionsSheet->getColumns()->getByExpression($ph):
                         continue 2;
@@ -617,7 +625,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                 throw new BehaviorRuntimeError($this, 'Cannot load custom attribute definitions from ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e, $logBook);
             }
             
-            $logBook->addLine('No cache detected. Loaded attribute definitions from source.');
+            $logBook->addLine('No cache found. Loaded attribute definitions from source.');
             $logBook->addDataSheet('From Source', $attributeDefinitionsSheet->copy());
         }
 
@@ -628,23 +636,53 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $attributes = [];
         $typeModels = [];
         
-        foreach ($attributeDefinitionsSheet->getRows() as $index => $definitionRow) {
-            $name = $definitionRow[$nameAlias];
-            $alias = null;
-
-            if ($aliasAlias !== null) {
-                $alias = $definitionRow[$aliasAlias];
+        $phColNames  = [];
+        foreach ($attrUxonPhs as $ph) {
+            if ($ph === self::PLACEHOLDER_ALIAS || $ph === self::PLACEHOLDER_NAME) {
+                continue;
             }
+            $col = $attributeDefinitionsSheet->getColumns()->getByExpression($ph);
+            if (! $col) {
+                throw new BehaviorRuntimeError($this, 'Cannot resolve placeholder `[#' . $ph . '#]` in custom attribute definition', null, null, $logBook);
+            }
+            $phColNames[$ph] = $col->getName();
+        }
+        
+        foreach ($attributeDefinitionsSheet->getRows() as $index => $definitionRow) {
+            $phVals = [];
+            foreach ($attrUxonPhs as $ph) {
+                $phVals[$ph] = $definitionRow[$phColNames[$ph]];
+            }
+
+            // Data address
             if ($storageKeyAlias !== null) {
                 $address = $definitionRow[$storageKeyAlias];
-                if ($alias === null) {
-                    $alias = $address;
-                }
             } else {
                 $address = '';
             }
-            if ($alias === null) {
-                $alias = $this->getAliasFromName($name);
+
+            // Attribute name
+            switch (true) {
+                case $nameTpl !== null:
+                    $name = StringDataType::replacePlaceholders($nameTpl, $phVals); break;
+                case $nameAlias !== null:
+                    $name = $definitionRow[$nameAlias]; break;
+                default:
+                    $name = null;
+            }
+            
+            // Attribute alias
+            switch (true) {
+                case $aliasTpl !== null:
+                    $alias = StringDataType::replacePlaceholders($aliasTpl, $phVals); break;
+                case $aliasAlias !== null:
+                    $alias = $definitionRow[$aliasAlias]; break;
+                case $address !== null && $address !== '':
+                    $alias = $address; break;
+                case $name !== null && $name !== '':
+                    $alias = $this->getAliasFromName($name); break;
+                default:
+                    $alias = null;
             }
 
             // Instantiate a new custom attribute
@@ -676,12 +714,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             if (! empty($typeModel)) {
                 // See if there are any placeholders and replace them. Need to replace them
                 // every time because the replacement values are different for every attribute
-                if (! $fromCache && ! empty($typePhs)) {
+                if (! $fromCache && ! empty($attrUxonPhs)) {
                     $typeModelStr = JsonDataType::encodeJson($typeModel);
-                    $typePhVals = $definitionRow;
-                    $typePhVals[self::PLACEHOLDER_ALIAS] = $attr->getAlias();
-                    $typePhVals[self::PLACEHOLDER_NAME] = $attr->getName();
-                    $typeModelStr = StringDataType::replacePlaceholders($typeModelStr, $typePhVals);
+                    $phVals[self::PLACEHOLDER_ALIAS] = $attr->getAlias();
+                    $phVals[self::PLACEHOLDER_NAME] = $attr->getName();
+                    $typeModelStr = StringDataType::replacePlaceholders($typeModelStr, $phVals);
                     $typeModel = JsonDataType::decodeJson($typeModelStr);
                 }
                 
@@ -759,7 +796,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     {
         $cache = $this->getWorkbench()->getCache();
         if($cache->has($this->getKeyForTrackingCache())) {
-            return json_decode($cache->get($this->getKeyForTrackingCache()));
+            $json = $cache->get($this->getKeyForTrackingCache());
+            return $json !== null ? json_decode($json) : [];
         }
 
         return [];

@@ -594,25 +594,6 @@ class StateMachineBehavior extends AbstractBehavior
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        $uxon->setProperty('state_attribute_alias', $this->getStateAttributeAlias());
-        $uxon->setProperty('default_state', $this->getDefaultStateId());
-        $uxon->setProperty('states', $this->getStates());
-        $uxon->setProperty('override_attribute_data_type', $this->getOverrideAttributeDataType());
-        $uxon->setProperty('override_attribute_display_widget', $this->getOverrideAttributeDisplayWidget());
-        $uxon->setProperty('override_attribute_editor_widget', $this->getOverrideAttributeEditorWidget());
-        $uxon->setProperty('show_state_as_progress_bar', $this->getShowStateAsProgressBar());
-        return $uxon;
-    }
-
-    /**
      * This method is called when a widget belonging to an object with this event
      * attached is being prefilled.
      * It is checked if this widget belongs to a dis-

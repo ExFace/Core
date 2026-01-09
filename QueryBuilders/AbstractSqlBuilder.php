@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\StringDataType;
@@ -540,6 +541,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildSqlQuerySelect();
+        $query = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $query;
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
             $q->setDialect($this->getSqlDialectDefault());
@@ -558,6 +560,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $result_totals = [];
         if ($this->hasTotals() === true) {
             $totals_query = $this->buildSqlQueryTotals();
+            $totals_query = $this->buildSqlComment('SELECT TOTAL ' . $this->getMainObject()->getAlias() . ':') . "\n" . $totals_query;
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
@@ -993,6 +996,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insertColumns = implode(', ', $columns);
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
+            $sql = $this->buildSqlComment('CREATE ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
 
             $beforeSql = $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '');
@@ -1289,6 +1293,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     )
                 );
                 $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $uidWhere);
+                $sql = $this->buildSqlComment('UPDATE ' . $this->getMainObject()->getAlias(). ':') . "\n" . $sql;
                 $query = $data_connection->runSql($sql);
                 $affected_rows += $query->countAffectedRows();
                 $query->freeResult();
@@ -1297,6 +1302,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Then those to be update filtering over other values (i.e. mass-updates without selection of specific rows)
         if (count($updates_by_filter) > 0) {
             $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
+            $sql = $this->buildSqlComment('UPDATE ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
             $query = $data_connection->runSql($sql);
             $affected_rows = $query->countAffectedRows();
             $query->freeResult();
@@ -1442,6 +1448,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
 
         $sql = $this->buildSqlQueryDelete($where, implode(' ', $joins));
+        $sql = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
         $query = $data_connection->runSql($sql);
 
         return new DataQueryResultData([], $query->countAffectedRows());
@@ -1454,7 +1461,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $result = $data_connection->runSql($this->buildSqlQueryCount());
+        $sql = $this->buildSqlQueryCount();
+        $sql = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
+        $result = $data_connection->runSql($sql);
         $cnt = $result->getResultArray()[0][$this->buildSqlAliasForRowCounter()];
         $result->freeResult();
         return new DataQueryResultData([], $cnt, true, $cnt);
@@ -2361,13 +2370,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
             }
-            // At this point we know, that the filter does not produce a WHERE clause, so the only
-            // option left is being a placeholder in the data address. If it's not the case, throw
-            // an error!
-            if (! in_array($qpart->getAlias(), StringDataType::findPlaceholders($this->buildSqlDataAddress($this->getMainObject())))) {
-                throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
+            
+            // At this point we know, that the filter does not produce a WHERE clause.
+            
+            // If it is not readable - ignore it here. It will probably be handled by some other logic - e.g. a Behavior
+            if ($qpart->getAttribute()->isReadable() === false) {
+                return false;
             }
-            return false;
+            // It might also be a placeholder in the data address - then just ignore it here
+            if (in_array($qpart->getAlias(), StringDataType::findPlaceholders($this->buildSqlDataAddress($this->getMainObject())), true)) {
+                return false;
+            }
+            
+            // In all other cases, throw an error!
+            throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
         }
 
         if (! $customWhereClause && ($qpart->getFirstRelation(RelationTypeDataType::REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0))) {
@@ -3783,9 +3799,17 @@ SQL;
     {
         $dataType = $qpart->getDataType();
         switch (true) {
-            case $dataType instanceof NumberDataType && ! $dataType instanceof HexadecimalNumberDataType:
+            // No fallback value for hex number - in particular UIDs
+            case $dataType instanceof HexadecimalNumberDataType:
+                return null;
+            // No fallback for enums - at least if it is not part of the enum
+            case $dataType instanceof EnumDataTypeInterface:
+                if ($dataType instanceof NumberDataType && $dataType->isValidValue(0)) {
+                    return 0;
+                }
+                return null;
+            case $dataType instanceof NumberDataType:
                 return 0;
-            // IDEA add other COALESCE() values here in future
         }
         return null;
     }

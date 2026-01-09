@@ -463,20 +463,6 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
     }
     
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        $uxon->setProperty('soft_delete_attribute_alias', $this->getSoftDeleteAttributeAlias());
-        $uxon->setProperty('soft_delete_value', $this->getSoftDeleteValue());
-        return $uxon;
-    }
-    
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()

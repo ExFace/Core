@@ -297,23 +297,6 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
         }
         return $this->getObject()->getAttribute($this->getUpdatedOnAttributeAlias());
     }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        $uxon->setProperty('created_on_attribute_alias', $this->getCreatedOnAttributeAlias());
-        $uxon->setProperty('updated_on_attribute_alias', $this->getUpdatedOnAttributeAlias());
-        $uxon->setProperty('created_by_attribute_alias', $this->getCreatedOnAttributeAlias());
-        $uxon->setProperty('updated_by_attribute_alias', $this->getUpdatedOnAttributeAlias());
-        $uxon->setProperty('check_for_conflicts_on_update', $this->getCheckForConflictsOnUpdate());
-        return $uxon;
-    }
     
     /**
      * 

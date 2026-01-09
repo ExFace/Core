@@ -219,7 +219,7 @@ class LookupMapping extends AbstractDataSheetMapping
         $lookupExpr = $this->getLookupExpression();
         $toExpr = $this->getToExpression();
         
-        $log = "Lookup `{$lookupExpr->__toString()}` -> `{$toExpr->__toString()}`.";
+        $log = "Lookup {$this->getLookupObject()->__toString()} `{$lookupExpr->__toString()}` -> `{$toExpr->__toString()}`.";
 
         // See if the target column will be a subsheet. We need to create column slightly differently
         // for subsheets (the attribute_alias is the reverse relation) and for regular columns 
@@ -411,7 +411,7 @@ class LookupMapping extends AbstractDataSheetMapping
                     if ($prevVal === null) {
                         $toColVals[$iFromRow] = $lookupVal;
                     } else {
-                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $iFromRow);
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $iFromRow . ' with filter `' . $lookupSheet->getFilters()->__toString() . '`.');
                     }
                 }
             }

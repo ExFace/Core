@@ -510,6 +510,7 @@ JS;
             var iXStart = parseInt(x);
             var iXEnd = iXStart;
             var oColOpts = {};
+            var iMaxPastedCells = 10000; 
 
             // Issue: in csv, umatched double quotes treat everything after it as a string (until the next quotes), breaking the parsing logic here
             // see https://github.com/jspreadsheet/ce/blob/7668cf06a067476f430b5f10cacda77c989fdd3f/src/utils/helpers.js#L102
@@ -555,7 +556,14 @@ JS;
                 aPastedData.push(cells);
             });
 
-
+            // if a very large spreadsheet (>10k cells) is pasted, give JS warning and option to cancel paste
+            if (aPastedData.length > 0 && aPastedData.length * aPastedData[0].length > iMaxPastedCells){
+                let bIsOk = window.confirm('{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.JEXCEL.CONFIRM_PASTE_PROMPT')}');
+                if (bIsOk === false){
+                    return false;
+                }
+            }
+            
             // if pasted data contains dropdown columns, get the source arrays
             // this way, we can then set the actual value (id) and not just the label on paste
             var iPastedColIdx = 0;
@@ -679,6 +687,14 @@ JS;
         _initData: [],
         _disabled: $disabledJs,
         _valueGetterRow: null,
+        _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
+        getDoNotValidate: function(){
+            return this._doNotValidate;
+        },
+        setDoNotValidate: function(bVal){
+            // set to true, to disable at runtime validation until DataGetter() is called
+            this._doNotValidate = bVal;
+        },
         getJExcel: function(){
             return this._dom.jspreadsheet;
         },
@@ -781,6 +797,11 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
+
+            if (this.getDoNotValidate() === true) {
+                return true;
+            }
+
             var oColModel = this.getColumnModel(iCol);
             var fnValidator = oColModel.validator;
 
@@ -798,6 +819,11 @@ JS;
             if (mValue === '\u0000') {
                 mValue = '';
             }
+
+            if (this.getDoNotValidate() === true) {
+                return mValue;
+            }
+
             bParseValue = bParseValue === undefined ? false : true;
             if (bParseValue === true) {
                 mValue = oCol.parser ? oCol.parser(mValue) : mValue;
@@ -828,6 +854,11 @@ JS;
             return mValue;
         },
         validateAll: function() {
+
+            if (this.getDoNotValidate() === true) {
+                return;
+            }
+
             var aData = this.getJExcel().getData() || [];
             var iDataCnt = aData.length;
             var iSpareRows = {$this->getMinSpareRows()};
@@ -858,6 +889,11 @@ JS;
             });
         },
         refreshConditionalProperties: function() {
+
+            if (this.getDoNotValidate() === true) {
+                return;
+            }
+
             var oWidget = this;
             var oJExcel = oWidget.getJExcel();
             let numRows = oJExcel.getData().length;
@@ -881,6 +917,10 @@ JS;
             }
         },
         isDropdownValueValid: function(iCol, iRow, mValue = null) {
+
+            if (this.getDoNotValidate() === true) {
+                return true;
+            }
 
             var oWidget = this;
             var oJExcel = oWidget.getJExcel();
@@ -2183,6 +2223,17 @@ JS;
         return <<<JS
         (function(){ 
             var jqEl = {$this->buildJsJqueryElement()};
+
+            // if do_not_validate_dynamically is set to true,
+            // we only validate once when getting the data here
+            // then we set the flag back to true
+            if (jqEl[0].exfWidget.getDoNotValidate() === true){
+                jqEl[0].exfWidget.setDoNotValidate(false);
+                jqEl[0].exfWidget.refreshConditionalProperties();
+                jqEl[0].exfWidget.validateAll();
+                jqEl[0].exfWidget.setDoNotValidate(true);
+            }
+
             var aRows;
             if (jqEl.length === 0) return {};
             aRows = jqEl[0].exfWidget.getData();
