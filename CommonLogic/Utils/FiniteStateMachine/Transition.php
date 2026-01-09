@@ -1,25 +1,30 @@
 <?php
 
-namespace exface\Core\CommonLogic\Utils\SimpleParser;
+namespace exface\Core\CommonLogic\Utils\FiniteStateMachine;
 
 class Transition
 {
-    protected State $target;
-    protected string $pattern;
+    protected AbstractState $target;
+    protected mixed $trigger;
     
-    function __construct(string $pattern, State $target)
+    function __construct(string $trigger, AbstractState $target)
     {
         $this->target = $target;
-        $this->pattern = $pattern;
+        $this->trigger = $trigger;
     }
     
-    public function getTarget() : State
+    public function getTarget() : AbstractState
     {
         return $this->target;
     }
     
-    public function getPattern() : string
+    public function getTrigger() : string
     {
-        return $this->pattern;
+        return $this->trigger;
+    }
+    
+    public function perform() : AbstractState|bool
+    {
+        return $this->target;
     }
 }
