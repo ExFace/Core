@@ -21,6 +21,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\ConfigPlaceholders;
 use exface\Core\Templates\Placeholders\EnvironmentVariablePlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
+use exface\Core\Templates\Placeholders\SelectivePlaceholders;
 use exface\Core\Uxon\ConnectionSchema;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
@@ -99,14 +100,21 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         }
         
         $workbench = $this->getWorkbench();
-        $result = new BracketHashStringTemplateRenderer($workbench);
+        $renderer = new BracketHashStringTemplateRenderer($workbench);
         
-        // Add placeholders.
-        $result->addPlaceholder(new EnvironmentVariablePlaceholders());
-        $result->addPlaceholder(new ConfigPlaceholders($workbench));
-        $result->addPlaceholder(new FormulaPlaceholders($workbench));
+        // Add placeholders, but be sure to keep those, that are cannot be resolved - they might
+        // get resolved by concrete implementations, that allow specific placeholders in their
+        // properties.
+        $renderer->addPlaceholder(
+            new SelectivePlaceholders([
+                new EnvironmentVariablePlaceholders(),
+                new ConfigPlaceholders($workbench),
+                new FormulaPlaceholders($workbench)
+            ])
+        );
+        
 
-        return $this->templateRenderer = $result;
+        return $this->templateRenderer = $renderer;
     }
     
     /**
