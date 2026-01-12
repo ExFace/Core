@@ -52,6 +52,8 @@
 	"ACTION.EXPORTXLSX.FILTER": "Verwendete Filter",
 	"ACTION.EXPORTXLSX.SHEET_DATA": "Daten",
 	"ACTION.EXPORTXLSX.SHEET_LEGEND": "Legende",
+    "ACTION.EXPORTPRINT.NAME": "Drucken",
+    "ACTION.EXPORTPRINT.RESULT": "Es wir ein separater Tab für den Druck geöffnet",
 
 	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
     "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
@@ -479,6 +481,7 @@
   
 	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION": "Zeilen hinzufügen",
  	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT": "Wie viele Zeilen möchten Sie hinzufügen?",
+	"WIDGET.JEXCEL.CONFIRM_PASTE_PROMPT": "Die Menge an eingefügten Daten könnte zu Performance-Problemen oder einem Absturz der Seite führen.",
 
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Schließen",
 	"WIDGET.DIALOG.HEADER": "Kopf-Bereich",

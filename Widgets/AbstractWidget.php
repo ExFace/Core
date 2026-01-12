@@ -1564,7 +1564,7 @@ abstract class AbstractWidget implements WidgetInterface
             $widget = $widget->getParent();
             if ($widget instanceof $classOrInterface) {
                 $result[] = $widget;
-                if (count($result) >= $maxResults) {
+                if ($maxResults > 0 && count($result) >= $maxResults) {
                     break;
                 }
             }

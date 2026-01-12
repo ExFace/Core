@@ -156,10 +156,9 @@ class ServiceParameter implements ServiceParameterInterface
      * @uxon-type boolean
      * @uxon-default false
      * 
-     * @param bool $value
-     * @return ServiceParameter
+     * @see ServiceParameterInterface::setRequired()
      */
-    public function setRequired(bool $value) : ServiceParameter
+    public function setRequired(bool $value) : ServiceParameterInterface
     {
         $this->required = $value;
         return $this;

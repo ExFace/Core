@@ -53,6 +53,8 @@
 	"ACTION.EXPORTXLSX.FILTER": "Used filters",
 	"ACTION.EXPORTXLSX.SHEET_DATA": "Data",
 	"ACTION.EXPORTXLSX.SHEET_LEGEND": "Legend",
+    "ACTION.EXPORTPRINT.NAME": "Print",
+    "ACTION.EXPORTPRINT.RESULT": "Opening a separate tab for printing",
 
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
@@ -494,6 +496,7 @@
 
 	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION": "add rows",
  	"WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT": "How many rows do you want to add?",
+	"WIDGET.JEXCEL.CONFIRM_PASTE_PROMPT": "The amount of pasted data might lead to performance issues, or unresponsiveness of the page.",
 	
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Close",
 	"WIDGET.DIALOG.HEADER": "Header",

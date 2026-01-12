@@ -7,6 +7,7 @@ interface EnumDataTypeInterface extends DataTypeInterface
 {
 
     /**
+     * Returns an array with the enum values and numeric keys
      * 
      * @return array
      */
@@ -26,7 +27,7 @@ interface EnumDataTypeInterface extends DataTypeInterface
     public function getValueHints() : array;
     
     /**
-     * 
+     * Returns an array with enum values for keys and their respective labels for array values.
      * 
      * @return array [ $value => $label ]
      */

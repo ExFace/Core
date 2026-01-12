@@ -70,7 +70,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Split Top-Bottom",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/SplitVertical.php",
+            "PROTOTYPE": "exface/core/Widgets/SplitVertical.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "SplitVertical",
@@ -108,7 +108,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Tile menu with 2 levels",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/NavTiles.php",
+            "PROTOTYPE": "exface/core/Widgets/NavTiles.php",
             "UXON": {
                 "widget_type": "NavTiles",
                 "object_alias": "exface.Core.PAGE"
@@ -127,7 +127,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Editor-Dialog with multiple widget groups",
             "DESCRIPTION": "The first widget group has no caption, so it will not be visible as a group. The other two have captions. If wrapping, the content will be placed inside the first group.",
-            "PROTOTYPE": "exface/Core/Widgets/Dialog.php",
+            "PROTOTYPE": "exface/core/Widgets/Dialog.php",
             "UXON": {
                 "widget_type": "Dialog",
                 "widgets": [
@@ -173,7 +173,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Precentual state machine without transition restrictions",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Behaviors/StateMachineBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/StateMachineBehavior.php",
             "UXON": {
                 "state_attribute_alias": "",
                 "states": {
@@ -202,7 +202,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple master data table",
             "DESCRIPTION": "A DataTable with all visible attributes as columns and buttons to create, edit, copy and delete.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -245,7 +245,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Table with filters, sorters and buttons",
             "DESCRIPTION": "A DataTable with placeholder for columns, filters and sorters and buttons to create, edit, copy and delete.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -299,7 +299,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Aggregated table",
             "DESCRIPTION": "Aggregates data for each value of the listed aggregate-by-attributes (like GROUP BY in SQL). Each column can either show an aggregate-by-attribute, an attribute related to it or an attribute with an aggregate-function like `:SUM`, `:LIST`, etc. Filters will be applied to aggregated values if possible.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -337,7 +337,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple Tabs",
             "DESCRIPTION": "Two tabs. If used as wrapper, the wrapped content will be added to the first tab",
-            "PROTOTYPE": "exface/Core/Widgets/Tabs.php",
+            "PROTOTYPE": "exface/core/Widgets/Tabs.php",
             "UXON": {
                 "widget_type": "Tabs",
                 "tabs": [
@@ -373,7 +373,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Editor-Dialog with tabs for child objects",
             "DESCRIPTION": "Tabbed dialog for master-detail object showing a \"General\" tab with an editor for the master object and a \"Details\" tab with a table of details objects. Wrapped content will be placed in the \"General\" tab.",
-            "PROTOTYPE": "exface/Core/Widgets/Dialog.php",
+            "PROTOTYPE": "exface/core/Widgets/Dialog.php",
             "UXON": {
                 "widget_type": "Dialog",
                 "widgets": [
@@ -459,7 +459,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Responsive table with filters, sorters and buttons",
             "DESCRIPTION": "A responsive table with placeholder for columns, filters and sorters and buttons to create, edit, copy and delete.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTableResponsive.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTableResponsive.php",
             "UXON": {
                 "widget_type": "DataTableResponsive",
                 "object_alias": "",
@@ -502,7 +502,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Table without pagination",
             "DESCRIPTION": "A simple table without pagination (showing all items at once)",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -527,7 +527,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Table with pagination, but without total count",
             "DESCRIPTION": "Not counting all items matching the current filters may greatly improve performance on large data sets",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -554,7 +554,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Tile menu with 1 level",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/NavTiles.php",
+            "PROTOTYPE": "exface/core/Widgets/NavTiles.php",
             "UXON": {
                 "widget_type": "NavTiles",
                 "object_alias": "exface.Core.PAGE",
@@ -574,7 +574,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Split Left-Right",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/SplitHorizontal.php",
+            "PROTOTYPE": "exface/core/Widgets/SplitHorizontal.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "SplitHorizontal",
@@ -612,7 +612,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Split Left-Center-Right",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/SplitHorizontal.php",
+            "PROTOTYPE": "exface/core/Widgets/SplitHorizontal.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "SplitHorizontal",
@@ -659,7 +659,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Split Top-Center-Bottom",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/SplitVertical.php",
+            "PROTOTYPE": "exface/core/Widgets/SplitVertical.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "SplitVertical",
@@ -726,7 +726,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Centered KPI tiles",
             "DESCRIPTION": "Several tiles in the middle of the screen. This can be a good starting point for a set of dashboards, where each tile navigates to a dashboard.",
-            "PROTOTYPE": "exface/Core/Widgets/Tiles.php",
+            "PROTOTYPE": "exface/core/Widgets/Tiles.php",
             "UXON": {
                 "widget_type": "Tiles",
                 "object_alias": "",
@@ -780,7 +780,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Custom tile menu",
             "DESCRIPTION": "Navigation menu with manually defined tiles. In contrast to NavTiles, each tile can have separate action, icon, etc.",
-            "PROTOTYPE": "exface/Core/Widgets/Tiles.php",
+            "PROTOTYPE": "exface/core/Widgets/Tiles.php",
             "UXON": {
                 "widget_type": "Tiles",
                 "object_alias": "",
@@ -817,7 +817,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple GET Webservice (JSON)",
             "DESCRIPTION": "Parameters will be sent in the URL. Use relative URLs to retrieve the host from the current connection of the data source. If the data source is not defined, the source of the action's object will be used.",
-            "PROTOTYPE": "exface/UrlDataConnector/Actions/CallWebService.php",
+            "PROTOTYPE": "exface/urldataconnector/Actions/CallWebService.php",
             "UXON": {
                 "alias": "exface.UrlDataConnector.CallWebService",
                 "data_source_alias": "",
@@ -853,7 +853,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple POST Webservice (Form)",
             "DESCRIPTION": "Parameters will be sent as form data. Use relative URLs to retrieve the host from the current connection of the data source. If the data source is not defined, the source of the action's object will be used.",
-            "PROTOTYPE": "exface/UrlDataConnector/Actions/CallWebService.php",
+            "PROTOTYPE": "exface/urldataconnector/Actions/CallWebService.php",
             "UXON": {
                 "alias": "exface.UrlDataConnector.CallWebService",
                 "data_source_alias": "",
@@ -890,7 +890,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple POST Webservice (JSON)",
             "DESCRIPTION": "Parameters will be sent JSON-object. Use relative URLs to retrieve the host from the current connection of the data source. If the data source is not defined, the source of the action's object will be used.",
-            "PROTOTYPE": "exface/UrlDataConnector/Actions/CallWebService.php",
+            "PROTOTYPE": "exface/urldataconnector/Actions/CallWebService.php",
             "UXON": {
                 "alias": "exface.UrlDataConnector.CallWebService",
                 "data_source_alias": "",
@@ -927,7 +927,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Master-detail tables",
             "DESCRIPTION": "The detail-table (bottom) is populated when a row in the master-table (top) is selected. Set the attribute_alias of the required filter in the detail-table to the relation to the master-table. If it does not point to the UID of the master-object, add a column to the value-property of the filter: e.g. master_table!key_column.",
-            "PROTOTYPE": "exface/Core/Widgets/SplitVertical.php",
+            "PROTOTYPE": "exface/core/Widgets/SplitVertical.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "SplitVertical",
@@ -985,7 +985,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "MS SQL Server connection",
             "DESCRIPTION": "Most basic connection to an SQL server",
-            "PROTOTYPE": "exface/Core/DataConnectors/MsSqlConnector.php",
+            "PROTOTYPE": "exface/core/DataConnectors/MsSqlConnector.php",
             "UXON": {
                 "host": "",
                 "database": "",
@@ -1007,7 +1007,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "MySQL Connection with relation matcher",
             "DESCRIPTION": "The relation matcher attempts to create relations by looking for column names matching a regex to extract the related column (e.g. something like other_table_id in the example below)",
-            "PROTOTYPE": "exface/Core/DataConnectors/MySqlConnector.php",
+            "PROTOTYPE": "exface/core/DataConnectors/MySqlConnector.php",
             "UXON": {
                 "host": "",
                 "dbase": "",
@@ -1030,7 +1030,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "MySQL Connection",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/DataConnectors/MySqlConnector.php",
+            "PROTOTYPE": "exface/core/DataConnectors/MySqlConnector.php",
             "UXON": {
                 "host": "",
                 "dbase": "",
@@ -1052,7 +1052,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Oracle SQL Connection",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/DataConnectors/OracleSqlConnector.php",
+            "PROTOTYPE": "exface/core/DataConnectors/OracleSqlConnector.php",
             "UXON": {
                 "host": "",
                 "port": "",
@@ -1075,7 +1075,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Dialog with tabs",
             "DESCRIPTION": "A dialog with two tabs. If used as wrapper, the content will be added to the first tab.",
-            "PROTOTYPE": "exface/Core/Widgets/Dialog.php",
+            "PROTOTYPE": "exface/core/Widgets/Dialog.php",
             "UXON": {
                 "widget_type": "Dialog",
                 "widgets": [
@@ -1116,7 +1116,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Widget group with caption",
             "DESCRIPTION": "Simple widget group with a caption. Can be used as wrapper.",
-            "PROTOTYPE": "exface/Core/Widgets/WidgetGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/WidgetGroup.php",
             "UXON": {
                 "widget_type": "WidgetGroup",
                 "caption": "",
@@ -1140,7 +1140,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Widget group without caption",
             "DESCRIPTION": "Simple widget group without a caption/title. Can be used as wrapper.",
-            "PROTOTYPE": "exface/Core/Widgets/WidgetGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/WidgetGroup.php",
             "UXON": {
                 "widget_type": "WidgetGroup",
                 "widgets": [
@@ -1163,7 +1163,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Widget group with 2 columns",
             "DESCRIPTION": "Wide widget group with two columns. Can be used as wrapper.",
-            "PROTOTYPE": "exface/Core/Widgets/WidgetGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/WidgetGroup.php",
             "UXON": {
                 "widget_type": "WidgetGroup",
                 "width": 2,
@@ -1188,7 +1188,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "ColorIndicator with a scale for numeric values",
             "DESCRIPTION": "The text show will be colored as follows: values <= 10 will be red, values > 10 and <= 20 will be colored yellow, those > 20 and <= 99 will have no special color and values starting with 100 (actually > 99) will be green.",
-            "PROTOTYPE": "exface/Core/Widgets/ColorIndicator.php",
+            "PROTOTYPE": "exface/core/Widgets/ColorIndicator.php",
             "UXON": {
                 "widget_type": "ColorIndicator",
                 "attribute_alias": "",
@@ -1215,7 +1215,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "ColorIndicator without text (streelight)",
             "DESCRIPTION": "Simple color-icon: green up-to 99, yellow up-to 299, red for 300 and up.",
-            "PROTOTYPE": "exface/Core/Widgets/ColorIndicator.php",
+            "PROTOTYPE": "exface/core/Widgets/ColorIndicator.php",
             "UXON": {
                 "widget_type": "ColorIndicator",
                 "attribute_alias": "",
@@ -1240,7 +1240,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "ColorIndicator with text-values and backgroud-fill",
             "DESCRIPTION": "Colors will be applied to text-background depending on the text shown: \"Pending\", \"Error\" and \"Done\" will be colored yellow, red and green, while all other texts will have transparent background.",
-            "PROTOTYPE": "exface/Core/Widgets/ColorIndicator.php",
+            "PROTOTYPE": "exface/core/Widgets/ColorIndicator.php",
             "UXON": {
                 "widget_type": "ColorIndicator",
                 "attribute_alias": "",
@@ -1267,7 +1267,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Small dialog",
             "DESCRIPTION": "A small dialog with only two input inputs in a single column. Setting maximized=false, height=auto, etc. explicitly forces alle facades to behave the same instead of using their dialog-defaults.",
-            "PROTOTYPE": "exface/Core/Widgets/Dialog.php",
+            "PROTOTYPE": "exface/core/Widgets/Dialog.php",
             "UXON": {
                 "widget_type": "Dialog",
                 "object_alias": "",
@@ -1303,7 +1303,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "String with min/max length",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/DataTypes/StringDataType.php",
+            "PROTOTYPE": "exface/core/DataTypes/StringDataType.php",
             "UXON": {
                 "length_min": "",
                 "length_max": ""
@@ -1322,7 +1322,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple empty dialog",
             "DESCRIPTION": "A simple empty dialog with placeholders for widgets and buttons",
-            "PROTOTYPE": "exface/Core/Widgets/Dialog.php",
+            "PROTOTYPE": "exface/core/Widgets/Dialog.php",
             "UXON": {
                 "widget_type": "Dialog",
                 "object_alias": "",
@@ -1351,7 +1351,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Console for a single command",
             "DESCRIPTION": "A Console that executes a command when loaded and does not permit to enter any other commands - good to display the output of a preconfigured command or action. Replace `exface.Core:CleanUp` with the desired CLI facade command.",
-            "PROTOTYPE": "exface/Core/Widgets/Console.php",
+            "PROTOTYPE": "exface/core/Widgets/Console.php",
             "UXON": {
                 "disabled": true,
                 "widget_type": "Console",
@@ -1374,7 +1374,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Console output dialog for CLI command",
             "DESCRIPTION": "Opens a readonly console window and executes a command",
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "icon": "fa fa-terminal",
                 "widget": {
@@ -1404,7 +1404,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Split-Dashboard Tiles + 1x2 + 1x3",
             "DESCRIPTION": "2 columns with 3 slots each. First slog (upper left) good for KPI-tiles. Adjust the height of the Tile-Panel to match the number of tile rows.",
-            "PROTOTYPE": "exface/Core/Widgets/SplitHorizontal.php",
+            "PROTOTYPE": "exface/core/Widgets/SplitHorizontal.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "SplitHorizontal",
@@ -1487,7 +1487,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Split-Dashboard 3x2",
             "DESCRIPTION": "2 rows of equal height with 3 slots each. All slots have equal size.",
-            "PROTOTYPE": "exface/Core/Widgets/SplitVertical.php",
+            "PROTOTYPE": "exface/core/Widgets/SplitVertical.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "SplitVertical",
@@ -1549,7 +1549,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Column chart",
             "DESCRIPTION": "Simple column chart with filters and sorters",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -1588,7 +1588,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Bar chart",
             "DESCRIPTION": "Simple bar chart with filters and sorters",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -1627,7 +1627,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Bar chart without axis caption",
             "DESCRIPTION": "The Y-axis has no caption to save space - in most cases it is pretty obvious, what the Y-axis shows because it's values are mostly descriptions or names. Make sure, y_attribute_alias of the series and attribute_alias of the axis match!",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -1659,7 +1659,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Stacked column chart",
             "DESCRIPTION": "To stack bars or columns, create multiple series and set stacked=tue for the first one in the stack. Theoretically, you can mix stacked and regular columns by giving each of them a separate stacked property.",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -1690,7 +1690,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Pie chart",
             "DESCRIPTION": "Simple pie chart with filters",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -1723,7 +1723,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Pie chart without header/footer",
             "DESCRIPTION": "Just a pie - no header/footer",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -1758,7 +1758,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Pie chart with aggregation",
             "DESCRIPTION": "Pie chart over aggregated values - i.e. order types by number of orders. Make sure to aggregate over the text attribute! And give the value attribute an aggregator like `:SUM`.",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -1789,7 +1789,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Call action on event",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Behaviors/CallActionBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/CallActionBehavior.php",
             "UXON": {
                 "event_alias": "",
                 "action": {
@@ -1810,7 +1810,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Run custom static SQL",
             "DESCRIPTION": "Just perform some SQL queries on the current connection of a data source when the action is triggered",
-            "PROTOTYPE": "exface/Core/Actions/CustomDataSourceQuery.php",
+            "PROTOTYPE": "exface/core/Actions/CustomDataSourceQuery.php",
             "UXON": {
                 "alias": "exface.Core.CustomDataSourceQuery",
                 "data_source": "my_sql_source_alias",
@@ -1833,7 +1833,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Run custom SQL with placeholders",
             "DESCRIPTION": "Run custom SQL with placeholders to be filled from input data of the action - i.e. [#ID#] will be replaced by the value in column \"ID\" of the input data. Multiple rows will trigger each query multiple times!",
-            "PROTOTYPE": "exface/Core/Actions/CustomDataSourceQuery.php",
+            "PROTOTYPE": "exface/core/Actions/CustomDataSourceQuery.php",
             "UXON": {
                 "alias": "exface.Core.CustomDataSourceQuery",
                 "data_source": "",
@@ -1857,7 +1857,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Update selected attributes with fixed values or formulas",
             "DESCRIPTION": "Use `=1` for fixed numeric values, `='string'` for strings and formulas for calculated values.",
-            "PROTOTYPE": "exface/Core/Actions/UpdateData.php",
+            "PROTOTYPE": "exface/core/Actions/UpdateData.php",
             "UXON": {
                 "input_object_alias": "",
                 "icon": "",
@@ -1889,7 +1889,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple filter",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/Filter.php",
+            "PROTOTYPE": "exface/core/Widgets/Filter.php",
             "UXON": {
                 "attribute_alias": ""
             },
@@ -1907,7 +1907,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "OR-Filter with a custom condition",
             "DESCRIPTION": "The placeholder [#value#] will be replaced by the input value of the filter. You can use it in multiple conditions.",
-            "PROTOTYPE": "exface/Core/Widgets/Filter.php",
+            "PROTOTYPE": "exface/core/Widgets/Filter.php",
             "UXON": {
                 "caption": "",
                 "condition_group": {
@@ -1940,7 +1940,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple Wizard",
             "DESCRIPTION": "You can add buttons to each step or to the wizard as a whole (shown on every step). A step without buttons will automatically show navigation buttons.",
-            "PROTOTYPE": "exface/Core/Widgets/Wizard.php",
+            "PROTOTYPE": "exface/core/Widgets/Wizard.php",
             "UXON": {
                 "widget_type": "Wizard",
                 "object_alias": "",
@@ -1993,7 +1993,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Inline input group for value + currency",
             "DESCRIPTION": "The caption will be inherited from the value-attribute",
-            "PROTOTYPE": "exface/Core/Widgets/InlineGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/InlineGroup.php",
             "UXON": {
                 "widget_type": "InlineGroup",
                 "widgets": [
@@ -2020,7 +2020,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Inline input group for dimensions (LxWxH)",
             "DESCRIPTION": "Equal-width inputs for length, width and heigth",
-            "PROTOTYPE": "exface/Core/Widgets/InlineGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/InlineGroup.php",
             "UXON": {
                 "widget_type": "InlineGroup",
                 "caption": "",
@@ -2051,7 +2051,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Line chart",
             "DESCRIPTION": "Simple line chart with filters and sorters",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -2090,7 +2090,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Area chart",
             "DESCRIPTION": "Simple area chart with filters and sorters",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -2129,7 +2129,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Smoothed line chart",
             "DESCRIPTION": "Smoothed line chart (spline) with filters and sorters",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
                 "object_alias": "",
@@ -2168,7 +2168,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Child-object table with static filter",
             "DESCRIPTION": "DataTable showing dependants (detail or child objects) based on an invisible filter. Use this preset when the parent object cannot be changed via user interaction - i.e. in detail tabs of editors where the parent object is part of the prefill data. If parent can be set/selected, use a similar preset with a \"synced filter\".",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -2200,7 +2200,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "DataTree with lazy loading",
             "DESCRIPTION": "The tree will show only the root level initially, lazy loading every level when it's parent is expanded. Nodes of the root level are expected to have NULL values (tree_root_uid) in their parent-id-attributes.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTree.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTree.php",
             "UXON": {
                 "widget_type": "DataTree",
                 "object_alias": "",
@@ -2239,7 +2239,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Fully expanded DataTree without lazy loading",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/DataTree.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTree.php",
             "UXON": {
                 "widget_type": "DataTree",
                 "object_alias": "",
@@ -2267,7 +2267,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Heatmap with custom colors",
             "DESCRIPTION": "Plots color-highlighted values for every x/y coordinate. The color depends on the `value_attribute_alias` and will be calculated automatically using a gradient between the provided `colors`.",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "Chart",
@@ -2319,7 +2319,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Heatmap with discrete color groups",
             "DESCRIPTION": "Plots color-highlighted values for every x/y coordinate. The color depends on the `value_attribute_alias`. The property `use_color_groups` of the `color_scale` results in 2 color groups between the `min` and `max` scale values along with automatic \"above\" and \"below\" color groups.",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "Chart",
@@ -2374,7 +2374,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple heatmap with autom. continuos color scale",
             "DESCRIPTION": "Plots color-highlighted values for every x/y coordinate. The color depends on the `value_attribute_alias` and will be calculated automatically.",
-            "PROTOTYPE": "exface/Core/Widgets/Chart.php",
+            "PROTOTYPE": "exface/core/Widgets/Chart.php",
             "UXON": {
                 "object_alias": "",
                 "widget_type": "Chart",
@@ -2426,7 +2426,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "FileList read-only",
             "DESCRIPTION": "This widget will just show a list of files. The `mime_type_attribute_alias` enables facades to display icons for file types if possible.",
-            "PROTOTYPE": "exface/Core/Widgets/FileList.php",
+            "PROTOTYPE": "exface/core/Widgets/FileList.php",
             "UXON": {
                 "widget_type": "FileList",
                 "object_alias": "",
@@ -2447,7 +2447,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "FileList with upload",
             "DESCRIPTION": "To upload files the `upload` must be set to `true` and a `file_content_attribute_alias` must be specified (otherwise there's no place to upload). Use `upload_options` to apply restrictions to file size, type, name length, etc.",
-            "PROTOTYPE": "exface/Core/Widgets/FileList.php",
+            "PROTOTYPE": "exface/core/Widgets/FileList.php",
             "UXON": {
                 "widget_type": "FileList",
                 "object_alias": "",
@@ -2475,7 +2475,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "FileList to upload attachments to master-object",
             "DESCRIPTION": "Use this with master-detail widgets. The hidden column with a widget-link for value makes sure all newly uploaded files automatically get the id of the master object.",
-            "PROTOTYPE": "exface/Core/Widgets/FileList.php",
+            "PROTOTYPE": "exface/core/Widgets/FileList.php",
             "UXON": {
                 "widget_type": "FileList",
                 "object_alias": "",
@@ -2513,7 +2513,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Editor-Dialog with table for simple child objects",
             "DESCRIPTION": "Suitable for relatively simple object with few dependents (e.g. tags, groups, etc.). Instead of placing dependents in separate tabs, put tables with them inside the main editor screen.",
-            "PROTOTYPE": "exface/Core/Widgets/Dialog.php",
+            "PROTOTYPE": "exface/core/Widgets/Dialog.php",
             "UXON": {
                 "widget_type": "Dialog",
                 "widgets": [
@@ -2581,7 +2581,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Generate an alias from a name",
             "DESCRIPTION": "Will \"sluggify\" the first attribute and put it into the second one",
-            "PROTOTYPE": "exface/Core/Behaviors/AliasGeneratingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/AliasGeneratingBehavior.php",
             "UXON": {
                 "source_attribute_alias": "",
                 "target_attribute_alias": ""
@@ -2600,7 +2600,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Generate an alias with namespace and custom character replacement",
             "DESCRIPTION": "In addition to the simples case, a namespace will be appended, the result will be lowercased and whitespaces will be replaced by `-` instead of the default `_`.",
-            "PROTOTYPE": "exface/Core/Behaviors/AliasGeneratingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/AliasGeneratingBehavior.php",
             "UXON": {
                 "target_attribute_alias": "",
                 "namespace_attribute_alias": "",
@@ -2624,7 +2624,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Update on duplicates",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Behaviors/PreventDuplicatesBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/PreventDuplicatesBehavior.php",
             "UXON": {
                 "compare_attributes": [
                     ""
@@ -2646,7 +2646,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Error on duplicates",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Behaviors/PreventDuplicatesBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/PreventDuplicatesBehavior.php",
             "UXON": {
                 "compare_attributes": [
                     ""
@@ -2667,7 +2667,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Ignore duplicates (e.g. for mappings)",
             "DESCRIPTION": "Will ignore duplicate rows on multi-row create. This is handy for creating mappings between objects en-masse, where you only need to be sure, there is a mapping.",
-            "PROTOTYPE": "exface/Core/Behaviors/PreventDuplicatesBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/PreventDuplicatesBehavior.php",
             "UXON": {
                 "compare_attributes": [
                     ""
@@ -2689,7 +2689,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent delete of rows after a certain status",
             "DESCRIPTION": "This preset assumes, that your object has an numeric attribute with the alias `Status`. The behavior will prevent deletion of any rows with a status greater than `50 Active`. Use the `error_text` to provide a user-friendly explanation.",
-            "PROTOTYPE": "exface/Core/Behaviors/UndeletableBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/UndeletableBehavior.php",
             "UXON": {
                 "prevent_delete_if": [
                     {
@@ -2719,7 +2719,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Set a flag on an object (e.g. disable/enable)",
             "DESCRIPTION": "Replace the `0` in the `from` property with your desired value. Place the alias of the target attribute in the `to` property. **Note:** the input data MUST be based on the target meta object - enforce this by setting `input_object_alias`!",
-            "PROTOTYPE": "exface/Core/Actions/UpdateData.php",
+            "PROTOTYPE": "exface/core/Actions/UpdateData.php",
             "UXON": {
                 "input_object_alias": "",
                 "icon": "toggle-off",
@@ -2748,7 +2748,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Encrypted data",
             "DESCRIPTION": "Will encrypt any data before sending to data source and decrypt it before showing. Just specify the the type of the raw (decrypted) data.",
-            "PROTOTYPE": "exface/Core/DataTypes/EncryptedDataType.php",
+            "PROTOTYPE": "exface/core/DataTypes/EncryptedDataType.php",
             "UXON": {
                 "inner_data_type": {
                     "alias": ""
@@ -2768,7 +2768,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Dashboard with data widgets",
             "DESCRIPTION": "Masonry-layout dashboard with a table and a chart. Add further widgets and change width and height as needed.",
-            "PROTOTYPE": "exface/Core/Widgets/Dashboard.php",
+            "PROTOTYPE": "exface/core/Widgets/Dashboard.php",
             "UXON": {
                 "widget_type": "Dashboard",
                 "object_alias": "",
@@ -2811,7 +2811,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Card with caption",
             "DESCRIPTION": "Simple card a caption. Can be used as wrapper.",
-            "PROTOTYPE": "exface/Core/Widgets/Card.php",
+            "PROTOTYPE": "exface/core/Widgets/Card.php",
             "UXON": {
                 "widget_type": "Card",
                 "caption": "",
@@ -2835,7 +2835,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Add mapping to multiple (dialog+combo)",
             "DESCRIPTION": "A dialog to create mappings for multiple selected objects: e.g. map user to roles, etc. The dialog's object should be that of the mapping to create. Add `PreventDuplicatesBehavior` to mapping object to avoid errors.",
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "alias": "exface.Core.ShowDialog",
                 "input_rows_min": 1,
@@ -2880,7 +2880,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Remove mapping from multiple (dialog+combo)",
             "DESCRIPTION": "A dialog to remove mappings for multiple selected objects: e.g. remove roles from users, etc. The dialog's object should be that of the mapping to create. Will remove all mappings matching selected values of the two relations!",
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "alias": "exface.Core.ShowDialog",
                 "input_rows_min": 1,
@@ -2942,7 +2942,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Mass editor for selected attributes",
             "DESCRIPTION": "Small dialog to change set the value of one or more attributes for multiple input objects. The dialog will display an info message with the number of edited objects or the selection criteria (if editing for a set of filters)",
-            "PROTOTYPE": "exface/Core/Actions/ShowMassEditDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowMassEditDialog.php",
             "UXON": {
                 "alias": "exface.Core.ShowMassEditDialog",
                 "widget": {
@@ -2970,7 +2970,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "KPI with semantic color scale",
             "DESCRIPTION": "Use an aggregation in `attribute_alias` like `id:COUNT` and the tile will display a counter, total, etc. You can also add filters and aggregations in the `data` section. In the color scale you can also replace the semantic colors with regular CSS colors like `red`, `#ccc` etc.",
-            "PROTOTYPE": "exface/Core/Widgets/KPI.php",
+            "PROTOTYPE": "exface/core/Widgets/KPI.php",
             "UXON": {
                 "widget_type": "KPI",
                 "object_alias": "",
@@ -3002,7 +3002,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Container (invisible)",
             "DESCRIPTION": "Use simple containers to place multiple widgets one-after-another. The container itself is not visible in most cases - it's just there for concatennation.",
-            "PROTOTYPE": "exface/Core/Widgets/Container.php",
+            "PROTOTYPE": "exface/core/Widgets/Container.php",
             "UXON": {
                 "widget_type": "Container",
                 "object_alias": "",
@@ -3033,7 +3033,7 @@
                 "",
                 "Since changes are kept in the table's data, pagination should not be used as it would discard any changes when leaving a page."
             ],
-            "PROTOTYPE": "exface/Core/Widgets/DataCarousel.php",
+            "PROTOTYPE": "exface/core/Widgets/DataCarousel.php",
             "UXON": {
                 "widget_type": "DataCarousel",
                 "data": {
@@ -3073,7 +3073,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Open URL with placeholder",
             "DESCRIPTION": "Your input data must have a column named `your_data_column`.",
-            "PROTOTYPE": "exface/Core/Actions/GoToUrl.php",
+            "PROTOTYPE": "exface/core/Actions/GoToUrl.php",
             "UXON": {
                 "alias": "exface.Core.GoToUrl",
                 "url": "https://yourdomain.com/[#your_data_column#]",
@@ -3094,7 +3094,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Open URL in new window",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Actions/GoToUrl.php",
+            "PROTOTYPE": "exface/core/Actions/GoToUrl.php",
             "UXON": {
                 "alias": "exface.Core.GoToUrl",
                 "url": "",
@@ -3114,7 +3114,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Open URL contained in input data",
             "DESCRIPTION": "The input data here is expected to have a column named `url`. Since the URL contains special characters, we need to disable url-encoding in this case!",
-            "PROTOTYPE": "exface/Core/Actions/GoToUrl.php",
+            "PROTOTYPE": "exface/core/Actions/GoToUrl.php",
             "UXON": {
                 "alias": "exface.Core.GoToUrl",
                 "url": "[#url#]",
@@ -3136,7 +3136,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "PDF viewer with download option",
             "DESCRIPTION": "NOTE: the `attribute_alias` should point to the attribute, containing the PDF binary",
-            "PROTOTYPE": "exface/Core/Widgets/PDFViewer.php",
+            "PROTOTYPE": "exface/core/Widgets/PDFViewer.php",
             "UXON": {
                 "widget_type": "PDFViewer",
                 "attribute_alias": "",
@@ -3158,7 +3158,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Open PDF in dialog",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "maximize": true,
                 "input_rows_min": 1,
@@ -3185,7 +3185,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Inline input group for a range",
             "DESCRIPTION": "Displays min/max-attributes as \"caption: [min] - [max]\"",
-            "PROTOTYPE": "exface/Core/Widgets/InlineGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/InlineGroup.php",
             "UXON": {
                 "widget_type": "InlineGroup",
                 "caption": "",
@@ -3213,7 +3213,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Create/update time tracking + optimistic locking",
             "DESCRIPTION": "Save create/update time and check if update time changed before modifying data",
-            "PROTOTYPE": "exface/Core/Behaviors/TimeStampingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/TimeStampingBehavior.php",
             "UXON": {
                 "created_on_attribute_alias": "",
                 "updated_on_attribute_alias": "",
@@ -3233,7 +3233,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Create/update time and user tracking + optimistic locking",
             "DESCRIPTION": "Save create/update time and user UID and check if update time changed before modifying data",
-            "PROTOTYPE": "exface/Core/Behaviors/TimeStampingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/TimeStampingBehavior.php",
             "UXON": {
                 "created_on_attribute_alias": "",
                 "created_by_attribute_alias": "",
@@ -3255,7 +3255,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Table with expandable row details",
             "DESCRIPTION": "Rows can be expanded to show a container details for this row. The detail-container will be prefilled with the row data asynchronously.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -3287,7 +3287,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Table with row groups",
             "DESCRIPTION": "All rows with the same value of the group-attribute will be grouped together under a mutual header showing the value of this attribute and an optional counter. Row groups can be collapsible. If there is a column with the same attribute, it will be hidden automatically.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -3315,7 +3315,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Child-object table with live sync filter",
             "DESCRIPTION": "DataTable showing dependants (detail or child objects) based on an invisible filter. Use this preset when the parent is not fixed via context or prefill data, but can be  actively selected by the user - e.g. in a master table. The value of the inivisible filter must therefore be bound to a widget containing the parent object's key.",
-            "PROTOTYPE": "exface/Core/Widgets/DataTable.php",
+            "PROTOTYPE": "exface/core/Widgets/DataTable.php",
             "UXON": {
                 "widget_type": "DataTable",
                 "object_alias": "",
@@ -3349,7 +3349,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "PDF viewer",
             "DESCRIPTION": "NOTE: the `attribute_alias` should point to the attribute, containing the PDF binary",
-            "PROTOTYPE": "exface/Core/Widgets/PDFViewer.php",
+            "PROTOTYPE": "exface/core/Widgets/PDFViewer.php",
             "UXON": {
                 "widget_type": "PDFViewer",
                 "attribute_alias": "",
@@ -3369,7 +3369,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Scheduler with resources",
             "DESCRIPTION": "Scheduler with swimlanes for resources/people/categories. Don't use pagination if not really needed - it may cause confusion because it is not clear, where the border of the loaded data lies.",
-            "PROTOTYPE": "exface/Core/Widgets/Scheduler.php",
+            "PROTOTYPE": "exface/core/Widgets/Scheduler.php",
             "UXON": {
                 "widget_type": "Scheduler",
                 "object_alias": "",
@@ -3409,7 +3409,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Scheduler",
             "DESCRIPTION": "Simple scheduler. Don't use pagination if not really needed - it may cause confusion because it is not clear, where the border of the loaded data lies. ",
-            "PROTOTYPE": "exface/Core/Widgets/Scheduler.php",
+            "PROTOTYPE": "exface/core/Widgets/Scheduler.php",
             "UXON": {
                 "widget_type": "Scheduler",
                 "object_alias": "",
@@ -3446,7 +3446,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "KPI tile menu",
             "DESCRIPTION": "Multiple KPI tiles suitable as an entry point for an app. Use an aggregation in `attribute_alias` of each tile like `id:COUNT` and the tiles will display counters, totals, etc. Use `color_scale` on a KPI to emphasize the meaning of it's values.",
-            "PROTOTYPE": "exface/Core/Widgets/Tiles.php",
+            "PROTOTYPE": "exface/core/Widgets/Tiles.php",
             "UXON": {
                 "widget_type": "Tiles",
                 "object_alias": "",
@@ -3516,7 +3516,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "KPI tile",
             "DESCRIPTION": "A tile with an aggregated value inside. Use an aggregation in `attribute_alias` of the tile like `id:COUNT` and it will display a counter, total, etc. Use a `color_scale` to add semantic colors to the KPI.",
-            "PROTOTYPE": "exface/Core/Widgets/Tile.php",
+            "PROTOTYPE": "exface/core/Widgets/Tile.php",
             "UXON": {
                 "widget_type": "KPI",
                 "title": "",
@@ -3558,7 +3558,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Colored values with color scale",
             "DESCRIPTION": "Text/number colored depending on it's value",
-            "PROTOTYPE": "exface/Core/Widgets/ColorIndicator.php",
+            "PROTOTYPE": "exface/core/Widgets/ColorIndicator.php",
             "UXON": {
                 "widget_type": "ColorIndicator",
                 "attribute_alias": "",
@@ -3584,7 +3584,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Progressbar",
             "DESCRIPTION": "Simple progress bar with automatic min- and max-values",
-            "PROTOTYPE": "exface/Core/Widgets/ProgressBar.php",
+            "PROTOTYPE": "exface/core/Widgets/ProgressBar.php",
             "UXON": {
                 "widget_type": "ProgressBar",
                 "attribute_alias": ""
@@ -3603,7 +3603,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Progressbar with text froma separate attribute",
             "DESCRIPTION": "Progress bar with text based on another attribute.",
-            "PROTOTYPE": "exface/Core/Widgets/ProgressBar.php",
+            "PROTOTYPE": "exface/core/Widgets/ProgressBar.php",
             "UXON": {
                 "widget_type": "ProgressBar",
                 "attribute_alias": "",
@@ -3623,7 +3623,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Progressbar with value-text-map",
             "DESCRIPTION": "Progress bar with text based on a value-map. In this example, values up-to `10` will be displayed as `Pending`, up-to `20` as `In Progress` and of `100` or more - as `Finished`.",
-            "PROTOTYPE": "exface/Core/Widgets/ProgressBar.php",
+            "PROTOTYPE": "exface/core/Widgets/ProgressBar.php",
             "UXON": {
                 "widget_type": "ProgressBar",
                 "attribute_alias": "",
@@ -3648,7 +3648,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Progressbar with custom color scale",
             "DESCRIPTION": "Progress bar with custom colors for values.",
-            "PROTOTYPE": "exface/Core/Widgets/ProgressBar.php",
+            "PROTOTYPE": "exface/core/Widgets/ProgressBar.php",
             "UXON": {
                 "widget_type": "ProgressBar",
                 "attribute_alias": "",
@@ -3673,7 +3673,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Date-time data column showing only the date",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/DataColumn.php",
+            "PROTOTYPE": "exface/core/Widgets/DataColumn.php",
             "UXON": {
                 "attribute_alias": "",
                 "cell_widget": {
@@ -3695,7 +3695,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Data column with custom cell widget",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/DataColumn.php",
+            "PROTOTYPE": "exface/core/Widgets/DataColumn.php",
             "UXON": {
                 "attribute_alias": "",
                 "cell_widget": {
@@ -3716,7 +3716,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Data column with total row (footer)",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/DataColumn.php",
+            "PROTOTYPE": "exface/core/Widgets/DataColumn.php",
             "UXON": {
                 "attribute_alias": "",
                 "footer": "SUM"
@@ -3735,7 +3735,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Data column group with nested headers",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/DataColumnGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/DataColumnGroup.php",
             "UXON": {
                 "caption": "",
                 "columns": [
@@ -3763,7 +3763,7 @@
                 "",
                 "This is a good alternative for tables with lot's of columns: place most important columns in the master table and organize all the secondary fields in widget groups inside the detail-form."
             ],
-            "PROTOTYPE": "exface/Core/Widgets/DataCarousel.php",
+            "PROTOTYPE": "exface/core/Widgets/DataCarousel.php",
             "UXON": {
                 "widget_type": "DataCarousel",
                 "data": {
@@ -3819,7 +3819,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Inline display group (read-only)",
             "DESCRIPTION": "Making the group `readonly` will automatically generate display widgets for each inner widget without an explicit widget typ. ",
-            "PROTOTYPE": "exface/Core/Widgets/InlineGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/InlineGroup.php",
             "UXON": {
                 "widget_type": "InlineGroup",
                 "readonly": true,
@@ -3847,7 +3847,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Widget group read-only",
             "DESCRIPTION": "Making the group `readonly` will automatically generate display widgets for each inner widget without an explicit widget typ. ",
-            "PROTOTYPE": "exface/Core/Widgets/WidgetGroup.php",
+            "PROTOTYPE": "exface/core/Widgets/WidgetGroup.php",
             "UXON": {
                 "widget_type": "WidgetGroup",
                 "caption": "",
@@ -3877,7 +3877,7 @@
                 "",
                 "You can also an `attribute_alias` to place the calculated value in place of an attribute in the resulting data - e.g. the input data for an action. The combination of `attribute_alias` and `calculation` can be used to calculate default values in editable table."
             ],
-            "PROTOTYPE": "exface/Core/Widgets/DataColumn.php",
+            "PROTOTYPE": "exface/core/Widgets/DataColumn.php",
             "UXON": {
                 "calculation": "="
             },
@@ -3895,7 +3895,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Action chain",
             "DESCRIPTION": "Perform multiple actions one-after-another. The result data of every action is passed as input to the next one.",
-            "PROTOTYPE": "exface/Core/Actions/ActionChain.php",
+            "PROTOTYPE": "exface/core/Actions/ActionChain.php",
             "UXON": {
                 "alias": "exface.Core.ActionChain",
                 "actions": [
@@ -3921,7 +3921,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Action chain with data transformation (mappers)",
             "DESCRIPTION": "The result data of the first action will be mapped from it's object to the object of the second action by an `input_mapper`. If both actions have the same object, the mapper can be used to change values, add columns, etc.",
-            "PROTOTYPE": "exface/Core/Actions/ActionChain.php",
+            "PROTOTYPE": "exface/core/Actions/ActionChain.php",
             "UXON": {
                 "alias": "exface.Core.ActionChain",
                 "actions": [
@@ -3955,7 +3955,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Map visualizing data from a table",
             "DESCRIPTION": "The map on the right will show a marker for each row loaded in the table. The position of the markers is determined via `latitude_attribute_alias` and `latitude_attribute_alias` that will be added to the table automatically. You can also make each marker show a (short) value (typically a number) by setting `value_attribute_alias`",
-            "PROTOTYPE": "exface/Core/Widgets/Map.php",
+            "PROTOTYPE": "exface/core/Widgets/Map.php",
             "UXON": {
                 "widget_type": "SplitHorizontal",
                 "object_alias": "",
@@ -4011,7 +4011,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Map with a aggregated data in markers ",
             "DESCRIPTION": "Place the aggregated value (e.g. `id:COUNT`) in the `value_attribute_alias` to display it on every marker",
-            "PROTOTYPE": "exface/Core/Widgets/Map.php",
+            "PROTOTYPE": "exface/core/Widgets/Map.php",
             "UXON": {
                 "widget_type": "Map",
                 "object_alias": "",
@@ -4053,7 +4053,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple map with data markers",
             "DESCRIPTION": "A marker will be shown for every row in the data. Add more columns the display their values in popups when markers are clicked.",
-            "PROTOTYPE": "exface/Core/Widgets/Map.php",
+            "PROTOTYPE": "exface/core/Widgets/Map.php",
             "UXON": {
                 "widget_type": "Map",
                 "object_alias": "",
@@ -4091,7 +4091,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Map with multiple base maps (ESRI, OpenStreetMap)",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/Map.php",
+            "PROTOTYPE": "exface/core/Widgets/Map.php",
             "UXON": {
                 "widget_type": "Map",
                 "object_alias": "",
@@ -4123,7 +4123,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Map with data from a widget link",
             "DESCRIPTION": "The map will show markers for every data row from another data widget (a table, a chart, etc.) and will refresh with that widget. Data columns for `latitude_attribute_alias` and `longitude_attribute_alias` will be added to the data widget automatically.",
-            "PROTOTYPE": "exface/Core/Widgets/Map.php",
+            "PROTOTYPE": "exface/core/Widgets/Map.php",
             "UXON": {
                 "widget_type": "Map",
                 "layers": [
@@ -4150,7 +4150,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Map visualizing data from a table",
             "DESCRIPTION": "The map on the right will show a marker for every SELECTED row in the table. Thus, the markers will move every time a user selects a row. The layer `DataSelectionMarker` can only be used with a `data_widget_link`!",
-            "PROTOTYPE": "exface/Core/Widgets/Map.php",
+            "PROTOTYPE": "exface/core/Widgets/Map.php",
             "UXON": {
                 "widget_type": "SplitHorizontal",
                 "object_alias": "",
@@ -4205,7 +4205,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "GeoJSON data on map",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/Map.php",
+            "PROTOTYPE": "exface/core/Widgets/Map.php",
             "UXON": {
                 "widget_type": "Map",
                 "object_alias": "",
@@ -4231,7 +4231,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Toggle a flag on an object (e.g. disable/enable)",
             "DESCRIPTION": "Replace the `REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS` with the alias of the attribute you want to toggle. **Note:** the input data MUST be based on the target meta object - enforce this by setting `input_object_alias`!",
-            "PROTOTYPE": "exface/Core/Actions/UpdateData.php",
+            "PROTOTYPE": "exface/core/Actions/UpdateData.php",
             "UXON": {
                 "input_object_alias": "",
                 "input_rows_min": 1,
@@ -4265,7 +4265,7 @@
                 "",
                 "If a column represents a relation, use consider using `InputCombo` widget without lazy loading to improve performance of the spreadsheet (see example in second column)"
             ],
-            "PROTOTYPE": "exface/Core/Widgets/DataSpreadSheet.php",
+            "PROTOTYPE": "exface/core/Widgets/DataSpreadSheet.php",
             "UXON": {
                 "widget_type": "DataSpreadSheet",
                 "object_alias": "// REPLACE WITH CHILD-OBJECT OR MAPPING-OBJECT ALIAS",
@@ -4308,7 +4308,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Data spread sheet (like Excel)",
             "DESCRIPTION": "A spreadsheet is an editable `DataTable` that works like Excel. By default all columns based on editable attributes are editable. Set `disabled` or `editable` to `false` to create a non-editable column. Pagination is disabled by default and also not recommended for spreadsheets as switching pages would discard changes. ",
-            "PROTOTYPE": "exface/Core/Widgets/DataSpreadSheet.php",
+            "PROTOTYPE": "exface/core/Widgets/DataSpreadSheet.php",
             "UXON": {
                 "widget_type": "DataSpreadSheet",
                 "object_alias": "",
@@ -4335,7 +4335,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Nested data as tags (tag selector in object editor)",
             "DESCRIPTION": "If you have a mapping between an object and predefined tags or categories (known as 3-table tagging in SQL), use this preset to create a tag-selector inside a widget based on the main object. Since the `InputTags` widget is based on the mapping-object, it will produce nested data for every mapping. The autosuggest will list all available tags as long as the `attribute_alias` is the relation from the mapping-object to the tag-object.",
-            "PROTOTYPE": "exface/Core/Widgets/InputTags.php",
+            "PROTOTYPE": "exface/core/Widgets/InputTags.php",
             "UXON": {
                 "widget_type": "InputTags",
                 "object_alias": "// REPLACE WITH ALIAS OF MAPPING-OBJECT",
@@ -4363,7 +4363,7 @@
                 "",
                 "Using an `InputComboTable` allows to display additional information about each category like a description. For simpler objects like tags also consider `InputTags`."
             ],
-            "PROTOTYPE": "exface/Core/Widgets/InputComboTable.php",
+            "PROTOTYPE": "exface/core/Widgets/InputComboTable.php",
             "UXON": {
                 "widget_type": "InputComboTable",
                 "object_alias": "// REPLACE WITH ALIAS OF MAPPING-OBJECT",
@@ -4385,7 +4385,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Multi-select filter",
             "DESCRIPTION": "Replace `widget_type` of the input widget with `InputComboTable`, `InputTags` or any other widget you like.",
-            "PROTOTYPE": "exface/Core/Widgets/Filter.php",
+            "PROTOTYPE": "exface/core/Widgets/Filter.php",
             "UXON": {
                 "attribute_alias": "",
                 "input_widget": {
@@ -4407,7 +4407,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Range filter for dates or numbers",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/Filter.php",
+            "PROTOTYPE": "exface/core/Widgets/Filter.php",
             "UXON": {
                 "attribute_alias": "",
                 "widget_type": "RangeFilter"
@@ -4426,7 +4426,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Custom input widget with external JS lib",
             "DESCRIPTION": "Use any JS UI library to render a custom input in almost any facade",
-            "PROTOTYPE": "exface/Core/Widgets/InputCustom.php",
+            "PROTOTYPE": "exface/core/Widgets/InputCustom.php",
             "UXON": {
                 "attribute_alias": "",
                 "widget_type": "InputCustom",
@@ -4465,7 +4465,7 @@
                 "",
                 "**NOTE:** The functionality of such custom widgets may be limited: for example, live references and conditional properties like `disable_if` may not work!"
             ],
-            "PROTOTYPE": "exface/Core/Widgets/InputCustom.php",
+            "PROTOTYPE": "exface/core/Widgets/InputCustom.php",
             "UXON": {
                 "attribute_alias": "",
                 "widget_type": "InputCustom",
@@ -4505,7 +4505,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Attachments dialog with upload-enabled FileList (PDF)",
             "DESCRIPTION": "A dialog with an editable FileList for attachments if a master object. In this example only PDF-files are allowed. The FileList has a view-button showing the PDF.",
-            "PROTOTYPE": "exface/Core/Widgets/Dialog.php",
+            "PROTOTYPE": "exface/core/Widgets/Dialog.php",
             "UXON": {
                 "widget_type": "Dialog",
                 "object_alias": "// REPLACE WITH MASTER OBJECT",
@@ -4585,7 +4585,7 @@
                 "",
                 "NOTE: the file-related properties of the uploader are not required for file objects with the `FileBehavior`."
             ],
-            "PROTOTYPE": "exface/Core/Widgets/ImageGallery.php",
+            "PROTOTYPE": "exface/core/Widgets/ImageGallery.php",
             "UXON": {
                 "widget_type": "ImageGallery",
                 "object_alias": "",
@@ -4617,7 +4617,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Horizontal image gallery",
             "DESCRIPTION": "Scorllable horizontal image gallery with filters and sorters",
-            "PROTOTYPE": "exface/Core/Widgets/ImageGallery.php",
+            "PROTOTYPE": "exface/core/Widgets/ImageGallery.php",
             "UXON": {
                 "widget_type": "ImageGallery",
                 "object_alias": "",
@@ -4651,7 +4651,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Horizontal image gallery without header",
             "DESCRIPTION": "Scorllable horizontal image gallery without a header (just the gallery)",
-            "PROTOTYPE": "exface/Core/Widgets/ImageGallery.php",
+            "PROTOTYPE": "exface/core/Widgets/ImageGallery.php",
             "UXON": {
                 "widget_type": "ImageGallery",
                 "object_alias": "",
@@ -4674,7 +4674,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Horizontal attachment gallery with upload",
             "DESCRIPTION": "Attachments with a relation to an object displayed as a scrollable gallery",
-            "PROTOTYPE": "exface/Core/Widgets/ImageGallery.php",
+            "PROTOTYPE": "exface/core/Widgets/ImageGallery.php",
             "UXON": {
                 "caption": "Attachments",
                 "widget_type": "ImageGallery",
@@ -4727,7 +4727,7 @@
                 "",
                 "Also keep in mind, that pagination of transposed data is very difficult, so it is safer to turn it off via `paginate:false`."
             ],
-            "PROTOTYPE": "exface/Core/Widgets/DataMatrix.php",
+            "PROTOTYPE": "exface/core/Widgets/DataMatrix.php",
             "UXON": {
                 "widget_type": "DataMatrix",
                 "object_alias": "",
@@ -4768,7 +4768,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "DataMatrix with totals",
             "DESCRIPTION": "Transposed columns inside a DataMatrix may also have `footer` totals - these will be displayed in a separate column on the right of every row of transposed values. ",
-            "PROTOTYPE": "exface/Core/Widgets/DataMatrix.php",
+            "PROTOTYPE": "exface/core/Widgets/DataMatrix.php",
             "UXON": {
                 "widget_type": "DataMatrix",
                 "object_alias": "",
@@ -4811,7 +4811,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "External web site (iFrame)",
             "DESCRIPTION": "Browser-in-browser (technically called iFrame) - shows the provided URL inside the widget allowing the user to navigate and interact with the target web page independently of the rest of the app. If using a static URL it does not matter, which meta object is assigned to the widget - you can use `exface.Core.DUMMY`",
-            "PROTOTYPE": "exface/Core/Widgets/Browser.php",
+            "PROTOTYPE": "exface/core/Widgets/Browser.php",
             "UXON": {
                 "widget_type": "Browser",
                 "object_alias": "exface.Core.DUMMY",
@@ -4831,7 +4831,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Button disabled depending on selection in table",
             "DESCRIPTION": "Buttons in tables or other data widgets can be dynamically enabled or disabled depending on values in the currently selected rows/items. You don't even need to give the data widget an explicit `id` - just use the magic reference `~input` in your condition to link the table the button belongs to (= its `input_widget`). For example, `=~input!my_col` would reference the column/attribute `my_col` of the buttons input widget.",
-            "PROTOTYPE": "exface/Core/Widgets/Button.php",
+            "PROTOTYPE": "exface/core/Widgets/Button.php",
             "UXON": {
                 "action_alias": "",
                 "disabled_if": {
@@ -4859,7 +4859,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Button with a dropdown-menu (multi-action)",
             "DESCRIPTION": "When this button is clicked, a menu will show up which also consists of button widgets - these menu items actually trigger actions. Each button inside the menu can separately be `disabled` or `disabled_if`.",
-            "PROTOTYPE": "exface/Core/Widgets/MenuButton.php",
+            "PROTOTYPE": "exface/core/Widgets/MenuButton.php",
             "UXON": {
                 "widget_type": "MenuButton",
                 "caption": "",
@@ -4887,7 +4887,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Button with custom action",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/Button.php",
+            "PROTOTYPE": "exface/core/Widgets/Button.php",
             "UXON": {
                 "caption": "",
                 "hint": "",
@@ -4910,7 +4910,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Button without icon",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/Button.php",
+            "PROTOTYPE": "exface/core/Widgets/Button.php",
             "UXON": {
                 "show_icon": false,
                 "action_alias": ""
@@ -4929,7 +4929,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Icon-only button",
             "DESCRIPTION": "Make sure to add a proper `hint` to give the button a helpful tooltip",
-            "PROTOTYPE": "exface/Core/Widgets/Button.php",
+            "PROTOTYPE": "exface/core/Widgets/Button.php",
             "UXON": {
                 "icon": "",
                 "hint": "",
@@ -4949,7 +4949,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Button without action (dummy)",
             "DESCRIPTION": "Used as mockup for quick prototyping",
-            "PROTOTYPE": "exface/Core/Widgets/Button.php",
+            "PROTOTYPE": "exface/core/Widgets/Button.php",
             "UXON": {
                 "caption": "",
                 "icon": ""
@@ -4968,7 +4968,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "MS SQL Server connection with SSL",
             "DESCRIPTION": "Change `TrustServerCertificate` to `false` if no self-signed certificates are used!",
-            "PROTOTYPE": "exface/Core/DataConnectors/MsSqlConnector.php",
+            "PROTOTYPE": "exface/core/DataConnectors/MsSqlConnector.php",
             "UXON": {
                 "host": "",
                 "database": "",
@@ -4994,7 +4994,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "SMTP without authentication",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/DataConnectors/SmtpConnector.php",
+            "PROTOTYPE": "exface/core/DataConnectors/SmtpConnector.php",
             "UXON": {
                 "host": "",
                 "port": 25,
@@ -5014,7 +5014,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "SMTP with TLS and authentication",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/DataConnectors/SmtpConnector.php",
+            "PROTOTYPE": "exface/core/DataConnectors/SmtpConnector.php",
             "UXON": {
                 "host": "",
                 "port": 587,
@@ -5042,7 +5042,7 @@
                 "",
                 "Note, that the value of the comment field is passed through the action chain in a non-attribute column \"_Comment\", that is mapped to the actual comment-attribute only once the CreateData action for the status log is really called."
             ],
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "input_rows_min": 1,
                 "input_rows_max": 1,
@@ -5145,7 +5145,7 @@
                 "",
                 "The actual change is done via `input_mapper` in the action triggered by the primary button of the dialog. "
             ],
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "input_rows_min": 1,
                 "input_rows_max": 1,
@@ -5202,7 +5202,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Show large dialog for selected data",
             "DESCRIPTION": "Show a large dialog with details for a selected data row",
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "input_rows_min": 1,
                 "input_rows_max": 1,
@@ -5238,7 +5238,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Error on duplicates excl. NULL-values",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Behaviors/PreventDuplicatesBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/PreventDuplicatesBehavior.php",
             "UXON": {
                 "compare_attributes": [
                     ""
@@ -5269,7 +5269,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "File object with mime type",
             "DESCRIPTION": "Will allow widgets and facades to recognize instances of the object as files regardless of their data source: e.g. for files stored in DB",
-            "PROTOTYPE": "exface/Core/Behaviors/FileBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/FileBehavior.php",
             "UXON": {
                 "filename_attribute": "",
                 "contents_attribute": "",
@@ -5294,7 +5294,7 @@
                 "",
                 "NOTE: the file-related properties of the uploader are not required for file objects with the `FileBehavior`."
             ],
-            "PROTOTYPE": "exface/Core/Widgets/ImageGallery.php",
+            "PROTOTYPE": "exface/core/Widgets/ImageGallery.php",
             "UXON": {
                 "widget_type": "ImageGallery",
                 "object_alias": "",
@@ -5323,7 +5323,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Show small dialog for selected data",
             "DESCRIPTION": "Show a small dialog with details for a selected data row",
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "input_rows_min": 1,
                 "input_rows_max": 1,
@@ -5359,7 +5359,7 @@
                 "",
                 "A good example would be printing an order or a similar object to save its current state in a history-table. The input data would be the order-object in this case. You would need to map it to the history-object using regular `column_to_column_mappings` and fill one of the history-columns with the result of the print action."
             ],
-            "PROTOTYPE": "exface/Core/Actions/CreateData.php",
+            "PROTOTYPE": "exface/core/Actions/CreateData.php",
             "UXON": {
                 "input_mapper": {
                     "column_to_column_mappings": [
@@ -5393,7 +5393,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Send notification to a user role on status change",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Behaviors/NotifyingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/NotifyingBehavior.php",
             "UXON": {
                 "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
                 "notify_if_attributes_change": [
@@ -5434,7 +5434,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Send email to users on status change",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Behaviors/NotifyingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/NotifyingBehavior.php",
             "UXON": {
                 "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
                 "notify_if_attributes_change": [
@@ -5475,7 +5475,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Info-button for timestamping attributes",
             "DESCRIPTION": "Intended to be used on base objects of data sources. This behavior will add an optional button to all inheriting objects, that will show a dialog with attributes of the base object: typically the UID and various system attributes like those used by the TimestampingBehavior",
-            "PROTOTYPE": "exface/Core/Behaviors/GlobalActionsBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/GlobalActionsBehavior.php",
             "UXON": {
                 "buttons": [
                     {
@@ -5526,7 +5526,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Console output dialog for CLI action",
             "DESCRIPTION": "Opens a readonly console window and executes a CLI action",
-            "PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "UXON": {
                 "icon": "fa fa-terminal",
                 "widget": {
@@ -5556,7 +5556,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Boolean value as icon",
             "DESCRIPTION": "",
-            "PROTOTYPE": "exface/Core/Widgets/Icon.php",
+            "PROTOTYPE": "exface/core/Widgets/Icon.php",
             "UXON": {
                 "widget_type": "icon",
                 "attribute_alias": "",
@@ -5579,7 +5579,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Enum with values and name",
             "DESCRIPTION": "E.g. displaying `10 New`, `100 Finished`",
-            "PROTOTYPE": "exface/Core/DataTypes/NumberEnumDataType.php",
+            "PROTOTYPE": "exface/core/DataTypes/NumberEnumDataType.php",
             "UXON": {
                 "values": {
                     "": ""
@@ -5599,7 +5599,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Enum with names only",
             "DESCRIPTION": "E.g. displaying only the names of its values, without the values themselves: `New`, `Finished`",
-            "PROTOTYPE": "exface/Core/DataTypes/NumberEnumDataType.php",
+            "PROTOTYPE": "exface/core/DataTypes/NumberEnumDataType.php",
             "UXON": {
                 "show_values": false,
                 "values": {
@@ -5620,7 +5620,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Multi-select filter as InputComboTable with apply_on_change",
             "DESCRIPTION": "Replace `widget_type` of the input widget with `InputComboTable`, `InputTags` or any other widget you like.",
-            "PROTOTYPE": "exface/Core/Widgets/Filter.php",
+            "PROTOTYPE": "exface/core/Widgets/Filter.php",
             "UXON": {
                 "attribute_alias": "",
                 "input_widget": {
@@ -5643,7 +5643,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Validate value by comparing to old value",
             "DESCRIPTION": "This behavior will check, if the new value of an attribute is greater, than the old one every time this attribute is updated.",
-            "PROTOTYPE": "exface/Core/Behaviors/ValidatingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/ValidatingBehavior.php",
             "UXON": {
                 "invalid_if_on_update": [
                     {
@@ -5673,7 +5673,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Check if data matches a formula every time an object is saved",
             "DESCRIPTION": "E.g. you can check, if a value is less than a maximum defined somewhere else. Concider planning activities for a project. The end-date of an activity cannot be later than the end date of a project.",
-            "PROTOTYPE": "exface/Core/Behaviors/ValidatingBehavior.php",
+            "PROTOTYPE": "exface/core/Behaviors/ValidatingBehavior.php",
             "UXON": {
                 "invalid_if_on_update": [
                     {

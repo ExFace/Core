@@ -47,7 +47,7 @@ class IsButtonAuthorized extends Formula
     public function run(string $pageAlias = '', string $widgetId = '') : ?bool
     {
         if ($pageAlias === '' || $widgetId === '') {
-            throw new FormulaError("Missing page alias or widget id for formula =IsButtonAuthorized()");
+            throw new FormulaError($this, "Missing page alias or widget id for formula =IsButtonAuthorized()");
         }
 
         $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
@@ -63,7 +63,7 @@ class IsButtonAuthorized extends Formula
             $page = UiPageFactory::createFromModel($this->getWorkbench(), $pageAlias);
             $widget = $page->getWidget($widgetId);
             if (! $widget instanceof iTriggerAction) {
-                throw new FormulaError("Invalid widget id for formula =IsButtonAuthorized() - the widget is not triggering an action!");
+                throw new FormulaError($this, "Invalid widget id for formula =IsButtonAuthorized() - the widget is not triggering an action!");
             }
             // Get the action from the widget
             $action = $widget->getAction();

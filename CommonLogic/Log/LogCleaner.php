@@ -178,6 +178,10 @@ class LogCleaner
         $logFiles = glob($pathToLogs . '/*.log');
         $repairedFiles = [];
         foreach ($logFiles as $file) {
+            // Skip logs that we cannot write anyhow - we cannot help them
+            if (! is_writable($file)) {
+                continue;
+            }
             $buffer = '';
             $brokenLines = [];
             $lineNo = 0;

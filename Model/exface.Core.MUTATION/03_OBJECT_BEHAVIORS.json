@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0a4da00a18fa6a4da025041000001",
-            "BEHAVIOR": "exface/Core/Behaviors/CustomAttributesJsonBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/CustomAttributesJsonBehavior.php",
             "CONFIG_UXON": {
                 "attributes_definition": {
                     "object_alias": "exface.Core.MUTATION_TARGET"

@@ -2,6 +2,7 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\SqlDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
@@ -17,6 +18,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\StringDataType;
@@ -557,6 +559,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $result_totals = [];
         if ($this->hasTotals() === true) {
             $totals_query = $this->buildSqlQueryTotals();
+            $totals_query = $this->buildSqlComment('SELECT TOTAL ' . $this->getMainObject()->getAlias() . ':') . "\n" . $totals_query;
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
@@ -1453,7 +1456,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $result = $data_connection->runSql($this->buildSqlQueryCount());
+        $sql = $this->buildSqlQueryCount();
+        $result = $data_connection->runSql($sql);
         $cnt = $result->getResultArray()[0][$this->buildSqlAliasForRowCounter()];
         $result->freeResult();
         return new DataQueryResultData([], $cnt, true, $cnt);
@@ -1611,10 +1615,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
 
         if ($add_nvl) {
-            // do some prettyfying
+            // do some prettifying
             // return zero for number fields if the subquery does not return anything
-            if ($qpart->getDataType() instanceof NumberDataType) {
-                $output = $this->buildSqlSelectNullCheck($output, 0);
+            if (null !== $nullValue = $this->buildSqlSelectNullCheckFallback($qpart)) {
+                $output = $this->buildSqlSelectNullCheck($output, $nullValue);
             }
         }
 
@@ -2360,13 +2364,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
             }
-            // At this point we know, that the filter does not produce a WHERE clause, so the only
-            // option left is being a placeholder in the data address. If it's not the case, throw
-            // an error!
-            if (! in_array($qpart->getAlias(), StringDataType::findPlaceholders($this->buildSqlDataAddress($this->getMainObject())))) {
-                throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
+            
+            // At this point we know, that the filter does not produce a WHERE clause.
+            
+            // If it is not readable - ignore it here. It will probably be handled by some other logic - e.g. a Behavior
+            if ($qpart->getAttribute()->isReadable() === false) {
+                return false;
             }
-            return false;
+            // It might also be a placeholder in the data address - then just ignore it here
+            if (in_array($qpart->getAlias(), StringDataType::findPlaceholders($this->buildSqlDataAddress($this->getMainObject())), true)) {
+                return false;
+            }
+            
+            // In all other cases, throw an error!
+            throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
         }
 
         if (! $customWhereClause && ($qpart->getFirstRelation(RelationTypeDataType::REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0))) {
@@ -2830,14 +2841,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
     {
-        switch ($select_from) {
-            case '':
-                $select_from = '';
-                break;
-            case null:
-                $select_from = $this->getShortAlias($this->getMainObject()->getAlias());
-                break;
-        }
+        $comment = "\n" . $this->buildSqlComment("buildSqlOrderBy(" . $qpart->getAlias() . ", " . $select_from . ")") . "\n";
+        $select_from ??= $this->getShortAlias($this->getMainObject()->getAlias());
 
         switch (true) {
             case $customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY):
@@ -2860,7 +2865,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             default:
                 $sort_by = $this->getShortAlias($qpart->getColumnKey());
         }
-        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
+        return $comment . ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
     }
 
     /**
@@ -2876,7 +2881,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlGroupBy(QueryPart $qpart, $select_from = null)
     {
-        $output = '';
         if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
             // Seems like SQL statements are not supported in the GROUP BY clause in general
             throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
@@ -3777,5 +3781,30 @@ SQL;
     protected function buildSqlAliasForRowCounter() : string
     {
         return 'EXFCNT';
+    }
+
+    /**
+     * Returns the COALESCE(, x) fallback value to be used for the given query part or NULL if no null-check is required
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return string|int|float|null
+     */
+    protected function buildSqlSelectNullCheckFallback(QueryPartAttribute $qpart) : string|int|float|null
+    {
+        $dataType = $qpart->getDataType();
+        switch (true) {
+            // No fallback value for hex number - in particular UIDs
+            case $dataType instanceof HexadecimalNumberDataType:
+                return null;
+            // No fallback for enums - at least if it is not part of the enum
+            case $dataType instanceof EnumDataTypeInterface:
+                if ($dataType instanceof NumberDataType && $dataType->isValidValue(0)) {
+                    return 0;
+                }
+                return null;
+            case $dataType instanceof NumberDataType:
+                return 0;
+        }
+        return null;
     }
 }

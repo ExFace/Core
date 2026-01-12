@@ -656,7 +656,7 @@ class App implements AppInterface
         if ((! array_key_exists($selectorString, $this->selector_cache)) || (! array_key_exists($selectorClass, $this->selector_cache[$selectorString]))) {
             // has() will cache the class
             $has = false;
-            // FilePathDataType::findPathCaseInsensitive('exface/Core/Formulas/USER.php', $this->getWorkbench()->filemanager()->getPathToVendorFolder(), '/', false);
+            // FilePathDataType::findPathCaseInsensitive('exface/core/Formulas/USER.php', $this->getWorkbench()->filemanager()->getPathToVendorFolder(), '/', false);
             if ($selector !== null) {
                 $has = $this->has($selector);
             } else {
