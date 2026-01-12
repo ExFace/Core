@@ -559,6 +559,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $result_totals = [];
         if ($this->hasTotals() === true) {
             $totals_query = $this->buildSqlQueryTotals();
+            $totals_query = $this->buildSqlComment('SELECT TOTAL ' . $this->getMainObject()->getAlias() . ':') . "\n" . $totals_query;
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
@@ -1455,7 +1456,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $result = $data_connection->runSql($this->buildSqlQueryCount());
+        $sql = $this->buildSqlQueryCount();
+        $result = $data_connection->runSql($sql);
         $cnt = $result->getResultArray()[0][$this->buildSqlAliasForRowCounter()];
         $result->freeResult();
         return new DataQueryResultData([], $cnt, true, $cnt);

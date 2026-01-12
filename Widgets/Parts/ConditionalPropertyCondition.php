@@ -9,7 +9,12 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
+use exface\Core\Widgets\Input;
 
 
 /**
@@ -52,41 +57,19 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
 {
     use ImportUxonObjectTrait;
     
-    /**
-     * 
-     * @var ConditionalProperty
-     */
-    private $conditionGroup = null;
+    private ConditionalProperty $conditionGroup;
     
-    /**
-     * 
-     * @var string|ExpressionInterface
-     */
-    private $valueLeft = null;
+    private string|ExpressionInterface|null $valueLeft = null;
+    private ?ExpressionInterface $valueLeftExpr = null;
+    private ?WidgetLinkInterface $valueLeftLink = null;
+    private ?bool $valueLeftIsLink = null;
     
-    /**
-     * 
-     * @var ExpressionInterface
-     */
-    private $valueLeftExpr = null;
+    private ?string $comparator = null;
     
-    /**
-     * 
-     * @var string
-     */
-    private $comparator = null;
-    
-    /**
-     * 
-     * @var string|ExpressionInterface
-     */
-    private $valueRight = null;
-    
-    /**
-     * 
-     * @var ExpressionInterface
-     */
-    private $valueRightExpr = null;
+    private string|ExpressionInterface|null $valueRight = null;
+    private ?ExpressionInterface $valueRightExpr = null;
+    private ?WidgetLinkInterface $valueRightLink = null;
+    private ?bool $valueRightIsLink = null;
     
     /**
      * 
@@ -135,14 +118,38 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
     {
         return $this->conditionGroup->getWorkbench();
     }
-    
+
     /**
-     *
+     * Returns the comparator defined for this condition - optionally optimized for use in with the current widget
+     * 
+     * If `$optimized` ist set to `true`, the comparator will be automatically converted to the best match
+     * for this condition - e.g. scalar comparators will be converted to list comparators if the condition
+     * references a multi-select widget, etc.
+     * 
+     * @param bool $optimize
      * @return string
      */
-    public function getComparator() : string
+    public function getComparator(bool $optimize = false) : string
     {
-        return $this->comparator ?? ComparatorDataType::IS;
+        $comparator = $this->comparator ?? ComparatorDataType::IS;
+        if ($optimize === true) {
+            $leftTargetWidget = $this->getValueLeftLinkTarget(true);
+            $rightTargetWidget = $this->getValueRightLinkTarget(true);
+            // Check if either expression is a reference to a widget, that supports multi-select or similar features.
+            // In those cases, the comparator needs to be a list comparator, in case more than one data-set must
+            // be evaluated.
+            // TODO Filters support multi-select, but do not expose that information. How to handle this?
+            $requiresListComparator =
+                ($leftTargetWidget instanceof iSupportMultiSelect && $leftTargetWidget->getMultiSelect())
+                || ($leftTargetWidget instanceof Input && $leftTargetWidget->getMultipleValuesAllowed())
+                || ($rightTargetWidget instanceof iSupportMultiSelect && $rightTargetWidget->getMultiSelect())
+                || ($rightTargetWidget instanceof Input && $rightTargetWidget->getMultipleValuesAllowed());
+
+            if ($requiresListComparator === true) {
+                $comparator = ComparatorDataType::convertToListComparator($comparator) ?? $comparator;
+            }
+        }
+        return $comparator;
     }
     
     /**
@@ -323,6 +330,96 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
     public function hasLiveReference() : bool
     {
         return $this->getValueLeftExpression()->isReference() || $this->getValueRightExpression()->isReference();
+    }
+
+    /**
+     * @param WidgetInterface $sourceWidget
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     */
+    public function getValueLeftLink() : ?WidgetLinkInterface
+    {
+        if ($this->valueLeftIsLink === null) {
+            $expr = $this->getValueLeftExpression();
+            $this->valueLeftIsLink = $expr->isReference();
+            $this->valueLeftLink = $expr->isReference() ? $expr->getWidgetLink($this->getWidget()) : null;
+        }
+        return $this->valueLeftLink;
+    }
+
+    /**
+     * @param WidgetInterface $sourceWidget
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     */
+    public function getValueRightLink() : ?WidgetLinkInterface
+    {
+        if ($this->valueRightIsLink === null) {
+            $expr = $this->getValueRightExpression();
+            $this->valueRightIsLink = $expr->isReference();
+            $this->valueRightLink = $expr->isReference() ? $expr->getWidgetLink($this->getWidget()) : null;
+        }
+        return $this->valueRightLink;
+    }
+
+    /**
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     * @throws \Throwable
+     */
+    public function getValueLeftLinkTarget(bool $silent = false) : ?WidgetInterface
+    {
+        $link = $this->getValueLeftLink();
+        if ($link === null) {
+            return null;
+        }
+        try {
+            $target = $link->getTargetWidget();
+        } catch (\Throwable $e) {
+            if ($silent) {
+                return null;
+            }
+            throw $e;
+        }
+        return $target;
+    }
+
+    /**
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     * @throws \Throwable
+     */
+    public function getValueRightLinkTarget(bool $silent = false) : ?WidgetInterface
+    {
+        $link = $this->getValueRightLink();
+        if ($link === null) {
+            return null;
+        }
+        try {
+            $target = $link->getTargetWidget();
+        } catch (\Throwable $e) {
+            if ($silent) {
+                return null;
+            }
+            throw $e;
+        }
+        return $target;
+    }
+    
+    public function getValueListDelimiter() : string
+    {
+        $rightTargetWidget = $this->getValueRightLinkTarget(true);
+        if ($rightTargetWidget !== null) {
+            if (($rightTargetWidget instanceof iShowSingleAttribute) && $rightTargetWidget->isBoundToAttribute()) {
+                $delim = $rightTargetWidget->getAttribute()->getValueListDelimiter();
+            } elseif ($rightTargetWidget instanceof iHaveColumns && $colName = $this->getValueRightLink()->getTargetColumnId()) {
+                $targetCol = $rightTargetWidget->getColumnByDataColumnName($colName);
+                if ($targetCol->isBoundToAttribute() === true) {
+                    $delim = $targetCol->getAttribute()->getValueListDelimiter();
+                }
+            }
+        }
+        return $delim ?? EXF_LIST_SEPARATOR;
     }
 
     /**
