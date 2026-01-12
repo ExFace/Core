@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Selectors\AttributeGroupSelector;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserData;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
 use exface\Core\Factories\RelationPathFactory;
@@ -1274,6 +1275,9 @@ class MetaObject implements MetaObjectInterface
 
         $modifiers = [];
         $modifierGroups = [];
+        
+        $parser = AttributeGroupFactory::getParser();
+        $output = $parser->process($aliasWithRelationPath);
         
         // Extract modifiers.
         if(preg_match_all('/\[(.*?)\]/', $aliasWithRelationPath, $modifierGroups) > 0) {

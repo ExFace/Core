@@ -7,39 +7,55 @@ abstract class AbstractStateMachine
     protected array $states = [];
     protected ?AbstractState $initial = null;
     protected ?AbstractState $current = null;
+    protected int $maxIterations;
+
+    function __construct(array $states,  int $maxIterations = 100000)
+    {
+        $this->states = $states;
+        $this->current = $states[0];
+        $this->maxIterations = $maxIterations;
+    }
     
-    public function addState(AbstractState $state) : bool
+    protected function addState(AbstractState $state) : bool
     {
         $name = $state->getName();
         $result = !key_exists($name, $this->states);
-        
+
         $this->states[$name] = $state;
-        
         return $result;
     }
     
-    public function setInitialState(AbstractState $state) : AbstractStateMachine
+    protected function setInitialState(AbstractState $state) : AbstractStateMachine
     {
         $this->initial = $state;
         return $this;
     }
     
-    public function process(&$data) : AbstractStateMachine
+    public function process() : mixed
     {
-        $this->current = $this->initial ?? $this->states[0];
-        if($this->current === null) {
-            return $this;
+        if(empty($this->states) || $this->current === null) {
+            return null;
         }
         
-        while (true) {
-            $result = $this->current->process($this->getInput($data), $data);
-            if(!$result instanceof AbstractState) {
+        $data = $this->getData();
+        $iterations = $this->maxIterations;
+        
+        while ($iterations > 0) {
+            $nextState = $this->current->process($this->getInput($data), $data);
+            
+            if($nextState === true) {
                 break;
+            } else {
+                $this->current = $nextState;
             }
+            
+            $iterations = $this->maxIterations < 0 ? $iterations : $iterations - 1;
         }
         
-        return $this;
+        return $data;
     }
+    
+    protected abstract function getData() : mixed;
     
     protected abstract function getInput($data) : mixed;
 }

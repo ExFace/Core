@@ -4,14 +4,17 @@ namespace exface\Core\CommonLogic\Utils\FiniteStateMachine;
 
 abstract class AbstractState
 {
+    public const METADATA = 'metaData';
+    
     protected string $name;
-    protected array $transitions;
+    protected array $transitions = [];
     protected array $patterns;
+    protected array $metaData;
 
-    function __construct(string $name, array $transitions)
+    function __construct(string $name, array $metaData = [])
     {
         $this->name = $name;
-        $this->transitions = $transitions;
+        $this->metaData = $metaData;
     }
     
     public function getName() : string
@@ -23,17 +26,30 @@ abstract class AbstractState
     {
         return $this->transitions;
     }
+    
+    public function addTransition(Transition $transition) : AbstractState
+    {
+        $this->transitions[] = $transition;
+        return $this;
+    }
+    
+    public function getMetaData() : array
+    {
+        return $this->metaData;
+    }
 
-    protected function checkTransitions($input) : AbstractState|bool
+    protected function checkTransitions($input) : ?Transition
     {
         foreach ($this->transitions as $transition) {
-            if($input === $transition) {
-                return $transition->perform();
+            if($input === $transition->getTrigger()) {
+                return $transition;
             }
         }
-
-        return $this;
+        
+        return null;
     }
 
     public abstract function process($input, &$data) : AbstractState|bool;
+    
+    public abstract function exit(?Transition $transition, &$data) : AbstractState|bool;
 }

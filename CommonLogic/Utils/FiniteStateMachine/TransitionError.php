@@ -6,7 +6,7 @@ class TransitionError extends Transition
 {
     protected \Throwable $error;
 
-    public function __construct(string $trigger, AbstractState $target, \Throwable $error)
+    public function __construct(mixed $trigger, AbstractState $target, \Throwable $error)
     {
         parent::__construct($trigger, $target);
         $this->error = $error;

@@ -2,6 +2,10 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParser;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserState;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\Transition;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\TransitionFinal;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
@@ -135,5 +139,35 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         }
         
         return static::getAttributesByMagic($attributeList, $spells);
+    }
+    
+    public static function getParser() : SimpleParser
+    {
+        // Create states.
+        $stateAliases = new SimpleParserState('aliases');
+        $stateModifiers = new SimpleParserState('modifiers');
+        $stateModifierArgs = new SimpleParserState('modifierArgs');
+        
+        // Configure alias state.
+        $stateAliases->addTransition(new Transition('(', $stateAliases));
+        $stateAliases->addTransition(new Transition('[', $stateModifiers));
+        $stateAliases->addTransition(new Transition(')', null));
+        $stateAliases->addTokenRule('&', true, true);
+        $stateAliases->addTokenRule('~', true, false);
+        
+        // Configure modifier state.
+        $stateModifiers->addTransition(new Transition('(', $stateModifierArgs));
+        $stateModifiers->addTransition(new Transition(']', null));
+        $stateModifiers->addTokenRule(',', true, true);
+
+        // Configure modifier args state. This is required to avoid splitting on inner ','.
+        $stateModifierArgs->addTransition(new Transition(')', null));
+        $stateModifierArgs->addTokenRule(',', true, true);
+
+        return new SimpleParser([
+            $stateAliases,
+            $stateModifiers,
+            $stateModifierArgs
+        ]);
     }
 }

@@ -38,7 +38,7 @@ class SymfonyLexer
      *
      * @return array
      */
-    protected function getTokens() : array
+    public function getTokens() : array
     {
         if ($this->tokens === null) {
             $tokens = [];
