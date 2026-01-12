@@ -341,7 +341,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlQuerySelectWithEnrichment(string $select, string $enrichment_select, string $select_comment, string $from, string $join, string $enrichment_join, string $where, string $group_by, string $having, string $order_by, string $limit, string $distinct = '') : string
     {
-        return "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
+        return "\n SELECT " . $distinct . $this->buildSqlComment($this->getMainObject()->getAliasWithNamespace()) . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
     }
     
     /**
@@ -360,7 +360,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlQuerySelectWithoutEnrichment(string $select, string $select_comment, string $from, string $join, string $where, string $group_by, string $having, string $order_by, string $limit, string $distinct = '') : string
     {
-        return "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by . $limit;
+        return "\n SELECT " . $distinct . $this->buildSqlComment($this->getMainObject()->getAliasWithNamespace()) . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by . $limit;
     }
 
     /**
@@ -427,9 +427,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         
         if ($totals_core_select) {
-            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
+            $totals_query = "\n SELECT {$this->buildSqlComment('TOTALS ' . $this->getMainObject()->getAliasWithNamespace())} COUNT(*) AS {$this->buildSqlAliasForRowCounter()} " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . ") EXFCOREQ";
         } else {
-            $totals_query = "\n SELECT COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
+            $totals_query = "\n SELECT {$this->buildSqlComment('TOTALS ' . $this->getMainObject()->getAliasWithNamespace())} COUNT(*) AS {$this->buildSqlAliasForRowCounter()} FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
         }
         
         if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
