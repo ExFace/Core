@@ -754,7 +754,9 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function hasColumTotals() : bool;
     
     /**
-     * Returns a new data sheet with the same columns, but only containing rows, that match the given filter
+     * Returns a new data sheet with the same columns, but only containing rows, that match the given filter.
+     * 
+     * Rows are re-indexed, they will not keep their original indexes!
      * 
      * @param ConditionalExpressionInterface $filter
      * @param bool $readMissingData

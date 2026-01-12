@@ -30,10 +30,10 @@ class ThumbnailURL extends \exface\Core\CommonLogic\Model\Formula
     public function run(string $objectAlias = '', string $uid = '', int $width = null, int $height = null, bool $relativeToSiteRoot = true, bool $makeOneTimeLink = false)
     {
         if ($objectAlias === '') {
-            throw new FormulaError('Can not evaluate ThumbnailURL formula: no valid object provided!');
+            throw new FormulaError($this, 'Can not evaluate ThumbnailURL formula: no valid object provided!');
         }
         if ($uid === '') {
-            throw new FormulaError('Can not evaluate ThumbnailURL formula: no UID value provided!');
+            throw new FormulaError($this, 'Can not evaluate ThumbnailURL formula: no UID value provided!');
         }
         $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
         

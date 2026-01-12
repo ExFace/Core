@@ -37,10 +37,10 @@ class ChangeTimezone extends Formula
             $toTz = DateTimeDataType::getTimeZoneDefault($workbench);
         }
         if (! TimeZoneDataType::isValidStaticValue($fromTz)) {
-            throw new FormulaError("Can not convert value '{$dateTimeString}'. Timezone '{$fromTz}' is not a valid timezone!");
+            throw new FormulaError($this,"Can not convert value '{$dateTimeString}'. Timezone '{$fromTz}' is not a valid timezone!");
         }
         if (! TimeZoneDataType::isValidStaticValue($toTz)) {
-            throw new FormulaError("Can not convert value '{$dateTimeString}'. Timezone '{$toTz}' is not a valid timezone!");
+            throw new FormulaError($this,"Can not convert value '{$dateTimeString}'. Timezone '{$toTz}' is not a valid timezone!");
         }
         return DateTimeDataType::convertTimeZone($dateTimeString, $fromTz, $toTz);
     }

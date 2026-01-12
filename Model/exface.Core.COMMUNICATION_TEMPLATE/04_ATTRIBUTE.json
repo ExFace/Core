@@ -524,7 +524,7 @@
         {
             "_EXPORT_SUMMARY": "Recipients [RECIPIENTS]",
             "CREATED_ON": "2023-03-16 18:50:48",
-            "MODIFIED_ON": "2024-11-26 09:27:26",
+            "MODIFIED_ON": "2025-12-16 02:33:14",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11edb84615f0cc4cb846025041000001",
@@ -550,6 +550,8 @@
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipients'))",
+                "",
+                "@pgSQL: (SELECT STRING_AGG([#~alias#]_relem, ', ') FROM jsonb_array_elements_text( [#~alias#].message_uxon::jsonb -> 'recipients' ) AS [#~alias#]_relem)",
                 "",
                 "@MySQL: (SELECT ",
                 " REPLACE(",
@@ -587,7 +589,7 @@
         {
             "_EXPORT_SUMMARY": "Recipient Roles [RECIPIENT_ROLES]",
             "CREATED_ON": "2023-03-16 19:05:49",
-            "MODIFIED_ON": "2024-11-26 09:27:26",
+            "MODIFIED_ON": "2025-12-16 02:33:43",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed97782f016c769778025041000001",
@@ -613,6 +615,8 @@
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_roles'))",
+                "",
+                "@pgSQL: (SELECT STRING_AGG([#~alias#]_rrelem, ', ') FROM jsonb_array_elements_text( [#~alias#].message_uxon::jsonb -> 'recipient_roles' ) AS [#~alias#]_rrelem)",
                 "",
                 "@MySQL:",
                 "(SELECT ",
@@ -651,7 +655,7 @@
         {
             "_EXPORT_SUMMARY": "Recipient Users [RECIPIENT_USERS]",
             "CREATED_ON": "2023-03-16 19:06:29",
-            "MODIFIED_ON": "2024-11-26 09:27:26",
+            "MODIFIED_ON": "2025-12-16 02:34:13",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11edb5524694f772b552025041000001",
@@ -677,6 +681,8 @@
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_users'))",
+                "",
+                "@pgSQL: (SELECT STRING_AGG([#~alias#]_ruelem, ', ') FROM jsonb_array_elements_text( [#~alias#].message_uxon::jsonb -> 'recipient_users' ) AS [#~alias#]_ruelem)",
                 "",
                 "@MySQL: (SELECT ",
                 " REPLACE(",

@@ -6,6 +6,7 @@ use exface\Core\Exceptions\BadMethodCallException;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataTypeFactory;
 
@@ -101,7 +102,7 @@ trait EnumStaticDataTypeTrait {
         }
 
         // Since the values are the constant names in this case, there cannot be 
-        // a value equal to NULL - that would meen, there is no constant, so
+        // a value equal to NULL - that would mean, there is no constant, so
         // return false in this case
         return static::$cacheValuesNC[$class][$value] ?? false;
     }
@@ -175,12 +176,35 @@ trait EnumStaticDataTypeTrait {
             return null;
         }
         
-        if ($constName === false){
+        if ($constName === false) {
             throw new DataTypeCastingError('Value "' . $value . '" does not fit into the enumeration data type ' . get_called_class() . '!');
         }
         
         return static::getValuesStatic()[$constName];
-    }    
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataTypeInterface::parse()
+     */
+    public function parse($string)
+    {
+        try {
+            $value = parent::parse($string);
+        } catch (DataTypeCastingError $eCast) {
+            // If the given value is not in the enum, see if it matches one of the labels - if it does, return 
+            // the raw value. This makes handling all sorts of manual inputs easier - e.g. raw-input filter,
+            // spreadsheets, etc. After all, the parse() function is meant to be forgiving!
+            $value = $string === null ? null : trim($string);
+            $matchInLabels = array_search($value, $this->getLabels(), true);
+            if ($matchInLabels !== false) {
+                $value = $matchInLabels;
+            } else {
+                throw $eCast;
+            }
+        }
+        return $value;
+    }
     
     /**
      * 

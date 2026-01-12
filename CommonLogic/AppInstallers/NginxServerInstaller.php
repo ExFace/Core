@@ -40,17 +40,17 @@ class NginxServerInstaller extends AbstractServerInstaller
         return <<<CONF
 
     if (!-e \$request_filename){
-        rewrite ^/api/.*$ /vendor/exface/Core/index.php;
+        rewrite ^/api/.*$ /vendor/exface/core/index.php;
     }
 
     if (\$request_uri ~ "^$")
         rewrite ^/$ /\$request_uri redirect;
     }
     
-    rewrite ^/?$ /vendor/exface/Core/index.php;
+    rewrite ^/?$ /vendor/exface/core/index.php;
     
     if (!-e \$request_filename){
-        rewrite ^/[^/]*$ /vendor/exface/Core/index.php;
+        rewrite ^/[^/]*$ /vendor/exface/core/index.php;
     }
     
     # Security restrictions

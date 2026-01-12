@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea944c61c11cd0944c0205857feb80",
-            "BEHAVIOR": "exface/Core/Behaviors/TranslatableBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/TranslatableBehavior.php",
             "CONFIG_UXON": null,
             "OBJECT": "0x11ea8e2d7b9151a68e2d0205857feb80",
             "APP": "0x31000000000000000000000000000000",

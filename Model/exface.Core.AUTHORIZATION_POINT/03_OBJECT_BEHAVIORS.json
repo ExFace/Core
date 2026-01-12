@@ -67,7 +67,7 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8cc007a283808cc00205857feb81",
-            "BEHAVIOR": "exface/Core/Behaviors/UndeletableBehavior.php",
+            "BEHAVIOR": "exface/core/Behaviors/UndeletableBehavior.php",
             "CONFIG_UXON": {
                 "condition_group": {
                     "operator": "AND",

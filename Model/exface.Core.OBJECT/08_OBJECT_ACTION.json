@@ -72,7 +72,7 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef9bead7ba50709bea025041000001",
             "OBJECT": "0x31350000000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "ALIAS": "ObjectAttributeGroupsDialog",
             "NAME": "Attribute groups",
             "SHORT_DESCRIPTION": "",

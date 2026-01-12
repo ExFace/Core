@@ -72,7 +72,7 @@
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ec828602be38fa8286747827435ce5",
             "OBJECT": "0x11e83bfea324861e86d30205857feb80",
-            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "ALIAS": "TranslationAddLangDialog",
             "NAME": "Add Language",
             "SHORT_DESCRIPTION": "Creates a new translation file for an app",

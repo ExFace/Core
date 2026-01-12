@@ -19,13 +19,19 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  */
 class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMappingInterface
 {
+    public const IF_MISSING_COLUMN_ERROR = 'error';
+    public const IF_MISSING_COLUMN_IGNORE = 'ignore';
+    public const IF_MISSING_COLUMN_USE_DEFAULT = 'use_default';
+    
     private $fromExpression = null;
     
     private $toExpression = null;
     
     private $createRowInEmptyData = true;
 
-    private $ignoreIfMissingFromColumn = false;
+    private ?string $ifMissingColumn = null;
+    
+    private ?ExpressionInterface $defaultExpression = null;
     
     /**
      * 
@@ -118,6 +124,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
         $toExpr = $this->getToExpression();
         
         $log = "Column `{$fromExpr->__toString()}` -> `{$toExpr->__toString()}`.";
+        $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr);
         
         switch (true) {
             // Constants and static formulas
@@ -150,8 +157,32 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                     }
                 }
                 break;
+            // Apply default values.
+            case $this->useDefaultValue():
+                $defaultExpr = $this->getDefaultExpression();
+                if(!$fromCol) {
+                    // From column is missing, add it with default values.
+                    $fromCol = $fromSheet->getColumns()->addFromExpression($fromExpr);
+                    $fromCol->setValues($defaultExpr->isStatic() ? 
+                        $defaultExpr->evaluate() : 
+                        $defaultExpr->evaluate($fromSheet)
+                    );
+                } else {
+                    // From column is present, replace empty values with defaults.
+                    $dataType = $fromCol->getDataType();
+                    foreach ($fromCol->getValues() as $rowNr => $value) {
+                        if(!$dataType::isValueEmpty($value)) {
+                            continue;
+                        }
+                        
+                        $fromCol->setValue($rowNr, $defaultExpr->isStatic() ?
+                            $defaultExpr->evaluate() :
+                            $defaultExpr->evaluate($fromSheet, $rowNr)
+                        );
+                    }
+                }
             // Data column references
-            case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
+            case $fromCol:
                 $toSheet->getColumns()->addFromExpression($toExpr, null, $fromCol->getHidden())->setValues($fromCol->getValues(false));
                 break;
             // Data column references should not result in errors if the data sheet is completely empty
@@ -210,25 +241,92 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
      */
     protected function getIgnoreIfMissingFromColumn() : bool
     {
-        return $this->ignoreIfMissingFromColumn;
+        return $this->getIfMissingFromColumn() === self::IF_MISSING_COLUMN_IGNORE;
     }
 
     /**
-     * Set to TRUE if this mapping is only to be applied if there is a corresponding from-data
-     * 
-     * By default the mapping will result in an error if the from-data does not have the 
-     * required data.
-     * 
-     * @uxon-property ignore_if_missing_from_column
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @param bool $trueOrFalse
+     * @param bool $ignore
+     * @return DataColumnMapping
+     *@deprecated Use `setIfMissingFromColumn()` instead.
+     */
+    protected function setIgnoreIfMissingFromColumn(bool $ignore) : DataColumnMapping
+    {
+        $this->ifMissingColumn = $ignore ? 
+            self::IF_MISSING_COLUMN_IGNORE : 
+            self::IF_MISSING_COLUMN_ERROR;
+        
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getIfMissingFromColumn() : string
+    {
+        return $this->ifMissingColumn ?? self::IF_MISSING_COLUMN_ERROR;
+    }
+    
+    /**
+     * Configure how this mapping behave if an expected column is missing from the input data.
+     *
+     * @uxon-property if_missing_from_column
+     * @uxon-type [error,ignore,use_default]
+     * @uxon-template error
+     *
+     * @param string $value
      * @return DataColumnMapping
      */
-    protected function setIgnoreIfMissingFromColumn(bool $trueOrFalse) : DataColumnMapping
+    protected function setIfMissingFromColumn(string $value) : DataColumnMapping
     {
-        $this->ignoreIfMissingFromColumn = $trueOrFalse;
+        if(in_array($value, [
+            self::IF_MISSING_COLUMN_ERROR,
+            self::IF_MISSING_COLUMN_IGNORE,
+            self::IF_MISSING_COLUMN_USE_DEFAULT
+        ])) {
+            $this->ifMissingColumn = $value;
+        } else {
+            $this->ifMissingColumn = null;
+        }
+        
+        return $this;
+    }
+
+    /**
+     * @return ExpressionInterface|null
+     */
+    protected function getDefaultExpression() : ExpressionInterface|null
+    {
+        return $this->defaultExpression;
+    }
+    
+    protected function useDefaultValue() : bool
+    {
+        return $this->getIfMissingFromColumn() === self::IF_MISSING_COLUMN_USE_DEFAULT &&
+            $this->getDefaultExpression() !== null;
+    }
+    
+    /**
+     * Define a default expression. This expression will be evaluated for all empty values, when mapping. It can be an 
+     * attribute alias, a constant or a formula.
+     * 
+     * NOTE: Setting this property will also set `if_missing_from_column` to `use_default`, unless you already specified
+     * a value for `if_missing_from_column`.
+     * 
+     * @uxon-property default_value
+     * @uxon-type metamodel:expression
+     */
+    protected function setDefaultValue($string) : DataColumnMapping
+    {
+        $this->defaultExpression = ExpressionFactory::createFromString(
+            $this->getWorkbench(),
+            $string,
+            $this->getMapper()->getFromMetaObject()
+        );
+        
+        if($this->ifMissingColumn === null) {
+            $this->ifMissingColumn = self::IF_MISSING_COLUMN_USE_DEFAULT;
+        }
+        
         return $this;
     }
     

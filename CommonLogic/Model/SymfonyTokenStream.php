@@ -2,12 +2,12 @@
 
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Exceptions\FormulaNotFoundError;
 use Symfony\Component\ExpressionLanguage\Lexer;
 use exface\Core\Formulas\Calc;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\Exceptions\FormulaError;
 
 /**
  * Wrapper class to extract formula name, nested formulas and attributes
@@ -49,7 +49,7 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             $lexer = new Lexer();
             $tokenStream = $lexer->tokenize($expression);
         } catch (\Throwable $e) {
-            throw new FormulaError('Cannot parse formula: ' . $e->getMessage(), '7R34E52', $e);
+            throw new FormulaNotFoundError('Cannot parse formula: ' . $e->getMessage(), '7R34E52', $e);
         }
         $this->tokenStream = $tokenStream;
     }

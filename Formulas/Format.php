@@ -40,7 +40,7 @@ class Format extends Formula
         }
 
         if ($dataType === null) {
-            throw new FormulaError('Formula does not contain any attribute to determine datatype from to format value!');
+            throw new FormulaError($this, 'Formula does not contain any attribute to determine datatype from to format value!');
         }
 
         return $dataType->format($value);

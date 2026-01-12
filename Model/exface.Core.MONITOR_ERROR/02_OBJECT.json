@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Monitored Error [exface.Core.MONITOR_ERROR]",
             "CREATED_ON": "2021-04-06 13:43:23",
-            "MODIFIED_ON": "2022-11-21 21:14:22",
+            "MODIFIED_ON": "2025-12-17 22:40:19",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb90f04b00a9be90f08c04ba002958",
@@ -242,6 +242,14 @@
                                     {
                                         "attribute_alias": "filepath",
                                         "hidden": true
+                                    },
+                                    {
+                                        "attribute_alias": "id",
+                                        "hidden": true
+                                    },
+                                    {
+                                        "attribute_alias": "logfile",
+                                        "hidden": true
                                     }
                                 ],
                                 "buttons": [
@@ -252,8 +260,7 @@
                                             "alias": "exface.Core.ShowDialogFromFile",
                                             "file_path_attribute_alias": "filepath",
                                             "file_extension": "json",
-                                            "folder_path": "logs/details",
-                                            "do_not_prefill": true
+                                            "folder_path": "logs/details"
                                         }
                                     }
                                 ]

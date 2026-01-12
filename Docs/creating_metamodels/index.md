@@ -4,7 +4,7 @@
 - Common data sources
 	- [SQL databases](data_sources/SQL/index.md)
 	- Files and Folders
-	- [Web services](https://github.com/exface/UrlDataConnector/blob/master/Docs/index.md)
+	- [Web services](https://github.com/exface/urldataconnector/blob/master/Docs/index.md)
 	- Source code
 - [Expression syntax](../UXON/Expressions_and_formulas.md) to reference data, widgets and other model entities. 
 - Modelling logic

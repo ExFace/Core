@@ -49,7 +49,7 @@ class TimeDif extends \exface\Core\CommonLogic\Model\Formula
             case self::UNIT_M: $diff = $interval->days*24*60 + $interval->h*60 + $interval->i; break;
             case self::UNIT_S: $diff = $interval->days*24*3600 + $interval->h*3600 + $interval->i*60 + $interval->s; break;
             default:
-                throw new FormulaError('Cannot evaluate formula "' . $this->__toString() . '": invalid unit "' . $unit . '" provided!');
+                throw new FormulaError($this, 'Cannot evaluate formula "' . $this->__toString() . '": invalid unit "' . $unit . '" provided!');
         }
         
         if ($date1 > $date2) {

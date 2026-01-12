@@ -9,7 +9,12 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
+use exface\Core\Widgets\Input;
 
 
 /**
@@ -52,41 +57,19 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
 {
     use ImportUxonObjectTrait;
     
-    /**
-     * 
-     * @var ConditionalProperty
-     */
-    private $conditionGroup = null;
+    private ConditionalProperty $conditionGroup;
     
-    /**
-     * 
-     * @var string|ExpressionInterface
-     */
-    private $valueLeft = null;
+    private string|ExpressionInterface|null $valueLeft = null;
+    private ?ExpressionInterface $valueLeftExpr = null;
+    private ?WidgetLinkInterface $valueLeftLink = null;
+    private ?bool $valueLeftIsLink = null;
     
-    /**
-     * 
-     * @var ExpressionInterface
-     */
-    private $valueLeftExpr = null;
+    private ?string $comparator = null;
     
-    /**
-     * 
-     * @var string
-     */
-    private $comparator = null;
-    
-    /**
-     * 
-     * @var string|ExpressionInterface
-     */
-    private $valueRight = null;
-    
-    /**
-     * 
-     * @var ExpressionInterface
-     */
-    private $valueRightExpr = null;
+    private string|ExpressionInterface|null $valueRight = null;
+    private ?ExpressionInterface $valueRightExpr = null;
+    private ?WidgetLinkInterface $valueRightLink = null;
+    private ?bool $valueRightIsLink = null;
     
     /**
      * 
@@ -135,21 +118,45 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
     {
         return $this->conditionGroup->getWorkbench();
     }
-    
+
     /**
-     *
+     * Returns the comparator defined for this condition - optionally optimized for use in with the current widget
+     * 
+     * If `$optimized` ist set to `true`, the comparator will be automatically converted to the best match
+     * for this condition - e.g. scalar comparators will be converted to list comparators if the condition
+     * references a multi-select widget, etc.
+     * 
+     * @param bool $optimize
      * @return string
      */
-    public function getComparator() : string
+    public function getComparator(bool $optimize = false) : string
     {
-        return $this->comparator ?? ComparatorDataType::IS;
+        $comparator = $this->comparator ?? ComparatorDataType::IS;
+        if ($optimize === true) {
+            $leftTargetWidget = $this->getValueLeftLinkTarget(true);
+            $rightTargetWidget = $this->getValueRightLinkTarget(true);
+            // Check if either expression is a reference to a widget, that supports multi-select or similar features.
+            // In those cases, the comparator needs to be a list comparator, in case more than one data-set must
+            // be evaluated.
+            // TODO Filters support multi-select, but do not expose that information. How to handle this?
+            $requiresListComparator =
+                ($leftTargetWidget instanceof iSupportMultiSelect && $leftTargetWidget->getMultiSelect())
+                || ($leftTargetWidget instanceof Input && $leftTargetWidget->getMultipleValuesAllowed())
+                || ($rightTargetWidget instanceof iSupportMultiSelect && $rightTargetWidget->getMultiSelect())
+                || ($rightTargetWidget instanceof Input && $rightTargetWidget->getMultipleValuesAllowed());
+
+            if ($requiresListComparator === true) {
+                $comparator = ComparatorDataType::convertToListComparator($comparator) ?? $comparator;
+            }
+        }
+        return $comparator;
     }
     
     /**
      * Comparator to use in this condition.
      * 
      * ## Scalar (single value) comparators
-     *
+     * 
      * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different
      * data types. If the left value is a string, becomes TRUE if it contains the right value. Case
      * insensitive for strings
@@ -165,11 +172,11 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * comparable types: e.g. numbers or dates.
      * - `>=` - yields TRUE if the left value is greater than or equal to the right one.
      * Both values must be of comparable types: e.g. numbers or dates.
-     *
+     * 
      * ## List comparators
      *
-     * ### Comparing entire lists
-     *
+     * ### Comparing a scalar value to a list (IN, NOT IN)
+     * 
      * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
      * value equals at least on of the values in the list within the right value. The list on the
      * right side must consist of numbers or strings separated by commas or the attribute's value
@@ -179,6 +186,11 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * list within the right value. The list on the right side must consist of numbers or strings separated
      * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can
      * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+     * 
+     * Additionally, you can also use the **EACH** and **ANY** comparators below if with a scalar value on one side.
+     * 
+     * ### Comparing two lists
+     * 
      * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least
      * one element, that is present in both lists.
      * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
@@ -186,9 +198,9 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * are in the right list too
      * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in
      * the right list.
-     *
+     * 
      * ### EACH comparators
-     *
+     * 
      * The following comparators yield TRUE if **EACH** of the values of the left list yields TRUE
      * when compared to at least one value of the right list using the respective scalar comparator.
      *
@@ -200,12 +212,12 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * - `[<=` - each value left is less than or equals any value on the right
      * - `[>` - each value left is greater than any value on the right
      * - `[>=` - each value left is greater than or equals value on the right
-     *
+     * 
      * ### ANY comparators
-     *
+     * 
      * Similarly, the following comparators will yield TRUE if **ANY** of the values of the left list yields TRUE
      * when compared to at least one value of the right list using the respective scalar comparator.
-     *
+     * 
      * - `]=` - at least one value left is at least one value on the right
      * - `]!=` - none of the left values match any value on the right
      * - `]==` - at least one value left equals at least one value on the right exactly
@@ -214,9 +226,9 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      * - `]<=` - at least one value left is less than or equals any value on the right
      * - `]>` - at least one value left is greater than any value on the right
      * - `]>=` - at least one value left is greater than or equals value on the right
-     *
+     * 
      *  ## Range comparators
-     *
+     * 
      *  - `..` - range between two values - e.g. `1 .. 5` 
      * 
      * @uxon-property comparator
@@ -318,6 +330,96 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
     public function hasLiveReference() : bool
     {
         return $this->getValueLeftExpression()->isReference() || $this->getValueRightExpression()->isReference();
+    }
+
+    /**
+     * @param WidgetInterface $sourceWidget
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     */
+    public function getValueLeftLink() : ?WidgetLinkInterface
+    {
+        if ($this->valueLeftIsLink === null) {
+            $expr = $this->getValueLeftExpression();
+            $this->valueLeftIsLink = $expr->isReference();
+            $this->valueLeftLink = $expr->isReference() ? $expr->getWidgetLink($this->getWidget()) : null;
+        }
+        return $this->valueLeftLink;
+    }
+
+    /**
+     * @param WidgetInterface $sourceWidget
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     */
+    public function getValueRightLink() : ?WidgetLinkInterface
+    {
+        if ($this->valueRightIsLink === null) {
+            $expr = $this->getValueRightExpression();
+            $this->valueRightIsLink = $expr->isReference();
+            $this->valueRightLink = $expr->isReference() ? $expr->getWidgetLink($this->getWidget()) : null;
+        }
+        return $this->valueRightLink;
+    }
+
+    /**
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     * @throws \Throwable
+     */
+    public function getValueLeftLinkTarget(bool $silent = false) : ?WidgetInterface
+    {
+        $link = $this->getValueLeftLink();
+        if ($link === null) {
+            return null;
+        }
+        try {
+            $target = $link->getTargetWidget();
+        } catch (\Throwable $e) {
+            if ($silent) {
+                return null;
+            }
+            throw $e;
+        }
+        return $target;
+    }
+
+    /**
+     * @param bool $silent
+     * @return WidgetLinkInterface|null
+     * @throws \Throwable
+     */
+    public function getValueRightLinkTarget(bool $silent = false) : ?WidgetInterface
+    {
+        $link = $this->getValueRightLink();
+        if ($link === null) {
+            return null;
+        }
+        try {
+            $target = $link->getTargetWidget();
+        } catch (\Throwable $e) {
+            if ($silent) {
+                return null;
+            }
+            throw $e;
+        }
+        return $target;
+    }
+    
+    public function getValueListDelimiter() : string
+    {
+        $rightTargetWidget = $this->getValueRightLinkTarget(true);
+        if ($rightTargetWidget !== null) {
+            if (($rightTargetWidget instanceof iShowSingleAttribute) && $rightTargetWidget->isBoundToAttribute()) {
+                $delim = $rightTargetWidget->getAttribute()->getValueListDelimiter();
+            } elseif ($rightTargetWidget instanceof iHaveColumns && $colName = $this->getValueRightLink()->getTargetColumnId()) {
+                $targetCol = $rightTargetWidget->getColumnByDataColumnName($colName);
+                if ($targetCol->isBoundToAttribute() === true) {
+                    $delim = $targetCol->getAttribute()->getValueListDelimiter();
+                }
+            }
+        }
+        return $delim ?? EXF_LIST_SEPARATOR;
     }
 
     /**

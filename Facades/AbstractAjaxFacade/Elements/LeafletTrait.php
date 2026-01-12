@@ -72,7 +72,7 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  *  	"LIBS.LEAFLET.GEOMAN.JS": "npm-asset/geoman-io--leaflet-geoman-free/dist/leaflet-geoman.min.js",
  *  	"LIBS.LEAFLET.GEOMAN.CSS": "npm-asset/geoman-io--leaflet-geoman-free/dist/leaflet-geoman.css",
  *  	"LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS": "npm-asset/proj4leaflet/src/proj4leaflet.js",
- *  	"LIBS.LEAFLET.TRUF.JS": "exface/Core/Facades/AbstractAjaxFacade/js/leaflet/turf.min.js",
+ *  	"LIBS.LEAFLET.TRUF.JS": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/turf.min.js",
  *  
  *      ```
  * 3. Use the trait in your element by creating a globally accessible variable or 

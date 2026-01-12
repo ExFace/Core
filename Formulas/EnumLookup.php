@@ -96,7 +96,7 @@ class EnumLookup extends Formula
         $attr = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias)->getAttribute($attributeAlias);
         $dataType = $attr->getDataType();
         if (! ($dataType instanceof EnumDataTypeInterface)) {
-            throw new FormulaError('Cannot use formula EnumLookup() on an attribute with non-enum data type');
+            throw new FormulaError($this, 'Cannot use formula EnumLookup() on an attribute with non-enum data type');
         }
         
         $values = $dataType->toArray();

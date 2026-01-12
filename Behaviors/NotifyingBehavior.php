@@ -312,19 +312,6 @@ class NotifyingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()
             ->removeListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
         return $this;
-    }  
-
-    /**
-     * 
-     * {@inheritdoc}
-     * 
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        // TODO
-        $uxon = parent::exportUxonObject();
-        return $uxon;
     }
     
     /**

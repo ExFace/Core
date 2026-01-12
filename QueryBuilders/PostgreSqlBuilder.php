@@ -243,23 +243,22 @@ SQL;
      * @see AbstractSqlBuilder::buildSqlOrderBy()
      */
     protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
-    {
-        $orderByObject = parent::buildSqlOrderBy($qpart, $select_from);
-        if ($orderByObject === '') {
-            return $orderByObject;
+    {        
+        if (
+            $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY)
+            || $qpart->isCompound()
+        ) {
+            return parent::buildSqlOrderBy($qpart, $select_from);
         }
-        $parts = preg_split('/\s+/', $orderByObject, 2);
-        $expr  = $parts[0];
-        $direction   = isset($parts[1]) ? strtoupper(trim($parts[1])) : '';
 
-        if (!in_array($direction, ['ASC', 'DESC'], true)) {
-            $expr = $orderByObject;
-            $direction  = '';
+        $comment = "\n" . $this->buildSqlComment("buildSqlOrderBy(" . $qpart->getAlias() . ", " . $select_from . ")") . "\n";
+        $select_from ??= $this->getShortAlias($this->getMainObject()->getAlias());
+        if ($qpartSelect = $this->getAttribute($qpart->getAlias())) {
+            $sort_by = '"' . $qpartSelect->getColumnKey() . '"';
+        } else {
+            $sort_by = $this->buildSqlSelect($qpart, $select_from, null, false);
         }
-        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $expr)) {
-            $expr = '"' . str_replace('"', '""', $expr) . '"';
-        }
-        return trim($expr . ' ' . $direction);
+        return $comment . ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
     }
     
     /**

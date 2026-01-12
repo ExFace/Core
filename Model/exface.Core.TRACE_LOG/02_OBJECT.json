@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Trace Log [exface.Core.TRACE_LOG]",
             "CREATED_ON": "2017-07-15 00:00:00",
-            "MODIFIED_ON": "2020-05-05 10:25:03",
+            "MODIFIED_ON": "2025-12-11 16:53:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e76918a96e616299d60205857feb80",
@@ -167,6 +167,12 @@
                     },
                     {
                         "attribute_alias": "level"
+                    },
+                    {
+                        "attribute_alias": "logfile"
+                    },
+                    {
+                        "attribute_alias": "filepath"
                     }
                 ],
                 "sorters": [
@@ -177,14 +183,14 @@
                 ],
                 "buttons": [
                     {
+                        "caption": "Details",
+                        "bind_to_double_click": true,
                         "action": {
                             "alias": "exface.Core.ShowDialogFromFile",
-                            "file_path_attribute_alias": "id",
+                            "file_path_attribute_alias": "filepath",
                             "file_extension": "json",
-                            "folder_path": "logs/details",
-                            "do_not_prefill": true
-                        },
-                        "bind_to_double_click": true
+                            "folder_path": "logs/details"
+                        }
                     }
                 ]
             },

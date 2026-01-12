@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use axenox\ETL\Events\Flow\OnAfterETLStepRun;
 use axenox\ETL\Events\Flow\OnBeforeETLStepRun;
 use exface\Core\CommonLogic\Debugger\Profiler;
+use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
@@ -175,7 +176,7 @@ class Tracer extends Profiler
                 $this->getWorkbench(),
                 "Tracer", 
                 $this->getTraceFilePath(), 
-                $workbench->filemanager()->getPathToLogDetailsFolder(),
+                $workbench->filemanager()->getPathToLogDetailsFolder(DateDataType::now()),
                 LoggerInterface::DEBUG,
                 LoggerInterface::DEBUG,
                 LoggerInterface::DEBUG
@@ -358,14 +359,14 @@ class Tracer extends Profiler
         return $name;
     }
     
-    protected function sanitizeLapName(string $name, int $maxLength = 50) : string
+    protected function sanitizeLapName(string $name, int $maxLength = 60) : string
     {
         $str = str_replace(
             ["\r", "\n", "\t", "  "],
             [' ', ' ', '', ''],
             $name
         );
-        return mb_substr($str, 0, 50) . (strlen($str) > 50 ? '...' : '');
+        return mb_substr($str, 0, $maxLength) . (mb_strlen($str) > $maxLength ? '...' : '');
     }
     
     /**

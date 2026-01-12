@@ -146,7 +146,7 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
         if ($this->isPathAbsolute()) {
             return $path;
         }
-        return FilePathDataType::join([$this->getBasePath(), $path]);
+        return FilePathDataType::join([$this->getBasePath() ?? '', $path]);
     }
     
     /**

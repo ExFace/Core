@@ -40,7 +40,7 @@ abstract class LoggerFactory extends AbstractStaticFactory
                 $coreLogFileExt = 'log';
                 $date = DateDataType::now();
                 $coreLogFilePath = $coreLogDir . DIRECTORY_SEPARATOR . $date . '.' . $coreLogFileExt;
-                $detailsLogDir = $workbench->filemanager()->getPathToLogDetailsFolder() . DIRECTORY_SEPARATOR . $date;
+                $detailsLogDir = $workbench->filemanager()->getPathToLogDetailsFolder($date);
                 
                 $config             = $workbench->getConfig();
                 $minLogLevel        = $config->getOption('LOG.MINIMUM_LEVEL_TO_LOG');

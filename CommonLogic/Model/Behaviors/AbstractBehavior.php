@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Debug\LogBookInterface;
@@ -28,7 +29,9 @@ use Throwable;
  */
 abstract class AbstractBehavior implements BehaviorInterface
 {
-    use ImportUxonObjectTrait;
+    use ICanBeConvertedToUxonTrait {
+        exportUxonObject as exportUxonObjectOriginal;
+    }
     use AliasTrait;
     
     private $object = null;
@@ -225,8 +228,10 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
-        $uxon->setProperty('disabled', $this->isDisabled());
+        $uxon = $this->exportUxonObjectOriginal();
+        if ($this->isDisabled()) {
+            $uxon->setProperty('disabled', true);
+        }
         return $uxon;
     }
     

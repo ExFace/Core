@@ -66,7 +66,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Local Folders",
-            "CONNECTOR": "exface/Core/DataConnectors/LocalFileConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/LocalFileConnector.php",
             "CONFIG": null,
             "READONLY": 0,
             "ALIAS": "LOCAL_FOLDERS"
@@ -81,7 +81,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Local Vendor Folders",
-            "CONNECTOR": "exface/Core/DataConnectors/LocalFileConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/LocalFileConnector.php",
             "CONFIG": "$$~~rtvXw94zJjUXqZJdxxUJSQ8+91cpmn5PsyMUfnaMEyAlPYdiS2XlG+gE8xvGXQgHcspcfaJgsa2DdFFmRm+Qa5jQ8SYVJkU=",
             "READONLY": 0,
             "ALIAS": "LOCAL_VENDOR_FOLDERS"
@@ -96,7 +96,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "PHP Annotations",
-            "CONNECTOR": "exface/Core/DataConnectors/PhpAnnotationsConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/PhpAnnotationsConnector.php",
             "CONFIG": null,
             "READONLY": 1,
             "ALIAS": "PHP_ANNOTATIONS"
@@ -111,7 +111,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Local file",
-            "CONNECTOR": "exface/Core/DataConnectors/FileContentsConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/FileContentsConnector.php",
             "CONFIG": "$$~~eEsDvEiPdaJVrQ5A3k/DmLm43Oh4sjnZbMNBuhN4gbfWt9CL0QOivf1Ze+xtdfua9fjPO3XZK+jGXh5TCuZHW3SyzsdafFXfgQ==",
             "READONLY": 0,
             "ALIAS": "LOCAL_FILE"
@@ -126,7 +126,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "No Connection (Transparent)",
-            "CONNECTOR": "exface/Core/DataConnectors/TransparentConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/TransparentConnector.php",
             "CONFIG": null,
             "READONLY": 0,
             "ALIAS": "TRANSPARENT_CONNECTION"
@@ -141,7 +141,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Metamodel DB",
-            "CONNECTOR": "exface/Core/DataConnectors/ModelLoaderConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/ModelLoaderConnector.php",
             "CONFIG": null,
             "READONLY": 0,
             "ALIAS": "METAMODEL_DB"
@@ -156,7 +156,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Workbench Config",
-            "CONNECTOR": "exface/Core/DataConnectors/WorkbenchConfigConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/WorkbenchConfigConnector.php",
             "CONFIG": null,
             "READONLY": 1,
             "ALIAS": "WORKBENCH_CONFIG"
@@ -171,7 +171,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Workbench Contexts",
-            "CONNECTOR": "exface/Core/DataConnectors/WorkbenchContextConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/WorkbenchContextConnector.php",
             "CONFIG": null,
             "READONLY": 0,
             "ALIAS": "WORKBENCH_CONTEXTS"
@@ -186,7 +186,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Objects with FileBehavior",
-            "CONNECTOR": "exface/Core/DataConnectors/DataSourceFileConnector.php",
+            "CONNECTOR": "exface/core/DataConnectors/DataSourceFileConnector.php",
             "CONFIG": "$$~~D76U58tQok+Vaw1dNtDdOyfyoSAphhiVVSNicx6Au8qdTFpHQhLAd4qg0hIUVlJjuIBZAwNsNVxSxsZcGRj07aKN/FBqNe3Fig==",
             "READONLY": 0,
             "ALIAS": "objects_with_filebehavior"
@@ -201,7 +201,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Fake SMTP for Debugging",
-            "CONNECTOR": "exface/Core/DataConnectors/SmtpToNotificationAdapter.php",
+            "CONNECTOR": "exface/core/DataConnectors/SmtpToNotificationAdapter.php",
             "CONFIG": "$$~~mrV2T4IJvxvaHU4YnwrxxcIlmIAv3JPPacPjoPXYA+WReCcr30zNJGpSwjiZm8IupYG6zrUlnYZtAxKEeTKV4ezNrR3CHo+KVJyVPpwxP/6XflSKF6D0e2ICsvuE",
             "READONLY": 0,
             "ALIAS": "fake_smtp_for_debugging"

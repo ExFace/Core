@@ -71,7 +71,7 @@
             "APP": "0x31000000000000000000000000000000",
             "UXON_SCHEMA": null,
             "NAME": "Model search result edit button",
-            "PROTOTYPE": "exface/Core/Uxon/Snippets/SingleWidgetSnippet.php",
+            "PROTOTYPE": "exface/core/Uxon/Snippets/SingleWidgetSnippet.php",
             "UXON": {
                 "parameters": [
                     {

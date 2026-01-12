@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-11-09 14:18:04",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-05-15 10:37:26",
+    "modified_on": "2026-01-07 11:29:37",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.OBJECT_BEHAVIORS",
@@ -43,21 +43,28 @@
         ],
         "columns": [
             {
-                "attribute_alias": "APP__LABEL"
+                "attribute_alias": "ENABLED_FLAG",
+                "caption": "On"
             },
             {
                 "attribute_alias": "NAME"
             },
             {
-                "attribute_alias": "BEHAVIOR",
-                "width_max": "300px"
-            },
-            {
-                "attribute_alias": "OBJECT__APP__LABEL",
-                "caption": "Object App"
+                "attribute_alias": "BEHAVIOR"
             },
             {
                 "attribute_alias": "OBJECT__LABEL"
+            },
+            {
+                "attribute_alias": "PRIORITY"
+            },
+            {
+                "attribute_alias": "OBJECT__APP__ALIAS",
+                "caption": "Object app"
+            },
+            {
+                "attribute_alias": "APP__ALIAS",
+                "caption": "Behavior app"
             },
             {
                 "attribute_alias": "CREATED_ON"

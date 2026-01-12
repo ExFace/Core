@@ -72,7 +72,7 @@
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11e95e84baee610e9677e4b318306b9a",
             "OBJECT": "0x32350000000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
             "ALIAS": "QuickEditAttributes",
             "NAME": "Quick Edit",
             "SHORT_DESCRIPTION": "Tabular editor for selected attributes",

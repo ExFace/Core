@@ -37,7 +37,7 @@ class Permalink extends Formula
     public function run(string $configAlias = '')
     {
         if(empty($configAlias)) {
-            throw new FormulaError('Cannot evaluate Permalink formula: no valid config provided!');
+            throw new FormulaError($this, 'Cannot evaluate Permalink formula: no valid config provided!');
         }
         
         $args = array_slice(func_get_args(), 1);

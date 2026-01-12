@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -17,6 +18,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
@@ -36,6 +38,7 @@ use exface\Core\Interfaces\DataSheets\PivotColumnInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Widgets\DataTableConfigurator;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -84,23 +87,18 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 class ExportJSON extends ReadData implements iExportData
 {
     private $downloadable = true;
-    
     private $filename = null;
-
     private ?string $filePathAbsolute = null;
-    
     protected $mimeType = null;
 
     private $writer = null;
     
     private $useAttributeAliasAsHeader = false;
+    private $formatEnums = true;
     
     private $limitRowsPerRequest = 10000;
-    
     private $limitTimePerRequest = 300;
-    
     private $firstRowWritten = false;
-    
     private $lazyExport = null;
 
     private $exportMapper = null;
@@ -204,7 +202,8 @@ class ExportJSON extends ReadData implements iExportData
             case 'text/csv': return 'csv';
             case 'text/plain': return 'txt';
             case 'application/vnd.openxmlformats-officedocument. spreadsheetml.sheet': return 'xlsx';
-            // TODO add more from https://wiki.selfhtml.org/wiki/MIME-Type/%C3%9Cbersicht#X
+            default:
+                return MimeTypeDataType::guessExtensionOfMimeType($this->getMimeType());
         }
         return '';
     }
@@ -256,9 +255,9 @@ class ExportJSON extends ReadData implements iExportData
         $lazyExport = $this->isLazyExport($dataSheetMaster);
         $rowsOnPage = $this->getLimitRowsPerRequest();
         
-        // If there we expect to do split requests, we MUST sort over a unique attribute!
+        // If we expect to do split requests, we MUST sort over a unique attribute!
         // Otherwise, the results of subsequent requests may contain data in different order
-        // resulting in dublicate or missing rows from the point of view of the entire
+        // resulting in duplicate or missing rows from the point of view of the entire
         // (combined) export.
         if ($rowsOnPage > 0) {
             if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
@@ -277,6 +276,7 @@ class ExportJSON extends ReadData implements iExportData
         $rowOffset = 0;
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
+        $pageSheet = null;
         do {
             if ($pageSheet === null) {
                 $pageSheet = $dataSheetMaster->copy();
@@ -298,15 +298,17 @@ class ExportJSON extends ReadData implements iExportData
             $pageSheet->setRowsOffset($rowOffset);
             $pageSheet->dataRead();
             
-            foreach ($pageSheet->getColumns() as $col) {
-                $type = $col->getDataType();
-                if ($type instanceof EnumDataTypeInterface) {
-                    $values = $col->getValues();
-                    $newValues = [];
-                    foreach ($values as $val) {
-                        $newValues[] = $type->getLabelOfValue($val);
+            if ($this->willFormatEnumsAsLabels()) {
+                foreach ($pageSheet->getColumns() as $col) {
+                    $type = $col->getDataType();
+                    if ($type instanceof EnumDataTypeInterface) {
+                        $values = $col->getValues();
+                        $newValues = [];
+                        foreach ($values as $val) {
+                            $newValues[] = $type->getLabelOfValue($val);
+                        }
+                        $col->setValues($newValues);
                     }
-                    $col->setValues($newValues);
                 }
             }
 
@@ -414,6 +416,16 @@ class ExportJSON extends ReadData implements iExportData
                 break;
             default:
                 $widgets = [];
+        }
+        
+        // Add optional columns, that are really exported
+        if (($exportedWidget instanceof iHaveConfigurator) && ($configurator = $exportedWidget->getConfiguratorWidget()) instanceof DataTableConfigurator) {
+            /** @var $column \exface\Core\Widgets\DataColumn */
+            foreach ($configurator->getOptionalColumns() as $column) {
+                if ($exportedSheet->getColumns()->has($column->getDataColumnName())) {
+                    $widgets[] = $column;
+                }
+            }
         }
 
         foreach ($additionalColumns as $sheetCol) {
@@ -812,5 +824,28 @@ class ExportJSON extends ReadData implements iExportData
         $this->exportMapper = $mapper;
         return $this;
     }
+
+    /**
+     * @return bool
+     */
+    protected function willFormatEnumsAsLabels() : bool
+    {
+        return $this->formatEnums;
+    }
+
+    /**
+     * Set to FALSE to keep raw values for enumerations - e.g. the status id instead of its name
+     * 
+     * @uxon-property format_enums_as_labels
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setFormatEnumsAsLabels(bool $trueOrFalse) : ExportJSON
+    {
+        $this->formatEnums = $trueOrFalse;
+        return $this;
+    }
 }
-?>
