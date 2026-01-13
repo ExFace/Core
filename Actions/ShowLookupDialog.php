@@ -109,7 +109,7 @@ class ShowLookupDialog extends ShowDialog
                     $tableObj = $data_table->getMetaObject();
                     
                     // Inherit filters from calling widget
-                    // When inheriting filters, it is important to keept their id space. If this is not
+                    // When inheriting filters, it is important to keep their id space. If this is not
                     // done explicitly, the filter will have a new id space - the one of the lookup
                     // dialog, thus any value links will stop working as they reference the id space of
                     // the table.
@@ -183,6 +183,7 @@ class ShowLookupDialog extends ShowDialog
                     
                     // Inherit columns from calling widget
                     $cols = [];
+                    $requiredColumnAliases = [];
                     switch (true) {
                         // If the input widget is an InputCombotTable, we MUST inherit columns of its
                         // table because the lookup dialog should look the same as the dropdown table.
@@ -191,6 +192,8 @@ class ShowLookupDialog extends ShowDialog
                         // after an item was looked up.
                         case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
                             $cols = $inputWidget->getTable()->getColumns();
+                            $requiredColumnAliases[] = $inputWidget->getValueAttributeAlias();
+                            $requiredColumnAliases[] = $inputWidget->getTextAttributeAlias();
                             break;
                             // TODO inherit columns from other types of input widgets? Is it a good idea to
                             // inherit columns from tables? Could be a lot...
@@ -219,6 +222,7 @@ class ShowLookupDialog extends ShowDialog
                     }
                     // Add columns from the source table, that are not (yet) present in the lookup table
                     foreach ($cols as $col) {
+                        $makeHidden = false;
                         // Avoid duplicate columns!
                         // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
                         // different attributes, but having the same caption, we should NOT put them both in the
@@ -227,17 +231,31 @@ class ShowLookupDialog extends ShowDialog
                         // of InputComboTables MUST also work with the data of the lookup dialog
                         foreach ($data_table->getColumns() as $existingCol) {
                             if ($this->isSameColumn($existingCol, $col, true)) {
-                                continue 2;
+                                // If source column is actually required, only skip it if the existing column has the
+                                // exact same attribute alias - otherwise keep it, but make it hidden.
+                                // For example, if the lookup table already has the NAME attribute because of its
+                                // default display position, and we are trying to inherit the LABEL column (having NAME
+                                // as the label-attribute of the object), a duplicate will be detected. But if LABEL
+                                // is explicitly required by the source InputComboTable, we still need to keep it! We
+                                // just need to hide it to avoid visual duplicates.
+                                if (in_array($col->getAttributeAlias(), $requiredColumnAliases) && $col->getAttributeAlias() !== $existingCol->getAttributeAlias()) {
+                                    $makeHidden = true;
+                                } else {
+                                    continue 2;
+                                }
                             }
                         }
                         
                         $widgetType = $data_table->getColumnDefaultWidgetType();
                         $colUxon = $col->exportUxonObject();
                         $colUxon->setProperty('widget_type', $widgetType);
+                        if ($makeHidden === true) {
+                            $colUxon->setProperty('hidden', true);
+                        }
                         $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
                     }
-                }
-            }
+                } // END if ($targetWidget instanceof iUseInputWidget)
+            } // END if ($this->isDefinedInWidget())
             
             // Add the "OK" button
             $btnUxon = new UxonObject([
@@ -279,7 +297,7 @@ class ShowLookupDialog extends ShowDialog
      * @param bool $compareCaption
      * @return bool
      */
-    protected function isSameColumn(DataColumn $existingCol, DataColumn $newCol, bool $compareCaption = true) : bool
+    protected function isSameColumn(DataColumn $existingCol, DataColumn $newCol, bool $compareCaption = true, array $requiredAliases = []) : bool
     {
         // Compare captions if required - but only for visible columns! Keeping hidden columns is important
         // because live-refs to columns of InputComboTables MUST also work with the data of the lookup dialog

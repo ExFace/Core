@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
@@ -58,84 +59,99 @@ class DataLookupDialog extends Dialog
     public function getWidgets(callable $filter = null)
     {
         if (parent::hasWidgets() === false) {
-            /* @var $data_table \exface\Core\Widgets\Data */
-            $data_table = WidgetFactory::create($this->getPage(), 'DataTableResponsive', $this);
-            $data_table->setMetaObject($this->getMetaObject());
-            $data_table->setMultiSelect($this->getMultiSelect());
-            $data_table->setMultiSelectSavedOnNavigation(true);
-            $data_table->getPaginator()->setCountAllRows(false);
-            // Disabled setups for the lookup table to prevent recursively nested dialogs: the setups table has
-            // buttons, that include other tables, which in-turn might have setups. On the other hand, it is
-            // extremely unlikely, that people would save setups for lookup tables: after all, this would mean,
-            // that certain lookup dialogs are used really often, which is probably not a very good idea. 
-            $data_table->setConfiguratorSetupsEnabled(false);
-            
-            // If the table has no columns, determine them from the model
-            if ($data_table->hasColumns() === false) {
-                $defaultDisplayAttrs = $data_table->getMetaObject()->getAttributes()->getDefaultDisplayList();
-                switch (true) {
-                    // If the object has default display attributes, use them
-                    case $defaultDisplayAttrs->isEmpty() === false:
-                        foreach ($defaultDisplayAttrs as $attr) {
-                            $data_table->addColumn($data_table->createColumnFromAttribute($attr), $attr->getDefaultDisplayOrder());
-                        }
-                        break;
-                    // Otherwise use the object's label if there is one
-                    case $data_table->getMetaObject()->hasLabelAttribute() === true:
-                        $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
-                        break;
-                    // If neither a label nor default-display attributes exist, see if the UID is not hidden
-                    case $defaultDisplayAttrs->isEmpty() && $data_table->getMetaObject()->hasUidAttribute() === true && $data_table->getMetaObject()->getUidAttribute()->isHidden() === false:
-                        $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getUidAttribute()));
-                        break;
-                    // Since we need columns a any case, just take the first 4 attributes if nothing else
-                    // helps
-                    default:
-                        $cnt = 0;
-                        foreach ($data_table->getMetaObject()->getAttributes() as $attr) {
-                            if ($attr->isHidden() === false) {
-                                $data_table->addColumn($data_table->createColumnFromAttribute($attr));
-                                $cnt++;
-                            }
-                            if ($cnt >= 4) {
-                                break;
-                            }
-                        }
-                }
-            }
-            
-            $dataConfigurator = $data_table->getConfiguratorWidget();
-            foreach($data_table->getColumns() as $col) {
-                if ($col->isHidden() === false && $col->isBoundToAttribute() === true) {
-                    if ($col->isBoundToLabelAttribute() === true || ($col->getAttribute()->getRelationPath()->isEmpty() === false && $col->getAttribute()->isLabelForObject() === true)) {
-                        $filterAttrAlias = $col->getAttribute()->getRelationPath()->toString();
-                    } else {
-                        $filterAttrAlias = $col->getAttributeAlias();
-                    }
-                    if ($filterAttrAlias !== '' || $filterAttrAlias !== null) {
-                        $filterWidget = $dataConfigurator->createFilterForAttributeAlias($filterAttrAlias);
-                        if ($filterWidget->getInputWidget() instanceof iSupportMultiSelect) {
-                            $filterWidget->getInputWidget()->setMultiSelect(true);
-                        }
-                        $dataConfigurator->addFilter($filterWidget);
-                    }
-                }
-            }
-            
+            $data_table = $this->createLookupTable();
             $this->dataWidget = $data_table;
             $this->addWidget($data_table);
-            
-            if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
-                $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
-                if (! $data_table->getColumnByAttributeAlias($labelAlias) 
-                    && ! $data_table->getColumnByDataColumnName(MetaAttributeInterface::OBJECT_LABEL_ALIAS)
-                ) {
-                    $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
-                }
-            }
         }
         
         return parent::getWidgets($filter);
+    }
+
+    /**
+     * Creates the default lookup table.
+     * 
+     * NOTE: this is the base table, which does not include the information from the context in which the
+     * lookup was called: e.g. this table does not know if it was called by an InputComboTable or by a
+     * user-defined button. This information is added by the specific action - e.g. `ShowLookupDialog`.
+     * 
+     * @return iShowData
+     */
+    protected function createLookupTable() : iShowData
+    {
+        /* @var $data_table \exface\Core\Widgets\Data */
+        $data_table = WidgetFactory::create($this->getPage(), 'DataTableResponsive', $this);
+        $data_table->setMetaObject($this->getMetaObject());
+        $data_table->setMultiSelect($this->getMultiSelect());
+        $data_table->setMultiSelectSavedOnNavigation(true);
+        $data_table->getPaginator()->setCountAllRows(false);
+        // Disabled setups for the lookup table to prevent recursively nested dialogs: the setups table has
+        // buttons, that include other tables, which in-turn might have setups. On the other hand, it is
+        // extremely unlikely, that people would save setups for lookup tables: after all, this would mean,
+        // that certain lookup dialogs are used really often, which is probably not a very good idea. 
+        $data_table->setConfiguratorSetupsEnabled(false);
+
+        // If the table has no columns, determine them from the model
+        if ($data_table->hasColumns() === false) {
+            $defaultDisplayAttrs = $data_table->getMetaObject()->getAttributes()->getDefaultDisplayList();
+            switch (true) {
+                // If the object has default display attributes, use them
+                case $defaultDisplayAttrs->isEmpty() === false:
+                    foreach ($defaultDisplayAttrs as $attr) {
+                        $data_table->addColumn($data_table->createColumnFromAttribute($attr), $attr->getDefaultDisplayOrder());
+                    }
+                    break;
+                // Otherwise use the object's label if there is one
+                case $data_table->getMetaObject()->hasLabelAttribute() === true:
+                    $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
+                    break;
+                // If neither a label nor default-display attributes exist, see if the UID is not hidden
+                case $defaultDisplayAttrs->isEmpty() && $data_table->getMetaObject()->hasUidAttribute() === true && $data_table->getMetaObject()->getUidAttribute()->isHidden() === false:
+                    $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getUidAttribute()));
+                    break;
+                // Since we need columns a any case, just take the first 4 attributes if nothing else
+                // helps
+                default:
+                    $cnt = 0;
+                    foreach ($data_table->getMetaObject()->getAttributes() as $attr) {
+                        if ($attr->isHidden() === false) {
+                            $data_table->addColumn($data_table->createColumnFromAttribute($attr));
+                            $cnt++;
+                        }
+                        if ($cnt >= 4) {
+                            break;
+                        }
+                    }
+            }
+        }
+
+        $dataConfigurator = $data_table->getConfiguratorWidget();
+        foreach($data_table->getColumns() as $col) {
+            if ($col->isHidden() === false && $col->isBoundToAttribute() === true) {
+                if ($col->isBoundToLabelAttribute() === true || ($col->getAttribute()->getRelationPath()->isEmpty() === false && $col->getAttribute()->isLabelForObject() === true)) {
+                    $filterAttrAlias = $col->getAttribute()->getRelationPath()->toString();
+                } else {
+                    $filterAttrAlias = $col->getAttributeAlias();
+                }
+                if ($filterAttrAlias !== '' || $filterAttrAlias !== null) {
+                    $filterWidget = $dataConfigurator->createFilterForAttributeAlias($filterAttrAlias);
+                    if ($filterWidget->getInputWidget() instanceof iSupportMultiSelect) {
+                        $filterWidget->getInputWidget()->setMultiSelect(true);
+                    }
+                    $dataConfigurator->addFilter($filterWidget);
+                }
+            }
+        }
+
+        if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
+            $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
+            if (! $data_table->getColumnByAttributeAlias($labelAlias)
+                && ! $data_table->getColumnByDataColumnName(MetaAttributeInterface::OBJECT_LABEL_ALIAS)
+            ) {
+                $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
+            }
+        }
+        
+        return $data_table;
     }
     
     /**
