@@ -22,6 +22,7 @@ use exface\Core\Mutations\AppliedMutationOnUxon;
  * - `insert` - adds one or more UXON objects to an array before the element, the JSONpath points to
  * - `change` - changes a scalar property at the end of the JSONpath - e.g. to set a widget to `hidden:true`
  * - `replace` - replaces a UXON object with another one. The JSONpath should point to an object
+ * - `move` - move an entire UXON object from one JSONpath position to another
  * - `remove` - removes all keys corresponding to the JSONpath entirely
  * 
  * ## Using JSONpath
@@ -102,6 +103,7 @@ class GenericUxonMutation extends AbstractMutation
     private $change = [];
     private $replace = [];
     private $remove = [];
+    private $move = [];
 
     /**
      * @see MutationInterface::apply()
@@ -138,6 +140,10 @@ class GenericUxonMutation extends AbstractMutation
             $object = $this->addCommentWithMutationName($object);
             $jsonObj->set($jsonPath, $object);
         }
+        // move
+        foreach ($this->move as $fromPath => $toPath) {
+            $jsonObj->moveObject($fromPath, $toPath);
+        }
         // remove
         foreach ($this->remove as $jsonPath) {
             $jsonObj->removeObject($jsonPath);
@@ -166,7 +172,7 @@ class GenericUxonMutation extends AbstractMutation
      * ```
      * {
      *     "change": {
-     *          "$.columns.0.hidden": true
+     *          "$.columns[?(@.attribute_alias=='MYATTR')].hidden": true
      *     }
      * }
      *
@@ -213,6 +219,37 @@ class GenericUxonMutation extends AbstractMutation
     protected function setReplace(UxonObject $arrayOfSets) : GenericUxonMutation
     {
         $this->replace = $arrayOfSets->toArray();
+        return $this;
+    }
+
+    /**
+     * Move an object from one JSONpath address to another
+     * 
+     * Technically, this is a `remove` immediately followed by an `insert`
+     *
+     * ## Examples
+     *
+     * Move column with `ATTR1` from its current position to right before the column with `ATTR2`.
+     *
+     * ```
+     * {
+     *     "move": {
+     *          "$.columns[?(@.attribute_alias=='ATTR1')]": "$.columns[?(@.attribute_alias=='ATTR2')]"
+     *     }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property move
+     * @uxon-type object
+     * @uxon-template {"// JSONpath to move (remove)": "// JSON path of new position (insert)"}
+     *
+     * @param UxonObject $arrayOfSets
+     * @return $this
+     */
+    protected function setMove(UxonObject $arrayOfSets) : GenericUxonMutation
+    {
+        $this->move = $arrayOfSets->toArray();
         return $this;
     }
 
