@@ -7,7 +7,7 @@ use JsonPath\JsonPath;
 class JsonObject extends \JsonPath\JsonObject
 {
     /**
-     * Append a new value into all json arrays that match
+     * Append a new value into all JSON arrays that match
      * the $jsonPath path.
      *
      * The $value will be inserted at the given $index moving
@@ -62,6 +62,27 @@ class JsonObject extends \JsonPath\JsonObject
                     array_splice($element, $index, 0, $asArray ? $value : [$value]);
                 }
             }
+        }
+        return $this;
+    }
+
+    /**
+     * Moves the object at the given "old" address to a "new" address
+     * 
+     * @param string $jsonPathOldPos
+     * @param string $jsonPathNewPos
+     * @return $this
+     */
+    public function moveObject(string $jsonPathOldPos, string $jsonPathNewPos)
+    {
+        $sources = $this->get($jsonPathOldPos);
+        if (count($sources) > 1) {
+            throw new \UnexpectedValueException('Cannot move JSONpath "' . $jsonPathOldPos . '": the path points to more than one node');
+        }
+        $subj = $sources[0] ?? null;
+        if ($subj !== null) {
+            $this->removeObject($jsonPathOldPos);
+            $this->insert($jsonPathNewPos, $subj);
         }
         return $this;
     }
