@@ -2,7 +2,7 @@
 
 namespace exface\Core\CommonLogic\Utils\FiniteStateMachine;
 
-class TransitionError extends Transition
+class AbstractTransitionError extends AbstractTransition
 {
     protected \Throwable $error;
 

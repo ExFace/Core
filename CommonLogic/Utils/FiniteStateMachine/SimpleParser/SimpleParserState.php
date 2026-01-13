@@ -3,7 +3,7 @@
 namespace exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser;
 
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractState;
-use exface\Core\CommonLogic\Utils\FiniteStateMachine\Transition;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractTransition;
 
 class SimpleParserState extends AbstractState
 {
@@ -27,16 +27,16 @@ class SimpleParserState extends AbstractState
                 break;
             }
             $token = $token[array_key_first($token)];
-            $this->cursor += 1;
-
-            // Check transitions.
-            $transition = $this->checkTransitions($token);
+            
+            // Check for transitions BEFORE processing.
+            $transition = $this->checkTransitions($token, true);
             if($transition !== null) {
                 // Write buffer to output.
                 $this->writeBuffer($stringBuffer);
                 return $this->exit($transition, $data);
             }
 
+            $this->cursor += 1;
             $split = false;
             $consume = false;
             
@@ -54,6 +54,14 @@ class SimpleParserState extends AbstractState
             // Add token to output buffer.
             if(!$consume) {
                 $stringBuffer .= $token;
+            }
+
+            // Check for transitions AFTER processing.
+            $transition = $this->checkTransitions($token, false);
+            if($transition !== null) {
+                // Write buffer to output.
+                $this->writeBuffer($stringBuffer);
+                return $this->exit($transition, $data);
             }
         }
         
@@ -76,7 +84,16 @@ class SimpleParserState extends AbstractState
         return $this;
     }
 
-    public function exit(?Transition $transition, &$data): AbstractState|bool
+    protected function addTransition(AbstractTransition $transition, bool $before): AbstractState
+    {
+        if($transition instanceof SimpleParserTransition && $transition->isConsumingToken()) {
+            $this->addTokenRule($transition->getTrigger(), false, true);
+        }
+        
+        return parent::addTransition($transition, $before);
+    }
+
+    public function exit(?AbstractTransition $transition, &$data): AbstractState|bool
     {
         if(!empty($this->outputBuffer)) {
             $data->setOutput($this->getName(), $this->outputBuffer);
@@ -85,10 +102,12 @@ class SimpleParserState extends AbstractState
         
         $data->setCursor($this->cursor);
         
-        $nextState = true;
-        if($transition !== null) {
-            $nextState = $transition->perform();
-            // Exit transition.
+        if($transition === null) {
+            return true;
+        }
+
+        $nextState = $transition->perform();
+        if($transition instanceof SimpleParserTransition && $transition->isGroupBoundary()) {
             if($nextState === true) {
                 $nextState = $data->popState();
                 // If the stack was empty, return TRUE to exit.

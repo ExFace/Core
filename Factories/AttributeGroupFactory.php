@@ -4,7 +4,8 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParser;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserState;
-use exface\Core\CommonLogic\Utils\FiniteStateMachine\Transition;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractTransition;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserTransition;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\TransitionFinal;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
@@ -149,20 +150,19 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         $stateModifierArgs = new SimpleParserState('modifierArgs');
         
         // Configure alias state.
-        $stateAliases->addTransition(new Transition('(', $stateAliases));
-        $stateAliases->addTransition(new Transition('[', $stateModifiers));
-        $stateAliases->addTransition(new Transition(')', null));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition('(', $stateAliases, true));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition('[', $stateModifiers));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition(')', null, true));
         $stateAliases->addTokenRule('&', true, true);
         $stateAliases->addTokenRule('~', true, false);
         
         // Configure modifier state.
-        $stateModifiers->addTransition(new Transition('(', $stateModifierArgs));
-        $stateModifiers->addTransition(new Transition(']', null));
+        $stateModifiers->addTransitionBefore(new SimpleParserTransition('(', $stateModifierArgs, false, false));
+        $stateModifiers->addTransitionAfter(new SimpleParserTransition(']', null));
         $stateModifiers->addTokenRule(',', true, true);
 
         // Configure modifier args state. This is required to avoid splitting on inner ','.
-        $stateModifierArgs->addTransition(new Transition(')', null));
-        $stateModifierArgs->addTokenRule(',', true, true);
+        $stateModifierArgs->addTransitionAfter(new SimpleParserTransition(')', null, false, false));
 
         return new SimpleParser([
             $stateAliases,

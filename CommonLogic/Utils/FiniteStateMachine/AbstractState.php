@@ -4,17 +4,14 @@ namespace exface\Core\CommonLogic\Utils\FiniteStateMachine;
 
 abstract class AbstractState
 {
-    public const METADATA = 'metaData';
-    
     protected string $name;
-    protected array $transitions = [];
+    protected array $transitionsBefore = [];
+    protected array $transitionsAfter = [];
     protected array $patterns;
-    protected array $metaData;
 
-    function __construct(string $name, array $metaData = [])
+    function __construct(string $name)
     {
         $this->name = $name;
-        $this->metaData = $metaData;
     }
     
     public function getName() : string
@@ -22,25 +19,33 @@ abstract class AbstractState
         return $this->name;
     }
     
-    public function getTransitions() : array
+    public function addTransitionBefore(AbstractTransition $transition) : AbstractState
     {
-        return $this->transitions;
+        return $this->addTransition($transition, true);
+    }
+
+    public function addTransitionAfter(AbstractTransition $transition) : AbstractState
+    {
+        return $this->addTransition($transition, false);
     }
     
-    public function addTransition(Transition $transition) : AbstractState
+    protected function addTransition(AbstractTransition $transition, bool $before) : AbstractState
     {
-        $this->transitions[] = $transition;
+        if($before) {
+            $this->transitionsBefore[] = $transition;
+            
+        } else {
+            $this->transitionsAfter[] = $transition;
+            
+        }
+        
         return $this;
     }
     
-    public function getMetaData() : array
+    protected function checkTransitions($input, bool $beforeProcessing) : ?AbstractTransition
     {
-        return $this->metaData;
-    }
-
-    protected function checkTransitions($input) : ?Transition
-    {
-        foreach ($this->transitions as $transition) {
+        $transitions = $beforeProcessing ? $this->transitionsBefore : $this->transitionsAfter;
+        foreach ($transitions as $transition) {
             if($input === $transition->getTrigger()) {
                 return $transition;
             }
@@ -51,5 +56,5 @@ abstract class AbstractState
 
     public abstract function process($input, &$data) : AbstractState|bool;
     
-    public abstract function exit(?Transition $transition, &$data) : AbstractState|bool;
+    public abstract function exit(?AbstractTransition $transition, &$data) : AbstractState|bool;
 }

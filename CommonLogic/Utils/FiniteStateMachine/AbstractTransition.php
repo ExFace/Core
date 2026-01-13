@@ -2,17 +2,15 @@
 
 namespace exface\Core\CommonLogic\Utils\FiniteStateMachine;
 
-class Transition
+abstract class AbstractTransition
 {
     protected ?AbstractState $target;
     protected mixed $trigger;
-    protected array $transitionData;
     
-    function __construct(mixed $trigger, ?AbstractState $target, array $transitionData = [])
+    function __construct(mixed $trigger, ?AbstractState $target)
     {
         $this->target = $target;
         $this->trigger = $trigger;
-        $this->transitionData = $transitionData;
     }
     
     public function getTarget() : ?AbstractState
@@ -28,10 +26,5 @@ class Transition
     public function perform() : AbstractState|bool
     {
         return $this->target ?? true;
-    }
-    
-    public function getTransitionData() : array
-    {
-        return $this->transitionData;
     }
 }
