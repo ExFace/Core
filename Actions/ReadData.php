@@ -40,7 +40,8 @@ class ReadData extends AbstractAction implements iReadData
     
     private $widgetToReadFor = null;
     
-    private $customColumnsUxon = null;
+    private ?UxonObject $customColumnsUxon = null;
+    private ?UxonObject $customSortersUxon = null;
 
     /**
      * 
@@ -219,6 +220,40 @@ class ReadData extends AbstractAction implements iReadData
     {
         return $this->customColumnsUxon !== null;
     }
+
+    /**
+     *
+     * @return UxonObject|NULL
+     */
+    protected function getCustomSortersUxon() : ?UxonObject
+    {
+        return $this->customSortersUxon;
+    }
+
+    /**
+     * Explicitly specify sorting for this read operation
+     *
+     * @uxon-property sorters
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter
+     * @uxon-template [{"attribute_alias": "", "directions": "ASC"}]
+     *
+     * @param UxonObject $value
+     * @return ReadData
+     */
+    protected function setSorters(UxonObject $value) : ReadData
+    {
+        $this->customSortersUxon = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * @return bool
+     */
+    protected function hasCustomSorters() : bool
+    {
+        return $this->customSortersUxon !== null;
+    }
     
     /**
      * Modifies the given base widget adding `columns` and other properties explicitly defined in this action
@@ -228,7 +263,8 @@ class ReadData extends AbstractAction implements iReadData
     protected function applyCustomWidgetProperties(TaskInterface $task, WidgetInterface $baseWidget = null) : ?WidgetInterface
     {
         $uxonForCols = $this->getCustomColumnsUxon();
-        if ($uxonForCols === null) {
+        $uxonForSorters = $this->getCustomSortersUxon();
+        if ($uxonForCols === null && $uxonForSorters === null) {
             return $baseWidget;
         }
         
@@ -244,14 +280,18 @@ class ReadData extends AbstractAction implements iReadData
             // Remove any explicitly set widget id because we are going to instantiate
             // a new widget, which will fail with the same explicit id
             $uxon->unsetProperty('id');
-            $uxon->setProperty('columns', $uxonForCols);
         } else {
             $page = $task->getPageTriggeredOn();
             $uxon = new UxonObject([
                 'widget_type' => 'Data',
-                'object_alias' => $this->getMetaObject()->getAliasWithNamespace(),
-                'columns' => $uxonForCols->toArray()
+                'object_alias' => $this->getMetaObject()->getAliasWithNamespace()
             ]);
+        }
+        if ($uxonForCols !== null) {
+            $uxon->setProperty('columns', $uxonForCols);
+        }
+        if ($uxonForSorters !== null) {
+            $uxon->setProperty('sorters', $uxonForSorters);
         }
         
         return WidgetFactory::createFromUxon($page, $uxon);
