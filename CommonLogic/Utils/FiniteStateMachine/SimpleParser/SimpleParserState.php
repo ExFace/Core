@@ -95,6 +95,10 @@ class SimpleParserState extends AbstractState
 
     public function exit(?AbstractTransition $transition, &$data): AbstractState|bool
     {
+        if(!$data instanceof SimpleParserData) {
+            return true;
+        }
+        
         if(!empty($this->outputBuffer)) {
             $data->setOutput($this->getName(), $this->outputBuffer);
             $this->outputBuffer = [];
@@ -107,14 +111,13 @@ class SimpleParserState extends AbstractState
         }
 
         $nextState = $transition->perform();
-        if($transition instanceof SimpleParserTransition && $transition->isGroupBoundary()) {
-            if($nextState === true) {
-                $nextState = $data->popState();
-                // If the stack was empty, return TRUE to exit.
-                $nextState = $nextState ?? true;
-            } else {
-                $data->pushState($this);
-            }
+        if($nextState === true) {
+            $nextState = $data->popState();
+            // If the stack was empty, return TRUE to exit.
+            $nextState = $nextState ?? true;
+        } else {
+            $createGroup = $transition instanceof SimpleParserTransition && $transition->isGroupBoundary();
+            $data->pushState($this, $createGroup);
         }
         
         return $nextState;

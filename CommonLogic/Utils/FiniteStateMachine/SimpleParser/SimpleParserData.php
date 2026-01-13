@@ -36,7 +36,7 @@ class SimpleParserData
 
     public function setCursor(int $index) : SimpleParserData
     {
-        $this->cursor = min($index, $this->tokenCount - 1);
+        $this->cursor = $index;
         return $this;
     }
 
@@ -50,10 +50,14 @@ class SimpleParserData
         return $this->nextKey++;
     }
     
-    public function pushState(SimpleParserState $state) : SimpleParserData
+    public function pushState(SimpleParserState $state, bool $createGroup) : SimpleParserData
     {
         $this->stack[] = [$this->currentKey, $state];
-        $this->currentKey = $this->getOutputKey();
+        
+        if($createGroup) {
+            $this->currentKey = $this->getOutputKey();
+        }
+        
         return $this;
     }
     
