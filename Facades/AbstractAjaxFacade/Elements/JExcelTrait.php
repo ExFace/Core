@@ -2223,6 +2223,7 @@ JS;
         return <<<JS
         (function(){ 
             var jqEl = {$this->buildJsJqueryElement()};
+            if (jqEl.length === 0) return {};
 
             // if do_not_validate_dynamically is set to true,
             // we only validate once when getting the data here
@@ -2234,8 +2235,7 @@ JS;
                 jqEl[0].exfWidget.setDoNotValidate(true);
             }
 
-            var aRows;
-            if (jqEl.length === 0) return {};
+            var aRows;            
             aRows = jqEl[0].exfWidget.getData();
             
             // Remove any keys, that are not in the columns of the widget
