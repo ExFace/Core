@@ -147,7 +147,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         // Create states.
         $stateAliases = new SimpleParserState('aliases');
         $stateModifiers = new SimpleParserState('modifiers');
-        $stateModifierArgs = new SimpleParserState('modifierArgs');
+        $stateModifierArgs = new SimpleParserState('modifierArgs', true);
         
         // Configure alias state.
         $stateAliases->addTransitionAfter(new SimpleParserTransition('(', $stateAliases, true));
@@ -162,6 +162,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         $stateModifiers->addTokenRule(',', true, true);
 
         // Configure modifier args state. This is required to avoid splitting on inner ','.
+        $stateModifierArgs->addTransitionAfter(new SimpleParserTransition('(', $stateModifierArgs, false, false));
         $stateModifierArgs->addTransitionAfter(new SimpleParserTransition(')', null, false, false));
 
         return new SimpleParser([

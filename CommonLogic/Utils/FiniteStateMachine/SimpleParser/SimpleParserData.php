@@ -3,14 +3,12 @@
 namespace exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser;
 
 use exface\Core\CommonLogic\Model\SymfonyLexer;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractState;
 
 class SimpleParserData
 {
-    public const OUTPUT_BUFFER = 'buffer';
-    
     private int $nextKey = 0;
     private array $tokens;
-    private int $tokenCount;
     private int $cursor = 0;
     private array $output = [];
     private array $stack = [];
@@ -20,7 +18,6 @@ class SimpleParserData
     {
         $lexer = new SymfonyLexer($expression);
         $this->tokens = $lexer->getTokens();
-        $this->tokenCount = count($this->tokens);
         $this->currentKey = $this->getOutputKey();
     }
     
@@ -61,14 +58,25 @@ class SimpleParserData
         return $this;
     }
     
-    public function popState() : ?SimpleParserState
+    public function popState(AbstractState $previousState) : ?SimpleParserState
     {
         $result = array_pop($this->stack);
         if($result === null) {
             return null;
         }
         
+        $oldKey = $this->currentKey;
         $this->currentKey = $result[0];
+        
+        // New state belongs to a different group.
+        if($oldKey !== $this->currentKey) {
+            // Store a reference to the group we just exited.
+            $prevStateName = $previousState->getName();
+            $outputBuffer = $this->getOutputBuffer($prevStateName);
+            $outputBuffer[] = $oldKey;
+            $this->writeToOutputBuffer($prevStateName, $outputBuffer);
+        }
+        
         return $result[1];
     }
     
@@ -82,7 +90,7 @@ class SimpleParserData
         return $output ?? [];
     }
 
-    public function setOutput(string $key, array $data) : SimpleParserData
+    public function writeToOutputBuffer(string $key, array $data) : SimpleParserData
     {
         $this->output[$this->currentKey][$key] = $data;
         return $this;
@@ -91,5 +99,27 @@ class SimpleParserData
     public function getOutputAll() : array
     {
         return $this->output;
+    }
+    
+    public function getStackInfo() : array
+    {
+        $result = [];
+        
+        foreach ($this->stack as $element) {
+            if(empty($element)) {
+                $result[] = null;
+                continue;
+            }
+            
+            $group = $element[0];
+            $state = $element[1];
+            if($state instanceof AbstractState) {
+                $result[] = '[' . $group . '] ' . $state->getName();
+            } else {
+                $result[] = null;
+            }
+        }
+        
+        return $result;
     }
 }

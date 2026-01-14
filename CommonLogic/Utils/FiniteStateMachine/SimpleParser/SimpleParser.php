@@ -32,4 +32,14 @@ class SimpleParser extends AbstractStateMachine
     {
         return $this->data->getOutputAll();
     }
+    
+    public function getDebugInfo() : array
+    {
+        return [
+            'Active State' => $current = $this->current->getName(),
+            'Token' => $this->data->getToken($this->data->getCursor()),
+            'Stack' => $this->data->getStackInfo(),
+            'Buffer' => $this->data->getOutputAll()
+        ];
+    }
 }

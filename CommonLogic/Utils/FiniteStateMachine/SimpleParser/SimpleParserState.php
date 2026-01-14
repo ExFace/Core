@@ -10,9 +10,21 @@ class SimpleParserState extends AbstractState
     protected array $tokenRules = [];
     protected array $outputBuffer = [];
     protected int $cursor = -1;
-    
+    protected bool $concatenate;
+
+    public function __construct(string $name, bool $concatenate = false)
+    {
+        $this->concatenate = $concatenate;
+        parent::__construct($name);
+    }
+
+
     public function process($input, &$data): AbstractState|bool
     {
+        if(!$data instanceof SimpleParserData) {
+            return true;
+        }
+        
         $this->cursor = $input;
         $this->outputBuffer = $data->getOutputBuffer($this->getName());
         $stringBuffer = '';
@@ -100,7 +112,7 @@ class SimpleParserState extends AbstractState
         }
         
         if(!empty($this->outputBuffer)) {
-            $data->setOutput($this->getName(), $this->outputBuffer);
+            $data->writeToOutputBuffer($this->getName(), $this->outputBuffer);
             $this->outputBuffer = [];
         }
         
@@ -111,11 +123,15 @@ class SimpleParserState extends AbstractState
         }
 
         $nextState = $transition->perform();
+        
+        // Transition return.
         if($nextState === true) {
-            $nextState = $data->popState();
+            $nextState = $data->popState($this);
             // If the stack was empty, return TRUE to exit.
             $nextState = $nextState ?? true;
-        } else {
+        } 
+        // Transition to state.
+        else {
             $createGroup = $transition instanceof SimpleParserTransition && $transition->isGroupBoundary();
             $data->pushState($this, $createGroup);
         }
