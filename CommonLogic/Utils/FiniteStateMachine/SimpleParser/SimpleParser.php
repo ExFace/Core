@@ -8,8 +8,8 @@ class SimpleParser extends AbstractStateMachine
 {
     public function process(string $data = null) : ?array
     {
-        if($data === null) {
-            return null;
+        if($data === null || $data === '') {
+            return [];
         }
 
         $this->dataRaw = $data;
@@ -17,7 +17,7 @@ class SimpleParser extends AbstractStateMachine
         return parent::process()->getOutputAll();
     }
 
-    protected function getData(): SimpleParserData
+    protected function getDataForProcessing(): SimpleParserData
     {
         return $this->data;
     }

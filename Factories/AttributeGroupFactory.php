@@ -4,9 +4,7 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParser;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserState;
-use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractTransition;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserTransition;
-use exface\Core\CommonLogic\Utils\FiniteStateMachine\TransitionFinal;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
@@ -16,6 +14,8 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 abstract class AttributeGroupFactory extends AbstractStaticFactory
 {
 
+    public static ?SimpleParser $parser = null;
+    
     /**
      *
      * @param MetaObjectInterface $object
@@ -141,9 +141,18 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         
         return static::getAttributesByMagic($attributeList, $spells);
     }
-    
+
+    /**
+     * Constructs and configures a parser for attribute group aliases.
+     * 
+     * @return SimpleParser
+     */
     public static function getParser() : SimpleParser
     {
+        if(self::$parser !== null) {
+            return self::$parser;
+        }
+        
         // Create states.
         $stateAliases = new SimpleParserState('aliases');
         $stateModifiers = new SimpleParserState('modifiers');
@@ -162,14 +171,17 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         $stateModifiers->addTransitionAfter(new SimpleParserTransition(']', null));
         $stateModifiers->addTokenRule(',', true, true);
 
-        // Configure modifier args state. This is required to avoid splitting on inner ','.
+        // Configure modifier args state.
         $stateModifierArgs->addTransitionBefore(new SimpleParserTransition('(', $stateModifierArgs, $optionsWriteConcat));
         $stateModifierArgs->addTransitionAfter(new SimpleParserTransition(')', null, $optionsWriteConcat));
 
-        return new SimpleParser([
+        // Construct the parser.
+        self::$parser = new SimpleParser([
             $stateAliases,
             $stateModifiers,
             $stateModifierArgs
         ]);
+        
+        return self::$parser;
     }
 }
