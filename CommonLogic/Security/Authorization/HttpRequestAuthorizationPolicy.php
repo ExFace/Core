@@ -73,6 +73,8 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $applyIfConditionGroup = null;
     
+    private $applyInMaintenanceMode = false;
+    
     /**
      * 
      * @param WorkbenchInterface $workbench
@@ -113,7 +115,7 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthorizationPolicyInterface::authorize()
      */
-    public function authorize(UserImpersonationInterface $userOrToken = null, FacadeInterface $facade = null, ServerRequestInterface $request = null): PermissionInterface
+    public function authorize(UserImpersonationInterface $userOrToken = null, FacadeInterface $facade = null, ServerRequestInterface $request = null, bool $maintenanceMode = false): PermissionInterface
     {
         $applied = false;
         try {
@@ -207,6 +209,13 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                 } else {
                     $applied = true;
                 }
+            }
+            
+            if ($maintenanceMode === true) {
+                if ($this->getApplyInMaintenanceMode() === false) {
+                    return PermissionFactory::createNotApplicable($this, 'Condition `apply_in_maintenance_mode` is `false`');
+                }
+                $applied = true;
             }
             
             if ($applied === false) {
@@ -440,6 +449,30 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->applyIfUxon = $value;
         $this->applyIfConditionGroup = null;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function getApplyInMaintenanceMode() : bool
+    {
+        return $this->applyInMaintenanceMode === true;
+    }
+
+    /**
+     * Set to TRUE a make this policy apply even if maintenance mode is enabled in the debug context
+     * 
+     * @uxon-property apply_in_maintenance_mode
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    protected function setApplyInMaintenanceMode(bool $value) : HttpRequestAuthorizationPolicy
+    {
+        $this->applyInMaintenanceMode = $value;
         return $this;
     }
 }

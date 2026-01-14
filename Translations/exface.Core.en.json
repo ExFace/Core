@@ -195,6 +195,10 @@
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION_HINT": "Temporary re-route all messages to certain users or roles while interception is active. Multiple values can be separated by comma.",
     "CONTEXT.DEBUG.INTERCEPT_STARTED": "Intercepting ON: re-routing messages to %recipients%",
     "CONTEXT.DEBUG.INTERCEPT_STOPPED": "Intercepting OFF: all messages will be delivered normally",
+	"CONTEXT.DEBUG.MAINTENANCE_MODE": "Maintenance mode",
+	"CONTEXT.DEBUG.MAINTENANCE_MODE_HINT": "In maintenance the system will deny any HTTP access unless `apply_in_maintenance_mode` is explicitly set in the policies (by default only for SUPERUSERs)",
+	"CONTEXT.DEBUG.MAINTENANCE_STARTED": "Maintenance mode ON: restricted access",
+	"CONTEXT.DEBUG.MAINTENANCE_STOPPED": "Maintenance mode OFF: normal access",
     
     "CONTEXT.FAVORITES.NAME": "Favorites",
     
