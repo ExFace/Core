@@ -199,7 +199,9 @@ class ShowLookupDialog extends ShowDialog
                             $requiredColumnAliases[] = $inputWidget->getValueAttributeAlias();
                             $requiredColumnAliases[] = $inputWidget->getTextAttributeAlias();
                             foreach ($inputWidget->getValueLinksToThisWidget() as $link) {
-                                if (null !== $linkedCol = $link->getTargetColumnId()) {
+                                //only add those columns that actually represent valid attribute_alias of the object,
+                                //not others that for example might be calculations and are referenced by data_column_name
+                                if ((null !== $linkedCol = $link->getTargetColumnId()) && $inputWidget->getTable()->getMetaObject()->hasAttribute($linkedCol)) {
                                     $requiredColumnAliases[] = $linkedCol;
                                 }
                             }
