@@ -59,14 +59,14 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
     
     private ConditionalProperty $conditionGroup;
     
-    private string|ExpressionInterface|null $valueLeft = null;
+    private string|ExpressionInterface|bool|int|float|null $valueLeft = null;
     private ?ExpressionInterface $valueLeftExpr = null;
     private ?WidgetLinkInterface $valueLeftLink = null;
     private ?bool $valueLeftIsLink = null;
     
     private ?string $comparator = null;
     
-    private string|ExpressionInterface|null $valueRight = null;
+    private string|ExpressionInterface|bool|int|float|null $valueRight = null;
     private ?ExpressionInterface $valueRightExpr = null;
     private ?WidgetLinkInterface $valueRightLink = null;
     private ?bool $valueRightIsLink = null;
