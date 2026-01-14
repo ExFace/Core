@@ -883,8 +883,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         if ($uxon->hasProperty('object_alias') === false) {
             $uxon->setProperty('object_alias', $this->getTableObject()->getAliasWithNamespace());
         }
-        
-        if ($uxon->hasProperty('target_widget_id') ===  false) {
+        if ($uxon->hasProperty('target_widget_id') === false) {
             $uxon->setProperty('target_widget_id', $this->getId());
         }
         
