@@ -5692,6 +5692,39 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "File attachments with paths in DB",
+            "CREATED_ON": "2026-01-14 12:47:50",
+            "MODIFIED_ON": "2026-01-14 12:47:50",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f08b80dac242088b80025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "File attachments with paths in DB",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "Here is a good attachment DB table: `DOC_TYPE`, `DOC_ID`, `FILE_PATH`, `FILE_NAME`, `FILE_SIZE`, `MIME_TYPE`, etc. It is a good idea to save the relative file path in the DB! The path is calculated initially using the formula and written to the file relation attribute automatically. You can add other columns to the table if you need more metadata. ",
+                "",
+                "`DOC_TYPE` and `DOC_ID` are just there for the folder structure - they will often be SQL columns.",
+                "",
+                "The formula prefixes the file name with the `UID` of the attachment to allow to attach multiple files with the same name. Don't worry: when downloading, the user will still see the original file name because it is saved separately."
+            ],
+            "PROTOTYPE": "exface/core/Behaviors/FileAttachmentBehavior.php",
+            "UXON": {
+                "file_relation": "FILE_PATH",
+                "file_path_calculation": "=Concatenate(DOC_TYPE, '/', DOC_ID, '/', UID, '_', FILE_NAME)",
+                "override_file_attributes": {
+                    "filename_attribute": "FILE_NAME",
+                    "file_size_attribute": "FILE_SIZE",
+                    "mime_type_attribute": "MIME_TYPE",
+                    "time_created_attribute": "CREATED_ON",
+                    "time_modified_attribute": "MODIFIED_ON"
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
