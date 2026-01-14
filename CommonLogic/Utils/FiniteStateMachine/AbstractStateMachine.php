@@ -48,7 +48,9 @@ abstract class AbstractStateMachine
 
     /**
      * @param array $states
+     * An array with states to be added. The first element will be the initial state.
      * @param int   $maxIterations
+     * A total iteration limit to prevent infinite loops. Set to `-1` to disable the limit.
      */
     function __construct(array $states,  int $maxIterations = 100000)
     {
