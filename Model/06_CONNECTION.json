@@ -57,32 +57,34 @@
     ],
     "rows": [
         {
-            "_EXPORT_SUMMARY": "Local Folders",
+            "_EXPORT_SUMMARY": "Local files and folders",
             "CREATED_ON": "2016-11-21 10:52:08",
-            "MODIFIED_ON": "2019-10-01 07:58:31",
+            "MODIFIED_ON": "2026-01-14 08:38:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6afd88b5ffcd28943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
-            "LABEL": "Local Folders",
+            "LABEL": "Local files and folders",
             "CONNECTOR": "exface/core/DataConnectors/LocalFileConnector.php",
             "CONFIG": null,
             "READONLY": 0,
             "ALIAS": "LOCAL_FOLDERS"
         },
         {
-            "_EXPORT_SUMMARY": "Local Vendor Folders",
+            "_EXPORT_SUMMARY": "Local vendor files and folders",
             "CREATED_ON": "2016-11-22 10:15:14",
-            "MODIFIED_ON": "2020-08-26 07:56:40",
+            "MODIFIED_ON": "2026-01-14 08:38:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6b09c8ccac11d8943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
-            "LABEL": "Local Vendor Folders",
+            "LABEL": "Local vendor files and folders",
             "CONNECTOR": "exface/core/DataConnectors/LocalFileConnector.php",
-            "CONFIG": "$$~~rtvXw94zJjUXqZJdxxUJSQ8+91cpmn5PsyMUfnaMEyAlPYdiS2XlG+gE8xvGXQgHcspcfaJgsa2DdFFmRm+Qa5jQ8SYVJkU=",
+            "CONFIG": {
+                "use_vendor_folder_as_base": 1
+            },
             "READONLY": 0,
             "ALIAS": "LOCAL_VENDOR_FOLDERS"
         },
@@ -112,7 +114,9 @@
             "TIME_ZONE": null,
             "LABEL": "Local file",
             "CONNECTOR": "exface/core/DataConnectors/FileContentsConnector.php",
-            "CONFIG": "$$~~eEsDvEiPdaJVrQ5A3k/DmLm43Oh4sjnZbMNBuhN4gbfWt9CL0QOivf1Ze+xtdfua9fjPO3XZK+jGXh5TCuZHW3SyzsdafFXfgQ==",
+            "CONFIG": {
+                "error_if_file_not_found": false
+            },
             "READONLY": 0,
             "ALIAS": "LOCAL_FILE"
         },
@@ -187,7 +191,9 @@
             "TIME_ZONE": null,
             "LABEL": "Objects with FileBehavior",
             "CONNECTOR": "exface/core/DataConnectors/DataSourceFileConnector.php",
-            "CONFIG": "$$~~D76U58tQok+Vaw1dNtDdOyfyoSAphhiVVSNicx6Au8qdTFpHQhLAd4qg0hIUVlJjuIBZAwNsNVxSxsZcGRj07aKN/FBqNe3Fig==",
+            "CONFIG": {
+                "error_if_file_not_found": false
+            },
             "READONLY": 0,
             "ALIAS": "objects_with_filebehavior"
         },
@@ -202,7 +208,10 @@
             "TIME_ZONE": null,
             "LABEL": "Fake SMTP for Debugging",
             "CONNECTOR": "exface/core/DataConnectors/SmtpToNotificationAdapter.php",
-            "CONFIG": "$$~~mrV2T4IJvxvaHU4YnwrxxcIlmIAv3JPPacPjoPXYA+WReCcr30zNJGpSwjiZm8IupYG6zrUlnYZtAxKEeTKV4ezNrR3CHo+KVJyVPpwxP/6XflSKF6D0e2ICsvuE",
+            "CONFIG": {
+                "send_message_dump": true,
+                "from": "exface@exface.com"
+            },
             "READONLY": 0,
             "ALIAS": "fake_smtp_for_debugging"
         }

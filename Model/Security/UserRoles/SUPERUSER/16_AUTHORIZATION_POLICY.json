@@ -148,7 +148,7 @@
         {
             "_EXPORT_SUMMARY": "All facades for superusers",
             "CREATED_ON": "2020-05-11 09:43:39",
-            "MODIFIED_ON": "2022-12-02 09:35:44",
+            "MODIFIED_ON": "2026-01-14 08:52:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea936be4203981a9d10205857feb80",
@@ -160,7 +160,9 @@
             "TARGET_PAGE_GROUP": null,
             "TARGET_USER_ROLE": "0x11ea6c428d7e7e9fa3480205857feb80",
             "TARGET_OBJECT": null,
-            "CONDITION_UXON": null,
+            "CONDITION_UXON": {
+                "apply_in_maintenance_mode": true
+            },
             "TARGET_ACTION_MODEL": null,
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": "",

@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authorization;
 
+use exface\Core\Contexts\DebugContext;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -80,8 +83,9 @@ class HttpRequestAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function evaluatePolicies(FacadeInterface $facade, ServerRequestInterface $request, UserImpersonationInterface $userOrToken) : \Generator
     {
+        $maintenanceMode = $this->getWorkbench()->getConfig()->getOption(DebugContext::CFG_MAINTENANCE_MODE);
         foreach ($this->getPolicies($userOrToken) as $policy) {
-            yield $policy->authorize($userOrToken, $facade, $request);
+            yield $policy->authorize($userOrToken, $facade, $request, $maintenanceMode);
         }
     }
     
@@ -95,6 +99,17 @@ class HttpRequestAuthorizationPoint extends AbstractAuthorizationPoint
         return 0;
     }
     
+    protected function createAccessDeniedException(string $message, PermissionInterface $permission, UserImpersonationInterface $userOrToken, $resource = null, string $alias = null, \Throwable $previous = null): AuthorizationExceptionInterface
+    {
+        $maintenanceMode = $this->getWorkbench()->getConfig()->getOption(DebugContext::CFG_MAINTENANCE_MODE);
+        $e = parent::createAccessDeniedException($message, $permission, $userOrToken, $resource, $alias, $previous);
+        if ($maintenanceMode === true) {
+            $e->setStatusCode(503);
+            $e->setAlias('84GFTY6');
+        }
+        return $e;
+    }
+
     /**
      * 
      * {@inheritDoc}
