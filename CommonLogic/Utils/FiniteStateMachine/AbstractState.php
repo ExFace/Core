@@ -56,5 +56,5 @@ abstract class AbstractState
 
     public abstract function process($input, &$data) : AbstractState|bool;
     
-    public abstract function exit(?AbstractTransition $transition, &$data) : AbstractState|bool;
+    public abstract function exit(?AbstractTransition $transition, &$data, bool $before) : AbstractState|bool;
 }

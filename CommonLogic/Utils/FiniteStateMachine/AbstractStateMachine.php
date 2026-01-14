@@ -8,6 +8,8 @@ abstract class AbstractStateMachine
     protected ?AbstractState $initial = null;
     protected ?AbstractState $current = null;
     protected int $maxIterations;
+    protected mixed $dataRaw = null;
+    protected mixed $data;
 
     function __construct(array $states,  int $maxIterations = 100000)
     {
@@ -53,6 +55,15 @@ abstract class AbstractStateMachine
         }
         
         return $data;
+    }
+    
+    public function getDebugInfo() : array
+    {
+        return [
+            'Raw Input Data' => $this->dataRaw,
+            'Active State' => $this->current->getName(),
+            'Input' => $this->getInput($this->data)
+        ];
     }
     
     protected abstract function getData() : mixed;

@@ -9,6 +9,7 @@ class SimpleParserState extends AbstractState
 {
     protected array $tokenRules = [];
     protected array $outputBuffer = [];
+    protected string $stringBuffer = '';
     protected int $cursor = -1;
     protected bool $concatenate;
 
@@ -27,7 +28,8 @@ class SimpleParserState extends AbstractState
         
         $this->cursor = $input;
         $this->outputBuffer = $data->getOutputBuffer($this->getName());
-        $stringBuffer = '';
+        $this->stringBuffer = $data->getStringBuffer();
+        $data->setStringBuffer('');
         
         // Perform parsing.
         while (true) {
@@ -35,20 +37,18 @@ class SimpleParserState extends AbstractState
             $token = $data->getToken($this->cursor);
             // End of file.
             if(empty($token)) {
-                $this->writeBuffer($stringBuffer);
+                $this->appendToOutputBuffer($this->stringBuffer);
                 break;
             }
             $token = $token[array_key_first($token)];
-            
+            $this->cursor += 1;
+
             // Check for transitions BEFORE processing.
             $transition = $this->checkTransitions($token, true);
             if($transition !== null) {
-                // Write buffer to output.
-                $this->writeBuffer($stringBuffer);
-                return $this->exit($transition, $data);
+                return $this->exit($transition, $data, true);
             }
 
-            $this->cursor += 1;
             $split = false;
             $consume = false;
             
@@ -59,29 +59,27 @@ class SimpleParserState extends AbstractState
 
             // Perform split, if needed.
             if($split) {
-                $this->writeBuffer($stringBuffer);
-                $stringBuffer = '';
+                $this->appendToOutputBuffer($this->stringBuffer);
+                $this->stringBuffer = '';
             }
             
             // Add token to output buffer.
             if(!$consume) {
-                $stringBuffer .= $token;
+                $this->stringBuffer .= $token;
             }
 
             // Check for transitions AFTER processing.
             $transition = $this->checkTransitions($token, false);
             if($transition !== null) {
-                // Write buffer to output.
-                $this->writeBuffer($stringBuffer);
-                return $this->exit($transition, $data);
+                return $this->exit($transition, $data, false);
             }
         }
         
         // Exit.
-        return $this->exit(null, $data);
+        return $this->exit(null, $data, false);
     }
     
-    protected function writeBuffer(string $buffer) : void
+    protected function appendToOutputBuffer(string $buffer) : void
     {
         if(empty($buffer)) {
             return;
@@ -98,17 +96,34 @@ class SimpleParserState extends AbstractState
 
     protected function addTransition(AbstractTransition $transition, bool $before): AbstractState
     {
-        if($transition instanceof SimpleParserTransition && $transition->isConsumingToken()) {
-            $this->addTokenRule($transition->getTrigger(), false, true);
-        }
-        
+        $this->addTokenRule($transition->getTrigger(), false, true);
         return parent::addTransition($transition, $before);
     }
 
-    public function exit(?AbstractTransition $transition, &$data): AbstractState|bool
+    public function exit(?AbstractTransition $transition, &$data, bool $before): AbstractState|bool
     {
         if(!$data instanceof SimpleParserData) {
             return true;
+        }
+
+        $writeToken = $transition instanceof SimpleParserTransition && $transition->isWritingTokenToOutput();
+        $concat = $transition instanceof SimpleParserTransition && $transition->isConcat();
+
+        if($writeToken && ($concat || !$before)) {
+            $this->stringBuffer .= $transition->getTrigger();
+        }
+        
+        // Pass string buffer to next state.
+        if($concat) {
+            $data->setStringBuffer($this->stringBuffer);
+        }
+        // Append string buffer to output buffer.
+        else {
+            $this->appendToOutputBuffer($this->stringBuffer);
+            
+            if($writeToken) {
+                $data->setStringBuffer($transition->getTrigger());
+            }
         }
         
         if(!empty($this->outputBuffer)) {

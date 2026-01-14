@@ -2,33 +2,26 @@
 
 namespace exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser;
 
-use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractState;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractTransition;
 
 class SimpleParserTransition extends AbstractTransition
 {
-    private bool $isGroupBoundary;
-    private bool $consumeToken;
-
-    public function __construct(
-        mixed $trigger,
-        ?AbstractState $target,
-        bool $isGroupBoundary = false,
-        bool $consumeToken = true
-    )
-    {
-        $this->isGroupBoundary = $isGroupBoundary;
-        $this->consumeToken = $consumeToken;
-        parent::__construct($trigger, $target);
-    }
+    public const GROUP = 'group';
+    public const CONCAT = 'concat';
+    public const WRITE_TOKEN = 'write_token';
     
     public function isGroupBoundary() : bool
     {
-        return $this->isGroupBoundary;
+        return in_array(self::GROUP, $this->getOptions());
     }
-    
-    public function isConsumingToken() : bool
+
+    public function isConcat() : bool
     {
-        return $this->consumeToken;
+        return in_array(self::CONCAT, $this->getOptions());
+    }
+
+    public function isWritingTokenToOutput() : bool
+    {
+        return in_array(self::WRITE_TOKEN, $this->getOptions());
     }
 }

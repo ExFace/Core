@@ -150,20 +150,21 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         $stateModifierArgs = new SimpleParserState('modifierArgs', true);
         
         // Configure alias state.
-        $stateAliases->addTransitionAfter(new SimpleParserTransition('(', $stateAliases, true));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition('(', $stateAliases, [SimpleParserTransition::GROUP]));
         $stateAliases->addTransitionAfter(new SimpleParserTransition('[', $stateModifiers));
-        $stateAliases->addTransitionAfter(new SimpleParserTransition(')', null, true));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition(')', null, [SimpleParserTransition::GROUP]));
         $stateAliases->addTokenRule('&', true, true);
         $stateAliases->addTokenRule('~', true, false);
         
         // Configure modifier state.
-        $stateModifiers->addTransitionBefore(new SimpleParserTransition('(', $stateModifierArgs, false, false));
+        $optionsWriteConcat = [SimpleParserTransition::WRITE_TOKEN, SimpleParserTransition::CONCAT];
+        $stateModifiers->addTransitionBefore(new SimpleParserTransition('(', $stateModifierArgs, $optionsWriteConcat));
         $stateModifiers->addTransitionAfter(new SimpleParserTransition(']', null));
         $stateModifiers->addTokenRule(',', true, true);
 
         // Configure modifier args state. This is required to avoid splitting on inner ','.
-        $stateModifierArgs->addTransitionAfter(new SimpleParserTransition('(', $stateModifierArgs, false, false));
-        $stateModifierArgs->addTransitionAfter(new SimpleParserTransition(')', null, false, false));
+        $stateModifierArgs->addTransitionBefore(new SimpleParserTransition('(', $stateModifierArgs, $optionsWriteConcat));
+        $stateModifierArgs->addTransitionAfter(new SimpleParserTransition(')', null, $optionsWriteConcat));
 
         return new SimpleParser([
             $stateAliases,

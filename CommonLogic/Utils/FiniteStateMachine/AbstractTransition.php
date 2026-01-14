@@ -6,11 +6,13 @@ abstract class AbstractTransition
 {
     protected ?AbstractState $target;
     protected mixed $trigger;
+    protected array $options = [];
     
-    function __construct(mixed $trigger, ?AbstractState $target)
+    function __construct(mixed $trigger, ?AbstractState $target, array $options = [])
     {
         $this->target = $target;
         $this->trigger = $trigger;
+        $this->options = $options;
     }
     
     public function getTarget() : ?AbstractState
@@ -26,5 +28,10 @@ abstract class AbstractTransition
     public function perform() : AbstractState|bool
     {
         return $this->target ?? true;
+    }
+    
+    public function getOptions() : array
+    {
+        return $this->options;
     }
 }

@@ -6,14 +6,13 @@ use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractStateMachine;
 
 class SimpleParser extends AbstractStateMachine
 {
-    protected SimpleParserData $data;
-    
     public function process(string $data = null) : ?array
     {
         if($data === null) {
             return null;
         }
 
+        $this->dataRaw = $data;
         $this->data = new SimpleParserData($data);
         return parent::process()->getOutputAll();
     }
@@ -35,11 +34,10 @@ class SimpleParser extends AbstractStateMachine
     
     public function getDebugInfo() : array
     {
-        return [
-            'Active State' => $current = $this->current->getName(),
+        return array_merge(parent::getDebugInfo(), [
             'Token' => $this->data->getToken($this->data->getCursor()),
             'Stack' => $this->data->getStackInfo(),
             'Buffer' => $this->data->getOutputAll()
-        ];
+        ]);
     }
 }

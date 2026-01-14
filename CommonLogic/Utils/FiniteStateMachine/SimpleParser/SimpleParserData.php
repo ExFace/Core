@@ -13,6 +13,7 @@ class SimpleParserData
     private array $output = [];
     private array $stack = [];
     private int $currentKey;
+    private string $stringBuffer = '';
 
     function __construct(string $expression)
     {
@@ -121,5 +122,16 @@ class SimpleParserData
         }
         
         return $result;
+    }
+    
+    public function getStringBuffer() : string
+    {
+        return $this->stringBuffer;
+    }
+    
+    public function setStringBuffer(string $value) : SimpleParserData
+    {
+        $this->stringBuffer = $value;
+        return $this;
     }
 }
