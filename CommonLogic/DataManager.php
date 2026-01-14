@@ -32,13 +32,14 @@ class DataManager implements DataManagerInterface
     function getDataSource($uid, $data_connection_id_or_alias = NULL)
     {
         // first check the cache
-        if ($this->active_sources[$uid . '-' . $data_connection_id_or_alias]) {
-            return $this->active_sources[$uid . '-' . $data_connection_id_or_alias];
+        $cacheKey = $uid . '-' . $data_connection_id_or_alias;
+        if (null !== $cache = ($this->active_sources[$cacheKey] ?? null)) {
+            return $cache;
         }
         
         // if it is a new source, create it here
         $data_source = DataSourceFactory::createFromModel($this->getWorkbench(), $uid, $data_connection_id_or_alias);
-        $this->active_sources[$uid . '-' . $data_connection_id_or_alias] = $data_source;
+        $this->active_sources[$cacheKey] = $data_source;
         return $data_source;
     }
 
