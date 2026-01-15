@@ -161,8 +161,8 @@ return $debug_widget;
                             if (strcasecmp($header, 'Authorization') === 0) {
                                 // For Authorization headers keep the authorization type: e.g. Bearer, Basic, etc.
                                 // Mask the value only!
-                                $type = StringDataType::substringBefore($value, ' ', $header);
-                                $value = ($type !== $header ? $type . ' ' : '') . '***';
+                                list($type, $key) = explode(' ', $value ?? '');
+                                $value = ($type !== $value ? $type . ' ' : '') . ($key ? mb_substr($key, 0, 2) . '***' : '');
                             } else {
                                 // Otherwise mask everything leaving only the first two chars!
                                 $value = mb_substr($value, 0, 2) . '***';
@@ -391,9 +391,15 @@ MD;
     protected function isSensitiveData(string $headerName, $value) : bool
     {
         switch (true) {
+            // Do not mask the special WWW-Authenticate header - if it is there, it will say, what went wrong
+            // see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate
+            case $headerName === 'WWW-Authenticate': 
+                return false;
             case stripos($headerName, 'auth') !== false:
             case stripos($headerName, 'key') !== false:
             case stripos($headerName, 'secret') !== false:
+                // Only non-empty values are actually sensitive - keep empty values as is for debugging!
+                return empty($value) ? false : true;
             case is_string($value) && stripos($value, '-----BEGIN CERTIFICATE-----') === 0:
                 return true;
         }
