@@ -30,6 +30,7 @@ class SimpleParserState extends AbstractState
         $this->stringBuffer = $data->getStringBuffer();
         // We "consume" the string buffer to avoid side effects.
         $data->setStringBuffer('');
+        $token = null;
         
         // Perform parsing.
         while (true) {
@@ -37,8 +38,7 @@ class SimpleParserState extends AbstractState
             $token = $data->getToken($this->cursor);
             // End of file.
             if(empty($token)) {
-                $this->exit(null, $data, true);
-                break;
+                return $this->exit(null, $data, true);
             }
             
             // Get token. TODO Read and parse token type.
@@ -76,9 +76,6 @@ class SimpleParserState extends AbstractState
                 return $this->exit($transition, $data, false);
             }
         }
-        
-        // Exit.
-        return $this->exit(null, $data, false);
     }
 
     /**

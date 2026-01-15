@@ -13,6 +13,9 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 abstract class AttributeGroupFactory extends AbstractStaticFactory
 {
+    public const PARSER_ALIASES = 'aliases';
+    public const PARSER_MODIFIERS = 'modifiers';
+    
     private static ?SimpleParser $parser = null;
     
     /**
@@ -153,9 +156,9 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         }
         
         // Create states.
-        $stateAliases = new SimpleParserState('aliases');
-        $stateModifiers = new SimpleParserState('modifiers');
-        $stateModifierArgs = new SimpleParserState('modifierArgs', true);
+        $stateAliases = new SimpleParserState(self::PARSER_ALIASES);
+        $stateModifiers = new SimpleParserState(self::PARSER_MODIFIERS);
+        $stateModifierArgs = new SimpleParserState('modifierArgs');
         
         // Configure alias state.
         $stateAliases->addTransitionAfter(new SimpleParserTransition('(', $stateAliases, [SimpleParserTransition::GROUP]));
