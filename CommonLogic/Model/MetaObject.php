@@ -1276,9 +1276,6 @@ class MetaObject implements MetaObjectInterface
         $modifiers = [];
         $modifierGroups = [];
         
-        $parser = AttributeGroupFactory::getParser();
-        $output = $parser->process($aliasWithRelationPath);
-        
         // Extract modifiers.
         if(preg_match_all('/\[(.*?)\]/', $aliasWithRelationPath, $modifierGroups) > 0) {
             foreach ($modifierGroups[1] as $modifierGroup) {
