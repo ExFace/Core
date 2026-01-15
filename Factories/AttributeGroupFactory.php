@@ -13,8 +13,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 abstract class AttributeGroupFactory extends AbstractStaticFactory
 {
-
-    public static ?SimpleParser $parser = null;
+    private static ?SimpleParser $parser = null;
     
     /**
      *

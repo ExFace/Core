@@ -25,7 +25,7 @@ abstract class AbstractTransition
      * When this transition is triggered, the FSM will transition into this state. If set to `null` this transition
      * will simply exit the current state akin to a RETURN.
      * @param array              $options
-     * Pass additional options.
+     * Pass additional options. Check the available constants for this class, to see what options are available.
      */
     function __construct(mixed $trigger, ?AbstractState $target, array $options = [])
     {
