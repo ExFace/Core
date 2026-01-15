@@ -5,21 +5,18 @@ namespace exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractState;
 use exface\Core\CommonLogic\Utils\FiniteStateMachine\AbstractTransition;
 
+/**
+ * Parses an input string and writes the results into an output array, using its name as key.
+ * Use transitions to control the parser behavior between states. Add token rules for more fine-grained control
+ * over the parsed string.
+ */
 class SimpleParserState extends AbstractState
 {
     protected array $tokenRules = [];
     protected array $outputBuffer = [];
     protected string $stringBuffer = '';
     protected int $cursor = -1;
-    protected bool $concatenate;
-
-    public function __construct(string $name, bool $concatenate = false)
-    {
-        $this->concatenate = $concatenate;
-        parent::__construct($name);
-    }
-
-
+    
     public function process($input, &$data): AbstractState|bool
     {
         if(!$data instanceof SimpleParserData) {
@@ -27,8 +24,11 @@ class SimpleParserState extends AbstractState
         }
         
         $this->cursor = $input;
+        
+        // Get output buffer and string buffer.
         $this->outputBuffer = $data->getOutputBuffer($this->getName());
         $this->stringBuffer = $data->getStringBuffer();
+        // We "consume" the string buffer to avoid side effects.
         $data->setStringBuffer('');
         
         // Perform parsing.
@@ -37,9 +37,11 @@ class SimpleParserState extends AbstractState
             $token = $data->getToken($this->cursor);
             // End of file.
             if(empty($token)) {
-                $this->appendToOutputBuffer($this->stringBuffer);
+                $this->exit(null, $data, true);
                 break;
             }
+            
+            // Get token. TODO Read and parse token type.
             $token = $token[array_key_first($token)];
             $this->cursor += 1;
 
@@ -78,7 +80,13 @@ class SimpleParserState extends AbstractState
         // Exit.
         return $this->exit(null, $data, false);
     }
-    
+
+    /**
+     * append a given string as a new element to the current output buffer.
+     * 
+     * @param string $buffer
+     * @return void
+     */
     protected function appendToOutputBuffer(string $buffer) : void
     {
         if(empty($buffer)) {
@@ -87,13 +95,32 @@ class SimpleParserState extends AbstractState
         
         $this->outputBuffer[] = $buffer;
     }
-    
+
+    /**
+     * Add a token rule to this state.
+     * 
+     * Much like transitions, token rules react to a specified token. When this state encounters a token with an
+     * associated rule, it will modify its behavior accordingly.
+     * 
+     * WARNING: Token rules are unique per token and adding a transition always produces a token rule with 
+     * `($trigger, false, true)`. Be careful not to accidentally overwrite existing token rules.
+     * 
+     * @param string $token
+     * The token this rule applies to.
+     * @param bool   $split
+     * If TRUE, the current buffer will be written to the output and a new string is started. Acts similar to
+     * `explode($token, $string)`.
+     * @param bool   $consume
+     * If TRUE, the token will be consumed, without being added to the buffer. This means it will NOT show up in
+     * the final output.
+     * @return $this
+     */
     public function addTokenRule(string $token, bool $split, bool $consume) : SimpleParserState
     {
         $this->tokenRules[$token] = [$split, $consume];
         return $this;
     }
-
+    
     protected function addTransition(AbstractTransition $transition, bool $before): AbstractState
     {
         $this->addTokenRule($transition->getTrigger(), false, true);
