@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Selectors\AttributeGroupSelector;
-use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserData;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
 use exface\Core\Factories\RelationPathFactory;
