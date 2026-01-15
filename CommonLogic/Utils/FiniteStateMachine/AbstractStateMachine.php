@@ -9,6 +9,8 @@ use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserTr
 /**
  * A generic implementation of a finite state machine (FSM). 
  * 
+ * For an intuitive explanation see: https://gameprogrammingpatterns.com/state.html
+ * 
  * An FSM consists of any number of states with unique names that are connected via transitions. When given an input
  * and some data to process, the FSM will feed both into its current state, which may perform transformations and
  * other tasks. Once the active state meets a trigger condition defined in any of its transitions, it will perform
@@ -26,14 +28,14 @@ use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserTr
  * This abstract FSM is not suited to solve anything. Instead, you have to adapt it to your use-case.
  * Apart from implementing all abstract methods, you should also consider the following:
  * 
- * 1. Decide when and how input data is passed to the state machine. The easiest way is to override `process` with
+ * - Decide when and how input data is passed to the state machine. The easiest way is to override `process` with
  * an optional parameter and handle any wrapper conversions there. Assign the processed data to `$this->data` and 
  * remember to assign the raw input data to `$this->dataRaw` to enable better debugging info. 
- * 2. Create a useful data structure to wrap your input data. You will have to handle buffers and many other concerns,
+ * - Create a useful data structure to wrap your input data. You will have to handle buffers and many other concerns,
  * which is much easier if you're a dedicated data class.
- * 3. Override `getDebugInfo()` with `array_merge(parent::getDebugInfo(), [yourInfo])` to include more detailed info 
+ * - Override `getDebugInfo()` with `array_merge(parent::getDebugInfo(), [yourInfo])` to include more detailed info 
  * for your specialized case.
- * 4. Implement specialized versions for `AbstractTransition` and `AbstractState`.
+ * - Implement specialized versions for `AbstractTransition` and `AbstractState`.
  * 
  * @see AbstractState, AbstractTransition, SimpleParser, SimpleParserState, SimpleParserTransition
  */

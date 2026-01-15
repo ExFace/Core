@@ -160,7 +160,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         // Configure alias state.
         $stateAliases->addTransitionAfter(new SimpleParserTransition('(', $stateAliases, [SimpleParserTransition::GROUP]));
         $stateAliases->addTransitionAfter(new SimpleParserTransition('[', $stateModifiers));
-        $stateAliases->addTransitionAfter(new SimpleParserTransition(')', null, [SimpleParserTransition::GROUP]));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition(')', null));
         $stateAliases->addTokenRule('&', true, true);
         $stateAliases->addTokenRule('~', true, false);
         

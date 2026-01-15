@@ -110,6 +110,14 @@ use exface\Core\Factories\AttributeGroupFactory;
  */
 class SimpleParser extends AbstractStateMachine
 {
+    /**
+     * Parse a given string.
+     * 
+     * @param string|null $data
+     * @return array|null
+     * Returns the same value as `getOutput()`.
+     * @see SimpleParser::getOutput()
+     */
     public function process(string $data = null) : ?array
     {
         if($data === null || $data === '') {
@@ -130,7 +138,39 @@ class SimpleParser extends AbstractStateMachine
     {
         return $data->getCursor();
     }
-    
+
+    /**
+     * Returns an array with the following structure:
+     * 
+     *  ```
+     *
+     *   [
+     *       0 => [ // <- this is a group.
+     *           'stateName1' => [ // <- group elements are named by the states that wrote them.
+     *               "Output1",
+     *               "Output2",
+     *               1    // <- this is a reference to another group.
+     *               // ....
+     *           ]
+     *       ],
+     *       1 => [ // <- this is the group referenced above.
+     *           'stateName1' [ // <- state names may recur across groups.
+     *               "Output3",
+     *               "Output4",
+     *               // ....
+     *           ],
+     *           'stateName2' [ // <- not every state occurs in every group.
+     *                "Output5",
+     *                "Output6",
+     *                // ....
+     *            ]
+     *       ]
+     *   ]
+     *
+     *  ```
+     * 
+     * @return array
+     */
     public function getOutput() : array
     {
         return $this->data->getOutputAll();
