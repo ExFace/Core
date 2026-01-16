@@ -171,37 +171,133 @@ class PostgreSqlBuilder extends MySqlBuilder
     }
 
     /**
-     * @inheritdoc 
+     * {@inheritdoc}
+     * @see AbstractSqlBuilder::buildSqlJsonEncodeAsFlat()
      */
-    protected function buildSqlJsonEncodeAsFlat(array $keyValuePairs, string $initialJson = "'{}'"): string
+    protected function buildSqlJsonEncodeAsFlat(array $keyValuePairs, string $initialJson = "'{}'::jsonb"): string
     {
         $resultJson = $initialJson;
 
-        foreach ($keyValuePairs as $attributePath => $attributeValue) {
+        foreach ($keyValuePairs as $dslPath => $attributeValue) {
+            $pgPath = $this->dslJsonPathToPgPath((string) $dslPath);
+            $pathLiteral = "'" . $pgPath . "'";
+
             if ($attributeValue === null || $attributeValue === 'null') {
-                $resultJson = "JSON_REMOVE(" . $resultJson . ", '" . $attributePath . "')";
+                // delete from CURRENT result
+                $resultJson = "({$resultJson} #- {$pathLiteral})";
             } else {
-                $resultJson = "JSON_SET(" . $resultJson . ", '" . $attributePath . "', " . $attributeValue . ")";
+                $valueExpr = $this->pgJsonbValueExpr((string) $attributeValue);
+                // set on CURRENT result
+                $resultJson = "jsonb_set({$resultJson}, {$pathLiteral}, {$valueExpr}, true)";
             }
         }
 
         return $resultJson;
     }
 
+
+    protected function pgJsonbValueExpr(string $attributeValue): string
+    {
+        $v = trim($attributeValue);
+
+        // If caller already provides a json/jsonb expression, respect it
+        if (preg_match('/::\s*jsonb\b/i', $v) || preg_match('/::\s*json\b/i', $v)) {
+            // Ensure jsonb to satisfy jsonb_set
+            return preg_match('/::\s*json\b/i', $v) ? "({$v})::jsonb" : $v;
+        }
+
+        // Quoted string literal -> cast to text before to_jsonb (prevents unknown-type error)
+        if ($v !== '' && $v[0] === "'" && substr($v, -1) === "'") {
+            return "to_jsonb({$v}::text)";
+        }
+
+        // Numeric / boolean literals
+        $lower = strtolower($v);
+        if (is_numeric($v) || $lower === 'true' || $lower === 'false') {
+            return "to_jsonb({$v})";
+        }
+
+        // Fallback: treat as expression/column
+        return "to_jsonb({$v})";
+    }
+    
     /**
-     * @inheritdoc
+     * {@inheritdoc}
+     * @see AbstractSqlBuilder::buildSqlJsonRead()
+     */
+    protected function buildSqlJsonRead(string $address, string $jsonPath): string
+    {
+        $jsonAddress = $this->isAggregated()
+            ? $address
+            : $this->buildSqlJsonInitial($address);
+        $pgPath = $this->dslJsonPathToPgPath($jsonPath);
+        return "({$jsonAddress}) #>> '{$pgPath}'";
+    }
+    
+    /**
+     * Converts DSL JSON path to PostgreSQL path:
+     *   $.a.b                  -> {a,b}
+     *   $."exface.Core.OBJECT" -> {exface.Core.OBJECT}
+     */
+    protected function dslJsonPathToPgPath(string $jsonPath): string
+    {
+        $p = trim($jsonPath);
+
+        // Expect DSL style starting with $
+        if ($p !== '' && $p[0] === '$') {
+            $p = substr($p, 1);
+        }
+        $p = ltrim($p, '.');
+
+        $segments = [];
+        $len = strlen($p);
+        $i = 0;
+
+        while ($i < $len) {
+            if ($p[$i] === '.') { $i++; continue; }
+
+            // quoted segment: "...." (may contain dots)
+            if ($p[$i] === '"') {
+                $i++;
+                $buf = '';
+                while ($i < $len) {
+                    $ch = $p[$i];
+                    if ($ch === '\\' && $i + 1 < $len) { $buf .= $p[$i+1]; $i += 2; continue; }
+                    if ($ch === '"') { $i++; break; }
+                    $buf .= $ch;
+                    $i++;
+                }
+                $segments[] = $buf;
+                continue;
+            }
+
+            // unquoted until dot
+            $start = $i;
+            while ($i < $len && $p[$i] !== '.') $i++;
+            $seg = substr($p, $start, $i - $start);
+            if ($seg !== '') $segments[] = $seg;
+        }
+
+        return '{' . implode(',', $segments) . '}';
+    }
+
+
+    /**
+     * {@inheritdoc}
+     * @see AbstractSqlBuilder::buildSqlJsonInitial()
      */
     protected function buildSqlJsonInitial(string $columnName): string
     {
         return <<<SQL
-
-CASE 
-    WHEN {$columnName} IS NOT NULL AND {$columnName} IS JSON
-    THEN {$columnName}
+(
+  CASE
+    WHEN {$columnName} IS NOT NULL AND btrim({$columnName}) <> '' THEN {$columnName}
     ELSE '{}'
-END 
+  END
+)::jsonb
 SQL;
     }
+
 
     /**
      * PostgreSQL does not allow table aliases in the SET clause
