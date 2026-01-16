@@ -67,12 +67,12 @@
         {
             "_EXPORT_SUMMARY": "User: My Account [ShowUserAccountDialog]",
             "CREATED_ON": "2020-03-23 13:17:24",
-            "MODIFIED_ON": "2023-06-05 12:28:50",
+            "MODIFIED_ON": "2026-01-16 11:06:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea6d08a337463fa3480205857feb80",
             "OBJECT": "0x31343400000000000000000000000000",
-            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
+            "ACTION_PROTOTYPE": "exface/Core/Actions/ShowDialog.php",
             "ALIAS": "ShowUserAccountDialog",
             "NAME": "My Account",
             "SHORT_DESCRIPTION": "",
@@ -101,6 +101,9 @@
                         },
                         {
                             "attribute_alias": "LAST_NAME"
+                        },
+                        {
+                            "attribute_alias": "SET_DISABLED_COMMUNICATION_FLAG"
                         },
                         {
                             "attribute_alias": "DISABLED_COMMUNICATION_FLAG"
