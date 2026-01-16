@@ -3,7 +3,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Exceptions\FormulaNotFoundError;
-use Symfony\Component\ExpressionLanguage\Lexer;
 use exface\Core\Formulas\Calc;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -16,12 +15,8 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
  * @author ralf.mulansky
  *
  */
-class SymfonyTokenStream implements FormulaTokenStreamInterface
+class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInterface
 {
-    private $tokenStream = null;
-    
-    private $tokens = null;
-    
     private $formName = null;
     
     private $nestedForms = null;
@@ -31,47 +26,16 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     private $attributes = null;
     
     private $arguments = null;
-    
-    /**
-     * 
-     * @param string $expression
-     */
+
     public function __construct(string $expression)
     {
-        
-        //from symfony/ExpressionLanguage documentation:
-        //Control characters (e.g. \n) in expressions are replaced with whitespace.
-        //To avoid this, escape the sequence with a single backslash (e.g. \\n).
-        $expression = str_replace("\n", "\\n", $expression);
-        $expression = str_replace("\t", "\\t", $expression);
-        
         try {
-            $lexer = new Lexer();
-            $tokenStream = $lexer->tokenize($expression);
+            parent::__construct($expression);
         } catch (\Throwable $e) {
             throw new FormulaNotFoundError('Cannot parse formula: ' . $e->getMessage(), '7R34E52', $e);
         }
-        $this->tokenStream = $tokenStream;
     }
-    
-    /**
-     * 
-     * @return array
-     */
-    protected function getTokens() : array
-    {
-        if ($this->tokens === null) {
-            $tokens = [];
-            do {
-                $tok = $this->tokenStream->current;
-                $tokens[] = [$tok->type => $tok->value];
-                $this->tokenStream->next();
-            } while (! $this->tokenStream->isEOF());
-            $this->tokens = $tokens;
-        }
-        return $this->tokens;
-    }
-    
+
     /**
      * 
      * @return array
