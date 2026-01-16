@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -126,18 +127,10 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
      */
     public function sortByProperty(string $property, string $direction) : MetaAttributeGroupInterface
     {
-        $getter = 'get' . $property;
-        if(!method_exists(MetaAttributeInterface::class, $getter)) {
-            $getter = 'get' . ucfirst(strtolower($property));
-            if(!method_exists(MetaAttributeInterface::class, $getter)) {
-                return $this;
-            }
-        }
-
-        $descending = strtolower(trim($direction)) === 'desc';
-        $this->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) use ($getter, $descending) {
-            $aVal = $a->$getter();
-            $bVal = $b->$getter();
+        $descending = SortingDirectionsDataType::cast($direction) === SortingDirectionsDataType::DESC;
+        $this->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) use ($property, $descending) {
+            $aVal = $a->exportUxonObject()->getProperty($property);
+            $bVal = $b->exportUxonObject()->getProperty($property);
 
             try {
                 return strnatcasecmp($aVal, $bVal) * ($descending ? -1 : 1);
