@@ -1,9 +1,11 @@
 <?php
 namespace exface\Core\CommonLogic\QueryBuilder;
 
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\QueryBuilderException;
+use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -34,22 +36,38 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
 
     function __construct($alias, AbstractQueryBuilder $query, ConditionInterface $condition, QueryPart $parentQueryPart = null)
     {
-        parent::__construct($alias, $query, $parentQueryPart);
         $this->condition = $condition;
-        // If we filter over an attribute, which actually is a reverse relation, we need to explicitly tell the query, that
-        // it is a relation and not a direct attribute. Concider the case of CUSTOMER<-CUSTOMER_CARD. If we filter CUSTOMERs over
-        // CUSTOMER_CARD, it would look as if the CUSTOMER_CARD is an attribute of CUSTOMER. We need to detect this and transform
-        // the filter into CUSTOMER_CARD__UID, which would clearly be a relation.
-        if ($this->getAttribute()->isRelation() && $this->getAttribute()->getRelation()->isReverseRelation()) {
-            $attr = $this->getQuery()->getMainObject()->getAttribute(RelationPath::join($alias, $this->getAttribute()->getObject()->getUidAttributeAlias()));
-            $this->setAttribute($attr);
-        }
         
-        if ($this->getAttribute() instanceof CompoundAttributeInterface) {
-            if ($this->hasAggregator() === true) {
-                throw new RuntimeException('Cannot filter compound attributes with aggregators!');
-            }
-            $this->addChildQueryPart($this->getCompoundFilterGroup());
+        switch (true) {
+            case $condition->getExpression()->isMetaAttribute():
+                parent::__construct($alias, $query, $parentQueryPart);
+                
+                // If we filter over an attribute, which actually is a reverse relation, we need to explicitly tell the query, that
+                // it is a relation and not a direct attribute. Consider the case of CUSTOMER<-CUSTOMER_CARD. If we filter CUSTOMERs over
+                // CUSTOMER_CARD, it would look as if the CUSTOMER_CARD is an attribute of CUSTOMER. We need to detect this and transform
+                // the filter into CUSTOMER_CARD__UID, which would clearly be a relation.
+                if ($this->getAttribute()->isRelation() && $this->getAttribute()->getRelation()->isReverseRelation()) {
+                $attr = $this->getQuery()->getMainObject()->getAttribute(RelationPath::join($alias, $this->getAttribute()->getObject()->getUidAttributeAlias()));
+                $this->setAttribute($attr);
+                }
+        
+                if ($this->getAttribute() instanceof CompoundAttributeInterface) {
+                    if ($this->hasAggregator() === true) {
+                        throw new RuntimeException('Cannot filter compound attributes with aggregators!');
+                    }
+                    $this->addChildQueryPart($this->getCompoundFilterGroup());
+                }
+                break;
+            case $condition->getExpression()->isStatic():
+                // TODO add native support for static query parts
+                // Filter query parts are attribute query parts, so they require an attribute, unfortunately.
+                // This workaround will add a placeholder attribute here to overcome this
+                $dummyAlias = DataColumn::sanitizeColumnName(ltrim($condition->__toString(), '_'));
+                MetaObjectFactory::addAttributeTemporary($query->getMainObject(), $dummyAlias, $dummyAlias, '');
+                parent::__construct($dummyAlias, $query, $parentQueryPart);
+                break;
+            default:
+                throw new RuntimeException('Cannot use expression `' . $condition->getExpression()->__toString() . '` in a data query filter: only attributes and static expressions allowed!');
         }
     }
 
@@ -202,5 +220,13 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
         }
         
         throw new QueryBuilderException('Cannot transform filter ' . $condition->__toString() . ' into one with atomic comparators');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStatic() : bool
+    {
+        return $this->getCondition()->getExpression()->isStatic();
     }
 }

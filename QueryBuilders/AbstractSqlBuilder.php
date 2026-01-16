@@ -2331,7 +2331,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlWhereCondition(QueryPartFilter $qpart, $rely_on_joins = true)
     {
-        // The given
+        // This filter should go into the HAVING clause instead of WHERE
         if ($this->checkFilterBelongsInHavingClause($qpart, $rely_on_joins)) {
             return '';
         }
@@ -2339,6 +2339,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $this->getOptimizedComparator($qpart);
+        
+        // For static conditions: evaluate them in PHP and add an SQL that is always true or false in their place 
+        if ($qpart->isStatic()) {
+            $result = $qpart->getCondition()->evaluate();
+            return $this->buildSqlComment('Static expression') . '1 = ' . ($result ? '1' : '0');
+        }
 
         $select = $this->buildSqlDataAddress($attr);
         $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);
