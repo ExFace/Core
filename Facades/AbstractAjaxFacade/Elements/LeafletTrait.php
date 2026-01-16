@@ -1589,12 +1589,10 @@ JS;
             if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_CSS') . '"/>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_JS') . '"></script>';
-                break;
             }
             if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() !== false) {
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4JS') . '"></script>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS') . '"></script>';
-                break;
             }
             
             if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget()) {
