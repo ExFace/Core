@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\StringDataType;
+
 /**
  * The string formatter displays NULL values as empty string and takes care of all sorts of validation
  * 
@@ -49,5 +51,46 @@ function(mVal) {
                 return (bEmpty || ($checksOkJs));
             }($jsValue)
 JS;
-    }   
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function buildJsGetValidatorIssues(string $jsValue): string
+    {
+        $dataType = $this->getDataType();
+        if(!$dataType instanceof StringDataType) {
+            return parent::buildJsGetValidatorIssues($jsValue);
+        }
+        
+        $regex = $dataType->getValidatorRegex();
+        if($regex === null) {
+            return parent::buildJsGetValidatorIssues($jsValue);
+        }
+        
+        // Make sure the regex is global and not sticky.
+        $regex = StringDataType::removeRegexFlags($regex, ['g','y']);
+        $regex .= 'g';
+        
+        return <<<JS
+
+(function (sValue) {
+    var aIssues = [];
+    // StringDataType::getValidatorRegex()
+    var regex = {$regex}; 
+    
+    // Apply validator regex to string to extract matches.
+    var matches = sValue.match(regex);
+
+    // Extract unqiue matches.
+    for (const match of matches) {
+        if (aIssues.indexOf(match) === -1) {
+            aIssues.push('"' + match + '"');
+        }
+    }
+    
+    return aIssues;
+})($jsValue)
+JS;
+    }
 }

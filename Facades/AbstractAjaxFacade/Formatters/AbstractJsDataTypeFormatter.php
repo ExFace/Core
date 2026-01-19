@@ -81,4 +81,16 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     {
         return "({$jsVar} === null || {$jsVar} === undefined || {$jsVar} === '')";
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function buildJsGetValidatorIssues(string $jsValue): string
+    {
+        return <<<JS
+
+(function (value){return [];})({$jsValue})
+JS;
+
+    }
 }

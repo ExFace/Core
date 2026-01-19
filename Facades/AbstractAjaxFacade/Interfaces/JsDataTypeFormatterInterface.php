@@ -64,8 +64,17 @@ interface JsDataTypeFormatterInterface
      * @return string
      */
     public function buildJsFormatParser($jsInput);
-    
+
     public function buildJsValidator(string $jsValue) : string;
+
+    /**
+     * Builds an inline JS-Snippet that returns an array containing all validation issues detected
+     * for a given input. The snippet returns an empty array for valid inputs.
+     * 
+     * @param string $jsValue
+     * @return string
+     */
+    public function buildJsGetValidatorIssues(string $jsValue) : string;
 
     /**
      * Returns an inline JS snippet that contains a fallback value for empty values (such as `null`).
