@@ -54,18 +54,8 @@ trait JsUploaderTrait
 
         $fileNameDataType = $this->getUploader()->getFilenameAttribute()->getDataType();
         $fileNameFormatter = $this->getFacade()->getDataTypeFormatter($fileNameDataType);
-        $fileNameValidatorJs = $fileNameFormatter->buildJsValidator('oFileObj.name');
         $fileNameIssuesJs = $fileNameFormatter->buildJsGetValidatorIssues('oFileObj.name');
         
-        if(null !== $errorMessage = $fileNameDataType->getValidationErrorMessage()) {
-            $fileNameError = $errorMessage->getTitle();
-        } else {
-            $fileNameError = 
-                $fileNameDataType->getValidationErrorMessage() ?? 
-                $translator->translate("WIDGET.UPLOADER.ERROR_FILENAME_INVALID");
-        }
-        $fileNameError = StringDataType::endSentence($fileNameError);
-
         $maxFilenameLength = $this->getUploader()->getMaxFilenameLength() ?? 'null';
         $maxFileSize = $this->getUploader()->getMaxFileSizeMb() ?? 'null';
         
@@ -102,15 +92,9 @@ trait JsUploaderTrait
                     }
                 }
                 // Validate file name.
-                if({$fileNameValidatorJs}) {
-                    sError = {$this->escapeString($fileNameError)};
-                    var aIssues = {$fileNameIssuesJs};
-                    // If we could extract invalid characters, add them to the error message.
-                    if (aIssues.length > 0) {
-                        var sIssues = JSON.stringify(aIssues, null, 1).slice(1,-1);
-                        sError += ' ' + {$this->escapeString($translator->translate("WIDGET.UPLOADER.ERROR_FILENAME_INVALID_SYMBOLS"))};
-                        sError += ' ' + sIssues + '.';
-                    }
+                sFileNameError = {$fileNameIssuesJs};
+                if(sFileNameError !== '') {
+                    sError = sFileNameError;
                 }
 
                 if (sError !== undefined) {

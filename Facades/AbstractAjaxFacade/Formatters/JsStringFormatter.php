@@ -55,6 +55,7 @@ JS;
 
     /**
      * @inheritDoc
+     * TODO: Needs to be extended to include other reasons, like conditions or length.
      */
     public function buildJsGetValidatorIssues(string $jsValue): string
     {
@@ -67,6 +68,16 @@ JS;
         if($regex === null) {
             return parent::buildJsGetValidatorIssues($jsValue);
         }
+
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $regexIssuePreamble = json_encode($translator->translate('DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS'));
+        
+        if(null !== $message = $dataType->getValidationErrorMessage()) {
+            $msg = StringDataType::endSentence($message->getTitle());
+        } else {
+            $msg = $translator->translate('DATATYPE.VALIDATION.FILENAME_INVALID');
+        }
+        $msg = json_encode($msg);
         
         // Make sure the regex is global and not sticky.
         $regex = StringDataType::removeRegexFlags($regex, ['g','y']);
@@ -75,21 +86,26 @@ JS;
         return <<<JS
 
 (function (sValue) {
-    var aIssues = [];
+    var sIssues = {$msg};
+    
     // StringDataType::getValidatorRegex()
     var regex = {$regex}; 
-    
     // Apply validator regex to string to extract matches.
     var matches = sValue.match(regex);
 
-    // Extract unqiue matches.
-    for (const match of matches) {
-        if (aIssues.indexOf(match) === -1) {
-            aIssues.push(match);
+    var aRegexIssues = [];
+    if (matches !== null || matches.length > 0) {
+        // Extract unqiue matches.
+        for (const match of matches) {
+            if (aRegexIssues.indexOf(match) === -1) {
+                aRegexIssues.push(match);
+            }
         }
+        
+        sIssues += ' ' + {$regexIssuePreamble} + JSON.stringify(aRegexIssues, null, 1).slice(1,-1) + '.';
     }
     
-    return aIssues;
+    return sIssues;
 })($jsValue)
 JS;
     }
