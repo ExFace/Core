@@ -596,6 +596,8 @@
 	"WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED": "Only the following file types allowed: %extensions%!",
 	"WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED": "Only the following content types allowed: %mimetypes%!",
 	"WIDGET.UPLOADER.ERROR_FILE_TOO_BIG": "File too large: max. %mb% MB allowed!",
+	"WIDGET.UPLOADER.ERROR_FILENAME_INVALID": "Invalid filename!", 
+	"WIDGET.UPLOADER.ERROR_FILENAME_INVALID_SYMBOLS": "Illegal characters:",
 	"WIDGET.UPLOADER.ERROR_FILENAME_TOO_LONG": "File name too long: max. %length% characters allowed!",
 	"WIDGET.UPLOADER.HINT_EXTENSION_NOT_ALLOWED": "Only the following file types allowed: %extensions%.",
 	"WIDGET.UPLOADER.HINT_MIMETYPE_NOT_ALLOWED": "Only the following content types allowed: %mimetypes%.",

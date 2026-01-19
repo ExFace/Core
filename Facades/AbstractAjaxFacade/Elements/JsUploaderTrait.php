@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Uploader;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\BinaryDataType;
@@ -48,6 +49,39 @@ trait JsUploaderTrait
         } else {
             $mimeTypesJs = '[]';
         }
+
+        $fileNameDataType = $this->getUploader()->getFilenameAttribute()->getDataType();
+        $fileNameFormatter = $this->getFacade()->getDataTypeFormatter($fileNameDataType);
+        $fileNameValidatorJs = $fileNameFormatter->buildJsValidator('oFileObj.name');
+        
+        $fileNameIssuesJs = '""';
+        if($fileNameDataType instanceof StringDataType && null !== $regex = $fileNameDataType->getValidatorRegex()) {
+            // Make sure the regex is global and not sticky.
+            $regex = StringDataType::removeRegexFlags($regex, ['g','y']);
+            $regex .= 'g';
+            
+            // This JS snippet extracts invalid characters in order to display them to the user.
+            $fileNameIssuesJs = <<<JS
+
+(function (oFileObj) {
+    var aIssues = [];
+    // StringDataType::getValidatorRegex()
+    var regex = {$regex}; 
+    
+    // Apply validator regex to string to extract matches.
+    var matches = oFileObj.name.match(regex);
+
+    // Extract unqiue matches.
+    for (const match of matches) {
+        if (aIssues.indexOf(match) === -1) {
+            aIssues.push('"' + match + '"');
+        }
+    }
+    
+    return aIssues.join(', ');
+})(oFileObj)
+JS;
+        }
         
         $maxFilenameLength = $this->getUploader()->getMaxFilenameLength() ?? 'null';
         $maxFileSize = $this->getUploader()->getMaxFileSizeMb() ?? 'null';
@@ -83,6 +117,16 @@ trait JsUploaderTrait
                 if (iMaxNameLength && iMaxNameLength > 0) {
                     if (iMaxNameLength < oFileObj.name.length) {
                         sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILENAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
+                    }
+                }
+                // Validate file name.
+                if({$fileNameValidatorJs}) {
+                    sError = {$this->escapeString($translator->translate("WIDGET.UPLOADER.ERROR_FILENAME_INVALID"))};
+                    var sIssues = {$fileNameIssuesJs};
+                    // If we could extract invalid characters, add them to the error message.
+                    if (sIssues !== '') {
+                        sError += ' ' + {$this->escapeString($translator->translate("WIDGET.UPLOADER.ERROR_FILENAME_INVALID_SYMBOLS"))};
+                        sError += ' ' + sIssues + '.';
                     }
                 }
 
