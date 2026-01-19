@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\StringDataType;
+
 /**
  * The string formatter displays NULL values as empty string and takes care of all sorts of validation
  * 
@@ -49,5 +51,62 @@ function(mVal) {
                 return (bEmpty || ($checksOkJs));
             }($jsValue)
 JS;
-    }   
+    }
+
+    /**
+     * @inheritDoc
+     * TODO: Needs to be extended to include other reasons, like conditions or length.
+     */
+    public function buildJsGetValidatorIssues(string $jsValue): string
+    {
+        $dataType = $this->getDataType();
+        if(!$dataType instanceof StringDataType) {
+            return parent::buildJsGetValidatorIssues($jsValue);
+        }
+        
+        $regex = $dataType->getValidatorRegex();
+        if($regex === null) {
+            return parent::buildJsGetValidatorIssues($jsValue);
+        }
+
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $regexIssuePreamble = json_encode($translator->translate('DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS'));
+        
+        if(null !== $message = $dataType->getValidationErrorMessage()) {
+            $msg = StringDataType::endSentence($message->getTitle());
+        } else {
+            $msg = $translator->translate('DATATYPE.VALIDATION.FILENAME_INVALID');
+        }
+        $msg = json_encode($msg);
+        
+        // Make sure the regex is global and not sticky.
+        $regex = StringDataType::removeRegexFlags($regex, ['g','y']);
+        $regex .= 'g';
+        
+        return <<<JS
+
+(function (sValue) {
+    var sIssues = {$msg};
+    
+    // StringDataType::getValidatorRegex()
+    var regex = {$regex}; 
+    // Apply validator regex to string to extract matches.
+    var matches = sValue.match(regex);
+
+    var aRegexIssues = [];
+    if (matches !== null || matches.length > 0) {
+        // Extract unqiue matches.
+        for (const match of matches) {
+            if (aRegexIssues.indexOf(match) === -1) {
+                aRegexIssues.push(match);
+            }
+        }
+        
+        sIssues += ' ' + {$regexIssuePreamble} + JSON.stringify(aRegexIssues, null, 1).slice(1,-1) + '.';
+    }
+    
+    return sIssues;
+})($jsValue)
+JS;
+    }
 }
