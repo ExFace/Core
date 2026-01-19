@@ -85,7 +85,7 @@ JS;
     // Extract unqiue matches.
     for (const match of matches) {
         if (aIssues.indexOf(match) === -1) {
-            aIssues.push('"' + match + '"');
+            aIssues.push(match);
         }
     }
     

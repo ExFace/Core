@@ -105,9 +105,9 @@ trait JsUploaderTrait
                 if({$fileNameValidatorJs}) {
                     sError = {$this->escapeString($fileNameError)};
                     var aIssues = {$fileNameIssuesJs};
-                    var sIssues = aIssues.join(', ');
                     // If we could extract invalid characters, add them to the error message.
-                    if (sIssues !== '') {
+                    if (aIssues.length > 0) {
+                        var sIssues = JSON.stringify(aIssues, null, 1).slice(1,-1);
                         sError += ' ' + {$this->escapeString($translator->translate("WIDGET.UPLOADER.ERROR_FILENAME_INVALID_SYMBOLS"))};
                         sError += ' ' + sIssues + '.';
                     }
