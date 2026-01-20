@@ -233,6 +233,8 @@
     "DATATYPE.VALIDATION.MUST": "Muss",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "der Maske %regex% entsprechen",
+	"DATATYPE.VALIDATION.FILENAME_INVALID": "Ungültige Zeichenkette!",
+	"DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS": "Unzulässige Zeichen: ",
 	"DATATYPE.VALIDATION.AND": "und",
 	"DATATYPE.VALIDATION.MINMAX_CONDITION": "%condition% sein",
 	"DATATYPE.VALIDATION.CRON": "ein valider CRON-Ausdruck sein (z.B. \"0 0 * ? * * *\")",

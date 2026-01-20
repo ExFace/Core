@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Uploader;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\BinaryDataType;
@@ -33,6 +34,8 @@ trait JsUploaderTrait
      */
     protected function buildJsFileValidator(string $fileJs, string $fnOnErrorJs) : string
     {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        
         $extensions = $this->getWidget()->getUploader()->getAllowedFileExtensions();
         if (! empty($extensions)) {
             $extensions = array_unique($extensions);
@@ -48,11 +51,14 @@ trait JsUploaderTrait
         } else {
             $mimeTypesJs = '[]';
         }
+
+        $fileNameDataType = $this->getUploader()->getFilenameAttribute()->getDataType();
+        $fileNameFormatter = $this->getFacade()->getDataTypeFormatter($fileNameDataType);
+        $fileNameIssuesJs = $fileNameFormatter->buildJsGetValidatorIssues('oFileObj.name');
         
         $maxFilenameLength = $this->getUploader()->getMaxFilenameLength() ?? 'null';
         $maxFileSize = $this->getUploader()->getMaxFileSizeMb() ?? 'null';
         
-        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         return <<<JS
             (function(oFileObj, fnOnError){
                 var sError;
@@ -84,6 +90,11 @@ trait JsUploaderTrait
                     if (iMaxNameLength < oFileObj.name.length) {
                         sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILENAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
                     }
+                }
+                // Validate file name.
+                sFileNameError = {$fileNameIssuesJs};
+                if(sFileNameError !== '') {
+                    sError = sFileNameError;
                 }
 
                 if (sError !== undefined) {

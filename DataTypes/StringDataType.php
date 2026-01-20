@@ -861,4 +861,32 @@ class StringDataType extends AbstractDataType
 
         return implode('', $result);
     }
+
+    /**
+     * Removes all specified flags from a given regex. 
+     * 
+     * @param string     $regex
+     * @param array|null $flagsToRemove
+     * An array containing all the flags you wish to remove. If null or empty, all flags will be removed instead.
+     * @return string
+     */
+    public static function removeRegexFlags(string $regex, array $flagsToRemove = null) : string
+    {
+        // Match delimiter, pattern, optional flags
+        if (preg_match('/^(.+?)([a-z]*)$/i', $regex, $matches)) {
+            if(empty($flagsToRemove)) {
+                return $matches[1];
+            }
+            
+            $flags = $matches[2];
+            
+            // Remove the specified flags from the flags part
+            foreach ($flagsToRemove as $flagToRemove) {
+                $flags = str_replace($flagToRemove, '', $flags);
+            }
+            
+            return $matches[1] . $flags;
+        }
+        return $regex; // Return unchanged if no match
+    }
 }
