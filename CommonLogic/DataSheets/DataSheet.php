@@ -3425,6 +3425,7 @@ class DataSheet implements DataSheetInterface
         $debugSheet = $this->createDebugSheet();
         $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
             'widget_type' => 'InputUxon',
+            'id' => $debug_widget->getId() . '_DataSheet_InputUxon',
             'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
             'hide_caption' => true,
             'width' => '100%',
