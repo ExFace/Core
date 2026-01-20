@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2015-12-14 17:07:13",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2026-01-16 11:12:15",
+    "modified_on": "2026-01-20 15:48:20",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER",
@@ -58,7 +58,7 @@
                 "attribute_alias": "DISABLED_FLAG"
             },
             {
-                "attribute_alias": "SET_DISABLED_COMMUNICATION_FLAG",
+                "attribute_alias": "DISABLED_COMMUNICATION_SETTING",
                 "caption": "Comm. Flag"
             },
             {
