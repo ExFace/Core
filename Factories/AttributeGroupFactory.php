@@ -2,6 +2,9 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParser;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserState;
+use exface\Core\CommonLogic\Utils\FiniteStateMachine\SimpleParser\SimpleParserTransition;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
@@ -10,7 +13,11 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 abstract class AttributeGroupFactory extends AbstractStaticFactory
 {
-
+    public const PARSER_ALIASES = 'aliases';
+    public const PARSER_MODIFIERS = 'modifiers';
+    
+    private static ?SimpleParser $parser = null;
+    
     /**
      *
      * @param MetaObjectInterface $object
@@ -135,5 +142,48 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         }
         
         return static::getAttributesByMagic($attributeList, $spells);
+    }
+
+    /**
+     * Constructs and configures a parser for attribute group aliases.
+     * 
+     * @return SimpleParser
+     */
+    public static function getParser() : SimpleParser
+    {
+        if(self::$parser !== null) {
+            return self::$parser;
+        }
+        
+        // Create states.
+        $stateAliases = new SimpleParserState(self::PARSER_ALIASES);
+        $stateModifiers = new SimpleParserState(self::PARSER_MODIFIERS);
+        $stateModifierArgs = new SimpleParserState('modifierArgs');
+        
+        // Configure alias state.
+        $stateAliases->addTransitionAfter(new SimpleParserTransition('(', $stateAliases, [SimpleParserTransition::GROUP]));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition('[', $stateModifiers));
+        $stateAliases->addTransitionAfter(new SimpleParserTransition(')', null));
+        $stateAliases->addTokenRule('&', true, true);
+        $stateAliases->addTokenRule('~', true, false);
+        
+        // Configure modifier state.
+        $optionsWriteConcat = [SimpleParserTransition::WRITE_TOKEN, SimpleParserTransition::CONCAT];
+        $stateModifiers->addTransitionBefore(new SimpleParserTransition('(', $stateModifierArgs, $optionsWriteConcat));
+        $stateModifiers->addTransitionAfter(new SimpleParserTransition(']', null));
+        $stateModifiers->addTokenRule(',', true, true);
+
+        // Configure modifier args state.
+        $stateModifierArgs->addTransitionBefore(new SimpleParserTransition('(', $stateModifierArgs, $optionsWriteConcat));
+        $stateModifierArgs->addTransitionAfter(new SimpleParserTransition(')', null, $optionsWriteConcat));
+
+        // Construct the parser.
+        self::$parser = new SimpleParser([
+            $stateAliases,
+            $stateModifiers,
+            $stateModifierArgs
+        ]);
+        
+        return self::$parser;
     }
 }

@@ -157,8 +157,8 @@ class ObjectAttributeMutation extends AbstractMutation
      * Change the data type of the attribute including its custom options
      *
      * @uxon-property change_data_type
-     * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
-     * @uxon-template {"alias": ""}
+     * @uxon-type \exface\Core\Mutations\Prototypes\GenericUxonMutation[]
+     * @uxon-template {"change": {"// JSONpath to change": ""}}
      *
      * @param UxonObject $uxon
      * @return $this
