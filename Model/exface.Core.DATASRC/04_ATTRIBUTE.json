@@ -502,7 +502,7 @@
         {
             "_EXPORT_SUMMARY": "Connection [CONNECTION]",
             "CREATED_ON": "2017-04-19 13:10:01",
-            "MODIFIED_ON": "2026-01-13 11:53:28",
+            "MODIFIED_ON": "2026-01-20 09:50:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11e725017ff09a68b2650205857feb80",
@@ -527,13 +527,13 @@
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
-                "@T-SQL:(CASE WHEN [#~alias#].custom_connection_oid <> '' AND [#~alias#].custom_connection_oid IS NOT NULL THEN [#~alias#].custom_connection_oid ELSE [#~alias#].default_connection_oid END)",
                 "@pgSQL: (CASE",
                 "  WHEN [#~alias#].custom_connection_oid IS NOT NULL ",
                 "  THEN [#~alias#].custom_connection_oid",
                 "  ELSE [#~alias#].default_connection_oid ",
                 "END",
-                ")"
+                ")",
+                "@OTHER:(CASE WHEN [#~alias#].custom_connection_oid <> '' AND [#~alias#].custom_connection_oid IS NOT NULL THEN [#~alias#].custom_connection_oid ELSE [#~alias#].default_connection_oid END)"
             ],
             "OBJECT": "0x32340000000000000000000000000000",
             "FORMATTER": "",
