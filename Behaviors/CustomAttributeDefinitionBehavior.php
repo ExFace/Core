@@ -1512,8 +1512,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_defaults
      * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute
-     * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable":
-     *     false, "value_list_delimiter": ","}
+     * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable":false, "value_list_delimiter": ","}
      *
      * @uxon-placeholder [#~custom_attribute_name#]
      * @uxon-placeholder [#~custom_attribute_alias#]
