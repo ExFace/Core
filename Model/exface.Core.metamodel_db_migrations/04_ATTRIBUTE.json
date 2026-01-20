@@ -539,7 +539,7 @@
         {
             "_EXPORT_SUMMARY": "Rolled back [is_down]",
             "CREATED_ON": "2019-04-17 09:58:20",
-            "MODIFIED_ON": "2020-12-16 11:17:59",
+            "MODIFIED_ON": "2026-01-14 15:56:37",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e960f75d06bc8cafc2ecf4bb639fc6",
@@ -562,7 +562,7 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "is_down",
             "DATATYPE": "0x37000000000000000000000000000000",
-            "DATA_ADDRESS": "(CASE WHEN [#down_datetime#] > 0 AND [#failed_flag#] = 0 THEN 1 ELSE 0 END)",
+            "DATA_ADDRESS": "(CASE WHEN [#down_datetime#] IS NOT NULL AND [#failed_flag#] = 0 THEN 1 ELSE 0 END)",
             "OBJECT": "0x11e960ea52c375a6afc2ecf4bb639fc6",
             "FORMATTER": "",
             "DISPLAYORDER": null,

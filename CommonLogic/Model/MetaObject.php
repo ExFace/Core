@@ -1272,35 +1272,143 @@ class MetaObject implements MetaObjectInterface
             return $grp;
         }
 
-        // See if the alias has a relation path
-        if (null !== $relParts = RelationPath::slice($aliasWithRelationPath, -1)) {
-            list($relStr, $alias) = $relParts;
-            $relPath = RelationPathFactory::createFromString($this, $relStr);
-                try {
-                $relObj = $relPath->getEndObject();
-            } catch (Throwable $e) {
-                throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $aliasWithRelationPath . '" not found for object ' . $this->__toString() . ': invalid relation path!');
-            }
-            $grp = new AttributeGroup($this->getWorkbench(), $this, $relPath);
-            $grp->setAlias($aliasWithRelationPath);
-            $relGrp = $relObj->getAttributeGroup($alias);
-            foreach ($relGrp->getAttributes() as $attr) {
-                $grp->add($this->getAttribute(RelationPath::join($relStr, $attr->getAliasWithRelationPath())));
-            }
-            return $grp;
+        // If the alias does not contain any advanced syntax, we can use the simplified getter.
+        // This should also ensure full legacy functionality.
+        if(preg_match('/[\(\)\[\]]/', $aliasWithRelationPath) !== 1) {
+            return $this->getAttributeGroupSimple($aliasWithRelationPath);
         }
 
-        // If it is a local alias, see if we can load it
+        $parsedAlias = AttributeGroupFactory::getParser()->process($aliasWithRelationPath);
+        $finalAttributeGroup = null;
+        $resolvedAttributeGroups = [];
         
-        // First of all, look for a modifier
-        // Grp1[:SORT(ATTRIBUTE__ALIAS, ASC)] - required!
-        // Grp1[:SORT(POS, ASC)]
-        // ~EDITABLE[:SORT(ATTRIBUTE__ALIAS, ASC)]&~CUSTOM
-        // (Grp1&Grp2)[:SORT(ATTRIBUTE__ALIAS, ASC)] - probably also ver useful!
-        // If there is a modifier, we should not cache to group. Next time it is request,
-        // we need to do the sorting again. Otherwise, adding attributes to the base (unsorted)
-        // group would not affect to cached sorted group.
+        // Resolve parsed alias into attribute groups.
+        foreach ($parsedAlias as $groupIndex => $parserGroup) {
+            $attributeGroup = $resolvedAttributeGroups[$groupIndex];
+            // Parser group has already been resolved.
+            if($attributeGroup !== null) {
+                continue;
+            }
+
+            $attributeGroup = $this->resolveParserGroup($parserGroup, $parsedAlias, $resolvedAttributeGroups);
+            if($attributeGroup !== null) {
+                $resolvedAttributeGroups[$groupIndex] = [$attributeGroup, false];
+            }
+        }
         
+        // Now we assemble the final output group from all resolved groups, while skipping subgroups.
+        foreach ($resolvedAttributeGroups as list($attributeGroup, $isSubGroup)) {
+            if($isSubGroup) {
+                continue;
+            }
+
+            if($attributeGroup === null) {
+                continue;
+            } else if ($finalAttributeGroup === null) {
+                $finalAttributeGroup = new AttributeGroup($this->getWorkbench(), $this);
+                $finalAttributeGroup->setAlias($aliasWithRelationPath);
+            }
+
+            foreach ($attributeGroup->getAttributes() as $attribute) {
+                $attrAliasWithRelation = $attribute->getAliasWithRelationPath();
+                if(!$finalAttributeGroup->has($attrAliasWithRelation)) {
+                    $finalAttributeGroup->add($attribute);
+                }
+            }
+        }
+
+        // If we still don't have a group here - throw an error!
+        if ($finalAttributeGroup === null) {
+            throw new MetaAttributeGroupNotFoundError($this, 'Attribute group `' . $aliasWithRelationPath . '` not found for object ' . $this->__toString() . '!');
+        }
+        
+        return $finalAttributeGroup;
+    }
+
+    /**
+     * @param array $parserGroup
+     * @param array $allParserGroups
+     * @param array $resolvedAttributeGroups
+     * @return MetaAttributeGroupInterface|null
+     */
+    protected function resolveParserGroup(array $parserGroup, array $allParserGroups, array &$resolvedAttributeGroups) : ?MetaAttributeGroupInterface
+    {
+        $aliases = $parserGroup[AttributeGroupFactory::PARSER_ALIASES];
+        $modifiers = $parserGroup[AttributeGroupFactory::PARSER_MODIFIERS] ?? [];
+        
+        if(empty($aliases)) {
+            return null;
+        }
+        
+        $builtIn = '';
+        $result = [];
+        
+        foreach ($aliases as $alias) {
+            // Resolve group directly.
+            if(is_string($alias)) {
+                // Collect built-in alias.
+                if(mb_substr($alias, 0, 1) === '~') {
+                    $builtIn .= $alias;
+                    continue;
+                }
+
+                // Dynamic.
+                $result[] = $this->getAttributeGroup($alias);
+            }
+            // Resolve group reference.
+            else {
+                // Try to get referenced group.
+                if(key_exists($alias, $resolvedAttributeGroups)) {
+                    $group = $resolvedAttributeGroups[$alias][0];
+                }
+                // Reference needs to be resolved first.
+                else {
+                    $group = $this->resolveParserGroup($allParserGroups[$alias], $allParserGroups, $resolvedAttributeGroups);
+                }
+
+                // Mark resolved group as subgroup.
+                $resolvedAttributeGroups[$alias] = [$group, true];
+                
+                if($group !== null) {
+                    // Add resolved reference to output.
+                    $result[] = $group;
+                }
+            }
+        }
+
+        // Resolve built-in aliases.
+        $finalAttributeGroup = AttributeGroupFactory::createForObject($this, $builtIn);
+        // Merge all groups.
+        foreach ($result as $group) {
+            foreach ($group->getAttributes() as $attribute) {
+                $attrAliasWithRelation = $attribute->getAliasWithRelationPath();
+                if(!$finalAttributeGroup->has($attrAliasWithRelation)) {
+                    $finalAttributeGroup->add($attribute);
+                }
+            }
+        }
+
+        // Apply modifiers and return.
+        return $this->applyModifiersToGroup($finalAttributeGroup, $modifiers);
+    }
+
+    /**
+     * Returns an attribute group based on a simple alias that does not contain:
+     * - Modifiers
+     * - Subgroups
+     * - Concatenated aliases (except built-in)
+     * 
+     * @param string $aliasWithRelationPath
+     * @return MetaAttributeGroupInterface
+     */
+    protected function getAttributeGroupSimple(string $aliasWithRelationPath) : MetaAttributeGroupInterface
+    {
+        // See if the alias has a relation path
+        $relGroup = $this->getAttributeGroupViaRelation($aliasWithRelationPath);
+        if($relGroup !== null) {
+            return $relGroup;
+        }
+
         // Now that we have the local alias, try to get it via model loader
         $alias = $aliasWithRelationPath;
         $selector = new AttributeGroupSelector($this->getWorkbench(), $alias);
@@ -1311,7 +1419,7 @@ class MetaObject implements MetaObjectInterface
             $this->setLoadAttributeGroupsFromModel(false);
         }
         $grp = $this->attribute_groups[$alias] ?? null;
-        
+
         // If there is no direct match, see if the given alias simply lacks the namespace and try
         // without the namespace
         if ($grp === null && stripos($alias, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
@@ -1328,12 +1436,75 @@ class MetaObject implements MetaObjectInterface
                 $grp = $foundByAlias;
             }
         }
-        
+
         // If we still don't have a group here - throw an error!
         if ($grp === null) {
             throw new MetaAttributeGroupNotFoundError($this, 'Attribute group `' . $alias . '` not found for object ' . $this->__toString() . '!');
         }
+        
         return $grp;
+    }
+
+    /**
+     * @param string $aliasWithRelationPath
+     * @return MetaAttributeGroupInterface|null
+     */
+    protected function getAttributeGroupViaRelation(string $aliasWithRelationPath) : ?MetaAttributeGroupInterface
+    {
+        $relParts = RelationPath::slice($aliasWithRelationPath, -1);
+        // See if the alias has a relation path
+        if($relParts === null) {
+            return null;
+        }
+
+        list($relStr, $alias) = $relParts;
+        $relPath = RelationPathFactory::createFromString($this, $relStr);
+        try {
+            $relObj = $relPath->getEndObject();
+        } catch (Throwable $e) {
+            throw new MetaAttributeGroupNotFoundError($this, 'Attribute group "' . $aliasWithRelationPath . '" not found for object ' . $this->__toString() . ': invalid relation path!');
+        }
+
+        $relGroup = $relObj->getAttributeGroup($alias);
+        $grp = new AttributeGroup($this->getWorkbench(), $this, $relPath);
+        $grp->setAlias($aliasWithRelationPath);
+        foreach ($relGroup->getAttributes() as $attr) {
+            $grp->add($this->getAttribute(RelationPath::join($relStr, $attr->getAliasWithRelationPath())));
+        }
+
+        return  $grp;
+    }
+
+    /**
+     * @param MetaAttributeGroupInterface $group
+     * @param array                       $modifiers
+     * @return MetaAttributeGroupInterface
+     */
+    protected function applyModifiersToGroup(MetaAttributeGroupInterface $group, array $modifiers) : MetaAttributeGroupInterface
+    {
+        // TODO Since we only support basic sorting, the classless approach is fine. IF we want to extend this,
+        // TODO we might need proper classes for these modifiers.
+        // TODO We might also need a modifier parser.
+        foreach ($modifiers as $modifier) {
+            $type = [];
+            $result = preg_match_all('/:(.*?)\(/', $modifier, $type);
+            if($result !== 1) {
+                continue;
+            }
+            $type = $type[1][0];
+            $args = substr($modifier, strpos($modifier, '(') + 1, -1);
+            $args = explode(',', $args);
+            
+            switch ($type) {
+                case 'SORT':
+                    $group->sortByProperty($args[0], $args[1]);
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        return $group;
     }
 
     /**

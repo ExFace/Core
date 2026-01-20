@@ -1,9 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -122,19 +123,22 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
     }
 
     /**
-     * Returns the modifier for an attribute group alias: e.g. `:SORT(alias, ASC)` from `~EDITABLE[:SORT(alias, ASC)]`
-     * 
-     * @param string $aliaWithModifier
-     * @return string|null
+     * @inheritDoc
      */
-    public static function findModifier(string $aliaWithModifier) : ?string
+    public function sortByProperty(string $property, string $direction) : MetaAttributeGroupInterface
     {
-        $aliaWithModifier = trim($aliaWithModifier);
-        $alias = StringDataType::substringBefore($aliaWithModifier, '[', $aliaWithModifier);
-        if ($alias !== $aliaWithModifier) {
-            $modifier = mb_substr($aliaWithModifier, mb_strlen($alias) + 1);
-            return StringDataType::substringBefore($modifier, ']', null);
-        }
-        return null;
+        $descending = SortingDirectionsDataType::cast($direction) === SortingDirectionsDataType::DESC;
+        $this->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) use ($property, $descending) {
+            $aVal = $a->exportUxonObject()->getProperty($property);
+            $bVal = $b->exportUxonObject()->getProperty($property);
+
+            try {
+                return strnatcasecmp($aVal, $bVal) * ($descending ? -1 : 1);
+            } catch (\Throwable $e) {
+                return 0;
+            }
+        });
+
+        return $this;
     }
 }
