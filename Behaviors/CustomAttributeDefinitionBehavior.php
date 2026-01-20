@@ -39,7 +39,6 @@ use exface\Core\Interfaces\Events\CrudPerformedEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use function Symfony\Component\String\u;
 
 /**
  * Makes this object define custom attributes to be attached to another object in addition to its regular attributes. 
@@ -159,7 +158,7 @@ use function Symfony\Component\String\u;
  * 
  * If you have no `type_attribute` in your config at all, all attributes will have the same default model. Most
  * storage-behaviors provide their own default models. For example, the `CustomAttributesJsonBehavior` will have 
- * writable attributes while `CustomAttribtuesLookupBehavior` will have non-writable ones. 
+ * writable attributes while `CustomAttributesLookupBehavior` will have non-writable ones. 
  * 
  * Only change the default model if you know what you are doing. Here is what you can change: 
  * 
