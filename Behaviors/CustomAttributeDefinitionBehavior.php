@@ -1630,15 +1630,15 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
 
     /**
      * Set the caching strategy of this behavior:
-     * - `globally`: All calls are cached using their object namespace and their CustomAttributesDefinition as key. 
-     * This guarantees proper caching, unless the definition contains dynamic values that might resolve differently
-     * across multiple calls.
+     * - `globally`: Results are cached using the object namespace, CustomAttributesDefinition and evaluated static
+     * expressions as key-data.
      * - `never`: Debugging option that disables caching altogether. Use it to check, whether the cache is causing
      * issues and as a hotfix in case it is.
      * - `per_user`: Creates separate caches per user in addition to the regular caching logic.
      * 
-     * NOTE: Caching only has access tp static data to separate caches. If your attribute filters include any dynamic
-     * formulas caching is not possible and will be disabled, which might degrade performance.
+     * NOTE: If you want to benefit from caching avoid dynamic filter expressions. When generating cache keys, the 
+     * system only has access to static data. If your attribute filters contain any dynamic expressions caching is not 
+     * possible and will be disabled, which might degrade performance.
      * 
      * @uxon-property cache_attribute_data
      * @uxon-type [globally,never,per_user]
