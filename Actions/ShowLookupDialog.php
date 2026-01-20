@@ -185,15 +185,27 @@ class ShowLookupDialog extends ShowDialog
                     $cols = [];
                     $requiredColumnAliases = [];
                     switch (true) {
-                        // If the input widget is an InputCombotTable, we MUST inherit columns of its
+                        // If the input widget is an InputComboTable, we MUST inherit columns of its
                         // table because the lookup dialog should look the same as the dropdown table.
                         // Additionally, hidden columns MUST be inherited too, because they may be
                         // accessed by data- and value-getters and should be set in the InputComboTable
                         // after an item was looked up.
                         case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
                             $cols = $inputWidget->getTable()->getColumns();
+                            // IDEA can we move finding required columns to the widget calling the lookup?
+                            // We could add a `required_columns` property to the action and fill it from
+                            // InputComboTable::getLookupActionUxon(). However, we need to make sure, that method
+                            // is called AFTER all incoming links were collected.
                             $requiredColumnAliases[] = $inputWidget->getValueAttributeAlias();
                             $requiredColumnAliases[] = $inputWidget->getTextAttributeAlias();
+                            foreach ($inputWidget->getValueLinksToThisWidget() as $link) {
+                                //only add those columns that actually represent valid attribute_alias of the object,
+                                //not others that for example might be calculations and are referenced by data_column_name
+                                if ((null !== $linkedCol = $link->getTargetColumnId()) && $inputWidget->getTable()->getMetaObject()->hasAttribute($linkedCol)) {
+                                    $requiredColumnAliases[] = $linkedCol;
+                                }
+                            }
+                            $requiredColumnAliases = array_unique($requiredColumnAliases);
                             break;
                             // TODO inherit columns from other types of input widgets? Is it a good idea to
                             // inherit columns from tables? Could be a lot...
@@ -220,9 +232,10 @@ class ShowLookupDialog extends ShowDialog
                             }
                         }
                     }
+                    
                     // Add columns from the source table, that are not (yet) present in the lookup table
+                    $colsToAddUxons = [];
                     foreach ($cols as $col) {
-                        $makeHidden = false;
                         // Avoid duplicate columns!
                         // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
                         // different attributes, but having the same caption, we should NOT put them both in the
@@ -230,30 +243,39 @@ class ShowLookupDialog extends ShowDialog
                         // On the other hand, keeping hidden columns is important here because live-refs to columns
                         // of InputComboTables MUST also work with the data of the lookup dialog
                         foreach ($data_table->getColumns() as $existingCol) {
+                            // NOTE: there are cases, when the source column is required, but will still be detected
+                            // as "visual" duplicate here. We still skip at this point because it will be added later
+                            // from the $requiredColumnAliases as a hidden column.
+                            // For example, if the lookup table already has the NAME attribute because of its
+                            // default display position, and we are trying to inherit the LABEL column (having NAME
+                            // as the label-attribute of the object), a duplicate will be detected. But if LABEL
+                            // is explicitly required by the source InputComboTable, we still need to keep it! We
+                            // just need to hide it to avoid visual duplicates.
                             if ($this->isSameColumn($existingCol, $col, true)) {
-                                // If source column is actually required, only skip it if the existing column has the
-                                // exact same attribute alias - otherwise keep it, but make it hidden.
-                                // For example, if the lookup table already has the NAME attribute because of its
-                                // default display position, and we are trying to inherit the LABEL column (having NAME
-                                // as the label-attribute of the object), a duplicate will be detected. But if LABEL
-                                // is explicitly required by the source InputComboTable, we still need to keep it! We
-                                // just need to hide it to avoid visual duplicates.
-                                if (in_array($col->getAttributeAlias(), $requiredColumnAliases) && $col->getAttributeAlias() !== $existingCol->getAttributeAlias()) {
-                                    $makeHidden = true;
-                                } else {
-                                    continue 2;
-                                }
+                                continue 2;
                             }
                         }
                         
-                        $widgetType = $data_table->getColumnDefaultWidgetType();
-                        $colUxon = $col->exportUxonObject();
-                        $colUxon->setProperty('widget_type', $widgetType);
-                        if ($makeHidden === true) {
-                            $colUxon->setProperty('hidden', true);
+                        $colsToAddUxons[$col->getAttributeAlias()] = $col->exportUxonObject();
+                    }
+                    
+                    // Make sure, all required columns are there. If they are not, add them as hidden columns
+                    foreach ($requiredColumnAliases as $reqAlias) {
+                        if (! $data_table->getColumnByAttributeAlias($reqAlias) && ! array_key_exists($reqAlias, $colsToAddUxons)) {
+                            $colsToAddUxons[$reqAlias] = new UxonObject([
+                                'attribute_alias' => $reqAlias,
+                                'hidden' => true
+                            ]);
                         }
+                    }
+
+                    // Now add the missing columns
+                    $colType = $data_table->getColumnDefaultWidgetType();
+                    foreach ($colsToAddUxons as $colUxon) {
+                        $colUxon->setProperty('widget_type', $colType);
                         $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
                     }
+                    
                 } // END if ($targetWidget instanceof iUseInputWidget)
             } // END if ($this->isDefinedInWidget())
             
@@ -297,7 +319,7 @@ class ShowLookupDialog extends ShowDialog
      * @param bool $compareCaption
      * @return bool
      */
-    protected function isSameColumn(DataColumn $existingCol, DataColumn $newCol, bool $compareCaption = true, array $requiredAliases = []) : bool
+    protected function isSameColumn(DataColumn $existingCol, DataColumn $newCol, bool $compareCaption = true) : bool
     {
         // Compare captions if required - but only for visible columns! Keeping hidden columns is important
         // because live-refs to columns of InputComboTables MUST also work with the data of the lookup dialog

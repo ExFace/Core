@@ -26,16 +26,16 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 /**
  * Marks an object as attachment - a link between a document and a file
  * 
- * The object of this behavior will appear to the rest of the system, as though it actually contained the referenced file, 
- * even though it will simply hold the file metadata (most importantly the file path). On the other hand, this also means
- * attachments can be easily listed and filtered without actually accessing the file system where the files
- * are actually stored.
+ * The object of this behavior will appear to the rest of the system, as though it actually contains the referenced file
+ * along with some metadata (in particular, the reference to the object, that is attached to) - even though in reality
+ * it only holds the file metadata (most importantly the file path). This is a very effective way to save file
+ * references and metadata. In particular, attachments can be easily listed and filtered without actually accessing the 
+ * potentially sylow file system.
  * 
- * This is especially useful if you need to reference large data-items: Instead of being stored
- * as raw values on this object, which could severely slow down your application, they will be saved
- * as files. And whenever you need to access that data, they will automatically be loaded and become available
- * via the attributes of this object. Once everything is configured, you won't have to think about files or
- * folders at all!
+ * You can also use this behavior to store large data as files instead of attributes: e.g. the `axenox.ETL.file_upload`
+ * object will not store the contents of uploaded files in its database, but rather in the file system. The workbench
+ * will automatically read the files if needed - which is actually just for processing, not in the UI. Once everything 
+ * is configured, you won't have to think about files or folders at all!
  * 
  * ##  Configuration
  * 
@@ -74,12 +74,50 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  * store the full path here using `file_path_calculation` or create a read-only relation attribute, that will build
  * the path from other things with a formula or a custom SQL statement (if the attachment object resides in a SQL table).
  * 
+ * ### Best practices
+ * 
+ * #### Store the file path in the attachment data
+ * 
  * We recommend to use `file_path_calculation` to persist the file path. This has a number of advantages compared
  * to live calculated paths:
  * 
  * - You can see the file path in the raw attachment data (e.g. the SQL table)
  * - If you choose to change the storage structure, previously saved attachments will retain their paths. You have
  * the choice of migrating them (e.g. via SQL migration) or not.
+ * 
+ * You can use any data in the path calculation. A typical example of a path would be something like this: 
+ * `=Concatenate(DOC_TYPE, '/', DOC_ID, '/', UID, '_', FILE_NAME)` where
+ * 
+ * - `DOC_TYPE` and `DOC_ID` often reference the document we attach to (either saved in the attachment data or read
+ * dynamically via SQL)
+ * - `UID` is the primary key of the attachment data - using it in the path helps avoid conflicts when multiple
+ * files are uploaded with the same name (e.g. all files produced by the iOS camera called from the browser have
+ * the same name)
+ * - `FILE_NAME` is the original file name as provided by the upload. It is a good idea to save it separately
+ * because you will mostly want to download the attachment with the very same file name.
+ * 
+ * Using path schemes like this will make sure, attachment files are easy to find on the file system and easy
+ * to match with the additional data from the attachment object.
+ * 
+ * #### Use the UID of the attachment object in the file path
+ * 
+ * As already mentioned above, it is a good idea to include the UID of the attachment as part of the folder or file
+ * names. This ensures, that multiple files with the same name can be attached to the same object. There are a lot
+ * of cases, when the names of different files might be the same. People do not like to rename them.
+ * 
+ * #### Store the original file name in the attachment data
+ * 
+ * The name of the file on the file system may be different, but you will want do download the attachment with the
+ * original file name.
+ * 
+ * #### Store as much descriptive data as possible in the attachment
+ * 
+ * If you store the mime type, file size, creating time, etc. in the attachment object, you will not have to rely on
+ * this data the file system. Not all file system can really store this data reliably. Storing it in the attachment
+ * data also greatly speeds ups sorting and filtering! 
+ * 
+ * Using `override_file_attributes` you control, which file information is actually taken from the file and what is
+ * read from the attachment data.
  * 
  * ## Saving comments for each attachment
  * 
@@ -106,7 +144,7 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  * files to be kept even if the attachments are deleted.
  * 
  * ## Examples
- *
+ * 
  * ### Persisted paths calculated from data
  * 
  * In this example, we are attaching files to an INVOICE object. The FILE_STORAGE object contains the
@@ -125,7 +163,7 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  * Storing creation/modification timestamps and mime type in the attachment object and overriding the
  * corresponding file attributes allows us to use them as filters/sorters for attachments without querying the
  * slow file system.
- *
+ * 
  * ```
  *  {
  *      "file_relation": "FILE_STORAGE",
@@ -144,7 +182,7 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  *
  * Used in `axenox.ETL.webservice_request`, the storage object is `axenox.ETL.webservice_request_storage`. The
  * `body_file` attribute is a read-only SQL statement in this case.
- *
+ * 
  * ```
  *  {
  *      "file_relation": "body_file",
@@ -237,11 +275,11 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     private $inProgress = false;
 
     /**
-     * Relation path to the file storage object.
+     * Relation path to the file storage object (typically the file path within the storage data source).
      *
      * Enter the attribute alias that points to the actual file storage. This attribute should usually
-     * have the datatype `File Path`, and be a relation to an object that inherits from `exface.Core.FILE`. Do NOT enter the actual
-     * relation, just the attribute alias that contains the relation (DO: `file_path`, DON'T: `file_path__...`).
+     * have the datatype `File Path`, and be a relation to an object that inherits from `exface.Core.FILE`. Just
+     * enter the relation here, not a related attribute - e.g. `file_path` and NOT `file_path__...`.
      *
      * @uxon-property file_relation
      * @uxon-type metamodel:relation
@@ -1137,7 +1175,27 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     }
 
     /**
-     * A formula to calculate the file path from the values of other attributes
+     * A formula to calculate the file path from the values of other attributes in case the path is to be saved completely
+     * 
+     * **NOTE:** it is generally a good idea to save the full path in the attachment object instead of calculating
+     * it dynamically via Formula, SQL or similar! On the one hand, this simply makes it easier to find the files when
+     * looking at the raw data source (e.g. SQL DB), on the other hand, saving the path will allow you to change the
+     * path calculation logic in future without having to migrate existing files.
+     * 
+     * Put the formula to calculate the path initially into `file_path_calculation` and it will be saved into the
+     * `file_relation` attribute automatically. You can use any data in the path calculation. A typical example of
+     * a path would be something like this: `=Concatenate(DOC_TYPE, '/', DOC_ID, '/', UID, '_', FILE_NAME)` where
+     * 
+     * - `DOC_TYPE` and `DOC_ID` often reference the document we attach to (either saved in the attachment data or read
+     * dynamically via SQL)
+     * - `UID` is the primary key of the attachment data - using it in the path helps avoid conflicts when multiple
+     * files are uploaded with the same name (e.g. all files produced by the iOS camera called from the browser have 
+     * the same name)
+     * - `FILE_NAME` is the original file name as provided by the upload. It is a good idea to save it separately
+     * because you will mostly want to download the attachment with the very same file name.
+     * 
+     * Using path schemes like this will make sure, attachment files are easy to find on the file system and easy
+     * to match with the additional data from the attachment object.
      *
      * @uxon-property file_path_calculation
      * @uxon-type formula

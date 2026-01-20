@@ -686,7 +686,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             }
 
             // Instantiate a new custom attribute
-            $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageBehavior());
+            $attr = new CustomAttribute($targetObject, $name, $alias, $definition->getStorageBehavior(), $index);
             $attr->setDataAddress($address);
 
             switch (true) {
