@@ -282,7 +282,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         // DATATYPE
         self::KEY_DATA_TYPE => "exface.Core.String"
     ];
-    private string $cacheAttributeData = 'globally';
+    private string $cacheAttributeData = self::CACHE_SETTING_GLOBALLY;
 
     /**
      * {@inheritDoc}
