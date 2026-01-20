@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
@@ -34,7 +35,17 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
         }
         
         $class = static::getClassname($selector);
-        if (! class_exists($class)) {
+        // Do not directly throw an error if the custom class has problems (e.g. broken syntax). Fall back to the
+        // default app class instead. An error here would mean, the workbench cannot start as long as the class
+        // is not fixed, while even on dev-system we need the app to launch the IDE.
+        try {
+            if (!class_exists($class)) {
+                $class = $selector->getClassnameOfDefaultPrototype();
+            }
+        } catch (\Throwable $e) {
+            $selector->getWorkbench()->getLogger()->logException(
+                new AppNotFoundError('Cannot check if app class exists for "' . $selector->toString() . '" - broken PHP class? Falling back to generic app. ' . $e->getMessage(), null, $e)
+            );
             $class = $selector->getClassnameOfDefaultPrototype();
         }
         $app = new $class($selector);
