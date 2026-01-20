@@ -716,7 +716,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $attributes[] = $attr;
         }
 
-        if(!$fromCache) {
+        if(!$fromCache && $cacheKey !== null) {
             $this->getWorkbench()->getCache()->set(
                 $cacheKey,
                 [
@@ -729,7 +729,20 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         return $attributes;
     }
-    
+
+    /**
+     * Creates an empty datasheet template for a given CustomAttributesDefinition.
+     * 
+     * @param CustomAttributesDefinition $definition
+     * @param string                     $nameAlias
+     * @param string|null                $aliasAlias
+     * @param string|null                $typeAlias
+     * @param string|null                $storageKeyAlias
+     * @param string|null                $hintAlias
+     * @param string|null                $requiredAlias
+     * @param string|null                $groupsAlias
+     * @return DataSheetInterface
+     */
     protected function getAttributesSheetTemplate(
         CustomAttributesDefinition $definition,
         string $nameAlias,
@@ -791,7 +804,18 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         
         return $sheet;
     }
-    
+
+    /**
+     * Generate a cache key for given set of inputs.
+     * 
+     * Returns NULL if caching is disabled or not possible.
+     * 
+     * @param MetaObjectInterface        $targetObject
+     * @param CustomAttributesDefinition $definition
+     * @param ConditionGroup|null        $attributeFilters
+     * @param BehaviorLogBook            $logBook
+     * @return string|null
+     */
     protected function getCacheKey(
         MetaObjectInterface $targetObject,
         CustomAttributesDefinition $definition,
@@ -804,6 +828,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $logBook->addLine('Caching disabled because `cache_attribute_data` is set to `never`.');
             return null;
         }
+        $logBook->addLine('Attribute caching set to `' . $cacheSettings . '`.');
         
         $additionalSpecifiers = '';
         
@@ -815,23 +840,31 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             foreach ($attributeFilters->getRequiredExpressions() as $expression) {
                 if(!$expression->isStatic()) {
                     $logBook->addLine(
-                        'Caching disabled because a dynamic filter was detected: "' . $expression->__toString() . '"' .
-                        'This might degrade performance. If you want to use caching, make sure all filter expressions are static.'
+                        'Caching disabled because a dynamic filter was detected: "' . $expression->__toString() . '". ' .
+                        'This might degrade performance. If you want to benefit from  caching, make sure all filter ' .
+                        'expressions are static.'
                     );
                     
                     return null;
                 }
-
-                $evaluatedExpressions[] = $expression->evaluate();
+                
+                $string = $expression->__toString();
+                if(!key_exists($string, $evaluatedExpressions)) {
+                    $evaluatedExpressions[$string] = $expression->evaluate();
+                }
             }
 
-            $logBook->addLine('Separating cache by results from static formulas found in filters.');
-            $additionalSpecifiers .= json_encode($evaluatedExpressions);
+            if(!empty($evaluatedExpressions)) {
+                $encoded = json_encode($evaluatedExpressions);
+                $logBook->addLine('Separating cache by results from static formulas found in filters: ' . $encoded);
+                $additionalSpecifiers .= $encoded;
+            }
         }
         
         if($cacheSettings === self::CACHE_SETTING_USER) {
-            $userUid = $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid();
-            $logBook->addLine('Separating cache by user UID: "' . $userUid . '".');
+            $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+            $userUid = $user->getUid();
+            $logBook->addLine('Separating cache by user UID: "' . $userUid . '" ("' . $user->getName() . '").');
             $additionalSpecifiers .= $userUid;
         }
 
@@ -842,8 +875,17 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $targetObject->getAliasWithNamespace() . '__' .
             $hash;
     }
-    
-    protected function getCacheData(string $cacheKey = null) : array
+
+    /**
+     * Returns cache data for a given key.
+     * 
+     * Returns an empty array if no data was found or if an error ocurred.
+     * 
+     * @param string|null $cacheKey
+     * @return array
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    protected function getCacheData(?string $cacheKey) : array
     {
         if($cacheKey === null) {
             return [];
