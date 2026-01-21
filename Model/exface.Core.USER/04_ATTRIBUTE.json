@@ -661,9 +661,9 @@
         {
             "_EXPORT_SUMMARY": "Disable communication [DISABLED_COMMUNICATION_FLAG]",
             "CREATED_ON": "2023-06-01 16:06:16",
-            "MODIFIED_ON": "2026-01-20 16:04:44",
+            "MODIFIED_ON": "2026-01-21 15:57:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eea1a77a53f7c4a1a7025041000001",
             "SORTABLEFLAG": 1,
             "FILTERABLEFLAG": 1,
@@ -693,7 +693,7 @@
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "(CASE ",
-                "  WHEN ([#DISABLED_FLAG#] = 1 || [#DISABLED_COMMUNICATION_SETTING#] = 1) ",
+                "  WHEN ([#DISABLED_FLAG#] = 1 OR [#DISABLED_COMMUNICATION_SETTING#] = 1) ",
                 "  THEN 1",
                 "  ELSE 0",
                 "END)"
