@@ -245,7 +245,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
-    protected const CACHE_SETTING_GLOBALLY = 'globally';
+    protected const CACHE_SETTING_AUTO = 'auto';
     protected const CACHE_SETTING_NEVER = 'never';
     protected const CACHE_SETTING_USER = 'per_user';
     
@@ -282,7 +282,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         // DATATYPE
         self::KEY_DATA_TYPE => "exface.Core.String"
     ];
-    private string $cacheAttributeData = self::CACHE_SETTING_GLOBALLY;
+    private string $cacheAttributeData = self::CACHE_SETTING_AUTO;
 
     /**
      * {@inheritDoc}
@@ -1630,7 +1630,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
 
     /**
      * Set the caching strategy of this behavior:
-     * - `globally`: Results are cached using the object namespace, CustomAttributesDefinition and evaluated static
+     * - `auto`: Results are cached using the object namespace, CustomAttributesDefinition and evaluated static
      * expressions as key-data.
      * - `never`: Debugging option that disables caching altogether. Use it to check, whether the cache is causing
      * issues and as a hotfix in case it is.
@@ -1641,8 +1641,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * possible and will be disabled, which might degrade performance.
      * 
      * @uxon-property cache_attribute_data
-     * @uxon-type [globally,never,per_user]
-     * @uxon-template globally
+     * @uxon-type [auto,never,per_user]
+     * @uxon-template auto
      * 
      * @param string $value
      * @return $this
