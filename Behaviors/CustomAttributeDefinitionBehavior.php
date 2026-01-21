@@ -5,6 +5,7 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Behaviors\CustomAttributesDefinition;
+use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
@@ -33,6 +34,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Events\CrudPerformedEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -156,7 +158,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * If you have no `type_attribute` in your config at all, all attributes will have the same default model. Most
  * storage-behaviors provide their own default models. For example, the `CustomAttributesJsonBehavior` will have 
- * writable attributes while `CustomAttribtuesLookupBehavior` will have non-writable ones. 
+ * writable attributes while `CustomAttributesLookupBehavior` will have non-writable ones. 
  * 
  * Only change the default model if you know what you are doing. Here is what you can change: 
  * 
@@ -243,6 +245,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  */
 class CustomAttributeDefinitionBehavior extends AbstractBehavior
 {
+    protected const CACHE_SETTING_AUTO = 'auto';
+    protected const CACHE_SETTING_NEVER = 'never';
+    protected const CACHE_SETTING_USER = 'per_user';
+    
     protected const KEY_BASE = "CustomAttributesDefinition";   
     protected const KEY_DATA_TYPE = "data_type";
     protected const KEY_INHERITS_FROM = "inherits";
@@ -276,6 +282,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         // DATATYPE
         self::KEY_DATA_TYPE => "exface.Core.String"
     ];
+    private string $cacheAttributeData = self::CACHE_SETTING_AUTO;
 
     /**
      * {@inheritDoc}
@@ -499,25 +506,32 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         BehaviorLogBook $logBook,
     ) : array
     {
-        $nameAlias = $this->getNameAttributeAlias();
         $nameTpl = null;
-        $aliasAlias = $this->getAliasAttributeAlias();
         $aliasTpl = null;
-        $typeAlias = $this->getTypeAttributeAlias();
-        $storageKeyAlias = $this->getDataAddressAttributeAlias();
-        $hintAlias = $this->getHintAttributeAlias();
-        $requiredAlias = $this->getRequiredAttributeAlias();
-        $groupsAlias = $this->getAttributeGroupsAttributeAlias();
-        $attrDefaults = $this->getAttributeDefaults($definition);
+        $attrUxonPhs = [];
 
-        // Try to load from cache.
-        $cacheKey =
-            self::KEY_BASE . '__' .
-            $targetObject->getAliasWithNamespace() . '__' .
-            $definition->getHash();
+        $attrDefaults = $this->getAttributeDefaults($definition);
+        $attributeDefinitionsSheet = $this->getAttributesSheetTemplate(
+            $definition,
+            $nameAlias = $this->getNameAttributeAlias(),
+            $aliasAlias = $this->getAliasAttributeAlias(),
+            $typeAlias = $this->getTypeAttributeAlias(),
+            $storageKeyAlias = $this->getDataAddressAttributeAlias(),
+            $hintAlias = $this->getHintAttributeAlias(),
+            $requiredAlias = $this->getRequiredAttributeAlias(),
+            $groupsAlias = $this->getAttributeGroupsAttributeAlias(),
+        );
         
-        $cacheData = $this->getWorkbench()->getCache()->get($cacheKey);
+        // Try loading from cache.
+        $cacheKey = $this->getCacheKey(
+            $targetObject,
+            $definition,
+            $attributeDefinitionsSheet->getFilters(),
+            $logBook
+        );
+        $cacheData = $this->getCacheData($cacheKey);
         $fromCache = !empty($cacheData);
+        
         if($fromCache) {
             $attributeDefinitionsSheet = DataSheetFactory::createFromUxon(
                 $this->getWorkbench(),
@@ -526,54 +540,6 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $logBook->addLine('Loaded attribute definitions from cache.');
             $logBook->addDataSheet('From Cache', $attributeDefinitionsSheet->copy());
         } else {
-            // If loading from cache failed, we have to load from source.
-            if (null === $tplUxon = $definition->getDataSheetTemplateUxon()) {
-                $attributeDefinitionsSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
-            } else {
-                $attributeDefinitionsSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $tplUxon, $this->getObject());
-            }
-
-            $attributeDefinitionsSheet->getColumns()->addMultiple([
-                $nameAlias
-            ]);
-
-            if (null !== $aliasAlias) {
-                $attributeDefinitionsSheet->getColumns()->addFromExpression($aliasAlias);
-            }
-
-            if (null !== $typeAlias) {
-                $attributeDefinitionsSheet->getColumns()->addFromExpression($typeAlias);
-            }
-
-            if (null !== $storageKeyAlias) {
-                $attributeDefinitionsSheet->getColumns()->addFromExpression($storageKeyAlias);
-            }
-
-            if (null !== $hintAlias) {
-                $attributeDefinitionsSheet->getColumns()->addFromExpression($hintAlias);
-            }
-
-            if (null !== $requiredAlias) {
-                $attributeDefinitionsSheet->getColumns()->addFromExpression($requiredAlias);
-            }
-
-            if (null !== $groupsAlias) {
-                $attributeDefinitionsSheet->getColumns()->addFromExpression($groupsAlias);
-            }
-
-            if (null !== $filtersUxon = $this->getFiltersUxon()) {
-                $conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject());
-                if(empty($attributeDefinitionsSheet->getFilters())) {
-                    $attributeDefinitionsSheet->setFilters($conditionGroup);
-                } else {
-                    $attributeDefinitionsSheet->getFilters()->addNestedGroup($conditionGroup);
-                }
-            }
-
-            if (null !== $sortersUxon = $this->getSortersUxon()) {
-                $attributeDefinitionsSheet->getSorters()->importUxonObject($sortersUxon);
-            }
-
             if($typeAlias !== null && empty($this->getTypeModelsAll())) {
                 throw new BehaviorRuntimeError($this, 'Could not load custom attributes: No type models found in behavior on object "' . $this->getObject()->getAliasWithNamespace() . '"!', null, null, $logBook);
             }
@@ -749,7 +715,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $attributes[] = $attr;
         }
 
-        if(!$fromCache) {
+        if(!$fromCache && $cacheKey !== null) {
             $this->getWorkbench()->getCache()->set(
                 $cacheKey,
                 [
@@ -761,6 +727,176 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         }
         
         return $attributes;
+    }
+
+    /**
+     * Creates an empty datasheet template for a given CustomAttributesDefinition.
+     * 
+     * @param CustomAttributesDefinition $definition
+     * @param string                     $nameAlias
+     * @param string|null                $aliasAlias
+     * @param string|null                $typeAlias
+     * @param string|null                $storageKeyAlias
+     * @param string|null                $hintAlias
+     * @param string|null                $requiredAlias
+     * @param string|null                $groupsAlias
+     * @return DataSheetInterface
+     */
+    protected function getAttributesSheetTemplate(
+        CustomAttributesDefinition $definition,
+        string $nameAlias,
+        ?string $aliasAlias,
+        ?string $typeAlias,
+        ?string $storageKeyAlias,
+        ?string $hintAlias,
+        ?string $requiredAlias,
+        ?string $groupsAlias,
+    ) : DataSheetInterface
+    {
+        // If loading from cache failed, we have to load from source.
+        if (null === $tplUxon = $definition->getDataSheetTemplateUxon()) {
+            $sheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->getObject());
+        } else {
+            $sheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $tplUxon, $this->getObject());
+        }
+
+        $sheet->getColumns()->addMultiple([
+            $nameAlias
+        ]);
+
+        if (null !== $aliasAlias) {
+            $sheet->getColumns()->addFromExpression($aliasAlias);
+        }
+
+        if (null !== $typeAlias) {
+            $sheet->getColumns()->addFromExpression($typeAlias);
+        }
+
+        if (null !== $storageKeyAlias) {
+            $sheet->getColumns()->addFromExpression($storageKeyAlias);
+        }
+
+        if (null !== $hintAlias) {
+            $sheet->getColumns()->addFromExpression($hintAlias);
+        }
+
+        if (null !== $requiredAlias) {
+            $sheet->getColumns()->addFromExpression($requiredAlias);
+        }
+
+        if (null !== $groupsAlias) {
+            $sheet->getColumns()->addFromExpression($groupsAlias);
+        }
+
+        if (null !== $filtersUxon = $this->getFiltersUxon()) {
+            $conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $filtersUxon, $this->getObject());
+            if(empty($sheet->getFilters())) {
+                $sheet->setFilters($conditionGroup);
+            } else {
+                $sheet->getFilters()->addNestedGroup($conditionGroup);
+            }
+        }
+
+        if (null !== $sortersUxon = $this->getSortersUxon()) {
+            $sheet->getSorters()->importUxonObject($sortersUxon);
+        }
+        
+        return $sheet;
+    }
+
+    /**
+     * Generate a cache key for given set of inputs.
+     * 
+     * Returns NULL if caching is disabled or not possible.
+     * 
+     * @param MetaObjectInterface        $targetObject
+     * @param CustomAttributesDefinition $definition
+     * @param ConditionGroup|null        $attributeFilters
+     * @param BehaviorLogBook            $logBook
+     * @return string|null
+     */
+    protected function getCacheKey(
+        MetaObjectInterface $targetObject,
+        CustomAttributesDefinition $definition,
+        ?ConditionGroup $attributeFilters,
+        BehaviorLogBook $logBook
+    ) : ?string
+    {
+        $cacheSettings = $this->getCacheAttributeData();
+        if($cacheSettings === self::CACHE_SETTING_NEVER) {
+            $logBook->addLine('Caching disabled because `cache_attribute_data` is set to `never`.');
+            return null;
+        }
+        $logBook->addLine('Attribute caching set to `' . $cacheSettings . '`.');
+        
+        $additionalSpecifiers = '';
+        
+        // We need to check if any filters are dynamic, since dynamic filters cannot be resolved without reading
+        // the datasheet, which means there is no point in caching them.
+        if($attributeFilters !== null) {
+            $evaluatedExpressions = [];
+            
+            foreach ($attributeFilters->getRequiredExpressions() as $expression) {
+                if(!$expression->isStatic()) {
+                    $logBook->addLine(
+                        'Caching disabled because a dynamic filter was detected: "' . $expression->__toString() . '". ' .
+                        'This might degrade performance. If you want to benefit from  caching, make sure all filter ' .
+                        'expressions are static.'
+                    );
+                    
+                    return null;
+                }
+                
+                $string = $expression->__toString();
+                if(!key_exists($string, $evaluatedExpressions)) {
+                    $evaluatedExpressions[$string] = $expression->evaluate();
+                }
+            }
+
+            if(!empty($evaluatedExpressions)) {
+                $encoded = json_encode($evaluatedExpressions);
+                $logBook->addLine('Separating cache by results from static formulas found in filters: ' . $encoded);
+                $additionalSpecifiers .= $encoded;
+            }
+        }
+        
+        if($cacheSettings === self::CACHE_SETTING_USER) {
+            $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+            $userUid = $user->getUid();
+            $logBook->addLine('Separating cache by user UID: "' . $userUid . '" ("' . $user->getName() . '").');
+            $additionalSpecifiers .= $userUid;
+        }
+
+        $hash = $definition->getHash($additionalSpecifiers);
+
+        return
+            self::KEY_BASE . '__' .
+            $targetObject->getAliasWithNamespace() . '__' .
+            $hash;
+    }
+
+    /**
+     * Returns cache data for a given key.
+     * 
+     * Returns an empty array if no data was found or if an error ocurred.
+     * 
+     * @param string|null $cacheKey
+     * @return array
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    protected function getCacheData(?string $cacheKey) : array
+    {
+        if($cacheKey === null) {
+            return [];
+        }
+        
+        try {
+            $result = $this->getWorkbench()->getCache()->get($cacheKey) ?? [];
+        } catch (\Throwable $exception) {
+            $result = [];
+        }
+        
+        return $result;
     }
 
     /**
@@ -1376,7 +1512,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      * 
      * @uxon-property attribute_defaults
      * @uxon-type \exface\core\CommonLogic\Model\CustomAttribute
-     * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable": false, "value_list_delimiter": ","}
+     * @uxon-template {"editable": false, "required": false, "filterable": false, "sortable": false, "aggregatable":false, "value_list_delimiter": ","}
      *
      * @uxon-placeholder [#~custom_attribute_name#]
      * @uxon-placeholder [#~custom_attribute_alias#]
@@ -1479,6 +1615,41 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     protected function setAliasGeneratorType(string $aliasGeneratorType) : CustomAttributeDefinitionBehavior
     {
         $this->aliasGeneratorType = $aliasGeneratorType;
+        return $this;
+    }
+
+    /**
+     * Returns the caching strategy of this behavior.
+     * 
+     * @return string
+     */
+    protected function getCacheAttributeData(): string
+    {
+        return $this->cacheAttributeData;
+    }
+
+    /**
+     * Set the caching strategy of this behavior:
+     * - `auto`: Results are cached using the object namespace, CustomAttributesDefinition and evaluated static
+     * expressions as key-data.
+     * - `never`: Debugging option that disables caching altogether. Use it to check, whether the cache is causing
+     * issues and as a hotfix in case it is.
+     * - `per_user`: Creates separate caches per user in addition to the regular caching logic.
+     * 
+     * NOTE: If you want to benefit from caching avoid dynamic filter expressions. When generating cache keys, the 
+     * system only has access to static data. If your attribute filters contain any dynamic expressions caching is not 
+     * possible and will be disabled, which might degrade performance.
+     * 
+     * @uxon-property cache_attribute_data
+     * @uxon-type [auto,never,per_user]
+     * @uxon-template auto
+     * 
+     * @param string $value
+     * @return $this
+     */
+    protected function setCacheAttributeData(string $value) : CustomAttributeDefinitionBehavior
+    {
+        $this->cacheAttributeData = $value;
         return $this;
     }
 
