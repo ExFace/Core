@@ -10,7 +10,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use JsonSchema\Validator;
 
-class JsonDataType extends TextDataType
+class JsonDataType extends CodeDataType
 {
 
     private $prettify = false;

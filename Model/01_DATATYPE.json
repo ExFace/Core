@@ -183,7 +183,7 @@
         {
             "_EXPORT_SUMMARY": "HTML",
             "CREATED_ON": "1970-01-01 00:00:00",
-            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "2026-01-21 18:14:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31340000000000000000000000000000",
@@ -194,7 +194,7 @@
             "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
-                "widget_type": "InputText"
+                "widget_type": "InputCode"
             },
             "ALIAS": "HTML",
             "SHORT_DESCRIPTION": ""
@@ -1313,6 +1313,25 @@
             },
             "ALIAS": "Color",
             "SHORT_DESCRIPTION": "TODO"
+        },
+        {
+            "_EXPORT_SUMMARY": "Code",
+            "CREATED_ON": "2026-01-21 18:12:36",
+            "MODIFIED_ON": "2026-01-21 18:12:36",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f0907d61dc599c907d025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Code",
+            "PROTOTYPE": "exface/core/DataTypes/CodeDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputCode"
+            },
+            "ALIAS": "Code",
+            "SHORT_DESCRIPTION": "Base type for all sorts of program code"
         }
     ],
     "totals_rows": [],
