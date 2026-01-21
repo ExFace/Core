@@ -541,7 +541,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildSqlQuerySelect();
-        $query = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $query;
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
             $q->setDialect($this->getSqlDialectDefault());
@@ -996,7 +995,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insertColumns = implode(', ', $columns);
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
-            $sql = $this->buildSqlComment('CREATE ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
 
             $beforeSql = $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '');
@@ -1293,7 +1291,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     )
                 );
                 $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $uidWhere);
-                $sql = $this->buildSqlComment('UPDATE ' . $this->getMainObject()->getAlias(). ':') . "\n" . $sql;
                 $query = $data_connection->runSql($sql);
                 $affected_rows += $query->countAffectedRows();
                 $query->freeResult();
@@ -1302,7 +1299,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Then those to be update filtering over other values (i.e. mass-updates without selection of specific rows)
         if (count($updates_by_filter) > 0) {
             $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
-            $sql = $this->buildSqlComment('UPDATE ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
             $query = $data_connection->runSql($sql);
             $affected_rows = $query->countAffectedRows();
             $query->freeResult();
@@ -1448,7 +1444,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
 
         $sql = $this->buildSqlQueryDelete($where, implode(' ', $joins));
-        $sql = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
         $query = $data_connection->runSql($sql);
 
         return new DataQueryResultData([], $query->countAffectedRows());
@@ -1462,7 +1457,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $sql = $this->buildSqlQueryCount();
-        $sql = $this->buildSqlComment('SELECT ' . $this->getMainObject()->getAlias() . ':') . "\n" . $sql;
         $result = $data_connection->runSql($sql);
         $cnt = $result->getResultArray()[0][$this->buildSqlAliasForRowCounter()];
         $result->freeResult();
@@ -2337,7 +2331,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlWhereCondition(QueryPartFilter $qpart, $rely_on_joins = true)
     {
-        // The given
+        // This filter should go into the HAVING clause instead of WHERE
         if ($this->checkFilterBelongsInHavingClause($qpart, $rely_on_joins)) {
             return '';
         }
@@ -2345,6 +2339,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $this->getOptimizedComparator($qpart);
+        
+        // For static conditions: evaluate them in PHP and add an SQL that is always true or false in their place 
+        if ($qpart->isStatic()) {
+            $result = $qpart->getCondition()->evaluate();
+            return $this->buildSqlComment('Static expression') . '1 = ' . ($result ? '1' : '0');
+        }
 
         $select = $this->buildSqlDataAddress($attr);
         $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);

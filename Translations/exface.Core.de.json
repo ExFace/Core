@@ -193,6 +193,10 @@
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION_HINT": "Temporary re-route all messages to certain users or roles while interception is active. Multiple values can be separated by comma.",
     "CONTEXT.DEBUG.INTERCEPT_STARTED": "Interceptor AN: alle Nachrichten werden zu %recipients% umgeleitet",
     "CONTEXT.DEBUG.INTERCEPT_STOPPED": "Interceptor AUS: alle Nachrichten werden normal zugestellt",
+	"CONTEXT.DEBUG.MAINTENANCE_MODE": "Maintenance mode",
+	"CONTEXT.DEBUG.MAINTENANCE_MODE_HINT": "In maintenance the system will deny any HTTP access unless `apply_in_maintenance_mode` is explicitly set in the policies (by default only for SUPERUSERs)",
+	"CONTEXT.DEBUG.MAINTENANCE_STARTED": "Maintenance mode AN: eingeschränkter Zugriff",
+	"CONTEXT.DEBUG.MAINTENANCE_STOPPED": "Maintenance mode AUS: normaler Zugriff",
     
     "CONTEXT.FAVORITES.NAME": "Favoriten",
     
@@ -229,6 +233,8 @@
     "DATATYPE.VALIDATION.MUST": "Muss",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "der Maske %regex% entsprechen",
+	"DATATYPE.VALIDATION.FILENAME_INVALID": "Ungültige Zeichenkette!",
+	"DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS": "Unzulässige Zeichen: ",
 	"DATATYPE.VALIDATION.AND": "und",
 	"DATATYPE.VALIDATION.MINMAX_CONDITION": "%condition% sein",
 	"DATATYPE.VALIDATION.CRON": "ein valider CRON-Ausdruck sein (z.B. \"0 0 * ? * * *\")",

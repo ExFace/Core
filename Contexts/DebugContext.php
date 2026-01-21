@@ -39,25 +39,20 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 class DebugContext extends AbstractContext
 {
     const OPERATION_START_TRACING = 'startTracing';
-    
     const OPERATION_STOP_TRACING = 'stopTracing';
-    
     const OPERATION_START_INTERCEPTING = 'startInterceptingCommunication';
-    
     const OPERATION_STOP_INTERCEPTING = 'stopInterceptingCommunication';
-
     const OPERATION_START_TRACING_JS = 'startTracingJs';
-
     const OPERATION_STOP_TRACING_JS = 'stopTracingJs';
-
     const OPERATION_START_SHOW_HIDDEN = 'startShowingHidden';
-
     const OPERATION_STOP_SHOW_HIDDEN = 'stopShowingHidden';
+    const OPERATION_START_MAINTENANCE = 'startMaintenance';
+    const OPERATION_STOP_MAINTENANCE = 'stopMaintenance';
     
     const CFG_DEBUG_TRACE = 'DEBUG.TRACE';
+    const CFG_MAINTENANCE_MODE = 'DEBUG.MAINTENANCE_MODE';
     
     const VAR_TRACE_STARTED = 'trace_started';
-    
     const VAR_SHOW_HIDDEN = 'DEBUG.SHOW_HIDDEN';
     
     private $intercepting = false;
@@ -155,6 +150,61 @@ class DebugContext extends AbstractContext
         );
         
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_STOPPED');
+    }
+
+    /**
+     * Returns TRUE if the debugger is active and FALSE otherwise
+     *
+     * @return boolean
+     */
+    public function isMaintenance() : bool
+    {
+        if($this->getWorkbench()->isStarted()) {
+            $config = $this->getWorkbench()->getConfig();
+            return $config->getOption(self::CFG_MAINTENANCE_MODE);
+        }
+
+        return false;
+    }
+
+    /**
+     * Starts the tracer for the current context scope
+     *
+     * @uxon-operation startTracing
+     *
+     * @param Tracer|null $tracer
+     * @return string
+     */
+    public function startMaintenance(Tracer $tracer = null) : string
+    {
+        $config = $this->getWorkbench()->getConfig();
+
+        if ($config->getOption(self::CFG_MAINTENANCE_MODE) === false) {
+            $config->setOption(
+                self::CFG_MAINTENANCE_MODE,
+                true,
+                AppInterface::CONFIG_SCOPE_SYSTEM
+            );
+        }
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.MAINTENANCE_STARTED');
+    }
+
+    /**
+     * Stops the tracer for the current context scope
+     *
+     * @uxon-operation stopTracing
+     *
+     * @return string
+     */
+    public function stopMaintenance() : string
+    {        
+        $this->getWorkbench()->getConfig()->setOption(
+            self::CFG_MAINTENANCE_MODE,
+            false,
+            AppInterface::CONFIG_SCOPE_SYSTEM
+        );
+
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.MAINTENANCE_STOPPED');
     }
     
     /**
@@ -400,6 +450,8 @@ class DebugContext extends AbstractContext
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $isTracing = $this->isTracing();
         $isShowingHidden = $this->getWorkbench()->getContext()->getScopeUser()->getVariable(self::VAR_SHOW_HIDDEN);
+        $isMaintenanceMode = $this->isMaintenance();
+        
         $menu = WidgetFactory::createFromUxonInParent($container, new UxonObject([
             'widget_type' => 'Menu',
             'caption' => $this->getName(),
@@ -633,6 +685,18 @@ JS
     }
 })();
 JS
+                    ]
+                ],
+                // Maintenance mode - e.g. for updates
+                [
+                    'caption' => $translator->translate('CONTEXT.DEBUG.MAINTENANCE_MODE'),
+                    'hint' => $translator->translate('CONTEXT.DEBUG.MAINTENANCE_MODE_HINT'),
+                    'action' => [
+                        'alias' => 'exface.Core.CallContext',
+                        'context_scope' => $this->getScope()->getName(),
+                        'context_alias' => $this->getAliasWithNamespace(),
+                        'operation' => $isMaintenanceMode ? self::OPERATION_STOP_MAINTENANCE : self::OPERATION_START_MAINTENANCE,
+                        'icon' => $isMaintenanceMode ? icons::TOGGLE_ON : Icons::TOGGLE_OFF
                     ]
                 ]
             ]
