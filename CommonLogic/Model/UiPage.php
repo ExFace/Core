@@ -427,7 +427,7 @@ class UiPage implements UiPageInterface
                         continue;
                     }
                 }
-                // Similarly, do go deeper if explicitly searching the root space and the child widget
+                // Similarly, do not go deeper if explicitly searching the root space and the child widget
                 // belongs to a different id space.
                 if ($id_space === self::WIDGET_ID_SEPARATOR && $childIdSpace !== '') {
                     continue;
