@@ -39,6 +39,8 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\DataTableConfigurator;
+use exface\Core\Widgets\PivotTable;
+use exface\Core\Widgets\DataMatrix;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -102,6 +104,7 @@ class ExportJSON extends ReadData implements iExportData
     private $lazyExport = null;
 
     private $exportMapper = null;
+    private $exportAllWidgetColumns = false;
     
     /**
      * 
@@ -122,12 +125,15 @@ class ExportJSON extends ReadData implements iExportData
     protected function getDataSheetToRead(TaskInterface $task) : DataSheetInterface
     {
         $dataSheet = $this->getInputDataSheet($task);
+
         // Make sure, the input data has all the columns required for the widget
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
         // which columns to export.
+
+        // skip this step if we use the exportDataSheet as the reference (e.g. exporting from DataTables with a configurator)
         $widget = $this->getWidgetToReadFor($task);
-        if ($widget){
+        if ($widget && $this->getUseExportDataSheet($widget) === false) {
             $dataSheet = $widget->prepareDataSheetToRead($dataSheet);
         }
         
@@ -417,14 +423,32 @@ class ExportJSON extends ReadData implements iExportData
             default:
                 $widgets = [];
         }
-        
-        // Add optional columns, that are really exported
+
+        // If the widget has a datatable configurator:
+        // -> add optional columns, that are really exported in the datasheet 
+        // if we are using the exportDataSheet as reference: only keep columns sent in DataSheet (visible ones) and re-order according to exportSheet
         if (($exportedWidget instanceof iHaveConfigurator) && ($configurator = $exportedWidget->getConfiguratorWidget()) instanceof DataTableConfigurator) {
+
             /** @var $column \exface\Core\Widgets\DataColumn */
             foreach ($configurator->getOptionalColumns() as $column) {
                 if ($exportedSheet->getColumns()->has($column->getDataColumnName())) {
                     $widgets[] = $column;
                 }
+            }
+            
+            // only keep columns that are in the source sheet
+            // and order columns to match the order in the source sheet
+            if ($this->getUseExportDataSheet($exportedWidget) === true) {
+                $orderedColumns = [];
+                foreach ($exportedSheet->getColumns() as $sheetCol) {
+                    foreach ($widgets as $column) {
+                        if ($column->getDataColumnName() === $sheetCol->getName()) {
+                            $orderedColumns[] = $column;
+                            break;
+                        }
+                    }
+                }
+                $widgets = $orderedColumns;
             }
         }
 
@@ -478,6 +502,28 @@ class ExportJSON extends ReadData implements iExportData
         }
         
         return $widgets;
+    }
+
+    /**
+     * Returns whether the exported DataSheet of the given widget should be used as the source of truth 
+     * for the export, over the widget columns. This only works for DataTables as of now, but allows exports to match the
+     * datatable configuration (e.g. visible columns, column order)
+     * 
+     * @param WidgetInterface $exportedWidget
+     * @return bool
+     */
+    private function getUseExportDataSheet(WidgetInterface $exportedWidget): bool
+    {
+        // we only want this if its a DataTable (with configurator), if export_all_widget_columns is set to false
+        // and its not a PivotTable or DataMatrix (because those should not get re-ordered)
+        if (($this->getExportAllWidgetColumns() === false) && 
+            ($exportedWidget instanceof iHaveConfigurator) && 
+            ($exportedWidget->getConfiguratorWidget()) instanceof DataTableConfigurator &&
+            !($exportedWidget instanceof PivotTable) &&
+            !($exportedWidget instanceof DataMatrix)) {
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -694,6 +740,32 @@ class ExportJSON extends ReadData implements iExportData
         return $this;
     }
     
+    /**
+     * Returns whether all widget columns should be exported or only currently visible ones.
+     *
+     * @return bool
+     */
+    public function getExportAllWidgetColumns() : bool
+    {
+        return $this->exportAllWidgetColumns;
+    }
+    
+    /**
+     * Sets whether or not all columns of the widget, or only the ones passed in the datasheet (visible ones) should be exported. (default is false)
+     * 
+     * @uxon-property export_all_widget_columns
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return \exface\Core\Actions\ExportJSON
+     */
+    public function setExportAllWidgetColumns(bool $value) : ExportJSON
+    {
+        $this->exportAllWidgetColumns = $value;
+        return $this;
+    }
+
     /**
      * Returns the time limit per request in microseconds.
      *
