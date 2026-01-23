@@ -44,16 +44,13 @@ abstract class ActionFactory extends AbstractStaticFactory
         if ($app->has($selector)) {
             $action = static::createFromPrototype($selector, $app, $trigger_widget);
         } else {
-            $actionAlias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
+            $actionAlias = mb_substr($selector->toString(), (strlen($selector->getAppAlias())+1));
             $action = $selector->getWorkbench()->model()->getModelLoader()->loadAction($app, $actionAlias, $trigger_widget);
             if (! $action) {
-                $err = new ActionNotFoundError('Cannot find action "' . $selector->toString() . '" in app "' . $selector->getAppAlias() . '"!');
-                if ($selector->isAlias()) {
-                    $appAlias = $selector->getAppAlias();
-                    $app = $selector->getWorkbench()->getApp($appAlias);
-                    if (! $app->isInstalled()) {
-                        $err = new ActionAppNotFoundError('Cannot find action "' . $selector->toString() . '": app "' . $selector->getAppAlias() . '" not found!');
-                    }
+                if (! $app->isInstalled()) {
+                    $err = new ActionAppNotFoundError('Cannot find action "' . $selector->toString() . '": app "' . $selector->getAppAlias() . '" not found!');
+                } else {
+                    $err = new ActionNotFoundError('Cannot find action "' . $selector->toString() . '" in app "' . $selector->getAppAlias() . '"!');
                 }
                 throw $err;
             }
