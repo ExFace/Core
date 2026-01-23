@@ -272,6 +272,9 @@ class MsSqlConnector extends AbstractSqlConnector
             // TODO move INSERT detection to the query builder? Or do we need it in some other use cases?
             if (StringDataType::startsWith(trim($sql), 'INSERT', false) === true) {
                 $sql .= '; SELECT SCOPE_IDENTITY() AS IDENTITY_COLUMN_NAME';
+                // Since we modify the original SQL, save it back to the query object in order to make it appear
+                // correctly in all sorts of logs
+                $query->setSql($sql);
             }
             if (! $result = sqlsrv_query($this->getCurrentConnection(), $sql)) {
                 throw $this->createQueryError($query, "SQL query failed!");
