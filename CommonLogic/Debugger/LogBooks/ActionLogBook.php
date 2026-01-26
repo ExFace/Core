@@ -21,6 +21,7 @@ use exface\Core\Events\Transaction\OnBeforeTransactionCommitEvent;
 use exface\Core\Events\Transaction\OnBeforeTransactionRollbackEvent;
 use exface\Core\Events\Transaction\OnTransactionStartEvent;
 use exface\Core\Facades\DocsFacade;
+use exface\Core\Interfaces\Debug\IHaveLogIdInterface;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\EventManagerInterface;
@@ -34,7 +35,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PhpClassDataType;
 
-class ActionLogBook implements DataLogBookInterface
+class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
 {
     const SECTION_INNER_EVENTS = 'Inner events';
     private $task = null;
@@ -586,5 +587,14 @@ class ActionLogBook implements DataLogBookInterface
             $objAlias = 'cannot get object';
         }
         return '"' . ($prefix ?? '') . $action->getName() . "\n({$objAlias})\"";
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\IHaveLogIdInterface::getLogId()
+     */
+    public function getLogId() : string
+    {
+        return $this->logBook->getLogId();
     }
 }
