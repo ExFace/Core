@@ -361,7 +361,6 @@ MD);
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getId()
      */
     public function getId()
@@ -374,6 +373,15 @@ MD);
             }
         }
         return $this->id;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\IHaveLogIdInterface::getLogId()
+     */
+    public function getLogId() : string
+    {
+        return $this->getId();
     }
 
     /**

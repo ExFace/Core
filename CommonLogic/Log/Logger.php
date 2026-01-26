@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Log;
 
+use exface\Core\Interfaces\Debug\IHaveLogIdInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
@@ -178,13 +179,14 @@ class Logger implements LoggerInterface
             }
 
             if ($sender instanceof ExceptionInterface) {
-                if (is_null($level)) {
-                    $level = $sender->getLogLevel();
-                }
                 $context['exception'] = $sender;
-                $context['id']        = $sender->getId();
+                $level = $level ?? $sender->getLogLevel();
+            }
+            
+            if ($sender instanceof IHaveLogIdInterface) {
+                $context['id'] = $sender->getLogId();
             } else {
-                $context['id']        = $this::generateLogId();
+                $context['id'] = $this::generateLogId();
             }
             
             foreach ($this->handlers as $i => $handler) {
