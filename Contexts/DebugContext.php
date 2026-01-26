@@ -535,6 +535,26 @@ class DebugContext extends AbstractContext
                             ]
                         ]
                     )
+                ],
+                // Highlight mode
+                [
+                    'caption' => 'Highlight widgets',
+                    'id' => 'DebugContext_Highlighter_toggle',
+                    'action' => [
+                        'alias' => 'exface.Core.CustomFacadeScript',
+                        'script' => <<<JS
+
+                            if (!exfDebugger ) return;
+                            var oBtn = $('#[#element_id:~self#]');
+                            if (exfDebugger.isHighlighting()) {
+                                exfDebugger.stopHighlighting()
+                                // TODO change button text
+                            } else {
+                                exfDebugger.startHighlighting()
+                            }
+JS                      ,
+                        'icon' => icons::MOUSE_POINTER
+                    ]
                 ], 
                 // View server traces
                 [
