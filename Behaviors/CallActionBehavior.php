@@ -38,10 +38,10 @@ use Throwable;
 /**
  * Calls an action when an event ist triggered for the behaviors object
  * 
- * Being attached to a meta object, this behavior will trigger its action every time something happens
+ * Being attached to a metaobject, this behavior will trigger its action every time something happens
  * to its object.
  * 
- * You can make the behavior listen to one `event_alias` or event multiple `event_aliases`. Additionally
+ * You can make the behavior listen to one `event_alias` or event multiple `event_aliases`. Additionally,
  * you can define configure it to call the action only on certain conditions via `only_if_attributes_change` 
  * and `only_if_data_matches_conditions`.
  * 
@@ -63,13 +63,14 @@ use Throwable;
  * "see" the "old" in our case.
  * 
  * Another typical example for the use of `input_data_event_alias` is the `OnDeleteData` event, where you will
- * oftnen need to collect required data before the main object is actually deleted.
+ * often need to collect required data before the main object is actually deleted.
  * 
  * ## Transaction handling and errors
  * 
  * By default, the action is performed within the same transaction as the original event (only if the
  * event actually has a transaction, of course - like for data sheet events). However, you can explicitly
- * commit the transaction before calling the action via `commit_before_action`.
+ * commit the transaction before or after calling the action using `commit_before_action` and `commit_after_action`
+ * respectively.
  * 
  * Being part of the transaction also implies, that any error in the called action will roll back the
  * entire transaction. If that is unwanted, but you do not want to commit the transaction either, set
@@ -91,7 +92,7 @@ use Throwable;
  * 
  * ## Examples
  * 
- * ### Call an ection every time an instance of this object is created or updated
+ * ### Call an section every time an instance of this object is created or updated
  * 
  * ```
  * {
@@ -162,6 +163,7 @@ class CallActionBehavior extends AbstractBehavior
 
     private bool $onFailError = true;
     private bool $commitBeforeAction = false;
+    private bool $commitAfterAction = false;
     
     private array $inputDataEventAliases = [];
     private ?UxonObject $inputDataMapperUxon = null;
@@ -401,8 +403,11 @@ class CallActionBehavior extends AbstractBehavior
                        $transaction->commit(); 
                     } else {
                         // Otherwise disable autocommit for the action to force it to use
-                        // the same transaction
-                        $action->setAutocommit(false);
+                        // the same transaction UNLESS it was explicitly configured to commit
+                        // its transaction
+                        if (! $action->hasAutocommit(false) === true) {
+                            $action->setAutocommit(false);
+                        }
                     }
                 } else {
                     $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
@@ -430,6 +435,16 @@ class CallActionBehavior extends AbstractBehavior
                     $logbook->addLine('No update of event data required because action result does not contain data');
                 }
 
+                // Commit task transaction if required
+                if ($transaction !== null && $this->willCommitAfterAction() === true) {
+                    $logbook->addLine('Committing transaction because of `commit_after_action`');
+                    // Commit the transaction if explicitly requested in the behavior config.
+                    // This might be the case if the action calls an external system, which 
+                    // relies on the commited data
+                    $transaction->commit();
+                    // TODO reopen transaction here?
+                }
+
                 // Prevent event default if needed
                 if ($this->getEventPreventDefault() === self::PREVENT_DEFAULT_IF_ACTION_CALLED) {
                     $logbook->addLine('Event default logic will be prevented');
@@ -452,6 +467,15 @@ class CallActionBehavior extends AbstractBehavior
         }
     }
 
+    /**
+     * @param ActionInterface $action
+     * @param TaskInterface $task
+     * @param DataLogBookInterface $logbook
+     * @param DataTransactionInterface|null $transaction
+     * @return ResultInterface
+     * 
+     * @throws Throwable
+     */
     protected function callAction(ActionInterface $action, TaskInterface $task, DataLogBookInterface $logbook, DataTransactionInterface $transaction = null) : ResultInterface
     {
         $this->isHandling = true;
@@ -647,11 +671,29 @@ class CallActionBehavior extends AbstractBehavior
     }
     
     /**
-     * Set to TRUE to call a commit on the transaction of the event
+     * Set to TRUE to commit the transaction of the event before the action is called
+     * 
+     * By default, the action called here will use the event transaction if the event has one. Events like
+     * `OnCreateData`, `OnUpdateData` or their `OnBefore...` versions know their transaction, so this behavior
+     * will use it automatically.
+     * 
+     * This means, that if you do not change anything:
+     * 
+     * - if the behavior action fails, the transaction will be rolled back and no data will be written
+     * - if any subsequent logic fails (e.g. other behaviors), the transaction will be rolled back including
+     * changes inflicted by the behavior actions
+     * 
+     * This is good in most cases. After all, the action called here is normally part of the business logic, and
+     * you want the business logic to be done as a whole, not in parts.
+     * 
+     * However, there are also cases, that require multiple separate transactions. For example, if the action called 
+     * by the behavior is done remotely (e.g. by calling a web service), other changes might need to be committed for 
+     * the remote system to see them too. If you set `commit_before_action`, the event transaction will be committed
+     * and the action of the behavior will be performed in its own transaction.
      *
      * @uxon-property commit_before_action
      * @uxon-type boolean
-     * @uxon-default true
+     * @uxon-default false
      *
      * @param bool $value
      * @return CallActionBehavior
@@ -661,10 +703,39 @@ class CallActionBehavior extends AbstractBehavior
         $this->commitBeforeAction = $value;
         return $this;
     }
-    
+
+    /**
+     * @return bool
+     */
     protected function willCommitBeforeAction() : bool
     {
         return $this->commitBeforeAction;
+    }
+
+    /**
+     * Set to TRUE to commit the transaction of the event after the action completes successfully
+     * 
+     * See `commit_before_action` for a detailed explanation of transaction handling in this behavior.
+     * 
+     * @uxon-property commit_after_action
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return CallActionBehavior
+     */
+    public function setCommitAfterAction(bool $value) : CallActionBehavior
+    {
+        $this->commitAfterAction = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function willCommitAfterAction() : bool
+    {
+        return $this->commitAfterAction;
     }
     
     /**
