@@ -94,7 +94,7 @@ JS;
     var matches = sValue.match(regex);
 
     var aRegexIssues = [];
-    if (matches !== null || matches.length > 0) {
+    if (matches !== null && matches.length > 0) {
         // Extract unqiue matches.
         for (const match of matches) {
             if (aRegexIssues.indexOf(match) === -1) {
@@ -102,10 +102,10 @@ JS;
             }
         }
         
-        sIssues += ' ' + {$regexIssuePreamble} + JSON.stringify(aRegexIssues, null, 1).slice(1,-1) + '.';
+        return sIssues + ' ' + {$regexIssuePreamble} + JSON.stringify(aRegexIssues, null, 1).slice(1,-1) + '.';
     }
     
-    return sIssues;
+    return '';
 })($jsValue)
 JS;
     }
