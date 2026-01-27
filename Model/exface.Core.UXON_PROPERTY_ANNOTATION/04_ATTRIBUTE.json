@@ -95,6 +95,18 @@
             "attribute_alias": "COPYABLEFLAG"
         },
         {
+            "name": "ICON",
+            "attribute_alias": "ICON"
+        },
+        {
+            "name": "ICON_SET",
+            "attribute_alias": "ICON_SET"
+        },
+        {
+            "name": "ABBREVIATION",
+            "attribute_alias": "ABBREVIATION"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -200,6 +212,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "PROPERTY",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-property",
@@ -245,6 +260,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "TYPE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-type",
@@ -290,6 +308,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "TEMPLATE",
             "DATATYPE": "0x11e7b02848321d2398350205857feb80",
             "DATA_ADDRESS": "uxon-template",
@@ -335,6 +356,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "DEFAULT",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-default",
@@ -380,6 +404,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "REQUIRED",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-required",
@@ -425,6 +452,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "TRANSLATABLE",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-translatable",
