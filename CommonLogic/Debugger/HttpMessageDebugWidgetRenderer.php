@@ -68,7 +68,7 @@ class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
         $request_widget = WidgetFactory::create($page, 'Markdown', $request_tab);
         
         $serverParams = '';
-        if ($this->request instanceof ServerRequestInterface) {
+        if (($this->request instanceof ServerRequestInterface) && $debug_widget->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_SERVER_PARAMS') === true) {
             $serverParams = <<<MD
 
 ## Server parameters
@@ -134,14 +134,18 @@ return $debug_widget;
      */
     protected function buildMarkdownRequestHeaders(RequestInterface $request) : string
     {
-        $requestHeaders = $request->getMethod() . ' ' . $request->getRequestTarget() . ' HTTP/' . $request->getProtocolVersion() . PHP_EOL . PHP_EOL;
-        $requestHeaders .= $this->buildMarkdownMessageHeaders($request);
-        
-        return $requestHeaders;
+        return <<<MD
+```
+HTTP/{$request->getProtocolVersion()} {$request->getMethod()} {$request->getRequestTarget()}
+```
+
+{$this->buildMarkdownMessageHeaders($request)}
+
+MD;
     }
     
     /**
-     * Generates a HTML-representation of the request or response headers.
+     * Generates an HTML-representation of the request or response headers.
      *
      * @return string
      */
