@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
@@ -8,7 +9,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
-interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopied
+interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopied, iHaveIcon
 {
     const OBJECT_LABEL_ALIAS = 'LABEL';
     
@@ -585,4 +586,15 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * @return int
      */
     public function getOrigin() : int;
+
+    /**
+     * @param string $value
+     * @return MetaAttributeInterface
+     */
+    public function setAbbreviation(string $value) : MetaAttributeInterface;
+
+    /**
+     * @return string|null
+     */
+    public function getAbbreviation() : ?string;
 }
