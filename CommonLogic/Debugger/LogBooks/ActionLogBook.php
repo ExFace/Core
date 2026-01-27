@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
+use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Action\OnActionFailedEvent;
@@ -239,7 +240,9 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
                         $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
                         $eventName = "`{$eventName}` ";
                     }
-                    $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
+                    $logbook = $event->getLogbook();
+                    $link = $logbook instanceof IHaveLogIdInterface ? ' - see [Log-ID ' . $logbook->getLogId() . '](' . DebugContext::buildUrlToLogId($logbook->getLogId()) . ')' : '';
+                    $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")" . $link, $idt);
                     break;
                 case $event instanceof OnBeforeActionPerformedEvent:
                     $action = $event->getAction();
@@ -343,25 +346,6 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
                 'value' => $this->action->exportUxonObject()->toJson(true),
                 'root_prototype' => '\\' . get_class($this->action)
             ])));
-            
-            foreach ($this->eventStack as $i => $item) {
-                if(is_string($item)) {
-                    continue;
-                }
-                
-                $event = $item['event'];
-                switch (true) {
-                    case $event->isOnBefore():
-                        break;
-                    case ($event instanceof OnBehaviorAppliedEvent) && null !== $logbook = $event->getLogbook():
-                        $logbook->createDebugWidget($actionTabs);
-                        break;
-                }
-                if ($i > 10 && $item['indent'] === 0) {
-                    $this->logBook->addLine('Skipping event details tabs after item ' . $i . ': too many events!', 0, self::SECTION_INNER_EVENTS);
-                    break;
-                }
-            }
         }
         return $debug_widget;
     }

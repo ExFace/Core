@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -164,6 +165,8 @@ class CallActionBehavior extends AbstractBehavior
     private bool $onFailError = true;
     private bool $commitBeforeAction = false;
     private bool $commitAfterAction = false;
+
+    private $callAfterAllActionsComplete = false;
     
     private array $inputDataEventAliases = [];
     private ?UxonObject $inputDataMapperUxon = null;
@@ -291,11 +294,14 @@ class CallActionBehavior extends AbstractBehavior
 
     /**
      * Executes the action if applicable
-     * 
+     *
      * @param EventInterface $event
+     * @param string|null $eventName
+     * @param null $eventDispatcher
+     * @param DataTransactionInterface|null $transaction
      * @return void
      */
-    public function onEventCallAction(EventInterface $event)
+    public function onEventCallAction(EventInterface $event, ?string $eventName = null, $eventDispatcher = null, ?DataTransactionInterface $transaction = null)
     {
         if ($this->isDisabled()) {
             return;
@@ -323,6 +329,20 @@ class CallActionBehavior extends AbstractBehavior
 		} else {
 			$logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
 		}
+
+        // If these notifications need to be sent after all transactions commit, add a listener
+        // to the OnStop event of the workbench and remember the original event, that triggered
+        // the notifications. Just call this whole method again then, but remove the postponing-flag.
+        if ($this->getCallAfterAllActionsComplete() === true) {
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), function(OnBeforeStopEvent $onBeforeStopEvent) use ($event) {
+                $this->setCallAfterAllActionsComplete(false);
+                $transaction = $this->getWorkbench()->data()->startTransaction();
+                $this->onEventCallAction($event, null, null, $transaction);
+                $transaction->commit();
+            });
+            $this->skipEvent('**Delegating** to `OnBeforeStop` event because of `notify_after_all_actions_complete:true`', $event, $logbook);
+            return;
+        }
         
         $logbook->addDataSheet('Event data', $eventSheet);
         $logbook->addLine('Found event data for object ' . $eventSheet->getMetaObject()->__toString());
@@ -367,8 +387,8 @@ class CallActionBehavior extends AbstractBehavior
                 }
             }
             
-            // Apply the input mapper if one is defined ant the input data was not fetched from a different event,
             // where the mapper was applied already. 
+            // Apply the input mapper if one is defined ant the input data was not fetched from a different event,
             if ($customInputEvent === null && null !== $mapper = $this->getInputDataMapper($inputSheet->getMetaObject())) {
                 $inputSheet = $mapper->map($inputSheet, null, $logbook);
             }
@@ -392,26 +412,28 @@ class CallActionBehavior extends AbstractBehavior
                 }
                 
                 // Use the tasks transaction if applicable
-                if ($event instanceof DataTransactionEventInterface) {
-                    $transaction = $event->getTransaction();
-                    $logbook->addLine('Getting the transaction from the original event');
-                    // Commit the transaction if explicitly requested in the behavior config.
-                    // This might be the case if the action calls a external system, which 
-                    // relies on the commited data
-                    if ($this->willCommitBeforeAction()) {
-                        // FIXME wouldn't this prevent further commits???
-                       $transaction->commit(); 
-                    } else {
-                        // Otherwise disable autocommit for the action to force it to use
-                        // the same transaction UNLESS it was explicitly configured to commit
-                        // its transaction
-                        if (! $action->hasAutocommit(false) === true) {
-                            $action->setAutocommit(false);
+                if ($transaction === null) {
+                    if ($event instanceof DataTransactionEventInterface) {
+                        $transaction = $event->getTransaction();
+                        $logbook->addLine('Getting the transaction from the original event');
+                        // Commit the transaction if explicitly requested in the behavior config.
+                        // This might be the case if the action calls a external system, which 
+                        // relies on the commited data
+                        if ($this->willCommitBeforeAction()) {
+                            // FIXME wouldn't this prevent further commits???
+                            $transaction->commit();
+                        } else {
+                            // Otherwise disable autocommit for the action to force it to use
+                            // the same transaction UNLESS it was explicitly configured to commit
+                            // its transaction
+                            if (!$action->hasAutocommit(false) === true) {
+                                $action->setAutocommit(false);
+                            }
                         }
+                    } else {
+                        $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
+                        $transaction = null;
                     }
-                } else {
-                    $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
-                    $transaction = null;
                 }
 
                 // Handle the task
@@ -882,6 +904,28 @@ class CallActionBehavior extends AbstractBehavior
     protected function setInputDataMapper(?UxonObject $mapper) : CallActionBehavior
     {
         $this->inputDataMapperUxon = $mapper;
+        return $this;
+    }
+
+    protected function getCallAfterAllActionsComplete() : bool
+    {
+        return $this->callAfterAllActionsComplete;
+    }
+
+    /**
+     * Set to TRUE to wait until all business logic is done and transactions are committed and only call the action
+     * after this.
+     *
+     * @uxon-property notify_after_all_actions_complete
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return NotifyingBehavior
+     */
+    public function setCallAfterAllActionsComplete(bool $value) : NotifyingBehavior
+    {
+        $this->callAfterAllActionsComplete = $value;
         return $this;
     }
 }
