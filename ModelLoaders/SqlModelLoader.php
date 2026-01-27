@@ -677,6 +677,18 @@ SQL;
         if (null !== $val = ($row['value_list_delimiter'] ?? null)){
             $attr->setValueListDelimiter($val);
         }
+        $val = $row['icon'] ?? null;
+        if ($val !== null && $val !== '') {
+            $attr->setIcon($val);
+        }
+        $val = $row['icon_set'] ?? null;
+        if ($val !== null && $val !== '') {
+            $attr->setIconSet($val);
+        }
+        $val = $row['abbreviation'] ?? null;
+        if ($val !== null && $val !== '') {
+            $attr->setAbbreviation($val);
+        }
 
         // Descriptions
         $attr->setShortDescription($row['attribute_short_description']);
