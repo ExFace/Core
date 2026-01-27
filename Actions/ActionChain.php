@@ -484,7 +484,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      */
     public function getUseSingleTransaction() : bool
     {
-        if ($this->getAutocommit() === false) {
+        if ($this->hasAutocommit() === false) {
             return true;
         }
         return $this->use_single_transaction;

@@ -6,7 +6,7 @@ use exface\Core\Exceptions\RuntimeException;
 /**
  * SQL statements
  */
-class SqlDataType extends TextDataType
+class SqlDataType extends CodeDataType
 {
     /**
      * @param string $sql

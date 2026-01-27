@@ -95,6 +95,18 @@
             "attribute_alias": "COPYABLEFLAG"
         },
         {
+            "name": "ICON",
+            "attribute_alias": "ICON"
+        },
+        {
+            "name": "ICON_SET",
+            "attribute_alias": "ICON_SET"
+        },
+        {
+            "name": "ABBREVIATION",
+            "attribute_alias": "ABBREVIATION"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -200,6 +212,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "ACTION",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "~file:extract(/Action \"([^\"]*)\".* time measurement started/i, 1)",
@@ -245,6 +260,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "URL",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "~file:extract(/HTTP request to \"([^\"]*)\"/i, 1)",
@@ -290,6 +308,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "PAGE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "~file:extract(/Authorized page \"[^\"]*\" \\(([^\\)]*)\\)/i, 1)",
@@ -335,6 +356,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "USER",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "~file:extract(/Authenticated user \"([^\"]*)\"/i, 1)",

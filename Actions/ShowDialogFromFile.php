@@ -64,8 +64,8 @@ class ShowDialogFromFile extends ShowDialog
     private $file_path_attribute_alias = null;
 
     private $file_extension = null;
-
     private $folder_path = null;
+    private $file_path_relative = nulL;
     
     /**
      * 
@@ -104,12 +104,66 @@ class ShowDialogFromFile extends ShowDialog
     }
 
     /**
+     * Static file path relative to the folder_path
+     * 
+     * @uxon-property file_path
+     * @uxon-type string
+     * 
+     * @param string $pathRelative
+     * @return $this
+     */
+    public function setFilePath(string $pathRelative) : ShowDialogFromFile
+    {
+        $this->file_path_relative = $pathRelative;
+        return $this;
+    }
+
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowWidget::perform()
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
+        
+        $basePath = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToBaseFolder());
+        $filePath = $this->getFilePath($task);
+        if ($this->getFolderPath()) {
+            if (Filemanager::pathIsAbsolute($this->getFolderPath())) {
+                $basePath = $this->getFolderPath();
+            } else {
+                $basePath = Filemanager::pathJoin(array(
+                    $basePath,
+                    $this->getFolderPath()
+                ));
+            }
+        }
+        $completeFilename = $basePath . '/' . $filePath . ($this->getFileExtension() ? '.' . ltrim($this->getFileExtension(), ".") : '');
+        if (file_exists($completeFilename)) {
+            $json = file_get_contents($completeFilename);
+            if ($json === false) {
+                throw new FileNotReadableError('Cannot read file "' . $completeFilename . '"!');
+            }
+            $this->getDialogWidget()->addWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
+        } else {
+            throw new FileNotFoundError('File "' . $completeFilename . '" not found!');
+        }
+        
+        if (! $this->getWidget()->getCaption()) {
+            $this->getWidget()->setCaption($completeFilename);
+        }
+        
+        $this->getWidget()->setCacheable(false);
+        
+        return parent::perform($task, $transaction);
+    }
+    
+    protected function getFilePath(TaskInterface $task) : string
+    {
+        if ($this->file_path_relative !== null) {
+            return $this->file_path_relative;
+        }
+        
         $inputSheet = $this->getInputDataSheet($task);
         if (! $fileCol = $inputSheet->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
             if ($inputSheet->hasUidColumn(true)) {
@@ -123,40 +177,12 @@ class ShowDialogFromFile extends ShowDialog
             }
         }
         $filename = $fileCol->getCellValue(0);
-        $basePath = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToBaseFolder());
 
-        if (strlen(trim($filename)) > 0) {
-            if ($this->getFolderPath()) {
-                if (Filemanager::pathIsAbsolute($this->getFolderPath())) {
-                    $basePath = $this->getFolderPath();
-                } else {
-                    $basePath = Filemanager::pathJoin(array(
-                        $basePath,
-                        $this->getFolderPath()
-                    ));
-                }
-            }
-            $completeFilename = $basePath . '/' . $filename . ($this->getFileExtension() ? '.' . ltrim($this->getFileExtension(), ".") : '');
-            if (file_exists($completeFilename)) {
-                $json = file_get_contents($completeFilename);
-                if ($json === false) {
-                    throw new FileNotReadableError('Cannot read file "' . $completeFilename . '"!');
-                }
-                $this->getDialogWidget()->addWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
-            } else {
-                throw new FileNotFoundError('File "' . $completeFilename . '" not found!');
-            }
-        } else {
+
+        if (empty(trim($filename ?? ''))) {
             throw new ActionInputMissingError($this, 'No file name found in input column "' . $this->getFilePathAttributeAlias() . '" for action "' . $this->getAliasWithNamespace() . '"!');
         }
-        
-        if (! $this->getWidget()->getCaption()) {
-            $this->getWidget()->setCaption($completeFilename);
-        }
-        
-        $this->getWidget()->setCacheable(false);
-        
-        return parent::perform($task, $transaction);
+        return $filename;
     }
 
     /**

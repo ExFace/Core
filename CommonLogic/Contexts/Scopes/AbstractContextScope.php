@@ -107,7 +107,9 @@ abstract class AbstractContextScope implements ContextScopeInterface
                 $this->loadContextData($context);
                 return $context;
             } catch (\Throwable $e) {
-                $this->active_errors[$context->getAliasWithNamespace()] = $e;
+                if ($context) {
+                    $this->active_errors[$context->getAliasWithNamespace()] = $e;
+                }
                 $this->active_errors[(string)$aliasOrSelector] = $e;
                 throw $e;
             }
