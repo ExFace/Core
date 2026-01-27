@@ -175,7 +175,7 @@ class LookupMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\LookupMappingInterface::getToExpression()
      */
-    protected function getToExpression() : ExpressionInterface
+    public function getToExpression() : ExpressionInterface
     {
         return $this->toExpression;
     }
@@ -679,7 +679,7 @@ class LookupMapping extends AbstractDataSheetMapping
      * Returns an array of matches - each providing pairs of expressions in the from-sheet and in the lookup-sheet
      * @return void
      */
-    protected function getMatches() : array
+    public function getMatches() : array
     {
         if ($this->matchesUxon === null) {
             return [];
