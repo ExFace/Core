@@ -378,6 +378,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     'sheet' => $eventSheet
                 ];
                 $eventSheet->removeRows($handledRowIdxs);
+                $logbook->addDataSheet('Data sheet to perform normal update on', $eventSheet->copy());
+
                 $logbook->addLine('Removed ' . count($handledRowIdxs) . ' duplicate rows: row indexes ' . implode(', ', $handledRowIdxs) . ' will be restored after the regular update operation');
             }
         }
@@ -498,6 +500,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             // (duplicate) rows in the sheet.
             $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_EVENT_DATA);
             foreach ($matches as $match) {
+                $logbook->addLine('Removing row with index:' . $match->getMatchedRowIndex() . ' because its a duplicte in event data!');
                 $rowsHandled[] = $match->getMatchedRowIndex();
             }
         }
@@ -674,6 +677,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             // indexes will be the same, so we now just need to remove these row indexes main data
             $filteredRowIdxs = $filterSheet->findRows($applicableConditions, false, $logbook);
             $mainSheet = $mainSheet->extractRows($filteredRowIdxs, false);
+            $logbook->addLine('Keeping rows with indexes: ' . implode(', ',$filteredRowIdxs));
         } else {
             $logbook->addLine('Will search for duplicates for all rows, no filtering required');
         }
