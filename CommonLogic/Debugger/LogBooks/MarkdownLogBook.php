@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
+use exface\Core\CommonLogic\Log\Logger;
+use exface\Core\Interfaces\Debug\IHaveLogIdInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\CommonLogic\UxonObject;
@@ -9,9 +11,11 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Exceptions\InternalError;
 
-class MarkdownLogBook implements LogBookInterface
+class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
 {
     const INDENT = '  ';
+    
+    private ?string $logId = null;
     
     private $title = null;
     
@@ -370,5 +374,17 @@ class MarkdownLogBook implements LogBookInterface
         unset($lines[$lineNo]);
         $this->lines[$this->getSectionKey($section)] = array_values($lines);
         return $this;
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\IHaveLogIdInterface::getLogId()
+     */
+    public function getLogId() : string
+    {
+        if ($this->logId === null) {
+            $this->logId = Logger::generateLogId();
+        }
+        return $this->logId;
     }
 }

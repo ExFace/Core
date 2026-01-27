@@ -1,11 +1,15 @@
 <?php
 namespace exface\Core\Contexts;
 
+use exface\Core\Actions\ShowDialogFromFile;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\Constants\Colors;
 use exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Actions\ShowContextPopup;
@@ -32,6 +36,11 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
  * 
  * NOTE: tracing produces a lot of files and causes performance overhead, so
  * don't leave it on for long!
+ * 
+ * ## Operations for `CallContext` action
+ * 
+ * - `showLogId` shows the log details dialog for a given Log-ID. This is handy to create links to Log-IDs: e.g.
+ * `exface.core.logs.html?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=showLogId&id=763EFFB9`
  *
  * @author Andrej Kabachnik
  *        
@@ -48,6 +57,8 @@ class DebugContext extends AbstractContext
     const OPERATION_STOP_SHOW_HIDDEN = 'stopShowingHidden';
     const OPERATION_START_MAINTENANCE = 'startMaintenance';
     const OPERATION_STOP_MAINTENANCE = 'stopMaintenance';
+    
+    const OPERATION_SHOW_LOG_ID = 'showLogId';
     
     const CFG_DEBUG_TRACE = 'DEBUG.TRACE';
     const CFG_MAINTENANCE_MODE = 'DEBUG.MAINTENANCE_MODE';
@@ -535,6 +546,26 @@ class DebugContext extends AbstractContext
                             ]
                         ]
                     )
+                ],
+                // Highlight mode
+                [
+                    'caption' => 'Highlight widgets',
+                    'id' => 'DebugContext_Highlighter_toggle',
+                    'action' => [
+                        'alias' => 'exface.Core.CustomFacadeScript',
+                        'script' => <<<JS
+
+                            if (!exfDebugger ) return;
+                            var oBtn = $('#[#element_id:~self#]');
+                            if (exfDebugger.isHighlighting()) {
+                                exfDebugger.stopHighlighting()
+                                // TODO change button text
+                            } else {
+                                exfDebugger.startHighlighting()
+                            }
+JS                      ,
+                        'icon' => icons::MOUSE_POINTER
+                    ]
                 ], 
                 // View server traces
                 [
@@ -722,14 +753,33 @@ JS
      */
     public function handle(TaskInterface $task, string $operation = null): ResultInterface
     {
-        if ($operation === self::OPERATION_START_INTERCEPTING && $task->hasInputData()) {
-            $inputSheet = $task->getInputData();
-            if ($col = $inputSheet->getColumns()->get('_intercept_to_users')) {
-                $this->getWorkbench()->getConfig()->setOption('DEBUG.INTERCEPT_AND_SEND_TO_USERS', $col->getValue(0), AppInterface::CONFIG_SCOPE_SYSTEM);
-            }
-            if ($col = $inputSheet->getColumns()->get('_intercept_to_roles')) {
-                $this->getWorkbench()->getConfig()->setOption('DEBUG.INTERCEPT_AND_SEND_TO_USER_ROLES', $col->getValue(0), AppInterface::CONFIG_SCOPE_SYSTEM);
-            }
+        switch (true) {
+            case $operation === self::OPERATION_START_INTERCEPTING && $task->hasInputData():
+                $inputSheet = $task->getInputData();
+                if ($col = $inputSheet->getColumns()->get('_intercept_to_users')) {
+                    $this->getWorkbench()->getConfig()->setOption('DEBUG.INTERCEPT_AND_SEND_TO_USERS', $col->getValue(0), AppInterface::CONFIG_SCOPE_SYSTEM);
+                }
+                if ($col = $inputSheet->getColumns()->get('_intercept_to_roles')) {
+                    $this->getWorkbench()->getConfig()->setOption('DEBUG.INTERCEPT_AND_SEND_TO_USER_ROLES', $col->getValue(0), AppInterface::CONFIG_SCOPE_SYSTEM);
+                }
+                break;
+            case $operation === self::OPERATION_SHOW_LOG_ID:
+                $logId = $task->getParameter('id');
+                $logSheet = $this->getWorkbench()->getDebugger()->getLogData($logId, null, [
+                    'id', 'filepath'
+                ]);
+
+                /** @var $action \exface\Core\Actions\ShowDialogFromFile */
+                $action = ActionFactory::createFromPrototype(new ActionSelector($this->getWorkbench(), ShowDialogFromFile::class));
+                $action->setFolderPath($this->getWorkbench()->filemanager()->getPathToLogDetailsFolder());
+                $action->setFilePath($logSheet->getCellValue('filepath', 0));
+                $action->setFileExtension('json');
+                $action->setObjectAlias('exface.Core.LOG_ENTRY');
+                $result = $action->handle($task);
+                $result->getWidget()->setMaximized(true);
+                // $result->setWidget($result->getWidget()->getWidgetFirst());
+                
+                return $result;
         }
         return parent::handle($task, $operation);
     }
@@ -756,5 +806,19 @@ JS
         }
         
         return time() - $traceStarted;
+    }
+
+    /**
+     * Returns a relative URL, that will render the debug widget for a given LogID
+     * 
+     * E.g. `?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=showLogId&id=763EFFB9#`
+     * 
+     * @param string $logId
+     * @param string|null $baseUrl
+     * @return string
+     */
+    public static function buildUrlToLogId(string $logId, ?string $baseUrl = null) : string
+    {
+        return ($baseUrl ?? '') . "?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=showLogId&id={$logId}";
     }
 }

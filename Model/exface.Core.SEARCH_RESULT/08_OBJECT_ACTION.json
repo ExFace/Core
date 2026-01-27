@@ -67,7 +67,7 @@
         {
             "_EXPORT_SUMMARY": "Search result: Usage in model [ShowModelSearchDialog]",
             "CREATED_ON": "2025-11-28 09:21:08",
-            "MODIFIED_ON": "2025-11-28 10:01:35",
+            "MODIFIED_ON": "2026-01-20 11:33:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f08a973138cd908a97025041000001",
@@ -167,6 +167,24 @@
                                     "~snippet": "exface.Core.SearchResultEditButton",
                                     "parameters": {
                                         "table_name_column": "TABLE_NAME"
+                                    }
+                                },
+                                {
+                                    "caption": "Open page",
+                                    "action": {
+                                        "alias": "exface.Core.GoToUrl",
+                                        "url": "[#INSTANCE_ALIAS#].html",
+                                        "open_in_new_window": true
+                                    },
+                                    "disabled_if": {
+                                        "operator": "AND",
+                                        "conditions": [
+                                            {
+                                                "value_left": "=~input!TABLE_NAME",
+                                                "comparator": "!==",
+                                                "value_right": "exf_page"
+                                            }
+                                        ]
                                     }
                                 }
                             ]

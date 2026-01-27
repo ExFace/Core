@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Exceptions;
 
+use exface\Core\Interfaces\Debug\IHaveLogIdInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
@@ -38,7 +39,7 @@ use exface\Core\Interfaces\Model\MessageInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ExceptionInterface extends \Throwable, iCanBeConvertedToUxon, iCanGenerateDebugWidgets
+interface ExceptionInterface extends \Throwable, iCanBeConvertedToUxon, iCanGenerateDebugWidgets, IHaveLogIdInterface
 {
     /**
      * Creates a widget with detailed information about this exception.
