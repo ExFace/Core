@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Events\Behavior;
 
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -13,12 +14,13 @@ use exface\Core\Interfaces\Events\EventInterface;
  */
 class OnBehaviorAppliedEvent extends OnBeforeBehaviorAppliedEvent
 {
-    private $dataChanged = false;
+    private bool $dataChanged = false;
     
     public function __construct(BehaviorInterface $behavior, EventInterface $processedEvent = null, LogBookInterface $logbook = null, $dataChanged = false)
     {
         parent::__construct($behavior, $processedEvent, $logbook);
         $this->dataChanged = $dataChanged;
+        $behavior->getWorkbench()->getLogger()->log(LoggerInterface::DEBUG, $this->getSummary(false), [], $logbook);
     }
     
     /**

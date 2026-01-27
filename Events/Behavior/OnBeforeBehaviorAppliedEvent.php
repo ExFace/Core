@@ -83,15 +83,19 @@ class OnBeforeBehaviorAppliedEvent extends AbstractEvent implements BehaviorEven
         return $this->logbook;
     }
     
-    public function getSummary() : string
+    public function getSummary(bool $withEventName = true) : string
     {
         $behavior = $this->getBehavior();
-        $processedEvent = $this->getEventProcessed();
-        if ($processedEvent == null) {
-            $eventName = '';
+        if ($withEventName) {
+            $processedEvent = $this->getEventProcessed();
+            if ($processedEvent == null) {
+                $eventName = '';
+            } else {
+                $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
+                $eventName = "[{$eventName}] ";
+            }
         } else {
-            $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
-            $eventName = "[{$eventName}] ";
+            $eventName = '';
         }
         return "{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()}";
     }
