@@ -20,6 +20,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\StringEnumDataType;
 use exface\Core\DataTypes\TimeDataType;
+use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
@@ -617,7 +618,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         foreach ($attributeDefinitionsSheet->getRows() as $index => $definitionRow) {
             $phVals = [];
             foreach ($attrUxonPhs as $ph) {
-                $phVals[$ph] = $definitionRow[$phColNames[$ph]];
+                $phVals[$ph] = UxonDataType::escapeJsonValue($definitionRow[$phColNames[$ph]], false);
             }
 
             // Data address
@@ -685,6 +686,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                     $phVals[self::PLACEHOLDER_ALIAS] = $attr->getAlias();
                     $phVals[self::PLACEHOLDER_NAME] = $attr->getName();
                     $typeModelStr = StringDataType::replacePlaceholders($typeModelStr, $phVals);
+                    // Replacing `"icon": "[#ICON#]"` with a null will produce `"icon": "null"`, which we now
+                    // need to transform back to `"icon": ""` for the UXON import to work properly
+                    $typeModelStr = str_replace('"null"', '""', $typeModelStr);
                     $typeModel = JsonDataType::decodeJson($typeModelStr);
                 }
                 

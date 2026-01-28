@@ -210,8 +210,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
+     * The alias of the attribute
      * 
-     * {@inheritDoc}
+     * @uxon-property alias
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setAlias()
      */
     public function setAlias($value)
@@ -249,7 +252,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
                     $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->getCustomDataTypeUxon());
                     break;
                 default:
-                    throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
+                    $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
             }
         } catch (\Throwable $e) {
             throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
@@ -419,8 +422,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
+     * The name of the attribute (used for widget captions)
      * 
-     * {@inheritDoc}
+     * @uxon-property name
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setName()
      */
     public function setName($value)
