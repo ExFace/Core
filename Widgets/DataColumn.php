@@ -80,6 +80,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     use iHaveIconTrait {
         getIcon as getIconViaTrait;
+        getIconSet as getIconSetViaTrait;
     }
     
     use iCanBeAlignedTrait {
@@ -1408,5 +1409,21 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             $icon = $this->getAttribute()->getIcon();
         }
         return $icon;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIcon()
+     */
+    public function getIconSet() : ?string
+    {
+        if ($this->getIconViaTrait() !== null) {
+            return $this->getIconSetViaTrait();
+        }
+        if ($this->isBoundToAttribute()) {
+            return $this->getAttribute()->getIconSet();
+        }
+        return null;
     }
 }
