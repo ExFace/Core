@@ -916,7 +916,7 @@ class CallActionBehavior extends AbstractBehavior
      * Set to TRUE to wait until all business logic is done and transactions are committed and only call the action
      * after this.
      *
-     * @uxon-property notify_after_all_actions_complete
+     * @uxon-property call_after_all_actions_complete
      * @uxon-type boolean
      * @uxon-default false
      *
