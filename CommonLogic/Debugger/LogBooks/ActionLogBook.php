@@ -241,7 +241,7 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
                         $eventName = "`{$eventName}` ";
                     }
                     $logbook = $event->getLogbook();
-                    $link = $logbook instanceof IHaveLogIdInterface ? ' - see [Log-ID ' . $logbook->getLogId() . '](' . DebugContext::buildUrlToLogId($logbook->getLogId()) . ')' : '';
+                    $link = $logbook instanceof IHaveLogIdInterface ? ' - see [#LOG-' . $logbook->getLogId() . '](' . DebugContext::buildUrlToLogId($logbook->getLogId()) . ')' : '';
                     $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")" . $link, $idt);
                     break;
                 case $event instanceof OnBeforeActionPerformedEvent:
