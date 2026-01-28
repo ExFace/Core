@@ -1494,6 +1494,18 @@ new L.ExtraMarkers.icon({
 
 JS;
                 break;
+            case ($layer instanceof DataMarkersLayer) && $layer->getIconSet() === 'svg':
+
+                $js = <<<JS
+new L.ExtraMarkers.icon({
+                            icon: '',
+                            markerColor: $colorJs,
+                            innerHTML: {$this->escapeString('<div class="exf-svg-icon">' . $layer->getIcon() . '</div>')},
+                            prefix: '',
+                            svg: false,
+                        })
+JS;
+                break;
             case ($layer instanceof DataMarkersLayer):
                 $icon = $layer->getIcon() ?? 'fa-map-marker';
                 $prefix = $layer->getIconSet() ?? 'fa';
