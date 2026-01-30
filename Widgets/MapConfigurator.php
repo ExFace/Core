@@ -8,9 +8,14 @@ use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
 
 /**
  * A configurator widget for maps combining filters and sorters from all data layers.
+ * 
+ * The map configurator will include filters from all its data layers. So the filters may belong to different
+ * objects. Data layers, that have `data_widget_link` or a `data` with `configurator_widget_link` will be
+ * excluded. Their filter will remain only in the linked widgets.
  * 
  * @author Andrej Kabachnik
  * 
@@ -63,16 +68,24 @@ class MapConfigurator extends DataConfigurator
     }
     
     /**
-    * Returns an array with all filter widgets.
-    *
-    * @return Filter[]
-    */
+     * Returns an array with all filter widgets.
+     * 
+     * The map configurator will include filters from all its data layers. So the filters may belong to different
+     * objects. Data layers, that have `data_widget_link` or a `data` with `configurator_widget_link` will be
+     * excluded. Their filter will remain only in the linked widgets.
+     *
+     * @return Filter[]
+     */
     public function getFilters() : array
     {
         $array = [];
         foreach ($this->getMap()->getLayers() as $layer) {
-            if (($layer instanceof iUseData) && $layer->getDataWidgetLink() === null) {
-                $c = $layer->getData()->getConfiguratorWidget();
+            if (
+                ($layer instanceof DataMapLayerInterface) 
+                && $layer->getDataWidgetLink() === null
+                && ! $layer->getDataWidget()->isConfiguratorLinked()
+            ) {
+                $c = $layer->getDataWidget()->getConfiguratorWidget();
                 foreach ($c->getFilters() as $filter) {
                     $array[] = $filter;
                 }
