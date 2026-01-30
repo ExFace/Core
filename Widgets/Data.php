@@ -518,17 +518,23 @@ class Data
         // DataPointerColumn, DataPointerFilter, DataPointerRange, etc.?
         
         // If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
+        $configuratorObj = $this->getConfiguratorWidget()->getMetaObject();
         foreach ($data_sheet->getFilters()->getConditions() as $condition) {
             // For each filter condition look for filters over the same attribute.
             // Skip conditions not based on attributes.
-            if (! $condition->getExpression()->isMetaAttribute()) {
+            $condExpr = $condition->getExpression();
+            if (! $condExpr->isMetaAttribute()) {
                 continue;
             }
-            $attr = $condition->getExpression()->getAttribute();
+            $attr = $condExpr->getAttribute();
             $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
-            // If no filters are there, create one
-            if (empty($attribute_filters) === true) {
-                $filter = $this->getConfiguratorWidget()->createFilterForAttributeAlias($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
+            // If no filters are there, create one for a non-empty condition or an empty one which is
+            // explicitly not to be ignored
+            if (empty($attribute_filters) === true && (! $condition->isEmpty() || $condition->willIgnoreEmptyValues())) {
+                if (! $condExpr->getMetaObject()->is($configuratorObj)) {
+                    continue;
+                }
+                $filter = $this->getConfiguratorWidget()->createFilterForAttributeAlias($condExpr->getAttribute()->getAliasWithRelationPath());
                 $this->addFilter($filter);
                 $filter->setValue($condition->getValue(), false);
                 // Disable the filter because if the user changes it, the
