@@ -97,6 +97,14 @@ interface iHaveColumns extends WidgetInterface
      * @return DataColumn
      */
     public function createColumnFromUxon(UxonObject $uxon) : DataColumn;
+
+    /**
+     * @param ExpressionInterface $expression
+     * @param string|null $caption
+     * @param bool|null $hidden
+     * @return DataColumn
+     */
+    public function createColumnFromExpression(ExpressionInterface $expression, ?string $caption = null, ?bool $hidden = null) : DataColumn;
     
     /**
      * Returns the UID column as DataColumn
