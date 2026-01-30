@@ -132,6 +132,16 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     {
         yield from [];
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface::getIndex()
+     */
+    public function getIndex() : int
+    {
+        return $this->getMap()->getLayerIndex($this);
+    }
     
     /**
      * 

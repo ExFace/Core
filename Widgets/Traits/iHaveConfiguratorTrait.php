@@ -129,9 +129,8 @@ trait iHaveConfiguratorTrait
     }
 
     /**
-     * Returns the configurator link if set and NULL otherwise
-     * 
-     * @return WidgetLinkInterface|null
+     * {@inheritDoc}
+     * @see iHaveConfigurator::getConfiguratorWidgetLink()
      */
     public function getConfiguratorWidgetLink() : ?WidgetLinkInterface
     {
@@ -142,7 +141,8 @@ trait iHaveConfiguratorTrait
     }
 
     /**
-     * @return bool
+     * {@inheritDoc}
+     * @see iHaveConfigurator::isConfiguratorLinked()
      */
     public function isConfiguratorLinked() : bool
     {
