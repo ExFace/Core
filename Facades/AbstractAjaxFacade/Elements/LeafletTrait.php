@@ -483,7 +483,7 @@ JS;
                     $asIfForAction = null;
                 }
                 $exfRefreshJs = <<<JS
-                    function() {
+                function() {
                     var oData = {$linkedEl->buildJsDataGetter($asIfForAction)};
                     var aRows = oData.rows || [];
                     var aRowsSkipped = [];
@@ -596,7 +596,13 @@ JS;
                 
                 oLayer._exfRefresh = $exfRefreshJs;
                 
-                oLeaflet.on('exfRefresh', oLayer._exfRefresh);
+                oLeaflet.on('exfRefresh', function(oEvent){
+                    if (oEvent && oEvent.layer !== undefined && oEvent.layer !== {$layer->getIndex()}) {
+                        return;
+                    }
+                    oLayer._exfRefresh(oEvent);
+                });
+                
                 oLayer._exfRefresh();
                 
                 return oLayer;
@@ -846,8 +852,14 @@ JS;
                 $initEditingJs
 
                 oLayer._exfRefresh = $exfRefreshJs;
-
-                oLeaflet.on('exfRefresh', oLayer._exfRefresh);
+                
+                oLeaflet.on('exfRefresh', function(oEvent){
+                    if (oEvent && oEvent.layer !== undefined && oEvent.layer !== {$layer->getIndex()}) {
+                        return;
+                    }
+                    oLayer._exfRefresh(oEvent);
+                });
+                
                 oLayer._exfRefresh();
                
                 return oClusterLayer ? oClusterLayer : oLayer;
@@ -1211,8 +1223,14 @@ JS;
                     oMap.pm.disableGlobalEditMode();
                 }
             }
-            
-            oMap.on('exfRefresh', oLayer._exfRefresh);
+                
+            oMap.on('exfRefresh', function(oEvent){
+                if (oEvent && oEvent.layer !== undefined && oEvent.layer !== {$layer->getIndex()}) {
+                    return;
+                }
+                oLayer._exfRefresh(oEvent);
+            });
+                
             oLayer._exfRefresh();
             
             return oLayer;
