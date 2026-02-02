@@ -12,7 +12,7 @@ use exface\Core\Formulas\SubstringAfter;
  * @author Thomas Ressel
  * 
  */
-class IPDataType extends TextDataType 
+class IPDataType extends StringDataType 
 {
     private $type = null;
     

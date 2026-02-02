@@ -88,6 +88,9 @@ class PostgreSqlConnector extends AbstractSqlConnector
             if (! empty($pkeys) && StringDataType::startsWith($sql, 'INSERT', false) === true) {
                 $sql .= ' RETURNING ' . implode(', ', $pkeys);
             }
+            // Since we modify the original SQL, save it back to the query object in order to make it appear
+            // correctly in all sorts of logs
+            $query->setSql($sql);
         } else {
             // TODO how to get results from multistatement queries?    
         }

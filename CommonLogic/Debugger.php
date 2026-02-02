@@ -2,6 +2,9 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Debugger\ExceptionMarkdownRenderer;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
@@ -23,6 +26,8 @@ class Debugger implements DebuggerInterface
     
     private $tracer = null;
     
+    private ConfigurationInterface $config;
+    
     private $communicationInterceptor = null;
 
     private $workbenchStartTimeMs = null;
@@ -38,6 +43,7 @@ class Debugger implements DebuggerInterface
     public function __construct(LoggerInterface $logger, ConfigurationInterface $config, float $workbenchStartTimeMs = null)
     {
         $this->logger = $logger;
+        $this->config = $config;
         $this->workbenchStartTimeMs = $workbenchStartTimeMs ?? self::getTimeMsNow();
         try {
             $opt = $config->getOption('DEBUG.PHP_ERROR_REPORTING');
@@ -169,5 +175,42 @@ class Debugger implements DebuggerInterface
     public function getTimeMsFromStart() : float
     {
         return self::getTimeMsNow() - $this->getTimeMsOfWorkebnchStart();
+    }
+    
+    public function getLogData(string $logId, ?string $logFilePath = null, array $attrs = ['id', 'levelname', 'message', 'filepath', 'channel']) : DataSheetInterface
+    {
+        // Find the message in the log file. 
+        // If we do not know the log file, search in all logs for the message id
+        if (! $logFilePath) {
+            $logFileSheet = DataSheetFactory::createFromObjectIdOrAlias($this->config->getWorkbench(), 'exface.Core.LOG');
+            $logFileCol = $logFileSheet->getColumns()->addFromExpression('PATHNAME_RELATIVE');
+            $logFileSheet->getFilters()->addConditionFromString('CONTENTS', $logId, ComparatorDataType::IS);
+            $logFileSheet->dataRead();
+            $logFile = $logFileCol->getValue(0);
+
+            // If the message cannot be found in the logs, try the traces
+            if (! $logFile) {
+                $logFileSheet = DataSheetFactory::createFromObjectIdOrAlias($this->config->getWorkbench(), 'exface.Core.TRACE_LOG');
+                $logFileCol = $logFileSheet->getColumns()->addFromExpression('PATHNAME_RELATIVE');
+                $logFileSheet->getFilters()->addConditionFromString('CONTENTS', $logId, ComparatorDataType::IS);
+                $logFileSheet->dataRead();
+                $logFile = $logFileCol->getValue(0);
+                if (! $logFile) {
+                    throw new RuntimeException('Cannot file log message "' . $logId . '"');
+                }
+            }
+        } else {
+            $logFile = $logFilePath;
+        }
+
+        $logEntrySheet = DataSheetFactory::createFromObjectIdOrAlias($this->config->getWorkbench(), 'exface.Core.LOG_ENTRY');
+        $logEntrySheet->getColumns()->addMultiple($attrs);
+        $logEntrySheet->getFilters()->addConditionFromString('id', $logId, ComparatorDataType::EQUALS);
+        $logEntrySheet->getFilters()->addConditionFromString('logfile', $logFile, ComparatorDataType::EQUALS);
+        $logEntrySheet->dataRead();
+
+        // TODO throw errors if no message could be found or it has no details file or the file does not exist, etc.
+        
+        return $logEntrySheet;
     }
 }

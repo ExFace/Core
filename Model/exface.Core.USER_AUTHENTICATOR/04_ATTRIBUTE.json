@@ -95,6 +95,18 @@
             "attribute_alias": "COPYABLEFLAG"
         },
         {
+            "name": "ICON",
+            "attribute_alias": "ICON"
+        },
+        {
+            "name": "ICON_SET",
+            "attribute_alias": "ICON_SET"
+        },
+        {
+            "name": "ABBREVIATION",
+            "attribute_alias": "ABBREVIATION"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -200,6 +212,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "AUTHENTICATOR",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "authenticator_id",
@@ -245,6 +260,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "user_oid",
@@ -292,6 +310,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "DISABLED_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "disabled_flag",
@@ -337,6 +358,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "LAST_AUTHENTICATED_ON",
             "DATATYPE": "0x11e93b4b3d1f22188c660205857feb80",
             "DATA_ADDRESS": "last_authenticated_on",
@@ -382,6 +406,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "AUTHENTICATOR_USERNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "authenticator_username",
@@ -431,6 +458,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "PROPERTIES_UXON",
             "DATATYPE": "0x11ea99f0acf95c54b00c025041000001",
             "DATA_ADDRESS": "properties_uxon",

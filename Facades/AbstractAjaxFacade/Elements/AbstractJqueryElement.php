@@ -824,7 +824,9 @@ JS;
             if ($widget instanceof iHaveIcon && null !== $iconSet = $widget->getIconSet()) {
                 // If it is an SVG icon, just return the general SVG icon CSS class. The icon itself must
                 // be added by the facade.
-                if ($iconSet === 'svg') {
+                if ($iconSet === iHaveIcon::ICON_SET_SVG_COLORED) {
+                    return 'exf-svg-icon exf-svg-colored';
+                } else if ($iconSet === iHaveIcon::ICON_SET_SVG) {
                     return 'exf-svg-icon';
                 }
                 $prefix = $iconSet . ' ' . $iconSet . '-';

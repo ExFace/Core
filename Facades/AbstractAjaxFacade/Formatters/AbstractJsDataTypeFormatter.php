@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
@@ -80,5 +81,29 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     protected function getJsEmptyCheck(string $jsVar) : string 
     {
         return "({$jsVar} === null || {$jsVar} === undefined || {$jsVar} === '')";
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function buildJsGetValidatorIssues(string $jsValue): string
+    {
+        $dataType = $this->getDataType();
+        if(null !== $message = $dataType->getValidationErrorMessage()) {
+            $msg = StringDataType::endSentence($message->getTitle());
+        } else {
+            $msg = '';
+        }
+        $msgJs = json_encode($msg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return <<<JS
+
+(function (value){
+    if ({$this->buildJsValidator('value')}) {
+        return {$msgJs};
+    } else {
+        return '';
+    }
+})({$jsValue})
+JS;
     }
 }

@@ -100,6 +100,8 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
 
     private $selectable_options = array();
     
+    private $excluded_options = array();
+    
     private $selectable_null = null;
 
     private $text_attribute_alias = null;
@@ -315,8 +317,37 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
             $options[$key] = $value === null ? null : $this->evaluatePropertyExpression($value);
         }
         
+        $excludes = $this->getExcludedOptions();
+        foreach ($options as $key => $value) {
+            if (in_array($key, $excludes, true)) {
+                unset($options[$key]);
+            }
+        }
+        
         $this->selectable_options = $options;
         return $this;
+    }
+
+    /**
+     * Exclude the following values
+     * 
+     * @uxon-property excluded_options
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param array|UxonObject $options
+     * @return $this
+     */
+    public function setExcludedOptions(array|UxonObject $options) : InputSelect
+    {
+        $array = $options instanceof UxonObject ? $options->toArray() : $options;
+        $this->excluded_options = $array;
+        return $this;
+    }
+    
+    public function getExcludedOptions() : array
+    {
+        return $this->excluded_options;
     }
     
     /**

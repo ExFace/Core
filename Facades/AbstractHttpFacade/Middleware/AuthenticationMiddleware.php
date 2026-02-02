@@ -30,10 +30,10 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\ApiKeyAuthToken;
  * 
  * Technically, the middleware will:
  * 
- * 1) Check if a user is already authenticatd (e.g. via remember-me some other authenticators etc.)
- * 2) Attemt to extract an authentciation token from the request using configurable token extractors
- * 3) Authenticate the extracted token(s) in the workbench
- * 4) Optionally the middleware can return a 401-response if the resulting authentication token
+ * 1. Check if a user is already authenticate (e.g. via remember-me some other authenticators etc.)
+ * 2. Attempt to extract an authentication token from the request using configurable token extractors
+ * 3. Authenticate the extracted token(s) in the workbench
+ * 4. Optionally the middleware can return a 401-response if the resulting authentication token
  * is still anonymous, thus requiring authentication for every request.
  * 
  * **NOTE:** this middleware only handles authentication! It does not check, if the user

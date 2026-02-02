@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpClassDataType;
@@ -113,12 +114,12 @@ trait ExceptionTrait {
             if ($msgCode = $this->getAlias()) {
                 try {
                     $msgModel = $this->getMessageModel($page->getWorkbench());
-                    
+                    $permalink = DebugContext::buildUrlToLogId($this->getId());
                     $error_heading = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setHideCaption(true)
                         ->setWidth(WidgetDimension::MAX)
                         ->setValue(<<<MD
-# {$translator->translate('ERROR.CAPTION')} {$msgCode}: {$msgModel->getTitle()}
+# {$translator->translate('ERROR.CAPTION')} {$msgCode}: {$msgModel->getTitle()} [&#x1F517;]({$permalink})
 
 > {$this->getMessage()}
 MD);
@@ -361,7 +362,6 @@ MD);
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getId()
      */
     public function getId()
@@ -374,6 +374,15 @@ MD);
             }
         }
         return $this->id;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\IHaveLogIdInterface::getLogId()
+     */
+    public function getLogId() : string
+    {
+        return $this->getId();
     }
 
     /**

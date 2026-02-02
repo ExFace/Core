@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Exceptions\Actions\ActionAppNotFoundError;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
@@ -152,6 +153,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                         $this->action->importUxonObject($this->action_uxon);
                     }
                 } catch (\Throwable $e) {
+                    if ($e instanceof ActionAppNotFoundError) {
+                        $this->action_alias = null;
+                        $this->setDisabled(true, 'App of action not installed!');
+                        return null;
+                    }
                     throw new WidgetConfigurationError($this, 'Error in Button widget: ' . $e->getMessage(), null, $e);
                 }
             } elseif ($this->action_uxon !== null) {

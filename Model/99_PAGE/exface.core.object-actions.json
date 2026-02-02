@@ -11,10 +11,11 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-05-28 16:19:46",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-03-14 11:37:58",
+    "modified_on": "2026-01-22 11:27:38",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.OBJECT_ACTION",
+        "multi_select": true,
         "filters": [
             {
                 "attribute_alias": "NAME"
@@ -94,6 +95,23 @@
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "caption": "Edit object",
+                "action": {
+                    "alias": "exface.core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.OBJECT",
+                    "input_mapper": {
+                        "from_object_alias": "exface.Core.OBJECT_ACTION",
+                        "to_object_alias": "exface.Core.OBJECT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
             }
         ]
     }

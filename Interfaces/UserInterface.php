@@ -147,6 +147,10 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
     public function hasRolesAll(array $selectorsOrStrings) : bool;
     
     /**
+     * Add a role selector to the user
+     * 
+     * NOTE: this should not affect any policies for this user for security reasons. Policies are ALWAYS loaded
+     * via metamodel DB and only user-to-role assignments there affect the policy loading mechanism!
      * 
      * @param UserRoleSelectorInterface|string $selectorOrString
      * @return UserInterface

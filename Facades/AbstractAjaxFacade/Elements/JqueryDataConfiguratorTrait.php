@@ -96,7 +96,38 @@ trait JqueryDataConfiguratorTrait
         } else {
             $filter_group = '';
         }
-        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . "}";
+
+
+        // when requesting data for a datatable, pass the columns as well 
+        // this is for example needed in the export actions/ExportJSON
+        $columnsJs = '';
+        if ($widget->getDataWidget() instanceof \exface\Core\Widgets\DataTable){
+            $columns = $widget->getDataWidget()->getColumns();
+            $columnsJs = ', columns: [';
+            foreach ($columns as $column) {
+                $columnJs = '{';
+
+                if ($column->getDataColumnName() !== null){
+                    if ($column->getAttributeAlias() !== null) {
+                        $columnJs .= ' attribute_alias: "' . $column->getAttributeAlias() . '" ';
+                        if ($column->getDataColumnName() !== $column->getAttributeAlias()){
+                            $columnJs .= ', name: "' . $column->getDataColumnName() . '" ';
+                        }
+                    }
+                    else if ($column->isCalculated()) {
+                        $columnJs .= ' name: "' . $column->getDataColumnName() . '" ';
+                        $columnJs .= ' , expression: "' . $column->getCalculationExpression() . '" ';
+                    }
+                    
+                }
+
+                $columnJs .= '}';
+                $columnsJs .= $columnJs . ', ';
+            }
+            $columnsJs .= ']';
+        }
+
+        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . $columnsJs ."}";
     }
     
     /**

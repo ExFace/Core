@@ -2,6 +2,8 @@
 
 namespace exface\Core\CommonLogic\Constants;
 
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+
 /**
  * Icon names for basic icons supported by all facades.
  * 
@@ -687,5 +689,21 @@ abstract class Icons
     public static function getIconSet() : string
     {
         return 'fa';
+    }
+
+    /**
+     * Returns true if the given icon set represents svg.
+     * 
+     * @param $iconSet
+     * @return bool
+     */
+    public static function isIconSetSVG($iconSet) : bool
+    {
+        if($iconSet === null) {
+            return false;
+        }
+        
+        return ($iconSet === iHaveIcon::ICON_SET_SVG ||
+            $iconSet === iHaveIcon::ICON_SET_SVG_COLORED);
     }
 }

@@ -5,7 +5,7 @@ use DOMDocument;
 use exface\Core\Exceptions\DataTypes\HtmlValidationError;
 use Gajus\Dindent\Indenter;
 
-class HtmlDataType extends TextDataType
+class HtmlDataType extends CodeDataType
 {
     const URL_TYPE_RELATIVE = 'relative';
     CONST URL_TYPE_ALL = 'all';

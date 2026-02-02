@@ -2,6 +2,7 @@
 
 namespace exface\Core\Permalinks;
 
+use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\Permalink\AbstractPermalink;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataSheetFactory;
@@ -17,6 +18,7 @@ use http\Exception\BadUrlException;
  * as an argument, the dialog will be prefilled with data from that entry.
  * 
  * **Link Syntax:** 
+ * 
  * - `api/permalink/<config_alias>/[target_uid]`
  */
 class DialogPermalink extends AbstractPermalink
@@ -129,6 +131,15 @@ class DialogPermalink extends AbstractPermalink
     /**
      * The ID of the widget targeted by this link.
      * 
+     * The id MUST belong to a widget in the root id space of the page or have an explicit id space. You cannot address 
+     * ids inside lazy dialogs without specifying the correct id space. Any widget id, that does not have an id
+     * space will be resolved in the root id space of the page.
+     * 
+     * Examples:
+     * 
+     * - `DataTable_DataToolbar_ButtongGroup_Button03` will be resolved in the root id space
+     * - `.DataTable_DataToolbar_ButtongGroup_Button03` is the same as above, but with the id space explicitly specified
+     * 
      * @uxon-property widget_id
      * @uxon-type string
      * @uxon-required true
@@ -138,6 +149,10 @@ class DialogPermalink extends AbstractPermalink
      */
     protected function setWidgetId(string $id) : DialogPermalink
     {
+        // Make sure the id has an id space
+        if (mb_strpos($id, UiPage::WIDGET_ID_SPACE_SEPARATOR) === false) {
+            $id = UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
+        }
         $this->widgetId = $id;
         $this->widget = null;
         return $this;

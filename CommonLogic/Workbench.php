@@ -320,6 +320,20 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see WorkbenchInterface::isAppInstalled()
+     */
+    public function isAppInstalled(string|AppSelectorInterface $aliasOrSelector) : bool
+    {
+        try {
+            $app = $this->getApp($aliasOrSelector);
+        } catch (AppNotFoundError $e) {
+            return false;
+        }
+        return $app->isInstalled();
+    }
+
+    /**
      * Returns the core app
      *
      * @return AppInterface

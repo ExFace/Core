@@ -209,9 +209,9 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     }
 
     /**
-     * Allows to set default values for attribtues programmatically
+     * Allows to set default values for attributes programmatically
      * 
-     * Note: this is intentionally NOT a UXON property. The attribtue defaults should instead be UXON
+     * Note: this is intentionally NOT a UXON property. The attribute defaults should instead be UXON
      * properties of the respective storage-behaviors directly. This way, each storage-behavior can have
      * its own defaults and UXON autosuggests also assume, that the object (e.g. of the attribute groups)
      * is the storage-object and not the definition-object, that is the abse of this prototype class.
@@ -238,16 +238,19 @@ class CustomAttributesDefinition implements iCanBeConvertedToUxon
     /**
      * Hashes a concatenation of this instances datasheet template and attribute defaults.
      * The hash is generated using `xxh128` and is 32 characters (i.e. 128 bits) long.
-     * 
+     *
      * Repeated calls make use of caching.
-     * 
+     *
+     * @param string $additionalSpecifiers
+     * Allows you to pass additional specifiers. This significantly changes the output, so make sure you can reproduce
+     * these specifiers when you try to compare hashes later down the line.
      * @return string|null
      */
-    public function getHash(): ?string
+    public function getHash(string $additionalSpecifiers = ''): ?string
     {
         if($this->hash === null) {
             $data = $this->getDataSheetTemplateUxon()->toJson() . $this->getAttributeDefaults()->toJson();
-            $this->hash = hash('xxh128', $data);
+            $this->hash = hash('xxh128', $data . $additionalSpecifiers);
         }
 
         return $this->hash;

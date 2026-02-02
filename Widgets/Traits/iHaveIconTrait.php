@@ -67,8 +67,7 @@ trait iHaveIconTrait {
      */
     public function getIconSet() : ?string
     {
-        if ($this->iconSet === null && $this->icon !== null) {
-            $icon = $this->getIcon();
+        if ($this->iconSet === null && null !== $icon = $this->getIcon()) {
             if (StringDataType::startsWith($icon, '<svg')) {
                 return iHaveIcon::ICON_SET_SVG;
             }

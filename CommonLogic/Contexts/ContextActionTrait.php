@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Contexts;
 
+use exface\Core\Exceptions\Contexts\ContextNotFoundError;
+use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Actions\ActionInputTypeError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -31,6 +33,9 @@ trait ContextActionTrait
      */
     public function getContextAlias(TaskInterface $task = null) : string
     {
+        if ($this->context_alias === null) {
+            throw new ContextNotFoundError('Context alias not set for action ' . $this->getAliasWithNamespace());
+        }
         return $this->context_alias;
     }
     
@@ -56,6 +61,9 @@ trait ContextActionTrait
      */
     public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
+        if ($this->context_scope === null) {
+            throw new ContextScopeNotFoundError('Context scope not set for action ' . $this->getAliasWithNamespace());
+        }
         return $this->context_scope;
     }
     
