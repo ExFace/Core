@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
@@ -107,6 +109,8 @@ class DataCarousel extends Split
     private $detailsWidget = null;
     
     private $detailPosition = null;
+
+    private $detailTitleColumn = null;
     
     /**
      * 
@@ -152,6 +156,24 @@ class DataCarousel extends Split
     {
         if ($this->hasDetailsWidget()) {
             $details = $this->getDetailsWidget();
+            $detailTitleColumn = $this->getDetailTitleColumn();
+
+            // add specified title column to data widget
+            if ($detailTitleColumn !== null){
+                $detailTitleExpression = ExpressionFactory::createFromString($this->getWorkbench(), $detailTitleColumn);
+                $widget->addColumn($widget->createColumnFromExpression($detailTitleExpression, null, true));
+            }
+            else {
+                // otherwise use label of object if it exists;
+                $metaObject = $widget->getMetaObject();
+                if ($metaObject->hasLabelAttribute()){
+                    $widget->addColumn($widget->createColumnFromAttribute($metaObject->getLabelAttribute(), null, true));
+                    $this->setDetailTitleColumn($metaObject->getLabelAttribute()->getAlias());
+                }
+            }
+
+            //TODO sah: add sorters/filters here automatically too!
+
             foreach ($this->getChildrenToSyncWithDataWidget($details) as $child) {
                 if ($child instanceof iShowSingleAttribute && $child->isBoundToAttribute()) {
                     if (! $widget->getColumnByAttributeAlias($child->getAttributeAlias())) {
@@ -336,6 +358,30 @@ class DataCarousel extends Split
     public function getDetailPosition() : ?string
     {
         return $this->detailPosition;
+    }
+    
+    /**
+     * Defines a title column, which will be shown as the caption of the detail section of the widget. Can either be a attribute alias or a formula.
+     * 
+     * @uxon-property detail_title_column
+     * @uxon-type metamodel:attribute|metamodel:formula
+     * 
+     * @param string $value
+     * @return DataCarousel
+     */
+    public function setDetailTitleColumn(string $value) : DataCarousel
+    {
+        $this->detailTitleColumn = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * @return string
+     */
+    public function getDetailTitleColumn() : ?string
+    {
+        return $this->detailTitleColumn;
     }
     
     /**

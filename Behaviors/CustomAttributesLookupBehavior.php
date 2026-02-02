@@ -378,7 +378,8 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $thisObj = $this->getObject();
         $fakeRelAttr = new CustomAttribute($thisObj, $relPathToLookup->getEndObject(), $relPathToLookup->__toString() . $customAttr->getAlias());
         $lookupAliasExpr = $this->getValuesLookup()->getValuesAttributeAliasColumnExpression();
-        if (! $lookupAliasExpr->isMetaAttribute()) {
+        $onlyOneAttribute = $lookupAliasExpr->isConstant();
+        if (! $lookupAliasExpr->isMetaAttribute() && ! $onlyOneAttribute) {
             throw new BehaviorConfigurationError($this, 'Cannot use custom SQL sorting/filtering if the values_attribute_alias_column is not an attribute alias');
         }
         $fakeRelUxon = new UxonObject([
@@ -392,10 +393,16 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         $fakeRelAttr->importUxonObject($fakeRelUxon);
         $thisObj->addAttribute($fakeRelAttr);
         $fakeRel = $fakeRelAttr->getRelation();
-        $fakeRelAttr->setDataAddressProperties(new UxonObject([
-            'SQL_JOIN_ON' => "[#~left:{$relFromLookup->getRightKeyAttribute()->getAlias()}#] = [#~right:{$relFromLookup->getLeftKeyAttribute()->getAlias()}#] 
-                AND [#~right:{$lookupAliasExpr->getAttributeAlias()}#] = '{$customAttr->getAlias()}'"
-        ]));
+        if ($onlyOneAttribute) {
+            $fakeRelAttr->setDataAddressProperties(new UxonObject([
+                'SQL_JOIN_ON' => "[#~left:{$relFromLookup->getRightKeyAttribute()->getAlias()}#] = [#~right:{$relFromLookup->getLeftKeyAttribute()->getAlias()}#]"
+            ]));
+        } else {
+            $fakeRelAttr->setDataAddressProperties(new UxonObject([
+                'SQL_JOIN_ON' => "[#~left:{$relFromLookup->getRightKeyAttribute()->getAlias()}#] = [#~right:{$relFromLookup->getLeftKeyAttribute()->getAlias()}#] 
+                    AND [#~right:{$lookupAliasExpr->getAttributeAlias()}#] = '{$customAttr->getAlias()}'"
+            ]));
+        }
         return $fakeRel;
     }
 

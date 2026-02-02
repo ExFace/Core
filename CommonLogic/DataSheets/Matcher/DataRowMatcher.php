@@ -264,16 +264,28 @@ class DataRowMatcher implements TwoSheetMatcherInterface
                 $checkRowsKeys[$checkRowIdx][$key] = $val;
             }
         }
+
+        $checkKeys = array_keys($checkRows);
         
         // Now compare the keys of each event row to each check row
-        for ($mainRowIdx = 0; $mainRowIdx < $mainRowCnt; $mainRowIdx++) {
+        foreach (array_keys($mainRows) as $mainRowIdx) {
             // For each row being saved iterate over all the rows from the data source
             // NOTE: in self-compare mode (when looking for duplicates inside the data sheet) only
             // iterate over the following rows, because previous ones were already checked.
             // This also makes sure, the first row is not marked as duplicate of one of the subsequent rows
             $uidMatchProcessed = false;
             $mainRow = $mainRowsKeys[$mainRowIdx];
-            for ($checkRowIdx = ($selfCompare === true ? $mainRowIdx+1 : 0); $checkRowIdx < $checkRowCnt; $checkRowIdx++) {
+            
+            $checkKeysLocal = $checkKeys;
+            if($selfCompare) {
+                $sliceIndex = array_search($mainRowIdx, $checkKeysLocal);
+                if($sliceIndex === false || $sliceIndex >= $checkRowCnt - 1) {
+                    break;
+                }
+                $checkKeysLocal = array_slice($checkKeysLocal, $sliceIndex + 1, null, true);
+            }
+            
+            foreach ($checkKeysLocal as $checkRowIdx) {
                 $checkRow = $checkRowsKeys[$checkRowIdx];
                 $isDuplicate = true;
                 $isUidMatch = false;

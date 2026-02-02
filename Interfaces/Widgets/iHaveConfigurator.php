@@ -34,4 +34,16 @@ interface iHaveConfigurator extends WidgetInterface
      * @return string
      */
     public function getConfiguratorWidgetType() : string;
+
+    /**
+     * Returns the configurator link if set and NULL otherwise
+     * 
+     * @return WidgetLinkInterface|null
+     */
+    public function getConfiguratorWidgetLink() : ?WidgetLinkInterface;
+
+    /**
+     * @return bool
+     */
+    public function isConfiguratorLinked() : bool;
 }

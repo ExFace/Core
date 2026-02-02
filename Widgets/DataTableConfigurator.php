@@ -155,11 +155,15 @@ class DataTableConfigurator extends DataConfigurator
         // Do not create the columns for the table itself because that would reserve column
         // ids in the main column group, eventually resulting in shifting ids when optional
         // columns are added. Instead, create a detached column group and use that.
-        // IDEA maybe we don't even need a column group? Couldn't we just create a detached
-        // column with the columns-tab as parent?
-        $colGrp = WidgetFactory::createFromUxonInParent($table, new UxonObject([
-            'visibility' => WidgetVisibilityDataType::OPTIONAL
-        ]), 'DataColumnGroup');
+        // Using a column group makes it automatically possible to use attribute_group_alias
+        // with the list of optional columns for the configurator!
+        $colGrp = WidgetFactory::createFromUxonInParent(
+            $table, 
+            new UxonObject([
+                'visibility' => WidgetVisibilityDataType::OPTIONAL
+            ]), 
+            'DataColumnGroup'
+        );
 
         foreach($arr = $this->columnsUxon->toArray() as $key => $value) {
             if($value['visibility'] === null) {

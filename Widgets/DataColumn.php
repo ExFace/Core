@@ -80,6 +80,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     use iHaveIconTrait {
         getIcon as getIconViaTrait;
+        getIconSet as getIconSetViaTrait;
     }
     
     use iCanBeAlignedTrait {
@@ -1307,11 +1308,40 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
             return $hint;
         }
-        $addition = '';
-        if ($includeDebugInfo === true && $foundDebugContext === true && null !== $group = $this->getAttributeGroupAlias()) {
-            $addition .= "\n- Attribute group: `{$group}`";
-        } 
-        return $this->getCellWidget()->getHint($includeDebugInfo) . $addition;
+        return $this->getCellWidget()->getHint($includeDebugInfo) . $this->getHintDebugForColumn($includeDebugInfo && $includeDebugInfo);
+    }
+
+    /**
+     * Returns additional debug hints for the column (not including those from the cell widget)
+     * 
+     * @param bool $includeDebugInfo
+     * @return string
+     */
+    protected function getHintDebugForColumn(bool $includeDebugInfo = true) : string
+    {
+        $hint = '';
+        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+            $hint .= "\n- Attribute group: `{$group}`";
+        }
+        if ($this->isFilterable() === false) {
+            $hint .= "\n - NOT filterable";
+        }
+        if ($this->isSortable() === false) {
+            $hint .= "\n - NOT sortable";
+        }
+        if ($this->isEditable() === false) {
+            $hint .= "\n - NOT exportable";
+        }
+        return $hint;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getHintDebug()
+     */
+    protected function getHintDebug() : string
+    {
+        return parent::getHintDebug() . $this->getHintDebugForColumn(true);
     }
     
     /**
@@ -1408,5 +1438,21 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             $icon = $this->getAttribute()->getIcon();
         }
         return $icon;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIcon()
+     */
+    public function getIconSet() : ?string
+    {
+        if ($this->getIconViaTrait() !== null) {
+            return $this->getIconSetViaTrait();
+        }
+        if ($this->isBoundToAttribute()) {
+            return $this->getAttribute()->getIconSet();
+        }
+        return null;
     }
 }

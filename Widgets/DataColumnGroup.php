@@ -7,7 +7,6 @@ use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Interfaces\Widgets\iCanBeEditable;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iShowData;
@@ -133,6 +132,38 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         }
         
         return $c;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iHaveColumns::createColumnFromExpression()
+     */
+    public function createColumnFromExpression(ExpressionInterface $expression, ?string $caption = null, ?bool $hidden = null) : DataColumn
+    {
+        $uxon = new UxonObject();
+        switch (true) {
+            case $expression->isFormula(): // =Now()
+            case $expression->isConstant(): // ='asdf'
+                $uxon->setProperty('calculation', $expression->__toString());
+                break;
+            case $expression->isMetaAttribute():
+            case $expression->isUnknownType():
+                $uxon->setProperty('attribute_alias', $expression->__toString());
+                break;
+            case $expression->isReference():
+                $uxon->setProperty('cell_widget', [
+                    'widget_type' => 'Display',
+                    'value' => $expression->__toString()
+                ]);
+                break;
+        }
+        if ($caption !== null) {
+            $uxon->setProperty('caption', $caption);
+        }
+        if ($hidden !== null) {
+            $uxon->setProperty('hidden', $hidden);
+        }
+        return $this->createColumnFromUxon($uxon);
     }
 
     /**

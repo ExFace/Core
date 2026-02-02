@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts\Maps;
 
+use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -10,19 +11,21 @@ use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Events\Widget\OnUiPageInitEvent;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
 
 /**
- *
+ * Base implementation for a map layer showing data
+ * 
  * @author Andrej Kabachnik
  *
  */
-abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
+abstract class AbstractDataLayer extends AbstractMapLayer implements DataMapLayerInterface
 {
-    private $dataWidget = null;
-    
-    private $dataUxon = null;
-    
-    private $dataWidgetLink = null;
+    private ?iShowData $dataWidget = null;
+    private ?WidgetLinkInterface $dataWidgetLink = null;
+    private ?UxonObject $dataUxon = null;
+    private ?MetaObjectInterface $object = null;
     
     public function exportUxonObject()
     {
@@ -32,11 +35,14 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
     }
     
     /**
-     *
-     * @return MetaObjectInterface
+     * {@inheritDoc}
+     * @see DataMapLayerInterface::getMetaObject()
      */
     public function getMetaObject() : MetaObjectInterface
     {
+        if ($this->object !== null) {
+            return $this->object;
+        } 
         return $this->dataWidget !== null ? $this->dataWidget->getMetaObject() : parent::getMetaObject();
     }
     
@@ -54,7 +60,11 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
                     throw new WidgetConfigurationError($this->getMap(), 'Error instantiating map layer data. ' . $e->getMessage(), null, $e);
                 }
             } else {
-                $data = $this->createDataWidget($this->dataUxon ?? (new UxonObject()));
+                $uxon = $this->dataUxon ?? (new UxonObject());
+                if (! $uxon->hasProperty('object_alias') && $this->object !== null) {
+                    $uxon->setProperty('object_alias', $this->object->getAliasWithNamespace());
+                }
+                $data = $this->createDataWidget($uxon);
             }
             $this->dataWidget = $this->initDataWidget($data);
         }
@@ -153,7 +163,24 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
      * This is very handy if you want to visualize the data presented by a table or so. 
      * Using the link will make the chart automatically react to filters and other setting 
      * of the target data widget.
-     *
+     * 
+     * However, the map will show ONLY what is visible in the linked widget. In particular, if linked to a
+     * table with pagination, the map will only show the current page. This may or may not be the expected
+     * behavior. If you want the map to show all data without pagination, use a linked configurator instead.
+     * This will load all data matching the filters of the linked widget into the map - not pagination, but
+     * it will also mean, the map will perform its own ReadData request.
+     * 
+     * ```
+     * {
+     *      "type": "DataMarkers",
+     *      "object_alias": "// object of the linked widget",
+     *      "data": {
+     *          "configurator_widget_link": "=IdOfTable"
+     *      }   
+     * }
+     * 
+     * ```
+     * 
      * @uxon-property data_widget_link
      * @uxon-type uxon:$..id
      *
@@ -189,5 +216,26 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
             }
         }
         return $caption;
+    }
+
+    /**
+     * Alias or UID of the object to be used in this data layers
+     * 
+     * By default, data layers will be based on the object of the map itself. However, they
+     * can also have their own objects if the use `data`, `data_widget_link`, etc.
+     * 
+     * If linking the layer to other widgets data, make sure to use the same `object_alias`
+     * in the layer and in the linked widget!
+     * 
+     * @uxon-property object_alias
+     * @uxon-type metamodel:object
+     * 
+     * @param string $aliasOrUid
+     * @return DataMapLayerInterface
+     */
+    protected function setObjectAlias(string $aliasOrUid) : DataMapLayerInterface
+    {
+        $this->object = MetaObjectFactory::createFromString($this->getWorkbench(), $aliasOrUid);
+        return $this;
     }
 }

@@ -74,6 +74,16 @@ trait iHaveColumnsAndColumnGroupsTrait
     {
         return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::createColumnFromExpression()
+     */
+    public function createColumnFromExpression(ExpressionInterface $expression, ?string $caption = null, ?bool $hidden = null) : DataColumn
+    {
+        return $this->getColumnGroupMain()->createColumnFromExpression($expression, $caption, $hidden);
+    }
     
     /**
      * 
