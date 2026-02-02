@@ -98,7 +98,7 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
         return <<<JS
 
 (function (value){
-    if ({$this->buildJsValidator('value')}) {
+    if ({$this->buildJsValidator('value')} === false) {
         return {$msgJs};
     } else {
         return '';
