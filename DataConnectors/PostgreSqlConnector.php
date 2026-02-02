@@ -7,7 +7,10 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\ModelBuilders\PostgreSqlModelBuilder;
 use exface\Core\QueryBuilders\PostgreSqlBuilder;
 
@@ -98,13 +101,32 @@ class PostgreSqlConnector extends AbstractSqlConnector
         $result = @pg_query($conn, $sql);
 
         if ($result === false) {
-            throw new DataQueryFailedError($query, 'PostgreSQL query failed: ' . pg_last_error($conn));
+            throw $this->createQueryError($query, pg_last_error($conn));
         }
 
         $this->affectedRows = pg_affected_rows($result);
         $query->setResultResource($result);
 
         return $query;
+    }
+
+    /**
+     *
+     * @param DataQueryInterface $query
+     * @param string $message
+     * @return DataQueryExceptionInterface
+     */
+    protected function createQueryError(DataQueryInterface $query, string $message = null) : DataQueryExceptionInterface
+    {
+        switch (true) {
+            /* TODO how to detect constraint errors in PostgreSQL? Use pg_result_error()?
+            case 2601:
+                $e = new DataQueryConstraintError($query, $message, null, $err->setAlias('73II64M'));
+            */
+            default:
+                $e = new DataQueryFailedError($query, 'PostgreSQL query failed: ' . $message, null, '6T2T2UI');
+        }
+        return $e;
     }
 
     /**
