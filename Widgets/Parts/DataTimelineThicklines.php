@@ -56,6 +56,7 @@ class DataTimelineThicklines implements WidgetPartInterface
     private ?int $value = null;
     private ?int $from = null;
     private ?int $to = null;
+    private ?string $color = null;
 
     public function __construct(DataTimelineView $timelineView, ?UxonObject $uxon = null)
     {
@@ -172,6 +173,29 @@ class DataTimelineThicklines implements WidgetPartInterface
     public function setTo(int $to) : DataTimelineThicklines
     {
         $this->to = $to;
+        return $this;
+    }
+    
+    /**
+     * @return string|null
+     */
+    public function getColor() : ?string
+    {
+        return $this->color;
+    }
+    
+    /**
+     * Sets the color of the thick lines.
+     *
+     * @uxon-property color
+     * @uxon-type string
+     *
+     * @param string $color
+     * @return $this
+     */
+    public function setColor(string $color) : DataTimelineThicklines
+    {
+        $this->color = $color;
         return $this;
     }
     
