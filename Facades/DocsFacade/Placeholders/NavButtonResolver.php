@@ -24,86 +24,59 @@ class NavButtonResolver extends AbstractMarkdownPlaceholderResolver implements P
     public function resolve(array $placeholders) : array
     {
         $vals = [];
-        $rootDirectory = FilePathDataType::findFolderPath($this->pagePath);        
+        $rootDirectory = $this->getDocsPath($this->pagePath);        
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
         $filteredNames = $this->filterPlaceholders($names);
+        $fileList = $this->getFlattenMarkdownFiles($rootDirectory);
         foreach ($placeholders as $i => $placeholder) {
             if (in_array($placeholder['name'], $filteredNames)) {
-                $fileList = $this->getSiblings($rootDirectory);
-                $val = $this->createButtons($fileList);
+                $val = $this->createButtons($fileList, $this->pagePath);
                 $vals[$i] = $val;
             }
         }
         return $vals;
     }
 
-    
-    protected function getSiblings(string $directory): array {
-        if (strtolower(basename($this->pagePath)) === 'index.md') {
-            return $this->getIndexSiblings($directory);
-        } else {
-            return $this->getRegularSiblings($directory);
-        }
-    }
 
-    protected function getIndexSiblings(string $directory): array {
-        $parent = dirname($directory);
-        $subfolders = glob($parent . '/*', GLOB_ONLYDIR);
-    
-        $siblings = [];
-        foreach ($subfolders as $folder) {
-            $indexPath = $folder . DIRECTORY_SEPARATOR . 'index.md';
-            if (file_exists($indexPath)) {
-                $siblings[] = [
-                    'title' => MarkdownDataType::findHeadOfFile($indexPath),
-                    'link' => FilePathDataType::normalize($indexPath)
-                ];
-            }
-        }
-    
-        $sorter = new RowDataArraySorter();
-        $sorter->addCriteria('title', SORT_ASC);
-        return $sorter->sort($siblings);
-    }
-    
-    protected function getRegularSiblings(string $directory): array {
-        $siblings = [];
-        $files = glob($directory . '/*.md');
-    
-        foreach ($files as $filePath) {
-            if (strtolower(basename($filePath)) === 'index.md') {
-                continue;
-            }
-    
-            $siblings[] = [
-                'title' => MarkdownDataType::findHeadOfFile($filePath),
-                'link' => FilePathDataType::normalize($filePath)
-            ];
-        }
-        $sorter = new RowDataArraySorter();
-        $sorter->addCriteria('title', SORT_ASC);
-        return $sorter->sort($siblings);
-    }
-
-    protected function createButtons(array $files): string
+    protected function createButtons(array $flatList, string $currentPath): string
     {
-        $currentIndex = array_search(FilePathDataType::normalize($this->pagePath), array_column($files, 'link'));
-        
-        if ($currentIndex === false) {
-            "";
-        }
-        $prev = $currentIndex > 0 ? $files[$currentIndex - 1] : null;
-        $next = $currentIndex < count($files) - 1 ? $files[$currentIndex + 1] : null;
-        
-        $buttons = [];
-        if ($prev) $buttons[] = $this->mdButon('Zurück',$this->getRelativePath($this->pagePath, $prev['link']));
-        if ($next) $buttons[] = $this->mdButon('Weiter',$this->getRelativePath($this->pagePath, $next['link']));
+        $normalizedCurrent = FilePathDataType::normalize($currentPath);
 
-        $buttonBlock = implode(' ', $buttons) . "\n";
-        return $buttonBlock;
+        $normalizedList = array_map(
+            fn($p) => FilePathDataType::normalize($p),
+            $flatList
+        );
+
+        $currentIndex = array_search($normalizedCurrent, $normalizedList);
+
+        if ($currentIndex === false) {
+            return '';
+        }
+
+        $buttons = [];
+
+        if ($currentIndex > 0) {
+            $prevPath = $flatList[$currentIndex - 1];
+            $buttons[] = $this->mdButon(
+                'Zurück',
+                $this->getRelativePath($this->pagePath, $prevPath)
+            );
+        }
+
+        if ($currentIndex < count($flatList) - 1) {
+            $nextPath = $flatList[$currentIndex + 1];
+            $buttons[] = $this->mdButon(
+                'Weiter',
+                $this->getRelativePath($this->pagePath, $nextPath)
+            );
+        }
+
+        return implode(' ', $buttons);
     }
 
-    function getRelativePath(string $from, string $to): string {
+
+    function getRelativePath(string $from, string $to): string 
+    {
         $from = is_dir($from) ? rtrim($from, '/') . '/' : dirname($from) . '/';
         $from = FilePathDataType::normalize(realpath($from));
         $to   = FilePathDataType::normalize(realpath($to));
@@ -120,7 +93,8 @@ class NavButtonResolver extends AbstractMarkdownPlaceholderResolver implements P
         return str_repeat('../', count($fromParts)) . implode('/', $toParts);
     }    
 
-    function mdButon(string $buttonText, string $path) {
+    function mdButon(string $buttonText, string $path): string
+    {
         return "[<kbd> <br> " . $buttonText . " <br> </kbd>]($path)";
     }
 
