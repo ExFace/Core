@@ -81,7 +81,7 @@ class SvgDataType extends AbstractDataType
             throw new DataTypeCastingError('Cannot parse SVG!');
         }
         
-        $result = $xmlDoc->saveHTML();
+        $result = $xmlDoc->saveXML();
         if ($result === false) {
             throw new DataTypeCastingError('Cannot parse SVG!');
         }
