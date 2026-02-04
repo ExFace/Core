@@ -89,7 +89,7 @@ class StringDataType extends AbstractDataType
      *
      * ```
      * {
-     *  "validator_regex": "/[^0-9ÄÖÜäöüßA-Za-z-_,+= .#&§$']/",
+     *  "validator_regex_negative": "/[^0-9ÄÖÜäöüßA-Za-z-_,+= .#&§$']/",
      *  "validation_error_text": "The string may only contain the following characters: Digits from `0-9`, Umlauts `ÄÖÜäöüß`, `A-Z`, `a-z` and these special characters `-_,+= .#&§$'`"
      * }
      *
@@ -309,25 +309,9 @@ class StringDataType extends AbstractDataType
         }
         
         // validate against regex
-        if ($this->getValidatorRegex()){
-            try {
-                $match = preg_match($this->getValidatorRegex(), $value);
-            } catch (\Throwable $e) {
-                $match = 0;
-            }
-            
-            if (! $match){
-                $excValue = '';
-                if (! $this->isSensitiveData()) {
-                    $excValue = '"' . $value . '" ';
-                }
-                throw $this->createValidationRuleError($value, 'Value ' . $excValue . 'does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
-            }
-        }
-
         if ($this->getValidatorRegexNegative()){
             $matches = [];
-            
+
             try {
                 preg_match_all($this->getValidatorRegexNegative(), $value, $matches);
             } catch (\Throwable $e) {
@@ -339,22 +323,38 @@ class StringDataType extends AbstractDataType
                 if (! $this->isSensitiveData()) {
                     $excValue = '"' . $value . '" ';
                 }
-                
+
                 $issues = [];
-                
+
                 foreach ($matches as $matchGroup) {
-                    for($i = 1; $i < count($matchGroup); $i++){
+                    for($i = 0; $i < count($matchGroup); $i++){
                         $val = $matchGroup[$i];
                         $issues[$val] = $val;
                     }
                 }
-                
+
                 if(!empty($issues)) {
                     throw $this->createValidationRuleError($value, 'Value ' . $excValue .
                         'must not match the regular expression mask "' . $this->getValidatorRegexNegative() .
                         '" of data type ' . $this->getAliasWithNamespace() . '! The following issues were detected: "' .
                         implode(', ', $issues) . '".', false);
                 }
+            }
+        }
+
+        if ($this->getValidatorRegex()){
+            try {
+                $match = preg_match($this->getValidatorRegex(), $value);
+            } catch (\Throwable $e) {
+                $match = 0;
+            }
+
+            if (! $match){
+                $excValue = '';
+                if (! $this->isSensitiveData()) {
+                    $excValue = '"' . $value . '" ';
+                }
+                throw $this->createValidationRuleError($value, 'Value ' . $excValue . 'does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
             }
         }
         

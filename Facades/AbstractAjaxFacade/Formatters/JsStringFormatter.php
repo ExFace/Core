@@ -40,7 +40,7 @@ class JsStringFormatter extends JsTransparentFormatter
         }
         
         if ($type->getValidatorRegex() !== null) {
-            $checksOk[] = "(function(){debugger;return {$type->getValidatorRegex()}.test({$jsValue}) !== false;})() \n";
+            $checksOk[] = "{$type->getValidatorRegex()}.test({$jsValue}) !== false \n";
         }
 
         if ($type->getValidatorRegexNegative() !== null) {
