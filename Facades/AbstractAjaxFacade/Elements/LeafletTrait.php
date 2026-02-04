@@ -1,9 +1,11 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Interfaces\Widgets\iCanBlink;
-use exface\Core\Widgets\Parts\Maps\DataMarkersLayer;
+use exface\Core\Widgets\Parts\Maps\DataSelectionShapeMarkerLayer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\DataSelectionMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 use exface\Core\Interfaces\WidgetInterface;
@@ -12,7 +14,6 @@ use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
-use exface\Core\Widgets\Parts\Maps\DataSelectionMarkerLayer;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\SaveData;
 use exface\Core\Widgets\Map;
@@ -32,6 +33,7 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ShapeDataColumnMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
@@ -72,7 +74,7 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  *  	"LIBS.LEAFLET.GEOMAN.JS": "npm-asset/geoman-io--leaflet-geoman-free/dist/leaflet-geoman.min.js",
  *  	"LIBS.LEAFLET.GEOMAN.CSS": "npm-asset/geoman-io--leaflet-geoman-free/dist/leaflet-geoman.css",
  *  	"LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS": "npm-asset/proj4leaflet/src/proj4leaflet.js",
- *  	"LIBS.LEAFLET.TRUF.JS": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/turf.min.js",
+ *  	"LIBS.LEAFLET.TURF.JS": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/turf.min.js",
  *
  *      ```
  * 3. Use the trait in your element by creating a globally accessible variable or
@@ -477,7 +479,7 @@ JS;
         switch (true) {
             case $link = $layer->getDataWidgetLink():
                 $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
-                if ($layer instanceof DataSelectionMarkerLayer) {
+                if ($layer instanceof DataSelectionMapLayerInterface) {
                     $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
                 } else {
                     $asIfForAction = null;
@@ -617,7 +619,7 @@ JS;
      */
     protected function buildJsLayerDataMarkers(MapLayerInterface $layer) : ?string
     {
-        if (! ($layer instanceof LatLngDataColumnMapLayerInterface)) {
+        if (! (($layer instanceof LatLngDataColumnMapLayerInterface) || ($layer instanceof MarkerMapLayerInterface))) {
             return null;
         }
 
@@ -665,6 +667,7 @@ JS;
 
         // Generate JS to run on map refresh
         switch (true) {
+            // Using latitude_widget_link and longitude_widget_link - e.g. in a Dialog with an editable map
             case ($layer instanceof LatLngWidgetLinkMapLayerInterface) && ($latLink = $layer->getLatitudeWidgetLink()) && ($lngLink = $layer->getLongitudeWidgetLink()):
                 $latEl = $this->getFacade()->getElement($latLink->getTargetWidget());
                 $lngEl = $this->getFacade()->getElement($lngLink->getTargetWidget());
@@ -680,20 +683,20 @@ function() {
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     
                     oLayer.clearLayers();
-                    oLayer.addData(aGeoJson);
-                    {$autoZoomJs}
-                    
                     if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}
                 }
                 
 JS;
 
                 break;
+            // Using a data_widget_link
             case $link = $layer->getDataWidgetLink():
                 $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
-                if ($layer instanceof DataSelectionMarkerLayer) {
+                if ($layer instanceof DataSelectionMapLayerInterface) {
                     $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
                 } else {
                     $asIfForAction = null;
@@ -706,18 +709,17 @@ function() {
                     var aRowsSkipped = [];
                     
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
-                    
                     oLayer.clearLayers();
-                    oLayer.addData(aGeoJson);
-                    {$autoZoomJs}
-                    
                     if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}
                 }
                 
 JS;
                 break;
+            // Using plain data
             default:
 
                 $dataToLeafletJs = <<<JS
@@ -725,12 +727,12 @@ JS;
                     var aGeoJson = [];
                     var aRowsSkipped = [];
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
-                    oLayer.clearLayers();
-                    oLayer.addData(aGeoJson);
-                    {$autoZoomJs}    
+                    oLayer.clearLayers();    
                     if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}
 JS;
 
                 // Add the layer index to the read data request to allow facades to handle loading
@@ -790,8 +792,8 @@ JS;
                 });
 
 JS;
-            }
-        }
+            } // END if($layer->hasEditByAddingItems())
+        } // END if(($layer instanceof EditableMapLayerInterface) && $layer->isEditable())
 
         $markerProps = '';
         if ($layer !== null && $layer->hasTooltip()) {
@@ -806,11 +808,76 @@ JS;
         } else {
             $layerConstructor = 'L.geoJSON';
         }
+        
+        // Convert shapes to markers
+        $renderShapesAsMarkers = '';
+        if (($layer instanceof ShapeDataColumnMapLayerInterface) && ($layer instanceof MarkerMapLayerInterface)) {
+            $renderShapesAsMarkers .= <<<JS
+                        
+                            // Compute a representative center
+                            /* TODO Use turf instead of the first point
+                            const center = turf.centerOfMass(feature); // or turf.centroid(feature)
+                            const [lng, lat] = center.geometry.coordinates;
+                            */
+                            
+                            // For now use the top-most ([lng, lat] with max latitude) for a GeoJSON Feature or Geometry
+                            const fnTop = function topMostCoordinate(feature) {
+                                const geom = feature.type === 'Feature' ? feature.geometry : feature;
+                                if (!geom || !geom.type) return null;
+                                let top = null;
+                                
+                                // Tailored iterator: avoid extra checks, just visit with known nesting depths
+                                function visit(coords, depth) {
+                                    if (depth === 0) {
+                                        // coords is a single [lng, lat]
+                                        const lng = coords[0], lat = coords[1];
+                                        if (top === null || lat > top[1]) top = [lng, lat];
+                                        return;
+                                    }
+                                    // coords is an array; go one level deeper
+                                    for (let i = 0; i < coords.length; i++) {
+                                        visit(coords[i], depth - 1);
+                                    }
+                                }
+                                
+                                switch (geom.type) {
+                                    case 'Point':            visit(geom.coordinates, 0); break;
+                                    case 'MultiPoint':       visit(geom.coordinates, 1); break;
+                                    case 'LineString':       visit(geom.coordinates, 1); break;
+                                    case 'MultiLineString':  visit(geom.coordinates, 2); break;
+                                    case 'Polygon':          visit(geom.coordinates, 2); break; // rings included
+                                    case 'MultiPolygon':     visit(geom.coordinates, 3); break;
+                                    default: return null;
+                                }
+                                
+                                return top;
+                            }
+                            const [lng, lat] = fnTop(feature);
+                            var oMarker = L.marker([lat, lng], { 
+                                icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
+                                draggable: false,
+                                autoPan: false,
+                                $markerProps 
+                            });
+                            
+                            if (oClusterLayer) {
+                                oClusterLayer.addLayer(oMarker);
+                            }
+
+JS;
+            if ($clusterInitJs === 'null') {
+                $clusterInitJs = <<<JS
+
+                                oClusterLayer = L.layerGroup();
+                                oClusterLayer.addLayer(oLayer);
+JS;
+
+            }
+        }
 
         return <<<JS
             (function(oLeaflet){
-                $projectionInit
-                var oClusterLayer = {$clusterInitJs};
+                {$projectionInit}
                 var oLayer = {$layerConstructor}(null, {
                     pointToLayer: function(feature, latlng) {
                         var bDraggable = feature.properties.draggable || false;
@@ -830,6 +897,7 @@ JS;
                         return oMarker;
                     },
                     onEachFeature: function(feature, layer) {
+                        {$renderShapesAsMarkers}
                         {$showPopupJs}                       
 
                         // Toggle marker selected state
@@ -848,11 +916,12 @@ JS;
                     
                     }
                 });
+                
+                var oClusterLayer = {$clusterInitJs};
 
-                $initEditingJs
+                {$initEditingJs}
 
                 oLayer._exfRefresh = $exfRefreshJs;
-                
                 oLeaflet.on('exfRefresh', function(oEvent){
                     if (oEvent && oEvent.layer !== undefined && oEvent.layer !== {$layer->getIndex()}) {
                         return;
@@ -861,7 +930,7 @@ JS;
                 });
                 
                 oLayer._exfRefresh();
-               
+                
                 return oClusterLayer ? oClusterLayer : oLayer;
             })({$this->buildJsLeafletVar()})
 JS;
@@ -1047,7 +1116,7 @@ JS;
                 break;
             case $link = $layer->getDataWidgetLink():
                 $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
-                if ($layer instanceof DataSelectionMarkerLayer) {
+                if ($layer instanceof DataSelectionMapLayerInterface) {
                     $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
                 } else {
                     $asIfForAction = null;
@@ -1250,7 +1319,7 @@ JS;
     protected function buildJsConvertDataRowsToGeoJSON(DataMapLayerInterface $layer, string $aRowsJs, string $aGeoJsonJs, string $aRowsSkippedJs) : string
     {
         switch (true) {
-            case $layer instanceof DataShapesLayer:
+            case $layer instanceof ShapeDataColumnMapLayerInterface:
                 $shapeColName = $layer->getShapesColumn()->getDataColumnName();
                 break;
             case $layer instanceof LatLngWidgetLinkMapLayerInterface && ($linkLat = $layer->getLatitudeWidgetLink()) && ($linkLng = $layer->getLongitudeWidgetLink()):
@@ -1378,7 +1447,7 @@ JS;
     protected function buildJsLayerBlinking(MapLayerInterface $layer, string $oRowJs) : string
     {
         switch (true) {
-            case (!($layer instanceof DataShapesLayer) || !($layer instanceof iCanBlink)):
+            case (!($layer instanceof iCanBlink)):
                 return '""';
 
             case ($layer->getIsBlinking()):
@@ -1489,11 +1558,11 @@ JS;
      * @param string $oRowJs
      * @return string
      */
-    protected function buildJsMarkerIcon(LatLngDataColumnMapLayerInterface $layer, string $oRowJs) : string
+    protected function buildJsMarkerIcon(DataMapLayerInterface $layer, string $oRowJs) : string
     {
 
         $colorJs = $this->buildJsLayerColor($layer, $oRowJs);
-        switch (true) {
+        switch (true) {                
             case ($layer instanceof DataPointsLayer):
                 $pointSizeCss = $layer->getPointSize() . 'px';
                 if ($layer->hasValue()) {
@@ -1514,7 +1583,7 @@ function(){
                         }()
 JS;
                 break;
-            case ($layer instanceof DataMarkersLayer) && $layer->hasValue():
+            case ($layer instanceof MarkerMapLayerInterface) && $layer->hasValue():
                 $js = <<<JS
 new L.ExtraMarkers.icon({
                             icon: 'fa-number',
@@ -1526,7 +1595,7 @@ new L.ExtraMarkers.icon({
 
 JS;
                 break;
-            case ($layer instanceof DataMarkersLayer) && $layer->getIconSet() === 'svg':
+            case ($layer instanceof MarkerMapLayerInterface) && $layer->getIconSet() === 'svg':
 
                 $js = <<<JS
 new L.ExtraMarkers.icon({
@@ -1538,7 +1607,7 @@ new L.ExtraMarkers.icon({
                         })
 JS;
                 break;
-            case ($layer instanceof DataMarkersLayer):
+            case ($layer instanceof MarkerMapLayerInterface):
                 $icon = $layer->getIcon() ?? 'fa-map-marker';
                 $prefix = $layer->getIconSet() ?? 'fa';
                 $js = <<<JS
@@ -1551,11 +1620,15 @@ new L.ExtraMarkers.icon({
                         })
                         
 JS;
+                break;
+            default:
+                throw new WidgetFacadeRenderingError($this->getWidget(), $this->getFacade(), 'Cannot render marker from layer!');
+                
         }
         return $js;
     }
 
-    protected function buildJsClusterIcon(DataMarkersLayer $layer, string $oClusterJs) : string
+    protected function buildJsClusterIcon(ColoredDataMapLayerInterface $layer, string $oClusterJs) : string
     {
         $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
         $caption = str_replace("'", "\\'", trim($this->escapeString($layer->getCaption(), true, false), '"'));
@@ -1654,11 +1727,15 @@ JS;
 
             if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget()) {
                 if ($layer instanceof GeoJsonMapLayerInterface) {
-                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.JS') . '"></script>';
-                    /*$includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.HELPERS') . '"></script>';
-                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.BOOLEAN_POINT_IN_POLYGON') . '"></script>';
+                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TURF.JS') . '"></script>';
+                    /*$includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TURF.HELPERS') . '"></script>';
+                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TURF.BOOLEAN_POINT_IN_POLYGON') . '"></script>';
                     */
                 }
+            }
+            
+            if ($layer instanceof DataSelectionShapeMarkerLayer) {
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TURF.JS') . '"></script>';
             }
 
             if ($this->hasLeafletDraw() === true) {

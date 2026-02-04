@@ -17,6 +17,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
  */
 trait DataPointLayerTrait
 {    
+    use DataTooltipLayerTrait;
+    
     private $latitudeAttributeAlias = null;
     
     private $latitudeColumn = null;
@@ -27,11 +29,7 @@ trait DataPointLayerTrait
     
     private $longitudeColumn = null;
     
-    private $shapeLink = null;
-    
-    private $tooltipAttribtueAlias = null;
-    
-    private $tooltipColumn = null;
+    private $longitudeLink = null;
     
     private $addMarkers = false;
     
@@ -139,7 +137,7 @@ trait DataPointLayerTrait
      */
     public function getLongitudeWidgetLink() : ?WidgetLinkInterface
     {
-        return $this->shapeLink;
+        return $this->longitudeLink;
     }
     
     /**
@@ -155,50 +153,8 @@ trait DataPointLayerTrait
      */
     protected function setLongitudeWidgetLink(string $value) : MapLayerInterface
     {
-        $this->shapeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
+        $this->longitudeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
         return $this;
-    }
-    
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getTooltipAttributeAlias() : ?string
-    {
-        return $this->tooltipAttribtueAlias;
-    }
-    
-    /**
-     * Alias of the attribtue containing the data to show in the tooltip of a marker
-     *
-     * @uxon-property tooltip_attribute_alias
-     * @uxon-type metamodel:attribute
-     *
-     * @param string $value
-     * @return MapLayerInterface
-     */
-    public function setTooltipAttributeAlias(string $value) : MapLayerInterface
-    {
-        $this->tooltipAttribtueAlias = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasTooltip() : bool
-    {
-        return $this->getTooltipAttributeAlias() !== null;
-    }
-    
-    /**
-     * 
-     * @return DataColumn|NULL
-     */
-    public function getTooltipColumn() : ?DataColumn
-    {
-        return $this->tooltipColumn;
     }
     
     /**
@@ -206,7 +162,7 @@ trait DataPointLayerTrait
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Parts\Maps\AbstractDataLayer::initDataWidget()
      */
-    protected function initDataWidget(iShowData $widget) : iShowData
+    protected function initDataWidgetPointColumns(iShowData $widget) : iShowData
     {
         $widget = parent::initDataWidget($widget);
         if ($this->getLatitudeAttributeAlias()) {
@@ -229,16 +185,7 @@ trait DataPointLayerTrait
             }
             $this->longitudeColumn = $col;
         }
-        if ($this->getTooltipAttributeAlias()) {
-            if (! $col = $widget->getColumnByAttributeAlias($this->getTooltipAttributeAlias())) {
-                $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getTooltipAttributeAlias(),
-                    'hidden' => true
-                ]));
-                $widget->addColumn($col);
-            }
-            $this->tooltipColumn = $col;
-        }
+        $this->initDataWidgetTooltip($widget);
         
         return $widget;
     }
