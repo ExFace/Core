@@ -167,6 +167,8 @@ class DataTable extends Data implements
      */
     const FUNCTION_RESET_CHANGE_TRACKING = 'reset_setup_change_tracking';
 
+    const FUNCTION_CLEAR_APPLIED_SETUP = 'clear_applied_setup';
+
     private $show_filter_row = null;
 
     private $show_row_numbers = false;
