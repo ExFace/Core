@@ -22,11 +22,12 @@ use Transliterator;
 class StringDataType extends AbstractDataType
 {
     private $lengthMin = 0;
-    
+
     private $lengthMax = null;
-    
+
     private $regexValidator = null;
 
+    private $regexValidatorNegative = null;
     private $emptyAsNULL = false;
 
     /**
@@ -38,7 +39,10 @@ class StringDataType extends AbstractDataType
     }
 
     /**
-     * Defines a regular expression to validate values of this data type.
+     * Defines a regular expression to validate values of this data type. If the regex finds a match, validation 
+     * succeeds.
+     * 
+     * Can be used in tandem with `validator_regex_negative`.
      * 
      * Example:
      * 
@@ -65,6 +69,47 @@ class StringDataType extends AbstractDataType
         $this->regexValidator = $regularExpression;
         return $this;
     }
+
+    /**
+     * @return string|null
+     */
+    public function getValidatorRegexNegative() : ?string
+    {
+        return $this->regexValidatorNegative;
+    }
+
+    /**
+     * Defines a regular expression to validate values of this data type. If the regex finds any match, validation
+     * fails. Some systems output the detected matches as "issues". To support this write your regex in such a way
+     * that it identifies meaningful issues with a given input string.
+     *
+     * Can be used in tandem with `validator_regex`.
+     * 
+     * Example:
+     *
+     * ```
+     * {
+     *  "validator_regex": "/[^0-9ÄÖÜäöüßA-Za-z-_,+= .#&§$']/",
+     *  "validation_error_text": "The string may only contain the following characters: Digits from `0-9`, Umlauts `ÄÖÜäöüß`, `A-Z`, `a-z` and these special characters `-_,+= .#&§$'`"
+     * }
+     *
+     * ```
+     *
+     * Use regular expressions compatible with PHP preg_match(). A good
+     * tool to create and test regular expressions can be found here:
+     * https://regex101.com/.
+     *
+     * @uxon-property validator_regex_negative
+     * @uxon-type string
+     *
+     * @param string $regularExpression
+     * @return StringDataType
+     */
+    public function setValidatorRegexNegative(string $regularExpression) : StringDataType
+    {
+        $this->regexValidatorNegative = $regularExpression;
+        return $this;
+    }
     
     /**
      * 
@@ -88,6 +133,10 @@ class StringDataType extends AbstractDataType
         }
         if ($this->getValidatorRegex()) {
             $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION', ['%regex%' => $this->getValidatorRegex()]);
+        }
+        if ($this->getValidatorRegexNegative()) {
+            $text = ($text ? $text . ' ' . $and . ' ' : '') . 
+                $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION_NEGATIVE', ['%regex%' => $this->getValidatorRegexNegative()]);
         }
         
         if ($text !== '') {
@@ -270,9 +319,42 @@ class StringDataType extends AbstractDataType
             if (! $match){
                 $excValue = '';
                 if (! $this->isSensitiveData()) {
-                    $excValue = '"' . $value . '"';
+                    $excValue = '"' . $value . '" ';
                 }
-                throw $this->createValidationRuleError($value, 'Value ' . $excValue . ' does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
+                throw $this->createValidationRuleError($value, 'Value ' . $excValue . 'does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
+            }
+        }
+
+        if ($this->getValidatorRegexNegative()){
+            $matches = [];
+            
+            try {
+                preg_match_all($this->getValidatorRegexNegative(), $value, $matches);
+            } catch (\Throwable $e) {
+                throw $this->createValidationRuleError($value, 'Validation regex "' . $this->getValidatorRegexNegative() . '" is invalid!');
+            }
+
+            if (!empty($matches)){
+                $excValue = '';
+                if (! $this->isSensitiveData()) {
+                    $excValue = '"' . $value . '" ';
+                }
+                
+                $issues = [];
+                
+                foreach ($matches as $matchGroup) {
+                    for($i = 1; $i < count($matchGroup); $i++){
+                        $val = $matchGroup[$i];
+                        $issues[$val] = $val;
+                    }
+                }
+                
+                if(!empty($issues)) {
+                    throw $this->createValidationRuleError($value, 'Value ' . $excValue .
+                        'must not match the regular expression mask "' . $this->getValidatorRegexNegative() .
+                        '" of data type ' . $this->getAliasWithNamespace() . '! The following issues were detected: "' .
+                        implode(', ', $issues) . '".', false);
+                }
             }
         }
         
@@ -582,7 +664,8 @@ class StringDataType extends AbstractDataType
      * @param int $length
      * @param bool $stickToWords prevents words getting cut in the middle
      * @param bool $ellipsis adds `...` at the end if the string is really shortened
-     * @param bool $endHint adds `[truncated <original length> characters]` if the string is really shortened (usefull for debug output)
+     * @param bool $endHint adds `[truncated <original length> characters]` if the string is really shortened (usefull
+     *     for debug output)
      * @return string
      */
     public static function truncate(string $string, int $length, bool $stickToWords = false, bool $removeLineBreaks = false, bool $ellipsis = false, bool $endHint = false) : string
@@ -718,7 +801,8 @@ class StringDataType extends AbstractDataType
      * - `transliterate('Änderung')` -> Anderung
      * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
      * - `transliterate('ä/B', ':: Any-Latin; [:Punctuation:] Remove;')` -> a b
-     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;')` -> aufgaben im uberblick
+     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove;
+     * :: Lower(); :: NFC;')` -> aufgaben im uberblick
      * 
      * @link https://unicode-org.github.io/icu/userguide/transforms/general/
      * 
@@ -747,7 +831,8 @@ class StringDataType extends AbstractDataType
      * Returns TRUE if the given string is one enclosed is quotes (single or double quotes) and FALSE otherwise
      * 
      * Currently this does not check, if there are also some closing quotes in the middle of the string.
-     * Possible enhanced solution: https://stackoverflow.com/questions/74963883/php-regular-expression-to-grab-values-enclosed-in-double-quotes
+     * Possible enhanced solution:
+     * https://stackoverflow.com/questions/74963883/php-regular-expression-to-grab-values-enclosed-in-double-quotes
      * 
      * @param string $str
      * @return bool

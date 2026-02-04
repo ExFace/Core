@@ -40,8 +40,13 @@ class JsStringFormatter extends JsTransparentFormatter
         }
         
         if ($type->getValidatorRegex() !== null) {
-            $checksOk[] = "{$type->getValidatorRegex()}.test({$jsValue}) !== false \n";
+            $checksOk[] = "(function(){debugger;return {$type->getValidatorRegex()}.test({$jsValue}) !== false;})() \n";
         }
+
+        if ($type->getValidatorRegexNegative() !== null) {
+            $checksOk[] = "{$type->getValidatorRegexNegative()}.test({$jsValue}) === false \n";
+        }
+        
         $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
         
         $nullStr = '" . EXF_LOGICAL_NULL . "';
@@ -65,45 +70,71 @@ JS;
         }
         
         $regex = $dataType->getValidatorRegex();
-        if($regex === null) {
+        $regexNegative = $dataType->getValidatorRegexNegative();
+        if($regex === null && $regexNegative === null) {
             return parent::buildJsGetValidatorIssues($jsValue);
         }
 
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        $regexIssuePreamble = json_encode($translator->translate('DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS'));
-        
         if(null !== $message = $dataType->getValidationErrorMessage()) {
             $msg = StringDataType::endSentence($message->getTitle());
         } else {
             $msg = $translator->translate('DATATYPE.VALIDATION.FILENAME_INVALID');
         }
         $msg = json_encode($msg);
-        
-        // Make sure the regex is global and not sticky.
-        $regex = StringDataType::removeRegexFlags($regex, ['g','y']);
-        $regex .= 'g';
-        
+
+        $positiveJs = '';
+        if($regex !== null) {
+            $positiveJs = <<<JS
+
+// If the negative regex did not produce issues, test the positive one.
+// StringDataType::getValidatorRegex()
+var regex = {$regex}; 
+// Apply validator regex to string to extract matches.
+if (regex.test(sValue) === false) {
+    return {$msg};
+} 
+JS;
+        }
+
+        $negativeJs = '';
+        if($regexNegative !== null) {
+            $regexIssuePreamble = json_encode($translator->translate('DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS'));
+
+            // Make sure the regex is global and not sticky.
+            $regexNegative = StringDataType::removeRegexFlags($regexNegative, ['g','y']);
+            $regexNegative .= 'g';
+            
+            $negativeJs = <<<JS
+
+var sIssues = {$msg};
+    
+// StringDataType::getValidatorRegexNegative()
+var regexNegative = {$regexNegative}; 
+// Apply negative validator regex to string to extract issues.
+var matches = sValue.match(regexNegative);
+var aRegexIssues = [];
+// If we detected issues, we generate an output message.
+if (matches !== null && matches.length > 0) {
+    // Extract unqiue matches.
+    for (const match of matches) {
+        if (aRegexIssues.indexOf(match) === -1) {
+            aRegexIssues.push(match);
+        }
+    }
+    
+    return sIssues + ' ' + {$regexIssuePreamble} + JSON.stringify(aRegexIssues, null, 1).slice(1,-1) + '.';
+}
+JS;
+        }
+
+
         return <<<JS
 
 (function (sValue) {
-    var sIssues = {$msg};
-    
-    // StringDataType::getValidatorRegex()
-    var regex = {$regex}; 
-    // Apply validator regex to string to extract matches.
-    var matches = sValue.match(regex);
+    {$negativeJs}
 
-    var aRegexIssues = [];
-    if (matches !== null && matches.length > 0) {
-        // Extract unqiue matches.
-        for (const match of matches) {
-            if (aRegexIssues.indexOf(match) === -1) {
-                aRegexIssues.push(match);
-            }
-        }
-        
-        return sIssues + ' ' + {$regexIssuePreamble} + JSON.stringify(aRegexIssues, null, 1).slice(1,-1) + '.';
-    }
+    {$positiveJs}
     
     return '';
 })($jsValue)
