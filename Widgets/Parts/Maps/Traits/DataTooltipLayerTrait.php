@@ -66,7 +66,7 @@ trait DataTooltipLayerTrait
      */
     protected function initDataWidgetTooltip(iShowData $widget) : iShowData
     {
-        if (null !== $alias = $this->getShapesAttributeAlias()) {
+        if (null !== $alias = $this->getTooltipAttributeAlias()) {
             if (! $col = $widget->getColumnByAttributeAlias($alias)) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
                     'attribute_alias' => $alias,
