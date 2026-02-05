@@ -2,8 +2,11 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Debugger\Profiler;
+use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
@@ -233,12 +236,12 @@ class Monitor extends Profiler
                 return true;
         }
     }
-    
+
     /**
-     * 
+     *
      * @param ActionInterface $action
-     * @param TaskInterface $task
-     * @param float $duration
+     * @param TaskInterface   $task
+     * @param float|null      $duration
      * @return Monitor
      */
     protected function addRowFromAction(ActionInterface $action, TaskInterface $task, float $duration = null) : Monitor
@@ -323,8 +326,12 @@ class Monitor extends Profiler
                 'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
                 'TIME' => $item['time'],
                 'DATE' => DateDataType::cast($item['time']),
-                'DURATION' => $this->getTimeTotalMs()
+                'DURATION' => $this->getTimeTotalMs(),
+                'TASK_CLASS' => PhpClassDataType::findClassNameWithoutNamespace($task),
+                'REQUEST_SIZE' => $task instanceof HttpTaskInterface ? $task->getHttpRequest()->getHeader('Content-Length')[0] : null,
+                'UI_FLAG' => $task->getFacade() instanceof AbstractAjaxFacade
             ]);
+            
             $ds->dataCreate();
             
             $logIds = $item['logIds'];
