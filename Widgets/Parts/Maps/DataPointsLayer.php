@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts\Maps;
 
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\Parts\Maps\Interfaces\PointMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\DataPointLayerTrait;
@@ -13,6 +14,7 @@ use exface\Core\Widgets\Parts\Maps\Traits\ValueLabeledLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * 
@@ -27,7 +29,8 @@ class DataPointsLayer extends AbstractDataLayer
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface,
-    CustomProjectionMapLayerInterface
+    CustomProjectionMapLayerInterface,
+    iHaveIcon
 {
     use DataPointLayerTrait;
     
@@ -36,6 +39,8 @@ class DataPointsLayer extends AbstractDataLayer
     use ValueLabeledLayerTrait;
     
     use CustomProjectionLayerTrait;
+    
+    use iHaveIconTrait;
     
     private $size = null;
     
@@ -63,7 +68,17 @@ class DataPointsLayer extends AbstractDataLayer
     public function getPointSize() : int
     {
         if ($this->size === null) {
-            return $this->getValuePosition() === PointMapLayerInterface::VALUE_POSITION_CENTER ? 30 : 10;
+            switch (true) {
+                case $this->getIcon() !== null:
+                    $pt = 18;
+                    break;
+                case $this->getValuePosition() === PointMapLayerInterface::VALUE_POSITION_CENTER;
+                    $pt = 30;
+                    break;
+                default:
+                    $pt = 10;
+            }
+            return $pt;
         }
         return $this->size;
     }
