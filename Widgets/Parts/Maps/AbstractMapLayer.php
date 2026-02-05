@@ -35,7 +35,7 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
      * `\exface\Core\Widgets\Parts\Maps\DataMarkersLayer`).
      * 
      * @uxon-property type
-     * @uxon-type [DataLines,DataMarkers,DataPoints,DataShapes,DataSelectionMarker,DataSelectionShapeMarker,GeoJSON]
+     * @uxon-type [DataLines,DataMarkers,DataPoints,DataShapes,DataSelectionMarker,DataSelectionShapeMarker,GeoJSON,WebTiles,WMS]
      * @uxon-required true
      * 
      * @return MapLayerInterface
