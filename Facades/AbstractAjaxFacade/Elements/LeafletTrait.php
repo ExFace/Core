@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Interfaces\Widgets\iCanBlink;
+use exface\Core\Widgets\Icon;
 use exface\Core\Widgets\Parts\Maps\DataSelectionShapeMarkerLayer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\DataSelectionMapLayerInterface;
@@ -1587,7 +1588,19 @@ JS;
                 } else {
                     $valueJs = "''";
                 }
-                $pointJs = "'<div class=\"exf-map-point\" style=\"height: {$pointSizeCss}; width: {$pointSizeCss}; background-color: ' + sColor + '; border-radius: 50%;\"></div>'";
+                if (null !== $icon = $layer->getIcon()) {
+                    switch ($layer->getIconSet()) {
+                        case (Icon::ICON_SET_SVG):
+                        case (Icon::ICON_SET_SVG_COLORED):
+                            $pointJs = "'<div class=\"exf-map-point\">' + {$this->escapeString($icon)} + '</div>'";
+                            break;
+                        default:
+                            $pointJs = "'<div class=\"exf-map-point\"><i class=\"fa fa-{$icon}\" aria-hidden=\"true\"></i></div>'";
+                            break;
+                    }
+                } else {
+                    $pointJs = "'<div class=\"exf-map-point\" style=\"height: {$pointSizeCss}; width: {$pointSizeCss}; background-color: ' + sColor + '; border-radius: 50%;\"></div>'";
+                }
                 $js= <<<JS
 function(){
                             var sColor = $colorJs;
