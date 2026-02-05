@@ -301,6 +301,9 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         switch ($err->getSqlErrorCode()) {
+            // Cannot perform an aggregate function on an expression containing an aggregate or a subquery
+            case 130:
+                return new DataQueryFailedError($query, $message, null, $err->setAlias('84RWYLO'));
             case 512:
                 return new DataQueryRelationCardinalityError($query, $message, null, $err->setAlias('7W2J960'));
             case 2627:
