@@ -41,9 +41,9 @@ use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface;
 
 /**
- * This trait helps render Map widgets with Leaflet JS.
- *
- * ## How to use:
+ * This trait helps render Map widgets with the popular library Leaflet JS.
+ * 
+ * ## How to use
  *
  * 1. Add the following dependencies to the composer.json of the facade:
  *      ```
@@ -81,6 +81,23 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  * property `buildJsLeafletVar()` and calling `buildJsLeafletInit()` at a time,
  * where the map `div` is available and the map is to be rendered. This method will
  * initialize the leaflet variable.
+ * 
+ * ## How it works
+ * 
+ * ### Leaflet
+ * 
+ * Leaflet is a popular mapping library, that draws layers on top of a base map. Technically, Leaflet has its Map
+ * object, defining the "canvas" and lots of layers on it - tile layers (e.g. base map), marker layers, polyline
+ * layers for geometries, etc. Complex layers like GeoJSON consist of smaller layers, which represent the features
+ * (shapes), markers, etc. 
+ *
+ * Leaflet has a lot of plug-ins, so we can easily add layer types, tools, and more.
+ * 
+ * ### Rendering
+ * 
+ * This trait translates layer (e.g. `DataMarkersLayer`) models into Leaflet layers. In the big Leaflet hierarchy
+ * of layers, we create a layer or layer group for every widget layer model and keep those in `oMap._layers`
+ * where `oMap` is the main Leaflet variable available via `$this->buildJsLeafletVar()`.
  *
  * @method \exface\Core\Widgets\Map getWidget()
  *
