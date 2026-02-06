@@ -238,4 +238,13 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements DataMapLaye
         $this->object = MetaObjectFactory::createFromString($this->getWorkbench(), $aliasOrUid);
         return $this;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractMapLayer::supportsAutoZoom()
+     */
+    public function supportsAutoZoom() : bool
+    {
+        return true;
+    }
 }
