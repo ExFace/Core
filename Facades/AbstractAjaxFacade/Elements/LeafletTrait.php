@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Interfaces\Widgets\iCanBlink;
 use exface\Core\Widgets\Icon;
+use exface\Core\Widgets\Parts\Maps\AutoZoom;
 use exface\Core\Widgets\Parts\Maps\DataSelectionShapeMarkerLayer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\DataSelectionMapLayerInterface;
@@ -323,7 +324,8 @@ JS;
             if ($layerInit) {
                 $captionJs = $this->escapeString($layer->getCaption(), true, false);
                 $visible = $layer->getVisibility() >= WidgetVisibilityDataType::NORMAL;
-                $autoZoom = $layer->getAutoZoomToSeeAll() === true ? 'true' : 'false';
+                $autoZoom = $layer->getAutoZoom();
+                $autoZoomJs = $autoZoom ? $autoZoom->exportUxonObject()->toJson() : '{}';
 
                 if ($visible) {
                     $layerInit .= ".addTo({$this->buildJsLeafletVar()})";
@@ -339,7 +341,7 @@ JS;
         {
             index: $index,
             caption: $captionJs,
-            autoZoom: {$autoZoom},
+            autoZoom: {$autoZoomJs},
             visibility: {$layer->getVisibility()},
             $optionsJs
             layer: $layerInit
@@ -488,10 +490,6 @@ JS;
 
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'oLine');
 
-        // Add auto-zoom
-        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
-            $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
-        }
         $color = $layer->getColor() ? $layer->getColor() : $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
         // Generate JS to run on map refresh
         switch (true) {
@@ -543,7 +541,7 @@ JS;
                         oLayer.addLayer(oLine);
                     });
                     
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 }
                 
 JS;
@@ -587,7 +585,7 @@ JS;
                         oLayer.addLayer(oLine);
                     });
                     
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
 
@@ -667,11 +665,6 @@ JS;
 
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
 
-        // Add auto-zoom
-        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
-            $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
-        }
-
         // Add clustering
         if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
             $clusterInitJs = <<<JS
@@ -705,7 +698,7 @@ function() {
                     if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 }
                 
 JS;
@@ -732,7 +725,7 @@ function() {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
                     oLayer.addData(aGeoJson);
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 }
                 
 JS;
@@ -750,7 +743,7 @@ JS;
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
                     oLayer.addData(aGeoJson);
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
                 // Add the layer index to the read data request to allow facades to handle loading
@@ -992,11 +985,6 @@ JS;
 
         $showPopupJs = $layer->getShowPopupOnClick() ? $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer') : '';
 
-        // Add auto-zoom
-        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
-            $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
-        }
-
         // Add styling and colors
         $color = $this->buildJsLayerColor($layer, 'feature.properties.data');
         $outlineColor = $this->buildJsLayerOutlineColor($layer, 'feature.properties.data');
@@ -1126,7 +1114,7 @@ JS;
                     oLayer.clearLayers();
                     oLayer.addData(aGeoJson);
                     oLayer.bringToFront();
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 })();
                 
 JS;
@@ -1151,7 +1139,7 @@ JS;
                     oLayer.clearLayers();
                     oLayer.addData(aFeatures);
                     oLayer.bringToBack();
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 })();
                 
 JS;
@@ -1168,7 +1156,7 @@ JS;
                     oLayer.clearLayers();
                     oLayer.addData(aFeatures);
                     oLayer.bringToBack();
-                    {$autoZoomJs}
+                    {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
                 $exfRefreshJs = <<<JS
@@ -1442,19 +1430,50 @@ JS;
      * @param string $oLayerJs
      * @return string
      */
-    public function buildJsAutoZoom(string $oLayerJs, int $maxZoom = null) : string
+    public function buildJsAutoZoom(string $oLayerJs, ?AutoZoom $autoZoom = null) : string
     {
+        if ($autoZoom === null || $autoZoom->isDisabled()) {
+            return '';
+        }
+        $maxZoom = $autoZoom->getZoomMax();
         $maxZoomJs = $maxZoom !== null ? 'maxZoom: ' . $maxZoom . ',' : '';
         return <<<JS
 
                     setTimeout(function() {
+                        var fZMin = {$autoZoom->getZoomMin()};
+                        var bZIn = {$this->escapeBool($autoZoom->getZoomIn())};
+                        var bZOut = {$this->escapeBool($autoZoom->getZoomOut())};
                         var oBounds = $oLayerJs.getBounds();
                         var oMap = {$this->buildJsLeafletVar()};
+                        var bIncludeOtherLayers = {$this->escapeBool($autoZoom->getIncludeOtherLayers())};
+                        var fZBounds, fZMap;
                         if (oBounds !== undefined && oBounds.isValid()) {
-                            if (oMap.getBoundsZoom(oBounds) < oMap.getZoom() || oMap.getZoom() === oMap._exfState.initialZoom) {
-                                oMap.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
-                            } else if (! oMap.getBounds().contains(oBounds)) {
-                                oMap.fitBounds(oBounds, {padding: [10,10], maxZoom: oMap.getZoom() });
+                            fZBounds = oMap.getBoundsZoom(oBounds);
+                            fZMap = oMap.getZoom();
+                            if (bIncludeOtherLayers === true) {
+                                oMap._exfLayers.forEach(function(oOtherModel){
+                                    if (oOtherModel.autoZoom === null || oOtherModel.autoZoom.disabled === true) {
+                                        return;
+                                    }
+                                    if (oOtherModel.layer.getBounds === undefined) {
+                                        return;
+                                    }
+                                    oBounds = oBounds.extend(oOtherModel.layer.getBounds());
+                                });
+                            }
+                            switch (true) {
+                                // Zoom-out if allowed and needed zoom < current zoom or map zoom never changed
+                                case bZOut === true && (fZBounds < fZMap || fZMap === oMap._exfState.initialZoom):
+                                    oMap.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
+                                    break;
+                                // Zoom-in if allowed and needed zoom > current zoom or map zoom never changed
+                                case bZIn === true && (fZBounds > fZMap || fZMap === oMap._exfState.initialZoom):
+                                    oMap.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
+                                    break;
+                                // Pan without zooming if bounds outside of map
+                                case ! oMap.getBounds().contains(oBounds):
+                                    oMap.fitBounds(oBounds, {padding: [10,10], maxZoom: oMap.getZoom() });
+                                    break;
                             }
                         }
                 	},100);
