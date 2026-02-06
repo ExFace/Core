@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Debugger\Profiler;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -43,6 +44,12 @@ class Monitor extends Profiler
     
     private $actionsEnabled = false;
     
+    private $longRunningActionsLogged = false;
+    
+    private $longRunningActionsThreshold = 10;
+    
+    private $longRunningActionsLevel = 'CRITICAL';
+    
     private $errorsEnabled = false;
     
     /**
@@ -54,18 +61,24 @@ class Monitor extends Profiler
     {
         parent::__construct($workbench, $startTimeMs);
     }
-    
+
     /**
-     * 
+     *
      * @param WorkbenchInterface $workbench
+     * @param float|null         $startTimeMs
      */
-    public static function register(WorkbenchInterface $workbench, float $startTimeMs = null) 
+    public static function register(WorkbenchInterface $workbench, float $startTimeMs = null) : void 
     {
         $self = new self($workbench, $startTimeMs);        
         $config = $workbench->getConfig();
+        
         $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
         $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');
         
+        $self->longRunningActionsLogged = $config->getOption('DEBUG.LOG_LONG_RUNNING_READS');
+        $self->longRunningActionsThreshold = $config->getOption('DEBUG.LOG_LONG_RUNNING_READS_THRESHOLD');
+        $self->longRunningActionsLevel = $config->getOption('DEBUG.LOG_LONG_RUNNING_READS_LEVEL');
+     
         // Do not monitor anything while installing the workbench
         if ($workbench->isInstalled() === false) {
             return;
@@ -160,7 +173,7 @@ class Monitor extends Profiler
      * @param OnBeforeActionPerformedEvent $event
      * @return void
      */
-    public function onActionStart(OnBeforeActionPerformedEvent $event)
+    public function onActionStart(OnBeforeActionPerformedEvent $event) : void
     {
         if (! $this->isActionMonitored($event->getAction())) {
             return;
@@ -174,18 +187,33 @@ class Monitor extends Profiler
      * @param OnActionPerformedEvent $event
      * @return void
      */
-    public function onActionStop(ActionEventInterface $event)
+    public function onActionStop(ActionEventInterface $event) : void
     {
-        if (! $this->isActionMonitored($event->getAction())) {
+        $action = $event->getAction();
+        
+        if (! $this->isActionMonitored($action)) {
             return;
         }
         
         $ms = null;
         if ($this->actionsEnabled) {
-            $ms = $this->stop($event->getAction())->getTimeTotalMs();
-        }        
-        $this->addRowFromAction($event->getAction(), $event->getTask(), $ms);
-        return;
+            $ms = $this->stop($action)->getTimeTotalMs();
+            $s = $ms / 1000;
+            
+            if($s > $this->longRunningActionsThreshold) {
+                $this->getWorkbench()->getLogger()->logException(new ActionRuntimeError(
+                    $action,
+                    'Action "' . $action->getName() . '" ran for ' . $s . 's!',
+                    $this->longRunningActionsLevel
+                ));
+            }
+        }
+
+        if($action instanceof iReadData) {
+            return;
+        }
+
+        $this->addRowFromAction($action, $event->getTask(), $ms);
     }
     
     /**
@@ -227,7 +255,8 @@ class Monitor extends Profiler
     protected function isActionMonitored(ActionInterface $action) : bool
     {
         switch (true) {
-            case $action instanceof iReadData:
+            // Ignore ReadData, unless we are logging long-running actions.
+            case $action instanceof iReadData && !$this->longRunningActionsLogged: 
             case $action instanceof UxonAutosuggest:
             case $action instanceof ContextBarApi:
             case $action instanceof ShowContextPopup:
