@@ -18,5 +18,7 @@ The order is determined by both **numerical** and **alphabetical** sorting of th
 
 ```html
 <!-- BEGIN NavButtons: -->
+[<kbd> <br> Zurück <br> </kbd>](ImageReferencePlaceholder.md) [<kbd> <br> Weiter <br> </kbd>](SubPageListPlaceholder.md)
+
 <!-- END NavButtons -->
  ```

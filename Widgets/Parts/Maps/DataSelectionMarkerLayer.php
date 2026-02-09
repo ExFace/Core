@@ -3,13 +3,14 @@ namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Parts\Maps\Interfaces\DataSelectionMapLayerInterface;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class DataSelectionMarkerLayer extends DataMarkersLayer
+class DataSelectionMarkerLayer extends DataMarkersLayer implements DataSelectionMapLayerInterface
 {
     /**
      * 

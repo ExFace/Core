@@ -166,13 +166,11 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
 
     private $value_column_id = null;
 
-    private $lookup_hide_header = null;
-
     private $data_table = null;
 
     private $table_uxon = null;
     
-    private $lookupActionUxon = null;
+    private ?UxonObject $lookupActionUxon = null;
     
     private $lookupButton = null;
     
@@ -568,41 +566,22 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
     }
 
     /**
-     * @return bool|null
-     */
-    public function getLookupHideHeader() : ?bool
-    {
-        return $this->lookup_hide_header;
-    }
-
-    /**
-     * It sets the collapse value of the header inside the DataLookupDialog that is called with the LookupAction of this InputComboTable.
-     *
-     * ATTENTION! This property will be ignored if the "lookup_action" uxon property is set.
-     * This property is a shortcut for the following uxon code:
+     * Collapses/expands the header inside the DataLookupDialog.
      * 
-     * ```
-     *  {
-     *      "lookup_action": {
-     *           "alias": "exface.Core.ShowLookupDialog",
-     *           "dialog": {
-     *               "hide_header": true
-     *           }
-     *      }
-     *  }
+     * @deprecated use collapse_header of lookup_action instead
      * 
-     * ```
-     *
-     * @uxon-property lookup_hide_header
-     * @uxon-type boolean
-     * @uxon-default false
-     *
      * @param boolean $value
      * @return \exface\Core\Widgets\InputComboTable
      */
-    public function setLookupHideHeader($value) : InputComboTable
+    public function setLookupHideHeader(bool $value) : InputComboTable
     {
-        $this->lookup_hide_header = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        if ($this->lookupActionUxon === null) {
+            $this->lookupActionUxon = new UxonObject([
+                'hide_header' => $value
+            ]); 
+            return $this;
+        }
+        $this->lookupActionUxon->setProperty('hide_header', $value);
         return $this;
     }
 
@@ -857,7 +836,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         if ($this->lookupButton !== null) {
             throw new WidgetLogicError($this, 'Cannot set lookup_action for ' . $this->getWidgetType() . ': the action has been already instantiated!');
         }
-        $this->lookupActionUxon = $uxon;
+        $this->lookupActionUxon = $this->lookupActionUxon === null ? $uxon : $this->lookupActionUxon->extend($uxon);
         return $this;
     }
 
@@ -867,19 +846,10 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
      */
     protected function getLookupActionUxon() : UxonObject
     {
-        if ($this->lookupActionUxon !== null) {
-            $uxon = $this->lookupActionUxon;
-        } else {
-            $uxonParams = ['alias' => 'exface.Core.ShowLookupDialog'];
-            $hideValueInLookup = $this->getLookupHideHeader();
-
-            if ($hideValueInLookup !== null) {
-                $uxonParams['dialog'] = new UxonObject(['hide_header' => $hideValueInLookup]);
-            }
-
-            $uxon = new UxonObject($uxonParams);
+        $uxon = $this->lookupActionUxon ?? new UxonObject();
+        if ($uxon->hasProperty('alias') === false) {
+            $uxon->setProperty('alias', 'exface.Core.ShowLookupDialog');
         }
-        
         if ($uxon->hasProperty('object_alias') === false) {
             $uxon->setProperty('object_alias', $this->getTableObject()->getAliasWithNamespace());
         }

@@ -719,6 +719,7 @@ class Data
         if ($this->paginator === null) {
             $this->paginator = WidgetFactory::create($this->getPage(), 'DataPaginator', $this);
         }
+        $this->paginator->setDisabled($this->isPaged() ? false : true);
         return $this->paginator;
     }
     
@@ -734,7 +735,7 @@ class Data
      *  "widget_type": "DataTable",
      *  "paginator": {
      *      "page_size": 40,
-     *      "page_sizes": [20, 40, 100, 200]
+     *      "count_all_rows": true
      *  }
      * }
      * 
