@@ -68,6 +68,12 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return AppInterface
      */
     public function getApp($selectorOrString) : AppInterface;
+
+    /**
+     * @param string|AppSelectorInterface $aliasOrSelector
+     * @return bool
+     */
+    public function isAppInstalled(string|AppSelectorInterface $aliasOrSelector) : bool;
     
     /**
      *

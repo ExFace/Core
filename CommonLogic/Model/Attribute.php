@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Selectors\AttributeGroupSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 use Throwable;
 
 /**
@@ -36,6 +37,7 @@ use Throwable;
  */
 class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
 {
+    use iHaveIconTrait;
     use ImportUxonObjectTrait;
     
     // Properties to be dublicated on copy()
@@ -126,6 +128,8 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     private $object;
 
     private $attributeType = MetaAttributeTypeDataType::GENERATED;
+    
+    private $abbreviation = null;
 
     public function __construct(MetaObjectInterface $object, string $name, string $alias)
     {
@@ -206,8 +210,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
+     * The alias of the attribute
      * 
-     * {@inheritDoc}
+     * @uxon-property alias
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setAlias()
      */
     public function setAlias($value)
@@ -245,7 +252,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
                     $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->getCustomDataTypeUxon());
                     break;
                 default:
-                    throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object ' . $this->getObject()->__toString() . ': expecting a selector, a valid UXON or a data type class instance!');
+                    $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
             }
         } catch (\Throwable $e) {
             throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
@@ -415,8 +422,11 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
+     * The name of the attribute (used for widget captions)
      * 
-     * {@inheritDoc}
+     * @uxon-property name
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setName()
      */
     public function setName($value)
@@ -1297,7 +1307,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     {
         return $this->setDefaultEditorUxon($uxon);
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -1329,7 +1339,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
         
         return $uxon;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -1363,7 +1373,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     {
         return $this->setDefaultDisplayUxon($uxon);
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -1373,7 +1383,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     {
         return $this->getRelationPath()->isEmpty() === false;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -1398,7 +1408,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
         $this->copyable = $value;
         return $this;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -1468,6 +1478,32 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     public function getOrigin() : int
     {
         return $this->isInherited() ? MetaAttributeOriginDataType::INHERITED_ATTRIBUTE : MetaAttributeOriginDataType::DIRECT_ATTRIBUTE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAbbreviation(): ?string
+    {
+        return $this->abbreviation;
+    }
+
+    /**
+     * Short version of the attribute name to be used in narrow column headers, etc.
+     *
+     * For attributes with short values (like KPI) it is a good idea to define either an abbreviation or an icon to
+     * allow tables to render narrow but understandable columns.
+     *
+     * @uxon-property abbreviation
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return MetaAttributeInterface
+     */
+    public function setAbbreviation(string $value): MetaAttributeInterface
+    {
+        $this->abbreviation = $value;
+        return $this;
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
+use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Action\OnActionFailedEvent;
@@ -21,6 +22,7 @@ use exface\Core\Events\Transaction\OnBeforeTransactionCommitEvent;
 use exface\Core\Events\Transaction\OnBeforeTransactionRollbackEvent;
 use exface\Core\Events\Transaction\OnTransactionStartEvent;
 use exface\Core\Facades\DocsFacade;
+use exface\Core\Interfaces\Debug\IHaveLogIdInterface;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\EventManagerInterface;
@@ -34,7 +36,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PhpClassDataType;
 
-class ActionLogBook implements DataLogBookInterface
+class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
 {
     const SECTION_INNER_EVENTS = 'Inner events';
     private $task = null;
@@ -238,7 +240,9 @@ class ActionLogBook implements DataLogBookInterface
                         $eventName = StringDataType::substringAfter($processedEvent::getEventName(), '.', $processedEvent::getEventName(), false, true);
                         $eventName = "`{$eventName}` ";
                     }
-                    $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")", $idt);
+                    $logbook = $event->getLogbook();
+                    $link = $logbook instanceof IHaveLogIdInterface ? ' - see [#LOG-' . $logbook->getLogId() . '](' . DebugContext::buildUrlToLogId($logbook->getLogId()) . ')' : '';
+                    $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")" . $link, $idt);
                     break;
                 case $event instanceof OnBeforeActionPerformedEvent:
                     $action = $event->getAction();
@@ -342,25 +346,6 @@ class ActionLogBook implements DataLogBookInterface
                 'value' => $this->action->exportUxonObject()->toJson(true),
                 'root_prototype' => '\\' . get_class($this->action)
             ])));
-            
-            foreach ($this->eventStack as $i => $item) {
-                if(is_string($item)) {
-                    continue;
-                }
-                
-                $event = $item['event'];
-                switch (true) {
-                    case $event->isOnBefore():
-                        break;
-                    case ($event instanceof OnBehaviorAppliedEvent) && null !== $logbook = $event->getLogbook():
-                        $logbook->createDebugWidget($actionTabs);
-                        break;
-                }
-                if ($i > 10 && $item['indent'] === 0) {
-                    $this->logBook->addLine('Skipping event details tabs after item ' . $i . ': too many events!', 0, self::SECTION_INNER_EVENTS);
-                    break;
-                }
-            }
         }
         return $debug_widget;
     }
@@ -586,5 +571,14 @@ class ActionLogBook implements DataLogBookInterface
             $objAlias = 'cannot get object';
         }
         return '"' . ($prefix ?? '') . $action->getName() . "\n({$objAlias})\"";
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\IHaveLogIdInterface::getLogId()
+     */
+    public function getLogId() : string
+    {
+        return $this->logBook->getLogId();
     }
 }

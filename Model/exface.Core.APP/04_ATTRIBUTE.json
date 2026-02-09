@@ -95,6 +95,18 @@
             "attribute_alias": "COPYABLEFLAG"
         },
         {
+            "name": "ICON",
+            "attribute_alias": "ICON"
+        },
+        {
+            "name": "ICON_SET",
+            "attribute_alias": "ICON_SET"
+        },
+        {
+            "name": "ABBREVIATION",
+            "attribute_alias": "ABBREVIATION"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -200,6 +212,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "app_alias",
@@ -248,6 +263,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "app_name",
@@ -293,6 +311,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "PACKAGE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "LOWER(REPLACE([#~alias#].app_alias, '.', '/'))",
@@ -338,6 +359,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "DEFAULT_LANGUAGE_CODE",
             "DATATYPE": "0x11e7bf02824f925f9c0f0205857feb80",
             "DATA_ADDRESS": "default_language_code",
@@ -383,6 +407,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "MODEL_MODIFIED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
             "DATA_ADDRESS": [
@@ -448,6 +475,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": [
@@ -499,6 +529,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "FOLDER",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "REPLACE([#~alias#].app_alias, '.', '/')",
@@ -544,6 +577,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "PUPLISHED",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "puplished",

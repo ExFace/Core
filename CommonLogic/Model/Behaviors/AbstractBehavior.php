@@ -279,7 +279,7 @@ abstract class AbstractBehavior implements BehaviorInterface
     }
 
     /**
-     * Set to TRUE to disabled this behavior
+     * Set to TRUE to disable this behavior
      * 
      * @param bool $value
      * @return BehaviorInterface
@@ -290,6 +290,23 @@ abstract class AbstractBehavior implements BehaviorInterface
             $this->disable();
         } else {
             $this->enable();
+        }
+        return $this;
+    }
+
+    /**
+     * Disables this behavior if the given app is not installed
+     * 
+     * @uxon-property disabled_if_app_not_installed
+     * @uxon-type metamodel:app
+     * 
+     * @param string $appAlias
+     * @return BehaviorInterface
+     */
+    protected function setDisabledIfAppNotInstalled(string $appAlias) : BehaviorInterface
+    {
+        if ($this->getWorkbench()->isAppInstalled($appAlias) === false) {
+            $this->disable();
         }
         return $this;
     }

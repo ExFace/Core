@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Attribute [exface.Core.ATTRIBUTE]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2025-05-03 11:21:18",
+            "MODIFIED_ON": "2026-01-27 10:58:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -141,6 +141,24 @@
                                             },
                                             {
                                                 "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "ABBREVIATION"
+                                            },
+                                            {
+                                                "widget_type": "InlineGroup",
+                                                "caption": "Icon / Icon set",
+                                                "separator": "/",
+                                                "widgets": [
+                                                    {
+                                                        "attribute_alias": "ICON",
+                                                        "widget_type": "Input"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "ICON_SET",
+                                                        "width": "25%"
+                                                    }
+                                                ]
                                             },
                                             {
                                                 "attribute_alias": "DATATYPE",
@@ -316,39 +334,52 @@
                                     {
                                         "widget_type": "WidgetGroup",
                                         "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPTIONS')",
+                                        "columns_in_grid": 2,
+                                        "width": 1,
                                         "widgets": [
                                             {
-                                                "attribute_alias": "READABLEFLAG"
+                                                "attribute_alias": "READABLEFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "WRITABLEFLAG"
+                                                "attribute_alias": "WRITABLEFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "COPYABLEFLAG"
+                                                "attribute_alias": "COPYABLEFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "EDITABLEFLAG"
+                                                "attribute_alias": "EDITABLEFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "REQUIREDFLAG"
+                                                "attribute_alias": "REQUIREDFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "HIDDENFLAG"
+                                                "attribute_alias": "HIDDENFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "UIDFLAG"
+                                                "attribute_alias": "UIDFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "LABELFLAG"
+                                                "attribute_alias": "LABELFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "SORTABLEFLAG"
+                                                "attribute_alias": "SORTABLEFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "FILTERABLEFLAG"
+                                                "attribute_alias": "FILTERABLEFLAG",
+                                                "width": 0.5
                                             },
                                             {
-                                                "attribute_alias": "AGGREGATABLEFLAG"
+                                                "attribute_alias": "AGGREGATABLEFLAG",
+                                                "width": 0.5
                                             }
                                         ]
                                     },
@@ -370,7 +401,7 @@
                                             {
                                                 "attribute_alias": "COMMENTS",
                                                 "hide_caption": true,
-                                                "height": 3
+                                                "height": 5
                                             }
                                         ]
                                     }

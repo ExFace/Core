@@ -53,7 +53,13 @@ class DataButton extends Button
     }
 
     /**
-     * Set to TRUE to perform the action of this button when an item of the parent Data widget is doubleclicked
+     * Set to TRUE to perform the action of this button when an item of the parent Data widget is double-clicked.
+     * 
+     * If multiple buttons get `bind_to_double_click`, the first one, that is active will be "pressed". This is
+     * very useful, if you have different default actions depending on the state of a row - e.g. double-clicking
+     * an order will edit it if it is a draft or show an info dialog if it has been released already.
+     * 
+     * This also works if the buttons are placed inside a `MenuButton`.
      *
      * @uxon-property bind_to_double_click
      * @uxon-type boolean
