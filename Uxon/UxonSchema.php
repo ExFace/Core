@@ -51,7 +51,6 @@ use Throwable;
  * - uri
  * - timezone
  * - metamodel:app
- * - metamodel:expression
  * - metamodel:object
  * - metamodel:attribute
  * - metamodel:attribute_group
@@ -522,6 +521,9 @@ class UxonSchema implements UxonSchemaInterface
                 break;
             case strcasecmp($type, 'timezone') === 0:
                 $options = TimeZoneDataType::getValuesStatic();
+                break;
+            case strcasecmp($type, 'metamodel:app') === 0:
+                $options = $this->getMetamodelAppAliases($search);
                 break;
             case strcasecmp($type, 'metamodel:data_source') === 0:
                 $options = $this->getMetamodelDataSourceAliases($search);
@@ -1005,6 +1007,19 @@ class UxonSchema implements UxonSchemaInterface
         $ds->getColumns()->addFromExpression('ALIAS_WITH_NS');
         $ds->dataRead();
         return $ds->getColumns()->get('ALIAS_WITH_NS')->getValues(false);
+    }
+
+    /**
+     * Returning metamodel app aliases
+     *
+     * @return string[]
+     */
+    protected function getMetamodelAppAliases() : array
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
+        $ds->getColumns()->addFromExpression('ALIAS');
+        $ds->dataRead();
+        return $ds->getColumns()->get('ALIAS')->getValues(false);
     }
    
     /**

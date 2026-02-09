@@ -306,4 +306,20 @@ class JsonDataType extends CodeDataType
     {
         return preg_replace('/[\\\\\/$@.\[\]*,?]/', $replacement, $string);
     }
+
+    /**
+     * Escapes a value to be used in a JSON object or array - optionally surrounding it with quotes if needed
+     * 
+     * @param $val
+     * @param bool $enquote
+     * @return string
+     */
+    public static function escapeJsonValue($val, bool $enquote = false) : string
+    {
+        $enc = json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($enquote === false && mb_substr($enc, 0, 1) === '"' && mb_substr($enc, -1) === '"') {
+            $enc = substr($enc, 1, -1);
+        }
+        return $enc;
+    }
 }

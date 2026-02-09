@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\TemplateRenderer\Traits;
 
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
 /**
@@ -22,14 +23,21 @@ trait SanitizedPlaceholderTrait
      */
     protected function sanitizeValue($val) {
         if ($this->sanitizeAsUxon === true) {
-            $sanitizer = $this->getSanitizerForUxon();
-            $val = $sanitizer($val);
+            $val = JsonDataType::escapeJsonValue($val, false);
         }
         if ($this->sanitizer !== null) {
-            $sanitizer = $this->sanitizer;
+            $sanitizer = $this->getSanitizer();
             $val = $sanitizer($val);
         }
         return $val;
+    }
+
+    /**
+     * @return callable
+     */
+    protected function getSanitizer() : callable
+    {
+        return $this->sanitizer;
     }
     
     /**
@@ -52,21 +60,5 @@ trait SanitizedPlaceholderTrait
     {
         $this->sanitizeAsUxon = $value;
         return $this;
-    }
-    
-    /**
-     * 
-     * @return callable
-     */
-    protected function getSanitizerForUxon() : callable
-    {
-        $fn = function($val) {
-            $enc = json_encode($val);
-            if (mb_substr($enc, 0, 1) === '"' && mb_substr($enc, -1) === '"') {
-                $enc = substr($enc, 1, -1);
-            }
-            return $enc;
-        };
-        return $fn;
     }
 }

@@ -384,20 +384,21 @@ interface ActionInterface extends
     public function setHint(string $text) : ActionInterface;
 
     /**
-     * Returns TRUE if the action will perform a commit on a task's data transaction after it was performed and if data was modified.
+     * Returns TRUE if the action will commit the transaction of its task after it was performed if data was modified.
      *
-     * @return boolean
+     * @param bool $default
+     * @return bool
      */
-    public function getAutocommit();
+    public function hasAutocommit(bool $default = true) : bool;
 
     /**
-     * Set to FALSE to force the action not to perform a commit on a taks's data transaction after the action had been performed.
+     * Set to FALSE to force the action not to perform a commit on a tasks data transaction after the action had been performed.
      * By default, the action will commit the transaction automatically.
      *
-     * @param boolean $true_or_false            
+     * @param bool $trueOrFalse            
      * @return ActionInterface
      */
-    public function setAutocommit($true_or_false);
+    public function setAutocommit(bool $trueOrFalse) : ActionInterface;
     
     /**
      * Returns TRUE if this action matches the given alias or inherits for the action identified by it.

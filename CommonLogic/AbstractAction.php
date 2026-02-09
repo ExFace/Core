@@ -146,7 +146,7 @@ abstract class AbstractAction implements ActionInterface
      */
     private $meta_object = null;
 
-    private $autocommit = true;
+    private $autocommit = null;
     
     private $input_object_alias = null;
     
@@ -511,15 +511,15 @@ abstract class AbstractAction implements ActionInterface
         $this->getWorkbench()->getLogger()->notice('Action ' . $this->__toString() . ' performed', [], $this->getLogBook($result->getTask()));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
-        // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
+        // safely do it here, before perform(). On the other hand, this gives all kinds of action event handlers
         // the possibility to access the current action and it's current state
         // FIXME re-enable action context: maybe make it work with events?
         // $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->addAction($this);
         
         // Commit the transaction if autocommit is on and the action COULD have modified data
-        // We cannot rely on $result->isDataModified() at this point as it is not allways possible 
-        // to determine it within the action (some data source simply do not give relieable feedback).
-        if ($this->getAutocommit() && (($this instanceof iModifyData) || $result->isDataModified())) {
+        // We cannot rely on $result->isDataModified() at this point as it is not always possible 
+        // to determine it within the action (some data sources simply do not give relivable feedback).
+        if ($this->hasAutocommit() && (($this instanceof iModifyData) || $result->isDataModified())) {
             $transaction->commit();
         }
         
@@ -845,22 +845,45 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getAutocommit()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasAutocommit()
      */
-    public function getAutocommit()
+    public function hasAutocommit(bool $default = true) : bool
     {
-        return $this->autocommit;
+        return $this->autocommit ?? $default;
     }
     
     /**
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setAutocommit()
      */
-    public function setAutocommit($true_or_false)
+    public function setAutocommit(bool $trueOrFalse) : ActionInterface
     {
-        $this->autocommit = $true_or_false ? true : false;
+        $this->autocommit = $trueOrFalse;
         return $this;
+    }
+
+    /**
+     * Set to TRUE or FALSE to force the action to commit its transaction after being performed successfully.
+     * 
+     * If not set, the behavior of the action will depend on how and where it is called. 
+     * 
+     * - Stand-alone action will run each in their own transaction. This transaction will be started when the action
+     * starts and will be committed when it is finished. Any behaviors triggered by events of the action or its
+     * underlying objects will be included in this transaction. Thus, if any of them fail, the transaction will be
+     * rolled back.
+     * - Actions included in other action or behaviors will run in the respective outer transaction - e.g. in
+     * `ActionChain` or `CallActionBehavior`. In this case, the action will not commit its transaction itself, but
+     * rely on the outer logic to handle this.
+     * 
+     * **NOTE:** in any case, the action will only perform a commit if any data was changed. If it does not change
+     * anything, no commit will be done.
+     * 
+     * @param bool $trueOrFalse
+     * @return bool
+     */
+    protected function setCommitAfterSuccess(bool $trueOrFalse) : bool
+    {
+        return $this->setAutocommit($trueOrFalse);
     }
     
     /**

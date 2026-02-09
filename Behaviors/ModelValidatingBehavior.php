@@ -3,19 +3,18 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Model\CustomAttribute;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\DataTypes\HtmlDataType;
-use exface\Core\DataTypes\MetaAttributeOriginDataType;
-use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iCanBeEditable;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Widgets\DataTable;
 use exface\Core\Widgets\MessageList;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Events\Model\OnMetaObjectModelValidatedEvent;
@@ -28,7 +27,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
-use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use Throwable;
@@ -49,7 +47,10 @@ use Throwable;
  *
  */
 class ModelValidatingBehavior extends AbstractBehavior
-{    
+{
+    private const CORE_ATTRIBUTE = 'exface.core.ATTRIBUTE';
+    private const CORE_ATTRIBUTE_GROUP_ATTRIBUTES = 'exface.core.ATTRIBUTE_GROUP_ATTRIBUTES';
+    
     /**
      *
      * {@inheritDoc}
@@ -134,7 +135,7 @@ class ModelValidatingBehavior extends AbstractBehavior
             }
         }
         
-        if ($result->getData()->getMetaObject()->is('exface.Core.ATTRIBUTE')) {
+        if ($result->getData()->getMetaObject()->is(self::CORE_ATTRIBUTE)) {
             $data = $result->getData();
             if (! $objectCol = $data->getColumns()->get('OBJECT')) {
                 return;
@@ -183,7 +184,7 @@ class ModelValidatingBehavior extends AbstractBehavior
         if (! $action->is('exface.Core.ReadData')) {
             return;
         }
-        if (! $action->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+        if (!$this->appliesToObject($action->getMetaObject())) {
             return;
         }
         if (! $event->getTask()->isTriggeredByWidget()) {
@@ -205,126 +206,283 @@ class ModelValidatingBehavior extends AbstractBehavior
         }
         /** @var \exface\Core\Interfaces\DataSheets\DataSheetInterface $resultSheet */
         $resultSheet = $event->getResult()->getData();
-        if (! $resultSheet->getMetaObject()->isExactly('exface.Core.ATTRIBUTE') || ! $resultSheet->getAggregations()->isEmpty()) {
-            return;
-        }
-        
-        // Find the object, for which we are reading attributes
-        $objConditionSearcher = function(ConditionInterface $condition) {
-            $expr = $condition->getLeftExpression();
-            return $expr->isMetaAttribute() && $expr->getMetaObject()->is('exface.Core.ATTRIBUTE') && $expr->getAttribute()->getAliasWithRelationPath() === 'OBJECT';
-        };
-        $objFilters = $resultSheet->getFilters()->getConditions($objConditionSearcher);
-        $objUid = null;
-        foreach ($objFilters as $cond) {
-            if ($cond->getComparator() === ComparatorDataType::EQUALS && $cond->isEmpty() === false) {
-                if ($objUid !== null) {
-                    return;
-                }
-                $objUid = $cond->getValue();
-            }
-        }
-        // Only proceed, if we are really reading for a single object - otherwise it all does not make sense
-        if ($objUid === null) {
+        $resultObject = $resultSheet->getMetaObject();
+        if (! $this->appliesToObject($resultObject) || ! $resultSheet->getAggregations()->isEmpty()) {
             return;
         }
 
         // Attempt to generate additional rows for all attributes, that are not present in the data
         // Return the original data if anything goes wrong.
         try {
-            $object = MetaObjectFactory::createFromUid($this->getWorkbench(), $objUid);
-            $aliasCol = $resultSheet->getColumns()->getByExpression('ALIAS');
-            $parentAttrs = $this->getParentAttributeAliases($object);
-            // Create a separate data sheet for the results in order not to break the regular data
-            $additionalSheet = $resultSheet->copy()->removeRows();
-            foreach ($additionalSheet->getFilters()->getConditions($objConditionSearcher) as $cond) {
-                $additionalSheet->getFilters()->removeCondition($cond);
+            $outputSheet = null;
+            
+            switch (true) {
+                // Add inherited and custom attributes.
+                case $resultSheet->getMetaObject()->isExactly(self::CORE_ATTRIBUTE):
+                    $outputSheet = $this->addAttributesToAttributeData($resultSheet);
+                    break;
+                // Add custom attributes to attribute group.
+                case $resultSheet->getMetaObject()->isExactly(self::CORE_ATTRIBUTE_GROUP_ATTRIBUTES):
+                    $outputSheet = $this->addAttributesToGroupData($resultSheet);
+                    break;
             }
-            foreach ($object->getAttributes() as $attr) {
-                $attrRowIdx = $aliasCol->findRowByValue($attr->getAlias());
-                // For attributes, that are already in the data sheet, just add the icons and skip the rest
-                if ($attrRowIdx !== false) {
-                    $resultSheet->setCellValue('INFO_ICONS', $attrRowIdx, $this->buildHtmlAttributeInfoIcons($attr, $parentAttrs));
-                    continue;
-                }
-                // Also skip the generated LABEL attribute because it is very confusing if it is there
-                // right next to the regular attribute with label-flag
-                if ($attr->getAlias() === MetaAttributeInterface::OBJECT_LABEL_ALIAS && ! $attr->isInherited()) {
-                    continue;
-                }
-                foreach ($resultSheet->getColumns() as $col) {
-                    switch ($col->getExpressionObj()->__toString()) {
-                        case 'UID':
-                            $row[$col->getName()] = $attr->getId();
-                            break;
-                        case 'NAME':
-                            $row[$col->getName()] = $attr->getName();
-                            break;
-                        case 'ALIAS':
-                            $row[$col->getName()] = $attr->getAlias();
-                            break;
-                        case 'DISPLAYORDER':
-                            $row[$col->getName()] = $attr->getDefaultDisplayOrder();
-                            break;
-                        case 'DATA_ADDRESS':
-                            $row[$col->getName()] = $attr->getDataAddress();
-                            break;
-                        case '=Left(DATA_ADDRESS,60)':
-                            $row[$col->getName()] = StringDataType::truncate($attr->getDataAddress(), 60);
-                            break;  
-                        case 'TYPE':
-                            $row[$col->getName()] = $attr->getType();
-                            break;
-                        case 'DATATYPE__LABEL':
-                            $row[$col->getName()] = $attr->getDataType()->getName();
-                            break;
-                        case 'EDITABLEFLAG':
-                            $row[$col->getName()] = $attr->isEditable() ? 1 : 0;
-                            break;
-                        case 'REQUIREDFLAG':
-                            $row[$col->getName()] = $attr->isReadable() ? 1 : 0;
-                            break;
-                        case 'RELATED_OBJ__NAME':
-                            $row[$col->getName()] = $attr->isRelation() ? $attr->getRelation()->getRightObject()->getName() : null;
-                            break;   
-                        case 'HIDDENFLAG':
-                            $row[$col->getName()] = $attr->isHidden() ? 1 : 0;
-                            break;
-                        case 'UIDFLAG':
-                            $row[$col->getName()] = $attr->isUidForObject() ? 1 : 0;
-                            break;
-                        case 'LABELFLAG':
-                            $row[$col->getName()] = $attr->isLabelForObject() ? 1 : 0;
-                            break;
-                        case 'SHORT_DESCRIPTION':
-                            $row[$col->getName()] = $attr->getShortDescription();
-                            break;    
-                        case 'ORIGIN':
-                            $row[$col->getName()] = $attr->getOrigin();;
-                            break;     
-                        case 'INFO_ICONS':
-                            $row[$col->getName()] = $this->buildHtmlAttributeInfoIcons($attr);
-                            break;                 
-                    }
-                }
-                $additionalSheet->addRow($row, false, false);
-            }
-            if (! $additionalSheet->isEmpty()) {
+            
+            if ($outputSheet !== null && ! $outputSheet->isEmpty()) {
                 if ($originCol = $resultSheet->getColumns()->getByExpression('ORIGIN')) {
                     $originCol->setValueOnAllRows(1);
                 }
                 // Apply the filters of the original sheet to the additional data
-                $additionalSheet = $additionalSheet->extract($additionalSheet->getFilters());
+                $outputSheet = $outputSheet->extract($outputSheet->getFilters());
                 // Append remaining rows to the original data
-                foreach ($additionalSheet->getRows() as $row) {
+                foreach ($outputSheet->getRows() as $row) {
                     $resultSheet->addRow($row, false, false);
                 }
             }
         } catch (Throwable $e) {
             $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this, 'Cannot add inherited/virtual attributes to object attribute data. ' . $e->getMessage(), null, $e));
         }
+    }
 
-        return;
+    /**
+     * Returns TRUE if this Behavior applies to a given metaobject.
+     * 
+     * @param MetaObjectInterface $object
+     * @return bool
+     */
+    protected function appliesToObject(MetaObjectInterface $object) : bool 
+    {
+        return 
+            $object->isExactly(self::CORE_ATTRIBUTE) ||
+            $object->isExactly(self::CORE_ATTRIBUTE_GROUP_ATTRIBUTES);
+    }
+
+    /**
+     * Copy the input sheet and remove all filters that match the callback.
+     * 
+     * @param DataSheetInterface $eventResultSheet
+     * @param callable           $conditionsFilter
+     * @return DataSheetInterface
+     */
+    protected function getOutputSheet(
+        DataSheetInterface $eventResultSheet,
+        callable           $conditionsFilter
+    ) : DataSheetInterface
+    {
+        // Create a separate data sheet for the results in order not to break the regular data
+        $outputSheet = $eventResultSheet->copy()->removeRows();
+        foreach ($outputSheet->getFilters()->getConditions($conditionsFilter) as $cond) {
+            $outputSheet->getFilters()->removeCondition($cond);
+        }
+        
+        return $outputSheet;
+    }
+
+    /**
+     * Return the value of the first filter from a given datasheet that matches the callable.
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param callable           $conditionSearcher
+     * @return mixed
+     */
+    protected function findFilterValue(DataSheetInterface $dataSheet, callable $conditionSearcher) : mixed
+    {
+        $objFilters = $dataSheet->getFilters()->getConditions($conditionSearcher);
+
+        foreach ($objFilters as $cond) {
+            $comp = $cond->getComparator();
+            if (($comp === ComparatorDataType::IS || $comp === ComparatorDataType::EQUALS) && $cond->isEmpty() === false) {
+                $value = $cond->getValue();
+                if($value !== null) {
+                    return $value;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param DataSheetInterface $eventResultSheet
+     * @return DataSheetInterface|null
+     */
+    protected function addAttributesToAttributeData(
+        DataSheetInterface         $eventResultSheet,
+    ) : ?DataSheetInterface
+    {
+        // Find target object, by extracting it from filters.
+        $objConditionSearcher = function(ConditionInterface $condition) {
+            $expr = $condition->getLeftExpression();
+            return
+                $expr->isMetaAttribute() &&
+                $expr->getMetaObject()->is(self::CORE_ATTRIBUTE) &&
+                $expr->getAttribute()->getAliasWithRelationPath() === 'OBJECT';
+        };
+
+        $objUid = $this->findFilterValue($eventResultSheet, $objConditionSearcher);
+        if($objUid === null) {
+            return null;
+        }
+        
+        $object = MetaObjectFactory::createFromUid($this->getWorkbench(), $objUid);
+        $outputSheet = $this->getOutputSheet($eventResultSheet, $objConditionSearcher);
+        $aliasCol = $eventResultSheet->getColumns()->getByExpression('ALIAS');
+        $parentAttrs = $this->getParentAttributeAliases($object);
+        
+        foreach ($object->getAttributes() as $attr) {
+            $attrRowIdx = $aliasCol->findRowByValue($attr->getAlias());
+            // For attributes, that are already in the data sheet, just add the icons and skip the rest
+            if ($attrRowIdx !== false) {
+                $eventResultSheet->setCellValue('INFO_ICONS', $attrRowIdx, $this->buildHtmlAttributeInfoIcons($attr, $parentAttrs));
+                continue;
+            }
+            // Also skip the generated LABEL attribute because it is very confusing if it is there
+            // right next to the regular attribute with label-flag
+            if ($attr->getAlias() === MetaAttributeInterface::OBJECT_LABEL_ALIAS && ! $attr->isInherited()) {
+                continue;
+            }
+            
+            $this->addAttributeToData($outputSheet, $attr, $eventResultSheet->getColumns());
+        }
+        
+        return $outputSheet;
+    }
+
+    /**
+     * @param DataSheetInterface $eventResultSheet
+     * @return DataSheetInterface|null
+     */
+    protected function addAttributesToGroupData(
+        DataSheetInterface         $eventResultSheet,
+    ) : ?DataSheetInterface
+    {
+        $conditionSearcher = function(ConditionInterface $condition) {
+            $expr = $condition->getLeftExpression();
+            return
+                $expr->isMetaAttribute() &&
+                $expr->getMetaObject()->is(self::CORE_ATTRIBUTE_GROUP_ATTRIBUTES) &&
+                $expr->getAttribute()->getAliasWithRelationPath() === 'ATTRIBUTE_GROUP';
+        };
+
+        $groupUid = $this->findFilterValue($eventResultSheet, $conditionSearcher);
+        if($groupUid === null) {
+            return null;
+        }
+        
+        $groupObject = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.core.ATTRIBUTE_GROUP');
+        $groupSheet = DataSheetFactory::createFromObject($groupObject);
+        $groupSheet->getColumns()->addFromUidAttribute();
+        $groupSheet->getColumns()->addFromExpression('OBJECT');
+        $groupSheet->getColumns()->addFromExpression('ALIAS_WITH_NS');
+        $groupSheet->getFilters()->addConditionFromAttribute($groupObject->getUidAttribute(), $groupUid, '==');
+        $groupSheet->dataRead();
+        $groupRow = $groupSheet->getRow();
+        if($groupRow === null) {
+            return null;
+        }
+
+        $targetObjectUID = $groupRow['OBJECT'];
+        $groupAlias = $groupRow['ALIAS_WITH_NS'];
+        if($targetObjectUID === null || $groupAlias == null) {
+            return null;
+        }
+
+        $relString = 'ATTRIBUTE__';
+        $aliasCol = $eventResultSheet->getColumns()->getByExpression($relString . 'ALIAS');
+        $targetObject = MetaObjectFactory::createFromUid($this->getWorkbench(), $targetObjectUID);
+        $outputSheet = $this->getOutputSheet($eventResultSheet, $conditionSearcher);
+
+        foreach ($targetObject->getAttributeGroup($groupAlias) as $attr) {
+            if(!$attr instanceof CustomAttribute) {
+                continue;
+            }
+            
+            if ($aliasCol->findRowByValue($attr->getAlias()) !== false) {
+                continue;
+            }
+
+            $this->addAttributeToData($outputSheet, $attr, $eventResultSheet->getColumns(), $relString);
+        }
+        
+        return $outputSheet;
+    }
+
+    /**
+     * Add an attribute to a given output sheet.
+     *
+     * @param DataSheetInterface $dataSheet
+     * @param MetaAttributeInterface $attr
+     * @param DataColumnListInterface|DataColumnInterface[] $columnsToFill
+     * @param string $relationPath
+     * @return void
+     */
+    protected function addAttributeToData(
+        DataSheetInterface              $dataSheet,
+        MetaAttributeInterface          $attr,
+        DataColumnListInterface|array   $columnsToFill,
+        string                          $relationPath = ''
+    ) : void
+    {
+        $row = [];
+        
+        foreach ($columnsToFill as $col) {
+            switch ($col->getExpressionObj()->__toString()) {
+                case $relationPath . 'UID':
+                    $row[$col->getName()] = $attr->getId();
+                    break;
+                case $relationPath . 'NAME':
+                    $row[$col->getName()] = $attr->getName();
+                    break;
+                case $relationPath . 'ALIAS':
+                    $row[$col->getName()] = $attr->getAlias();
+                    break;
+                case $relationPath . 'DISPLAYORDER':
+                    $row[$col->getName()] = $attr->getDefaultDisplayOrder();
+                    break;
+                case $relationPath . 'DATA_ADDRESS':
+                    $row[$col->getName()] = $attr->getDataAddress();
+                    break;
+                case $relationPath . '=Left(DATA_ADDRESS,60)':
+                    $row[$col->getName()] = StringDataType::truncate($attr->getDataAddress(), 60);
+                    break;
+                case $relationPath . 'TYPE':
+                    $row[$col->getName()] = $attr->getType();
+                    break;
+                case $relationPath . 'DATATYPE__LABEL':
+                    $row[$col->getName()] = $attr->getDataType()->getName();
+                    break;
+                case $relationPath . 'EDITABLEFLAG':
+                    $row[$col->getName()] = $attr->isEditable() ? 1 : 0;
+                    break;
+                case $relationPath . 'REQUIREDFLAG':
+                    $row[$col->getName()] = $attr->isReadable() ? 1 : 0;
+                    break;
+                case $relationPath . 'RELATED_OBJ__NAME':
+                    $row[$col->getName()] = $attr->isRelation() ? $attr->getRelation()->getRightObject()->getName() : null;
+                    break;
+                case $relationPath . 'HIDDENFLAG':
+                    $row[$col->getName()] = $attr->isHidden() ? 1 : 0;
+                    break;
+                case $relationPath . 'UIDFLAG':
+                    $row[$col->getName()] = $attr->isUidForObject() ? 1 : 0;
+                    break;
+                case $relationPath . 'LABELFLAG':
+                    $row[$col->getName()] = $attr->isLabelForObject() ? 1 : 0;
+                    break;
+                case $relationPath . 'SHORT_DESCRIPTION':
+                    $row[$col->getName()] = $attr->getShortDescription();
+                    break;
+                case $relationPath . 'ORIGIN':
+                    $row[$col->getName()] = $attr->getOrigin();;
+                    break;
+                case $relationPath . 'INFO_ICONS':
+                    $row[$col->getName()] = $this->buildHtmlAttributeInfoIcons($attr);
+                    break;
+            }
+        }
+        
+        if(!empty($row)) {
+            $dataSheet->addRow($row, false, false);
+        }
     }
     
     /**
@@ -385,7 +543,7 @@ class ModelValidatingBehavior extends AbstractBehavior
             return;
         }
         /** @var \exface\Core\Actions\ShowObjectEditDialog $action */
-        if (! $action->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
+        if (! $action->getMetaObject()->isExactly(self::CORE_ATTRIBUTE)) {
             return;
         }
 

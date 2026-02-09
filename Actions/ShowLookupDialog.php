@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Data;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Dialog;
 use exface\Core\CommonLogic\UxonObject;
@@ -58,6 +60,10 @@ class ShowLookupDialog extends ShowDialog
     private $target_widget_id = null;
     
     private $multi_select = null;
+    
+    // Defaults
+    private ?UxonObject $paginatorUxon = null;
+    private ?bool $hideHeader = null;
 
     /**
      * 
@@ -95,6 +101,10 @@ class ShowLookupDialog extends ShowDialog
     {
         $dialog = parent::enrichDialogWidget($dialog);
         
+        if ($this->getHideHeader() !== null) {
+            $dialog->setHideHeader($this->getHideHeader());
+        }
+        
         if ($dialog instanceof DataLookupDialog) {
             if ($this->getMultiSelect() !== null) {
                 $dialog->setMultiSelect($this->getMultiSelect());
@@ -106,176 +116,7 @@ class ShowLookupDialog extends ShowDialog
                 $targetWidget = $this->getWidgetDefinedIn();
                 if ($targetWidget instanceof iUseInputWidget) {
                     $inputWidget = $targetWidget->getInputWidget();
-                    $tableObj = $data_table->getMetaObject();
-                    
-                    // Inherit filters from calling widget
-                    // When inheriting filters, it is important to keep their id space. If this is not
-                    // done explicitly, the filter will have a new id space - the one of the lookup
-                    // dialog, thus any value links will stop working as they reference the id space of
-                    // the table.
-                    switch (true) {
-                        case ($inputWidget instanceof iHaveFilters && $tableObj->is($inputWidget->getMetaObject())): 
-                            foreach($inputWidget->getFilters() as $filter) {
-                                // Force the filter to keep its id space - see explanation above the switch()
-                                // TODO maybe better to copy the filters somehow?
-                                $filter->setIdSpace($filter->getIdSpace());
-                                $data_table->addFilter($filter);
-                            }
-                            break;
-                        // In case of InputComboTable, it is very important to inherit all custom
-                        // filters as the lookup table should show the same as the dropdown table
-                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
-                            foreach($inputWidget->getTable()->getFilters() as $filter) {
-                                // Force the filter to keep its id space - see explanation above the switch()
-                                // TODO maybe better to copy the filters somehow?
-                                $filter->setIdSpace($filter->getIdSpace());
-                                $data_table->addFilter($filter);
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                    
-                    switch (true) {
-                        case ($inputWidget instanceof iHaveSorters && $tableObj->is($inputWidget->getMetaObject())):
-                            foreach ($inputWidget->getSorters() as $sorter)
-                            {
-                                $data_table->addSorter($sorter->getProperty('attribute_alias'), $sorter->getProperty('direction'));
-                            }
-                            break;
-                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
-                            foreach ($inputWidget->getTable()->getSorters() as $sorter)
-                            {
-                                $data_table->addSorter($sorter->getProperty('attribute_alias'), $sorter->getProperty('direction'));
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                    
-                    // Inherit aggregations from calling widget
-                    $aggrAttrs = [];
-                    switch (true) {
-                        // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
-                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
-                            $aggrAttrs = $inputWidget->getTable()->getAggregations();
-                            if (! empty($aggrAttrs)) {
-                                $data_table->setAggregateByAttributeAlias(implode(',', $aggrAttrs));
-                                // Make sure to remove all columns, that are not aggregated or
-                                // aggregated over as they will remain empty
-                                foreach ($data_table->getColumns() as $col) {
-                                    if (! $col->hasAggregator() && ! $data_table->hasAggregationOverColumn($col)) {
-                                        $data_table->setColumnsAutoAddDefaultDisplayAttributes(false);
-                                        foreach ($data_table->getFilters() as $filter) {
-                                            if ($filter->isBoundToAttribute() && $filter->getAttribute()->isExactly($col->getAttribute())) {
-                                                $data_table->getConfiguratorWidget()->getFilterTab()->removeWidget($filter);
-                                            }
-                                        }
-                                        $data_table->removeColumn($col);
-                                    }
-                                }
-                            }
-                            break;
-                        // TODO inherit aggregations from other types of input widgets?
-                        default:
-                            break;
-                    }
-                    
-                    // Inherit columns from calling widget
-                    $cols = [];
-                    $requiredColumnAliases = [];
-                    switch (true) {
-                        // If the input widget is an InputComboTable, we MUST inherit columns of its
-                        // table because the lookup dialog should look the same as the dropdown table.
-                        // Additionally, hidden columns MUST be inherited too, because they may be
-                        // accessed by data- and value-getters and should be set in the InputComboTable
-                        // after an item was looked up.
-                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
-                            $cols = $inputWidget->getTable()->getColumns();
-                            // IDEA can we move finding required columns to the widget calling the lookup?
-                            // We could add a `required_columns` property to the action and fill it from
-                            // InputComboTable::getLookupActionUxon(). However, we need to make sure, that method
-                            // is called AFTER all incoming links were collected.
-                            $requiredColumnAliases[] = $inputWidget->getValueAttributeAlias();
-                            $requiredColumnAliases[] = $inputWidget->getTextAttributeAlias();
-                            foreach ($inputWidget->getValueLinksToThisWidget() as $link) {
-                                //only add those columns that actually represent valid attribute_alias of the object,
-                                //not others that for example might be calculations and are referenced by data_column_name
-                                if ((null !== $linkedCol = $link->getTargetColumnId()) && $inputWidget->getTable()->getMetaObject()->hasAttribute($linkedCol)) {
-                                    $requiredColumnAliases[] = $linkedCol;
-                                }
-                            }
-                            $requiredColumnAliases = array_unique($requiredColumnAliases);
-                            break;
-                            // TODO inherit columns from other types of input widgets? Is it a good idea to
-                            // inherit columns from tables? Could be a lot...
-                        default:
-                            break;
-                    }
-                    // Remove columns from the lookup table, that are not present in the source table (e.g.
-                    // default display columns, that are not there anymore because the designer has overwritten
-                    // the columns completely).
-                    // Not doing so, will actually break many non-relation combos, where the default display
-                    // columns are not included by default. This filter will remove these columns in the lookup
-                    // too.
-                    if (! empty($cols)) {
-                        foreach ($data_table->getColumns() as $existingCol) {
-                            $found = false;
-                            foreach ($cols as $col) {
-                                if ($this->isSameColumn($existingCol, $col)) {
-                                    $found = true;
-                                    break;
-                                }
-                            }
-                            if ($found === false) {
-                                $data_table->removeColumn($existingCol);
-                            }
-                        }
-                    }
-                    
-                    // Add columns from the source table, that are not (yet) present in the lookup table
-                    $colsToAddUxons = [];
-                    foreach ($cols as $col) {
-                        // Avoid duplicate columns!
-                        // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
-                        // different attributes, but having the same caption, we should NOT put them both in the
-                        // table! Similarly, avoid columns with different captions, but same content!
-                        // On the other hand, keeping hidden columns is important here because live-refs to columns
-                        // of InputComboTables MUST also work with the data of the lookup dialog
-                        foreach ($data_table->getColumns() as $existingCol) {
-                            // NOTE: there are cases, when the source column is required, but will still be detected
-                            // as "visual" duplicate here. We still skip at this point because it will be added later
-                            // from the $requiredColumnAliases as a hidden column.
-                            // For example, if the lookup table already has the NAME attribute because of its
-                            // default display position, and we are trying to inherit the LABEL column (having NAME
-                            // as the label-attribute of the object), a duplicate will be detected. But if LABEL
-                            // is explicitly required by the source InputComboTable, we still need to keep it! We
-                            // just need to hide it to avoid visual duplicates.
-                            if ($this->isSameColumn($existingCol, $col, true)) {
-                                continue 2;
-                            }
-                        }
-                        
-                        $colsToAddUxons[$col->getAttributeAlias()] = $col->exportUxonObject();
-                    }
-                    
-                    // Make sure, all required columns are there. If they are not, add them as hidden columns
-                    foreach ($requiredColumnAliases as $reqAlias) {
-                        if (! $data_table->getColumnByAttributeAlias($reqAlias) && ! array_key_exists($reqAlias, $colsToAddUxons)) {
-                            $colsToAddUxons[$reqAlias] = new UxonObject([
-                                'attribute_alias' => $reqAlias,
-                                'hidden' => true
-                            ]);
-                        }
-                    }
-
-                    // Now add the missing columns
-                    $colType = $data_table->getColumnDefaultWidgetType();
-                    foreach ($colsToAddUxons as $colUxon) {
-                        $colUxon->setProperty('widget_type', $colType);
-                        $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
-                    }
-                    
+                    $data_table = $this->enrichDataWidget($data_table, $inputWidget);                    
                 } // END if ($targetWidget instanceof iUseInputWidget)
             } // END if ($this->isDefinedInWidget())
             
@@ -309,6 +150,192 @@ class ShowLookupDialog extends ShowDialog
         }
         
         return $dialog;
+    }
+
+    /**
+     * @param Data $data_table
+     * @param WidgetInterface $inputWidget
+     * @return WidgetInterface
+     */
+    protected function enrichDataWidget(WidgetInterface $data_table, WidgetInterface $inputWidget) : WidgetInterface
+    {
+        $tableObj = $data_table->getMetaObject();
+        
+        // Override pagination
+        if ((null !== $paginatorUxon = $this->getPaginatorUxon()) && $data_table instanceof Data) {
+            $data_table->setPaginator($paginatorUxon);
+            if ($paginatorUxon->getProperty('disabled') === true) {
+                $data_table->setPaginate(false);
+            }
+        }
+
+        // Inherit filters from calling widget
+        // When inheriting filters, it is important to keep their id space. If this is not
+        // done explicitly, the filter will have a new id space - the one of the lookup
+        // dialog, thus any value links will stop working as they reference the id space of
+        // the table.
+        switch (true) {
+            case ($inputWidget instanceof iHaveFilters && $tableObj->is($inputWidget->getMetaObject())):
+                foreach($inputWidget->getFilters() as $filter) {
+                    // Force the filter to keep its id space - see explanation above the switch()
+                    // TODO maybe better to copy the filters somehow?
+                    $filter->setIdSpace($filter->getIdSpace());
+                    $data_table->addFilter($filter);
+                }
+                break;
+            // In case of InputComboTable, it is very important to inherit all custom
+            // filters as the lookup table should show the same as the dropdown table
+            case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                foreach($inputWidget->getTable()->getFilters() as $filter) {
+                    // Force the filter to keep its id space - see explanation above the switch()
+                    // TODO maybe better to copy the filters somehow?
+                    $filter->setIdSpace($filter->getIdSpace());
+                    $data_table->addFilter($filter);
+                }
+                break;
+            default:
+                break;
+        }
+
+        switch (true) {
+            case ($inputWidget instanceof iHaveSorters && $tableObj->is($inputWidget->getMetaObject())):
+                foreach ($inputWidget->getSorters() as $sorter) {
+                    $data_table->addSorter($sorter->getProperty('attribute_alias'), $sorter->getProperty('direction'));
+                }
+                break;
+            case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                foreach ($inputWidget->getTable()->getSorters() as $sorter) {
+                    $data_table->addSorter($sorter->getProperty('attribute_alias'), $sorter->getProperty('direction'));
+                }
+                break;
+            default:
+                break;
+        }
+
+        // Inherit aggregations from calling widget
+        $aggrAttrs = [];
+        switch (true) {
+            // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
+            case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                $aggrAttrs = $inputWidget->getTable()->getAggregations();
+                if (! empty($aggrAttrs)) {
+                    $data_table->setAggregateByAttributeAlias(implode(',', $aggrAttrs));
+                    // Make sure to remove all columns, that are not aggregated or
+                    // aggregated over as they will remain empty
+                    foreach ($data_table->getColumns() as $col) {
+                        if (! $col->hasAggregator() && ! $data_table->hasAggregationOverColumn($col)) {
+                            $data_table->setColumnsAutoAddDefaultDisplayAttributes(false);
+                            foreach ($data_table->getFilters() as $filter) {
+                                if ($filter->isBoundToAttribute() && $filter->getAttribute()->isExactly($col->getAttribute())) {
+                                    $data_table->getConfiguratorWidget()->getFilterTab()->removeWidget($filter);
+                                }
+                            }
+                            $data_table->removeColumn($col);
+                        }
+                    }
+                }
+                break;
+            // TODO inherit aggregations from other types of input widgets?
+            default:
+                break;
+        }
+
+        // Inherit columns from calling widget
+        $cols = [];
+        $requiredColumnAliases = [];
+        switch (true) {
+            // If the input widget is an InputComboTable, we MUST inherit columns of its
+            // table because the lookup dialog should look the same as the dropdown table.
+            // Additionally, hidden columns MUST be inherited too, because they may be
+            // accessed by data- and value-getters and should be set in the InputComboTable
+            // after an item was looked up.
+            case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                $cols = $inputWidget->getTable()->getColumns();
+                // IDEA can we move finding required columns to the widget calling the lookup?
+                // We could add a `required_columns` property to the action and fill it from
+                // InputComboTable::getLookupActionUxon(). However, we need to make sure, that method
+                // is called AFTER all incoming links were collected.
+                $requiredColumnAliases[] = $inputWidget->getValueAttributeAlias();
+                $requiredColumnAliases[] = $inputWidget->getTextAttributeAlias();
+                foreach ($inputWidget->getValueLinksToThisWidget() as $link) {
+                    //only add those columns that actually represent valid attribute_alias of the object,
+                    //not others that for example might be calculations and are referenced by data_column_name
+                    // TODO columns with calculations and custom data_column_name
+                    if ((null !== $linkedCol = $link->getTargetColumnId()) && $inputWidget->getTable()->getMetaObject()->hasAttribute($linkedCol)) {
+                        $requiredColumnAliases[] = $linkedCol;
+                    }
+                }
+                $requiredColumnAliases = array_unique($requiredColumnAliases);
+                break;
+            // TODO inherit columns from other types of input widgets? Is it a good idea to
+            // inherit columns from tables? Could be a lot...
+            default:
+                break;
+        }
+        // Remove columns from the lookup table, that are not present in the source table (e.g.
+        // default display columns, that are not there anymore because the designer has overwritten
+        // the columns completely).
+        // Not doing so, will actually break many non-relation combos, where the default display
+        // columns are not included by default. This filter will remove these columns in the lookup
+        // too.
+        if (! empty($cols)) {
+            foreach ($data_table->getColumns() as $existingCol) {
+                $found = false;
+                foreach ($cols as $col) {
+                    if ($this->isSameColumn($existingCol, $col)) {
+                        $found = true;
+                        break;
+                    }
+                }
+                if ($found === false) {
+                    $data_table->removeColumn($existingCol);
+                }
+            }
+        }
+
+        // Add columns from the source table, that are not (yet) present in the lookup table
+        $colsToAddUxons = [];
+        foreach ($cols as $col) {
+            // Avoid duplicate columns!
+            // NOTE: we are extending a user-facing dialog here. So even if we have columns pointing to
+            // different attributes, but having the same caption, we should NOT put them both in the
+            // table! Similarly, avoid columns with different captions, but same content!
+            // On the other hand, keeping hidden columns is important here because live-refs to columns
+            // of InputComboTables MUST also work with the data of the lookup dialog
+            foreach ($data_table->getColumns() as $existingCol) {
+                // NOTE: there are cases, when the source column is required, but will still be detected
+                // as "visual" duplicate here. We still skip at this point because it will be added later
+                // from the $requiredColumnAliases as a hidden column.
+                // For example, if the lookup table already has the NAME attribute because of its
+                // default display position, and we are trying to inherit the LABEL column (having NAME
+                // as the label-attribute of the object), a duplicate will be detected. But if LABEL
+                // is explicitly required by the source InputComboTable, we still need to keep it! We
+                // just need to hide it to avoid visual duplicates.
+                if ($this->isSameColumn($existingCol, $col, true)) {
+                    continue 2;
+                }
+            }
+
+            $colsToAddUxons[$col->getAttributeAlias()] = $col->exportUxonObject();
+        }
+
+        // Make sure, all required columns are there. If they are not, add them as hidden columns
+        foreach ($requiredColumnAliases as $reqAlias) {
+            if (! $data_table->getColumnByAttributeAlias($reqAlias) && ! array_key_exists($reqAlias, $colsToAddUxons)) {
+                $colsToAddUxons[$reqAlias] = new UxonObject([
+                    'attribute_alias' => $reqAlias,
+                    'hidden' => true
+                ]);
+            }
+        }
+
+        // Now add the missing columns
+        $colType = $data_table->getColumnDefaultWidgetType();
+        foreach ($colsToAddUxons as $colUxon) {
+            $colUxon->setProperty('widget_type', $colType);
+            $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
+        }
+        return $data_table;
     }
 
     /**
@@ -394,5 +421,78 @@ class ShowLookupDialog extends ShowDialog
     protected function getMultiSelect() : ?bool
     {
         return $this->multi_select;
+    }
+
+    /**
+     *
+     * @return UxonObject|null
+     */
+    protected function getPaginatorUxon() : ?UxonObject
+    {
+        return $this->paginatorUxon;
+    }
+
+    /**
+     * Overrides pagination behavior of the lookup data widget.
+     *
+     * Example:
+     *
+     * ```
+     * {
+     *  "paginator": {
+     *      "count_all_rows": true,
+     *      "page_size": 40,
+     *  }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property paginator
+     * @uxon-type \exface\Core\Widgets\DataPaginator
+     * @uxon-template {"count_all_rows": true}
+     *
+     * @param UxonObject $uxon
+     * @return ShowLookupDialog
+     */
+    protected function setPaginator(UxonObject $uxon) : ShowLookupDialog
+    {
+        $this->paginatorUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * Hide/collapse the header of the lookup dialog initially
+     * 
+     * If not set, the default behavior will be determined by the facade being used.
+     * 
+     * This property is a shortcut for the following uxon code:
+     * 
+     * ```
+     *  {
+     *      "dialog": {
+     *          "hide_header": true
+     *      }
+     *  }
+     * 
+     * ```
+     * 
+     * @uxon-property hide_header
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setHideHeader(bool $trueOrFalse) : ShowLookupDialog
+    {
+        $this->hideHeader = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    protected function getHideHeader() : ?bool
+    {
+        return $this->hideHeader;
     }
 }

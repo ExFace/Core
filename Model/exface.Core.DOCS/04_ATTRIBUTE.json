@@ -95,6 +95,18 @@
             "attribute_alias": "COPYABLEFLAG"
         },
         {
+            "name": "ICON",
+            "attribute_alias": "ICON"
+        },
+        {
+            "name": "ICON_SET",
+            "attribute_alias": "ICON_SET"
+        },
+        {
+            "name": "ABBREVIATION",
+            "attribute_alias": "ABBREVIATION"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -200,6 +212,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "X",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "line(1)",
@@ -245,6 +260,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "CONTENTS",
             "DATATYPE": "0x11e7b88efc3e81d586360205857feb80",
             "DATA_ADDRESS": "contents",
@@ -290,6 +308,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "APP",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "subpath(0,2)",

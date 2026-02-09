@@ -20,6 +20,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Interfaces\Widgets\iCanBeBoundToCalculation;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iTakeInput;
@@ -39,6 +40,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -72,9 +74,14 @@ use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
  * @author Andrej Kabachnik
  *        
  */
-class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText, iCanBeBoundToCalculation
+class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText, iCanBeBoundToCalculation, iHaveIcon
 {
     use iHaveAttributeGroupTrait;
+    
+    use iHaveIconTrait {
+        getIcon as getIconViaTrait;
+        getIconSet as getIconSetViaTrait;
+    }
     
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
@@ -1301,11 +1308,40 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
             return $hint;
         }
-        $addition = '';
-        if ($includeDebugInfo === true && $foundDebugContext === true && null !== $group = $this->getAttributeGroupAlias()) {
-            $addition .= "\n- Attribute group: `{$group}`";
-        } 
-        return $this->getCellWidget()->getHint($includeDebugInfo) . $addition;
+        return $this->getCellWidget()->getHint($includeDebugInfo) . $this->getHintDebugForColumn($includeDebugInfo && $includeDebugInfo);
+    }
+
+    /**
+     * Returns additional debug hints for the column (not including those from the cell widget)
+     * 
+     * @param bool $includeDebugInfo
+     * @return string
+     */
+    protected function getHintDebugForColumn(bool $includeDebugInfo = true) : string
+    {
+        $hint = '';
+        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+            $hint .= "\n- Attribute group: `{$group}`";
+        }
+        if ($this->isFilterable() === false) {
+            $hint .= "\n - NOT filterable";
+        }
+        if ($this->isSortable() === false) {
+            $hint .= "\n - NOT sortable";
+        }
+        if ($this->isEditable() === false) {
+            $hint .= "\n - NOT exportable";
+        }
+        return $hint;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getHintDebug()
+     */
+    protected function getHintDebug() : string
+    {
+        return parent::getHintDebug() . $this->getHintDebugForColumn(true);
     }
     
     /**
@@ -1388,5 +1424,35 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function hasNestedData() : bool
     {
         return $this->nestedDataSheetUxon !== null;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIcon()
+     */
+    public function getIcon() : ?string
+    {
+        $icon = $this->getIconViaTrait();
+        if ($icon === null && $this->isBoundToAttribute()) {
+            $icon = $this->getAttribute()->getIcon();
+        }
+        return $icon;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIcon()
+     */
+    public function getIconSet() : ?string
+    {
+        if ($this->getIconViaTrait() !== null) {
+            return $this->getIconSetViaTrait();
+        }
+        if ($this->isBoundToAttribute()) {
+            return $this->getAttribute()->getIconSet();
+        }
+        return null;
     }
 }

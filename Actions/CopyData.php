@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Interfaces\Actions\iCreateData;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -77,8 +79,9 @@ class CopyData extends SaveData implements iCreateData
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $inputSheet = $this->getInputDataSheet($task);
+        $logbook = $this->getLogBook($task);
         
-        $copiedSheets = $this->copyWithRelatedObjects($inputSheet, $this->getCopyRelations($inputSheet->getMetaObject()), $transaction);
+        $copiedSheets = $this->copyWithRelatedObjects($inputSheet, $this->getCopyRelations($inputSheet->getMetaObject()), $transaction, $logbook);
 
         $mainCopiedSheet = $copiedSheets[''];
         $copyCounter = $mainCopiedSheet->countRows();
@@ -105,13 +108,13 @@ class CopyData extends SaveData implements iCreateData
         
         return $result;
     }
-    
+
     /**
      * Copies all instances of the object in the given data sheet as well, as related instances from the passed array of relations.
-     * 
+     *
      * Returns an array of data sheets with created data. The keys of the array are the relations pathes to the object of the
-     * corresponding data sheet. Here is an example copying a meta object with correspoinding attributes and actions: 
-     * 
+     * corresponding data sheet. Here is an example copying a meta object with correspoinding attributes and actions:
+     *
      * - copyWithRelatedObjects(sheet_of_meta_objects, [relation_to_attributes, relation_to_actons], transaction)
      * will produce the following array
      *
@@ -122,21 +125,20 @@ class CopyData extends SaveData implements iCreateData
      *  relation_to_actions: data_sheet_with_copied_actions_of_all_copied_meta_objects
      * ]
      * ```
-     * 
+     *
      * This method is meant to be used recursively as a copied object may require copying related objects by itself
      * (configured in the model of the relations). Recursive calls should get the relations path of the previous
-     * recursion level as parameter. 
-     * 
+     * recursion level as parameter.
+     *
      * @param DataSheetInterface $inputSheet
-     * @param array $relationsToCopy
+     * @param MetaRelationInterface[] $relationsToCopy
      * @param DataTransactionInterface $transaction
-     * @param MetaRelationPathInterface $relationPathFromHeadObject
-     * 
-     * @throws ActionInputMissingError
-     * 
+     * @param ActionLogBook $logBook
+     * @param MetaRelationPathInterface|null $relationPathFromHeadObject
+     *
      * @return DataSheetInterface[]
      */
-    protected function copyWithRelatedObjects(DataSheetInterface $inputSheet, array $relationsToCopy, DataTransactionInterface $transaction, MetaRelationPathInterface $relationPathFromHeadObject = null) : array
+    protected function copyWithRelatedObjects(DataSheetInterface $inputSheet, array $relationsToCopy, DataTransactionInterface $transaction, ActionLogBook $logBook, MetaRelationPathInterface $relationPathFromHeadObject = null) : array
     {
         // Can't copy anything, if there is no UID column (can't load current data)
         if (! $inputSheet->hasUidColumn()) {
@@ -144,7 +146,15 @@ class CopyData extends SaveData implements iCreateData
         }
         
         $result = [];
+        $relationAliases = [];
+        foreach ($relationsToCopy as $relation) {
+            $relationAliases[] = $relation->getAlias();
+        }
+        $logBook->addLine('Copying ' . $inputSheet->getMetaObject()->__toString() . ' ' . (empty($relationAliases) ? 'without relations' : 'with relations `' . implode('`, `', $relationAliases) . '`'));
+        $logBook->addIndent(+1);
         
+        $logBook->addLine('Removing non-copyable columns');
+        $logBook->addIndent(+1);
         // Remove all non-attribute columns and those with relations
         foreach ($inputSheet->getColumns() as $col) {
             // Make sure not to remove the UID column
@@ -159,17 +169,24 @@ class CopyData extends SaveData implements iCreateData
             
             if (! $col->isAttribute()) {
                 $inputSheet->getColumns()->remove($col);
+                $logBook->addLine('Removing column `' . $col->getName() . '` because it is not an attribute!');
             } elseif ($col->getAttribute()->isRelated()) {
                 $inputSheet->getColumns()->remove($col);
+                $logBook->addLine('Removing column `' . $col->getName() . '` because it has a relation');
                 // FIXME #data-column-name-duplicates-bug For example, columns with aggregators,
                 // will be removed, but only one of the two row columns will get removed: MY_ATTRIBUTE_COUNT
                 // while MY_ATTRIBUTE:COUNT will remain. When the sheet is copied, the remaining row values
                 // will restore the column.
                 if ($col->getAttributeAlias() !== $col->getName()) {
+                    $logBook->addLine('Also removing values for `' . $col->getAttributeAlias() . '` because the column name and the attribute alias were different', +1);
                     $inputSheet->removeRowsForColumn($col->getAttributeAlias());
                 }
             }
         }
+        $logBook->addIndent(-1);
+        
+        $logBook->addLine('Making sure, we have all data to copy');
+        $logBook->addIndent(+1);
         
         // Make sure, we have all copyable attributes.
         // Therefore, copy the sheet, add all copyable attributes and see if it needs
@@ -178,6 +195,7 @@ class CopyData extends SaveData implements iCreateData
         $currentData = $inputSheet->copy();
         foreach ($inputSheet->getMetaObject()->getAttributes()->getCopyable() as $attr) {
             if (! $currentData->getColumns()->getByAttribute($attr)) {
+                $logBook->addLine('Adding column for attribute `' . $attr->getAliasWithRelationPath() . '` as it is copyable, but not present');
                 $currentData->getColumns()->addFromAttribute($attr);
             }
         }
@@ -187,6 +205,7 @@ class CopyData extends SaveData implements iCreateData
         // to be done later in the code.
         foreach ($currentData->getColumns() as $currentCol) {
             if ($currentCol->getDataType() instanceof DataSheetDataType) {
+                $logBook->addLine('Removing column `' . $currentCol->getName() . '` because it contains subsheets');
                 $currentData->getColumns()->remove($currentCol);
             }
         }
@@ -199,19 +218,25 @@ class CopyData extends SaveData implements iCreateData
             }
         }
         
+        $logBook->addIndent(-1);
+        
+        
         // Now loop through the sheet with the current data and create copies for each row,
         // including related objects, that should get copied.
+        $logBook->addLine('Copying each of ' . $currentData->countRows() . ' rows');
+        $logBook->addIndent(+1);
+        $currentUidCol = $currentData->getUidColumn();
         foreach ($currentData->getRows() as $rownr => $row) {
-            $rowUid = $currentData->getUidColumn()->getCellValue($rownr);
+            $rowUid = $currentUidCol->getValue($rownr);
             
             // Now create a sheet for the new copy of the main object (need a separate sheet, because we will need
             // to remove the UID column, but will still need it's values later on.
             // This sheet will have only one row, which is a merge from current and input data.
             $rowMerged = array_merge($row, $inputSheet->getRow($inputSheet->getUidColumn()->findRowByValue($rowUid)));
             $mainSheet = $currentData
-            ->copy()
-            ->removeRows()
-            ->addRow($rowMerged);
+                ->copy()
+                ->removeRows()
+                ->addRow($rowMerged);
             $mainSheet->getFilters()->removeAll();
             $mainSheet->getUidColumn()->removeRows();
             // Save the copy of the main object
@@ -229,7 +254,7 @@ class CopyData extends SaveData implements iCreateData
             
             // Now save all related objects and make sure, their relations point to the new (copied) instance.
             // Gather data for the related objects to be copied
-            // Need to to this before
+            // Need to do this before
             foreach ($relationsToCopy as $rel) {
                 if ($rel->isReverseRelation() === false) {
                     throw new ActionRuntimeError($this, 'Cannot copy related object for relation ' . $rel->getAliasWithModifier() . ': only reverse relations currently supported!');    
@@ -273,7 +298,7 @@ class CopyData extends SaveData implements iCreateData
 
                 // Call the copy-method for the sheet with the related data (don't forget the relation path)
                 $relPath = $relationPathFromHeadObject->copy()->appendRelation($rel);
-                $relCopySheets = $this->copyWithRelatedObjects($relSheet, $this->getCopyRelations($relSheet->getMetaObject()), $transaction, $relPath);
+                $relCopySheets = $this->copyWithRelatedObjects($relSheet, $this->getCopyRelations($relSheet->getMetaObject()), $transaction, $logBook, $relPath);
                 
                 // The result of the recursive call can be any number of sheets, so we need to merge them
                 // with previous results of the foreach().
@@ -288,6 +313,7 @@ class CopyData extends SaveData implements iCreateData
                 }
             }
         }
+        $logBook->addIndent(-1);
         
         return $result;
     }

@@ -20,6 +20,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\StringEnumDataType;
 use exface\Core\DataTypes\TimeDataType;
+use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
@@ -617,7 +618,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         foreach ($attributeDefinitionsSheet->getRows() as $index => $definitionRow) {
             $phVals = [];
             foreach ($attrUxonPhs as $ph) {
-                $phVals[$ph] = $definitionRow[$phColNames[$ph]];
+                $phVals[$ph] = UxonDataType::escapeJsonValue($definitionRow[$phColNames[$ph]], false);
             }
 
             // Data address
@@ -685,6 +686,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
                     $phVals[self::PLACEHOLDER_ALIAS] = $attr->getAlias();
                     $phVals[self::PLACEHOLDER_NAME] = $attr->getName();
                     $typeModelStr = StringDataType::replacePlaceholders($typeModelStr, $phVals);
+                    // Replacing `"icon": "[#ICON#]"` with a null will produce `"icon": "null"`, which we now
+                    // need to transform back to `"icon": ""` for the UXON import to work properly
+                    $typeModelStr = str_replace('"null"', '""', $typeModelStr);
                     $typeModel = JsonDataType::decodeJson($typeModelStr);
                 }
                 
@@ -744,7 +748,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      */
     protected function getAttributesSheetTemplate(
         CustomAttributesDefinition $definition,
-        string $nameAlias,
+        ?string $nameAlias,
         ?string $aliasAlias,
         ?string $typeAlias,
         ?string $storageKeyAlias,
@@ -760,9 +764,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $sheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $tplUxon, $this->getObject());
         }
 
-        $sheet->getColumns()->addMultiple([
-            $nameAlias
-        ]);
+        if (null !== $nameAlias) {
+            $sheet->getColumns()->addFromExpression($nameAlias);
+        }
 
         if (null !== $aliasAlias) {
             $sheet->getColumns()->addFromExpression($aliasAlias);
@@ -1251,12 +1255,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string
      */
-    protected function getNameAttributeAlias() : string
-    {
-        if(! $this->attributeNameAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("name_attribute"));
-        }
-        
+    protected function getNameAttributeAlias() : ?string
+    {        
         return $this->attributeNameAlias;
     }
 

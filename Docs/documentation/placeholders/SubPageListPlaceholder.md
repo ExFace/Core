@@ -23,5 +23,15 @@ It scans the directory where the Markdown file resides and lists all subfolders 
 
 ```html
 <!-- BEGIN SubPageList:depth=3&list-type=none -->
+<div class="list-wrapper">
+<ul style="list-style-type: none; padding-left: 0; margin-left: 0px;">
+<li><a href="ImageCaptionNumberPlaceholder.md">ImageCaptionNr Placeholder</a></li>
+<li><a href="ImageListPlaceholder.md">ImageList Placeholder</a></li>
+<li><a href="ImageReferencePlaceholder.md">ImageRef Placeholder</a></li>
+<li><a href="NavButtonsPlaceholder.md">NavButtons Placeholder</a></li>
+<li><a href="SubPageListPlaceholder.md">SubPageList Placeholder</a></li>
+</ul>
+</div>
+
 <!-- END SubPageList -->
 ```

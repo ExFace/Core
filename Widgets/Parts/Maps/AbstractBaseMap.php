@@ -3,6 +3,7 @@ namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 use exface\Core\Widgets\Map;
+use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 
 /**
  *
@@ -18,6 +19,25 @@ abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterf
     private $minZoom = 0;
 
     private $doubleClickToZoom = true;
+
+    /**
+     * The type (prototype class) of the base map.
+     *
+     * Use one of the built-in classes (e.g. `OpenStreetMap`, `GenericUrlTiles`, etc.) or
+     * specify any PHP class implementing the BaseMapInterface (e.g.
+     * `\exface\Core\Widgets\Parts\Maps\BaseMaps\EsriArcGisMap`).
+     *
+     * @uxon-property type
+     * @uxon-type [OpenStreetMap,EsriArcGisMap,GenericUrlTiles,ImageMap,OpenTopoMap,WMS]
+     * @uxon-required true
+     * @uxon-default OpenStreetMap
+     *
+     * @return MapLayerInterface
+     */
+    protected function setType() : MapLayerInterface
+    {
+        return parent::setType();
+    }
     
     /**
      *
