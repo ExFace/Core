@@ -530,7 +530,12 @@ class Data
             $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
             // If no filters are there, create one for a non-empty condition or an empty one which is
             // explicitly not to be ignored
-            if (empty($attribute_filters) === true && (! $condition->isEmpty() || $condition->willIgnoreEmptyValues())) {
+            if (empty($attribute_filters) === true) {
+                // Ignore conditions with empty values IF they are to ignore empty values
+                if ($condition->isEmpty() && $condition->willIgnoreEmptyValues()) {
+                    continue;
+                }
+                // Ignore conditions of other objects
                 if (! $condExpr->getMetaObject()->is($configuratorObj)) {
                     continue;
                 }
