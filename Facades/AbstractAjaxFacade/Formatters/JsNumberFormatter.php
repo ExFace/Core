@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
-use exface\Core\DataTypes\PercentDataType;
 
 /**
  * 
- * @method NumberDataType getDataType()
+ * @method \exface\Core\DataTypes\NumberDataType getDataType()
  * 
  * @author Andrej Kabachnik
  *
@@ -96,25 +96,28 @@ JS;
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
      */
-    public function buildJsFormatParser($jsInput)
+    public function buildJsFormatParser($jsInput, ?string $listDelimiter = null) : string
     {
-        if($this->getDataType()->getBase() != 10) {
+        $type = $this->getDataType();
+        if($type->getBase() != 10) {
             return $jsInput;
         }
 
         $decimalRegex = preg_quote($this->getDecimalSeparator());
         $thousandsRegex = preg_quote($this->getThousandsSeparator());
         
-        $prefix = $this->getDataType()->getPrefix();
+        $prefix = $type->getPrefix();
         $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
-        $suffix = $this->getDataType()->getSuffix();
+        $suffix = $type->getSuffix();
         $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
-        $emptyFormatJs = json_encode($this->getDataType()->getEmptyFormat() ?? '');
+        $emptyFormatJs = json_encode($type->getEmptyFormat() ?? '');
+        $isIntJs = $type instanceof IntegerDataType ? 'true' : 'false';
         
         return <<<JS
         function(mNumber) {
             var sPrefix = $prefixJs;
             var sSuffix = $suffixJs;
+            var bParseAsInt = $isIntJs;
             if (mNumber === undefined || mNumber === null) return mNumber;
             if (typeof mNumber === 'number' && isFinite(mNumber)) {
                 return mNumber;
@@ -129,7 +132,11 @@ JS;
                 }
             }
             if (mNumber === '' || mNumber === $emptyFormatJs) return null;
-            mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
+            mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '');
+            // Normalize decimal separator if it is not an integer
+            if (! bParseAsInt) {
+                mNumber = mNumber.replace(/{$decimalRegex}/g, '.')
+            }
 
             // Return as number because otherwise comparisons between 100 and 100.00 will fail! The comparator logic cannot
             // know, whether the value was inteded to be a number, so it is important to parse a numeric string to a real

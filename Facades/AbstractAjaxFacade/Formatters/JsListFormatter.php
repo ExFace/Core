@@ -76,7 +76,7 @@ JS;
      * 
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
      */
-    public function buildJsFormatParser($jsInput)
+    public function buildJsFormatParser($jsInput, ?string $listDelimiter = null) : string
     {
         $listType = $this->getDataType();
         $delim = $listType->getListDelimiter();

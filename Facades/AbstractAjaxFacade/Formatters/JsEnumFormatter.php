@@ -37,22 +37,23 @@ class JsEnumFormatter extends AbstractJsDataTypeFormatter
     }({$jsInput})
 JS;
     }
-    
+
     /**
      * Finds the enum value by its label - optionally performing a case-insensitive search
-     * 
+     *
      * By default only exact matches are returned. However, if `$searchForPartialMatches` is `true`
      * even substrings of labels will be transformed into values. In this case, if a substring matches
      * multiple labels (and ultimately multiple values), a delimited list of potential values is returned
-     * 
+     *
      * @param string $jsInput
+     * @param string|null $listDelimiter
      * @param bool $searchForPartialMatches
      * @param string $searchResultsDelimiter
      * @return string
-     * 
+     *
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
      */
-    public function buildJsFormatParser($jsInput, bool $searchForPartialMatches = false, string $searchResultsDelimiter = EXF_LIST_SEPARATOR)
+    public function buildJsFormatParser($jsInput, ?string $listDelimiter = null, bool $searchForPartialMatches = false, string $searchResultsDelimiter = EXF_LIST_SEPARATOR) : string
     {
         $labelValuesJs = json_encode(array_flip($this->getDataType()->getLabels()));
         if ($searchForPartialMatches === false) {

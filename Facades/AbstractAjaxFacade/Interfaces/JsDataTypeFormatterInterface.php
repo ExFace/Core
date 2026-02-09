@@ -61,9 +61,10 @@ interface JsDataTypeFormatterInterface
      * The input must be valid javascript code: e.g. a variable, a function call or a quoted string.
      * 
      * @param string $jsInput
+     * @param string|null $listDelimiter
      * @return string
      */
-    public function buildJsFormatParser($jsInput);
+    public function buildJsFormatParser($jsInput, ?string $listDelimiter = null) : string;
 
     public function buildJsValidator(string $jsValue) : string;
 
