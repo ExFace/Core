@@ -748,7 +748,7 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
      */
     protected function getAttributesSheetTemplate(
         CustomAttributesDefinition $definition,
-        string $nameAlias,
+        ?string $nameAlias,
         ?string $aliasAlias,
         ?string $typeAlias,
         ?string $storageKeyAlias,
@@ -764,9 +764,9 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
             $sheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $tplUxon, $this->getObject());
         }
 
-        $sheet->getColumns()->addMultiple([
-            $nameAlias
-        ]);
+        if (null !== $nameAlias) {
+            $sheet->getColumns()->addFromExpression($nameAlias);
+        }
 
         if (null !== $aliasAlias) {
             $sheet->getColumns()->addFromExpression($aliasAlias);
@@ -1255,12 +1255,8 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
     /**
      * @return string
      */
-    protected function getNameAttributeAlias() : string
-    {
-        if(! $this->attributeNameAlias) {
-            throw new BehaviorConfigurationError($this, $this->getMissingPropertyMessage("name_attribute"));
-        }
-        
+    protected function getNameAttributeAlias() : ?string
+    {        
         return $this->attributeNameAlias;
     }
 

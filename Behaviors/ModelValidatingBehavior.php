@@ -2,26 +2,19 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\CustomAttribute;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\DataTypes\HtmlDataType;
-use exface\Core\DataTypes\MetaAttributeOriginDataType;
-use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
-use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iCanBeEditable;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Widgets\Data;
-use exface\Core\Widgets\DataTable;
 use exface\Core\Widgets\MessageList;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Events\Model\OnMetaObjectModelValidatedEvent;
@@ -34,7 +27,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
-use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use Throwable;
@@ -215,7 +207,7 @@ class ModelValidatingBehavior extends AbstractBehavior
         /** @var \exface\Core\Interfaces\DataSheets\DataSheetInterface $resultSheet */
         $resultSheet = $event->getResult()->getData();
         $resultObject = $resultSheet->getMetaObject();
-        if (!$this->appliesToObject($resultObject) || ! $resultSheet->getAggregations()->isEmpty()) {
+        if (! $this->appliesToObject($resultObject) || ! $resultSheet->getAggregations()->isEmpty()) {
             return;
         }
 
@@ -227,11 +219,11 @@ class ModelValidatingBehavior extends AbstractBehavior
             switch (true) {
                 // Add inherited and custom attributes.
                 case $resultSheet->getMetaObject()->isExactly(self::CORE_ATTRIBUTE):
-                    $outputSheet = $this->addAttributes($resultSheet);
+                    $outputSheet = $this->addAttributesToAttributeData($resultSheet);
                     break;
                 // Add custom attributes to attribute group.
                 case $resultSheet->getMetaObject()->isExactly(self::CORE_ATTRIBUTE_GROUP_ATTRIBUTES):
-                    $outputSheet = $this->addAttributeGroupCustomAttributes($resultSheet);
+                    $outputSheet = $this->addAttributesToGroupData($resultSheet);
                     break;
             }
             
@@ -313,7 +305,7 @@ class ModelValidatingBehavior extends AbstractBehavior
      * @param DataSheetInterface $eventResultSheet
      * @return DataSheetInterface|null
      */
-    protected function addAttributes(
+    protected function addAttributesToAttributeData(
         DataSheetInterface         $eventResultSheet,
     ) : ?DataSheetInterface
     {
@@ -349,7 +341,7 @@ class ModelValidatingBehavior extends AbstractBehavior
                 continue;
             }
             
-            $this->addAttribute($eventResultSheet, $outputSheet, $attr, '');
+            $this->addAttributeToData($outputSheet, $attr, $eventResultSheet->getColumns());
         }
         
         return $outputSheet;
@@ -359,7 +351,7 @@ class ModelValidatingBehavior extends AbstractBehavior
      * @param DataSheetInterface $eventResultSheet
      * @return DataSheetInterface|null
      */
-    protected function addAttributeGroupCustomAttributes(
+    protected function addAttributesToGroupData(
         DataSheetInterface         $eventResultSheet,
     ) : ?DataSheetInterface
     {
@@ -408,7 +400,7 @@ class ModelValidatingBehavior extends AbstractBehavior
                 continue;
             }
 
-            $this->addAttribute($eventResultSheet, $outputSheet, $attr, $relString);
+            $this->addAttributeToData($outputSheet, $attr, $eventResultSheet->getColumns(), $relString);
         }
         
         return $outputSheet;
@@ -416,23 +408,23 @@ class ModelValidatingBehavior extends AbstractBehavior
 
     /**
      * Add an attribute to a given output sheet.
-     * 
-     * @param DataSheetInterface     $eventResultSheet
-     * @param DataSheetInterface     $outputSheet
+     *
+     * @param DataSheetInterface $dataSheet
      * @param MetaAttributeInterface $attr
-     * @param string                 $relationPath
+     * @param DataColumnListInterface|DataColumnInterface[] $columnsToFill
+     * @param string $relationPath
      * @return void
      */
-    protected function addAttribute(
-        DataSheetInterface $eventResultSheet,
-        DataSheetInterface $outputSheet,
-        MetaAttributeInterface $attr,
-        string $relationPath
+    protected function addAttributeToData(
+        DataSheetInterface              $dataSheet,
+        MetaAttributeInterface          $attr,
+        DataColumnListInterface|array   $columnsToFill,
+        string                          $relationPath = ''
     ) : void
     {
         $row = [];
         
-        foreach ($eventResultSheet->getColumns() as $col) {
+        foreach ($columnsToFill as $col) {
             switch ($col->getExpressionObj()->__toString()) {
                 case $relationPath . 'UID':
                     $row[$col->getName()] = $attr->getId();
@@ -489,7 +481,7 @@ class ModelValidatingBehavior extends AbstractBehavior
         }
         
         if(!empty($row)) {
-            $outputSheet->addRow($row, false, false);
+            $dataSheet->addRow($row, false, false);
         }
     }
     

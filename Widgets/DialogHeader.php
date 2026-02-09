@@ -10,6 +10,38 @@ use exface\Core\Factories\DataPointerFactory;
 
 /**
  * A dialog header is a special widget used to display a summary of a dialog - typically the object currently loaded.
+ * 
+ * The `header` of a dialog has a `title_attribute_alias`, that can be used to display a primary (big) heading and
+ * `widgets` to display additional information. You can explicitly hide the title using `hide_caption`.
+ * 
+ * ## Header widgets
+ * 
+ * It is a good idea to add a couple of `WidgetGroup` containers to the header to organize its widgets in groups 
+ * for related information. If you have more than two widgets, put them into `WidgetGroup` containers.
+ * 
+ * The header is primarily intended for display widgets. If you omit the `widget_type`, the widget will use the
+ * default display widget of the attribute or the generic `Display` as ultimate fallback. You can manually switch 
+ * to other widget types like `ProgressBar`, `ColorIndicator`, etc. 
+ * 
+ * ## Headers do not provide data for actions by default
+ * 
+ * Keep in mind, that display widgets (which are rendered in the header by default) will not provide input data for 
+ * the dialog actions! If you need data from the header in your action, use `InputHidden` or another input widget 
+ * explicitly.
+ * 
+ * ## Header buttons
+ * 
+ * Dialog headers can have their own buttons. They will get the same input data as regular dialog buttons will, but
+ * header buttons will never close the dialog. Technically, they are regular `Button` widgets, not `DialogButton`.
+ * 
+ * If you need a header button to close the dialog, switch set the `widget_type` to `DialogButton` manually.
+ * 
+ * Where these buttons are positioned and how they look like depends on the facade used - see `look&feel` section below.
+ * 
+ * ## Look&feel
+ * 
+ * The exact look&feel of a header depends on the facade being used, but most of them will show the header as a more
+ * "compact" area on top of the dialog - often with a different background color.
  *     
  * @author Andrej Kabachnik
  *        
@@ -162,4 +194,3 @@ class DialogHeader extends Form
         return true;
     }
 }
-?>

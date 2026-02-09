@@ -3092,6 +3092,28 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "84RWYLO MS SQL Server does not support nested aggregations",
+            "CREATED_ON": "2026-02-05 15:29:21",
+            "MODIFIED_ON": "2026-02-05 15:29:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f185ce0fa5c44285ce025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "84RWYLO",
+            "TITLE": "MS SQL Server does not support nested aggregations",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error happens due to a limitation in Microsoft SQL Server. It perform an aggregate function on an expression containing an aggregate or a subquery. In other words, it does not support SUM of SUM or SUM of COUNTs, etc.",
+                "",
+                "This will typically happen if you aggregate over multiple reverse relations. For example, to get the total price of all order of a client, you could normally just use an `attribute_alias` like `ORDER__POS__PRICE:SUM` - but not with MS SQL because a client may have multiple orders with multiple positions each, so it would run down to a sum of sums. ",
+                "",
+                "The best workaround would be an SQL view or a table valued function, that will list the totals on a pre-aggregated level. In  our example above you could have a view listing totals per  `ORDER`. Then, to get the total revenue for a `CLIENT`, you would use an`attribute_alias` like `ORDER_STATS__TOTAL_VALUE:SUM`. Such a view might be a good idea anyway, because it may learn to calculate more KPIs in future: average price, total VAT, total discount, etc."
+            ],
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

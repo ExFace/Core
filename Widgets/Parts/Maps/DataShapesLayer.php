@@ -5,7 +5,9 @@ use exface\Core\Interfaces\Widgets\iCanBlink;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ShapeDataColumnMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\ColoredLayerTrait;
+use exface\Core\Widgets\Parts\Maps\Traits\DataShapesLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Traits\ValueLabeledLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
@@ -34,6 +36,7 @@ class DataShapesLayer extends AbstractDataLayer
     implements
     GeoJsonMapLayerInterface,
     GeoJsonWidgetLinkMapLayerInterface,
+    ShapeDataColumnMapLayerInterface,
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface,
@@ -44,7 +47,7 @@ class DataShapesLayer extends AbstractDataLayer
 {
     const VALUE_POSITION_LEFT = 'left';
     
-    const VALUE_POSITION_RGHT = 'right';
+    const VALUE_POSITION_RIGHT = 'right';
     
     const VALUE_POSITION_TOP = 'top';
     
@@ -54,15 +57,13 @@ class DataShapesLayer extends AbstractDataLayer
     
     const VALUE_POSITION_TOOLTIP = 'tooltip';
     
+    use DataShapesLayerTrait;
+    
     use ColoredLayerTrait;
     
     use ValueLabeledLayerTrait;
     
     use CustomProjectionLayerTrait;
-    
-    private $shapeAttributeAlias = null;
-    
-    private $shapeColumn = null;
     
     private $shapeLink = null;
     
@@ -91,40 +92,6 @@ class DataShapesLayer extends AbstractDataLayer
     private $blinkingAttributeAlias = null;
     
     private $blinkingColumn = null;
-    
-    /**
-     *
-     * @return string
-     */
-    public function getShapesAttributeAlias() : string
-    {
-        return $this->shapeAttributeAlias;
-    }
-    
-    /**
-     * Alias of the attribtue that will contain the shape of a marker
-     *
-     * @uxon-property shapes_attribute_alias
-     * @uxon-type metamodel:attribute
-     * @uxon-required true
-     *
-     * @param string $value
-     * @return MapLayerInterface
-     */
-    public function setShapesAttributeAlias(string $value) : MapLayerInterface
-    {
-        $this->shapeAttributeAlias = $value;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return DataColumn
-     */
-    public function getShapesColumn() : DataColumn
-    {
-        return $this->shapeColumn;
-    }
     
     /**
      * 
@@ -299,16 +266,7 @@ class DataShapesLayer extends AbstractDataLayer
     protected function initDataWidget(iShowData $widget) : iShowData
     {
         $widget = parent::initDataWidget($widget);
-        if (null !== $alias = $this->getShapesAttributeAlias()) {
-            if (! $col = $widget->getColumnByAttributeAlias($alias)) {
-                $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $alias,
-                    'hidden' => true
-                ]));
-                $widget->addColumn($col);
-            }
-            $this->shapeColumn = $col;
-        }
+        $widget = $this->initDataWidgetShapeColumn($widget);
         
         if (null !== $alias = $this->getBlinkingAttributeAlias()) {
             if (! $col = $widget->getColumnByAttributeAlias($alias)) {

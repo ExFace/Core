@@ -110,8 +110,8 @@ class GeoJSONLayer extends AbstractMapLayer implements GeoJsonMapLayerInterface,
             
 JS;
             // Add auto-zoom
-            if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
-                $autoZoomJs = $facadeElement->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
+            if (null !== $zoom = $layer->getAutoZoom()){
+                $autoZoomJs = $facadeElement->buildJsAutoZoom('oLayer', $zoom);
             }
             
             if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() && $layer->getProjection() instanceof Proj4Projection) {
@@ -344,5 +344,14 @@ JS;
     {
         $this->colorScaleProperty = $value;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractMapLayer::supportsAutoZoom()
+     */
+    public function supportsAutoZoom() : bool
+    {
+        return true;
     }
 }
