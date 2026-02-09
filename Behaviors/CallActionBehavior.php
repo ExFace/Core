@@ -10,6 +10,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -330,7 +331,7 @@ class CallActionBehavior extends AbstractBehavior
 			$logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
 		}
 
-        // If these notifications need to be sent after all transactions commit, add a listener
+        // If this action need to be sent after all transactions commit, add a listener
         // to the OnStop event of the workbench and remember the original event, that triggered
         // the notifications. Just call this whole method again then, but remove the postponing-flag.
         if ($this->getCallAfterAllActionsComplete() === true) {
@@ -340,7 +341,7 @@ class CallActionBehavior extends AbstractBehavior
                 $this->onEventCallAction($event, null, null, $transaction);
                 $transaction->commit();
             });
-            $this->skipEvent('**Delegating** to `OnBeforeStop` event because of `notify_after_all_actions_complete:true`', $event, $logbook);
+            $this->skipEvent('**Delegating** to `OnBeforeStop` event because of `call_after_all_actions_complete:true`', $event, $logbook);
             return;
         }
         
@@ -921,11 +922,18 @@ class CallActionBehavior extends AbstractBehavior
      * @uxon-default false
      *
      * @param bool $value
-     * @return NotifyingBehavior
+     * @return CallActionBehavior
      */
-    public function setCallAfterAllActionsComplete(bool $value) : NotifyingBehavior
+    public function setCallAfterAllActionsComplete(bool $value) : CallActionBehavior
     {
         $this->callAfterAllActionsComplete = $value;
         return $this;
+    }
+
+    protected function skipEvent(string $reason, EventInterface $event, LogBookInterface $logbook)
+    {
+        $logbook->addLine($reason);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+        return;
     }
 }
