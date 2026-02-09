@@ -1377,8 +1377,24 @@ CSS;
                 '      class="preset-path uxoneditor-input"' +
                 '      readonly> ' +
                 '   </textarea>' +
+                '   <div>' +
+                '      <button id="jsonPathCopyBtn">Copy</button>' +
+                '   </div>' +
                 '</div>';
             return jsonPathViewContent;
+        }
+        
+        //TODO SR: New JSON path copy button.
+        function {$funcPrefix}_initJsonPathCopy(modal){
+            var pathView = modal.modalElem().querySelector('#jsonPathView');
+            var pathViewCopyBtn = modal.modalElem().querySelector('#jsonPathCopyBtn');
+            if (!pathView || !pathViewCopyBtn) return;
+        
+            pathViewCopyBtn.addEventListener('click', async function () {
+                var text = pathView.value || '';
+                
+                exfTools.clipboard.copyText(text);
+            });
         }
         
         function {$funcPrefix}_filterAutosuggest(aSuggestions, sSearch) {
@@ -1445,6 +1461,7 @@ CSS;
                 "jsoneditor-modal jsonPathView",
                 function(modal) {
                     {$funcPrefix}_loadJsonPathView(modal, node);
+                    {$funcPrefix}_initJsonPathCopy(modal);
                 }
             );
         }
