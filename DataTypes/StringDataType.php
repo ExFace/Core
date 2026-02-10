@@ -25,30 +25,43 @@ class StringDataType extends AbstractDataType
 
     private $lengthMax = null;
 
-    private $regexValidator = null;
-
-    private $regexValidatorNegative = null;
+    private $regexValidatorGoodValue = null;
+    private $regexValidatorBadValue = null;
+    
     private $emptyAsNULL = false;
 
     /**
      * @return string|null
      */
-    public function getValidatorRegex() : ?string
+    public function getValidationRegexForGoodValues() : ?string
     {
-        return $this->regexValidator;
+        return $this->regexValidatorGoodValue;
     }
 
     /**
-     * Defines a regular expression to validate values of this data type. If the regex finds a match, validation 
-     * succeeds.
+     * @deprecated use validation_regex_for_good_values instead!
      * 
-     * Can be used in tandem with `validator_regex_negative`.
+     * @param string $regularExpression
+     * @return StringDataType
+     */
+    protected function setValidatorRegex($regularExpression)
+    {
+        return $this->setValidationRegexForGoodValues($regularExpression);
+    }
+
+    /**
+     * Regular expression for valid values of this data type - will trigger error if NOT matched. 
+     * 
+     * If the regex finds a match - it is a valid value. Otherwise, a validation error will be triggered.
+     * 
+     * There is also a `validation_regex_for_bad_values`, which triggers an error when matched. Both can 
+     * even be used in tandem.
      * 
      * Example:
-     * 
+     *
      * ```
      * {
-     *  "validator_regex": "/^..[+]...$/",
+     *  "validation_regex_for_good_values": "/^..[+]...$/",
      *  "validation_error_text": "The value must be formatted as follows: xx+xxx (e.g. `Ab+123`)!"
      * }
      * 
@@ -57,39 +70,40 @@ class StringDataType extends AbstractDataType
      * Use regular expressions compatible with PHP preg_match(). A good
      * tool to create and test regular expressions can be found here:
      * https://regex101.com/.
-     * 
-     * @uxon-property validator_regex
+     *
+     * @uxon-property validation_regex_for_good_values
      * @uxon-type string
-     * 
+     *
      * @param string $regularExpression
      * @return StringDataType
      */
-    public function setValidatorRegex($regularExpression)
+    public function setValidationRegexForGoodValues(string $regularExpression) : StringDataType
     {
-        $this->regexValidator = $regularExpression;
+        $this->regexValidatorGoodValue = $regularExpression;
         return $this;
     }
 
     /**
      * @return string|null
      */
-    public function getValidatorRegexNegative() : ?string
+    public function getValidationRegexForBadValues() : ?string
     {
-        return $this->regexValidatorNegative;
+        return $this->regexValidatorBadValue;
     }
 
     /**
-     * Defines a regular expression to validate values of this data type. If the regex finds any match, validation
-     * fails. Some systems output the detected matches as "issues". To support this write your regex in such a way
-     * that it identifies meaningful issues with a given input string.
+     * Regular expression for bad values of this data type - will trigger error if matched.
+     * 
+     * If the regex finds any match, validation fails. Some facades will show the detected matches as "issues". 
+     * To support this write your regex in such a way that it identifies meaningful issues with a given input string.
      *
-     * Can be used in tandem with `validator_regex`.
+     * Can be used in tandem with `validation_regex_for_good_values`.
      * 
      * Example:
      *
      * ```
      * {
-     *  "validator_regex_negative": "/[^0-9ÄÖÜäöüßA-Za-z-_,+= .#&§$']/",
+     *  "validation_regex_for_bad_values": "/[^0-9ÄÖÜäöüßA-Za-z-_,+= .#&§$']/",
      *  "validation_error_text": "The string may only contain the following characters: Digits from `0-9`, Umlauts `ÄÖÜäöüß`, `A-Z`, `a-z` and these special characters `-_,+= .#&§$'`"
      * }
      *
@@ -99,15 +113,15 @@ class StringDataType extends AbstractDataType
      * tool to create and test regular expressions can be found here:
      * https://regex101.com/.
      *
-     * @uxon-property validator_regex_negative
+     * @uxon-property validation_regex_for_bad_values
      * @uxon-type string
      *
      * @param string $regularExpression
      * @return StringDataType
      */
-    public function setValidatorRegexNegative(string $regularExpression) : StringDataType
+    protected function setValidationRegexForBadValues(string $regularExpression) : StringDataType
     {
-        $this->regexValidatorNegative = $regularExpression;
+        $this->regexValidatorBadValue = $regularExpression;
         return $this;
     }
     
@@ -131,12 +145,12 @@ class StringDataType extends AbstractDataType
         if ($lengthCond) {
             $text .= $translator->translate('DATATYPE.VALIDATION.LENGTH_CONDITION', ['%condition%' => $lengthCond]);
         }
-        if ($this->getValidatorRegex()) {
-            $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION', ['%regex%' => $this->getValidatorRegex()]);
+        if ($this->getValidationRegexForGoodValues()) {
+            $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION', ['%regex%' => $this->getValidationRegexForGoodValues()]);
         }
-        if ($this->getValidatorRegexNegative()) {
+        if ($this->getValidationRegexForBadValues()) {
             $text = ($text ? $text . ' ' . $and . ' ' : '') . 
-                $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION_NEGATIVE', ['%regex%' => $this->getValidatorRegexNegative()]);
+                $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION_NEGATIVE', ['%regex%' => $this->getValidationRegexForBadValues()]);
         }
         
         if ($text !== '') {
@@ -309,13 +323,13 @@ class StringDataType extends AbstractDataType
         }
         
         // validate against regex
-        if ($this->getValidatorRegexNegative()){
+        if ($this->getValidationRegexForBadValues()){
             $matches = [];
 
             try {
-                preg_match_all($this->getValidatorRegexNegative(), $value, $matches);
+                preg_match_all($this->getValidationRegexForBadValues(), $value, $matches);
             } catch (\Throwable $e) {
-                throw $this->createValidationRuleError($value, 'Validation regex "' . $this->getValidatorRegexNegative() . '" is invalid!');
+                throw $this->createValidationRuleError($value, 'Validation regex "' . $this->getValidationRegexForBadValues() . '" is invalid!');
             }
 
             if (!empty($matches)){
@@ -335,16 +349,16 @@ class StringDataType extends AbstractDataType
 
                 if(!empty($issues)) {
                     throw $this->createValidationRuleError($value, 'Value ' . $excValue .
-                        'must not match the regular expression mask "' . $this->getValidatorRegexNegative() .
+                        'must not match the regular expression mask "' . $this->getValidationRegexForBadValues() .
                         '" of data type ' . $this->getAliasWithNamespace() . '! The following issues were detected: "' .
                         implode(', ', $issues) . '".', false);
                 }
             }
         }
 
-        if ($this->getValidatorRegex()){
+        if ($this->getValidationRegexForGoodValues()){
             try {
-                $match = preg_match($this->getValidatorRegex(), $value);
+                $match = preg_match($this->getValidationRegexForGoodValues(), $value);
             } catch (\Throwable $e) {
                 $match = 0;
             }
@@ -354,7 +368,7 @@ class StringDataType extends AbstractDataType
                 if (! $this->isSensitiveData()) {
                     $excValue = '"' . $value . '" ';
                 }
-                throw $this->createValidationRuleError($value, 'Value ' . $excValue . 'does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
+                throw $this->createValidationRuleError($value, 'Value ' . $excValue . 'does not match the regular expression mask "' . $this->getValidationRegexForGoodValues() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
             }
         }
         
@@ -432,8 +446,8 @@ class StringDataType extends AbstractDataType
         if (null !== $val = $this->getLengthMax()) {
             $uxon->setProperty('length_max', $val);
         }
-        if (null !== $val = $this->regexValidator) {
-            $uxon->setProperty('validation_regex', $this->regexValidator);
+        if (null !== $val = $this->regexValidatorGoodValue) {
+            $uxon->setProperty('validation_regex', $this->regexValidatorGoodValue);
         }
         return $uxon;
     }

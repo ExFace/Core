@@ -39,12 +39,12 @@ class JsStringFormatter extends JsTransparentFormatter
             $checksOk[] = "mVal.toString().length <= {$type->getLengthMax()} \n";
         }
         
-        if ($type->getValidatorRegex() !== null) {
-            $checksOk[] = "{$type->getValidatorRegex()}.test({$jsValue}) !== false \n";
+        if ($type->getValidationRegexForGoodValues() !== null) {
+            $checksOk[] = "{$type->getValidationRegexForGoodValues()}.test({$jsValue}) !== false \n";
         }
 
-        if ($type->getValidatorRegexNegative() !== null) {
-            $checksOk[] = "{$type->getValidatorRegexNegative()}.test({$jsValue}) === false \n";
+        if ($type->getValidationRegexForBadValues() !== null) {
+            $checksOk[] = "{$type->getValidationRegexForBadValues()}.test({$jsValue}) === false \n";
         }
         
         $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
@@ -69,8 +69,8 @@ JS;
             return parent::buildJsGetValidatorIssues($jsValue);
         }
         
-        $regex = $dataType->getValidatorRegex();
-        $regexNegative = $dataType->getValidatorRegexNegative();
+        $regex = $dataType->getValidationRegexForGoodValues();
+        $regexNegative = $dataType->getValidationRegexForBadValues();
         if($regex === null && $regexNegative === null) {
             return parent::buildJsGetValidatorIssues($jsValue);
         }
@@ -88,7 +88,7 @@ JS;
             $positiveJs = <<<JS
 
 // If the negative regex did not produce issues, test the positive one.
-// StringDataType::getValidatorRegex()
+// StringDataType::getValidationRegexForGoodValues()
 var regex = {$regex}; 
 // Apply validator regex to string to extract matches.
 if (regex.test(sValue) === false) {
@@ -109,7 +109,7 @@ JS;
 
 var sIssues = {$msg};
     
-// StringDataType::getValidatorRegexNegative()
+// StringDataType::getValidationRegexForBadValues()
 var regexNegative = {$regexNegative}; 
 // Apply negative validator regex to string to extract issues.
 var matches = sValue.match(regexNegative);
