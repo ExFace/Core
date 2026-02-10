@@ -36,6 +36,10 @@ class WMS extends GenericUrlTiles
     
     private $transparent = false;
     
+    private bool $updateWhenIdle = false;
+    
+    private bool $updateWhenZooming = true;
+    
     /**
      * 
      * @param OnFacadeWidgetRendererExtendedEvent $event
@@ -68,6 +72,8 @@ L.tileLayer.wms('{$url}', {
                     layers: '{$this->getLayers()}',
         			format: '{$this->getFormat()}',
         			transparent: {$transparent},
+        			updateWhenIdle: '{$this->getUpdateWhenIdle()}',
+        			updateWhenZooming: '{$this->getUpdateWhenZooming()}',
                     {$this->buildJsPropertyZoom()}
                 })
 JS;
@@ -148,6 +154,56 @@ JS;
     protected function setTransparent(bool $value) : WMS
     {
         $this->transparent = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getUpdateWhenIdle() : bool
+    {
+        return $this->updateWhenIdle;
+    }
+    
+    /**
+     * Load new tiles only when panning (moving) ends.
+     * false otherwise in order to display new tiles during panning,
+     *
+     * @uxon-property update_when_idle
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return WMS
+     */
+    protected function setUpdateWhenIdle(bool $value) : WMS
+    {
+        $this->updateWhenIdle = $value;
+        return $this;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function getUpdateWhenZooming() : bool
+    {       
+        return $this->updateWhenZooming;
+    }
+    
+    /**
+     * By default, a smooth zoom animation will update grid layers every integer zoom level. 
+     * Setting this option to false will update the grid layer only when the smooth animation ends.
+     *
+     * @uxon-property update_when_zooming
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return WMS
+     */
+    protected function setUpdateWhenZooming(bool $value) : WMS
+    {
+        $this->updateWhenZooming = $value;
         return $this;
     }
 }
