@@ -233,6 +233,7 @@
     "DATATYPE.VALIDATION.MUST": "Muss",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "der Maske %regex% entsprechen",
+	"DATATYPE.VALIDATION.REGEX_CONDITION_NEGATIVE": "nicht der Maske %regex% entsprechen",
 	"DATATYPE.VALIDATION.FILENAME_INVALID": "Ungültige Zeichenkette!",
 	"DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS": "Unzulässige Zeichen: ",
 	"DATATYPE.VALIDATION.AND": "und",
