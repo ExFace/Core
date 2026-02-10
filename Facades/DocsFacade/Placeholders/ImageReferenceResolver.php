@@ -24,7 +24,7 @@ class ImageReferenceResolver extends AbstractMarkdownPlaceholderResolver impleme
     public function resolve(array $placeholders) : array
     {
         $vals = [];
-        $rootDirectory = $this->getDocsPath();
+        $rootDirectory = $this->getDocsPath($this->pagePath);
         $markdownStructure = $this->getFlattenMarkdownFiles($rootDirectory);
             
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
@@ -77,14 +77,4 @@ class ImageReferenceResolver extends AbstractMarkdownPlaceholderResolver impleme
         }
     }
 
-    protected function getDocsPath() : string
-    {
-        $rootDir = FilePathDataType::findFolderPath($this->pagePath);
-        $normalizedFull = FilePathDataType::normalize($rootDir);
-        $parts = explode("/Docs/", string: $normalizedFull);
-        if(count($parts) == 1) {
-            return $normalizedFull;
-        }
-        return $parts[0]. "/Docs/";
-    }
 }
