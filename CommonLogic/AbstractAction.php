@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Actions\ActionConfirmationList;
+use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -17,7 +18,6 @@ use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
@@ -80,8 +80,9 @@ use function Sabre\Event\Loop\instance;
  */
 abstract class AbstractAction implements ActionInterface
 {    
-    use ImportUxonObjectTrait {
-		importUxonObject as importUxonObjectDefault;
+    use ICanBeConvertedToUxonTrait {
+		importUxonObject as importUxonObjectViaTrait;
+        exportUxonObject as exportUxonObjectViaTrait;
 	}
 	
 	use iHaveIconTrait;
@@ -298,7 +299,7 @@ abstract class AbstractAction implements ActionInterface
         // Skip alias property if found because it was processed already to instantiate the right action class.
         // Setting the alias after instantiation is currently not possible beacuase it would mean recreating
         // the entire action.
-        return $this->importUxonObjectDefault($uxon, [
+        return $this->importUxonObjectViaTrait($uxon, [
             'alias',
             'object_alias'
         ]);
@@ -699,33 +700,16 @@ abstract class AbstractAction implements ActionInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
+        $uxon = $this->exportUxonObjectViaTrait();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
-        /*if ($this->isDefinedInWidget()) {
-            $uxon->setProperty('trigger_widget', $this->getWidgetDefinedIn()->getId());
-        }*/
         if ($this->hasInputDataPreset()) {
             $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
         }
-        $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
-        
-        if (! empty($this->getInputMappers())){
-            $inner_uxon = new UxonObject();
-            foreach ($this->getInputMappers() as $nr => $check){
-                $inner_uxon->setProperty($nr, $check->exportUxonObject());
-            }
-            $uxon->setProperty('input_mappers', $inner_uxon);
+        if (! empty($this->getDisabledBehaviors())) {
+            $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         }
         
-        if (! empty($this->getOutputMappers())){
-            $inner_uxon = new UxonObject();
-            foreach ($this->getOutputMappers() as $nr => $check){
-                $inner_uxon->setProperty($nr, $check->exportUxonObject());
-            }
-            $uxon->setProperty('output_mappers', $inner_uxon);
-        }
-        
-        if (! empty($this->getInputChecks())){
+        if (! $this->getInputChecks()->isEmpty()){
             $inner_uxon = new UxonObject();
             foreach ($this->getInputChecks() as $nr => $check){
                 $inner_uxon->setProperty($nr, $check->exportUxonObject());
