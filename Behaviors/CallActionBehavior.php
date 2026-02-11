@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
+use exface\Core\CommonLogic\Traits\iCheckInputRowsCountTrait;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -142,6 +143,8 @@ use Throwable;
  */
 class CallActionBehavior extends AbstractBehavior
 {
+    use iCheckInputRowsCountTrait;
+    
     const PREVENT_DEFAULT_ALWAYS = 'always';
     
     const PREVENT_DEFAULT_NEVER = 'never';
@@ -375,6 +378,13 @@ class CallActionBehavior extends AbstractBehavior
             $event->preventDefault();
         }
         
+        $inputRowsValidationResult = $this->validateInputRowCount($inputSheet);
+        if($inputRowsValidationResult !== true) {
+            $logbook->addLine('**Skipped** ' . $inputRowsValidationResult);
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+            return;
+        }
+
         try {
             // See if relevant
             if ($this->hasRestrictionConditions()) {
@@ -387,9 +397,9 @@ class CallActionBehavior extends AbstractBehavior
                     return;
                 }
             }
-            
+
+            // Apply the input mapper if one is defined and the input data was not fetched from a different event,
             // where the mapper was applied already. 
-            // Apply the input mapper if one is defined ant the input data was not fetched from a different event,
             if ($customInputEvent === null && null !== $mapper = $this->getInputDataMapper($inputSheet->getMetaObject())) {
                 $inputSheet = $mapper->map($inputSheet, null, $logbook);
             }
@@ -897,7 +907,8 @@ class CallActionBehavior extends AbstractBehavior
      *
      * @uxon-property input_data_mapper
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
-     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to":
+     *     ""}]}
      * 
      * @param UxonObject|null $mapper
      * @return $this
