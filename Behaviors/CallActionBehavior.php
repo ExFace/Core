@@ -907,8 +907,7 @@ class CallActionBehavior extends AbstractBehavior
      *
      * @uxon-property input_data_mapper
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
-     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to":
-     *     ""}]}
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to":""}]}
      * 
      * @param UxonObject|null $mapper
      * @return $this
