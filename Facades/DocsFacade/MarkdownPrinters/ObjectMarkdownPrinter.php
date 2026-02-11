@@ -92,6 +92,7 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 
         $actionHeading = MarkdownDataType::buildMarkdownHeader("Actions of \"{$metaObject->getName()}\"", $headingLevel + 1);
 
+        $groupHeading = MarkdownDataType::buildMarkdownHeader("Attributegroups of \"{$metaObject->getName()}\"", $headingLevel + 1);
 
         $markdown = <<<MD
 
@@ -110,6 +111,8 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 {$this->buildMdAttributesSections($metaObject, $headingLevel+2)}
 
 {$this->buildMdActionSection($actionHeading, $metaObject, $headingLevel+2 )}
+
+{$this->buildMdAttributeGroupSection($groupHeading, $metaObject, $headingLevel+2 )}
 
 {$this->buildMdBehaviorsSections($metaObject, 'Behaviors of "' . $metaObject->getName() . '"', $headingLevel+1)}
 
@@ -187,10 +190,33 @@ MD;
     {
        
         $markdown = '';
-        foreach ($obj->getActions() as $act) {
-            $actionPrinter = new ActionMarkdownPrinter($this->workbench, $act, $headingLevel);
-            $markdown .= $actionPrinter->getMarkdown();
+        try{
+            foreach ($obj->getActions() as $act) {
+                $actionPrinter = new ActionMarkdownPrinter($this->workbench, $act, $headingLevel);
+                $markdown .= $actionPrinter->getMarkdown();
+            } 
+        }catch (\Exception $e){
+            
         }
+        
+        return <<<MD
+{$header}
+
+{$markdown}
+MD;
+
+    }
+    
+    protected function buildMdAttributeGroupSection(string $header, MetaObjectInterface $obj, int $headingLevel = 3) : string
+    {
+        $markdown = '';
+        
+        $groups = $obj->getAttributeGroups();
+        foreach ($groups as $group) {
+            $groupPrinter = new AttributeGroupMarkdownPrinter($this->workbench, $group, $headingLevel);
+            $markdown .= $groupPrinter->getMarkdown();
+        }
+        
         return <<<MD
 {$header}
 
