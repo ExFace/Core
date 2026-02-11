@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
@@ -38,14 +39,17 @@ class CallContext extends AbstractAction implements iModifyContext
      */
     public function getContextAlias(TaskInterface $task = null) : string
     {
-        if (is_null($this->getContextAliasViaTrait())){
+        try {
+            $alias = $this->getContextAliasViaTrait();
+        } catch (ContextNotFoundError $e) {
             if ($task->hasParameter($this::TASK_PARAMETER_CONTEXT_TYPE)) {
-                $this->setContextAlias($task->getParameter($this::TASK_PARAMETER_CONTEXT_TYPE));
+                $alias = $task->getParameter($this::TASK_PARAMETER_CONTEXT_TYPE);
+                $this->setContextAlias($alias);
             } else {
                 throw new ActionInputMissingError($this, 'No context type defined for action ' . $this->getAliasWithNamespace() . ': either set a scope programmatically or pass it via task/request parameter "' . $this::TASK_PARAMETER_CONTEXT_TYPE . '"!');
             }
         }
-        return $this->getContextAliasViaTrait();
+        return $alias;
     }
     
     /**
@@ -57,7 +61,7 @@ class CallContext extends AbstractAction implements iModifyContext
     public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
         try {
-            $this->getContextScopeViaTrait();
+            return $this->getContextScopeViaTrait();
         } catch (ContextScopeNotFoundError $e){
             if ($task->hasParameter($this::TASK_PARAMETER_CONTEXT_SCOPE)) {
                 $this->setContextScope($task->getParameter($this::TASK_PARAMETER_CONTEXT_SCOPE));
@@ -66,7 +70,7 @@ class CallContext extends AbstractAction implements iModifyContext
             }
             
         }
-        return $this->getContextScopeViaTrait();
+        return $this->getContextScopeViaTrait($task);
     }
     
     /**

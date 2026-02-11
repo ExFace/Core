@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
+use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -24,6 +25,7 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
+use exface\Core\Widgets\Traits\IHaveTourGuideTrait;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
@@ -72,6 +74,7 @@ class Data
         iHaveQuickSearch,
         iSupportLazyLoading, 
         iHaveContextualHelp, 
+        IHaveTourGuideInterface,
         iHaveConfigurator, 
         iShowData,
         iCanPreloadData,
@@ -91,6 +94,7 @@ class Data
     use iHaveConfiguratorTrait;
     use iCanAutoloadDataTrait;
     use iTrackIncomingLinksTrait;
+    use IHaveTourGuideTrait;
 
     // properties
     private $paginate = true;
@@ -518,17 +522,28 @@ class Data
         // DataPointerColumn, DataPointerFilter, DataPointerRange, etc.?
         
         // If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
+        $configuratorObj = $this->getConfiguratorWidget()->getMetaObject();
         foreach ($data_sheet->getFilters()->getConditions() as $condition) {
             // For each filter condition look for filters over the same attribute.
             // Skip conditions not based on attributes.
-            if (! $condition->getExpression()->isMetaAttribute()) {
+            $condExpr = $condition->getExpression();
+            if (! $condExpr->isMetaAttribute()) {
                 continue;
             }
-            $attr = $condition->getExpression()->getAttribute();
+            $attr = $condExpr->getAttribute();
             $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
-            // If no filters are there, create one
+            // If no filters are there, create one for a non-empty condition or an empty one which is
+            // explicitly not to be ignored
             if (empty($attribute_filters) === true) {
-                $filter = $this->getConfiguratorWidget()->createFilterForAttributeAlias($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
+                // Ignore conditions with empty values IF they are to ignore empty values
+                if ($condition->isEmpty() && $condition->willIgnoreEmptyValues()) {
+                    continue;
+                }
+                // Ignore conditions of other objects
+                if (! $condExpr->getMetaObject()->is($configuratorObj)) {
+                    continue;
+                }
+                $filter = $this->getConfiguratorWidget()->createFilterForAttributeAlias($condExpr->getAttribute()->getAliasWithRelationPath());
                 $this->addFilter($filter);
                 $filter->setValue($condition->getValue(), false);
                 // Disable the filter because if the user changes it, the
@@ -713,6 +728,7 @@ class Data
         if ($this->paginator === null) {
             $this->paginator = WidgetFactory::create($this->getPage(), 'DataPaginator', $this);
         }
+        $this->paginator->setDisabled($this->isPaged() ? false : true);
         return $this->paginator;
     }
     
@@ -728,7 +744,7 @@ class Data
      *  "widget_type": "DataTable",
      *  "paginator": {
      *      "page_size": 40,
-     *      "page_sizes": [20, 40, 100, 200]
+     *      "count_all_rows": true
      *  }
      * }
      * 

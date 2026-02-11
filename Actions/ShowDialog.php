@@ -102,8 +102,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         try {
             /* @var $dialog \exface\Core\Widgets\Dialog */
-            $parent_widget = $this->getWidgetDefinedIn();
-            $dialog = WidgetFactory::createFromUxonInParent($parent_widget, $this->addIdSpaceToWidgetUxon(new UxonObject()), $this->getDefaultWidgetType());
+            if ($this->isDefinedInWidget()) {
+                $parent_widget = $this->getWidgetDefinedIn();
+                $dialog = WidgetFactory::createFromUxonInParent($parent_widget, $this->addIdSpaceToWidgetUxon(new UxonObject()), $this->getDefaultWidgetType());
+            } else {
+                $dialog = WidgetFactory::createFromUxon($page, $this->addIdSpaceToWidgetUxon(new UxonObject()), null, $this->getDefaultWidgetType());
+            }
             $dialog->setMetaObject($this->getMetaObject());
 
             if ($contained_widget) {
@@ -142,7 +146,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     protected function enrichDialogWidget(Dialog $dialog) : Dialog
     {     
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
-        if ($this->getWidgetDefinedIn()) {
+        if ($this->isDefinedInWidget()) {
             if (! $dialog->getIcon() && ($this->getWidgetDefinedIn() instanceof iHaveIcon) && null !== $icon = $this->getWidgetDefinedIn()->getIcon()) {
                 $dialog->setIcon($icon);
             }
@@ -173,7 +177,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
      */
     protected function getDialogCaption()
     {
-        if ($this->getWidgetDefinedIn()) {
+        if ($this->isDefinedInWidget()) {
             $caption = $this->getWidgetDefinedIn()->getCaption();
         }
         if (! $caption) {
@@ -384,7 +388,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     protected function addIdSpaceToWidgetUxon(UxonObject $uxon) : UxonObject
     {
         // Don't bother if our widget does not have a parent - then it cannot have an id space!
-        if (! $parent = $this->getWidgetDefinedIn()) {
+        if (! $this->isDefinedInWidget() || ! $parent = $this->getWidgetDefinedIn()) {
             return $uxon;
         }
         

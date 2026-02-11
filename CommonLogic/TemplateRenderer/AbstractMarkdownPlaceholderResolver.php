@@ -9,6 +9,17 @@ use exface\Core\DataTypes\StringDataType;
 
 abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderResolver 
 {
+    protected function getDocsPath(string $currentPagePath) : string
+    {
+        $rootDir = FilePathDataType::findFolderPath($currentPagePath);
+        $normalizedFull = FilePathDataType::normalize($rootDir);
+        $parts = explode("/Docs/", string: $normalizedFull);
+        if(count($parts) == 1) {
+            return $normalizedFull;
+        }
+        return $parts[0]. "/Docs/";
+    }
+    
     protected function scanMarkdownDirectory(string $directory, int $maxDepth = PHP_INT_MAX, int $currentDepth = 0, $relativePath = ''): array {
         if ($currentDepth > $maxDepth) {
             return [];

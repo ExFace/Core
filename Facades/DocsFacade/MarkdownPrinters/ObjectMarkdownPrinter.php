@@ -353,14 +353,14 @@ MD;
             }
 
 
-            $list[] = "| {$name} | {$alias}  | {$dataType} | {$relationText}  |";
+            $list[] = "| {$name} | {$alias} | {$relationText} | {$dataType} |";
         }
 
         $rows = implode("\n", $list);
         return <<<MD
 
-| Name | Alias | Data Type | Relation to |
-|------|-------|-----------|-------------|
+| Name | Alias | Relation to | Data Type |
+|------|-------|-------------|-----------|
 {$rows}
 
 MD;        

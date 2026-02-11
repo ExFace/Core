@@ -1455,7 +1455,7 @@ class DataSheet implements DataSheetInterface
                 $thisKeyCol = $this->getColumns()->addFromExpression($relPathStr);
                 $thisKeyCol->setValuesByExpression($thisKeyCol->getAttribute()->getCalculationExpression());
             } else {
-                throw new DataSheetWriteError($this, 'Cannot save subsheet for "' . $relPathStr . '": missing relation key column "' . $relPathStr . '" in the main data sheet!');
+                throw new DataSheetWriteError($this, 'Cannot save subsheet for `' . $relPathStr . '`: missing relation key column `' . $relPathStr . '` in the main data sheet!');
             }
         }
         foreach ($thisKeyCol->getValues() as $r => $val) {
@@ -3230,7 +3230,7 @@ class DataSheet implements DataSheetInterface
                     $logbook->addDataSheet('Extract-data', $checkSheet);
                 }
             } catch (\Throwable $e) {
-                throw new DataSheetExtractError($this, 'Cannot filter/extract data rows! ' . $e->getMessage(), null, null, $condGrp);
+                throw new DataSheetExtractError($this, 'Cannot filter/extract data rows! ' . $e->getMessage(), null, $e, $condGrp);
             }
         } else {
             $checkSheet = $this;

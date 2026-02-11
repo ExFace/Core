@@ -95,6 +95,18 @@
             "attribute_alias": "COPYABLEFLAG"
         },
         {
+            "name": "ICON",
+            "attribute_alias": "ICON"
+        },
+        {
+            "name": "ICON_SET",
+            "attribute_alias": "ICON_SET"
+        },
+        {
+            "name": "ABBREVIATION",
+            "attribute_alias": "ABBREVIATION"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -200,6 +212,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "DEFAULT_SETUP_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "default_setup_flag",
@@ -251,6 +266,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "FAVORITE_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "favorite_flag",
@@ -296,6 +314,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "user_oid",
@@ -343,6 +364,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
+            "ICON": null,
+            "ICON_SET": null,
+            "ABBREVIATION": null,
             "ALIAS": "WIDGET_SETUP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "widget_setup_oid",

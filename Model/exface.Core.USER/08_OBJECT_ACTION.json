@@ -255,9 +255,9 @@
         {
             "_EXPORT_SUMMARY": "User: Mass edit [ShowUserMassEditDialog]",
             "CREATED_ON": "2020-07-15 09:14:19",
-            "MODIFIED_ON": "2024-04-22 17:20:06",
+            "MODIFIED_ON": "2026-01-23 17:45:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea892190b84c7889210205857feb80",
             "OBJECT": "0x31343400000000000000000000000000",
             "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
@@ -267,176 +267,180 @@
             "CONFIG_UXON": {
                 "icon": "list",
                 "prefill_with_input_data": false,
-                "widget": {
-                    "widget_type": "DataTable",
-                    "object_alias": "exface.Core.USER",
-                    "multi_select": true,
-                    "filters": [
+                "dialog": {
+                    "widgets": [
                         {
-                            "attribute_alias": "USERNAME",
-                            "comparator": "["
-                        },
-                        {
-                            "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
-                        },
-                        {
-                            "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION",
-                            "caption": "Credentials for connection"
-                        },
-                        {
-                            "attribute_alias": "DISABLED_FLAG"
-                        },
-                        {
-                            "attribute_alias": "LAST_NAME",
-                            "comparator": "["
-                        },
-                        {
-                            "attribute_alias": "LOCALE"
-                        }
-                    ],
-                    "columns": [
-                        {
-                            "attribute_alias": "USERNAME"
-                        },
-                        {
-                            "attribute_alias": "LAST_NAME"
-                        },
-                        {
-                            "attribute_alias": "FIRST_NAME"
-                        },
-                        {
-                            "attribute_alias": "LOCALE"
-                        },
-                        {
-                            "attribute_alias": "DISABLED_FLAG"
-                        },
-                        {
-                            "attribute_alias": "USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT"
-                        }
-                    ],
-                    "sorters": [
-                        {
-                            "attribute_alias": "USERNAME",
-                            "direction": "asc"
-                        }
-                    ],
-                    "buttons": [
-                        {
-                            "caption": "Add Role",
-                            "icon": "plus-circle",
-                            "action": {
-                                "alias": "exface.Core.ShowObjectCreateDialog",
-                                "object_alias": "exface.Core.USER_ROLE_USERS",
-                                "prefill_with_input_data": true,
-                                "input_rows_min": 1,
-                                "input_rows_max": null,
-                                "widget": {
-                                    "widget_type": "Dialog",
-                                    "object_alias": "exface.Core.USER_ROLE_USERS",
-                                    "width": 1,
-                                    "height": "auto",
-                                    "widgets": [
-                                        {
-                                            "attribute_alias": "USER",
-                                            "widget_type": "InputComboTable",
-                                            "multi_select": true,
-                                            "disabled": true,
-                                            "height": 3
-                                        },
-                                        {
-                                            "attribute_alias": "USER_ROLE"
-                                        }
-                                    ],
-                                    "buttons": [
-                                        {
-                                            "action_alias": "exface.Core.CreateData",
-                                            "align": "opposite",
-                                            "visibility": "promoted",
-                                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
-                                            "icon": "plus"
-                                        }
-                                    ]
+                            "widget_type": "DataTable",
+                            "object_alias": "exface.Core.USER",
+                            "multi_select": true,
+                            "filters": [
+                                {
+                                    "attribute_alias": "USERNAME",
+                                    "comparator": "["
+                                },
+                                {
+                                    "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
+                                },
+                                {
+                                    "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION",
+                                    "caption": "Credentials for connection"
+                                },
+                                {
+                                    "attribute_alias": "DISABLED_FLAG"
+                                },
+                                {
+                                    "attribute_alias": "LAST_NAME",
+                                    "comparator": "["
+                                },
+                                {
+                                    "attribute_alias": "LOCALE"
                                 }
-                            }
-                        },
-                        {
-                            "caption": "Remove Role",
-                            "icon": "minus-circle",
-                            "action": {
-                                "alias": "exface.Core.ShowObjectCreateDialog",
-                                "object_alias": "exface.Core.USER_ROLE_USERS",
-                                "prefill_with_input_data": true,
-                                "input_rows_min": 1,
-                                "input_rows_max": null,
-                                "widget": {
-                                    "widget_type": "Dialog",
-                                    "object_alias": "exface.Core.USER_ROLE_USERS",
-                                    "width": 1,
-                                    "height": "auto",
-                                    "widgets": [
-                                        {
-                                            "attribute_alias": "USER",
-                                            "widget_type": "InputComboTable",
-                                            "multi_select": true,
-                                            "disabled": true,
-                                            "height": 3
-                                        },
-                                        {
-                                            "attribute_alias": "USER_ROLE"
-                                        }
-                                    ],
-                                    "buttons": [
-                                        {
-                                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
-                                            "visibility": "promoted",
-                                            "align": "opposite",
-                                            "icon": "minus",
-                                            "action": {
-                                                "alias": "exface.Core.DeleteObject",
-                                                "input_mapper": {
-                                                    "column_to_filter_mappings": [
-                                                        {
-                                                            "from": "USER",
-                                                            "to": "USER",
-                                                            "comparator": "["
-                                                        },
-                                                        {
-                                                            "from": "USER_ROLE",
-                                                            "to": "USER_ROLE",
-                                                            "comparator": "=="
-                                                        }
-                                                    ]
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": "USERNAME"
+                                },
+                                {
+                                    "attribute_alias": "LAST_NAME"
+                                },
+                                {
+                                    "attribute_alias": "FIRST_NAME"
+                                },
+                                {
+                                    "attribute_alias": "LOCALE"
+                                },
+                                {
+                                    "attribute_alias": "DISABLED_FLAG"
+                                },
+                                {
+                                    "attribute_alias": "USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT"
+                                }
+                            ],
+                            "sorters": [
+                                {
+                                    "attribute_alias": "USERNAME",
+                                    "direction": "asc"
+                                }
+                            ],
+                            "buttons": [
+                                {
+                                    "caption": "Add Role",
+                                    "icon": "plus-circle",
+                                    "action": {
+                                        "alias": "exface.Core.ShowObjectCreateDialog",
+                                        "object_alias": "exface.Core.USER_ROLE_USERS",
+                                        "prefill_with_input_data": true,
+                                        "input_rows_min": 1,
+                                        "input_rows_max": null,
+                                        "widget": {
+                                            "widget_type": "Dialog",
+                                            "object_alias": "exface.Core.USER_ROLE_USERS",
+                                            "width": 1,
+                                            "height": "auto",
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "USER",
+                                                    "widget_type": "InputComboTable",
+                                                    "multi_select": true,
+                                                    "disabled": true,
+                                                    "height": 3
+                                                },
+                                                {
+                                                    "attribute_alias": "USER_ROLE"
                                                 }
-                                            }
+                                            ],
+                                            "buttons": [
+                                                {
+                                                    "action_alias": "exface.Core.CreateData",
+                                                    "align": "opposite",
+                                                    "visibility": "promoted",
+                                                    "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                    "icon": "plus"
+                                                }
+                                            ]
                                         }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            "caption": "Change locale",
-                            "icon": "language",
-                            "action": {
-                                "alias": "exface.Core.ShowMassEditDialog",
-                                "widget": {
-                                    "widget_type": "Dialog",
-                                    "maximized": false,
-                                    "width": 1,
-                                    "columns_in_grid": 1,
-                                    "height": "auto",
-                                    "widgets": [
-                                        {
-                                            "attribute_alias": "LOCALE"
+                                    }
+                                },
+                                {
+                                    "caption": "Remove Role",
+                                    "icon": "minus-circle",
+                                    "action": {
+                                        "alias": "exface.Core.ShowObjectCreateDialog",
+                                        "object_alias": "exface.Core.USER_ROLE_USERS",
+                                        "prefill_with_input_data": true,
+                                        "input_rows_min": 1,
+                                        "input_rows_max": null,
+                                        "widget": {
+                                            "widget_type": "Dialog",
+                                            "object_alias": "exface.Core.USER_ROLE_USERS",
+                                            "width": 1,
+                                            "height": "auto",
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "USER",
+                                                    "widget_type": "InputComboTable",
+                                                    "multi_select": true,
+                                                    "disabled": true,
+                                                    "height": 3
+                                                },
+                                                {
+                                                    "attribute_alias": "USER_ROLE"
+                                                }
+                                            ],
+                                            "buttons": [
+                                                {
+                                                    "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                    "visibility": "promoted",
+                                                    "align": "opposite",
+                                                    "icon": "minus",
+                                                    "action": {
+                                                        "alias": "exface.Core.DeleteObject",
+                                                        "input_mapper": {
+                                                            "column_to_filter_mappings": [
+                                                                {
+                                                                    "from": "USER",
+                                                                    "to": "USER",
+                                                                    "comparator": "["
+                                                                },
+                                                                {
+                                                                    "from": "USER_ROLE",
+                                                                    "to": "USER_ROLE",
+                                                                    "comparator": "=="
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            ]
                                         }
-                                    ]
+                                    }
+                                },
+                                {
+                                    "caption": "Change locale",
+                                    "icon": "language",
+                                    "action": {
+                                        "alias": "exface.Core.ShowMassEditDialog",
+                                        "widget": {
+                                            "widget_type": "Dialog",
+                                            "maximized": false,
+                                            "width": 1,
+                                            "columns_in_grid": 1,
+                                            "height": "auto",
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "LOCALE"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "action_alias": "exface.Core.DisableUser"
+                                },
+                                {
+                                    "action_alias": "exface.Core.EnableUser"
                                 }
-                            }
-                        },
-                        {
-                            "action_alias": "exface.Core.DisableUser"
-                        },
-                        {
-                            "action_alias": "exface.Core.EnableUser"
+                            ]
                         }
                     ]
                 }

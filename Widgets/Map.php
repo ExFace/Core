@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
@@ -100,6 +101,8 @@ class Map extends AbstractWidget implements
     
     private $coordinateSystem = self::COORDINATE_SYSTEM_AUTO;
     
+    private ?UxonObject $autoZoomDefaults = null;
+    
     /**
      *
      * @return BaseMapInterface[]
@@ -175,7 +178,7 @@ class Map extends AbstractWidget implements
     public function getDataLayers() : array
     {
         return $this->getLayers(function($layer){
-            return ($layer instanceof \exface\Core\Widgets\Parts\Maps\AbstractDataLayer);
+            return ($layer instanceof DataMapLayerInterface);
         });
     }
     
@@ -935,5 +938,34 @@ class Map extends AbstractWidget implements
             }
         }
         return array_unique($objs);
+    }
+
+    /**
+     * Default setting for auto_zoom for all layers, that support it
+     * 
+     * @uxon-property auto_zoom
+     * @uxon-type \exface\Core\Widgets\Parts\Maps\AutoZoom
+     * @uxon-template {"zoom_in": false, "zoom_out": true}
+     * 
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setAutoZoom(UxonObject $uxon) : Map
+    {
+        $this->autoZoomDefaults = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getAutoZoomDefaults() : ?UxonObject
+    {
+        if ($this->autoZoomDefaults === null && count($this->getDataLayers())) {
+            $this->autoZoomDefaults = new UxonObject([
+                'zoom_in' => true
+            ]);
+        }
+        return $this->autoZoomDefaults;
     }
 }

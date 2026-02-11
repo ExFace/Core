@@ -1,0 +1,9 @@
+-- UP
+ALTER TABLE exf_monitor_action
+ADD
+    task_class VARCHAR(100) NULL,
+    ui_flag TINYINT NULL,
+    request_size INT NULL;
+
+-- DOWN
+-- Do not delete columns to avoid losing data!

@@ -30,9 +30,7 @@ class DataMarkersLayer extends AbstractDataLayer
     EditableMapLayerInterface,
     CustomProjectionMapLayerInterface
 {
-    use DataPointLayerTrait {
-        initDataWidget as initDataWidgetForPoints;
-    }
+    use DataPointLayerTrait;
     
     use iHaveIconTrait;
     
@@ -51,7 +49,7 @@ class DataMarkersLayer extends AbstractDataLayer
      */
     protected function initDataWidget(iShowData $widget) : iShowData
     {
-        $widget = $this->initDataWidgetForPoints($widget);
+        $widget = $this->initDataWidgetPointColumns($widget);
         $widget = $this->initDataWidgetValue($widget);
         $widget = $this->initDataWidgetColor($widget);
         

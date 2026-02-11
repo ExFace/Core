@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Actions\ActionConfirmationList;
+use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -17,7 +18,6 @@ use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
@@ -80,8 +80,9 @@ use function Sabre\Event\Loop\instance;
  */
 abstract class AbstractAction implements ActionInterface
 {    
-    use ImportUxonObjectTrait {
-		importUxonObject as importUxonObjectDefault;
+    use ICanBeConvertedToUxonTrait {
+		importUxonObject as importUxonObjectViaTrait;
+        exportUxonObject as exportUxonObjectViaTrait;
 	}
 	
 	use iHaveIconTrait;
@@ -146,7 +147,7 @@ abstract class AbstractAction implements ActionInterface
      */
     private $meta_object = null;
 
-    private $autocommit = true;
+    private $autocommit = null;
     
     private $input_object_alias = null;
     
@@ -298,7 +299,7 @@ abstract class AbstractAction implements ActionInterface
         // Skip alias property if found because it was processed already to instantiate the right action class.
         // Setting the alias after instantiation is currently not possible beacuase it would mean recreating
         // the entire action.
-        return $this->importUxonObjectDefault($uxon, [
+        return $this->importUxonObjectViaTrait($uxon, [
             'alias',
             'object_alias'
         ]);
@@ -511,15 +512,15 @@ abstract class AbstractAction implements ActionInterface
         $this->getWorkbench()->getLogger()->notice('Action ' . $this->__toString() . ' performed', [], $this->getLogBook($result->getTask()));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
-        // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
+        // safely do it here, before perform(). On the other hand, this gives all kinds of action event handlers
         // the possibility to access the current action and it's current state
         // FIXME re-enable action context: maybe make it work with events?
         // $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->addAction($this);
         
         // Commit the transaction if autocommit is on and the action COULD have modified data
-        // We cannot rely on $result->isDataModified() at this point as it is not allways possible 
-        // to determine it within the action (some data source simply do not give relieable feedback).
-        if ($this->getAutocommit() && (($this instanceof iModifyData) || $result->isDataModified())) {
+        // We cannot rely on $result->isDataModified() at this point as it is not always possible 
+        // to determine it within the action (some data sources simply do not give relivable feedback).
+        if ($this->hasAutocommit() && (($this instanceof iModifyData) || $result->isDataModified())) {
             $transaction->commit();
         }
         
@@ -699,33 +700,16 @@ abstract class AbstractAction implements ActionInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
+        $uxon = $this->exportUxonObjectViaTrait();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
-        /*if ($this->isDefinedInWidget()) {
-            $uxon->setProperty('trigger_widget', $this->getWidgetDefinedIn()->getId());
-        }*/
         if ($this->hasInputDataPreset()) {
             $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
         }
-        $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
-        
-        if (! empty($this->getInputMappers())){
-            $inner_uxon = new UxonObject();
-            foreach ($this->getInputMappers() as $nr => $check){
-                $inner_uxon->setProperty($nr, $check->exportUxonObject());
-            }
-            $uxon->setProperty('input_mappers', $inner_uxon);
+        if (! empty($this->getDisabledBehaviors())) {
+            $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         }
         
-        if (! empty($this->getOutputMappers())){
-            $inner_uxon = new UxonObject();
-            foreach ($this->getOutputMappers() as $nr => $check){
-                $inner_uxon->setProperty($nr, $check->exportUxonObject());
-            }
-            $uxon->setProperty('output_mappers', $inner_uxon);
-        }
-        
-        if (! empty($this->getInputChecks())){
+        if (! $this->getInputChecks()->isEmpty()){
             $inner_uxon = new UxonObject();
             foreach ($this->getInputChecks() as $nr => $check){
                 $inner_uxon->setProperty($nr, $check->exportUxonObject());
@@ -845,22 +829,45 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getAutocommit()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasAutocommit()
      */
-    public function getAutocommit()
+    public function hasAutocommit(bool $default = true) : bool
     {
-        return $this->autocommit;
+        return $this->autocommit ?? $default;
     }
     
     /**
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setAutocommit()
      */
-    public function setAutocommit($true_or_false)
+    public function setAutocommit(bool $trueOrFalse) : ActionInterface
     {
-        $this->autocommit = $true_or_false ? true : false;
+        $this->autocommit = $trueOrFalse;
         return $this;
+    }
+
+    /**
+     * Set to TRUE or FALSE to force the action to commit its transaction after being performed successfully.
+     * 
+     * If not set, the behavior of the action will depend on how and where it is called. 
+     * 
+     * - Stand-alone action will run each in their own transaction. This transaction will be started when the action
+     * starts and will be committed when it is finished. Any behaviors triggered by events of the action or its
+     * underlying objects will be included in this transaction. Thus, if any of them fail, the transaction will be
+     * rolled back.
+     * - Actions included in other action or behaviors will run in the respective outer transaction - e.g. in
+     * `ActionChain` or `CallActionBehavior`. In this case, the action will not commit its transaction itself, but
+     * rely on the outer logic to handle this.
+     * 
+     * **NOTE:** in any case, the action will only perform a commit if any data was changed. If it does not change
+     * anything, no commit will be done.
+     * 
+     * @param bool $trueOrFalse
+     * @return bool
+     */
+    protected function setCommitAfterSuccess(bool $trueOrFalse) : bool
+    {
+        return $this->setAutocommit($trueOrFalse);
     }
     
     /**

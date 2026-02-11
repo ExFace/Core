@@ -94,12 +94,12 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
         } else {
             $msg = '';
         }
-        
+        $msgJs = json_encode($msg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         return <<<JS
 
 (function (value){
-    if ({$this->buildJsValidator('value')}) {
-        return {$msg};
+    if ({$this->buildJsValidator('value')} === false) {
+        return {$msgJs};
     } else {
         return '';
     }
