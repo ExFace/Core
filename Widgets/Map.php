@@ -82,9 +82,11 @@ class Map extends AbstractWidget implements
     
     private $zoomMax = null;
     
-    private $showFullScreenButton = true;
+    private $showFullScreenButton = null;
     
     private $showGpsLocateButton = null;
+    
+    private $showZoomControls = null;
     
     private $showScale = true;
 
@@ -771,7 +773,16 @@ class Map extends AbstractWidget implements
      */
     public function getShowFullScreenButton() : bool
     {
-        return $this->showFullScreenButton;
+        if ($this->showFullScreenButton !== null) {
+            return $this->showFullScreenButton;
+        }
+        
+        // The header and caption already contains the fullscreen button.
+        if ($this->getHideCaption() && $this->getHideHeader()) {
+            return true;
+        } else {
+            return false;
+        }
     }
     
     /**
@@ -819,6 +830,38 @@ class Map extends AbstractWidget implements
     public function setShowGpsLocateButton(bool $value) : Map
     {
         $this->showGpsLocateButton = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     * 
+     */
+    public function getShowZoomControls() : bool
+    {
+        if ($this->showZoomControls === null) {
+            foreach ($this->getBaseMaps() as $map) {
+                if ($map->getCoordinateSystem() === self::COORDINATE_SYSTEM_PIXELS) {
+                    return false;
+                }
+            }
+        }
+        return $this->showZoomControls ?? true;
+    }
+    
+    /**
+     * Set to FALSE to hide the ZoomBar plugin zoom controls on the map. The default zoom controls will be displayed instead.
+     * 
+     * @uxon-property show_zoom_controls
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Map
+     */
+    public function setShowZoomControls(bool $value) : Map
+    {        
+        $this->showZoomControls = $value;
         return $this;
     }
     

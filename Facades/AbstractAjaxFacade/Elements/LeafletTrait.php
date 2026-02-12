@@ -77,6 +77,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  *  	"LIBS.LEAFLET.GEOMAN.CSS": "npm-asset/geoman-io--leaflet-geoman-free/dist/leaflet-geoman.css",
  *  	"LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS": "npm-asset/proj4leaflet/src/proj4leaflet.js",
  *  	"LIBS.LEAFLET.TURF.JS": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/turf.min.js",
+ *      "LIBS.LEAFLET.ZOOMBAR.JS": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/plugins/ZoomBar/L.Control.ZoomBar.js",
+ *      "LIBS.LEAFLET.ZOOMBAR.CSS": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/plugins/ZoomBar/L.Control.ZoomBar.css",
  *
  *      ```
  * 3. Use the trait in your element by creating a globally accessible variable or
@@ -220,8 +222,10 @@ HTML;
         initialZoom: {$this->getZoomInitial()}
     };
     {$this->buildJsLeafletVar()}._exfLayers = {};
-
+    
+    {$this->buildJsLeafletControlZoomBar()}
     {$this->buildJsLeafletControlLocate()}
+    {$this->buildJsLeafletDebugControlGetCenter()}
     {$this->buildJsLeafletControlScale()}
     {$this->buildJsMapDrop()}
     {$this->buildJsLayers()}
@@ -269,6 +273,12 @@ JS;
             $mapOptions .= "
         doubleClickZoom: false,";
         }
+        
+        if ($widget->getShowZoomControls())
+        {
+            // sets the default zoomControl to false. The ZoomBar plugin is used instead.
+            $mapOptions .= "zoomControl: false";
+        }
 
         return $mapOptions;
     }
@@ -283,6 +293,101 @@ JS;
             return '';
         }
         return "L.control.locate().addTo({$this->buildJsLeafletVar()});";
+    }
+    
+    protected function buildJsLeafletControlZoomBar() : string
+    {
+        $widget = $this->getWidget();
+        if (! $widget->getShowZoomControls()) {
+            return '';
+        }
+        $zoom = $this->getZoomInitial();
+        $lat = $widget->getCenterLatitude() ?? 0;
+        $lon = $widget->getCenterLongitude() ?? 0;
+        
+        return <<<JS
+
+         (function(oMap) {
+           let zoomBar = new L.Control.ZoomBar({position: 'topleft'}).addTo({$this->buildJsLeafletVar()});
+           const homeBtn = zoomBar.getContainer().querySelector('.leaflet-control-zoom-to-start');
+                
+           homeBtn.addEventListener('click', (ev) => {
+             ev.preventDefault();
+             ev.stopPropagation();
+             
+             // Values after the initial autoZoom is done:
+             let center = oMap._exfState.homeCenter;
+             let zoom = oMap._exfState.homeZoom;
+                 
+             if (!center || zoom === undefined) {
+               // takes initial values
+               center = [{$lat}, {$lon}];
+               zoom = {$zoom};
+             }
+             
+             if (center) {
+               {$this->buildJsLeafletVar()}.setView(center, zoom);
+             }}, true);
+           
+          })(oMap);
+
+JS;
+    }
+    
+    protected function buildJsLeafletDebugControlGetCenter() : string
+    {
+        //TODO: the "hasContext()" trows an exception, so this call is always false and we never see the button.
+        if (!$this->getWidget()->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            return '';
+        }
+
+        $popupJs = $this->getWidget()->getShowPopupOnClick() ?  $this->buildJsLeafletPopup('"Current View Center Location"', $this->buildJsLeafletPopupList("[
+            {
+                caption: 'Latitude',
+                value: mapCenter.lat + '°'
+            },{
+                caption: 'Longitude',
+                value: mapCenter.lng + '°'
+            }, {
+                caption: 'Zoom',
+                value: mapZoom
+            }
+        ]"), "[mapCenter.lat,mapCenter.lng]") : '';
+        
+        
+        return <<<JS
+            
+            (function (map){
+                const controlGetCenterButton = L.Control.extend({
+                  options: {
+                    position: 'topleft' 
+                  },
+        
+                  onAdd(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const centerButton = L.DomUtil.create('a', 'exf-leaflet-control-get-center', container);
+                    
+                    container.title = 'Show View Center and Zoom';
+                    centerButton.innerHTML = '<span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">' 
+                    + '<i class="fa fa-info-circle" style="font-size:16px;"></i>' 
+                    + '</span>';
+                    
+                    L.DomEvent.disableClickPropagation(centerButton);
+                    L.DomEvent.on(centerButton, 'click', () => {
+                      const mapCenter = map.getCenter();
+                      const mapZoom = map.getZoom();
+                      
+                      {$popupJs}          
+                    });
+                
+                    return container;
+                  }
+                });
+        
+                new controlGetCenterButton().addTo(map);
+            })({$this->buildJsLeafletVar()});
+
+JS;
     }
 
     /**
@@ -1475,6 +1580,12 @@ JS;
                                     oMap.fitBounds(oBounds, {padding: [10,10], maxZoom: oMap.getZoom() });
                                     break;
                             }
+                            
+                            // it saves the last initial autoZoom and is used in buildJsLeafletControlZoomBar()
+                            oMap.once('moveend', () => {
+                              oMap._exfState.homeCenter = oMap.getCenter();
+                              oMap._exfState.homeZoom = oMap.getZoom();
+                            });
                         }
                 	},100);
 
@@ -1801,6 +1912,11 @@ JS;
         if ($widget->getShowGpsLocateButton()) {
             $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.LOCATECONTROL_CSS') . '"/>';
             $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LOCATECONTROL_JS') . '"></script>';
+        }
+        
+        if ($widget->getShowZoomControls()) {
+            $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.ZOOMBAR.CSS') . '"/>';
+            $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.ZOOMBAR.JS') . '"></script>';
         }
 
         $includes = array_merge($includes, array_unique($this->headTags));
