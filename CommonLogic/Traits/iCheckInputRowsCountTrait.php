@@ -39,7 +39,7 @@ trait iCheckInputRowsCountTrait
     }
 
     /**
-     * Returns the minimum number of rows the action expects in the input data sheet.
+     * Returns the minimum number of rows the expected in the input data sheet.
      *
      * @return int|null
      */
@@ -49,7 +49,7 @@ trait iCheckInputRowsCountTrait
     }
 
     /**
-     * Sets the minimum number of rows the input data sheet must have for this action.
+     * Sets the minimum number of rows expected in the input data sheet.
      *
      * @uxon-property input_rows_min
      * @uxon-type integer
@@ -64,7 +64,7 @@ trait iCheckInputRowsCountTrait
     }
 
     /**
-     * Returns the maximum number of rows the action expects in the input data sheet.
+     * Returns the maximum number of rows the expected in the input data sheet.
      *
      * @return int|null
      */
@@ -74,7 +74,7 @@ trait iCheckInputRowsCountTrait
     }
 
     /**
-     * Sets the maximum number of rows the input data sheet must have for this action.
+     * Sets the maximum number of rows expected in the input data sheet.
      *
      * @uxon-property input_rows_max
      * @uxon-type integer
