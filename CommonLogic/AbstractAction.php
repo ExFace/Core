@@ -700,7 +700,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->exportUxonObjectViaTrait();
+        $uxon = $this->exportUxonObjectViaTrait() ?? new UxonObject();        
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
         if ($this->hasInputDataPreset()) {
             $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
