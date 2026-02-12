@@ -11,12 +11,14 @@ use exface\Core\Exceptions\Model\MetaRelationBrokenError;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use Respect\Validation\Rules\Length;
 
 /**
  * Builds a Markdown documentation view for a meta object and its related objects.
@@ -87,7 +89,11 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         $importantAttributes = trim($importantAttributes);
         
         $attributesHeading = MarkdownDataType::buildMarkdownHeader("Attributes of \"{$metaObject->getName()}\"", $headingLevel + 1);
-        
+
+        $actionHeading = MarkdownDataType::buildMarkdownHeader("Actions of \"{$metaObject->getName()}\"", $headingLevel + 1);
+
+        $groupHeading = MarkdownDataType::buildMarkdownHeader("Attributegroups of \"{$metaObject->getName()}\"", $headingLevel + 1);
+
         $markdown = <<<MD
 
 {$heading} 
@@ -103,6 +109,10 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 {$this->buildMdAttributesTable($metaObject->getAttributes())}
 
 {$this->buildMdAttributesSections($metaObject, $headingLevel+2)}
+
+{$this->buildMdActionSection($actionHeading, $metaObject, $headingLevel+2 )}
+
+{$this->buildMdAttributeGroupSection($groupHeading, $metaObject, $headingLevel+2 )}
 
 {$this->buildMdBehaviorsSections($metaObject, 'Behaviors of "' . $metaObject->getName() . '"', $headingLevel+1)}
 
@@ -172,6 +182,45 @@ Properties: {$this->buildMdAttributeProperties($attr)}
 
 {$this->buildMdUxonCodeblock($attr->getCustomDataTypeUxon(), 'Configuration of data type [' . $dataType->getAliasWithNamespace() . '](' . $dataTypeLink . '):')}
 
+MD;
+
+    }
+
+    protected function buildMdActionSection(string $header, MetaObjectInterface $obj, int $headingLevel = 3) : string
+    {
+       
+        $markdown = '';
+        try{
+            foreach ($obj->getActions() as $act) {
+                $actionPrinter = new ActionMarkdownPrinter($this->workbench, $act, $headingLevel);
+                $markdown .= $actionPrinter->getMarkdown();
+            } 
+        }catch (\Exception $e){
+            
+        }
+        
+        return <<<MD
+{$header}
+
+{$markdown}
+MD;
+
+    }
+    
+    protected function buildMdAttributeGroupSection(string $header, MetaObjectInterface $obj, int $headingLevel = 3) : string
+    {
+        $markdown = '';
+        
+        $groups = $obj->getAttributeGroups();
+        foreach ($groups as $group) {
+            $groupPrinter = new AttributeGroupMarkdownPrinter($this->workbench, $group, $headingLevel);
+            $markdown .= $groupPrinter->getMarkdown();
+        }
+        
+        return <<<MD
+{$header}
+
+{$markdown}
 MD;
 
     }
