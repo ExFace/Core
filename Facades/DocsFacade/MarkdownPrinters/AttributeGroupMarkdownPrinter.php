@@ -51,38 +51,51 @@ class AttributeGroupMarkdownPrinter //implements MarkdownPrinterInterface
     }
 
     /**
-     * Builds and returns the complete Markdown for the current action
+     * Builds and returns the complete Markdown for the current group
      */
     public function getMarkdown(): string
     {
         $heading = MarkdownDataType::buildMarkdownHeader($this->group->getAlias(), $this->headingLevel);
 
-        $markdown = '';
-        
+        $rows = [];
+
         try {
             $attributes = $this->group->getAttributes();
 
-            $markdown .= MarkdownDataType::buildMarkdownHeader("Attributes:\n", $this->headingLevel +1 );
             foreach ($attributes as $attribute) {
-                if($attribute instanceof MetaAttributeInterface){
-                    $markdown .= $attribute->getName() . ": " . $attribute->getAlias();
+                if (!$attribute instanceof MetaAttributeInterface) {
+                    continue;
                 }
+
+                $name  = (string) $attribute->getName();
+                $alias = (string) $attribute->getAlias();
+
+                // Minimaler Hinweis, ohne Relation auszubauen/aufzulösen
+                $note = '';
+                if (method_exists($attribute, 'isRelation') && $attribute->isRelation()) {
+                    $note = ' (Relation)';
+                }
+
+                // Pipes escapen, damit die Tabelle nicht kaputt geht
+                $name  = str_replace('|', '\|', $name);
+                $alias = str_replace('|', '\|', $alias);
+
+                $rows[] = "| {$name} | {$alias}{$note} |";
             }
-            
-           
-        }catch (\Exception $e){
-            
+        } catch (\Throwable $e) {
+            // bewusst still; alternativ: Fehlerzeile in die Tabelle
         }
-        
+
+        $table = "| Name | Alias |\n|---|---|\n";
+        $table .= $rows ? implode("\n", $rows) . "\n" : "| _keine_ | _keine_ |\n";
+
         return <<<MD
 {$heading}
 
-
-
-{$markdown}
-
+{$table}
 MD;
     }
 
-    
+
+
 }
