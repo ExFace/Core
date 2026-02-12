@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\CommonLogic\DataSheets\DataSorter;
+use exface\Core\CommonLogic\DataSheets\DataSorterList;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Factories\MetaObjectFactory;
@@ -26,11 +28,12 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Saves pages as UXON (JSON) files and imports these files back into model when needed.
  * 
- * Each page is stored as a separate JSON file using it's `UiPageInterface::exportUxonObject()`.
+ * Each page is stored as a separate JSON file using its `UiPageInterface::exportUxonObject()`.
  * All pages are stored in a single folder. The path to that folder can be passed to the
  * installer's constructor.
  * 
@@ -45,6 +48,8 @@ class PageInstaller extends AbstractAppInstaller
     private $transaction = null;
     
     private $path = null;
+    
+    private $tmpPath = null;
     
     private $rootSelector = null;
     
@@ -114,35 +119,15 @@ class PageInstaller extends AbstractAppInstaller
             }
         }
         
-        // Find pages files. 
-        $files = glob($dir . DIRECTORY_SEPARATOR . '*.json');
+        $files = $this->loadPageFiles($dir);
         if ($files === false) {
             $workbench->getLogger()->logException((new InstallerRuntimeError($this, 'Error reading folder "' . $dir . DIRECTORY_SEPARATOR . '*.json"! - no pages were installed!')));
         }
-        // Make sure, the array only contains existing files.
-        $files = array_filter($files, 'is_file');
         
         // Load pages. If anything goes wrong, the installer should not continue to avoid broken menu
         // structures etc., so don't silence any exceptions here.
         foreach ($files as $file) {
-            try {
-                $page = UiPageFactory::createFromUxon($workbench, UxonObject::fromJson(file_get_contents($file)));
-                $page->setApp($this->getApp()->getSelector());
-                // Wird eine Seite neu hinzugefuegt ist die menuDefaultPosition gleich der
-                // gesetzen Position.
-                $page->setParentPageSelectorDefault($page->getParentPageSelector());
-                $page->setMenuIndexDefault($page->getMenuIndex());
-                
-                // Pages marked as top-level explicitly, get this installations root page as parent
-                if ($page->isMenuHome()) {
-                    $page->setParentPageSelector($this->getServerRootSelector());
-                    $page->setParentPageSelectorDefault($this->getServerRootSelector());
-                }
-                    
-                $pagesFile[] = $page;
-            } catch (\Throwable $e) {
-                throw new InstallerRuntimeError($this, 'Cannot load page model from file "' . $file . '": corrupted UXON?', null, $e);
-            }
+            $pagesFile[] = $this->getPageFromFile($workbench, $file);
         }
         $pagesFile = $this->sortPages($pagesFile);
         
@@ -298,6 +283,38 @@ class PageInstaller extends AbstractAppInstaller
         }
     }
     
+    protected function loadPageFiles(string $pathAbsolute) : array|bool
+    {
+        // Find pages files. 
+        $files = glob($pathAbsolute . DIRECTORY_SEPARATOR . '*.json');
+        if($files === false) {
+            return false;
+        }
+        // Make sure, the array only contains existing files.
+        return array_filter($files, 'is_file');
+    }
+    
+    protected function getPageFromFile(WorkbenchInterface $workbench, string $file) : UiPageInterface
+    {
+        try {
+            $page = UiPageFactory::createFromUxon($workbench, UxonObject::fromJson(file_get_contents($file)));
+            $page->setApp($this->getApp()->getSelector());
+            $page->setParentPageSelectorDefault($page->getParentPageSelector());
+            // New Pages have menuDefaultPosition set to their current position.
+            $page->setMenuIndexDefault($page->getMenuIndex());
+
+            // Pages marked as top-level explicitly, get current installations root page as parent
+            if ($page->isMenuHome()) {
+                $page->setParentPageSelector($this->getServerRootSelector());
+                $page->setParentPageSelectorDefault($this->getServerRootSelector());
+            }
+        } catch (\Throwable $e) {
+            throw new InstallerRuntimeError($this, 'Cannot load page model from file "' . $file . '": corrupted UXON?', null, $e);
+        }
+        
+        return $page;
+    }
+    
     /**
      * 
      * @param AppInterface $app
@@ -446,10 +463,11 @@ class PageInstaller extends AbstractAppInstaller
         $exportWb = Workbench::startNewInstance($exportConfig);
         $exportWb->getContext()->getScopeSession()->setSessionDisabled(true);
         $exportApp = $exportWb->getApp($this->getApp()->getSelector());
-        
-        // Dann alle Dialoge der App als Dateien in den Ordner schreiben.
+
+        // Load page data for app from model.
         $pages = $this->getPagesForApp($exportApp);
-        
+        $pages = $this->diffPages($exportWb, $pages);
+
         if (! empty($pages)) {
             $fileManager->pathConstruct($path);
         }
@@ -472,6 +490,85 @@ class PageInstaller extends AbstractAppInstaller
         }
         
         yield $idt . 'Exported ' . count($pages) . ' pages successfully.' . PHP_EOL;
+    }
+    
+    protected function diffPages(WorkbenchInterface $workbench, array $pages) : array
+    {
+        $tempPath = $this->getTempPath();
+        if($tempPath === null) {
+            return $pages;
+        }
+        
+        try {
+            // Load page data from files.
+            $previousPages = [];
+            foreach ($this->loadPageFiles($tempPath) as $pageFile) {
+                $previousPages[] = $this->getPageFromFile($workbench, $pageFile);
+            }
+
+            if(empty($previousPages)) {
+                return $pages;
+            }
+
+            // Generate data sheet for easy comparison.
+            $pagesDs = $this->createPageDataSheet();
+            $compDs = $this->createPageDataSheet();
+
+            $changedPages = [];
+            foreach ($pages as $currPage) {
+                $uid = $currPage->getUid();
+                
+                $compPage = null;
+                foreach ($previousPages as $i => $prevPage) {
+                    if($uid === $prevPage->getUid()) {
+                        $compPage = $prevPage;
+                        unset($previousPages[$i]);
+                        break;
+                    }
+                }
+                
+                if($compPage === null) {
+                    $changedPages[] = $currPage;
+                    continue;
+                }
+                
+                // Remove white spaces from content to improve comparison accuracy.
+                $currPage->setContents(preg_replace('/\s/', '', $currPage->getContents()));
+                $compPage->setContents(preg_replace('/\s/', '', $compPage->getContents()));
+
+                // Diff the loaded and exported pages.
+                $pagesDs->removeRows();
+                $compDs->removeRows();
+                $currPage->exportDataRow($pagesDs);
+                $compPage->exportDataRow($compDs);
+                $diffs = $pagesDs->getRowsDiffWithInfo(
+                    $compDs,
+                    [
+                        'CREATED_BY_USER',
+                        'CREATED_ON',
+                        'MODIFIED_BY_USER',
+                        'MODIFIED_ON',
+                        'TEMPLATE'
+                    ]
+                );
+
+                if(!empty($diffs['rows'])) {
+                    $changedPages[] = $currPage;
+                }
+            }
+            
+            $pages = $changedPages;
+        } catch (\Throwable $e) {
+            // If something goes wrong here, we ignore it, because it does not directly affect the export.
+            $this->getWorkbench()->getLogger()->logException(new InstallerRuntimeError(
+                $this,
+                'Cannot check pages for changes: ' . $e->getMessage(),
+                null,
+                $e
+            ));
+        }
+
+        return $pages;
     }
 
     /**
@@ -604,5 +701,16 @@ class PageInstaller extends AbstractAppInstaller
             $this->rootSelector = UiPageSelector::getServerRootSelector($this->getWorkbench());
         }
         return $this->rootSelector;
+    }
+
+    public function getTempPath() : ?string
+    {
+        return $this->tmpPath;
+    }
+
+    public function setTempPath(string $tmpPath) : PageInstaller
+    {
+        $this->tmpPath = $tmpPath;
+        return $this;
     }
 }
