@@ -216,6 +216,21 @@ trait iHaveColumnsAndColumnGroupsTrait
         }
         return false;
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasVisibleColumns()
+     */
+    public function hasVisibleColumns() : bool
+    {
+        foreach ($this->getColumnGroups() as $group){
+            if ($group->hasVisibleColumns()){
+                return true;
+            }
+        }
+        return false;
+    }
     
     /**
      * Returns FALSE if no columns were defined - even if hasColumns() would return TRUE because
