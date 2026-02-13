@@ -178,6 +178,7 @@
     "CONTEXT.DATA.NAME": "Data",
     
     "CONTEXT.DEBUG.NAME": "Developer tools",
+	"CONTEXT.DEBUG.TRACE_BLOCKED": "Tracer BLOCKED: Tracing is forbidden on this system",
     "CONTEXT.DEBUG.TRACE_STARTED": "Tracing ON: all server requests now logged in detail",
     "CONTEXT.DEBUG.TRACE_STOPPED": "Tracing OFF: server requests not logged anymore",
     "CONTEXT.DEBUG.TRACE_SERVER_REQUESTS": "Trace server requests",
