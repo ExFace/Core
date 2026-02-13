@@ -38,6 +38,13 @@ interface iHaveColumns extends WidgetInterface
     public function hasColumns() : bool;
     
     /**
+     * Returns TRUE if the widget has at least one visible column at the moment and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function hasVisibleColumns() : bool;
+    
+    /**
      *
      * @param string $widgetId
      * @return DataColumn|NULL
