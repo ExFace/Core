@@ -2018,7 +2018,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * Set to FALSE to disable built-in confirmations.
      * 
-     * @uxon-property confirmation_for_unsaved_data
+     * @uxon-property confirmation_for_unsaved_changes
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
      * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
      * 
