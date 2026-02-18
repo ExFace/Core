@@ -3230,7 +3230,7 @@ class DataSheet implements DataSheetInterface
                     $logbook->addDataSheet('Extract-data', $checkSheet);
                 }
             } catch (\Throwable $e) {
-                throw new DataSheetExtractError($this, 'Cannot filter/extract data rows! ' . $e->getMessage(), null, null, $condGrp);
+                throw new DataSheetExtractError($this, 'Cannot filter/extract data rows! ' . $e->getMessage(), null, $e, $condGrp);
             }
         } else {
             $checkSheet = $this;

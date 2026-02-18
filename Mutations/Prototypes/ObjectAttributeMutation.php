@@ -436,6 +436,21 @@ class ObjectAttributeMutation extends AbstractMutation
         $this->changedAttributes['defaultSorterDir'] = $attributeDefaultSorterDir;
         return $this;
     }
+    
+    /**
+     * Changes the icon of the attribute
+     *
+     * @uxon-property change_icon
+     * @uxon-type string
+     *
+     * @param string $icon
+     * @return $this
+     */
+    protected function setChangeIcon(string $icon): ObjectAttributeMutation
+    {
+        $this->changedAttributes['icon'] = $icon;
+        return $this;
+    }
 
     protected function hasChanges() : bool
     {

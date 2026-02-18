@@ -427,14 +427,29 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
+        // See if we have flattened rows in the data sheet
+        if ($dataSheet->hasUidColumn() && $dataSheet->getUidColumn()->hasValueLists()) {
+            $applicableSheet = $dataSheet->copy();
+            $applicableSheet->getUidColumn()->splitRowsWithValueLists();
+            $logbook->addLine('Found UID value lists in event data: splitting `' . $dataSheet->countRows() . '` rows in to `' . $applicableSheet->countRows() . '` rows with unique UIDs');
+        } else {
+            $applicableSheet = $dataSheet;
+        }
+        
         // Ignore the event if its data does not match restrictions
-        if ($dataSheet && $this->hasRestrictionConditions()) {
-            $dataSheet = $dataSheet->extract($this->buildNotifyIfDataMatchesConditions($event, $dataSheet, $oldSheet), true);
-            if ($dataSheet->isEmpty()) {
-                $this->skipEvent('**Skipping** event because of `notify_if_data_matches_conditions`', $event, $logbook);
-                return;
+        if ($applicableSheet && $this->hasRestrictionConditions()) {
+            $conditions = $this->buildNotifyIfDataMatchesConditions($event, $dataSheet, $oldSheet);
+            $logbook->addLine('Filtering input data because of `notify_if_data_matches_conditions`: `' . $conditions->__toString() . '`');
+            try {
+                $applicableSheet = $applicableSheet->extract($conditions, true);
+                if ($applicableSheet->isEmpty()) {
+                    $this->skipEvent('**Skipping** event because of `notify_if_data_matches_conditions`', $event, $logbook);
+                    return;
+                }
+            } catch (\Throwable $e) {
+                throw new BehaviorRuntimeError($this, 'Cannot apply conditions to input data to send notifications. ' . $e->getMessage(), null, $e, $logbook);
             }
-        }        
+        }
         
         // If everything is OK, generate UXON envelopes for the messages and send them
         $logbook->addSection('Sending notifications');
@@ -442,7 +457,7 @@ class NotifyingBehavior extends AbstractBehavior
         $e = null;
         if ($this->messageUxons !== null) {
             try {
-                $envelopes = $this->getMessageEnvelopes($this->messageUxons, $dataSheet, $phResolvers);
+                $envelopes = $this->getMessageEnvelopes($this->messageUxons, $applicableSheet, $phResolvers);
                 $logbook->addLine('Prepared ' . count($envelopes) . ' envelopes');
             } catch (\Throwable $e) {
                 $logbook->addException($e);
@@ -465,7 +480,6 @@ class NotifyingBehavior extends AbstractBehavior
             $this->isNotificationInProgress = false;
         }
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
-        return;
     }
     
     protected function skipEvent(string $reason, EventInterface $event, LogBookInterface $logbook)

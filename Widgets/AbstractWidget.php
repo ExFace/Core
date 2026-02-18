@@ -29,6 +29,7 @@ use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Widgets\Parts\Tours\TourStep;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Uxon\WidgetSchema;
 use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
@@ -185,6 +186,8 @@ abstract class AbstractWidget implements WidgetInterface
      * @var string|UxonObject
      */
     private $extendedFrom = null;
+    
+    private UxonObject|array $tourSteps = [];
 
     /**
      *
@@ -1895,5 +1898,37 @@ MD;
     public function getMetaObjectsEffectingThisWidget() : array
     {
         return [$this->getMetaObject()];
+    }
+
+    /**
+     * Tour steps to show on this widget
+     * 
+     * @uxon-property tour_steps
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourStep[]
+     * @uxon-template [{"title": ""}]
+     * 
+     * @param UxonObject $arrayOfSteps
+     * @return WidgetInterface
+     */
+    protected function setTourSteps(UxonObject $arrayOfSteps) : WidgetInterface
+    {
+        $this->tourSteps = $arrayOfSteps;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see WidgetInterface::getTourSteps()
+     */
+    public function getTourSteps() : array
+    {
+        if ($this->tourSteps instanceof UxonObject) {
+            $uxon = $this->tourSteps;
+            $this->tourSteps = [];
+            foreach ($uxon as $stepUxon) {
+                $this->tourSteps[] = new TourStep($this, $stepUxon);
+            }
+        }
+        return $this->tourSteps;
     }
 }
