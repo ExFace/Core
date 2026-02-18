@@ -103,7 +103,10 @@ class CliTask extends GenericTask implements CliTaskInterface
      */
     public function getParameters() : array
     {
-        return array_merge($this->getCliArguments(), $this->getCliOptions());
+        // Overwrite CLI options with arguments on conflict. Conflicts happened on
+        // Windows when calling the action directly from CLI - arguments had 
+        // included the options too, but with `false` as value.
+        return array_merge($this->getCliOptions(), $this->getCliArguments());
     }
     
     /**

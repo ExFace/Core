@@ -22,29 +22,46 @@ use Transliterator;
 class StringDataType extends AbstractDataType
 {
     private $lengthMin = 0;
-    
-    private $lengthMax = null;
-    
-    private $regexValidator = null;
 
+    private $lengthMax = null;
+
+    private $regexValidatorGoodValue = null;
+    private $regexValidatorBadValue = null;
+    
     private $emptyAsNULL = false;
 
     /**
      * @return string|null
      */
-    public function getValidatorRegex() : ?string
+    public function getValidationRegexForGoodValues() : ?string
     {
-        return $this->regexValidator;
+        return $this->regexValidatorGoodValue;
     }
 
     /**
-     * Defines a regular expression to validate values of this data type.
+     * @deprecated use validation_regex_for_good_values instead!
+     * 
+     * @param string $regularExpression
+     * @return StringDataType
+     */
+    protected function setValidatorRegex($regularExpression)
+    {
+        return $this->setValidationRegexForGoodValues($regularExpression);
+    }
+
+    /**
+     * Regular expression for valid values of this data type - will trigger error if NOT matched. 
+     * 
+     * If the regex finds a match - it is a valid value. Otherwise, a validation error will be triggered.
+     * 
+     * There is also a `validation_regex_for_bad_values`, which triggers an error when matched. Both can 
+     * even be used in tandem.
      * 
      * Example:
-     * 
+     *
      * ```
      * {
-     *  "validator_regex": "/^..[+]...$/",
+     *  "validation_regex_for_good_values": "/^..[+]...$/",
      *  "validation_error_text": "The value must be formatted as follows: xx+xxx (e.g. `Ab+123`)!"
      * }
      * 
@@ -53,16 +70,58 @@ class StringDataType extends AbstractDataType
      * Use regular expressions compatible with PHP preg_match(). A good
      * tool to create and test regular expressions can be found here:
      * https://regex101.com/.
-     * 
-     * @uxon-property validator_regex
+     *
+     * @uxon-property validation_regex_for_good_values
      * @uxon-type string
-     * 
+     *
      * @param string $regularExpression
      * @return StringDataType
      */
-    public function setValidatorRegex($regularExpression)
+    public function setValidationRegexForGoodValues(string $regularExpression) : StringDataType
     {
-        $this->regexValidator = $regularExpression;
+        $this->regexValidatorGoodValue = $regularExpression;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getValidationRegexForBadValues() : ?string
+    {
+        return $this->regexValidatorBadValue;
+    }
+
+    /**
+     * Regular expression for bad values of this data type - will trigger error if matched.
+     * 
+     * If the regex finds any match, validation fails. Some facades will show the detected matches as "issues". 
+     * To support this write your regex in such a way that it identifies meaningful issues with a given input string.
+     *
+     * Can be used in tandem with `validation_regex_for_good_values`.
+     * 
+     * Example:
+     *
+     * ```
+     * {
+     *  "validation_regex_for_bad_values": "/[^0-9ÄÖÜäöüßA-Za-z-_,+= .#&§$']/",
+     *  "validation_error_text": "The string may only contain the following characters: Digits from `0-9`, Umlauts `ÄÖÜäöüß`, `A-Z`, `a-z` and these special characters `-_,+= .#&§$'`"
+     * }
+     *
+     * ```
+     *
+     * Use regular expressions compatible with PHP preg_match(). A good
+     * tool to create and test regular expressions can be found here:
+     * https://regex101.com/.
+     *
+     * @uxon-property validation_regex_for_bad_values
+     * @uxon-type string
+     *
+     * @param string $regularExpression
+     * @return StringDataType
+     */
+    protected function setValidationRegexForBadValues(string $regularExpression) : StringDataType
+    {
+        $this->regexValidatorBadValue = $regularExpression;
         return $this;
     }
     
@@ -86,8 +145,12 @@ class StringDataType extends AbstractDataType
         if ($lengthCond) {
             $text .= $translator->translate('DATATYPE.VALIDATION.LENGTH_CONDITION', ['%condition%' => $lengthCond]);
         }
-        if ($this->getValidatorRegex()) {
-            $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION', ['%regex%' => $this->getValidatorRegex()]);
+        if ($this->getValidationRegexForGoodValues()) {
+            $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION', ['%regex%' => $this->getValidationRegexForGoodValues()]);
+        }
+        if ($this->getValidationRegexForBadValues()) {
+            $text = ($text ? $text . ' ' . $and . ' ' : '') . 
+                $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION_NEGATIVE', ['%regex%' => $this->getValidationRegexForBadValues()]);
         }
         
         if ($text !== '') {
@@ -260,19 +323,52 @@ class StringDataType extends AbstractDataType
         }
         
         // validate against regex
-        if ($this->getValidatorRegex()){
+        if ($this->getValidationRegexForBadValues()){
+            $matches = [];
+
             try {
-                $match = preg_match($this->getValidatorRegex(), $value);
+                preg_match_all($this->getValidationRegexForBadValues(), $value, $matches);
+            } catch (\Throwable $e) {
+                throw $this->createValidationRuleError($value, 'Validation regex "' . $this->getValidationRegexForBadValues() . '" is invalid!');
+            }
+
+            if (!empty($matches)){
+                $excValue = '';
+                if (! $this->isSensitiveData()) {
+                    $excValue = '"' . $value . '" ';
+                }
+
+                $issues = [];
+
+                foreach ($matches as $matchGroup) {
+                    for($i = 0; $i < count($matchGroup); $i++){
+                        $val = $matchGroup[$i];
+                        $issues[$val] = $val;
+                    }
+                }
+
+                if(!empty($issues)) {
+                    throw $this->createValidationRuleError($value, 'Value ' . $excValue .
+                        'must not match the regular expression mask "' . $this->getValidationRegexForBadValues() .
+                        '" of data type ' . $this->getAliasWithNamespace() . '! The following issues were detected: "' .
+                        implode(', ', $issues) . '".', false);
+                }
+            }
+        }
+
+        if ($this->getValidationRegexForGoodValues()){
+            try {
+                $match = preg_match($this->getValidationRegexForGoodValues(), $value);
             } catch (\Throwable $e) {
                 $match = 0;
             }
-            
+
             if (! $match){
                 $excValue = '';
                 if (! $this->isSensitiveData()) {
-                    $excValue = '"' . $value . '"';
+                    $excValue = '"' . $value . '" ';
                 }
-                throw $this->createValidationRuleError($value, 'Value ' . $excValue . ' does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
+                throw $this->createValidationRuleError($value, 'Value ' . $excValue . 'does not match the regular expression mask "' . $this->getValidationRegexForGoodValues() . '" of data type ' . $this->getAliasWithNamespace() . '!', false);
             }
         }
         
@@ -350,8 +446,8 @@ class StringDataType extends AbstractDataType
         if (null !== $val = $this->getLengthMax()) {
             $uxon->setProperty('length_max', $val);
         }
-        if (null !== $val = $this->regexValidator) {
-            $uxon->setProperty('validation_regex', $this->regexValidator);
+        if (null !== $val = $this->regexValidatorGoodValue) {
+            $uxon->setProperty('validation_regex', $this->regexValidatorGoodValue);
         }
         return $uxon;
     }
@@ -582,7 +678,8 @@ class StringDataType extends AbstractDataType
      * @param int $length
      * @param bool $stickToWords prevents words getting cut in the middle
      * @param bool $ellipsis adds `...` at the end if the string is really shortened
-     * @param bool $endHint adds `[truncated <original length> characters]` if the string is really shortened (usefull for debug output)
+     * @param bool $endHint adds `[truncated <original length> characters]` if the string is really shortened (usefull
+     *     for debug output)
      * @return string
      */
     public static function truncate(string $string, int $length, bool $stickToWords = false, bool $removeLineBreaks = false, bool $ellipsis = false, bool $endHint = false) : string
@@ -718,7 +815,8 @@ class StringDataType extends AbstractDataType
      * - `transliterate('Änderung')` -> Anderung
      * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
      * - `transliterate('ä/B', ':: Any-Latin; [:Punctuation:] Remove;')` -> a b
-     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;')` -> aufgaben im uberblick
+     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove;
+     * :: Lower(); :: NFC;')` -> aufgaben im uberblick
      * 
      * @link https://unicode-org.github.io/icu/userguide/transforms/general/
      * 
@@ -747,7 +845,8 @@ class StringDataType extends AbstractDataType
      * Returns TRUE if the given string is one enclosed is quotes (single or double quotes) and FALSE otherwise
      * 
      * Currently this does not check, if there are also some closing quotes in the middle of the string.
-     * Possible enhanced solution: https://stackoverflow.com/questions/74963883/php-regular-expression-to-grab-values-enclosed-in-double-quotes
+     * Possible enhanced solution:
+     * https://stackoverflow.com/questions/74963883/php-regular-expression-to-grab-values-enclosed-in-double-quotes
      * 
      * @param string $str
      * @return bool

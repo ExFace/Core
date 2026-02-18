@@ -280,11 +280,21 @@ class EncryptedDataType extends StringDataType
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\DataTypes\StringDataType::getValidatorRegex()
+     * @see \exface\Core\DataTypes\StringDataType::getValidationRegexForGoodValues()
      */
-    public function getValidatorRegex() : ?string
+    public function getValidationRegexForGoodValues() : ?string
     {
-        return parent::getValidatorRegex() ?? ($this->getInnerDataType() instanceof StringDataType ? $this->getInnerDataType()->getValidatorRegex() : null);
+        return parent::getValidationRegexForGoodValues() ?? ($this->getInnerDataType() instanceof StringDataType ? $this->getInnerDataType()->getValidationRegexForGoodValues() : null);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\StringDataType::getValidationRegexForGoodValues()
+     */
+    public function getValidationRegexForBadValues() : ?string
+    {
+        return parent::getValidationRegexForBadValues() ?? ($this->getInnerDataType() instanceof StringDataType ? $this->getInnerDataType()->getValidationRegexForBadValues() : null);
     }
     
     /**

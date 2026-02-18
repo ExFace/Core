@@ -472,6 +472,15 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function hasValueLists() : bool;
 
     /**
+     * Splits values lists in this column and adds a new row to this data sheet for every split value
+     * 
+     * Thus, if the data sheet has a UID column with the value `1024,1025` and we split values lists
+     * of the UID column, the existing row will keep its first value (`1024`) and a copy of the row
+     * will be appended right next to it with the remaining value `2025`. Thus, we will split the original 
+     * row into as many rows as it had delimited values.
+     * 
+     * **NOTE:** this method modifies the data the data sheet, normally increasing the number of rows
+     * 
      * @return DataColumnInterface
      */
     public function splitRowsWithValueLists() : DataColumnInterface;
