@@ -151,7 +151,8 @@ class TourStep implements TourStepInterface
     protected function setSide(string $side): TourStepInterface
     {
         $constant = 'self::SIDE_' . strtoupper($side);
-        if (!defined($constant)) { //TODO SR: das "WidgetPropertyInvalidValueError" hat hier nicht funktioniert
+        if (!defined($constant)) { 
+            //TODO: the "WidgetPropertyInvalidValueError" have not worked here. Find a better error to drop.
             throw new Error("Invalid tour step side value: $side. Allowed values are: top, right, bottom, left.");
         }
         $this->side = $side;
