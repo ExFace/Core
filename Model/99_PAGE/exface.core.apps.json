@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-12 14:04:30",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-06-24 14:11:08",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2026-02-19 15:03:24",
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",
@@ -122,7 +122,7 @@
             },
             {
                 "widget_type": "MenuButton",
-                "caption": "Puplish",
+                "caption": "Publish",
                 "icon": "share-square-o",
                 "buttons": [
                     {
@@ -150,6 +150,92 @@
                     },
                     {
                         "action_alias": "axenox.PackageManager.ComposerCleanupPreviousActions"
+                    },
+                    {
+                        "caption": "Logs",
+                        "icon": "info-circle",
+                        "action": {
+                            "alias": "exface.core.ShowDialog",
+                            "dialog": {
+                                "widgets": [
+                                    {
+                                        "object_alias": "axenox.PackageManager.APP_INSTALL_LOG",
+                                        "widget_type": "DataTable",
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "CREATED_ON",
+                                                "direction": "desc"
+                                            },
+                                            {
+                                                "attribute_alias": "CREATED_BY_USER",
+                                                "direction": "asc"
+                                            }
+                                        ],
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "CREATED_BY_USER",
+                                                "caption": "User"
+                                            },
+                                            {
+                                                "attribute_alias": "CREATED_ON",
+                                                "caption": "Date"
+                                            },
+                                            {
+                                                "attribute_alias": "APP_OID",
+                                                "caption": "App"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_LOG_ID"
+                                            },
+                                            {
+                                                "attribute_alias": "MESSAGE_TYPE"
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "MESSAGE_TYPE"
+                                            },
+                                            {
+                                                "attribute_alias": "CREATED_BY_USER__LABEL",
+                                                "caption": "User"
+                                            },
+                                            {
+                                                "attribute_alias": "CREATED_ON",
+                                                "caption": "Date"
+                                            },
+                                            {
+                                                "attribute_alias": "APP_OID__ALIAS",
+                                                "caption": "App"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_LOG_ID"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_MESSAGE"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_DEBUG_WIDGET",
+                                                "hidden": true
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "action_alias": "exface.core.ShowObjectEditDialog",
+                                                "caption": "Details",
+                                                "icon": "info-circle",
+                                                "bind_to_double_click": true
+                                            },
+                                            {
+                                                "action_alias": "axenox.PackageManager.ShowMonitorError"
+                                            },
+                                            {
+                                                "action_alias": "axenox.PackageManager.ShowMonitorErrorWidget"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
                     }
                 ]
             },
