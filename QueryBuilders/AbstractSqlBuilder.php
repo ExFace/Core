@@ -996,8 +996,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
 
-            $beforeSql = $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '');
-            $afterSql = $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '');
+            $beforeSql = $before_each_insert_sqls !== null ?
+                $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '') : 
+                null;
+            
+            $afterSql = $after_each_insert_sqls !== null ?
+                $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '') :
+                null;
+            
             if ($beforeSql || $afterSql) {
                 $query = $data_connection->runSql($beforeSql . $sql . '; ' . $afterSql, true);
                 if ($uidAddress && $customUid === null && $rRow = $query->getResultArray()[0]) {
@@ -1282,6 +1288,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $uidConditionGrp = ConditionGroupFactory::createAND($this->getMainObject());
             $uidConditionGrp->addConditionFromAttribute($uidAttr, '', ComparatorDataType::IN, false);
+            $affected_rows = 0;
             foreach ($updates_by_uid as $uid => $row) {
                 $uidConditionGrp->getConditions()[0]->setValue($uid);
                 $uidWhere = $this->buildSqlWhere(
