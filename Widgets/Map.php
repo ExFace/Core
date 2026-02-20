@@ -961,6 +961,11 @@ class Map extends AbstractWidget implements
      */
     public function getAutoZoomDefaults() : ?UxonObject
     {
+        if ($this->autoZoomDefaults === null && count($this->getDataLayers())) {
+            $this->autoZoomDefaults = new UxonObject([
+                'zoom_in' => true
+            ]);
+        }
         return $this->autoZoomDefaults;
     }
 }

@@ -4,12 +4,14 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Traits\ICanBypassDataAuthorizationTrait;
+use exface\Core\CommonLogic\Traits\iCheckInputRowsCountTrait;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -141,6 +143,8 @@ use Throwable;
  */
 class CallActionBehavior extends AbstractBehavior
 {
+    use iCheckInputRowsCountTrait;
+    
     const PREVENT_DEFAULT_ALWAYS = 'always';
     
     const PREVENT_DEFAULT_NEVER = 'never';
@@ -330,7 +334,7 @@ class CallActionBehavior extends AbstractBehavior
 			$logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
 		}
 
-        // If these notifications need to be sent after all transactions commit, add a listener
+        // If this action need to be sent after all transactions commit, add a listener
         // to the OnStop event of the workbench and remember the original event, that triggered
         // the notifications. Just call this whole method again then, but remove the postponing-flag.
         if ($this->getCallAfterAllActionsComplete() === true) {
@@ -340,7 +344,7 @@ class CallActionBehavior extends AbstractBehavior
                 $this->onEventCallAction($event, null, null, $transaction);
                 $transaction->commit();
             });
-            $this->skipEvent('**Delegating** to `OnBeforeStop` event because of `notify_after_all_actions_complete:true`', $event, $logbook);
+            $this->skipEvent('**Delegating** to `OnBeforeStop` event because of `call_after_all_actions_complete:true`', $event, $logbook);
             return;
         }
         
@@ -374,6 +378,13 @@ class CallActionBehavior extends AbstractBehavior
             $event->preventDefault();
         }
         
+        $inputRowsValidationResult = $this->validateInputRowCount($inputSheet);
+        if($inputRowsValidationResult !== true) {
+            $logbook->addLine('**Skipped** ' . $inputRowsValidationResult);
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+            return;
+        }
+
         try {
             // See if relevant
             if ($this->hasRestrictionConditions()) {
@@ -386,9 +397,9 @@ class CallActionBehavior extends AbstractBehavior
                     return;
                 }
             }
-            
+
+            // Apply the input mapper if one is defined and the input data was not fetched from a different event,
             // where the mapper was applied already. 
-            // Apply the input mapper if one is defined ant the input data was not fetched from a different event,
             if ($customInputEvent === null && null !== $mapper = $this->getInputDataMapper($inputSheet->getMetaObject())) {
                 $inputSheet = $mapper->map($inputSheet, null, $logbook);
             }
@@ -896,7 +907,7 @@ class CallActionBehavior extends AbstractBehavior
      *
      * @uxon-property input_data_mapper
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
-     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to":""}]}
      * 
      * @param UxonObject|null $mapper
      * @return $this
@@ -921,11 +932,18 @@ class CallActionBehavior extends AbstractBehavior
      * @uxon-default false
      *
      * @param bool $value
-     * @return NotifyingBehavior
+     * @return CallActionBehavior
      */
-    public function setCallAfterAllActionsComplete(bool $value) : NotifyingBehavior
+    public function setCallAfterAllActionsComplete(bool $value) : CallActionBehavior
     {
         $this->callAfterAllActionsComplete = $value;
         return $this;
+    }
+
+    protected function skipEvent(string $reason, EventInterface $event, LogBookInterface $logbook)
+    {
+        $logbook->addLine($reason);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+        return;
     }
 }
