@@ -52,12 +52,14 @@ class DriverJsTourDriver implements TourDriverInterface
     public function getTourSteps(TourInterface $tour): array
     {
         $steps = [];
+        $tourWaypoints = explode("&", $tour->getWaypointRoute());
+        $takeAllWaypoints = in_array("~all", $tourWaypoints);
+        
         foreach ($this->steps as $step) {
             // Filter only steps, that have matching waypoints
             $stepWaypoints = $step->getWaypoints();
-            $tourWaypoints = explode("&", $tour->getWaypointRoute());
             
-            if(!empty(array_intersect($tourWaypoints, $stepWaypoints)) || in_array("~all", $tourWaypoints)) {
+            if ($takeAllWaypoints || !empty(array_intersect($tourWaypoints, $stepWaypoints))) {
                 $steps[] = $step;
             }
         }
@@ -86,7 +88,7 @@ class DriverJsTourDriver implements TourDriverInterface
     }
 
     /**
-     * This method builds the JavaScript code to start the tour using driver.js library, 
+     * Builds the JavaScript code to start the tour using driver.js library, 
      * based on the steps of the given tour.
      * 
      * @param TourInterface $tour
@@ -103,8 +105,8 @@ class DriverJsTourDriver implements TourDriverInterface
                 {
                     element: '#{$step->getElementId($this->getFacade())}',
                     popover: {
-                      title: '{$step->getTitle()}',
-                      description: '{$step->getBody()}',
+                      title: '{$this->escapeString($step->getTitle())}',
+                      description: '{$this->escapeString($step->getBody())}',
                       side: '{$step->getSide()}',
                       align: '{$step->getAlign()}',
                     }

@@ -140,6 +140,8 @@ class Tour implements TourInterface, iHaveIcon
         return $this->description;
     }
     
+    //TODO: Improve the documentation here. Currently, the tour description is not used in the UI
+    // because the MenuDropdown, which displays the tour list, cannot display descriptions.
     /**
      * The description of the tour.
      * 
@@ -165,7 +167,7 @@ class Tour implements TourInterface, iHaveIcon
     }
 
     /**
-     * Show a progress indicator in the tour popover, which indicates the current step number and the total number of steps in the tour.
+     * If true, a progress indicator will appear in the tour popover, which indicates the current step number and the total number of steps in the tour.
      * 
      * @uxon-property show_progress
      * @uxon-type boolean

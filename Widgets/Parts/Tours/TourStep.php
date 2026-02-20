@@ -221,7 +221,7 @@ class TourStep implements TourStepInterface
     }
 
     /**
-     * The order number of the step, which defines the order of the steps in the tour.
+     * The order number of the step, which define at which point in the tour this step will be displayed to the user.
      * Steps with defined order numbers will be sorted by their order number,
      * while steps without order number will be sorted in the order they are defined in the uxon configuration.
      * 
