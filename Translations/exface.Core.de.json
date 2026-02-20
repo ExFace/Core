@@ -423,7 +423,11 @@
     "TASK.QUEUE.STATUS_DONE_MANUALLY": "Erledigt manuell",
     "TASK.QUEUE.STATUS_DONE": "Erledigt",
     "TASK.QUEUE.TYPE_SYNC": "Synchron",
-    "TASK.QUEUE.TYPE_ASYNC": "Asynchron",    
+    "TASK.QUEUE.TYPE_ASYNC": "Asynchron",
+
+  "TOUR.STEP.ACTION.NEXT": "Weiter",
+  "TOUR.STEP.ACTION.PREVIOUS": "Zurück",
+  "TOUR.STEP.ACTION.DONE": "Fertig",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",

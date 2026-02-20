@@ -438,8 +438,12 @@
     "TASK.QUEUE.STATUS_DONE_MANUALLY": "Done manually",
     "TASK.QUEUE.STATUS_DONE": "Done",
     "TASK.QUEUE.TYPE_SYNC": "Sync",
-    "TASK.QUEUE.TYPE_ASYNC": "Async",  
-    
+    "TASK.QUEUE.TYPE_ASYNC": "Async",
+
+  "TOUR.STEP.ACTION.NEXT": "Next",
+  "TOUR.STEP.ACTION.PREVIOUS": "Previous",
+  "TOUR.STEP.ACTION.DONE": "Done",
+  
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_Y": "Y",
