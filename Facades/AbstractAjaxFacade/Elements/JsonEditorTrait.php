@@ -1372,13 +1372,13 @@ CSS;
         
         function {$funcPrefix}_getJsonPathViewContent(){
             var jsonPathViewContent =
-                '<div>' +
+                '<div style="display:flex; gap:8px; align-items:center;">' +
                 '   <textarea id="jsonPathView" ' +
                 '      class="preset-path uxoneditor-input"' +
                 '      readonly> ' +
                 '   </textarea>' +
                 '   <div>' +
-                '      <button id="jsonPathCopyBtn">Copy</button>' +
+                '      <button id="jsonPathCopyBtn" class="uxoneditor-btn">Copy</button>' +
                 '   </div>' +
                 '</div>';
             return jsonPathViewContent;
@@ -1394,6 +1394,14 @@ CSS;
                 var text = pathView.value || '';
                 
                 exfTools.clipboard.copyText(text);
+
+                //TODO SR: Call the "EuiAvstractElement.php::buildJsShowMessageSuccess()" instead.
+/*                $.messager.show({
+                    title: "JSON-Pfad",
+                    msg: "Erfolgreich kopiert.",
+                    timeout:5000,
+                    showType: 'slide'
+                });*/
             });
         }
         
