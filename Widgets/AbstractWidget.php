@@ -1905,7 +1905,7 @@ MD;
      * 
      * @uxon-property tour_steps
      * @uxon-type \exface\Core\Widgets\Parts\Tours\TourStep[]
-     * @uxon-template [{"title": ""}]
+     * @uxon-template [{"order_number":"","waypoints":[""],"title":"","body":"","side":"bottom", "align": "center"}]
      * 
      * @param UxonObject $arrayOfSteps
      * @return WidgetInterface
