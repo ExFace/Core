@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Contexts\DebugContext;
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Interfaces\Widgets\iCanBlink;
 use exface\Core\Widgets\Icon;
@@ -336,7 +337,6 @@ JS;
     
     protected function buildJsLeafletDebugControlGetCenter() : string
     {
-        //TODO: the "hasContext()" trows an exception, so this call is always false and we never see the button.
         if (!$this->getWidget()->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
             return '';
         }
