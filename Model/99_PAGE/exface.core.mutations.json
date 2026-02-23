@@ -140,6 +140,9 @@
                                         "attribute_alias": "MUTATION_TYPE__LABEL"
                                     },
                                     {
+                                        "attribute_alias": "CONFIG_BASE_OBJECT__LABEL"
+                                    },
+                                    {
                                         "attribute_group_alias": "~CUSTOM"
                                     },
                                     {
@@ -147,6 +150,12 @@
                                     },
                                     {
                                         "attribute_alias": "CREATED_BY_USER__LABEL"
+                                    },
+                                    {
+                                        "attribute_alias": "MODIFIED_ON"
+                                    },
+                                    {
+                                        "attribute_alias": "MODIFIED_BY_USER__LABEL"
                                     },
                                     {
                                         "calculation": "=Left(DESCRIPTION, 60)"
