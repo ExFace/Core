@@ -996,11 +996,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
 
-            $beforeSql = $before_each_insert_sqls !== null ?
+            $beforeSql = is_array($before_each_insert_sqls) ?
                 $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '') : 
                 null;
             
-            $afterSql = $after_each_insert_sqls !== null ?
+            $afterSql = is_array($after_each_insert_sqls) ?
                 $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '') :
                 null;
             
