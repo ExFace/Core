@@ -124,7 +124,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
                 $e = new DataQueryConstraintError($query, $message, null, $err->setAlias('73II64M'));
             */
             default:
-                $e = new DataQueryFailedError($query, 'PostgreSQL query failed: ' . $message, null, '6T2T2UI');
+                $e = new DataQueryFailedError($query, 'PostgreSQL query failed: ' . $message, '6T2T2UI');
         }
         return $e;
     }
