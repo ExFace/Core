@@ -7,6 +7,13 @@ use exface\Core\Interfaces\Tours\TourGuideInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 
+/**
+ * TourGuide is a collection of UI tours. 
+ * If at least one tour is defined, a tour guide menu dropdown will be shown at the top toolbar 
+ * and will contain all the defined tours.
+ * 
+ * @author Sergej Riel
+ */
 class TourGuide implements TourGuideInterface
 {
     use ICanBeConvertedToUxonTrait;
@@ -23,9 +30,18 @@ class TourGuide implements TourGuideInterface
     }
 
     /**
+     * Defines the UI tours. If at least one tour is defined, a tour guide menu dropdown will be shown at the top toolbar and will contain all the defined tours.
+     * waypoints: defines witch waypoints this tour will visit.
+     * 
+     *  Examples:
+     * 
+     *  - `news` - only steps with the `news` waypoint
+     *  - `~all` - all steps
+     *  - `news&intro` - steps with either `news` or `intro` waypoints
+     * 
      * @uxon-property tours
      * @uxon-type \exface\Core\Widgets\Parts\Tours\Tour
-     * @uxon-template [{"title": "", "waypoints": ""}]
+     * @uxon-template [{"title": "", "waypoints": "~all"}]
      * 
      * @param UxonObject $arrayOfTourDefs
      * @return TourGuideInterface
@@ -37,7 +53,10 @@ class TourGuide implements TourGuideInterface
         }
         return $this;
     }
-    
+
+    /**
+     * @return array|\exface\Core\Interfaces\Tours\TourInterface[]
+     */
     public function getTours() : array
     {
         return $this->tours;

@@ -700,7 +700,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->exportUxonObjectViaTrait();
+        $uxon = $this->exportUxonObjectViaTrait() ?? new UxonObject();        
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
         if ($this->hasInputDataPreset()) {
             $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
@@ -2018,7 +2018,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * Set to FALSE to disable built-in confirmations.
      * 
-     * @uxon-property confirmation_for_unsaved_data
+     * @uxon-property confirmation_for_unsaved_changes
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
      * @uxon-template {"widget_type": "ConfirmationMessage", "text": ""}
      * 
