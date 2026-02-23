@@ -3558,6 +3558,13 @@ class DataSheet implements DataSheetInterface
         return $diffRows;
     }
 
+    /**
+     * Like `getRowsDiff()`, but with additional info on the diffed rows.
+     * 
+     * @param DataSheetInterface $otherSheet
+     * @param array              $exclude
+     * @return array
+     */
     public function getRowsDiffWithInfo(DataSheetInterface $otherSheet, array $exclude = []) : array
     {
         $diffRows = [];
@@ -3598,6 +3605,7 @@ class DataSheet implements DataSheetInterface
                 $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->getValues(false)));
             }
         }
+        
         $diffIdxs = array_unique($diffIdxs);
         sort($diffIdxs);
         foreach ($diffIdxs as $i) {

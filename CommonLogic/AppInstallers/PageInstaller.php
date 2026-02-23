@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
-use exface\Core\CommonLogic\DataSheets\DataSorter;
-use exface\Core\CommonLogic\DataSheets\DataSorterList;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Factories\MetaObjectFactory;
@@ -282,7 +280,15 @@ class PageInstaller extends AbstractAppInstaller
             yield $idt.$idt . 'No changes found' . PHP_EOL;
         }
     }
-    
+
+    /**
+     * Loads stored page data from files and returns all file objects loaded this way.
+     * 
+     * NOTE: The returned elements still need to be instantiated.
+     * 
+     * @param string $pathAbsolute
+     * @return array|bool
+     */
     protected function loadPageFiles(string $pathAbsolute) : array|bool
     {
         // Find pages files. 
@@ -293,7 +299,14 @@ class PageInstaller extends AbstractAppInstaller
         // Make sure, the array only contains existing files.
         return array_filter($files, 'is_file');
     }
-    
+
+    /**
+     * Instantiated a UiPage from a given file.
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string             $file
+     * @return UiPageInterface
+     */
     protected function getPageFromFile(WorkbenchInterface $workbench, string $file) : UiPageInterface
     {
         try {
@@ -491,7 +504,17 @@ class PageInstaller extends AbstractAppInstaller
         
         yield $idt . 'Exported ' . count($pages) . ' pages successfully.' . PHP_EOL;
     }
-    
+
+    /**
+     * Compares a set pages fore changes compared to any pages stored in the temp folder.
+     * 
+     * Pairs are identified via UID and then compared column by column.
+     * TODO: At the moment, pages instantiated from database are formatted differently than those from files.
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param array              $pages
+     * @return array
+     */
     protected function diffPages(WorkbenchInterface $workbench, array $pages) : array
     {
         $tempPath = $this->getTempPath();
@@ -694,7 +717,10 @@ class PageInstaller extends AbstractAppInstaller
         }
         return $source_absolute_path . DIRECTORY_SEPARATOR . 'Install' . DIRECTORY_SEPARATOR . 'Pages' . DIRECTORY_SEPARATOR . $languageCode;
     }
-    
+
+    /**
+     * @return UiPageSelectorInterface
+     */
     protected function getServerRootSelector() : UiPageSelectorInterface
     {
         if ($this->rootSelector === null) {
@@ -703,11 +729,18 @@ class PageInstaller extends AbstractAppInstaller
         return $this->rootSelector;
     }
 
+    /**
+     * @return string|null
+     */
     public function getTempPath() : ?string
     {
         return $this->tmpPath;
     }
 
+    /**
+     * @param string $tmpPath
+     * @return $this
+     */
     public function setTempPath(string $tmpPath) : PageInstaller
     {
         $this->tmpPath = $tmpPath;
