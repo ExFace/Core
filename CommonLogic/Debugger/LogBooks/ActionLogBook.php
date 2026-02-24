@@ -318,6 +318,26 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
         $this->logBook->addLine($text, $indent, $section);
         return $this;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::continueLine()
+     */
+    public function continueLine(string $text): LogBookInterface
+    {
+        $this->logBook->continueLine($text);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getLineActive()
+     */
+    public function getLineActive() : ?string
+    {
+        return $this->logBook->getLineActive();
+    }
 
     /**
      * 

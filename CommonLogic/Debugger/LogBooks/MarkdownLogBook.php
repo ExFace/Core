@@ -54,6 +54,38 @@ class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
         $this->lines[$this->getSectionKey($section)][] = ['indent' => $this->currentIndent + ($indent ?? 0), 'text' => $text];
         return $this;
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::continueLine()
+     */
+    public function continueLine(string $text): LogBookInterface
+    {
+        $sectionKey = $this->currentSection ?? $this->getSectionKey();
+        if (empty($this->lines[$sectionKey])) {
+            return $this->addLine($text);
+        }
+        $lineKey = count($this->lines[$sectionKey] ?? []) - 1;
+        $this->lines[$sectionKey][$lineKey]['text'] = $this->lines[$sectionKey][$lineKey]['text'] . $text;
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getLineActive()
+     */
+    public function getLineActive() : ?string
+    {
+        if ($this->currentSection === null) {
+            return null;
+        }
+        if (empty($this->lines[$this->currentSection])) {
+            return null;
+        }
+        return $this->lines[$this->currentSection][array_key_last($this->lines[$this->currentSection])]['text'] ?? null;
+    }
     
     /**
      * 
