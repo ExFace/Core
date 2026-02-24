@@ -3,6 +3,7 @@ namespace exface\Core\ModelLoaders;
 
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Events\Model\OnBeforeDataTypeLoadedEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
 use exface\Core\Events\Model\OnBeforeSnippetLoadedEvent;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
@@ -1168,9 +1169,35 @@ SQL;
             return $cache->copy();
         } elseif (! empty($cache)) {
             $uxon = UxonObject::fromJson($cache['config_uxon']);
-            $default_editor_uxon = UxonObject::fromJson($cache['default_editor_uxon']);
-            $default_display_uxon = UxonObject::fromJson($cache['default_display_uxon']);
-            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_editor_uxon, $default_display_uxon);
+            $uxon->setProperty('name', $cache['name']);
+            if ($val = $cache['default_editor_uxon']) {
+                $uxon->setProperty('default_editor_widget', UxonObject::fromJson($val));
+            }
+            if ($val = $cache['default_display_uxon']) {
+                $uxon->setProperty('default_display_widget', UxonObject::fromJson($val));
+            }
+            if ($val = $cache['short_description']) {
+                $uxon->setProperty('short_description', $val);
+            }
+            if ($val = $cache['validation_error_code']) {
+                $uxon->setProperty('validation_error_code', $val);
+            }
+            if ($val = $cache['validation_error_text']) {
+                $uxon->setProperty('validation_error_text', $val);
+            }
+
+            $this->getWorkbench()->eventManager()->dispatch(
+                new OnBeforeDataTypeLoadedEvent(
+                    $this->getWorkbench(),
+                    $cache['prototype'],
+                    $cache['data_type_alias'],
+                    $cache['oid'],
+                    $cache['app_alias'],
+                    $uxon,
+                )
+            );
+            
+            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon);
             $this->data_types_by_uid[$cache['oid']] = $data_type;
             return $data_type;
         } else {

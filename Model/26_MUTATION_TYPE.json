@@ -135,6 +135,20 @@
             "NAME": "Snippet mutation",
             "APP": "0x31000000000000000000000000000000",
             "MUTATION_TARGET": "0x11f0a3af13dde67ca3af025041000001"
+        },
+        {
+            "_EXPORT_SUMMARY": "Data type mutation",
+            "CREATED_ON": "2026-02-24 11:50:23",
+            "MODIFIED_ON": "2026-02-24 11:50:23",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f1bf099eaa4702bf09025041000001",
+            "MUTATION_POINT_FILE": "exface/core/Mutations/MutationPoints/DataTypeMutationPoint.php",
+            "MUTATION_PROTOTYPE_FILE": "exface/core/Mutations/Prototypes/GenericUxonMutation.php",
+            "DESCRIPTION": "",
+            "NAME": "Data type mutation",
+            "APP": "0x31000000000000000000000000000000",
+            "MUTATION_TARGET": "0x11f1b7729658ce34b772025041000001"
         }
     ],
     "totals_rows": [],
