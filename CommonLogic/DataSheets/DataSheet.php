@@ -1179,7 +1179,7 @@ class DataSheet implements DataSheetInterface
             // relation paths. Direct attributes will produce an empty relation path - `""`, so direct
             // attributes will only will examied once too.
             $rel_path = $col->getAttribute()->getRelationPath()->toString();
-            if ($processed_relations[$rel_path]) {
+            if (array_key_exists($rel_path, $processed_relations)) {
                 continue;
             }
             
