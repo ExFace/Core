@@ -851,6 +851,8 @@ class Map extends AbstractWidget implements
     
     /**
      * Set to FALSE to hide the zoom and home controls from the map.
+     * - zoom controls are the "+" and "-" buttons to zoom in and out.
+     * - home control is the button to reset the view to the initial center and zoom level.
      * 
      * @uxon-property show_zoom_controls
      * @uxon-type boolean
