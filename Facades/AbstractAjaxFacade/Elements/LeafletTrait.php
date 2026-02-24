@@ -222,7 +222,7 @@ HTML;
     };
     {$this->buildJsLeafletVar()}._exfLayers = {};
     
-    {$this->buildJsLeafletControlHome()}
+    {$this->buildJsLeafletControlHomeZoom()}
     {$this->buildJsLeafletControlLocate()}
     {$this->buildJsLeafletDebugControlGetCenter()}
     {$this->buildJsLeafletControlScale()}
@@ -293,7 +293,7 @@ JS;
         return "L.control.locate().addTo({$this->buildJsLeafletVar()});";
     }
     
-    protected function buildJsLeafletControlHome() : string
+    protected function buildJsLeafletControlHomeZoom() : string
     {
         $widget = $this->getWidget();
         if (! $widget->getShowZoomControls()) {
@@ -1594,7 +1594,7 @@ JS;
                                     break;
                             }
                             
-                            // it saves the last initial autoZoom and is used in buildJsLeafletControlHome()
+                            // it saves the last initial autoZoom and is used in buildJsLeafletControlHomeZoom()
                             oMap.once('moveend', () => {
                               oMap._exfState.homeCenter = oMap.getCenter();
                               oMap._exfState.homeZoom = oMap.getZoom();
