@@ -128,6 +128,9 @@
     	"exface.Core.Model.OnMessageLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
     	],
+        "exface.Core.Model.OnBeforeDataTypeLoaded": [
+            "\\exface\\core\\Mutations\\MutationPoints\\DataTypeMutationPoint::onDataTypeLoadedApplyMutations"
+        ],
     	"exface.Core.Workbench.OnCleanUp": [
     		"\\exface\\Core\\CommonLogic\\Monitor::onCleanUp",
     		"\\exface\\Core\\CommonLogic\\Queue\\TaskQueueBroker::onCleanUp"
