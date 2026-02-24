@@ -362,8 +362,8 @@ class LookupMapping extends AbstractDataSheetMapping
             $toColVals[$iFromRow] = null;
             // Collect all from-values into a single string to quickly find out
             $fromRowValsJoined = '';
-            foreach ($matches as $match) {
-                $fromRowValsJoined .= trim($fromRow[$match['from']] ?? '');
+            foreach ($matches as $i => $match) {
+                $fromRowValsJoined .= trim($fromRow[$match['from']] ?? $matchesFrom[$i]['static'] ?? '');
             }
             // Look for matching lookup rows for this from-row
             foreach ($lookupSheet->getRows() as $lookupRow) {
@@ -375,7 +375,7 @@ class LookupMapping extends AbstractDataSheetMapping
                     $matchType = $matchesLookup[$iMatch]['lookupCol']->getDataType();
                     $matchVal = $lookupRow[$match['lookup']];
                     if (is_array($matchesFrom[$iMatch]) && array_key_exists('static', $matchesFrom[$iMatch])) {
-                        $fromVal = $matchesFrom['static'];
+                        $fromVal = $matchesFrom[$iMatch]['static'];
                     } else {
                         $fromVal = $fromRow[$matchesFrom[$iMatch]['fromColName'] ?? $match['from']];
                     }
