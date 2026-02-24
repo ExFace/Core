@@ -491,7 +491,7 @@ abstract class AbstractAction implements ActionInterface
     
     /**
      * A convenience-method, that contains all the things to be performed immediately after the 
-     * result was otained from the action.
+     * result was obtained from the action.
      * 
      * Do not override this method unless you really need to. If you do, make sure to perform
      * the things below or provide suitable replacements.
