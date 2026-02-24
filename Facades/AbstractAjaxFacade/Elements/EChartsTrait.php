@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
+use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
@@ -2354,8 +2355,18 @@ JS;
         }
         
         // Data type specific formatting
-        $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
-        
+        $type = $col->getDataType();
+        switch (true) {
+            case ($type instanceof NumberDataType) && $type->getPrecisionMax() === 0:
+                $originalType = $type;
+                $type = DataTypeFactory::createFromString($this->getWorkbench(), NumberDataType::class);
+                // 0.5 -> 0.5, 1.0 -> 1, 1.254 -> 1.25
+                $type->setPrecisionMax(2);
+                $type->setPrecisionMin(0);
+                break;
+        }
+        $formatter = $this->getFacade()->getDataTypeFormatter($type);
+
         return $formatter->buildJsFormatter($js_var_value);
     }
     
