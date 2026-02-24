@@ -850,7 +850,7 @@ class Map extends AbstractWidget implements
     }
     
     /**
-     * Set to FALSE to hide the ZoomBar plugin zoom controls on the map. The default zoom controls will be displayed instead.
+     * Set to FALSE to hide the zoom and home controls from the map.
      * 
      * @uxon-property show_zoom_controls
      * @uxon-type boolean
