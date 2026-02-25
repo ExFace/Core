@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Contexts\DebugContext;
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Interfaces\Widgets\iCanBlink;
 use exface\Core\Widgets\Icon;
@@ -220,8 +221,10 @@ HTML;
         initialZoom: {$this->getZoomInitial()}
     };
     {$this->buildJsLeafletVar()}._exfLayers = {};
-
+    
+    {$this->buildJsLeafletControlHomeZoom()}
     {$this->buildJsLeafletControlLocate()}
+    {$this->buildJsLeafletDebugControlGetCenter()}
     {$this->buildJsLeafletControlScale()}
     {$this->buildJsMapDrop()}
     {$this->buildJsLayers()}
@@ -270,6 +273,11 @@ JS;
         doubleClickZoom: false,";
         }
 
+        if (null !== $val = json_encode($widget->getShowZoomControls())) {
+            $mapOptions .= "
+        zoomControl: {$val},";
+        }
+        
         return $mapOptions;
     }
 
@@ -283,6 +291,116 @@ JS;
             return '';
         }
         return "L.control.locate().addTo({$this->buildJsLeafletVar()});";
+    }
+    
+    protected function buildJsLeafletControlHomeZoom() : string
+    {
+        $widget = $this->getWidget();
+        if (! $widget->getShowZoomControls()) {
+            return '';
+        }
+        $zoom = $this->getZoomInitial();
+        $lat = $widget->getCenterLatitude() ?? 0;
+        $lon = $widget->getCenterLongitude() ?? 0;
+        
+        return <<<JS
+
+            (function (map){
+                const controlGetHomeButton = L.Control.extend({
+                  options: {
+                    position: 'topleft' 
+                  },
+        
+                  onAdd(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const homeBtn = L.DomUtil.create('a', 'exf-leaflet-control-get-home', container);
+                    
+                    container.title = 'Show initial view';
+                    homeBtn.innerHTML = '<span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">' 
+                    + '<i class="fa fa-home" style="font-size:18px;"></i>'
+                    + '</span>';
+                    
+                    L.DomEvent.disableClickPropagation(homeBtn);
+                    L.DomEvent.on(homeBtn, 'click', () => {
+                      
+                        // Values after the initial autoZoom is done:
+                        let center = map._exfState.homeCenter;
+                        let zoom = map._exfState.homeZoom;
+                        
+                        if (!center || zoom === undefined) {
+                          // takes initial values
+                          center = [{$lat}, {$lon}];
+                          zoom = {$zoom};
+                        }
+                        
+                        if (center) {
+                          {$this->buildJsLeafletVar()}.setView(center, zoom);
+                        }        
+                    });
+                
+                    return container;
+                  }
+                });
+        
+                new controlGetHomeButton().addTo(map);
+            })({$this->buildJsLeafletVar()});
+
+JS;
+    }
+    
+    protected function buildJsLeafletDebugControlGetCenter() : string
+    {
+        if (!$this->getWidget()->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            return '';
+        }
+
+        $popupJs = $this->getWidget()->getShowPopupOnClick() ?  $this->buildJsLeafletPopup('"Current View Center Location"', $this->buildJsLeafletPopupList("[
+            {
+                caption: 'Latitude',
+                value: mapCenter.lat + '°'
+            },{
+                caption: 'Longitude',
+                value: mapCenter.lng + '°'
+            }, {
+                caption: 'Zoom',
+                value: mapZoom
+            }
+        ]"), "[mapCenter.lat,mapCenter.lng]") : '';
+        
+        
+        return <<<JS
+            
+            (function (map){
+                const controlGetCenterButton = L.Control.extend({
+                  options: {
+                    position: 'topleft' 
+                  },
+        
+                  onAdd(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const centerButton = L.DomUtil.create('a', 'exf-leaflet-control-get-center', container);
+                    
+                    container.title = 'Show View Center and Zoom';
+                    centerButton.innerHTML = '<span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">' 
+                    + '<i class="fa fa-info-circle" style="font-size:18px;"></i>' 
+                    + '</span>';
+                    
+                    L.DomEvent.disableClickPropagation(centerButton);
+                    L.DomEvent.on(centerButton, 'click', () => {
+                      const mapCenter = map.getCenter();
+                      const mapZoom = map.getZoom();
+                      
+                      {$popupJs}          
+                    });
+                
+                    return container;
+                  }
+                });
+        
+                new controlGetCenterButton().addTo(map);
+            })({$this->buildJsLeafletVar()});
+
+JS;
     }
 
     /**
@@ -1475,6 +1593,12 @@ JS;
                                     oMap.fitBounds(oBounds, {padding: [10,10], maxZoom: oMap.getZoom() });
                                     break;
                             }
+                            
+                            // it saves the last initial autoZoom and is used in buildJsLeafletControlHomeZoom()
+                            oMap.once('moveend', () => {
+                              oMap._exfState.homeCenter = oMap.getCenter();
+                              oMap._exfState.homeZoom = oMap.getZoom();
+                            });
                         }
                 	},100);
 

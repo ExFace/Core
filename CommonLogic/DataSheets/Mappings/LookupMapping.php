@@ -124,6 +124,8 @@ class LookupMapping extends AbstractDataSheetMapping
     private string $notFoundBehavior = 'leave_empty';
     private bool $stopOnFirstMiss = false;
     private ?string $fallbackValue = null;
+    private ?DataSheetInterface $lookupSheet = null;
+    private ?UxonObject $lookupSheetUxon = null;
 
     /**
      * 
@@ -253,7 +255,7 @@ class LookupMapping extends AbstractDataSheetMapping
         $matchesLookup = [];
         if ($this->lookupCache === null) {
             $matches = $this->getMatches();
-            $lookupSheet = DataSheetFactory::createFromObject($this->getLookupObject());
+            $lookupSheet = $this->getLookupSheet() ?? DataSheetFactory::createFromObject($this->getLookupObject());
             $lookupCol = $lookupSheet->getColumns()->addFromExpression($lookupExpr);
             // Add lookup columns for every match
             foreach ($matches as $i => $match) {
@@ -362,8 +364,8 @@ class LookupMapping extends AbstractDataSheetMapping
             $toColVals[$iFromRow] = null;
             // Collect all from-values into a single string to quickly find out
             $fromRowValsJoined = '';
-            foreach ($matches as $match) {
-                $fromRowValsJoined .= trim($fromRow[$match['from']] ?? '');
+            foreach ($matches as $i => $match) {
+                $fromRowValsJoined .= trim($fromRow[$match['from']] ?? $matchesFrom[$i]['static'] ?? '');
             }
             // Look for matching lookup rows for this from-row
             foreach ($lookupSheet->getRows() as $lookupRow) {
@@ -375,7 +377,7 @@ class LookupMapping extends AbstractDataSheetMapping
                     $matchType = $matchesLookup[$iMatch]['lookupCol']->getDataType();
                     $matchVal = $lookupRow[$match['lookup']];
                     if (is_array($matchesFrom[$iMatch]) && array_key_exists('static', $matchesFrom[$iMatch])) {
-                        $fromVal = $matchesFrom['static'];
+                        $fromVal = $matchesFrom[$iMatch]['static'];
                     } else {
                         $fromVal = $fromRow[$matchesFrom[$iMatch]['fromColName'] ?? $match['from']];
                     }
@@ -877,6 +879,49 @@ class LookupMapping extends AbstractDataSheetMapping
     protected function setReadAll(bool $trueOrFalse) : LookupMapping
     {
         $this->readAll = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @return DataSheetInterface|null
+     */
+    protected function getLookupSheet() : ?DataSheetInterface 
+    {
+        if($this->lookupSheet === null) {
+            if($this->lookupSheetUxon === null) {
+                return null;
+            }
+            
+            if(!$this->lookupSheetUxon->hasProperty('object_alias')) {
+                $this->lookupSheetUxon->setProperty(
+                    'object_alias',
+                    $this->getLookupObject()->getAliasWithNamespace()
+                );
+            }
+            
+            $this->lookupSheet = DataSheetFactory::createFromUxon(
+                $this->getWorkbench(),
+                $this->lookupSheetUxon
+            );
+        }
+        
+        return $this->lookupSheet;
+    }
+
+    /**
+     * This template will be used as the base for the lookup data sheet, giving you fine-grained control over the
+     * lookup data. Most importantly, you can define detailed filters for the lookup data.
+     * 
+     * @uxon-property lookup_sheet
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"//object_alias":"Define an object alias to improve auto-suggest","filters":{"operator": "AND","conditions":[{"expression": "","comparator": "==","value":""}]}}
+     * 
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setLookupSheet(UxonObject $uxon) : LookupMapping
+    {
+        $this->lookupSheetUxon = $uxon;
         return $this;
     }
 }

@@ -52,7 +52,7 @@ class DriverJsTourDriver implements TourDriverInterface
     public function getTourSteps(TourInterface $tour): array
     {
         $steps = [];
-        $tourWaypoints = explode("&", $tour->getWaypointRoute());
+        $tourWaypoints = explode("&", $tour->getWaypointsRoute());
         $takeAllWaypoints = in_array("~all", $tourWaypoints);
         
         foreach ($this->steps as $step) {
@@ -66,8 +66,8 @@ class DriverJsTourDriver implements TourDriverInterface
         
         // sorting steps by order
         usort($steps, function ($a, $b) {
-            $aOrder = $a->getOrderNumber();
-            $bOrder = $b->getOrderNumber();
+            $aOrder = $a->getPositionInTour();
+            $bOrder = $b->getPositionInTour();
 
             if (!$aOrder && !$bOrder) return 0;
             if (!$aOrder) return 1;
