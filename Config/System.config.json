@@ -122,8 +122,11 @@
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate",
 			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
     	],
+		"exface.Core.Model.OnBeforeDataTypeLoaded": [
+			"\\exface\\Core\\Mutations\\MutationPoints\\DataTypemutationPoint::onDataTypeLoadedApplyMutations"
+		],
         "exface.Core.Model.OnBeforeSnippetLoaded": [
-          "\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"
+          	"\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"
         ],
     	"exface.Core.Model.OnMessageLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
