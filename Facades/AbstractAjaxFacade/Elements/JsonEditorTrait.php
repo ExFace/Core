@@ -1378,13 +1378,14 @@ CSS;
                 '      readonly> ' +
                 '   </textarea>' +
                 '   <div>' +
-                '      <button id="jsonPathCopyBtn" class="uxoneditor-btn">Copy</button>' +
+                '      <button id="jsonPathCopyBtn" class="uxoneditor-btn" title="{$trans['CONTEXT_MENU.CLIPBOARD.COPY_HINT']}">' +
+                '         {$trans['CONTEXT_MENU.CLIPBOARD.COPY']}' +
+                '       </button>' +
                 '   </div>' +
                 '</div>';
             return jsonPathViewContent;
         }
         
-        //TODO SR: New JSON path copy button.
         function {$funcPrefix}_initJsonPathCopy(modal){
             var pathView = modal.modalElem().querySelector('#jsonPathView');
             var pathViewCopyBtn = modal.modalElem().querySelector('#jsonPathCopyBtn');
@@ -1394,14 +1395,15 @@ CSS;
                 var text = pathView.value || '';
                 
                 exfTools.clipboard.copyText(text);
-
-                //TODO SR: Call the "EuiAvstractElement.php::buildJsShowMessageSuccess()" instead.
-/*                $.messager.show({
-                    title: "JSON-Pfad",
-                    msg: "Erfolgreich kopiert.",
-                    timeout:5000,
+                
+                // TODO: This is a Eui specific message popup implementation. 
+                //  Change it after the refactoring of this trait so that it can be used in other facades as well.
+                $.messager.show({
+                    title: "{$trans['JSON_PATH']}",
+                    msg: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY_SUCCESS']}",
+                    timeout: 2000,
                     showType: 'slide'
-                });*/
+                });
             });
         }
         
