@@ -22,7 +22,7 @@ use exface\Core\Interfaces\WidgetInterface;
  *              "news",
  *              "table"
  *          ],
- *          "order_number": 1,
+ *          "position_in_tour": 1,
  *          "title": "New Column",
  *          "body": "This text will appear in the popover when the step is active.",
  *          "side": "bottom",
@@ -53,7 +53,7 @@ class TourStep implements TourStepInterface
     private ?string $align = null;
     private ?array $waypoints = [];
     private ?string $element = null;
-    private ?int $orderNumber = null;
+    private ?int $positionInTour = null;
     private ?UxonObject $waypointsUxon = null;
 
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
@@ -215,25 +215,25 @@ class TourStep implements TourStepInterface
     /**
      * @return int|null
      */
-    public function getOrderNumber(): ?int
+    public function getPositionInTour(): ?int
     {
-        return $this->orderNumber;
+        return $this->positionInTour;
     }
 
     /**
-     * The order number of the step, which define at which point in the tour this step will be displayed to the user.
-     * Steps with defined order numbers will be sorted by their order number,
-     * while steps without order number will be sorted in the order they are defined in the uxon configuration.
+     * Defines at which point in the tour this step will be displayed to the user.
+     * Steps with defined position_in_tour property will be sorted by it,
+     * while steps without position_in_tour will be sorted in the order they are defined in the uxon configuration.
      * 
-     * @uxon-property order_number
+     * @uxon-property position_in_tour
      * @uxon-type int
      * 
-     * @param int $orderNumber
+     * @param int $positionInTour
      * @return TourStepInterface
      */
-    protected function setOrderNumber(int $orderNumber) : TourStepInterface
+    protected function setPositionInTour(int $positionInTour) : TourStepInterface
     {
-        $this->orderNumber = $orderNumber;
+        $this->positionInTour = $positionInTour;
         return $this;
     }
     
