@@ -105,8 +105,8 @@ class DriverJsTourDriver implements TourDriverInterface
                 {
                     element: '#{$step->getElementId($this->getFacade())}',
                     popover: {
-                      title: '{$this->escapeString($step->getTitle())}',
-                      description: '{$this->escapeString($step->getBody())}',
+                      title: {$this->escapeString($step->getTitle())},
+                      description: {$this->escapeString($step->getBody())},
                       side: '{$step->getSide()}',
                       align: '{$step->getAlign()}',
                     }
