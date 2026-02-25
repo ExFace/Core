@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
@@ -648,7 +649,8 @@ class Data
         // Check for required filters
         foreach ($this->getMetaObject()->getDataAddressRequiredPlaceholders(false, true) as $ph) {
             // If the placeholder is an attribute, add a required filter on it (or make an existing filter required)
-            if ($ph_attr = $this->getMetaObject()->getAttribute($ph)) {
+            $phAlias = StringDataType::stripPlaceholderModifiers($ph);
+            if ($ph_attr = $this->getMetaObject()->getAttribute($phAlias)) {
                 if ($this->getConfiguratorWidget()->hasFilters()) {
                     $ph_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($ph_attr);
                     foreach ($ph_filters as $ph_filter) {

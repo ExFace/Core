@@ -3085,6 +3085,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
         $baseObj = $relation_path !== null ? $relation_path->getEndObject() : $this->getMainObject();
         foreach (StringDataType::findPlaceholders($data_address) as $ph) {
+            // TODO #placeholder-modifiers switch to more generic StringDataType::stripPlaceholderModifiers()
+            // - but is it really enough to search for a single pipe? Can there be pipes in placeholders without modifiers?
             $phAlias = IfNullModifier::stripFilter($ph);
             // TODO how to use the default value from the modifier here?
             if (StringDataType::startsWith($phAlias, '=')) {
@@ -3196,7 +3198,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                 case StringDataType::startsWith($ph, '~right:'):
                     $attrAlias = StringDataType::substringAfter($ph, '~right:');
-                    // TODO add support for modifiers here! Currently we just ignore them
+                    // TODO #placeholder-modifiers switch to more generic StringDataType::stripPlaceholderModifiers()
+                    // - but is it really enough to search for a single pipe? Can there be pipes in placeholders without modifiers?
+                    // TODO #placeholder-modifiers add support for modifiers here! Currently we just ignore them
                     $attrAlias = IfNullModifier::stripFilter($attrAlias);
                     $relPath = $leftQuery !== $rightQuery ? null : RelationPathFactory::createForObject($relation->getLeftObject())->appendRelation($relation);
                     // If the placeholder is a RELATED attribute of the right object, we will need to JOIN all tables

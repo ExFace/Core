@@ -10,6 +10,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 abstract class AbstractPlaceholderModifier implements PlaceholderModifierInterface
 {
+    const DELIMITER = '|';
+    
     private $workbench;
 
     /**
