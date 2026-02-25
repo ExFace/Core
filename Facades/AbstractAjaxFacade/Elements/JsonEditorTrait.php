@@ -1372,13 +1372,39 @@ CSS;
         
         function {$funcPrefix}_getJsonPathViewContent(){
             var jsonPathViewContent =
-                '<div>' +
+                '<div style="display:flex; gap:8px; align-items:center;">' +
                 '   <textarea id="jsonPathView" ' +
                 '      class="preset-path uxoneditor-input"' +
                 '      readonly> ' +
                 '   </textarea>' +
+                '   <div>' +
+                '      <button id="jsonPathCopyBtn" class="uxoneditor-btn" title="{$trans['CONTEXT_MENU.CLIPBOARD.COPY_HINT']}">' +
+                '         {$trans['CONTEXT_MENU.CLIPBOARD.COPY']}' +
+                '       </button>' +
+                '   </div>' +
                 '</div>';
             return jsonPathViewContent;
+        }
+        
+        function {$funcPrefix}_initJsonPathCopy(modal){
+            var pathView = modal.modalElem().querySelector('#jsonPathView');
+            var pathViewCopyBtn = modal.modalElem().querySelector('#jsonPathCopyBtn');
+            if (!pathView || !pathViewCopyBtn) return;
+        
+            pathViewCopyBtn.addEventListener('click', async function () {
+                var text = pathView.value || '';
+                
+                exfTools.clipboard.copyText(text);
+                
+                // TODO: This is a Eui specific message popup implementation. 
+                //  Change it after the refactoring of this trait so that it can be used in other facades as well.
+                $.messager.show({
+                    title: "{$trans['JSON_PATH']}",
+                    msg: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY_SUCCESS']}",
+                    timeout: 2000,
+                    showType: 'slide'
+                });
+            });
         }
         
         function {$funcPrefix}_filterAutosuggest(aSuggestions, sSearch) {
@@ -1445,6 +1471,7 @@ CSS;
                 "jsoneditor-modal jsonPathView",
                 function(modal) {
                     {$funcPrefix}_loadJsonPathView(modal, node);
+                    {$funcPrefix}_initJsonPathCopy(modal);
                 }
             );
         }
