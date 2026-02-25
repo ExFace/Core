@@ -2,6 +2,7 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
@@ -9,10 +10,13 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Exceptions\DataSources\PostgreSqlError;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\ModelBuilders\PostgreSqlModelBuilder;
 use exface\Core\QueryBuilders\PostgreSqlBuilder;
+use pgsql\Connection;
+use PgSql\Result;
 
 /**
  * Data source connector for PostgreSQL databases
@@ -24,6 +28,8 @@ class PostgreSqlConnector extends AbstractSqlConnector
     private $dbase = null;
     private $use_persistant_connection = false;
     private $affectedRows = null;
+    
+    private array $sessionOptions = [];
 
     /**
      * Establishes a connection to the PostgreSQL database
@@ -59,11 +65,18 @@ class PostgreSqlConnector extends AbstractSqlConnector
             ? @pg_pconnect($connStr)
             : @pg_connect($connStr);
 
-        if (! $conn instanceof \pgsql\Connection) {
+        if (! $conn instanceof Connection) {
             throw new DataConnectionFailedError($this, 'Failed to connect to PostgreSQL: ' . pg_last_error());
         }
 
         $this->setCurrentConnection($conn);
+        
+        foreach ($this->sessionOptions as $option => $value) {
+            $result = pg_query($conn, "SET {$option} TO '{$value}'");
+            if ($result === false) {
+                throw new DataConnectionFailedError($this, 'Failed to set PostgreSQL session option "' . $option . '" to `\'' . $value . '\'`: ' . pg_last_error($conn));
+            }
+        }
     }
 
     /**
@@ -78,7 +91,8 @@ class PostgreSqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * Executes a SQL query
+     * {@inheritDoc}
+     * @see AbstractSqlConnector::performQuerySql()
      */
     protected function performQuerySql(SqlDataQuery $query)
     {
@@ -86,46 +100,85 @@ class PostgreSqlConnector extends AbstractSqlConnector
         $this->affectedRows = null;
 
         $sql = $query->getSql();
+
+        // For single statements add ...RETURNING <pkey> to make sure auto-generated ids are returned
         if (! $query->isMultipleStatements()) {
             $pkeys = $query->getPrimaryKeyColumns();
-            if (! empty($pkeys) && StringDataType::startsWith($sql, 'INSERT', false) === true) {
+            if (!empty($pkeys) && StringDataType::startsWith($sql, 'INSERT', false) === true) {
                 $sql .= ' RETURNING ' . implode(', ', $pkeys);
             }
-            // Since we modify the original SQL, save it back to the query object in order to make it appear
-            // correctly in all sorts of logs
+            // Save mutated SQL for logging
             $query->setSql($sql);
         } else {
-            // TODO how to get results from multistatement queries?    
+            // For multi-statements we keep SQL as-is; pg_get_result will return one result per statement.
+            // (No need to modify the original SQL here.)
         }
-        
-        $result = @pg_query($conn, $sql);
 
-        if ($result === false) {
+        // Send query asynchronously so we always can fetch a PgSql\Result to inspect error fields.
+        // See https://www.php.net/manual/en/function.pg-result-error-field.php
+        // See https://www.php.net/manual/uk/function.pg-get-result.php
+        $sent = @pg_send_query($conn, $sql);
+        if ($sent === false) {
+            // If we couldn't even send, fall back to connection error text.
             throw $this->createQueryError($query, pg_last_error($conn));
         }
 
-        $this->affectedRows = pg_affected_rows($result);
-        $query->setResultResource($result);
+        $lastResult = null;
+        $lastStatus = null;
+        $allResults = [];
+
+        // Drain all results (important for multi-statement and also vital for erroneous queries).
+        // See https://www.php.net/manual/uk/function.pg-get-result.php
+        // See https://stackoverflow.com/questions/12349230/catching-errors-from-postgresql-to-php
+        while (($res = pg_get_result($conn)) !== false) {
+            $allResults[] = $res;
+            $lastResult = $res;
+            $lastStatus = pg_result_status($res);
+            if ($lastStatus === PGSQL_FATAL_ERROR || $lastStatus === PGSQL_NONFATAL_ERROR) {
+                throw $this->createQueryError($query, pg_last_error($conn), $res);
+            }
+        }
+
+        // If nothing came back, treat as unexpected / connection-level error.
+        if ($lastResult === null) {
+            throw $this->createQueryError($query, pg_last_error($conn));
+        }
+        
+        // Handle main result resource; for multi-statement, last result matches pg_query() behavior.
+        $this->affectedRows = pg_affected_rows($lastResult);
+        $query->setResultResource($lastResult);
+
+        // TODO preserve all statement results somewhere:
+        // $query->setAllResultResources($allResults);
 
         return $query;
     }
 
     /**
-     *
+     * 
      * @param DataQueryInterface $query
      * @param string $message
      * @return DataQueryExceptionInterface
      */
-    protected function createQueryError(DataQueryInterface $query, string $message = null) : DataQueryExceptionInterface
-    {
+    protected function createQueryError(DataQueryInterface $query, string $message = null, ?Result $res = null) : DataQueryExceptionInterface
+    {        
+        $message = 'PostgreSQL query failed. ' . $message;
+        $e = new PostgreSqlError($this, $message, '6T2T2UI', null, $res);
+        $sqlState = $e->getSqlState();
         switch (true) {
-            /* TODO how to detect constraint errors in PostgreSQL? Use pg_result_error()?
-            case 2601:
-                $e = new DataQueryConstraintError($query, $message, null, $err->setAlias('73II64M'));
-            */
+            case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
+            case $sqlState === 23001: // RESTRICT VIOLATION
+            case $sqlState === 23502: // NOT NULL VIOLATION
+            case $sqlState === 23503: // FOREIGN KEY VIOLATION
+            case $sqlState === 23505: // UNIQUE VIOLATION
+            case $sqlState === 23514: // CHECK VIOLATION
+                $e = new DataQueryConstraintError($query, $message, null, $e->setAlias('73II64M'));
+                break;
             default:
-                $e = new DataQueryFailedError($query, 'PostgreSQL query failed: ' . $message, '6T2T2UI');
+                $e = new DataQueryFailedError($query, $message, null, $e);
+                break;
         }
+        
         return $e;
     }
 
@@ -300,5 +353,29 @@ class PostgreSqlConnector extends AbstractSqlConnector
     public function getSqlDialect(): string
     {
         return PostgreSqlBuilder::SQL_DIALECT_PGSQL;
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getSessionOptions() : array
+    {
+        return $this->sessionOptions;
+    }
+
+    /**
+     * Set PostgreSQL session variables via `SET ... TO '...'`
+     * 
+     * @uxon-property session_options
+     * @uxon-type object
+     * @uxon-template {"lc_messages": "en_US.UTF-8"}
+     * 
+     * @param UxonObject $arrayOfOptions
+     * @return PostgreSqlConnector
+     */
+    protected function setSessionOptions(UxonObject $arrayOfOptions) : PostgreSqlConnector
+    {
+        $this->sessionOptions = $arrayOfOptions->toArray();
+        return $this;
     }
 }
