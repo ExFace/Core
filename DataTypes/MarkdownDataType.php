@@ -112,6 +112,26 @@ class MarkdownDataType
     }
 
     /**
+     * Summary of buildMarkdownTableFromArray
+     * 
+     * @param array $keyValues
+     * @param string $keyHeading
+     * @param string $valueHeading
+     * @return string
+     */
+    public static function buildMarkdownTableFromPropertySet(array $keyValues, string $keyHeading, string $valueHeading) : string
+    {
+        $md = '| ' . static::escapeString($keyHeading) . ' | ' . static::escapeString($valueHeading) . ' |';
+        $md .= PHP_EOL . '| ---- | ---- |';
+        
+        foreach ($keyValues as $key => $value) {
+            $md .= PHP_EOL . '| ' . self::escapeString($key ?? '') . ' | ' . self::escapeString($value ?? '') . ' |';
+        }
+
+        return $md;
+    }
+
+    /**
      * Builds a Markdown header string with the given heading level.
      *
      * Example:
