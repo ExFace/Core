@@ -14,6 +14,18 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return LogBookInterface
      */
     public function addLine(string $text, int $indent = null, $section = null) : LogBookInterface;
+
+    /**
+     * @param string $text
+     * @param $section
+     * @return LogBookInterface
+     */
+    public function continueLine(string $text): LogBookInterface;
+
+    /**
+     * @return string|null
+     */
+    public function getLineActive() : ?string;
     
     /**
      * 

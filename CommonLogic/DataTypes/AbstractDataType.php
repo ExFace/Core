@@ -107,7 +107,16 @@ abstract class AbstractDataType implements DataTypeInterface
         }
         return $this->name;
     }
-    
+
+    /**
+     * Name of the data type
+     * 
+     * @uxon-property name
+     * @uxon-type string
+     * 
+     * @param $string
+     * @return $this
+     */
     public function setName($string)
     {
         $this->name = $string;
@@ -403,8 +412,11 @@ abstract class AbstractDataType implements DataTypeInterface
     }
 
     /**
+     * Description of the data type
      * 
-     * {@inheritDoc}
+     * @uxon-property short_description
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setShortDescription()
      */
     public function setShortDescription(string $shortDescription) : DataTypeInterface
