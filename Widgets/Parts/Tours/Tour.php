@@ -24,12 +24,12 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  * "tours": [
  *      {
  *          "title": "News",
- *          "waypoints": "news",
+ *          "waypoints_route": "news",
  *          "show_progress": true
  *      },
  *      {
  *          "title": "Tutorials 1 & 2",
- *          "waypoints": "tutorial1&tutorial2",
+ *          "waypoints_route": "tutorial1&tutorial2",
  *          "disable_active_interaction": true
  *      }
  * ]
@@ -44,7 +44,7 @@ class Tour implements TourInterface, iHaveIcon
     
     private WidgetInterface $widget;
     private ?string $title = null;
-    private ?string $waypointRoute = null;
+    private ?string $waypointsRoute = null;
     private ?string $description = null;
     private bool $showProgress = false;
     private bool $disableActiveInteraction = false;
@@ -109,25 +109,25 @@ class Tour implements TourInterface, iHaveIcon
     }
 
     /**
-     * @see TourInterface::getWaypointRoute()
+     * @see TourInterface::getWaypointsRoute()
      */
-    public function getWaypointRoute(): string
+    public function getWaypointsRoute(): string
     {
-        return $this->waypointRoute ?? '~all';
+        return $this->waypointsRoute ?? '~all';
     }
 
     /**
      * Route definition consisting of one or multiple waypoints concatenated with `&`
      * 
-     * @uxon-property waypoints
+     * @uxon-property waypoints_route
      * @uxon-type string
      * 
      * @param string $route
      * @return $this
      */
-    protected function setWaypoints(string $route) : TourInterface
+    protected function setWaypointsRoute(string $route) : TourInterface
     {
-        $this->waypointRoute = $route;
+        $this->waypointsRoute = $route;
         return $this;
     }
 
