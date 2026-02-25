@@ -35,10 +35,10 @@ class MessageCodeDataType extends StringDataType
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\DataTypes\StringDataType::getValidatorRegex()
+     * @see \exface\Core\DataTypes\StringDataType::getValidationRegexForGoodValues()
      */
-    public function getValidatorRegex() : ?string
+    public function getValidationRegexForGoodValues() : ?string
     {
-        return parent::getValidatorRegex() ?? self::VALIDATION_REGEX;
+        return parent::getValidationRegexForGoodValues() ?? self::VALIDATION_REGEX;
     }
 }

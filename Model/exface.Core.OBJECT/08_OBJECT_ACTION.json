@@ -67,7 +67,7 @@
         {
             "_EXPORT_SUMMARY": "Meta Object: Attribute groups [ObjectAttributeGroupsDialog]",
             "CREATED_ON": "2025-03-12 11:50:41",
-            "MODIFIED_ON": "2025-03-12 17:34:50",
+            "MODIFIED_ON": "2026-02-03 09:30:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ef9bead7ba50709bea025041000001",
@@ -150,6 +150,12 @@
                                         "widget_type": "DataTable",
                                         "object_alias": "exface.Core.ATTRIBUTE_GROUP_ATTRIBUTES",
                                         "paginate": false,
+                                        "row_grouper": {
+                                            "group_by_attribute_alias": "ATTRIBUTE__ORIGIN",
+                                            "expand_groups": "all",
+                                            "show_counter": true,
+                                            "hide_caption": true
+                                        },
                                         "filters": [
                                             {
                                                 "attribute_alias": "ATTRIBUTE_GROUP",
@@ -158,6 +164,10 @@
                                             }
                                         ],
                                         "columns": [
+                                            {
+                                                "attribute_alias": "ATTRIBUTE__INFO_ICONS",
+                                                "caption": "I"
+                                            },
                                             {
                                                 "attribute_alias": "ATTRIBUTE__NAME"
                                             },
@@ -190,6 +200,10 @@
                                             },
                                             {
                                                 "attribute_alias": "CREATED_ON"
+                                            },
+                                            {
+                                                "attribute_alias": "ATTRIBUTE__ORIGIN",
+                                                "hidden": true
                                             }
                                         ],
                                         "sorters": [

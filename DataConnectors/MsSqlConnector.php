@@ -125,32 +125,32 @@ use exface\Core\QueryBuilders\MsSqlBuilder;
  * @link https://github.com/ExFace/Core/tree/1.x-dev/Docs/creating_metamodels/data_sources/SQL/Troubleshooting_MS_SQL.md
  * 
  * ```
-* <?php
-    * $serverName = "<SERVER>\<INSTANCE>";  
-    * $connectionInfo = [
-    	* "Database" => "<dbname>"
-    	* // Add more options here
-    * ];  
+ * <?php
+ * $serverName = "<SERVER>\<INSTANCE>";  
+ * $connectionInfo = [
+ * "Database" => "<dbname>"
+ * // Add more options here
+ * ];  
  *
-* $conn = sqlsrv_connect($serverName, $connectionInfo);  
-    * if( $conn === false ) {  
-         * echo "Unable to connect.</br>";  
-         * die( print_r( sqlsrv_errors(), true));  
-    * }  
+ * $conn = sqlsrv_connect($serverName, $connectionInfo);  
+ * if( $conn === false ) {  
+ * echo "Unable to connect.</br>";  
+ * die( print_r( sqlsrv_errors(), true));  
+ * }  
  *
-* $tsql = "SELECT CONVERT(varchar(32), SUSER_SNAME())";  
-    * $stmt = sqlsrv_query( $conn, $tsql);  
-    * if( $stmt === false )  {  
-         * echo "Error in executing query.</br>";  
-         * die( print_r( sqlsrv_errors(), true));  
-    * }  
+ * $tsql = "SELECT CONVERT(varchar(32), SUSER_SNAME())";  
+ * $stmt = sqlsrv_query( $conn, $tsql);  
+ * if( $stmt === false )  {  
+ * echo "Error in executing query.</br>";  
+ * die( print_r( sqlsrv_errors(), true));  
+ * }  
  *
-* $row = sqlsrv_fetch_array($stmt);  
-    * echo "User login: ".$row[0]."</br>";  
+ * $row = sqlsrv_fetch_array($stmt);  
+ * echo "User login: ".$row[0]."</br>";  
  *
-* sqlsrv_free_stmt( $stmt);  
-    * sqlsrv_close( $conn);  
-* ?>
+ * sqlsrv_free_stmt( $stmt);  
+ * sqlsrv_close( $conn);
+ * ?>
  * 
  * ```
  *
@@ -301,6 +301,9 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         switch ($err->getSqlErrorCode()) {
+            // Cannot perform an aggregate function on an expression containing an aggregate or a subquery
+            case 130:
+                return new DataQueryFailedError($query, $message, null, $err->setAlias('84RWYLO'));
             case 512:
                 return new DataQueryRelationCardinalityError($query, $message, null, $err->setAlias('7W2J960'));
             case 2627:

@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Widgets\Parts\Maps;
 
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Widgets\Parts\Maps\Interfaces\PointMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\DataPointLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
@@ -12,6 +14,7 @@ use exface\Core\Widgets\Parts\Maps\Traits\ValueLabeledLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * 
@@ -20,26 +23,16 @@ use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
  */
 class DataPointsLayer extends AbstractDataLayer 
     implements
+    PointMapLayerInterface,
     LatLngDataColumnMapLayerInterface,
     LatLngWidgetLinkMapLayerInterface,
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface,
-    CustomProjectionMapLayerInterface
+    CustomProjectionMapLayerInterface,
+    iHaveIcon
 {
-    const VALUE_POSITION_LEFT = 'left';
-    
-    const VALUE_POSITION_RGHT = 'right';
-    
-    const VALUE_POSITION_TOP = 'top';
-    
-    const VALUE_POSITION_BOTTOM = 'bottom';
-    
-    const VALUE_POSITION_CENTER = 'center';
-    
-    use DataPointLayerTrait {
-        initDataWidget as initDataWidgetForPoints;
-    }
+    use DataPointLayerTrait;
     
     use ColoredLayerTrait;
     
@@ -47,9 +40,11 @@ class DataPointsLayer extends AbstractDataLayer
     
     use CustomProjectionLayerTrait;
     
+    use iHaveIconTrait;
+    
     private $size = null;
     
-    private $valuePosition = self::VALUE_POSITION_RGHT;
+    private $valuePosition = PointMapLayerInterface::VALUE_POSITION_RIGHT;
     
     /**
      *
@@ -58,21 +53,32 @@ class DataPointsLayer extends AbstractDataLayer
      */
     protected function initDataWidget(iShowData $widget) : iShowData
     {
-        $widget = $this->initDataWidgetForPoints($widget);
+        $widget = $this->initDataWidgetPointColumns($widget);
         $widget = $this->initDataWidgetColor($widget);
         $widget = $this->initDataWidgetValue($widget);
         
         return $widget;
     }
-    
+
     /**
-     * 
-     * @return int
+     *
+     * {@inheritDoc}
+     * @see PointMapLayerInterface::getPointSize()
      */
     public function getPointSize() : int
     {
         if ($this->size === null) {
-            return $this->getValuePosition() === self::VALUE_POSITION_CENTER ? 30 : 10;
+            switch (true) {
+                case $this->getIcon() !== null:
+                    $pt = 18;
+                    break;
+                case $this->getValuePosition() === PointMapLayerInterface::VALUE_POSITION_CENTER;
+                    $pt = 30;
+                    break;
+                default:
+                    $pt = 10;
+            }
+            return $pt;
         }
         return $this->size;
     }
@@ -95,7 +101,8 @@ class DataPointsLayer extends AbstractDataLayer
     
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see PointMapLayerInterface::getValuePosition()
      */
     public function getValuePosition() : string
     {

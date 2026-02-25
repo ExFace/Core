@@ -22,7 +22,7 @@ class ImageNumberResolver extends AbstractMarkdownPlaceholderResolver implements
     public function resolve(array $placeholders) : array
     {
         $vals = [];
-        $rootDirectory = $this->getDocsPath();
+        $rootDirectory = $this->getDocsPath($this->pagePath);
         $markdownStructure = $this->getFlattenMarkdownFiles($rootDirectory);
             
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
@@ -65,16 +65,5 @@ class ImageNumberResolver extends AbstractMarkdownPlaceholderResolver implements
 
             $currentAbbildungNumber += count($matches[0]);
         }
-    }
-
-    protected function getDocsPath() : string
-    {
-        $rootDir = FilePathDataType::findFolderPath($this->pagePath);
-        $normalizedFull = FilePathDataType::normalize($rootDir);
-        $parts = explode("/Docs/", string: $normalizedFull);
-        if(count($parts) == 1) {
-            return $normalizedFull;
-        }
-        return $parts[0]. "/Docs/";
     }
 }

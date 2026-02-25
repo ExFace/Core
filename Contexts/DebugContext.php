@@ -65,6 +65,8 @@ class DebugContext extends AbstractContext
     
     const VAR_TRACE_STARTED = 'trace_started';
     const VAR_SHOW_HIDDEN = 'DEBUG.SHOW_HIDDEN';
+
+    const CFG_TRACE_BLOCKED = 'DEBUG.TRACE_BLOCKED';
     
     private $intercepting = false;
     
@@ -122,6 +124,10 @@ class DebugContext extends AbstractContext
     {
         $this->tracer = $tracer;
         $config = $this->getWorkbench()->getConfig();
+        $disabled = $config->hasOption(self::CFG_TRACE_BLOCKED) ? $config->getOption(self::CFG_TRACE_BLOCKED) : false;
+        if ($disabled === true) {
+            return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_BLOCKED');
+        }
         
         if ($config->getOption(self::CFG_DEBUG_TRACE) === false) {
             $this->getScopeInstallation()->setVariable(

@@ -434,6 +434,22 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     }
 
     /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasVisibleColumns()
+     */
+    public function hasVisibleColumns() : bool
+    {
+        foreach ($this->getColumns() as $col) {
+            if($col->isHidden() === false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Returns the number of visible columns in this group
      *
      * @return integer

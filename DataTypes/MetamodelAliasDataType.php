@@ -60,11 +60,11 @@ class MetamodelAliasDataType extends StringDataType
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\DataTypes\StringDataType::getValidatorRegex()
+     * @see \exface\Core\DataTypes\StringDataType::getValidationRegexForGoodValues()
      */
-    public function getValidatorRegex() : ?string
+    public function getValidationRegexForGoodValues() : ?string
     {
-        return parent::getValidatorRegex() ?? ($this->getIncludesNamespace() ? self::VALIDATION_REGEX_WITH_NAMESPACE : self::VALIDATION_REGEX);
+        return parent::getValidationRegexForGoodValues() ?? ($this->getIncludesNamespace() ? self::VALIDATION_REGEX_WITH_NAMESPACE : self::VALIDATION_REGEX);
     }
     
     /**

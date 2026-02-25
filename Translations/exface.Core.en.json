@@ -178,6 +178,7 @@
     "CONTEXT.DATA.NAME": "Data",
     
     "CONTEXT.DEBUG.NAME": "Developer tools",
+	"CONTEXT.DEBUG.TRACE_BLOCKED": "Tracer BLOCKED: Tracing is forbidden on this system",
     "CONTEXT.DEBUG.TRACE_STARTED": "Tracing ON: all server requests now logged in detail",
     "CONTEXT.DEBUG.TRACE_STOPPED": "Tracing OFF: server requests not logged anymore",
     "CONTEXT.DEBUG.TRACE_SERVER_REQUESTS": "Trace server requests",
@@ -237,6 +238,7 @@
 	"DATATYPE.VALIDATION.MUST": "Must",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "have %condition% characters",
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "match the pattern %regex%",
+	"DATATYPE.VALIDATION.REGEX_CONDITION_NEGATIVE": "not match the pattern %regex%",
 	"DATATYPE.VALIDATION.FILENAME_INVALID": "Invalid string!",
 	"DATATYPE.VALIDATION.FILENAME_INVALID_SYMBOLS": "Illegal characters: ",
 	"DATATYPE.VALIDATION.MINMAX_CONDITION": "be %condition%",
@@ -436,8 +438,12 @@
     "TASK.QUEUE.STATUS_DONE_MANUALLY": "Done manually",
     "TASK.QUEUE.STATUS_DONE": "Done",
     "TASK.QUEUE.TYPE_SYNC": "Sync",
-    "TASK.QUEUE.TYPE_ASYNC": "Async",  
-    
+    "TASK.QUEUE.TYPE_ASYNC": "Async",
+
+  "TOUR.STEP.ACTION.NEXT": "Next",
+  "TOUR.STEP.ACTION.PREVIOUS": "Previous",
+  "TOUR.STEP.ACTION.DONE": "Done",
+  
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_Y": "Y",

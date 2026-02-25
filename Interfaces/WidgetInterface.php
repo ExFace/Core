@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Interfaces\Widgets\iHaveVisibility;
 use exface\Core\Interfaces\Facades\FacadeInterface;
@@ -521,4 +522,9 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return bool
      */
     public function hasFunction(string $functionName) : bool;
+
+    /**
+     * @return TourStepInterface[]
+     */
+    public function getTourSteps() : array;
 }

@@ -28,8 +28,8 @@ Each image block **must** follow this structure:
   <img src="path/to/image2.png" alt="Optional second image"> <!-- Optional -->
   <div class="caption">
     <!-- BEGIN ImageCaptionNr: -->
-    Abbildung 1:
-    <!-- END ImageCaptionNr -->
+
+<!-- END ImageCaptionNr -->
     Your caption text here.
   </div>
 </div>
@@ -43,8 +43,9 @@ Each image block **must** follow this structure:
 - `<br>` tags between images are allowed.
 - The `.caption` element is **required**, even if no numbering or text is initially present.
 - The caption **may include** optional HTML comments:
-  - `<!-- BEGIN ImageCaptionNr: -->`
-  - `<!-- END ImageCaptionNr -->`
+  - `<!-- BEGIN ImageCaptionNr: -->
+
+<!-- END ImageCaptionNr -->`
 - If present, the `Abbildung X:` label inside the caption will be automatically numbered and updated based on the position of the image in the documentation.
 
 ## Unsupported Usage

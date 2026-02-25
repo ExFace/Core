@@ -109,7 +109,7 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
             $this->getWorkbench()->eventManager()->addListener(OnBeforeReadDataEvent::getEventName(), [$this, 'onReadAddFilter'], $this->getPriority());
         }
         
-        if ($this->willUseSqlCustomWhere()) {
+        if ($this->isDisabled() === false && $this->willUseSqlCustomWhere()) {
             $this->onRegisterAddCustomSqlWhere();
         }
         
@@ -128,7 +128,7 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
             $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onReadAddFilter']);
         }
         
-        if ($this->willUseSqlCustomWhere()) {
+        if ($this->isDisabled() === false && $this->willUseSqlCustomWhere()) {
             $this->getObject()->setDataAddressProperty(AbstractSqlBuilder::DAP_SQL_SELECT_WHERE, $this->previousSqlWhere);
         }
         

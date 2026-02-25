@@ -19,8 +19,7 @@ Abbildung #Nr#: #Caption Text#
 ### Example Usage
 
 ```html
-<!-- BEGIN ImageRef:image-id=id-of-the-image-1 -->
-<!-- END ImageRef -->
+<!-- BEGIN ImageRef:image-id=id-of-the-image-1 --><!-- END ImageRef -->
 ```
 
 Notes

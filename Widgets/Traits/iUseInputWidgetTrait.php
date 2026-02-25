@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\DialogHeader;
 
 /**
  * This trait helps getting the input widget for action triggers.
@@ -55,10 +55,21 @@ trait iUseInputWidgetTrait {
                 while (!(($parent instanceof iHaveButtons) || ($parent instanceof iUseInputWidget)) && ! is_null($parent->getParent())) {
                     $parent = $parent->getParent();
                 }
-                if ($parent instanceof iUseInputWidget){
-                    $this->input_widget = $parent->getInputWidget();
-                } else {
-                    $this->input_widget = $parent;
+                // Now that we have a parent widget, that should know where to take the input from, there are still
+                // a couple of different situation possible:
+                switch (true) {
+                    // If the widget uses input data itself (e.g. a Toolbar), we ask that for its input widget
+                    case $parent instanceof iUseInputWidget:
+                        $this->input_widget = $parent->getInputWidget();
+                        break;
+                    // If it is a DialogHeader, we simply know, that it belongs to a dialog and, thus, provides the
+                    // same input as the dialog itself (= the contents of the dialog)
+                    case $parent instanceof DialogHeader:
+                        $this->input_widget = $parent->getDialog();
+                        break;
+                    // In all other cases the parent will be assumed to provide the input data
+                    default:
+                        $this->input_widget = $parent;
                 }
             }
         }

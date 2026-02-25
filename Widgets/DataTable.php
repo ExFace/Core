@@ -167,6 +167,8 @@ class DataTable extends Data implements
      */
     const FUNCTION_RESET_CHANGE_TRACKING = 'reset_setup_change_tracking';
 
+    const FUNCTION_CLEAR_APPLIED_SETUP = 'clear_applied_setup';
+
     private $show_filter_row = null;
 
     private $show_row_numbers = false;
@@ -202,6 +204,8 @@ class DataTable extends Data implements
     private $height_in_rows = null;
     
     private $drag_to_other_widgets = false;
+    
+    private $hidden_if_no_columns = false;
 
     function hasRowDetails()
     {
@@ -860,5 +864,39 @@ class DataTable extends Data implements
     {
         $this->drag_to_other_widgets = $value;
         return $this;
+    }
+    
+    /**
+     * Set to TRUE to hide the table if no columns are explicitly defined. 
+     * 
+     * Use this if you build tables dynamic with groups for example and need to hide them if no attributes are yet present in said groups.
+     *
+     * @uxon-property hidden_if_no_columns
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return DataTable
+     */
+    public function setHiddenIfNoColumns(bool $value) : DataTable
+    {
+        $this->hidden_if_no_columns = $value;
+        return $this;
+    }
+
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\WidgetInterface::isHidden()
+     */
+    public function isHidden()
+    {        
+        if($this->hidden_if_no_columns === true) {
+            return $this->hasVisibleColumns() === false;
+        }
+        
+        return parent::isHidden();
     }
 }

@@ -7,16 +7,11 @@ The order is determined by both **numerical** and **alphabetical** sorting of th
 - Sorting is done first numerically (e.g., `1. Intro`, `1.1 Usage`), then alphabetically (e.g., `GettingStarted`, `Overview`).
 - This placeholder does **not** support any options.
 
-
-### How It Works
-
-- If the current file represents a **first-level heading** (e.g., a top-level topic or `1. Introduction`), the navigation buttons will link to other **first-level heading** (`2. How To Use`, `3. Summary`) files.
-- If the current file represents a **second-level heading** (i.e., a sub-topic under a parent folder e.g., `1.1 Required Hardware`), the buttons will navigate only among other **second-level heading** (`1.2 Required Software`, `1.3 Required Apps`) files within the same parent.
-
-
 ### Example Usage
 
 ```html
 <!-- BEGIN NavButtons: -->
+[<kbd> <br> Zurück <br> </kbd>](ImageReferencePlaceholder.md) [<kbd> <br> Weiter <br> </kbd>](SubPageListPlaceholder.md)
+
 <!-- END NavButtons -->
  ```
