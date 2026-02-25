@@ -31,7 +31,7 @@ trait IHaveTourGuideTrait {
      * 
      * @uxon-property tour_guide
      * @uxon-type \exface\Core\Widgets\Parts\Tours\TourGuide
-     * @uxon-template {"tours": [{"title": "", "waypoints": "~all"}]}
+     * @uxon-template {"tours": [{"title": "", "waypoints_route": "~all"}]}
      * 
      * @param UxonObject $uxon
      * @return IHaveTourGuideInterface
