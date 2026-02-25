@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
 use exface\Core\Interfaces\Tours\TourStepInterface;
+use exface\Core\Widgets\Filter;
 
 /**
  * This class is a tour driver that uses the driver.js library to create interactive tours on the UI.
@@ -99,11 +100,20 @@ class DriverJsTourDriver implements TourDriverInterface
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $aStepsJs = '';
         
-        foreach ($this->getTourSteps($tour) as $step) {
+        $steps = $this->getTourSteps($tour);
+        if (empty ($steps))  {
             $aStepsJs .= <<<JS
-            
                 {
-                    element: '#{$step->getElementId($this->getFacade())}',
+                    popover: {
+                      title: {$this->escapeString('This tour is empty')}
+                    }
+                },
+JS;
+        } else {
+            foreach ($steps as $step) {
+                $aStepsJs .= <<<JS
+                {
+                    element: '#{$this->getStepHighlightedElementId($step)}',
                     popover: {
                       title: {$this->escapeString($step->getTitle())},
                       description: {$this->escapeString($step->getBody())},
@@ -112,6 +122,7 @@ class DriverJsTourDriver implements TourDriverInterface
                     }
                 },
 JS;
+            }
         }
         $aStepsJs = '[' . $aStepsJs . ']';
         
@@ -136,5 +147,25 @@ JS;
     protected function escapeString($value) : string
     {
         return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * This method returns the ID of the DOM element widget that this step will highlight.
+     * 
+     * The popover for this step will be displayed next to this element.
+     * 
+     * @param TourStepInterface $step
+     * @return string
+     */
+    public function getStepHighlightedElementId(TourStepInterface $step): string
+    {
+        $widget = $step->getWidget();
+        
+        // Filters will mostly not have any id - they just render their input_widget, so we take that
+        if ($widget instanceof Filter) {
+            $widget = $widget->getInputWidget();
+        }
+        
+        return $this->getFacade()->getElement($widget)->getId();
     }
 }

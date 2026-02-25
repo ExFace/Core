@@ -236,16 +236,4 @@ class TourStep implements TourStepInterface
         $this->positionInTour = $positionInTour;
         return $this;
     }
-    
-    /**
-     * This method returns the ID of the widget that this tour step is associated with.
-     * The popover for this step will be displayed next to this element.
-     * 
-     * @param HttpFacadeInterface $facade
-     * @return string
-     */
-    public function getElementId(HttpFacadeInterface $facade): string
-    {
-        return $facade->getElement($this->widget)->getId();
-    }
 }
