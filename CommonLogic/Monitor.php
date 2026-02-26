@@ -44,8 +44,6 @@ class Monitor extends Profiler
     
     private $actionsEnabled = false;
 
-    private $logLongRunningReads = false;
-
     private $logLongRunningActions = false;
     
     private $longRunningActionsThreshold = 10;
@@ -79,7 +77,6 @@ class Monitor extends Profiler
         $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
         $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');
         
-        $self->logLongRunningReads = $config->getOption('DEBUG.LOG_LONG_RUNNING_READS');
         $self->logLongRunningActions = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS');
         $self->longRunningActionsThreshold = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD');
         $self->longRunningActionsLevel = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_LEVEL');
@@ -205,13 +202,17 @@ class Monitor extends Profiler
             $ms = $this->stop($action)->getTimeTotalMs();
             $s = $ms / 1000;
             
-            if($this->logLongRunningActions && $s > $this->longRunningActionsThreshold) {
+            $threshold = $action->getLongRunningThreshold() ?? $this->longRunningActionsThreshold;
+            if($threshold < 0) {
+                return;
+            }
+            
+            if($this->logLongRunningActions && $s > $threshold) {
                 $msg = 'Action "' . $action->getName() . '" ran for ' . $s . 's!';
                 
                 $exception = new ActionRuntimeError(
                     $action,
-                    $msg,
-                    $this->longRunningActionsLevel
+                    $msg
                 );
                 
                 $this->getLongRunningActionsHandler()->handle(
@@ -270,7 +271,7 @@ class Monitor extends Profiler
     {
         switch (true) {
             // Ignore ReadData, unless we are logging long-running actions AND reads.
-            case $action instanceof iReadData && (!$this->logLongRunningReads || !$this->logLongRunningActions): 
+            case $action instanceof iReadData && !$this->logLongRunningActions: 
             case $action instanceof UxonAutosuggest:
             case $action instanceof ContextBarApi:
             case $action instanceof ShowContextPopup:

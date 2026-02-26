@@ -162,6 +162,8 @@ abstract class AbstractAction implements ActionInterface
     private $offlineStrategy = null;
 
     private $confirmations = null;
+    
+    private $longRunningThreshold = null;
 
     /**
      *
@@ -2080,6 +2082,49 @@ abstract class AbstractAction implements ActionInterface
         foreach ($arrayOfConfirmations as $uxon) {
             $this->getConfirmations()->addFromUxon($uxon);
         }
+        return $this;
+    }
+
+    /**
+     * Returns the long-running threshold (in seconds) for this action.
+     * 
+     * @return int|null
+     * - `>= 0`: The maximum execution in seconds, before this action should be logged.
+     * - `-1`: Do not log this action, regardless of execution time.
+     * - `null`: Use the default threshold defined in `DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD`
+     *  in the `System.config.json`
+     */
+    public function getLongRunningThreshold() : int|null
+    {
+        return $this->longRunningThreshold;
+    }
+
+    /**
+     * Set a runtime threshold (in seconds) for this action. If executing it takes longer than this threshold, a message
+     * will be logged and displayed by the monitor. 
+     * 
+     * - Any value >= 0 will override the config setting.
+     * - You can disable this feature by setting the threshold to `-1` or `false`.
+     * - Not setting this property explicitly applies the default threshold defined in `DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD`
+     * in the `System.config.json`.
+     * 
+     * @uxon-property long_running_threshold
+     * @uxon-template null
+     * 
+     * @param int|bool|null $value
+     * @return $this
+     */
+    public function setLongRunningThreshold(int|bool|null $value) : AbstractAction
+    {
+        if($value === true) {
+            $value = 1;
+        }
+        
+        if($value === false) {
+            $value = -1;
+        }
+
+        $this->longRunningThreshold = $value;
         return $this;
     }
 
