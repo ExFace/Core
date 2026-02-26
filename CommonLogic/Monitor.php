@@ -43,12 +43,14 @@ class Monitor extends Profiler
     private $rowObjects = [];
     
     private $actionsEnabled = false;
-    
-    private $longRunningActionsLogged = false;
+
+    private $logLongRunningActions = false;
     
     private $longRunningActionsThreshold = 10;
     
     private $longRunningActionsLevel = 'CRITICAL';
+    
+    private $longRunningActionsHandler = null;
     
     private $errorsEnabled = false;
     
@@ -75,9 +77,9 @@ class Monitor extends Profiler
         $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
         $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');
         
-        $self->longRunningActionsLogged = $config->getOption('DEBUG.LOG_LONG_RUNNING_READS');
-        $self->longRunningActionsThreshold = $config->getOption('DEBUG.LOG_LONG_RUNNING_READS_THRESHOLD');
-        $self->longRunningActionsLevel = $config->getOption('DEBUG.LOG_LONG_RUNNING_READS_LEVEL');
+        $self->logLongRunningActions = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS');
+        $self->longRunningActionsThreshold = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD');
+        $self->longRunningActionsLevel = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_LEVEL');
      
         // Do not monitor anything while installing the workbench
         if ($workbench->isInstalled() === false) {
@@ -200,12 +202,25 @@ class Monitor extends Profiler
             $ms = $this->stop($action)->getTimeTotalMs();
             $s = $ms / 1000;
             
-            if($s > $this->longRunningActionsThreshold) {
-                $this->getWorkbench()->getLogger()->logException(new ActionRuntimeError(
+            $threshold = $action->getLongRunningThreshold() ?? $this->longRunningActionsThreshold;
+            if($threshold < 0) {
+                return;
+            }
+            
+            if($this->logLongRunningActions && $s > $threshold) {
+                $msg = 'Action "' . $action->getName() . '" ran for ' . $s . 's!';
+                
+                $exception = new ActionRuntimeError(
                     $action,
-                    'Action "' . $action->getName() . '" ran for ' . $s . 's!',
-                    $this->longRunningActionsLevel
-                ));
+                    $msg
+                );
+                
+                $this->getLongRunningActionsHandler()->handle(
+                    $this->longRunningActionsLevel,
+                    $msg,
+                    ['id' => $exception->getId()],
+                    $exception
+                );
             }
         }
 
@@ -255,8 +270,8 @@ class Monitor extends Profiler
     protected function isActionMonitored(ActionInterface $action) : bool
     {
         switch (true) {
-            // Ignore ReadData, unless we are logging long-running actions.
-            case $action instanceof iReadData && !$this->longRunningActionsLogged: 
+            // Ignore ReadData, unless we are logging long-running actions AND reads.
+            case $action instanceof iReadData && !$this->logLongRunningActions: 
             case $action instanceof UxonAutosuggest:
             case $action instanceof ContextBarApi:
             case $action instanceof ShowContextPopup:
@@ -406,6 +421,27 @@ class Monitor extends Profiler
                 break;
         }
         return $inputName ?? $inputWidget->getWidgetType();
+    }
+
+    /**
+     * Returns a log handler specifically configured to log long-running actions. The result is cached to speed up
+     * repeated calls.
+     * 
+     * Use it's `handle()` method to log any long-running actions.
+     * 
+     * @return MonitorLogHandler
+     */
+    protected function getLongRunningActionsHandler() : MonitorLogHandler
+    {
+        if($this->longRunningActionsHandler === null) {
+            $this->longRunningActionsHandler = new MonitorLogHandler(
+                $this->getWorkbench(),
+                $this,
+                $this->longRunningActionsLevel
+            );
+        }
+
+        return $this->longRunningActionsHandler;
     }
 }
 ?>
