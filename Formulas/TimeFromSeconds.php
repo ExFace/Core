@@ -8,53 +8,44 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Model\Formula;
 
 /**
- * Extracts the time from (almost) any date-related value.
- *
- * The first parameter is the value to parse, while the second (optional) parameter is
- * the ICU date format. Additionally, you can specify a custom input-format in ICU syntax
- * if the automatic parser does not work properly for your date.
+ * Converts a number of seconds to time (hh:mm:ss)
  *
  * Examples:
  *
- * - `=Time('25.03.2020 21:00:55')` = 21:00:55
- * - `=Time('1585090800')` = 00:00:00
- * - `=Time('1585090800', 'HH:mm:ss)` = 00:00:00
- * - `=Time('2020-03-25 21:00:55', 'HHmmss')` = 210055
+ * - `=TimeFromSeconds(81.52)` = 00:01:21
+ * - `=Time(81.52, 'mm:ss')` = 01:21
+ * - `=Time(81.52, 'mm:ss.SS')` = 01:21.52
  * 
  * See https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax for a complete guide to
  * the ICU date format syntax.
  *
  * @link https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
  */
-class Time extends Formula
+class TimeFromSeconds extends Formula
 {
     /**
-     * 
-     * @param string $date
-     * @param string $format
+     * @param $seconds
+     * @param $formatTo
+     * @return mixed|null
      */
-    public function run($date = null, $formatTo = TimeDataType::TIME_ICU_FORMAT_INTERNAL, $inputFormat = null)
+    public function run($seconds = null, $formatTo = TimeDataType::TIME_ICU_FORMAT_INTERNAL)
     {
-        if ($date === null || $date === '') {
+        if ($seconds === null || $seconds === '') {
             return null;
         }
         
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), DateTimeDataType::class);
         $dataType->setFormat($formatTo);
         
-        if ($inputFormat !== null) {
-            $phpDate = DateTimeDataType::castFromFormat($date, $inputFormat, $dataType->getLocale(), true);
-        } else {
-            $phpDate = $dataType::castToPhpDate($date);
-        }
+        $time = TimeDataType::convertSecondsToTime($seconds, 0);
         
         try {
-            return $dataType->formatDate($phpDate);
+            return $dataType->format($time);
         } catch (DataTypeCastingError $e) {
-            return $date;
+            return $seconds;
         }
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -65,4 +56,3 @@ class Time extends Formula
         return DataTypeFactory::createFromPrototype($this->getWorkbench(), TimeDataType::class);
     }
 }
-?>
