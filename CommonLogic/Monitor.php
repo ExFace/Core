@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Actions\UxonValidate;
 use exface\Core\CommonLogic\Debugger\Profiler;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
@@ -77,9 +79,9 @@ class Monitor extends Profiler
         $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
         $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');
         
-        $self->logLongRunningActions = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS');
-        $self->longRunningActionsThreshold = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD');
-        $self->longRunningActionsLevel = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_LEVEL');
+        $self->logLongRunningActions = $config->getOption('MONITOR.LONG_RUNNERS.ENABLED');
+        $self->longRunningActionsThreshold = $config->getOption('MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS');
+        $self->longRunningActionsLevel = $config->getOption('MONITOR.LONG_RUNNERS.LOG_LEVEL');
      
         // Do not monitor anything while installing the workbench
         if ($workbench->isInstalled() === false) {
@@ -193,22 +195,18 @@ class Monitor extends Profiler
     {
         $action = $event->getAction();
         
-        if (! $this->isActionMonitored($action)) {
-            return;
-        }
-        
-        $ms = null;
+        // Log long-running actions
         if ($this->actionsEnabled) {
             $ms = $this->stop($action)->getTimeTotalMs();
             $s = $ms / 1000;
             
-            $threshold = $action->getLongRunningThreshold() ?? $this->longRunningActionsThreshold;
-            if($threshold < 0) {
+            $threshold = $action->getMonitorAsLongRunningAfterSeconds($this->longRunningActionsThreshold);
+            if ($threshold < 0) {
                 return;
             }
             
-            if($this->logLongRunningActions && $s > $threshold) {
-                $msg = 'Action "' . $action->getName() . '" ran for ' . $s . 's!';
+            if ($this->logLongRunningActions && $s > $threshold) {
+                $msg = 'Long-runing action detected: "' . $action->__toString() . '" ran for ' . TimeDataType::formatMs($s) . '!';
                 
                 $exception = new ActionRuntimeError(
                     $action,
@@ -224,7 +222,8 @@ class Monitor extends Profiler
             }
         }
 
-        if($action instanceof iReadData) {
+        // Log action to action monitor
+        if (! $this->isActionMonitored($action)) {
             return;
         }
 
@@ -270,9 +269,11 @@ class Monitor extends Profiler
     protected function isActionMonitored(ActionInterface $action) : bool
     {
         switch (true) {
-            // Ignore ReadData, unless we are logging long-running actions AND reads.
-            case $action instanceof iReadData && !$this->logLongRunningActions: 
+            // Ignore ReadData actions - there are too many not monitor.
+            case $action instanceof iReadData: 
+            // Same goes for the following administration-related actions
             case $action instanceof UxonAutosuggest:
+            case $action instanceof UxonValidate:
             case $action instanceof ContextBarApi:
             case $action instanceof ShowContextPopup:
                 return false;
