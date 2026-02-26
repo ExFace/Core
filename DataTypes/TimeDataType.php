@@ -423,4 +423,57 @@ class TimeDataType extends AbstractDataType
         }
         return $formatted;
     }
+
+
+    /**
+     * Convert a seconds value (float or numeric string) to "hh:mm:ss" - optionally with microseconds
+     *
+     * - No timezone involved (pure arithmetic).
+     * - Hours are not capped at 24 (so 90000 seconds -> "25:00:00").
+     * - Microseconds are rounded to 6 digits (optionally fewer with $maxPrecision), and trimmed of trailing zeros.
+     *
+     * @param float|int|string $seconds
+     * @param int|null $maxPrecision
+     * @return string
+     */
+    public static function convertSecondsToTime(float|int|string $seconds, ?int $maxPrecision = null) : string
+    {
+        if (!is_numeric($seconds)) {
+            throw new DataTypeCastingError('Cannot parse "' . $seconds . '" as number of seconds - the value must be numeric');
+        }
+
+        // Work in total microseconds to avoid timezone and reduce float quirks.
+        $totalMicros = (int) round(((float)$seconds) * 1_000_000);
+
+        // Handle negative durations (optional, but safe)
+        $sign = '';
+        if ($totalMicros < 0) {
+            $sign = '-';
+            $totalMicros = abs($totalMicros);
+        }
+
+        $sec = intdiv($totalMicros, 1_000_000);
+        $mic = $totalMicros % 1_000_000;
+
+        $h = intdiv($sec, 3600);
+        $m = intdiv($sec % 3600, 60);
+        $s = $sec % 60;
+
+        $base = sprintf('%s%d:%02d:%02d', $sign, $h, $m, $s);
+
+        // Append fractional part only if it exists
+        if ($mic === 0) {
+            return $base;
+        }
+        
+        // IDEA can't we do the rounding further below in the sprintf()?
+        if ($maxPrecision > 0) {
+            $mic = round($mic, $maxPrecision);    
+        }
+        
+        // Format microseconds and trim trailing zeros (so 45.500000 -> ".5")
+        $frac = rtrim(sprintf('%06d', $mic), '0');
+
+        return $base . '.' . $frac;
+    }
 }

@@ -110,7 +110,7 @@ class DateDataType extends AbstractDataType
                     break;
                 // Numeric values, that are neither relative nor short dates, must be invalid!
                 case is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE:
-                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $string);
+                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', null, $string);
                     break;
             }        
             
