@@ -10,6 +10,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -736,6 +737,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                     break;
                 case $type instanceof NumberDataType && ! ($type instanceof EnumDataTypeInterface):
                 case $type instanceof DateDataType:
+                case $type instanceof TimeDataType:
                     $this->setAlign(EXF_ALIGN_OPPOSITE);
                     break;
                 case $type instanceof BooleanDataType:
