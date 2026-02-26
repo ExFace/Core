@@ -52,6 +52,8 @@ class Monitor extends Profiler
     
     private $longRunningActionsLevel = 'CRITICAL';
     
+    private $longRunningActionsHandler = null;
+    
     private $errorsEnabled = false;
     
     /**
@@ -205,14 +207,18 @@ class Monitor extends Profiler
             
             if($this->logLongRunningActions && $s > $this->longRunningActionsThreshold) {
                 $msg = 'Action "' . $action->getName() . '" ran for ' . $s . 's!';
-                $this->getWorkbench()->getLogger()->log(
+                
+                $exception = new ActionRuntimeError(
+                    $action,
+                    $msg,
+                    $this->longRunningActionsLevel
+                );
+                
+                $this->getLongRunningActionsHandler()->handle(
                     $this->longRunningActionsLevel,
                     $msg,
-                    [],
-                    new ActionRuntimeError(
-                        $action,
-                        $msg
-                    ),
+                    ['id' => $exception->getId()],
+                    $exception
                 );
             }
         }
@@ -414,6 +420,27 @@ class Monitor extends Profiler
                 break;
         }
         return $inputName ?? $inputWidget->getWidgetType();
+    }
+
+    /**
+     * Returns a log handler specifically configured to log long-running actions. The result is cached to speed up
+     * repeated calls.
+     * 
+     * Use it's `handle()` method to log any long-running actions.
+     * 
+     * @return MonitorLogHandler
+     */
+    protected function getLongRunningActionsHandler() : MonitorLogHandler
+    {
+        if($this->longRunningActionsHandler === null) {
+            $this->longRunningActionsHandler = new MonitorLogHandler(
+                $this->getWorkbench(),
+                $this,
+                $this->longRunningActionsLevel
+            );
+        }
+
+        return $this->longRunningActionsHandler;
     }
 }
 ?>
