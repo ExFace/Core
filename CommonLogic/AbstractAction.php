@@ -163,7 +163,7 @@ abstract class AbstractAction implements ActionInterface
 
     private $confirmations = null;
     
-    private $longRunningThreshold = null;
+    private ?int $longRunningThreshold = null;
 
     /**
      *
@@ -2086,41 +2086,45 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Returns the long-running threshold (in seconds) for this action.
+     * Returns the long-running action monitor threshold (in seconds) for this action.
      * 
      * @return int|null
      * - `>= 0`: The maximum execution in seconds, before this action should be logged.
      * - `-1`: Do not log this action, regardless of execution time.
-     * - `null`: Use the default threshold defined in `DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD`
-     *  in the `System.config.json`
+     * - `null`: Use the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS`
+     * in the `System.config.json`
      */
-    public function getLongRunningThreshold() : int|null
+    public function getMonitorAsLongRunningAfterSeconds(?int $default = null) : int|null
     {
-        return $this->longRunningThreshold;
+        return $this->longRunningThreshold ?? $default;
     }
 
     /**
-     * Set a runtime threshold (in seconds) for this action. If executing it takes longer than this threshold, a message
-     * will be logged and displayed by the monitor. 
-     * 
+     * Set a custom maximum run time for this action, after which it will appear in the monitor as long-running action.
+     *
+     * If running the action takes longer than this threshold, a message will appear in the monitor and may issue
+     * an alert depending on the monitor configuration.
+     *
+     * Logging long-running actions must be explicitly enabled in `MONITOR.LONG_RUNNERS.ENABLED` System.config.json.
+     * If enabled, all actions taking longer than `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS` will be logged to the
+     * monitor.
+     *
      * - Any value >= 0 will override the config setting.
      * - You can disable this feature by setting the threshold to `-1` or `false`.
-     * - Not setting this property explicitly applies the default threshold defined in `DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD`
+     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS`
      * in the `System.config.json`.
      * 
-     * @uxon-property long_running_threshold
-     * @uxon-template null
+     * @uxon-property monitor_as_long_running_after_seconds
+     * @uxon-type int
+     * @uxon-template 30
      * 
-     * @param int|bool|null $value
-     * @return $this
+     * @see ActionInterface::setMonitorAsLongRunningAfterSeconds()
      */
-    public function setLongRunningThreshold(int|bool|null $value) : AbstractAction
+    public function setMonitorAsLongRunningAfterSeconds(int|bool|null $value) : AbstractAction
     {
         if($value === true) {
-            $value = 1;
-        }
-        
-        if($value === false) {
+            $value = $this->getWorkbench()->getConfig()->getOption('MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS');
+        } elseif ($value === false) {
             $value = -1;
         }
 
