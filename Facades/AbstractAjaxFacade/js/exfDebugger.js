@@ -26,7 +26,7 @@
                 '/* Inner shadow highlight (no size change) */\n' +
                 '.' + _sCssHighlight + ' {' +
                 '  position: relative;' +
-                '  box-shadow: inset 0 0 0 3px rgba(0, 149, 255, 0.8), inset 0 0 12px rgba(0, 149, 255, 0.35);' +
+                '  box-shadow: 0 0 0 3px rgba(0, 149, 255, 0.8), inset 0 0 12px rgba(0, 149, 255, 0.55);' +
                 '  transition: box-shadow 120ms ease-in-out;' +
                 '}\n' +
 
