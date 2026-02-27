@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  * - `interval` - This sets an interval that determines where thick lines are drawn.
  * - `value` - Used with the "week" interval to specify the day of the week for the thick line.
  * - `from` and `to` - Used with the "month_range_in_days" interval to specify the range of days in a month for the thick line.
+ * - `color` - sets the color of the thick lines.
  * 
  * ## Examples
  * 
@@ -21,7 +22,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  * ```
  *      "thick_lines": {
  *          "interval": "week",
- *          "value": 1
+ *          "value": 1,
  *      }
  * ```
  * 
@@ -30,7 +31,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  *       "thick_lines": {
  *           "interval": "month_range_in_days",
  *           "from": 1,
- *           "to": 7
+ *           "to": 7,
  *       }
  *  ```
  * 
@@ -38,6 +39,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  *  ```
  *       "thick_lines": {
  *           "interval": "year_quarter",
+ *           "color": "#7c7c7c",
  *       }
  *  ```
  * 
