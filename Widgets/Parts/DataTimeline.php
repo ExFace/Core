@@ -299,6 +299,33 @@ class DataTimeline implements WidgetPartInterface
                     new DataTimelineView($this, new UxonObject([
                         'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH'),
                         'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH_DESCRIPTION'),
+                        'granularity' => DataTimelineView::GRANULARITY_WEEKS,
+                        'date_format' => 'yyyy-MM-dd',
+                        'column_width' => 35,
+                        'upper_text_frequency' => 4,
+                        'header_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimeline::INTERVAL_MONTH,
+                                'date_format' => '',
+                                'date_format_at_border' => 'MMMM'
+                            ], [
+                                'date_format' => 'w',
+                            ]
+                        ]),
+                        'thick_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimelineThicklines::INTERVAL_MONTH_RANGE_IN_DAYS,
+                                'from' => 1,
+                                'to' => 7,
+                            ]
+                        ])
+                    ])),
+                    //TODO: This is the original month view. Currently, month and the year view is not working properly.
+                    // If the user starts no scroll inside the view, the bars will change its position randomly.
+                    // Frappe-gantt authors know about this issue, so it may be fixed in the future. 
+/*                    new DataTimelineView($this, new UxonObject([ 
+                        'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH'),
+                        'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH_DESCRIPTION'),
                         'granularity' => DataTimelineView::GRANULARITY_MONTHS,
                         'date_format' => 'yyyy-MM',
                         'column_width' => 120,
@@ -316,7 +343,7 @@ class DataTimeline implements WidgetPartInterface
                                 'interval' => DataTimelineThicklines::INTERVAL_YEAR_QUARTER,
                             ]
                         ])
-                    ])),
+                    ])),*/
                 ];
             } else {
                 foreach ($this->viewsUxon as $uxon) {
