@@ -323,6 +323,7 @@ class DataTimeline implements WidgetPartInterface
                     //TODO: This is the original month view. Currently, month and the year view is not working properly.
                     // If the user starts no scroll inside the view, the bars will change its position randomly.
                     // Frappe-gantt authors know about this issue, so it may be fixed in the future. 
+                    // See: https://github.com/frappe/gantt/issues/498
 /*                    new DataTimelineView($this, new UxonObject([ 
                         'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH'),
                         'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH_DESCRIPTION'),
