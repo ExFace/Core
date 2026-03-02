@@ -563,7 +563,7 @@ interface ActionInterface extends
      * @return int|null
      * - `>= 0`: The maximum execution in seconds, before this action should be logged.
      * - `-1`: Do not log this action, regardless of execution time.
-     * - `null`: Use the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS`
+     * - `null`: Use the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
      *  in the `System.config.json`
      */
     public function getMonitorAsLongRunningAfterSeconds(?int $default = null) : int|null;
@@ -573,11 +573,11 @@ interface ActionInterface extends
      *
      * - Any value >= 0 will override the config setting.
      * - You can disable this feature by setting the threshold to `-1` or `false`.
-     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS`
+     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
      * in the `System.config.json`.
      * 
      * @param int|bool|null $value
      * @return ActionInterface
      */
-    public function setMonitorAsLongRunningAfterSeconds(int|bool|null $value) : ActionInterface;
+    public function setMonitorAsLongRunningAfterSeconds(int|bool $value) : ActionInterface;
 }
