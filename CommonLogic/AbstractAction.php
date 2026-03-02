@@ -2091,7 +2091,7 @@ abstract class AbstractAction implements ActionInterface
      * @return int|null
      * - `>= 0`: The maximum execution in seconds, before this action should be logged.
      * - `-1`: Do not log this action, regardless of execution time.
-     * - `null`: Use the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS`
+     * - `null`: Use the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
      * in the `System.config.json`
      */
     public function getMonitorAsLongRunningAfterSeconds(?int $default = null) : int|null
@@ -2106,24 +2106,24 @@ abstract class AbstractAction implements ActionInterface
      * an alert depending on the monitor configuration.
      *
      * Logging long-running actions must be explicitly enabled in `MONITOR.LONG_RUNNERS.ENABLED` System.config.json.
-     * If enabled, all actions taking longer than `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS` will be logged to the
+     * If enabled, all actions taking longer than `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS` will be logged to the
      * monitor.
      *
      * - Any value >= 0 will override the config setting.
      * - You can disable this feature by setting the threshold to `-1` or `false`.
-     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS`
+     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
      * in the `System.config.json`.
      * 
      * @uxon-property monitor_as_long_running_after_seconds
      * @uxon-type int
-     * @uxon-template 30
+     * @uxon-template 5
      * 
      * @see ActionInterface::setMonitorAsLongRunningAfterSeconds()
      */
-    public function setMonitorAsLongRunningAfterSeconds(int|bool|null $value) : AbstractAction
+    public function setMonitorAsLongRunningAfterSeconds(int|bool $value) : AbstractAction
     {
         if($value === true) {
-            $value = $this->getWorkbench()->getConfig()->getOption('MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS');
+            $value = null;
         } elseif ($value === false) {
             $value = -1;
         }
