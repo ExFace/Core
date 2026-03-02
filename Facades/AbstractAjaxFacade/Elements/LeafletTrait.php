@@ -267,6 +267,10 @@ JS;
             $mapOptions .= "
         maxZoom: {$val},";
         }
+        if (null !== $val = $widget->getZoomStep()) {
+            $mapOptions .= "
+        zoomSnap: {$val},";
+        }
 
         if (!$widget->getDoubleClickToZoom()) {
             $mapOptions .= "
@@ -1297,12 +1301,13 @@ JS;
         }
 
         if (($layer instanceof ValueLabeledMapLayerInterface) && $layer->hasValue()) {
-            if ($layer->getValuePosition() === DataShapesLayer::VALUE_POSITION_TOOLTIP) {
-                $layerCaption = '';
-                if (! $layer->getHideCaption() && null !== $layerCaption = $layer->getCaption()) {
-                    $layerCaptionJs = $this->escapeString($layerCaption . ' ');
-                }
-                $tooltipJs = <<<JS
+            switch (true) {
+                case $layer->getValuePosition() === DataShapesLayer::VALUE_POSITION_TOOLTIP:
+                    $layerCaption = '';
+                    if (! $layer->getHideCaption() && null !== $layerCaption = $layer->getCaption()) {
+                        $layerCaptionJs = $this->escapeString($layerCaption . ' ');
+                    }
+                    $tooltipJs = <<<JS
 
                     layer.bindTooltip({$layerCaptionJs} + feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: false, 
@@ -1311,8 +1316,15 @@ JS;
                     }).openTooltip();
 
 JS;
-            } else {
-                $tooltipJs = <<<JS
+                    break;
+                // For data shapes layers place value text inside layer an scale it with the shape if 
+                case ($layer instanceof DataShapesLayer) && $layer->getValueTextFitToShape() === true:
+                    $tooltipJs = $this->buildJsShapeValueOverlay($layer, 'layer');
+                    break;
+                // Otherwise place a permanent tooltip in the center of the layer, do not scale it and let it
+                // overflow the layer freely - i.e. text is always the same size regardless of the shape.
+                default:
+                    $tooltipJs = <<<JS
 
                     layer.bindTooltip(feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: true, 
@@ -2207,6 +2219,158 @@ JS;
     });
 })($oMapJs);
 JS;
+    }
+
+    /**
+     * Returns the JS to create an SVG overlay with data of `value_attribute_alias` for every layer item and scale it with the layer
+     * 
+     * Challanges:
+     * - When you set viewBox to the actual pixel size (0 0 w h), you fix letterboxing, but you also redefine the SVG 
+     * coordinate system so that CSS px inside <foreignObject> becomes “smaller” in screen space as w/h grow → text 
+     * shrinks when you zoom in (the inverse scaling you observed).
+     * - When you keep a fixed square viewBox (0 0 100 100) you get stable scaling, but wide/flat rectangles letterbox 
+     * because the viewBox aspect ratio doesn’t match the viewport → content looks narrow/squeezed. This is exactly 
+     * what preserveAspectRatio is meant to control when viewBox and viewport have different aspect ratios.
+     * 
+     * @param DataShapesLayer $layer
+     * @param string $layerJs
+     * @return string
+     */
+    protected function buildJsShapeValueOverlay(DataShapesLayer $layer, string $layerJs) : string
+    {
+        $lineWidth = 1;
+        if ($layer instanceof DataShapesLayer) {
+            $lineWidth = $layer->getLineWeight() ?? $lineWidth;
+        }
+        return <<<JS
+
+(function(layer) {
+    function buildLabelSvgElement() {
+      const svgNS = "http://www.w3.org/2000/svg";
+      const xhtmlNS = "http://www.w3.org/1999/xhtml";
+    
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("xmlns", svgNS);
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "100%");
+      // viewBox is set dynamically later
+      svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+    
+      const bg = document.createElementNS(svgNS, "rect");
+      bg.setAttribute("x", "0");
+      bg.setAttribute("y", "0");
+      bg.setAttribute("fill", "transparent");
+      svg.appendChild(bg);
+    
+      const fo = document.createElementNS(svgNS, "foreignObject");
+      fo.setAttribute("x", "0");
+      fo.setAttribute("y", "0");
+      svg.appendChild(fo);
+    
+      const container = document.createElementNS(xhtmlNS, "div");
+      container.setAttribute(
+        "style",
+        `
+        width:100%;
+        height:100%;
+        box-sizing:border-box;
+        padding:5px;
+        text-align:left;
+        `
+      );
+      $(container).append(feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}']);
+    
+      fo.appendChild(container);
+    
+      // expose nodes so we can resize viewBox/bg/fo later
+      svg.__bg = bg;
+      svg.__fo = fo;
+    
+      return svg;
+    }
+
+    const svgEl = buildLabelSvgElement();
+    const overlay = L.svgOverlay(svgEl, layer.getBounds(), { interactive: false });
+    
+    const syncViewBoxToPixels = (bScaleText) => {
+        var bScaleText = true;
+        const map = layer._map;
+        if (!map) return;
+        
+        const fLineW = {$lineWidth};
+        const b = layer.getBounds();
+        const nw = map.latLngToLayerPoint(b.getNorthWest());
+        const se = map.latLngToLayerPoint(b.getSouthEast());
+        var w,h;
+        
+        if (bScaleText === false) {
+            w = Math.max(1, Math.round(Math.abs(se.x - nw.x)));
+            h = Math.max(1, Math.round(Math.abs(se.y - nw.y)));
+            
+            // ✅ Critical: viewBox aspect ratio matches the rectangle on screen
+            svgEl.setAttribute("viewBox", `0 0 \${w} \${h}`);
+        } else {
+            /*
+            Instead of viewBox = 0 0 w h (pixel-dependent), do:
+            - compute the rectangle’s current pixel aspect ratio r = w / h
+            - keep a constant viewBox height (e.g., VBH = 100)
+            - set viewBox width to VBW = r * VBH
+            This way:
+            - the viewBox matches the rectangle’s aspect ratio → no letterboxing / no narrow FO ✅
+            - the viewBox scale does not depend on zoom → text grows when the rectangle grows ✅
+            - you still get left alignment and tiny margins.
+            // FIXME why is text bigger if height is bigger???
+             */
+            const pxW = Math.max(1, Math.abs(se.x - nw.x));
+            const pxH = Math.max(1, Math.abs(se.y - nw.y));
+            
+            // aspect ratio of the shape in screen pixels
+            const r = pxW / pxH;
+            
+            // keep viewBox magnitude constant, change ONLY ratio
+            h = 100;             // constant "design height"
+            w = Math.max(1, r * h);
+            
+            svgEl.setAttribute("viewBox", `0 0 \${w} \${h}`);
+            svgEl.setAttribute("preserveAspectRatio", "xMinYMin meet");
+            $(svgEl).css('font-size', '1.4rem');
+        }
+        
+        // Make bg and foreignObject fill the full viewBox (use numbers, not %)
+        svgEl.__bg.setAttribute("width", String(w));
+        svgEl.__bg.setAttribute("height", String(h));
+        svgEl.__fo.setAttribute("width", String(w));
+        svgEl.__fo.setAttribute("height", String(h));
+    };
+
+
+    layer.on("add", () => {
+        overlay.addTo(layer._map);
+        syncViewBoxToPixels();
+        // TODO add geoman events if editable
+    });
+    
+    const syncBounds = () => {
+        if (!layer._map) return;
+        overlay.setBounds(layer.getBounds());
+        syncViewBoxToPixels();
+    };
+    
+    // TODO add geoman events if editable
+    
+    layer.on("remove", () => {
+        const map = layer._map;
+        if (map) {
+            map.off("zoom", syncViewBoxToPixels);
+            map.off("zoomend", syncViewBoxToPixels);
+            if (map.hasLayer(overlay)) map.removeLayer(overlay);
+        }
+    });
+    
+    layer._labelOverlay = overlay;
+})($layerJs);
+JS;
+
     }
 
     /**
