@@ -579,7 +579,7 @@ JS;
                           
                             if (response.rows.length === 0) {
                                 wrapper.innerHTML = `<ul><li class="mention-item empty" style="\${ed.exfWidget.mentionItemEmptyCss}">
-                                    {$translator->translate('ERROR.No_RESULTS')}
+                                    {$translator->translate('ERROR.NO_RESULTS')}
                                   </li></ul>`;
                                 return resolve(wrapper);
                             }
