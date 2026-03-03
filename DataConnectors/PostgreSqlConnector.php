@@ -9,6 +9,8 @@ use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\Exceptions\DataSources\DataQueryForeignKeyError;
+use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\DataSources\PostgreSqlError;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
@@ -164,15 +166,25 @@ class PostgreSqlConnector extends AbstractSqlConnector
     {        
         $message = 'PostgreSQL query failed. ' . $message;
         $e = new PostgreSqlError($this, $message, '6T2T2UI', null, $res);
-        $sqlState = $e->getSqlState();
+        $sqlState = intval($e->getSqlState());
         switch (true) {
+            case $sqlState === PostgreSqlError::SQL_STATE_UNIQUE_VIOLATION:
+                $obj = $e->getAffectedObject();
+                $attrVals = $e->getAffectedAttributeValues();
+                $e = new DataQueryUniqueConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+            case $sqlState === PostgreSqlError::SQL_STATE_UNIQUE_VIOLATION:
+                $obj = $e->getAffectedObject();
+                $attrVals = $e->getAffectedAttributeValues();
+                $e = new DataQueryForeignKeyError($query, $message, null, $e, $obj, $attrVals);
+                break;
             case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
+            case $sqlState === 23514: // CHECK VIOLATION
             case $sqlState === 23001: // RESTRICT VIOLATION
             case $sqlState === 23502: // NOT NULL VIOLATION
-            case $sqlState === 23503: // FOREIGN KEY VIOLATION
-            case $sqlState === 23505: // UNIQUE VIOLATION
-            case $sqlState === 23514: // CHECK VIOLATION
-                $e = new DataQueryConstraintError($query, $message, null, $e->setAlias('73II64M'));
+                $obj = $e->getAffectedObject();
+                $attrVals = $e->getAffectedAttributeValues();
+                $e = new DataQueryConstraintError($query, $message, null, $e, $obj, $attrVals);
                 break;
             default:
                 $e = new DataQueryFailedError($query, $message, null, $e);

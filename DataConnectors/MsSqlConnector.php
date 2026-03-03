@@ -13,7 +13,7 @@ use exface\Core\ModelBuilders\MsSqlModelBuilder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
-use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
 use exface\Core\QueryBuilders\MsSqlBuilder;
@@ -308,7 +308,7 @@ class MsSqlConnector extends AbstractSqlConnector
                 return new DataQueryRelationCardinalityError($query, $message, null, $err->setAlias('7W2J960'));
             case 2627:
             case 2601:
-                return new DataQueryConstraintError($query, $message, null, $err->setAlias('73II64M'));
+                return new DataQueryUniqueConstraintError($query, $this, $message, null, $err->setAlias('73II64M'));
             // Subquery returns more than 1 row - SQL error code 1242
             case 1242:
                 return new DataQueryRelationCardinalityError($query, $message, $err);
