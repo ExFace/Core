@@ -1332,6 +1332,23 @@
             },
             "ALIAS": "Code",
             "SHORT_DESCRIPTION": "Base type for all sorts of program code"
+        },
+        {
+            "_EXPORT_SUMMARY": "Email address",
+            "CREATED_ON": "2026-03-03 18:10:53",
+            "MODIFIED_ON": "2026-03-03 18:10:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f1a1b7ef7176b4a1b7025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Email address",
+            "PROTOTYPE": "exface/core/DataTypes/EmailDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "EmailAddress",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
