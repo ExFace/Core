@@ -605,7 +605,7 @@
 	"ERROR.ECHARTS.AXIS_NO_DATA": "Keine Daten erhalten für Achse",
 
 	"ERROR.CAPTION": "Fehler",
-  "ERROR.No_RESULTS": "Keine Treffer",
+	"ERROR.NO_RESULTS": "Keine Treffer",
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",

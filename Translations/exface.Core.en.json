@@ -620,7 +620,7 @@
 	"ERROR.ECHARTS.AXIS_NO_DATA": "No data received for axis",
 	
 	"ERROR.CAPTION": "Error",
-  "ERROR.No_RESULTS": "No results",
+	"ERROR.NO_RESULTS": "No results",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
 	"ERROR.OBJECT_CAPTION": "Object \"%name%\"",
