@@ -26,7 +26,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * optionally walk through relation attributes to print child objects up to a
  * configurable depth.
  */
-class ActionMarkdownPrinter //implements MarkdownPrinterInterface
+class ActionMarkdownPrinter extends AbstractMarkdownPrinter //implements MarkdownPrinterInterface
 {
     protected WorkbenchInterface $workbench;
     
@@ -59,24 +59,22 @@ class ActionMarkdownPrinter //implements MarkdownPrinterInterface
      */
     public function getMarkdown(): string
     {
-        $heading = MarkdownDataType::buildMarkdownHeader($this->action->getName(), $this->headingLevel);
-
-        $uxon = $this->action->exportUxonObject();
-        
-        $uxon = $uxon->toJson();
-        //Uxon
-
-        //TODO Einbauen Uxon im Codeblock, mögliche Description
-        
+        $action = $this->action;
+        $heading = MarkdownDataType::buildMarkdownHeader('Action "' . $action->getName() . '"' . ($action->hasMetaObject() ? ' of object "' . $action->getMetaObject()->getName() . '"' : ''), $this->headingLevel);
+        $prototypeClass = '\\' . get_class($action);
+        $prototypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($action);
         return <<<MD
 {$heading}
 
-Uxon:
-´´´
-{$uxon}
-´´´
+{$this->escapeMarkdownText($action->getHint())}
+
+- Alias: {$action->getAliasWithNamespace()}
+- Prototype: [$prototypeClass]($prototypeLink)
+
+```
+{$action->exportUxonObject()->toJson(true)}
+```
+
 MD;
     }
-
-    
 }
