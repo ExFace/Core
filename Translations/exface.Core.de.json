@@ -188,7 +188,7 @@
     "CONTEXT.DEBUG.TRACE_NAME": "Trace",
     "CONTEXT.DEBUG.TRACE_JS_STARTED": "JS-Tracer AN: Fehler im JavaScript werden als Pop-Up angezeigt (für Debugging)",
     "CONTEXT.DEBUG.TRACE_JS_STOPPED": "JS-Tracer AUS: Fehler im JavaScript werden nur im Hintergrund geloggt",
-    "CONTEXT.DEBUG.TRACE_JS": "Trace fron-end errors",
+    "CONTEXT.DEBUG.TRACE_JS": "Trace front-end errors",
     "CONTEXT.DEBUG.TRACES_JS_LIST_BUTTON": "Frontend-Traces anzeigen",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION": "Intercept user communication",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION_HINT": "Temporary re-route all messages to certain users or roles while interception is active. Multiple values can be separated by comma.",
