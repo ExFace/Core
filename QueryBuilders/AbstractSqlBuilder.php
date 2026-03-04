@@ -2894,10 +2894,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlGroupBy(QueryPart $qpart, $select_from = null)
     {
-        if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
-            // Seems like SQL statements are not supported in the GROUP BY clause in general
-            throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
-        } else {
+        if ($this->isGroupable($qpart, true)) {
             // If it's not a custom SQL statement, it must be a column, so we need to prefix it with the table alias
             if ($select_from === null) {
                 $select_from = $qpart->getAttribute()->getRelationPath()->toString() ? $qpart->getAttribute()->getRelationPath()->toString() : $this->getMainObject()->getAlias();
@@ -3823,5 +3820,31 @@ SQL;
                 return 0;
         }
         return null;
+    }
+
+    /**
+     * Returns TRUE if the given query part can be used in a GROUP BY clause
+     * 
+     * If $throwError is TRUE, the method will throw an exception with the specific reason, why the query
+     * part is not groupable.
+     * 
+     * @param QueryPartAttribute $qpart
+     * @param bool $throwError
+     * @return null
+     */
+    protected function isGroupable(QueryPartAttribute $qpart, bool $throwError = false) : bool
+    {
+        $error = null;
+        // Seems like SQL statements are not supported in the GROUP BY clause in general
+        if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
+            $error = 'Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement';
+        }
+        if ($error) {
+            if ($throwError) {
+                throw new QueryBuilderException($error);
+            }
+            return false;
+        }
+        return true;
     }
 }

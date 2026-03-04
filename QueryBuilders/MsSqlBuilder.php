@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
@@ -11,7 +10,6 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
-use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
@@ -514,19 +512,36 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
         $args = $aggregator->getArguments();
-        $function_name = $aggregator->getFunction()->getValue();
+        $aggrFunc = $aggregator->getFunction()->getValue();
         
-        switch ($function_name) {
+        $isListAggregation = (AggregatorFunctionsDataType::LIST_ALL || AggregatorFunctionsDataType::LIST_DISTINCT);
+        $needsForXML = $this->needsForXml($qpart, $aggregator);
+        
+        switch ($aggrFunc) {
             // Use STRING_AGG() for non-distinct lists.
-            case AggregatorFunctionsDataType::LIST_ALL:
+            case $isListAggregation && ! $needsForXML :
                 $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
                 $output = "STRING_AGG($sql, '{$this->escapeString($delim)}')";
                 if ($qpart->getQuery()->isSubquery()) {
-                    $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+                    /* IDEA replace LABEL attributes with SQL statements with UID attributes - did not work because
+                     * of a syntax error. No time to evaluate further so far
+                    $attr = $qpart->getAttribute();
+                    $attrObj = $attr->getObject();
+                    if ($this->isSqlStatement($qpart->getDataAddress())) {
+                        if (($attr->isLabelForObject() || $attr->getAlias() === MetaAttributeInterface::OBJECT_LABEL_ALIAS) && $attrObj->hasUidAttribute()) {
+                            $groupByAlias = ($attr->isRelated() ? $attr->getRelationPath()->toString() . RelationPath::RELATION_SEPARATOR : '') . $attrObj->getUidAttribute()->getAlias();
+                        } else {
+                            throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
+                        }
+                    } else {
+                        $groupByAlias = $qpart->getAttribute()->getAliasWithRelationPath();
+                    }*/
+                    $groupByAlias = $qpart->getAttribute()->getAliasWithRelationPath();
+                    $qpart->getQuery()->addAggregation($groupByAlias);
                 }
                 return $output;
             // For LIST_DISTINCT, we cannot use STRING_AGG(), so we try a workaround
-            case AggregatorFunctionsDataType::LIST_DISTINCT:
+            case $isListAggregation && $needsForXML:
                 // This is a VERY strange way to concatenate row values, but it seems to be the only
                 // one available in SQL Server: STUFF(CAST(( SELECT ... FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, {LengthOfDelimiter}, '')
                 // Since in case of subselects the `...` needs to be replaced by the whole subselect,
@@ -540,9 +555,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 }
                 $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
                 if ($qpart->getQuery()->isSubquery()) {
+                    // IDEA replace LABEL attributes with SQL statements with UID attributes - see non-XML LIST above
                     $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 }
-                return "STUFF(CAST(( SELECT DISTINCT [text()] = '{$this->escapeString($delim)}' + {$sql}";
+                return "STUFF(CAST(( SELECT " . ($aggrFunc == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = '{$this->escapeString($delim)}' + {$sql}";
             default:
                 return parent::buildSqlGroupByExpression($qpart, $sql, $aggregator);
         }
@@ -699,7 +715,11 @@ class MsSqlBuilder extends AbstractSqlBuilder
             return false;
         }
         $aggr = $aggregator ?? $qpart->getAggregator();
-        if ($aggr && $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT) {
+        $aggrFunc = $aggr->getFunction()->getValue();
+        if ($aggr && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || AggregatorFunctionsDataType::LIST_DISTINCT) && $this->isSqlStatement($qpart->getDataAddress())) {
+            return true;
+        }
+        if ($aggr && $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
             return true;
         }
         return false;
