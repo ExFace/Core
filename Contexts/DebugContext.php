@@ -2,6 +2,8 @@
 namespace exface\Core\Contexts;
 
 use exface\Core\Actions\ShowDialogFromFile;
+use exface\Core\Actions\UxonAutosuggest;
+use exface\Core\Actions\UxonValidate;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\Constants\Colors;
@@ -142,7 +144,7 @@ class DebugContext extends AbstractContext
             );
         }
         
-        $this->excludeDebugContextFromTrace();
+        $this->excludeCertainActionsFromTrace();
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_STARTED');
     }
     
@@ -327,17 +329,17 @@ class DebugContext extends AbstractContext
     /**
      * @return void
      */
-    protected function excludeDebugContextFromTrace()
+    protected function excludeCertainActionsFromTrace()
     {
         // Make sure the tracer is disabled for all actions dealing with this context, so
         // we don't caption stop-tracing and debug-menu actions.
         $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
             $this,
-            'onContextActionDisableTracer'
+            'onExcludedActionDisableTracer'
         ));
         $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), array(
             $this,
-            'onContextActionDisableTracer'
+            'onExcludedActionDisableTracer'
         ));
     }
     
@@ -345,14 +347,20 @@ class DebugContext extends AbstractContext
      * 
      * @param ActionEventInterface $e
      */
-    public function onContextActionDisableTracer(ActionEventInterface $e)
+    public function onExcludedActionDisableTracer(ActionEventInterface $e)
     {
         $action = $e->getAction();
-        if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)
-        || $action instanceof CallContext && $action->getContext() === $this){
-            if (null !== $tracer = $this->getTracer()) {
-                $tracer->disable();
-            }
+        switch (true) {
+            // Ignore UXON editor background actions to avoid spamming the logs on multi-user dev-systems
+            case $action instanceof UxonAutosuggest:
+            case $action instanceof UxonValidate:
+            // Ignore interaction with the DebugContext
+            case ($action instanceof ShowContextPopup) && $action->getContext() === $this:
+            case ($action instanceof CallContext) && $action->getContext() === $this:
+                if (null !== $tracer = $this->getTracer()) {
+                    $tracer->disable();
+                }
+                break;
         }
     }
 
