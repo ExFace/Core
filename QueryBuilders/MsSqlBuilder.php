@@ -514,7 +514,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $args = $aggregator->getArguments();
         $aggrFunc = $aggregator->getFunction()->getValue();
         
-        $isListAggregation = (AggregatorFunctionsDataType::LIST_ALL || AggregatorFunctionsDataType::LIST_DISTINCT);
+        $isListAggregation = ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT);
         $needsForXML = $this->needsForXml($qpart, $aggregator);
         
         switch ($aggrFunc) {
@@ -715,11 +715,14 @@ class MsSqlBuilder extends AbstractSqlBuilder
             return false;
         }
         $aggr = $aggregator ?? $qpart->getAggregator();
+        if (! $aggr) {
+            return false;
+        }
         $aggrFunc = $aggr->getFunction()->getValue();
-        if ($aggr && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || AggregatorFunctionsDataType::LIST_DISTINCT) && $this->isSqlStatement($qpart->getDataAddress())) {
+        if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
             return true;
         }
-        if ($aggr && $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
+        if ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL && $this->isSqlStatement($qpart->getDataAddress())) {
             return true;
         }
         return false;
