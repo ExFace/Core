@@ -488,6 +488,20 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function atomizeCondition(ConditionInterface $condition, bool $trimValues = true) : ConditionalExpressionInterface
     {
+        /**
+         * TODO geb 2026-04-03
+         * - Currently only atomizes the right value (nested loop required)
+         * - Needs to be added to Condition::compare() around the end of the switch()
+         * - Extract atomizeComparison() for better performance
+         * - LIST_EACH works by "accident"
+         * - ][ does not work
+         * - [[ does not work
+         * - LIST_ANY does not work
+         * - exfTools.data.compareValues is also missing the double loop for LIST_EACH and LIST_ANY
+         * - IF we decide to fix this, we need to monitor the effects on all usages of these comparators, since they
+         * might have unintentionally "worked" in practice (even though they would not have met expectations).
+         */
+        
         // IDEA also support ConditionGroups atomizing their inner conditions and nested groups recursively
         $rightSideValues = $condition->getValue();
         if(!is_array($rightSideValues)) {
