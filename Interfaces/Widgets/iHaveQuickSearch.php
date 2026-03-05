@@ -49,7 +49,7 @@ interface iHaveQuickSearch extends WidgetInterface
      *
      * @uxon-property quick_search_widget
      * @uxon-type \exface\Core\Widgets\Input
-     * @uxon-tempalte {"widget_type": ""}
+     * @uxon-template {"widget_type": ""}
      *
      * @param UxonObject $value
      * @return iHaveQuickSearch
