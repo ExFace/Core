@@ -1054,6 +1054,7 @@ class DataSheet implements DataSheetInterface
                     // Create a separated data sheet for the new rows
                     $create_ds = $this->copy()->removeRows();
                     // For non-empty missing UIDs just add the entire row
+                    $missingUidRowsInCreateSheet = [];
                     foreach ($missing_uids as $missing_uid) {
                         $missingUidIdx = $thisUidCol->findRowByValue($missing_uid);
                         $rowIdxsToCreate[] = $missingUidIdx;
@@ -1075,32 +1076,40 @@ class DataSheet implements DataSheetInterface
                     try {
                         $counter += $create_ds->dataCreate(false, $transaction);
                         // Now update the columns of the original sheet with values from the create-sheet
-                        // on all rows, that previously did not have a UID value. Doing this for all
-                        // mutual columns instead of just the UID ensures, that default values and
-                        // those altered by behaviors are not lost
+                        // on all rows, that appear in the create-sheet on the assumption that they have been changed.
+                        // Doing this for all mutual columns instead of just the UID ensures, that default values and
+                        // those altered by behaviors are not lost.
+                        // FIXME #update-create-separation remember to use $update_ds here, once its implemented.
+                        $updateUidCol = $this->getUidColumn();
+                        $createToUpdateMapping = [];
+                        // Map create-sheet rows to update-sheet rows.
+                        foreach ($create_ds->getUidColumn()->getValues() as $createRowIdx => $createSheetUid) {
+                            // See if row can be found in the update-sheet.
+                            $updateRowIdx = $updateUidCol->findRowByValue($createSheetUid);
+                            if($updateRowIdx !== false) {
+                                $createToUpdateMapping[$createRowIdx] = $updateRowIdx;
+                            } else {
+                                // If it's not there, it probably had an empty UID.
+                                $emptyKey = array_search($createRowIdx, $emptyUidRowsInCreateSheet, true);
+                                if($emptyKey !== false) {
+                                    $createToUpdateMapping[$createRowIdx] = $emptyUidRows[$emptyKey];
+                                }
+                                // If it wasn't an update-row, nor had an empty UID it must have been passed by
+                                // a Behavior reacting to the create events, which means we can ignore this row.
+                            }
+                        }
+                        // Update column values, using the above mapping. This maps ALL create-rows to their
+                        // corresponding update-rows.
                         foreach ($create_ds->getColumns() as $create_col) {
                             if ($col = $this->getColumns()->getByExpression($create_col->getExpressionObj())) {
-                                foreach ($emptyUidRowsInCreateSheet as $i => $r) {
-                                    $col->setValue($emptyUidRows[$i], $create_col->getValue($r));
-                                }
-                                // Also make sure to update all subsheets in the original data after the respective
-                                // rows were created because these subsheets also received UIDs. Otherwise, if another
-                                // update is done on the original sheet, subsheet rows will be treated as new ones
-                                // and will be recreated. This has caused problems with file attachments, that have
-                                // the attachment table UIDs in their file paths - recreating the attachment rows
-                                // lead to saving files multiple times or to orphans if the FileAttachmentBehavior
-                                // was configured to not actually delete the files.
-                                // TODO wouldn't it actually be better to update ALL values in the original sheet?
-                                // Right now it is only done if the UID was empty or the column is a subsheet. But
-                                // why???
-                                if ($col->isNestedData()) {
-                                    foreach ($create_col->getValues() as $createdIdx => $value) {
-                                        $col->setValue($rowIdxsToCreate[$createdIdx], $value);
+                                foreach ($create_col->getValues() as $createRowIdx => $value) {
+                                    if(key_exists($createRowIdx, $createToUpdateMapping)) {
+                                        $col->setValue($createToUpdateMapping[$createRowIdx], $value);
                                     }
                                 }
                             }
                         }
-                        
+
                         /* FIXME #update-create-separation make separate $update_ds. See DevMan #
                         $update_ds = $this->copy();
                         // We remove all rows from the update sheet, that were created during this step,
