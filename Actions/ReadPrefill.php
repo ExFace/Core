@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
@@ -68,7 +69,10 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         $mainSheet = null;
         $targetWidget = $this->getWidgetToReadFor($task);
         $logBook = $this->getLogBook($task);
-        
+
+        $logBook->addLine($targetWidget !== null ? 'Target widget provided: **' . $targetWidget->getWidgetType() . '** based on ' . $targetWidget->getMetaObject()->__toString(): '**No target widget** provided', +1);
+
+
         // If the prefill is read for a widget opened by a trigger (e.g. a button),
         // any mappers or checks used on the original action of the button must be
         // applied to the prefill too! 
@@ -77,6 +81,8 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // But if the button calls an object action from the meta model, that has checks/mappers
         // defined, they will not be part of the imported UXON and need to be added manually here.
         if (null !== $showWidgetAction = $this->getPrefillTriggerAction($task)) {
+            $logBook->addLine('**Inheriting** from trigger action ' . $showWidgetAction->__toString() . ': `prefill_with_*`, `input_mappers`, `input_invalid_if`, `output_mappers`');
+            
             // Make sure, the original ShowWidget action is authorized with the current set of data.
             // This is important to prevent reading prefill data for things, that the user actually cannot
             // open due to policies applying to ShowWidget/Dialog actions, that cause the prefill.
@@ -107,9 +113,26 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                 }
             }
         }
+
+        $logBook->addLine('Prefill types **enabled**: ', +1);
+        if ($this->getPrefillWithInputData()) {
+            $logBook->continueLine(' `prefill_with_input_data`');
+        }
+        if ($this->getPrefillWithPrefillData()) {
+            $logBook->continueLine(' `prefill_with_prefill_data`');
+        }
+        if ($this->getPrefillWithFilterContext()) {
+            $logBook->continueLine(' `prefill_with_filter_context`');
+        }
+        if ($this->getPrefillWithDefaults()) {
+            $logBook->continueLine(' `prefill_with_defaults`');
+        }
+        if ($this->hasPrefillDataPreset()) {
+            $logBook->continueLine(' `prefill_data_sheet`');
+        }
         
         // Normally, if we know, which widget to prefill, use the normal prefill logic from the iPrefillWidgetTrait
-        // Otherwise get the input/prefill data and refresh it if neccessary
+        // Otherwise get the input/prefill data and refresh it if necessary
         if ($targetWidget !== null) {
             $logBook->addSection('Prefilling widget "' . $targetWidget->getWidgetType() . '"');
             $logBook->addCodeBlock('[#diagram_prefill#]', 'mermaid');
@@ -178,13 +201,16 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // UID column with values.
         // This can occur if user did load data in a table and the another user changed a data entry
         // after the first user did load the table. The first user can then select an entry and press a button
-        // to show a dialog, for example to change a status with ading a commentary.
-        // With up to date data that action wouldn't be allowed, but as the user still has old data shown they can
+        // to show a dialog, for example to change a status with adding a commentary.
+        // With up-to-date data that action wouldn't be allowed, but as the user still has old data shown they can
         // trigger the action initially.
         // Therefor we should check again after we load the actual data in the prefill if the prefill ist actually allowed
         // by checking again against the checks of the trigger action.
         if ($mainSheet !== null && $mainSheet->hasUidColumn()) {
+            $logBook->addLine('**Validating prefill data** once more in case it has become out-dated');
+            $logBook->addIndent(+1);
             $this->validateInputData($mainSheet, $logBook);
+            $logBook->addIndent(-1);
         }
         
         if ($mainSheet === null) {
@@ -193,10 +219,11 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             $mainSheet->setAutoCount(false);
         }
         
-        $prefillWithDefaults = $this->getPrefillWithDefaults($task);
-        $logBook->addLine('Property `prefill_with_input_data` is `' . ($prefillWithDefaults === null ? 'null' : ($prefillWithDefaults ? 'true' : 'false')) . '`.');
+        $logBook->addLine('**Looking for prefill data** from defaults');
+        $logBook->addIndent(+1);
+        $prefillWithDefaults = $this->getPrefillWithDefaults();
+        $logBook->addLine('Property `prefill_with_defaults` is `' . ($prefillWithDefaults === null ? 'null' : ($prefillWithDefaults ? 'true' : 'false')) . '`.');
         if ($prefillWithDefaults !== false) {
-            $logBook->addIndent(+1);
             $defaults = [];
             // Add event listeners to see, what the prefill would do
             // 1) Before a widget is prefilled, remember its default value
@@ -220,7 +247,11 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             
             // Do the prefill to trigger the events
             if ($targetWidget !== null) {
+                $logBook->addLine('**Prefilling** "' . $targetWidget->getWidgetType() . '" based on object ' . $targetWidget->getMetaObject()->__toString());
+                $logBook->addLine('Main prefill with ' . DataLogBook::buildTitleForData($mainSheet, ' '), +1);
                 $targetWidget->prefill($mainSheet);
+            } else {
+                $logBook->addLine('Do not really prefill a widget because not target widget found');
             }
             // If there are $defaults, place the respective values in every empty cell of the data
             // columns used by widgets with default values
@@ -252,10 +283,13 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                 }
             }
         }
+        $logBook->addIndent(-1);
         
         // Fire the event, log it to make it appear in the tracer
-        $logBook->addDataSheet('Final prefill', $mainSheet);
+        $logBook->addDataSheet('Main prefill', $mainSheet);
         if ($targetWidget !== null) {
+            $logBook->addLine('**Prefilling** "' . $targetWidget->getWidgetType() . '" based on object ' . $targetWidget->getMetaObject()->__toString());
+            $logBook->addLine('Main prefill with ' . DataLogBook::buildTitleForData($mainSheet, ' '), +1);
             $event = new OnPrefillDataLoadedEvent(
                 $targetWidget,
                 $mainSheet,

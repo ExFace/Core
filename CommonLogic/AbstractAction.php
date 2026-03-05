@@ -1213,12 +1213,6 @@ abstract class AbstractAction implements ActionInterface
         
         $logbook->addDataSheet('Final input data', $inputData);
         
-        if ($prevSection !== null && $prevSection !== 'Input data') {
-            $logbook->setSectionActive($prevSection);
-        } else {
-            $logbook->setIndentActive(0);
-        }
-        
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $diagram .= " InputValidation[Input Validation]";
@@ -1226,6 +1220,13 @@ abstract class AbstractAction implements ActionInterface
         $logbook->addPlaceholderValue('input_diagram', $diagram);
         $inputData = $this->validateInputData($inputData, $logbook);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
+
+        // Leave the input data section of the logbook and return to wherever we were previously
+        if ($prevSection !== null && $prevSection !== 'Input data') {
+            $logbook->setSectionActive($prevSection);
+        } else {
+            $logbook->setIndentActive(0);
+        }
         
         return $inputData;
     }

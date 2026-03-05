@@ -83,16 +83,16 @@ class DataLogBook extends MarkdownLogBook implements DataLogBookInterface
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $dataSheet
      * @return string
      */
-    public static function buildTitleForData(DataSheetInterface $dataSheet) : string
+    public static function buildTitleForData(DataSheetInterface $dataSheet, string $delimiter = "\n") : string
     {
         $obj = $dataSheet->getMetaObject()->getAliasWithNamespace();
         $rows = $dataSheet->countRows();
         $cols = $dataSheet->getColumns()->count();
         $filters = $dataSheet->getFilters()->countConditions() + $dataSheet->getFilters()->countNestedGroups();
         if (empty($rows) && empty($cols) && empty($filters)) {
-            return "{$obj}\nblank";
+            return "{$obj}{$delimiter}blank";
         }
-        return "{$obj}\n{$rows} row(s), {$cols} col(s), {$filters} filter(s)";
+        return "{$obj}{$delimiter}{$rows} row(s), {$cols} col(s), {$filters} filter(s)";
     }
     
     /**

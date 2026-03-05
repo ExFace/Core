@@ -59,8 +59,11 @@ trait iPrefillWidgetTrait
             $prefillSheets[0] = $mainSheetWithContext;
         }
         
+        $logBook->addLine('Prefilling "' . $widget->getWidgetType() . '" based on object ' . $widget->getMetaObject()->__toString());
         foreach ($prefillSheets as $i => $sheet) {
-            $logBook->addDataSheet(($i > 0 ? 'Secondary prefill' : 'Final prefill'), $sheet);
+            $title = ($i > 0 ? 'Secondary prefill' : 'Main prefill');
+            $logBook->addDataSheet($title, $sheet);
+            $logBook->addLine($title . ' with ' . $sheet->getMetaObject()->__toString() . ', ' . $sheet->countRows() . ' row(s)', +1);
             $event = new OnPrefillDataLoadedEvent($widget, $sheet, $this, $logBook);
             $this->getWorkbench()->EventManager()->dispatch($event);
             $widget->prefill($sheet);
@@ -91,7 +94,7 @@ trait iPrefillWidgetTrait
      */
     protected function getPrefillDataFromTask(WidgetInterface $widget, TaskInterface $task, DataLogBookInterface $logBook) : array
     {
-        $logBook->addLine('Prefill from task data');
+        $logBook->addLine('**Looking for prefill data** in task');
         $logBook->addIndent(+1);
         $diagram = 'flowchart LR';
         $diagram .= "\n\t InputPrefill(\"Task input\")";
@@ -310,9 +313,9 @@ trait iPrefillWidgetTrait
      */
     protected function getPrefillDataFromFilterContext(WidgetInterface $widget, TaskInterface $task, DataLogBookInterface $logBook, DataSheetInterface $data_sheet = null) : ?DataSheetInterface
     {
-        $logBook->addLine('Prefill from filter context');
+        $logBook->addLine('**Looking for prefill data** in filter context');
         $logBook->addIndent(1);
-        $logBook->addLine('Property `prefill_with_filter_context` is `' . ($this->getPrefillWithFilterContext($task) ? 'true' : 'false') . '`');
+        $logBook->addLine('Property `prefill_with_filter_context` is `' . ($this->getPrefillWithFilterContext() ? 'true' : 'false') . '`');
         $widgetObj = $widget->getMetaObject();
         // Prefill widget using the filter contexts if the widget does not have any prefill data yet
         // TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
@@ -618,10 +621,10 @@ trait iPrefillWidgetTrait
      * @uxon-property prefill_with_defaults
      * @uxon-type boolean
      * 
-     * @param bool $value
+     * @param bool|null $value
      * @return iPrefillWidget
      */
-    public function setPrefillWithDefaults(bool $value) : iPrefillWidget
+    public function setPrefillWithDefaults(?bool $value) : iPrefillWidget
     {
         $this->prefill_with_defaults = $value;
         return $this;
