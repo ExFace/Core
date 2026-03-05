@@ -4,9 +4,15 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\ListDataType;
+use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\TextDataType;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
@@ -15,6 +21,7 @@ use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use Respect\Validation\Rules\Number;
 
 /**
  * A query builder for PostgreSQL.
@@ -383,6 +390,25 @@ SQL;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
                 $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
+                
+                // Cast non-string column to text
+                $dataType = $qpart->getDataType();
+                if ($dataType instanceof ListDataType) {
+                    $dataType = $dataType->getValuesDataType();
+                }
+                $sqlType = $qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE);
+                switch (true) {
+                    case $dataType instanceof NumberDataType:
+                    case $dataType instanceof DateDataType:
+                    case $dataType instanceof TimeDataType:
+                    case $dataType instanceof BooleanDataType:
+                        $sql = "($sql)::text";
+                        break;
+                    case $sqlType === self::DAP_SQL_DATA_TYPE_BINARY:
+                        $sql = $this->buildSqlSelectBinaryAsHEX($sql);
+                        break;
+                }
+                
                 $output = "STRING_AGG(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . ", '{$this->escapeString($delim)}')";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
