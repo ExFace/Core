@@ -43,7 +43,7 @@ class MsSql2016Builder extends MsSqlBuilder
         return array_merge(['T-SQL2016', 'MSSQL2016'], parent::getSqlDialects());
     }
 
-    protected function needsForXml(QueryPartAttribute $qpart, ?AggregatorInterface $aggregator = null) : bool
+    protected function isAggregatedViaStuffXML(QueryPartAttribute $qpart, ?AggregatorInterface $aggregator = null) : bool
     {
         $aggr = $aggregator ?? $qpart->getAggregator();
         if ($aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {

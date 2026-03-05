@@ -2,6 +2,7 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
@@ -268,7 +269,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if ($useEnrichment) {
             $query = $this->buildSqlQuerySelectWithEnrichment($select, $enrichment_select, $select_comment, $from, $join, $enrichment_join, $where, $group_by, $having, $order_by, $limit, $distinct);
         } else {
-            if ($this->isAggregatedToSingleRowViaListOnly() === true) {
+            if ($this->isAggregatedToSingleRowViaStuffXML() === true) {
                 $distinct = 'DISTINCT ';
             }
             $query = $this->buildSqlQuerySelectWithoutEnrichment($select, $select_comment, $from, $join, $where, $group_by, $having, $order_by, $limit, $distinct);
@@ -446,7 +447,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     {        
         $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable, $addComments);
         $aggr = $aggregator ?? $qpart->getAggregator();
-        if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && $this->needsForXml($qpart, $aggr)) {
+        if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && $this->isAggregatedViaStuffXML($qpart, $aggr)) {
             $sql = StringDataType::substringBefore($sql, ' AS ', $sql, false, true);
         }
         return $sql;
@@ -515,11 +516,11 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $aggrFunc = $aggregator->getFunction()->getValue();
         
         $isListAggregation = ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT);
-        $needsForXML = $this->needsForXml($qpart, $aggregator);
+        $isAggregatedViaStuffXML = $this->isAggregatedViaStuffXML($qpart, $aggregator);
         
         switch ($aggrFunc) {
-            // Use STRING_AGG() for non-distinct lists.
-            case $isListAggregation && ! $needsForXML :
+            // Use STRING_AGG() for list aggregations if possible
+            case $isListAggregation && ! $isAggregatedViaStuffXML :
                 $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
                 $output = "STRING_AGG($sql, '{$this->escapeString($delim)}')";
                 if ($qpart->getQuery()->isSubquery()) {
@@ -540,15 +541,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $qpart->getQuery()->addAggregation($groupByAlias);
                 }
                 return $output;
-            // For LIST_DISTINCT, we cannot use STRING_AGG(), so we try a workaround
-            case $isListAggregation && $needsForXML:
-                // This is a VERY strange way to concatenate row values, but it seems to be the only
-                // one available in SQL Server: STUFF(CAST(( SELECT ... FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, {LengthOfDelimiter}, '')
-                // Since in case of subselects the `...` needs to be replaced by the whole subselect,
-                // we need to split the logic in two: `STUFF...` goes here and `FOR XML...` goes in
-                // buildSqlSelectSubselect() or buildSqlSelectGrouped() for subselects and regular
-                // columns a bit differently.
-                
+            // If STRING_AGG() is not expected to work, try a workaround - see `isAggregatedViaStuffXML()` for details.
+            case $isListAggregation && $isAggregatedViaStuffXML:
                 // Make sure to cast any non-string things to nvarchar BEFORE they are concatenated
                 if (! ($qpart->getAttribute()->getDataType() instanceof StringDataType)) {
                     $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
@@ -576,8 +570,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $function_name = $aggregator->getFunction()->getValue();
         $args = $aggregator->getArguments();
         switch ($function_name) {
-            // See buildSqlGroupByExpression() for details
-            case $this->needsForXml($qpart, $aggregator):
+            // See isAggregatedViaStuffXML() for details
+            case $this->isAggregatedViaStuffXML($qpart, $aggregator):
                 // Only do this special treatment if it is not a subquery - otherwise the buildSqlSelectSubselect()
                 // will add its own `FOR XML...` because that would not need an inner query since it is based on a 
                 // subquery already
@@ -626,7 +620,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
                     $subSql = $subSqlFrom . StringDataType::substringAfter($subSql, $subSqlFrom);
-                    // At this point, $sql is the result of buildSqlGroupByExpression for THIS query. Since we are going
+                    // At this point, $sql is the result of buildSqlGroupByExpression() for THIS query. Since we are going
                     // to use it in the subquery, we need to replace the table alias in the select clause - i.e. 
                     // "tt.aggregatedCol" -> "ttLIST.aggregatedCol" in the above example.
                     $thisSqlSelect = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false, false);
@@ -651,8 +645,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $aggregator = $qpart->getAggregator();
             $function_name = $aggregator->getFunction()->getValue();
             switch ($function_name) {
-                // See buildSqlGroupByExpression() for details
-                case $this->needsForXml($qpart, $aggregator):
+                // See isAggregatedViaStuffXML() for details
+                case $this->isAggregatedViaStuffXML($qpart, $aggregator):
                     $args = $aggregator->getArguments();
                     $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
                     $delimLength = strlen($delim);
@@ -667,9 +661,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
     {
         // When filtering, replace LIST_DISTINCT with LIST_ALL because the filter result should be the same
         // and filtering with STRING_AGG() is much simpler to write. In fact, we never got filters to work
-        // with FOR XML stuff reliably - See buildSqlGroupByExpression() for details
+        // with FOR XML stuff reliably - See isAggregatedViaStuffXML() for details
         // TODO Table-header filters still don't work even with LIST if apply_to_aggregates:true. Disable it here?
-        if ($qpart->hasAggregator() && ! $this->needsForXml($qpart)) {
+        if ($qpart->hasAggregator() && ! $this->isAggregatedViaStuffXML($qpart)) {
             $aggr = $qpart->getAggregator();
             $aggrFunc = $aggr->getFunction()->__toString();
             if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
@@ -698,33 +692,40 @@ class MsSqlBuilder extends AbstractSqlBuilder
     }
 
     /**
-     * Returns TRUE if an aggregation with FOR XML is required for the give query part
+     * Returns TRUE if an aggregation with `STUFF ... FOR XML` is required for the given query part
      * 
-     * Since SQL Server 2017 there is an alternative: STRING_AGG(), but it does not have a distinct mode, so
-     * we still need to use the strange workaround as described in buildSqlGroupByExpression(). However,
-     * since 2017 only for LIST_DISTINCT, not for non-distinct LIST. This method allows to determine, when
+     * Since SQL Server 2017 there is an alternative: `STRING_AGG()`, but it has pros and cons, so
+     * we still need to use the strange workaround. This method here allows to determine, when
      * the workaround is required. It is different here from MsSql2016Builder!
+     * 
+     * When to use `STRING_AGG()`?
+     * - It does not support DISTINCT, so we can't use it for :LIST_DISTINCT SELECTs
+     * - It does not support nesting (just like the other aggregations in MS SQL), but STUFF ... FOR XML does
+     * - It works better in WHERE and HAVING clauses. Mainly because of bugs in the complex scattered 
+     * implementation of STUFF ... FOR XML - the statement sometimes remains unfinished while being passed
+     * around through different methods.
      * 
      * @param QueryPartAttribute $qpart
      * @param AggregatorInterface|null $aggregator
      * @return bool
      */
-    protected function needsForXml(QueryPartAttribute $qpart, ?AggregatorInterface $aggregator = null) : bool
+    protected function isAggregatedViaStuffXML(QueryPartAttribute $qpart, ?AggregatorInterface $aggregator = null) : bool
     {
+        // Don't USE STUFF ... FOR XML for filters
         if ($qpart instanceof QueryPartFilter) {
             return false;
         }
+        // Obviously don't use it if there is no aggregator
         $aggr = $aggregator ?? $qpart->getAggregator();
         if (! $aggr) {
             return false;
         }
+        // Use STUFF ... FOR XML for :LIST and :LIST_DISTINCT in SELECTs, totals and other query parts
         $aggrFunc = $aggr->getFunction()->getValue();
-        if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
+        if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_ALL) {
             return true;
         }
-        if ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL && $this->isSqlStatement($qpart->getDataAddress())) {
-            return true;
-        }
+        // Otherwise
         return false;
     }
     
@@ -913,23 +914,22 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * 
      * `SELECT DISTINCT STUFF((SELECT [text()] = ', ' + tbl.name FOR XML PATH(''),TYPE),1,2,'') FROM tbl WHERE id IN (100,101)`
      * 
-     * @see buildSqlGroupByExpression()
+     * @see isAggregatedViaStuffXML()
      * @see buildSqlSelectGrouped()
      * 
      * @return bool
      */
-    protected function isAggregatedToSingleRowViaListOnly() : bool
+    protected function isAggregatedToSingleRowViaStuffXML() : bool
     {
         if ($this->isAggregatedToSingleRow() === false) {
             return false;
         }
 
         foreach ($this->getAttributes() as $qpart) {
-            $aggr = $qpart->hasAggregator() ? $qpart->getAggregator() : null;
-            if ($aggr === null) {
+            if (! $qpart->hasAggregator()) {
                 return false;
             }
-            if ($aggr->__toString() !== AggregatorFunctionsDataType::LIST_DISTINCT) {
+            if (! $this->isAggregatedViaStuffXML($qpart)) {
                 return false;
             }
         }
