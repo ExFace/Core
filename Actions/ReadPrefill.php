@@ -27,40 +27,31 @@ use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Exports the prefill data sheet for the target widget.
- * 
+ *
  * This action allows to fetch the data, that would be used to prefill a widget. This
  * can be used to fill forms asynchronously - for example:
- * 
+ *
  * - Reload the data for a form without rerendering it
  * - Render an editor dialog once and merely switch data sets when opening it for
  * different objects
  * - Allow the user to navigate to the next/previos object right in an detail
  * widget via buttons
- * 
+ *
  * The prefill data is fetched in the same way, as a `ShowWidget` action would do.
  * This action also has the the same `prefill_xxx` properties. Refer to the documentation
  * of `ShowWidget` for more details.
- * 
+ *
  * @see ShowWidget
- * 
+ *
  * @author Andrej Kabachnik
  *
  */
 class ReadPrefill extends ReadData implements iPrefillWidget
 {
-    use iPrefillWidgetTrait {
-        getPrefillWithFilterContext as getPrefillWithFilterContextViaTrait;
-        getPrefillWithInputData as getPrefillWithInputDataViaTrait;
-        getPrefillWithPrefillData as getPrefillWithPrefillDataViaTrait;
-        getPrefillWithDefaults as getPrefillWithDefaultsViaTrait;
-        getPrefillDataPreset as getPrefillDataPresetViaTrait;
-        hasPrefillDataPreset as hasPrefillDataPresetViaTrait;
-        getPrefillDataSheet as getPrefillDataSheetViaTrait;
-        getPrefillDataRefresh as getPrefillDataRefreshViaTrait;
-    }
+    use iPrefillWidgetTrait;
 
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ReadData::perform()
      */
@@ -82,7 +73,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // defined, they will not be part of the imported UXON and need to be added manually here.
         if (null !== $showWidgetAction = $this->getPrefillTriggerAction($task)) {
             $logBook->addLine('**Inheriting** from trigger action ' . $showWidgetAction->__toString() . ': `prefill_with_*`, `input_mappers`, `input_invalid_if`, `output_mappers`');
-            
+
             // Make sure, the original ShowWidget action is authorized with the current set of data.
             // This is important to prevent reading prefill data for things, that the user actually cannot
             // open due to policies applying to ShowWidget/Dialog actions, that cause the prefill.
@@ -95,12 +86,24 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                 $actionAP->authorize($showWidgetAction, $task);
             }
 
+            // Inherit prefill options
+            if ($showWidgetAction instanceof iPrefillWidget) {
+                $this->setPrefillWithInputData($showWidgetAction->getPrefillWithInputData());
+                $this->setPrefillWithPrefillData($showWidgetAction->getprefillwithPrefillData());
+                $this->setPrefillWithFilterContext($showWidgetAction->getPrefillWithFilterContext());
+                $this->setPrefillWithDefaults($showWidgetAction->getPrefillWithDefaults());
+                $this->setPrefillDataRefresh($showWidgetAction->getPrefillDataRefresh());
+                if ($showWidgetAction->hasPrefillDataPreset()) {
+                    $this->setPrefillDataPreset($showWidgetAction->getPrefillDataPreset());
+                }
+            }
+
             // Inherit all checks
             // IDEA should we only get checks, that are different from those alread in the prefill action?
             foreach ($showWidgetAction->getInputChecks() as $check) {
                 $this->getInputChecks()->add($check);
             }
-            
+
             // Inherit mappers for objects, that are not handled by already existing mappers
             foreach ($showWidgetAction->getInputMappers() as $mapper) {
                 if (null === $this->getInputMapper($mapper->getFromMetaObject())) {
@@ -130,7 +133,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         if ($this->hasPrefillDataPreset()) {
             $logBook->continueLine(' `prefill_data_sheet`');
         }
-        
+
         // Normally, if we know, which widget to prefill, use the normal prefill logic from the iPrefillWidgetTrait
         // Otherwise get the input/prefill data and refresh it if necessary
         if ($targetWidget !== null) {
@@ -167,13 +170,13 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             } else {
                 $logBook->addLine('No input data to use');
             }
-            
+
             // We don't need the total row count for prefills.
             $mainSheet->setAutoCount(false);
-            
+
             // IDEA are there other ways to load more data, than use UID-filters?
             $canLoadMoreData = $mainSheet->hasUidColumn(true);
-            
+
             if ($mainSheet->isEmpty() && $targetWidget !== null) {
                 $logBook->addLine('Did not find any prefill data till now - use filter context only.');
                 $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $task, $logBook, $mainSheet);
@@ -185,7 +188,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                 return ResultFactory::createDataResult($task, $data_sheet->removeRows());
                 }*/
             }
-            
+
             // Reed data if it is not fresh
             if ($canLoadMoreData === true && $mainSheet->isFresh() === false) {
                 $logBook->addLine('Refreshing data');
@@ -212,13 +215,13 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             $this->validateInputData($mainSheet, $logBook);
             $logBook->addIndent(-1);
         }
-        
+
         if ($mainSheet === null) {
             $logBook->addLine('No prefill data found so far: creating an empty data sheet.');
             $mainSheet = DataSheetFactory::createFromObject($this->getMetaObject());
             $mainSheet->setAutoCount(false);
         }
-        
+
         $logBook->addLine('**Looking for prefill data** from defaults');
         $logBook->addIndent(+1);
         $prefillWithDefaults = $this->getPrefillWithDefaults();
@@ -244,7 +247,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                     unset ($defaults[$widget->getId()]);
                 }
             });
-            
+
             // Do the prefill to trigger the events
             if ($targetWidget !== null) {
                 $logBook->addLine('**Prefilling** "' . $targetWidget->getWidgetType() . '" based on object ' . $targetWidget->getMetaObject()->__toString());
@@ -284,7 +287,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             }
         }
         $logBook->addIndent(-1);
-        
+
         // Fire the event, log it to make it appear in the tracer
         $logBook->addDataSheet('Main prefill', $mainSheet);
         if ($targetWidget !== null) {
@@ -300,23 +303,23 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         } else {
             $logBook->addLine('No prefill event triggered as no target widget was found!');
         }
-        
+
         // Send back the result
         $result = ResultFactory::createDataResult($task, $mainSheet);
         $result->setMessage($mainSheet->countRows() . ' prefill item(s) found');
-        
+
         return $result;
     }
-    
+
     /**
      * In contrast to ReadData, the default target for a button-action is not always
      * the button itself - if the button opens a widget, the this widget will be
-     * automatically treated as target. 
-     * 
+     * automatically treated as target.
+     *
      * The reason for this behavior is, that the button itself generally does not need
      * any prefill data. It also does not automatically pass a request for prefill data
      * to it's action's widget.
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ReadData::getWidgetToReadFor()
      */
@@ -325,12 +328,12 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         if (($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
             return $action->getWidget();
         }
-        
+
         return parent::getWidgetToReadFor($task);
     }
-    
+
     /**
-     * 
+     *
      * @param TaskInterface $task
      * @return WidgetInterface|NULL
      */
@@ -342,10 +345,10 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             return $this->getWidgetDefinedIn();
         }
     }
-    
+
     /**
      * Returns the action that showed the widget an thus triggered the prefill
-     * 
+     *
      * @param TaskInterface $task
      * @return ActionInterface|NULL
      */
@@ -379,131 +382,19 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                         throw new ActionRuntimeError($this, 'Cannot read prefill data for action in a chain if the chain has multiple ShowWidget actions');
                     }
                 }
-            } 
+            }
             return $action;
         }
         return null;
     }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithFilterContext()
-     */
-    public function getPrefillWithFilterContext(TaskInterface $task = null) : bool
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->getPrefillWithFilterContext();
-        }
-        
-        return $this->getPrefillWithFilterContextViaTrait();
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithInputData()
-     */
-    public function getPrefillWithInputData(TaskInterface $task = null) : bool
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->getPrefillWithInputData();
-        }
-        
-        return $this->getPrefillWithInputDataViaTrait();
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithPrefillData()
-     */
-    public function getPrefillWithPrefillData(TaskInterface $task = null) : bool
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->getPrefillWithPrefillData();
-        }
-        
-        return $this->getPrefillWithPrefillDataViaTrait();
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithDefaults()
-     */
-    public function getPrefillWithDefaults(TaskInterface $task = null) : ?bool
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->getPrefillWithDefaults() ?? true;
-        }
-        
-        return $this->getPrefillWithDefaultsViaTrait();
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillDataPreset()
-     */
-    public function getPrefillDataPreset(TaskInterface $task = null) : ?DataSheetInterface
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->getPrefillDataPreset();
-        }
-        
-        return $this->getPrefillDataPresetViaTrait();
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::hasPrefillDataPreset()
-     */
-    public function hasPrefillDataPreset(TaskInterface $task = null) : bool
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->hasPrefillDataPreset();
-        }
-        
-        return $this->hasPrefillDataPresetViaTrait();
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillDataSheet()
-     */
-    public function getPrefillDataSheet(TaskInterface $task) : DataSheetInterface
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->getPrefillDataSheet($task);
-        }
-        
-        return $this->getPrefillDataSheetViaTrait($task);
-    }
-    
+
     /**
      * A specific prefill widget is not neccessarily required - a page is enough.
-     * 
+     *
      * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
      */
     public function isTriggerWidgetRequired() : ?bool
     {
         return true;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iPrefillWidget::getPrefillDataRefresh()
-     */
-    public function getPrefillDataRefresh(TaskInterface $task = null) : string
-    {
-        if ($task && ($action = $this->getPrefillTriggerAction($task))&& $action instanceof iPrefillWidget && $this->prefill_data_refresh === iPrefillWidget::REFRESH_AUTO) {
-            return $action->getPrefillDataRefresh();
-        }
-        
-        return $this->getPrefillDataRefreshViaTrait();
     }
 }
