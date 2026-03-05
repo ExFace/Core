@@ -327,6 +327,7 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
     public function continueLine(string $text): LogBookInterface
     {
         $this->logBook->continueLine($text);
+        return $this;
     }
 
     /**
