@@ -81,7 +81,7 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
         if ($task->isTriggeredByWidget()) {
             try {
                 $trigger = $task->getWidgetTriggeredBy();
-                $this->logBook->addLine('Trigger widget: ' . $trigger->getWidgetType() . ' "**' . $trigger->getCaption() . '**"');
+                $this->logBook->addLine('Trigger widget: ' . $trigger->getWidgetType() . ' "**' . $trigger->getCaption() . '**" on page [' . $trigger->getPage()->getName() . '](' . $trigger->getPage()->getAliasWithNamespace() . '.html)');
             } catch (\Throwable $e) {
                 $this->logBook->addLine('Trigger widget not accessible: ' . $e->getMessage());
             }
