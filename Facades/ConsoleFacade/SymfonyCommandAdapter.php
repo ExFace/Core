@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\ConsoleFacade;
 
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -71,7 +72,8 @@ class SymfonyCommandAdapter extends Command
     
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $task = TaskFactory::createCliTask($this->commandLoader->getFacade(), $this->action->getSelector(), $input->getArguments(), $input->getOptions());
+        $cmdName = $input->getFirstArgument();
+        $task = TaskFactory::createCliTask($this->commandLoader->getFacade(), $this->action->getSelector(), $cmdName, $input->getArguments(), $input->getOptions());
         $result = $this->getWorkbench()->handle($task);
         if ($result instanceof ResultMessageStreamInterface) {
             foreach ($result->getMessageStreamGenerator() as $msg) {
@@ -95,5 +97,11 @@ class SymfonyCommandAdapter extends Command
     public function getAction() : ActionInterface
     {
         return $this->action;
+    }
+    
+    public static function getCommandNameFromAlias(string $aliasWithNamespace) : string
+    {
+        $parts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $aliasWithNamespace);
+        return $parts[0] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $parts[1] . ':' . $parts[2];
     }
 }
