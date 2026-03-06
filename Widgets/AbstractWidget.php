@@ -1806,7 +1806,7 @@ abstract class AbstractWidget implements WidgetInterface
 
 - Widget type: [{$this->getWidgetType()}]($docsLink)
 - Widget ID: `{$this->getId()}`
-- Page: `{$this->getPage()->getAliasWithNamespace()}`
+- Page: [{$this->getPage()->getName()}]({$this->getPage()->getAliasWithNamespace()}.html)
 - Called by action: {$actionInfo}
 
 ## Widget UXON
