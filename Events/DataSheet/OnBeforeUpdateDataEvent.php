@@ -17,8 +17,8 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
  * 1. DataSheet::updateData() is called
  * 2. Event OnBeforeSaveData is fired
  * 3. If we have rows, that need to be created, a create-subsheet is spawned and that subset of data is created.
- *  - Create-events are fired
- *  - Rows of the update-sheet are updated with the result of the create-operation, so they are now ALL existing
+ *      - Create-events are fired
+ *      - Rows of the update-sheet are updated with the result of the create-operation, so they are now ALL existing
  *  and definitely ready to be updated
  * 4. Event OnBeforeUpdateData (THIS) is fired for the entire update-sheet (including newly created rows)
  * 5. Default and fixed values are set in the update-sheet
@@ -27,7 +27,9 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
  * 7. The update-sheet is validated (e.g. missing-values are discovered here)
  * 8. If there are UID values missing, they are read from the data source.
  * 9. The update query is executed for the data sheet.
- * 10. Subsheets are updated (if there are any) triggering their own update lifecycle 
+ * 10. Subsheets are updated (if there are any)
+ *      - Update-events are fired for each subsheet
+ *      - Create-events may also be fired if the subsheets contain rows without UIDs.
  * 11. Event OnUpdateData is fired for the entire update-sheet.
  * 12. Event OnSaveData is fired for the entire update-sheet.
  * 
