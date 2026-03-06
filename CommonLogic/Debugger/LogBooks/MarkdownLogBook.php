@@ -26,8 +26,8 @@ class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
     private $id = null;
     
     private $currentSection = null;
-    
     private $currentIndent = 0;
+    private $currentInsertPosition = 0;
     
     private $placeholders = [];    
     
@@ -51,7 +51,10 @@ class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
      */
     public function addLine(string $text, int $indent = null, $section = null): LogBookInterface
     {
-        $this->lines[$this->getSectionKey($section)][] = ['indent' => $this->currentIndent + ($indent ?? 0), 'text' => $text];
+        $this->lines[$this->getSectionKey($section)][] = [
+            'indent' => $this->currentIndent + ($indent ?? 0), 
+            'text' => $text
+        ];
         return $this;
     }
 
@@ -68,6 +71,23 @@ class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
         }
         $lineKey = count($this->lines[$sectionKey] ?? []) - 1;
         $this->lines[$sectionKey][$lineKey]['text'] = $this->lines[$sectionKey][$lineKey]['text'] . $text;
+        return $this;
+    }
+
+    public function insertLine(string $text, int $indent = null, $section = null, ?int $position = null): LogBookInterface
+    {
+        $position = $position ?? $this->currentInsertPosition;
+        $sectionKey = $this->getSectionKey($section);
+        if (empty($this->lines[$sectionKey])) {
+            return $this->addLine($text);
+        }
+        array_splice($this->lines[$sectionKey], $position, 0, [
+            [
+                'indent' => $this->currentIndent + ($indent ?? 0), 
+                'text' => $text
+            ]
+        ]);
+        $this->currentInsertPosition = $position + 1;
         return $this;
     }
 
@@ -125,6 +145,11 @@ class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
     public function getSectionActive() : ?string
     {
         return $this->currentSection;
+    }
+    
+    public function getSectionFirst() : ?string
+    {
+        return array_key_first($this->lines) ?? null;
     }
     
     /**
