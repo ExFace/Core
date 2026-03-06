@@ -110,6 +110,19 @@ class ActionDebugger implements iCanGenerateDebugWidgets
         }
         return $widget ? WidgetDebugger::getWidgetUiPath($widget) : 'Not triggered by widget';
     }
+    
+    public function getTriggerUiPathMarkdown(bool $startWithPage = true, bool $includeLastWidgetType = true) : string
+    {
+        $widget = $this->getTriggerWidget();
+        $task = $this->getTask();
+        switch (true) {
+            case $widget:
+                return WidgetDebugger::getWidgetUiPathMarkdown($widget, $startWithPage, $includeLastWidgetType);
+            case $task !== null && $task->isTriggeredOnPage():
+                return 'Page [' . $widget->getPage()->getName() . '](' . $widget->getPage()->getAliasWithNamespace() . '.html)';
+        }
+        return $this->getTriggerUiPath();
+    }
 
     /**
      * @return WidgetInterface|null

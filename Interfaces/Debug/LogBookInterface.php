@@ -23,6 +23,15 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
     public function continueLine(string $text): LogBookInterface;
 
     /**
+     * @param string $text
+     * @param int|null $indent
+     * @param string|int $section
+     * @param int|null $position
+     * @return LogBookInterface
+     */
+    public function insertLine(string $text, int $indent = null, $section = null, ?int $position = null): LogBookInterface;
+
+    /**
      * @return string|null
      */
     public function getLineActive() : ?string;
@@ -61,6 +70,11 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return string|NULL
      */
     public function getSectionActive() : ?string;
+
+    /**
+     * @return string|null
+     */
+    public function getSectionFirst() : ?string;
     
     /**
      * 

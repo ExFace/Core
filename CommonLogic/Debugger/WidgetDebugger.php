@@ -24,25 +24,48 @@ class WidgetDebugger implements iCanGenerateDebugWidgets
 
     /**
      *
-     * @param WidgetInterface $inputWidget
+     * @param WidgetInterface $widget
      * @return string
      */
-    public static function getWidgetUiPath(WidgetInterface $inputWidget) : string
+    public static function getWidgetUiPath(WidgetInterface $widget) : string
     {
-        $inputName = $inputWidget->getCaption();
+        $path = $widget->getCaption();
         switch (true) {
-            case $inputWidget instanceof Dialog && $inputWidget->hasParent():
-                $btn = $inputWidget->getParent();
+            case $widget instanceof Dialog && $widget->hasParent():
+                $btn = $widget->getParent();
                 if ($btn instanceof Button) {
                     if ($btnCaption = $btn->getCaption()) {
-                        $inputName = $btnCaption;
+                        $path = $btnCaption;
                     }
                     $btnInput = $btn->getInputWidget();
-                    $inputName = self::getWidgetUiPath($btnInput) . ' > ' . $inputName;
+                    $path = self::getWidgetUiPath($btnInput) . ' > ' . $path;
                 }
                 break;
         }
-        return $inputName ?? $inputWidget->getWidgetType();
+        return $path ?? $widget->getWidgetType();
+    }
+    
+    public static function getWidgetUiPathMarkdown(WidgetInterface $widget, bool $startWithPage = false, bool $includeLastWidgetType = true) : string
+    {
+        $path = '';
+        if ($startWithPage) {
+            $page = $widget->getPage();
+            $path .= "Page [{$page->getName()}]({$page->getAliasWithNamespace()}.html)";
+        }
+        $innerPath = $widget->getWidgetType() . ' "' . $widget->getCaption() . '"';
+        switch (true) {
+            case $widget instanceof Dialog && $widget->hasParent():
+                $btn = $widget->getParent();
+                if ($btn instanceof Button) {
+                    if ($btnCaption = $btn->getCaption()) {
+                        $innerPath = $btnCaption;
+                    }
+                    $btnInput = $btn->getInputWidget();
+                    $innerPath = self::getWidgetUiPath($btnInput) . ' > ' . $innerPath;
+                }
+                break;
+        }
+        return $path . ($path ? ' > ' : '') . $innerPath;
     }
     
     public function getWidget() : WidgetInterface
