@@ -9,9 +9,11 @@ use exface\Core\CommonLogic\Utils\LazyHierarchicalDataCache;
 use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeSaveDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnSaveDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -107,14 +109,10 @@ class OrderingBehavior extends AbstractBehavior
         $priority = is_numeric($priority) ? $priority : EventManagerInterface::PRIORITY_MIN;
 
         $onBeforeHandle = array($this, 'handleOnBefore');
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $onBeforeHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $onBeforeHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), $onBeforeHandle, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeSaveDataEvent::getEventName(), $onBeforeHandle, $priority);
 
         $onAfterHandle = array($this, 'handleOnAfter');
-        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $onAfterHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $onAfterHandle, $priority);
-        $this->getWorkbench()->eventManager()->addListener(OnDeleteDataEvent::getEventName(), $onAfterHandle, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnSaveDataEvent::getEventName(), $onAfterHandle, $priority);
         
         return $this;
     }
@@ -126,14 +124,10 @@ class OrderingBehavior extends AbstractBehavior
     protected function unregisterEventListeners(): BehaviorInterface
     {
         $onBeforeHandle = array($this, 'handleOnBefore');
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), $onBeforeHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $onBeforeHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), $onBeforeHandle);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeSaveDataEvent::getEventName(), $onBeforeHandle);
 
         $onAfterHandle = array($this, 'handleOnAfter');
-        $this->getWorkbench()->eventManager()->removeListener(OnCreateDataEvent::getEventName(), $onAfterHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnUpdateDataEvent::getEventName(), $onAfterHandle);
-        $this->getWorkbench()->eventManager()->removeListener(OnDeleteDataEvent::getEventName(), $onAfterHandle);
+        $this->getWorkbench()->eventManager()->removeListener(OnSaveDataEvent::getEventName(), $onAfterHandle);
 
         return $this;
     }
@@ -164,11 +158,11 @@ class OrderingBehavior extends AbstractBehavior
     /**
      * Pre-process data, fill in missing values with actual data or meaningful proxies and shift indices
      * to avoid collisions on unique constraints.
-     * 
-     * @param DataSheetEventInterface $event
+     *
+     * @param OnBeforeSaveDataEvent $event
      * @return void
      */
-    public function handleOnBefore(DataSheetEventInterface $event) : void
+    public function handleOnBefore(OnBeforeSaveDataEvent $event) : void
     {
         if(!$this->appliesToEvent($event)) {
             return;
@@ -187,10 +181,6 @@ class OrderingBehavior extends AbstractBehavior
             $logbook->addLine('Cannot order objects with no Uid attribute.');
             $this->finishWork($event, $logbook);
             return;
-        }
-        
-        if(!$event instanceof DataSheetTransactionEventInterface) {
-            throw new BehaviorRuntimeError($this, 'Event ' . $event->getAlias() . ' not supported!', null, null, $logbook);
         }
         
         // Fetch any missing columns.
@@ -217,7 +207,7 @@ class OrderingBehavior extends AbstractBehavior
         $this->normalizeDataSheet($loadedData);
 
         // If we are reacting to OnBeforeDelete, our work is done.
-        if($event instanceof OnBeforeDeleteDataEvent) {
+        if($event->getOperation() === OnBeforeSaveDataEvent::OPERATION_DELETE) {
             // Cache data for next step.
             $this->eventCache = [
                 self::KEY_EVENT_SHEET => $eventSheet,
@@ -284,13 +274,13 @@ class OrderingBehavior extends AbstractBehavior
         ];
 
     }
-    
+
     /**
      * Perform the actual re-ordering of groups.
-     * 
-     * @param DataSheetEventInterface $event
+     *
+     * @param OnSaveDataEvent $event
      */
-    public function handleOnAfter(DataSheetEventInterface $event): void
+    public function handleOnAfter(OnSaveDataEvent $event): void
     {
         if (!$this->appliesToEvent($event)) {
             return;
@@ -336,15 +326,14 @@ class OrderingBehavior extends AbstractBehavior
             $cachedData[self::KEY_LOADED], 
             $siblingCache, 
             true, 
-            $logbook);
+            $logbook
+        );
 
         if(empty($pendingChanges)) {
             $logbook->addLine('No changes pending for input data.');
-        } else if ($event instanceof DataSheetTransactionEventInterface) {
+        } else {
             $logbook->addLine('Found ' . count($pendingChanges) . ' pending changes.');
             $this->applyChanges($event, $siblingCache, $pendingChanges, $logbook);
-        } else {
-            throw new BehaviorRuntimeError($this, 'Event ' . $event->getAlias() . ' not supported!', null, null, $logbook);
         }
         
         $this->finishWork($event, $logbook);
@@ -363,7 +352,8 @@ class OrderingBehavior extends AbstractBehavior
         DataSheetInterface          $eventSheet,
         LazyHierarchicalDataCache   $siblingCache,
         array                       $pendingChanges,
-        BehaviorLogBook             $logBook) : array
+        BehaviorLogBook             $logBook
+    ) : array
     {
         // Prepare variables.
         $indexAlias = $this->getOrderNumberAttributeAlias();
@@ -423,7 +413,8 @@ class OrderingBehavior extends AbstractBehavior
      */
     private function fetchMissingColumns(
         DataSheetInterface $eventSheet,
-        BehaviorLogBook $logBook): void
+        BehaviorLogBook $logBook
+    ): void
     {
         $logBook->addLine('Ensuring required data...');
         $logBook->addIndent(1);
@@ -475,9 +466,9 @@ class OrderingBehavior extends AbstractBehavior
 
     /**
      * Process all groups that need to be changed.
-     * 
+     *
      * @param array                     $changedGroups
-     * @param DataSheetEventInterface   $event
+     * @param OnBeforeSaveDataEvent     $event
      * @param DataSheetInterface        $loadedData
      * @param LazyHierarchicalDataCache $cache
      * Any necessary data updates will be appended to this array, since updating is deferred to `On...DataEvent`.
@@ -487,7 +478,7 @@ class OrderingBehavior extends AbstractBehavior
      */
     private function processChangedGroups(
         array                     $changedGroups,
-        DataSheetEventInterface   $event,
+        OnBeforeSaveDataEvent     $event,
         DataSheetInterface        $loadedData,
         LazyHierarchicalDataCache $cache,
         bool                      $updateOrder,
@@ -499,7 +490,7 @@ class OrderingBehavior extends AbstractBehavior
         // Prepare variables.
         $eventSheet = $event->getDataSheet();
         $uidAlias = $eventSheet->getUidColumnName();
-        $onDelete = $event instanceof OnDeleteDataEvent;
+        $onDelete = $event->getOperation() === OnBeforeSaveDataEvent::OPERATION_DELETE;
         $pendingChanges = [];
 
         // Iterate over rows in the event sheet and update their ordering.
@@ -515,7 +506,8 @@ class OrderingBehavior extends AbstractBehavior
                 $onDelete,
                 $updateOrder,
                 $uidAlias,
-                $logbook);
+                $logbook
+            );
             
             $pendingChanges = $this->mergePendingChanges($pendingChanges, $detectedChanges);
             
@@ -547,7 +539,8 @@ class OrderingBehavior extends AbstractBehavior
         bool $onDelete,
         bool $updateOrder,
         string $uidAlias,
-        BehaviorLogBook $logbook) : array
+        BehaviorLogBook $logbook
+    ) : array
     {
         $pendingChanges = [];
         // Check if we already loaded sibling data for this UID before.
@@ -665,7 +658,8 @@ class OrderingBehavior extends AbstractBehavior
     private function fillMissingIndices(
         DataSheetInterface $allSiblingsSheet,
         bool               $pendingOnly,
-        BehaviorLogBook    $logbook) : array
+        BehaviorLogBook    $logbook
+    ) : array
     {
         // Determine where to insert new elements.
         $insertOnTop = ! $this->getAppendToEnd();
@@ -791,7 +785,8 @@ class OrderingBehavior extends AbstractBehavior
     private function updateOrder(
         DataSheetInterface $allSiblingsSheet,
         array $priorityRows,
-        BehaviorLogBook $logBook) : array
+        BehaviorLogBook $logBook
+    ) : array
     {
         // Prepare variables.
         $indexAlias = $this->getOrderNumberAttributeAlias();
@@ -932,17 +927,18 @@ class OrderingBehavior extends AbstractBehavior
 
     /**
      *
-     * @param DataSheetTransactionEventInterface $event
-     * @param LazyHierarchicalDataCache          $siblingCache
-     * @param array                              $pendingChanges
-     * @param BehaviorLogBook                    $logBook
+     * @param OnBeforeSaveDataEvent     $event
+     * @param LazyHierarchicalDataCache $siblingCache
+     * @param array                     $pendingChanges
+     * @param BehaviorLogBook           $logBook
      * @return void
      */
     private function applyChanges(
-        DataSheetTransactionEventInterface $event,
+        OnBeforeSaveDataEvent              $event,
         LazyHierarchicalDataCache          $siblingCache,
         array                              $pendingChanges,
-        BehaviorLogBook                    $logBook): void
+        BehaviorLogBook                    $logBook
+    ) : void
     {
         // Generate update sheet.
         $eventSheet = $event->getDataSheet();
@@ -952,7 +948,7 @@ class OrderingBehavior extends AbstractBehavior
         $shiftSheet = $updateSheet->copy();
         $updateSheet->addRows($pendingChanges, false, false);
 
-        if(!$event instanceof OnDeleteDataEvent) {
+        if($event->getOperation() !== OnBeforeSaveDataEvent::OPERATION_DELETE) {
             // Make sure any data we didn't modify is up-to-date.
             $currentSheet = $eventSheet->copy();
             $currentSheet->getColumns()->removeByKey($this->getOrderNumberAttributeAlias());
@@ -1174,7 +1170,8 @@ class OrderingBehavior extends AbstractBehavior
         array                       $priorityRows,
         LazyHierarchicalDataCache   $cache,
         array                       $groupParents,
-        BehaviorLogBook             $logbook) : void
+        BehaviorLogBook             $logbook
+    ) : void
     {
         $indexAlias = $this->getOrderNumberAttributeAlias();
         $maxIndex = max($allSiblingsSheet->getColumnValues($indexAlias));
