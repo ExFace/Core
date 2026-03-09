@@ -78,6 +78,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  */
 class OrderingBehavior extends AbstractBehavior
 {
+    private const KEY_TRANSACTION = 'transaction';
     private const KEY_EVENT_SHEET = 'eventSheet';
     private const  KEY_SHIFTED = 'shiftedIndices';
     private const KEY_ALL = 'all';
@@ -135,10 +136,10 @@ class OrderingBehavior extends AbstractBehavior
     /**
      * @inheritDoc
      */
-    protected function finishWork(EventInterface $event, BehaviorLogBook $logbook): bool
+    protected function finishWork(EventInterface $event, BehaviorLogBook $logbook, bool $clearCache = false): bool
     {
-        if($this->isInProgress()) {
-            $this->eventCache = [];
+        if($clearCache && $event instanceof OnBeforeSaveDataEvent) {
+            $this->clearEventDataFromCache($event);
         }
         
         return parent::finishWork($event, $logbook);
@@ -150,9 +151,104 @@ class OrderingBehavior extends AbstractBehavior
      */
     protected function appliesToEvent(EventInterface $event) : bool
     {
-        return 
-            $event instanceof DataSheetEventInterface &&
-            $event->getDataSheet()->getMetaObject()->isExactly($this->getObject());
+        if(!$event instanceof OnBeforeSaveDataEvent) {
+            return false;
+        }
+
+        $name = $event::getEventName();
+        $index = $this->getEventDataCacheIndex($event);
+        
+        // OnBefore we only process events that match our metaobject and that don't have a corresponding cache entry.
+        if($name === OnBeforeSaveDataEvent::getEventName()) {
+            return 
+                $index === false && 
+                $event->getDataSheet()->getMetaObject()->isExactly($this->getObject());
+        }
+
+        // OnAfter we process only events that have a corresponding cache entry and a matching datasheet.
+        if($name === OnSaveDataEvent::getEventName()) {
+            return
+                $index !== false &&
+                $event->getDataSheet() === $this->eventCache[$index][self::KEY_EVENT_SHEET];
+        }
+        
+        return false;
+    }
+
+    /**
+     * Store event data in a cache for later use. The cache uses transactions as pseudo-keys. Existing entries with
+     * matching transactions will be overwritten.
+     *
+     * @param OnBeforeSaveDataEvent $event
+     * @param DataSheetInterface    $eventSheet
+     * @param DataSheetInterface    $loadedData
+     * @param array                 $shiftedIndices
+     * @param array                 $changedGroups
+     * @return bool
+     * Returns TRUE if a new entry was added and FALSE if an existing one was overwritten.
+     */
+    protected function addEventDataToCache(
+        OnBeforeSaveDataEvent $event,
+        DataSheetInterface $eventSheet,
+        DataSheetInterface $loadedData,
+        array $shiftedIndices,
+        array $changedGroups
+    ) : bool
+    {
+        $entry = [
+            self::KEY_TRANSACTION => $event->getTransaction(),
+            self::KEY_EVENT_SHEET => $eventSheet,
+            self::KEY_LOADED => $loadedData,
+            self::KEY_SHIFTED => $shiftedIndices,
+            self::KEY_GROUPS => $changedGroups
+        ];
+        
+        $index = $this->getEventDataCacheIndex($event);
+        if($index === false) {
+            $this->eventCache[] = $entry;
+            return true;
+        } else {
+            $this->eventCache[$index] = $entry;
+            return false;
+        }
+    }
+
+    /**
+     * Clear any data corresponding to a given event from the cache.
+     * 
+     * @param OnBeforeSaveDataEvent $event
+     * @return bool
+     * Returns TRUE if corresponding data was found and removed.
+     */
+    protected function clearEventDataFromCache(OnBeforeSaveDataEvent $event) : bool
+    {
+        $index = $this->getEventDataCacheIndex($event);
+        if($index === false) {
+            return false;
+        }
+        
+        unset($this->eventCache[$index]);
+        return true;
+    }
+
+    /**
+     * Finds the cache index for the data corresponding to a given event.
+     * 
+     * @param OnBeforeSaveDataEvent $event
+     * @return false|int
+     * Returns the index, if it existed and FALSE if there was no corresponding data for the given event.
+     */
+    protected function getEventDataCacheIndex(OnBeforeSaveDataEvent $event) : false|int
+    {
+        $transaction = $event->getTransaction();
+        
+        foreach ($this->eventCache as $i => $eventData) {
+            if($transaction === $eventData[self::KEY_TRANSACTION]) {
+                return $i;
+            }
+        }
+        
+        return false;
     }
 
     /**
@@ -179,7 +275,7 @@ class OrderingBehavior extends AbstractBehavior
         // Make sure it has a UID column.
         if ($eventSheet->hasUidColumn() === false) {
             $logbook->addLine('Cannot order objects with no Uid attribute.');
-            $this->finishWork($event, $logbook);
+            $this->finishWork($event, $logbook, true);
             return;
         }
         
@@ -209,13 +305,15 @@ class OrderingBehavior extends AbstractBehavior
         // If we are reacting to OnBeforeDelete, our work is done.
         if($event->getOperation() === OnBeforeSaveDataEvent::OPERATION_DELETE) {
             // Cache data for next step.
-            $this->eventCache = [
-                self::KEY_EVENT_SHEET => $eventSheet,
-                self::KEY_LOADED => $loadedData,
-                self::KEY_SHIFTED => [],
-                self::KEY_GROUPS => $changedGroups
-            ];
+            $this->addEventDataToCache(
+                $event,
+                $eventSheet,
+                $loadedData,
+                [],
+                $changedGroups
+            );
 
+            $this->finishWork($event, $logbook, false);
             return;
         }
         
@@ -266,13 +364,15 @@ class OrderingBehavior extends AbstractBehavior
         }
 
         // Cache data for next step.
-        $this->eventCache = [
-            self::KEY_EVENT_SHEET => $eventSheet,
-            self::KEY_LOADED => $loadedData,
-            self::KEY_SHIFTED => $shiftedIndices,
-            self::KEY_GROUPS => $changedGroups
-        ];
+        $this->addEventDataToCache(
+            $event,
+            $eventSheet,
+            $loadedData,
+            $shiftedIndices,
+            $changedGroups
+        );
 
+        $this->finishWork($event, $logbook, false);
     }
 
     /**
@@ -285,25 +385,30 @@ class OrderingBehavior extends AbstractBehavior
         if (!$this->appliesToEvent($event)) {
             return;
         }
+
+        // Fetch cached data.
+        $index = $this->getEventDataCacheIndex($event);
+        if($index === false) {
+            // If the event sheet does not match our cached sheet, we can ignore this call.
+            return;
+        } else {
+            $cachedData = $this->eventCache[$index];
+        }
+        
         $logbook = $this->createLogBook($event);
+        if(!$this->beginWork($event, $logbook)) {
+            return;
+        }
 
         // Get datasheet.
         $eventSheet = $event->getDataSheet();
         $this->normalizeDataSheet($eventSheet);
         $logbook->addDataSheet('InputData', $eventSheet);
 
-        // Fetch cached data.
-        if($this->eventCache[self::KEY_EVENT_SHEET] === $eventSheet) {
-            $cachedData = $this->eventCache;
-        } else {
-            // If the event sheet does not match our cached sheet, we can ignore this call.
-            return;
-        }
-        
         // Make sure it has a UID column.
         if ($eventSheet->hasUidColumn() === false) {
             $logbook->addLine('Cannot order objects with no Uid attribute.');
-            $this->finishWork($event, $logbook);
+            $this->finishWork($event, $logbook, true);
             return;
         }
 
@@ -336,7 +441,7 @@ class OrderingBehavior extends AbstractBehavior
             $this->applyChanges($event, $siblingCache, $pendingChanges, $logbook);
         }
         
-        $this->finishWork($event, $logbook);
+        $this->finishWork($event, $logbook, true);
     }
 
     /**
