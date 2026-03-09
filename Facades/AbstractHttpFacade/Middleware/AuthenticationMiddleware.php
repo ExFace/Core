@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
+use exface\Core\CommonLogic\Security\AuthenticationToken\JWTAuthToken;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -391,6 +392,40 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
                 }
             );
         }
+        return $this;
+    }
+
+    /**
+     * Authenticate using the value of an HTTP header as an API key to match agains registered API keys.
+     *
+     * @uxon-property bearer_token_as_jwt
+     * @uxon-type object
+     * @uxon-template {"username": "", "disabled": false}
+     * 
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setBearerTokenAsJWT(UxonObject $uxon) : AuthenticationMiddleware
+    {
+        if ($uxon->getProperty('disabled') === true) {
+            return $this;
+        }
+        $username = $uxon->getProperty('username');
+        $this->addTokenExtractor(
+            function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($username) {
+                if (! $request->hasHeader('Authorization')) {
+                    return null;
+                }
+                $authString = $request->getHeaderLine('Authorization');
+                $matches = [];
+                if (preg_match("/Bearer\s+(.*)$/i", $authString, $matches)) {
+                    $tokenString = $matches[1];
+                    return new JWTAuthToken($tokenString, $username, $facade);
+                }
+                
+                return null;
+            }
+        );
         return $this;
     }
 }
