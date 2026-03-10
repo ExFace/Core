@@ -66,7 +66,13 @@ class JWTAuthToken implements JWTAuthenticationTokenInterface
     {
         return $this->token;
     }
-    
+
+    /**
+     * Gets the JWT header as an associative array. 
+     * The header is the first part of the JWT token, which is a base64-encoded JSON string.
+     * 
+     * @return array
+     */
     public function getHeader() : array
     {
         if ($this->header === null) {
@@ -114,11 +120,12 @@ class JWTAuthToken implements JWTAuthenticationTokenInterface
         return $this->isValidated() === false;
     }
 
+    /**
+     * @return bool
+     */
     protected function isValidated() : bool
     {
-        // The JWT token will be handled by AzureAppRegistrationAuthenticator. That authenticator will decode the token using public
-        // keys from Azure tenant. If decoded, the authenticator must create a new instance of this class, which will
-        // represent the authenticated token.
+        // The token is considered validated if the payload has been successfully decoded in corresponding Authenticator and set here.
         return ! empty($this->payload);
     }
 }
