@@ -409,7 +409,6 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
         if ($uxon->getProperty('disabled') === true) {
             return $this;
         }
-
         $username = $uxon->getProperty('username');
         
         $this->addTokenExtractor(

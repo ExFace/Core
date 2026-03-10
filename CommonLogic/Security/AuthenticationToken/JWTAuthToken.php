@@ -7,7 +7,9 @@ use exface\Core\Interfaces\Security\JWTAuthenticationTokenInterface;
 use RuntimeException;
 
 /**
- * Authentication token for API keys and access tokens with or without a username.
+ * Common authentication token implementation for JSON Web Tokens (JWT).
+ * 
+ * See https://www.jwt.io/introduction#what-is-json-web-token-structure
  *
  * @author Andrej Kabachnik
  */
