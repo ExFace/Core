@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Security\JWTAuthenticationTokenInterface;
+use JsonException;
 use RuntimeException;
 
 /**
@@ -74,7 +75,12 @@ class JWTAuthToken implements JWTAuthenticationTokenInterface
             if (count($parts) !== 3) {
                 throw new RuntimeException(self::JWT_ERROR_PREFIX . 'Invalid JWT format (header.payload.signature)');
             }
-            $this->header = json_decode(base64_decode($parts[0]), true);
+            
+            try {
+                $this->header = json_decode(base64_decode($parts[0]), true, flags: JSON_THROW_ON_ERROR);
+            } catch (JsonException $e) {
+                throw new RuntimeException(self::JWT_ERROR_PREFIX . 'Invalid JWT header: ' . $e->getMessage(), $e->getCode(), $e);
+            }
         }
         return $this->header;
     }
