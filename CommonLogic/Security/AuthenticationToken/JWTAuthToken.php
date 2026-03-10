@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Security\JWTAuthenticationTokenInterface;
+use RuntimeException;
 
 /**
  * Authentication token for API keys and access tokens with or without a username.
@@ -12,40 +13,31 @@ use exface\Core\Interfaces\Security\JWTAuthenticationTokenInterface;
  */
 class JWTAuthToken implements JWTAuthenticationTokenInterface
 {
+    private const JWT_ERROR_PREFIX = 'JWTAuthToken Error: ';
+    private const ALLOWED_ALGORITHMS = ['RS256', 'RS384', 'RS512', 'ES384','ES256', 'HS256', 'HS384', 'HS512'];
     private string $token;
-    private ?string $username = null;
-    private ?HttpFacadeInterface $facade = null;
-    private ?array $decoded = null;
-
-    private string $expectedTenantId = '';
-    private string $requiredRole = '';
-    private string $expectedAudience = '';
+    private ?string $username;
+    private ?HttpFacadeInterface $facade;
+    private ?array $payload = null;
+    
+    private ?array $header = null;
 
     /**
      * @param string $token
      * @param string $username
      * @param HttpFacadeInterface|null $facade
-     * @param string $expectedTenantId
-     * @param string $expectedAudience
-     * @param string $requiredRole
      * @param array|null $decoded
      */
     public function __construct(
         string $token, 
         string $username, 
         ?HttpFacadeInterface $facade = null,
-        string $expectedTenantId,
-        string $expectedAudience,
-        string $requiredRole,
-        ?array $decoded = null)
+        ?array $payload = null)
     {
         $this->token = $token;
         $this->facade = $facade;
         $this->username = $username;
-        $this->expectedTenantId = $expectedTenantId;
-        $this->expectedAudience = $expectedAudience;
-        $this->requiredRole = $requiredRole;
-        $this->decoded = $decoded;
+        $this->payload = $payload;
     }
 
     /**
@@ -71,37 +63,39 @@ class JWTAuthToken implements JWTAuthenticationTokenInterface
     {
         return $this->token;
     }
-
-    /**
-     * Gets expected tenant ID of the Azure tenant, which issued the token.
-     * 
-     * @return string
-     */
-    public function getExpectedTenantId() : string
-    {
-        return $this->expectedTenantId;
-    }
-
-    /**
-     * Gets the required role for the token. 
-     * The token must contain this role in order to be valid.
-     * 
-     * @return string
-     */
-    public function getRequiredRole() : string
-    {
-        return $this->requiredRole;
-    }
     
+    public function getHeader() : array
+    {
+        if ($this->header === null) {
+            $parts = explode('.', $this->token);
+
+            if (count($parts) !== 3) {
+                throw new RuntimeException(self::JWT_ERROR_PREFIX . 'Invalid JWT format (header.payload.signature)');
+            }
+            $this->header = json_decode(base64_decode($parts[0]), true);
+        }
+        return $this->header;
+    }
+
     /**
-     * Gets the API backend service identification that the token is permitted to call. 
-     * Must match the audience configured during app registration in Entra ID (e.g. as ‘Application ID URI’).
+     * Gets the encryption algorithm (alg) from the JWT header and checks if it is allowed. 
+     * It is used for verifying the token signature.
+     * 
+     * You can not just trust the alg in the header, because the token is probably not verified at this point.
+     * The public keys from the JWKS also contain the alg, but not in all cases (not in v1 tokens).
+     * That is why we check the alg against a whitelist of allowed algorithms before using it.
      * 
      * @return string
      */
-    public function getExpectedAudience() : string
+    public function getHeaderAlgorithm() : string
     {
-        return $this->expectedAudience;
+        $headerAlg = $this->getHeader()['alg'] ?? null;
+        
+        if (!is_string($headerAlg) || !in_array($headerAlg, self::ALLOWED_ALGORITHMS, true)) {
+            throw new RuntimeException(self::JWT_ERROR_PREFIX . "Unexpected encryption algorithm (alg): " . (string)$headerAlg);
+        }
+        
+        return $headerAlg;
     }
 
     /**
@@ -117,6 +111,6 @@ class JWTAuthToken implements JWTAuthenticationTokenInterface
         // The JWT token will be handled by AzureAppRegistrationAuthenticator. That authenticator will decode the token using public
         // keys from Azure tenant. If decoded, the authenticator must create a new instance of this class, which will
         // represent the authenticated token.
-        return ! empty($this->decoded);
+        return ! empty($this->payload);
     }
 }
