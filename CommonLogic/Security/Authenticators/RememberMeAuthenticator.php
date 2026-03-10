@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
+use axenox\Microsoft365Connector\CommonLogic\Security\Authenticators\AzureAppRegistrationAuthenticator;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
@@ -72,7 +73,16 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      */
     public function onAuthenticatedSaveSessionData(OnAuthenticatedEvent $event)
     {
-        if ($event->getAuthenticationProvider() instanceof RememberMeAuthenticator) {
+        $authProvider = $event->getAuthenticationProvider();
+        
+        if ($authProvider instanceof RememberMeAuthenticator) {
+            return;
+        }
+        
+        // Azure App Registration authentication should not be remembered,
+        // because it is already based on a token,
+        // that is stored on the external client side and sent with every request to us.
+        if ($authProvider instanceof AzureAppRegistrationAuthenticator) {
             return;
         }
         
@@ -83,7 +93,8 @@ class RememberMeAuthenticator extends AbstractAuthenticator
             $this->getWorkbench()->getLogger()->debug('Remember-me authenticator: disabled in CLI mode');
             return;
         }
-        $this->saveSessionData($event->getToken(), $event->getAuthenticationProvider());
+        
+        $this->saveSessionData($event->getToken(), $authProvider);
         return;
     }
     
