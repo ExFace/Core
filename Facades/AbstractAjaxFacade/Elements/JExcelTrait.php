@@ -832,7 +832,11 @@ JS;
                 mValue = '';
             }
 
-            if (this.getDoNotValidate() === true) {
+            // if were in a spare row, we dont need to validate
+            var aData = this.getJExcel().getData() || [];
+            var iSpareRows = {$this->getMinSpareRows()}; 
+
+            if (this.getDoNotValidate() === true || (iRow >= aData.length - iSpareRows)) {
                 return mValue;
             }
 
