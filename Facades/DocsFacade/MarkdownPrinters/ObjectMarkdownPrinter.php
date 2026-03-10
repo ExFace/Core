@@ -5,9 +5,11 @@ namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaRelationBrokenError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -27,7 +29,7 @@ use Respect\Validation\Rules\Length;
  * optionally walk through relation attributes to print child objects up to a
  * configurable depth.
  */
-class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
+class ObjectMarkdownPrinter extends AbstractMarkdownPrinter //implements MarkdownPrinterInterface
 {
     protected WorkbenchInterface $workbench;
     
@@ -89,9 +91,7 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         $importantAttributes = trim($importantAttributes);
         
         $attributesHeading = MarkdownDataType::buildMarkdownHeader("Attributes of \"{$metaObject->getName()}\"", $headingLevel + 1);
-
-        $actionHeading = MarkdownDataType::buildMarkdownHeader("Actions of \"{$metaObject->getName()}\"", $headingLevel + 1);
-
+        $actionHeading = MarkdownDataType::buildMarkdownHeader("Actions", $headingLevel + 1);
         $groupHeading = MarkdownDataType::buildMarkdownHeader("Attributegroups of \"{$metaObject->getName()}\"", $headingLevel + 1);
 
         $markdown = <<<MD
@@ -106,7 +106,7 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 
 {$attributesHeading}
 
-{$this->buildMdAttributesTable($metaObject->getAttributes())}
+{$this->buildMdAttributesTable($metaObject->getAttributes(), $metaObject->getRelations())}
 
 {$this->buildMdAttributesSections($metaObject, $headingLevel+2)}
 
@@ -115,8 +115,6 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 {$this->buildMdAttributeGroupSection($groupHeading, $metaObject, $headingLevel+2 )}
 
 {$this->buildMdBehaviorsSections($metaObject, 'Behaviors of "' . $metaObject->getName() . '"', $headingLevel+1)}
-
-{$this->buildMdRelatedObjects($metaObject->getRelations(), 'Related objects', $headingLevel)}
 MD;        
         return $markdown;
     }
@@ -141,6 +139,10 @@ MD;
                     continue;
                 }
                 $relObj = $relation->getRightObject();
+                // Skip objects in other apps - very often relations to core objects
+                if ($relObj->getApp() !== $relation->getLeftObject()->getApp()) {
+                    continue;
+                }
                 static::$printedObjects[] = $relObj;
                 $childPrinter = new ObjectMarkdownPrinter($this->workbench, $relObj, ($depth - 1), $headingLevel+1);
                 $markdown .= $childPrinter->getMarkdown();
@@ -156,12 +158,12 @@ MD;
     {
         $markdown = '';
         foreach ($obj->getAttributes() as $attr) {
-            $markdown .= $this->buildMarkDownAttributeSection($attr, $headingLevel);
+            $markdown .= $this->buildMdAttributeSection($attr, $headingLevel);
         }
         return $markdown;
     }
     
-    protected function buildMarkDownAttributeSection(MetaAttributeInterface $attr, int $headingLevel = 3) : string
+    protected function buildMdAttributeSection(MetaAttributeInterface $attr, int $headingLevel = 3) : string
     {
         $heading = MarkdownDataType::buildMarkdownHeader($attr->getName(), $headingLevel);
         $dataType = $attr->getDataType();
@@ -172,9 +174,8 @@ MD;
 
 {$attr->getShortDescription()}
 
-Alias: **{$attr->getAlias()}**
-
-Properties: {$this->buildMdAttributeProperties($attr)}
+- Alias: **{$this->escapeMarkdownText($attr->getAlias())}**
+- Properties: {$this->buildMdAttributeProperties($attr)}
 
 {$this->buildMdCodeblock($attr->getDataAddress(), 'Data address:')}
 
@@ -195,8 +196,9 @@ MD;
                 $actionPrinter = new ActionMarkdownPrinter($this->workbench, $act, $headingLevel);
                 $markdown .= $actionPrinter->getMarkdown();
             } 
-        }catch (\Exception $e){
-            
+        } catch (\Exception $e){
+            $markdown .= 'Cannot print action details: ' . $e->getMessage();
+            $this->workbench->getLogger()->logException(new RuntimeException('Cannot print object action. ' . $e->getMessage(), null, $e));
         }
         
         return <<<MD
@@ -325,24 +327,29 @@ MD;
         $propertiesPills = '`' . implode('`, `', $properties) . '`';
         return $propertiesPills;
     }
-    
+
     /**
      * Returns a list of attribute strings in Markdown format.
      *| Name | Alias | Data Address | Data Type | Required | Relation |
-     * 
-     * @param MetaObjectInterface $metaObject
-     * @return string[]  
+     *
+     * @param MetaAttributeListInterface $attributes
+     * @param MetaRelationInterface[] $relations
+     * @return string
      */
-    protected function buildMdAttributesTable(MetaAttributeListInterface $attributes): string
+    protected function buildMdAttributesTable(MetaAttributeListInterface $attributes, array $relations): string
     {        
-        $list = [];
-        foreach ($attributes->getAll() as  $attribute ) {
-            $name = $this->escapeCell($attribute->getName());
-            $alias = $this->escapeCell($attribute->getAlias());
-            //$dataAddress = $this->escapeCell($attribute->getDataAddress());
+        $attributeList = [];
+        $regRelList = [];
+        $revRelList = [];
+        /* @var $attribute \exface\Core\Interfaces\Model\MetaAttributeInterface */
+        foreach ($attributes->getAll() as  $attribute) {
+            $name = $this->escapeMarkdownCell($attribute->getName());
+            $alias = $this->escapeMarkdownCell($attribute->getAlias());
             $dataTypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($attribute->getDataType());
-            $dataType = $this->escapeCell("[{$attribute->getDataType()->getAliasWithNamespace()}]($dataTypeLink)");
+            $dataType = $this->escapeMarkdownCell("[{$attribute->getDataType()->getAliasWithNamespace()}]($dataTypeLink)");
+            $attributeType = MetaAttributeTypeDataType::fromValue($this->workbench, $attribute->getType());
             $relationText = "";
+            $rel = null;
             if ($attribute->isRelation()) {
                 $rel = $attribute->getRelation();
                 try {
@@ -352,18 +359,67 @@ MD;
                 }
             }
 
-
-            $list[] = "| {$name} | {$alias} | {$relationText} | {$dataType} |";
+            if ($attribute->isRelation()) {
+                $regRelList[] = "| {$name} | {$alias} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()} | {$dataType}";
+            } else {
+                $attributeList[] = "| {$name} | {$alias} | {$dataType} | {$attributeType->getLabelOfValue()}";
+            }
+        }
+        foreach ($relations as $rel) {
+            if ($rel->isReverseRelation()) {
+                try {
+                    $relationText = $this->createLink($rel->getRightObject());
+                } catch (MetaRelationBrokenError $e) {
+                    $relationText = 'Related object `' . $rel->getRightObjectId() . '` not found!';
+                }
+                $revRelList[] = "| {$rel->getName()} | {$rel->getAlias()} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()}";
+            }
         }
 
-        $rows = implode("\n", $list);
-        return <<<MD
+        $md = '';
+        if (! empty($attributeList)) {
+            $rows = implode("\n", $attributeList);
+            $md = <<<MD
 
-| Name | Alias | Relation to | Data Type |
-|------|-------|-------------|-----------|
+| Attribute name | Alias | Data Type | Attribute type |
+|----------------|-------|-----------|----------------|
 {$rows}
 
-MD;        
+MD;
+        }
+
+        if (! empty($regRelList)) {
+            $rows = implode("\n", $regRelList);
+            $md .= <<<MD
+
+### Relations to other objects
+
+The following attributes hold foreign keys. In UXON their aliases can be used to access attributes of related objects:
+e.g. `RELATION_ALIAS__LABEL`.
+
+| Relation/attribute name | Alias | Relation to | Cardinality | Data Type |
+|-------------------------|-------|-------------|-------------|-----------|
+{$rows}
+
+MD;
+        }
+
+        if (! empty($revRelList)) {
+            $rows = implode("\n", $revRelList);
+            $md .= <<<MD
+        
+### Relations from other to this object
+
+Reverse relations (those from other object) can be used just like regular ones. Most of them point to multiple related
+objects, so use aggregators like `:SUM` or `:LIST` - e.g. `RELATION_ALIAS__UID:COUNT`.
+
+| Relation name | Relation alias | Relation from | Cardinality |
+|---------------|----------------|---------------|-------------|
+{$rows}
+
+MD;      
+        }  
+        return $md;
     }
 
     /**
@@ -377,22 +433,9 @@ MD;
      */
     protected function createLink(MetaObjectInterface $metaObject): string
     {
-        $alias = $this->escapeCell($metaObject->getAlias());
+        $alias = $this->escapeMarkdownCell($metaObject->getAlias());
         $link = DocsFacade::buildUrlToDocsForMetaObject($metaObject);
         return "[$alias]({$link})";
-    }
-
-
-    /**
-     * Escapes a value so that it can be safely used inside a Markdown table cell.
-     *
-     * Line breaks are converted to HTML line breaks and pipe characters are escaped.
-     */
-    protected function escapeCell(string $value): string
-    {
-        $value = str_replace(["\r\n", "\r", "\n"], '<br>', $value);
-        $value = str_replace('|', '\|', $value);
-        return $value;
     }
 
     /**

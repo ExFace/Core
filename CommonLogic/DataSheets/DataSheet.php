@@ -7,7 +7,9 @@ use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataWriteEvent;
+use exface\Core\Events\DataSheet\OnBeforeSaveDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataWriteEvent;
+use exface\Core\Events\DataSheet\OnSaveDataEvent;
 use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetListInterface;
@@ -1033,6 +1035,18 @@ class DataSheet implements DataSheetInterface
         } else {
             $commit = false;
         }
+
+        // Fire OnBeforeSaveData to give behaviors the chance to see the data to-be-update before anything is done with it
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(
+            new OnBeforeSaveDataEvent($this, $transaction, OnBeforeSaveDataEvent::OPERATION_UPDATE)
+        );
+        if ($eventBefore->isDefaultPrevented() === true) {
+            // IDEA not sure, if it would be correct to fire OnSaveData here?
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $counter;
+        }
         
         // Check if the data source already contains rows with matching UIDs
         $update_ds = null;
@@ -1100,6 +1114,20 @@ class DataSheet implements DataSheetInterface
                                 }
                             }
                         }
+                        
+                        /*
+                         * - update(rows 101,102,103,104,201)
+                         *  - create(2rows due to missing UIDs: 103,104)
+                         *      - OnBeforeCreate OrderingBehavior sorts and modifies rows 103,104
+                         *      - OnAfterCreate OrderingBehavior inserts 2rows, but needs to update (move) existing 101,102
+                         *          - update(rows 101,102,103,104) during sorting
+                         *  - create finished, created rows 103,104 merged into update-sheet. 
+                         *  BUT 101,102 are now out of sync between the original update-sheet and the db causing a 
+                         *  TimeStamping-error.
+                         *  - FIX: we need to update 101 and 102 in the update-sheet.
+                         *      a) we could put them into the create-sheet and use the existing update-mechanics
+                         *      b)      
+                         */
                         
                         /* FIXME #update-create-separation make separate $update_ds. See DevMan #
                         $update_ds = $this->copy();
@@ -1331,7 +1359,7 @@ class DataSheet implements DataSheetInterface
                 // If there is no appropriate UID column for updated related object, the UID values must be fetched from the data 
                 // source using an identical data sheet, but having only the required uid column. Since the new data sheet is 
                 // cloned, it will have exactly the same filters, order, etc. so we can be sure to fetch only those UIDs, that 
-                // should have been in the original sheet. Additionally we need to add a filter over the values of the original 
+                // should have been in the original sheet. Additionally, we need to add a filter over the values of the original 
                 // UID column, in case the user had explicitly selected some of the rows of the original data set.
                 if (! $colObjectUidColumn = $update_ds->getColumns()->getByExpression($uid_column_alias)) {
                     $uid_data_sheet = $update_ds->copy();
@@ -1398,12 +1426,14 @@ class DataSheet implements DataSheetInterface
             $this->setCounterForRowsInDataSource($this->countRows());
         }
 
-        // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
-        $update_ds->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent(
-            $update_ds, 
-            $transaction,
-            $counter
-        ));
+        // Fire after events BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
+        // IDEA prevent commit or even roll back here if the event default is prevented?
+        $update_ds->getWorkbench()->eventManager()->dispatch(
+            new OnUpdateDataEvent($update_ds, $transaction, $counter)
+        );
+        $this->getWorkbench()->eventManager()->dispatch(
+            new OnSaveDataEvent($this, $transaction, OnBeforeSaveDataEvent::OPERATION_UPDATE)
+        );
 
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
@@ -1722,9 +1752,17 @@ class DataSheet implements DataSheetInterface
         } else {
             $commit = false;
         }
-        
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction, $update_if_uid_found));
-        if ($eventBefore->isPreventCreate() === true) {
+
+        $preventDefault = false;
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(
+            new OnBeforeSaveDataEvent($this, $transaction, OnBeforeSaveDataEvent::OPERATION_CREATE)
+        );
+        $preventDefault = $eventBefore->isDefaultPrevented();
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(
+            new OnBeforeCreateDataEvent($this, $transaction, $update_if_uid_found)
+        );
+        $preventDefault = $eventBefore->isDefaultPrevented();
+        if ($preventDefault === true) {
             // IDEA not sure, if it would be correct to fire OnCreateData here?
             if ($commit && ! $transaction->isRolledBack()) {
                 $transaction->commit();
@@ -1933,6 +1971,12 @@ class DataSheet implements DataSheetInterface
             $transaction, 
             $result->getAffectedRowsCounter()
         ));
+        $this->getWorkbench()->eventManager()->dispatch(new OnSaveDataEvent(
+            $this,
+            $transaction,
+            OnBeforeSaveDataEvent::OPERATION_CREATE
+        ));
+        // IDEA prevent commit or even roll back here if the event default is prevented?
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
@@ -2064,9 +2108,17 @@ class DataSheet implements DataSheetInterface
         }
         
         $affected_rows = 0;
+
+        // Fire OnBeforeSaveDataEvent
+        $this->getWorkbench()->eventManager()->dispatch(
+            new OnBeforeSaveDataEvent($this, $transaction, OnBeforeSaveDataEvent::OPERATION_DELETE)
+        );
+        // IDEA prevent commit or even roll back here if the event default is prevented?
         
-        // Fire OnBeforeDeleteDataEvent to allow preprocessing and alternative deletetion logic
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
+        // Fire OnBeforeDeleteDataEvent to allow preprocessing and alternative deletion logic
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(
+            new OnBeforeDeleteDataEvent($this, $transaction)
+        );
         
         // create new query for the main object
         $query = QueryBuilderFactory::createForObject($this->getMetaObject());
@@ -2160,11 +2212,13 @@ class DataSheet implements DataSheetInterface
         }
         
         // Fire after-update event BEFORE commit - @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
-        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent(
-            $this, 
-            $transaction,
-            $affected_rows
-        ));
+        $this->getWorkbench()->eventManager()->dispatch(
+            new OnDeleteDataEvent($this, $transaction, $affected_rows)
+        );
+        $this->getWorkbench()->eventManager()->dispatch(
+            new OnSaveDataEvent($this, $transaction, OnBeforeSaveDataEvent::OPERATION_DELETE)
+        );
+        // IDEA prevent commit or even roll back here if the event default is prevented?
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();

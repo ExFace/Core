@@ -16,7 +16,7 @@ trait JqueryHtmlTrait {
     {
         $output = '';
         $widget = $this->getWidget();
-        $style = '';
+        $style = $widget->getCssInlineStyle() ?? '';
         
         if ($widget->getCss()) {
             $output .= '<style>' . $widget->getCss() . '</style>';
@@ -34,7 +34,12 @@ trait JqueryHtmlTrait {
             $style .= 'display: inline-block;';
         }
         
-        $output .= '<div id="' . $this->getId() . '" style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $widget->getHtml() . '</div>';
+        $valueHtml = $widget->getHtml();
+        if (null !== $tpl = $widget->getHtmlTemplate()) {
+            $valueHtml = str_replace('[#~value#]', $valueHtml, $tpl);
+        }
+        
+        $output .= '<div id="' . $this->getId() . '" style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $valueHtml . '</div>';
         return $this->buildHtmlGridItemWrapper($output);
     }
     

@@ -212,4 +212,10 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return bool
      */
     public function hasIcon() : bool;
+
+    /**
+     *
+     * @return string
+     */
+    public function __toString() : string;
 }

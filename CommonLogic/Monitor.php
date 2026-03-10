@@ -3,7 +3,9 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Actions\ReadData;
 use exface\Core\Actions\UxonValidate;
+use exface\Core\CommonLogic\Debugger\ActionDebugger;
 use exface\Core\CommonLogic\Debugger\Profiler;
+use exface\Core\CommonLogic\Debugger\WidgetDebugger;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
@@ -398,38 +400,8 @@ class Monitor extends Profiler
                 continue;
             }
             
-            try {
-                switch (true) {
-                    case $task->isTriggeredOnPage():
-                        $page = $task->getPageTriggeredOn();
-                        break;
-                    case $action->isDefinedInWidget():
-                        $page = $action->getWidgetDefinedIn()->getPage();
-                        break;
-                    default:
-                        $page = null;
-                }
-            } catch (\Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-            }
-            
-            $triggerWidget = ($task->isTriggeredByWidget() ? $task->getWidgetTriggeredBy() : ($action->isDefinedInWidget() ? $action->getWidgetDefinedIn() : null));
-            if ($triggerWidget instanceof iUseInputWidget) {
-                $inputWidget = $triggerWidget->getInputWidget();
-            } else {
-                $inputWidget = $triggerWidget;
-            }
-            
-            if ($triggerWidget) {
-                $triggerName = $triggerWidget->getCaption() ?? '';
-                if ($triggerName === '') {
-                    $triggerName = $action->getName();
-                }
-            } else {
-                $triggerName = $action->getName();
-            }
-            
-            $inputName = $inputWidget ? $this->getInputName($inputWidget) : '';
+            $actionDebugger = new ActionDebugger($action, $task);
+            $page = $actionDebugger->getPage();
             
             try {
                 $object = $action->getMetaObject();
@@ -441,8 +413,8 @@ class Monitor extends Profiler
                 'PAGE' => $page ? $page->getUid() : null,
                 'OBJECT' => $object ? $object->getId() : null,
                 'ACTION_ALIAS' => $action->getAliasWithNamespace(),
-                'ACTION_NAME' => $triggerName,
-                'WIDGET_NAME' => $inputName,
+                'ACTION_NAME' => $actionDebugger->getTriggerName(),
+                'WIDGET_NAME' => $actionDebugger->getInputUiPath(),
                 'FACADE_ALIAS' => $task->getFacade() ? $task->getFacade()->getAliasWithNamespace() : '',
                 'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
                 'TIME' => $item['time'],
@@ -475,29 +447,6 @@ class Monitor extends Profiler
         }*/ 
         
         return $this;
-    }
-    
-    /**
-     * 
-     * @param WidgetInterface $inputWidget
-     * @return string
-     */
-    protected function getInputName(WidgetInterface $inputWidget) : string
-    {
-        $inputName = $inputWidget->getCaption();
-        switch (true) {
-            case $inputWidget instanceof Dialog && $inputWidget->hasParent():
-                $btn = $inputWidget->getParent();
-                if ($btn instanceof Button) {
-                    if ($btnCaption = $btn->getCaption()) {
-                        $inputName = $btnCaption;
-                    }
-                    $btnInput = $btn->getInputWidget();
-                    $inputName = $this->getInputName($btnInput) . ' > ' . $inputName;
-                }
-                break;
-        }
-        return $inputName ?? $inputWidget->getWidgetType();
     }
 
     /**

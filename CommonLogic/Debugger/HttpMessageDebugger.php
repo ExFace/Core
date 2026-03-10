@@ -14,12 +14,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
- * Renders debug widget tabs for PSR7 requests and responses
+ * Helps extract useful debug information from PSR-7 requests and responses - in particular for debug widgets
  * 
  * @author Andrej Kabachnik
  *
  */
-class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
+class HttpMessageDebugger implements iCanGenerateDebugWidgets
 {
     const MAX_BODY_PRINT_SIZE = 100*1024; // 100 kb in bytes
     

@@ -51,38 +51,31 @@ use exface\Core\Widgets\DataMatrix;
  * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
  * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
  *
- *
- *
- *   ## Filename Placeholders
- *
- *
- *
- *   You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
- *   For example `"filename":"[#=Now('yyyy-MM-dd')#]_[#~data:Materialkategorie:LIST_DISTINCT#]"` could be used to include both
- *   the current date and some information about the categories present in the export and result in a filename like `2024-09-10_Muffen`.
- *
- *   ### Supported placeholders:
- *
- *   - `[#=Formula()#]` Allows the use of formulas.
- *   - `[#~data:attribute_alias:AGGREGATOR#]` Aggregates the data column for the given alias by applying the specified aggregator. See below for
- *  a list of supported aggregators.
- *
- *
- *
- *   ### Supported aggregators:
- *
- *   - `SUM` Sums up all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
- *   - `AVG` Calculates the arithmetic mean of all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
- *   - `MIN` Gets the lowest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
- *   non-numeric values will be read as numerics or as 0, if they cannot be converted.
- *   - `MAX` Gets the highest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
- *    non-numeric values will be read as numerics or as 0, if they cannot be converted.
- *   - `COUNT` Counts the total number of rows in the column.
- *   - `COUNT_DISTINCT` Counts the number of unique entries in the column, excluding empty rows.
- *   - `LIST` Lists all non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
- *   - `LIST_DISTINCT` Lists all unique, non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
- *
- *
+ * ## Filename Placeholders
+ * 
+ * You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
+ * For example `"filename":"[#=Now('yyyy-MM-dd')#]_[#~data:Materialkategorie:LIST_DISTINCT#]"` could be used to include both
+ * the current date and some information about the categories present in the export and result in a filename like `2024-09-10_Muffen`.
+ * 
+ * ### Supported placeholders:
+ * 
+ * - `[#=Formula()#]` Allows the use of formulas.
+ * - `[#~data:attribute_alias:AGGREGATOR#]` Aggregates the data column for the given alias by applying the specified aggregator. See below for
+ * a list of supported aggregators.
+ * 
+ * ### Supported aggregators:
+ * 
+ * - `SUM` Sums up all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ * - `AVG` Calculates the arithmetic mean of all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ * - `MIN` Gets the lowest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ * non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ * - `MAX` Gets the highest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ *  non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ * - `COUNT` Counts the total number of rows in the column.
+ * - `COUNT_DISTINCT` Counts the number of unique entries in the column, excluding empty rows.
+ * - `LIST` Lists all non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ * - `LIST_DISTINCT` Lists all unique, non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -115,6 +108,8 @@ class ExportJSON extends ReadData implements iExportData
     {
         parent::init();
         $this->setIcon(Icons::DOWNLOAD);
+        // Don't monitor exports as long-running by default, because it's fine if they take longer for large data sets.
+        $this->setMonitorAsLongRunningAfterSeconds(-1);
     }
     
     /**
