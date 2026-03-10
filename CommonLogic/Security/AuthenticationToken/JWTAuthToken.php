@@ -29,7 +29,7 @@ class JWTAuthToken implements JWTAuthenticationTokenInterface
      * @param string $token
      * @param string $username
      * @param HttpFacadeInterface|null $facade
-     * @param array|null $decoded
+     * @param array|null $payload
      */
     public function __construct(
         string $token, 
