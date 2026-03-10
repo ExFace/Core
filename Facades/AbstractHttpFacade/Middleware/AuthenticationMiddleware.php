@@ -1,26 +1,25 @@
 <?php
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
+use exface\Core\CommonLogic\Security\AuthenticationToken\ApiKeyAuthToken;
 use exface\Core\CommonLogic\Security\AuthenticationToken\JWTAuthToken;
+use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Facades\FacadeLogicError;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Exceptions\SecurityException;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use GuzzleHttp\Psr7\Response;
-use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Interfaces\Facades\HttpFacadeInterface;
-use exface\Core\Interfaces\Log\LoggerInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\Exceptions\Facades\FacadeLogicError;
-use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
-use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
-use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Exceptions\SecurityException;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Security\AuthenticationToken\ApiKeyAuthToken;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -394,14 +393,14 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
         }
         return $this;
     }
-
+    
     /**
-     * Authenticate using the value of an HTTP header as an API key to match agains registered API keys.
+     * Authenticate using the value of an HTTP authorization header bearer token.
      *
      * @uxon-property bearer_token_as_jwt
      * @uxon-type object
-     * @uxon-template {"username": "", "disabled": false}
-     * 
+     * @uxon-template {"username": "", "tenant": "", "audience": "", "role": "", "disabled": false}
+     *
      * @param UxonObject $uxon
      * @return $this
      */
@@ -410,9 +409,20 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
         if ($uxon->getProperty('disabled') === true) {
             return $this;
         }
+
         $username = $uxon->getProperty('username');
+        $expectedTenantId = $uxon->getProperty('tenant');
+        $expectedAudience = $uxon->getProperty('audience'); // TODO: Info: audience (aud) of a token is a claim and not a scope!
+        $requiredRole = $uxon->getProperty('role');
+        
         $this->addTokenExtractor(
-            function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($username) {
+            function(ServerRequestInterface $request, HttpFacadeInterface $facade) 
+            use ($username, 
+                $expectedTenantId, 
+                $expectedAudience, 
+                $requiredRole) 
+            {
+                
                 if (! $request->hasHeader('Authorization')) {
                     return null;
                 }
@@ -420,9 +430,16 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
                 $matches = [];
                 if (preg_match("/Bearer\s+(.*)$/i", $authString, $matches)) {
                     $tokenString = $matches[1];
-                    return new JWTAuthToken($tokenString, $username, $facade);
+                    return new JWTAuthToken(
+                        $tokenString, 
+                        $username, 
+                        $facade, 
+                        $expectedTenantId, 
+                        $expectedAudience, 
+                        $requiredRole
+                    );
                 }
-                
+
                 return null;
             }
         );
