@@ -947,54 +947,101 @@ JS;
         if (($layer instanceof ShapeDataColumnMapLayerInterface) && ($layer instanceof MarkerMapLayerInterface)) {
             $renderShapesAsMarkers .= <<<JS
                         
-                            // Compute a representative center
-                            /* TODO Use turf instead of the first point
-                            const center = turf.centerOfMass(feature); // or turf.centroid(feature)
-                            const [lng, lat] = center.geometry.coordinates;
+                            // Alternaitve soltion: Compute a representative center
+                            /* TODO Try turf instead of the first point
+                                const center = turf.centerOfMass(feature); // or turf.centroid(feature)
+                                out.push(center.geometry.coordinates);
                             */
                             
-                            // For now use the top-most ([lng, lat] with max latitude) for a GeoJSON Feature or Geometry
-                            const fnTop = function topMostCoordinate(feature) {
-                                const geom = feature.type === 'Feature' ? feature.geometry : feature;
-                                if (!geom || !geom.type) return null;
-                                let top = null;
+                            /**
+                             * Collection of "top-most" coordinates (max latitude) for each geometry found.
+                             * - Input must be a GeoJSON that contains FeatureCollection, GeometryCollection, Feature or any type of Geometry (Point, Polygon etc).
+                             * - Output is an array of [longitutde, latitude], one entry per geometry (Polygon, Point, etc.).
+                             */
+                            function topMostCoordinates(node, out = []) {                                                            
+                                if (!node) return out;
                                 
-                                // Tailored iterator: avoid extra checks, just visit with known nesting depths
-                                function visit(coords, depth) {
+                                // If a GeoJSON Feature is passed, descend into its geometry
+                                if (node.type === "Feature") {
+                                    return topMostCoordinates(node.geometry, out);
+                                }
+                                
+                                // If a FeatureCollection is passed, descend into its features
+                                if (node.type === "FeatureCollection") {
+                                    for (const f of node.features) topMostCoordinates(f, out);
+                                    return out;
+                                }
+                                
+                                // If a GeometryCollection is passed, descend into its geometries
+                                if (node.type === "GeometryCollection") {
+                                    for (const g of node.geometries) topMostCoordinates(g, out);
+                                    return out;
+                                }
+                                
+                                // single geometry
+                                const { type, coordinates } = node;
+
+                                // At this point we expect a GeoJSON Geometry object with "coordinates".
+                                if (!type || !coordinates) return out;            
+                                
+                                // Recursive walk trough a GeoJSON "coordinates" structure to find the [lng, lat] pair with the highest latitude.
+                                function findTopMostCoordinate(coordinates, depth) {
+                                  var top = null;
+                                
+                                  function visit(value, depth) {
+                                    if (value == null) return;
+                                    
                                     if (depth === 0) {
-                                        // coords is a single [lng, lat]
-                                        const lng = coords[0], lat = coords[1];
-                                        if (top === null || lat > top[1]) top = [lng, lat];
-                                        return;
+                                        // GeoJSON coordinate arrays can contain extra elements (altitude), but we only care about long and lat.
+                                        let [lng, lat] = value;
+                                        if (typeof lng === "number" && typeof lat === "number") {                                        
+                                            // keep the coordinate with the highest latitude.
+                                            if (top === null || lat > top[1]) {
+                                                top = [lng, lat];
+                                            }                                        
+                                            return;
+                                        }
                                     }
-                                    // coords is an array; go one level deeper
-                                    for (let i = 0; i < coords.length; i++) {
-                                        visit(coords[i], depth - 1);
+                                    // value is an array; go one level deeper
+                                    for (let i = 0; i < value.length; i++) {
+                                        visit(value[i], depth - 1);
                                     }
+                                  }
+                                
+                                  visit(coordinates, depth);
+                                  return top;
+                                }
+
+                                let topCoordinate = [];
+                                switch (type) {
+                                    case 'Point':            topCoordinate = findTopMostCoordinate(coordinates, 0); break;
+                                    case 'MultiPoint':       topCoordinate = findTopMostCoordinate(coordinates, 1); break;
+                                    case 'LineString':       topCoordinate = findTopMostCoordinate(coordinates, 1); break;
+                                    case 'MultiLineString':  topCoordinate = findTopMostCoordinate(coordinates, 2); break;
+                                    case 'Polygon':          topCoordinate = findTopMostCoordinate(coordinates, 2); break; // rings included
+                                    case 'MultiPolygon':     topCoordinate = findTopMostCoordinate(coordinates, 3); break;
+                                    default: return out;
                                 }
                                 
-                                switch (geom.type) {
-                                    case 'Point':            visit(geom.coordinates, 0); break;
-                                    case 'MultiPoint':       visit(geom.coordinates, 1); break;
-                                    case 'LineString':       visit(geom.coordinates, 1); break;
-                                    case 'MultiLineString':  visit(geom.coordinates, 2); break;
-                                    case 'Polygon':          visit(geom.coordinates, 2); break; // rings included
-                                    case 'MultiPolygon':     visit(geom.coordinates, 3); break;
-                                    default: return null;
-                                }
+                                // Only add top coordinate if we found one
+                                if (topCoordinate) out.push(topCoordinate);
                                 
-                                return top;
-                            }
-                            const [lng, lat] = fnTop(feature);
-                            var oMarker = L.marker([lat, lng], { 
-                                icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
-                                draggable: false,
-                                autoPan: false,
-                                $markerProps 
-                            });
+                                return out;
+                            }                            
                             
-                            if (oClusterLayer) {
-                                oClusterLayer.addLayer(oMarker);
+                            // create markers for eacht top coordinate of every geometry within our geoJSON
+                            const markerCoords = topMostCoordinates(feature);                            
+                            for (const [lng, lat] of markerCoords) {
+                                const oMarker = L.marker([lat, lng], {
+                                    icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
+                                    draggable: false,
+                                    autoPan: false,
+                                    $markerProps
+                                });
+                            
+                                if (oClusterLayer) {
+                                    oClusterLayer.addLayer(oMarker);
+                                }
                             }
 
 JS;
