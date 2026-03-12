@@ -10,9 +10,11 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
+use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Widgets\Traits\IHaveTourGuideTrait;
 use exface\Core\Widgets\Traits\PopupTrait;
 
 /**
@@ -34,9 +36,10 @@ use exface\Core\Widgets\Traits\PopupTrait;
  * 
  * @author Andrej Kabachnik
  */
-class Dialog extends Form implements iAmClosable, iHaveHeader
+class Dialog extends Form implements iAmClosable, iHaveHeader, IHaveTourGuideInterface
 {
     use PopupTrait;
+    use IHaveTourGuideTrait;
     
     private $maximizable = true;
 
