@@ -125,7 +125,7 @@
 			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
     	],
 		"exface.Core.Model.OnBeforeDataTypeLoaded": [
-			"\\exface\\Core\\Mutations\\MutationPoints\\DataTypemutationPoint::onDataTypeLoadedApplyMutations"
+			"\\exface\\Core\\Mutations\\MutationPoints\\DataTypeMutationPoint::onDataTypeLoadedApplyMutations"
 		],
         "exface.Core.Model.OnBeforeSnippetLoaded": [
           	"\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"

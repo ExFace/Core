@@ -199,8 +199,12 @@ class EventManager implements EventManagerInterface
     protected function registerStaticListeners()
     {
         foreach ($this->getWorkbench()->getConfig()->getOption('EVENTS.STATIC_LISTENERS')->toArray() as $event => $callables) {
-            foreach ($callables as $priority => $callable)
-            $this->addListener($event, $callable, $priority);
+            foreach ($callables as $priority => $callable) {
+                if (! is_callable($callable)) {
+                    throw new InvalidArgumentException('Invalid static event configuratrion: `' . $callable . '` is not a callable!');
+                }
+                $this->addListener($event, $callable, $priority);
+            }
         }
         return;
     }
