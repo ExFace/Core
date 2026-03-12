@@ -12,19 +12,9 @@ use exface\Core\DataTypes\StringDataType;
  */
 class ExceptionMarkdownRenderer extends AbstractExceptionRenderer
 {
-    public function __construct(\Throwable $exception, int $maxArgChars = 500, int $maxArgArrayItems = 100)
-    {
-        parent::__construct($exception, $maxArgChars, $maxArgArrayItems);
-
-        $previous = $exception->getPrevious();
-        if ($previous instanceof \Throwable) {
-            $this->previous = new self($previous);
-        }
-    }
-    
     /**
-     * @param bool $withHeader
-     * @return string
+     * {@inheritdoc}
+     * @see AbstractExceptionRenderer::render()
      */
     public function render() : string
     {
@@ -102,7 +92,7 @@ EOF
      */
     private function formatArgs(array $args): string
     {
-        if ($this->maxArgChars === 0) {
+        if ($this->getMaxArgumentChars() === 0) {
             return '';
         }
 
@@ -119,7 +109,7 @@ EOF
             } elseif ('resource' === $item[0]) {
                 $formattedValue = 'resource';
             } else {
-                $formattedValue = str_replace("\n", '', $this->escapeBackticks(StringDataType::truncate(var_export($item[1], true), $this->maxArgChars, false, false, true, true)));
+                $formattedValue = str_replace("\n", '', $this->escapeBackticks(StringDataType::truncate(var_export($item[1], true), $this->getMaxArgumentChars(), false, false, true, true)));
             }
 
             $result[] = \is_int($key) ? $formattedValue : sprintf("'%s' => %s", $this->escapeBackticks($key), $formattedValue);

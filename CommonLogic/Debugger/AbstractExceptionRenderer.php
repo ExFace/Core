@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Exceptions\iContainCustomTrace;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
@@ -16,18 +17,20 @@ if (!function_exists('get_debug_type')) {
  */
 abstract class AbstractExceptionRenderer
 {
-    protected $message;
-    protected $code;
-    protected $previous;
-    protected $trace;
-    protected $traceAsString;
-    protected $class;
-    protected $file;
-    protected $line;
-    protected $statusCode = null;
+    private $message;
+    private $code;
+    private $previous;
+    private $trace;
+    private $traceAsString;
+    private $class;
+    private $file;
+    private $line;
+    
+    private $statusCode = null;
+    private $logId = null;
 
-    protected $maxArgChars = 500;
-    protected $maxArgArrayItems = 100;
+    private $maxArgChars = 500;
+    private $maxArgArrayItems = 100;
     
     public function __construct(\Throwable $exception, int $maxArgChars = 500, int $maxArgArrayItems = 100)
     {
@@ -43,8 +46,21 @@ abstract class AbstractExceptionRenderer
         
         if ($exception instanceof ExceptionInterface) {
             $this->statusCode = $exception->getStatusCode();
+            $this->logId = $exception->getId();
+        }
+        
+        $previous = $exception->getPrevious();
+        if ($previous instanceof \Throwable) {
+            $this->previous = new static($previous);
         }
     }
+
+    /**
+     * Renders the exception in a specific format. The format depends on the concrete implementation of the renderer.
+     * 
+     * @return string
+     */
+    abstract public function render() : string;
     
     public function toArray()
     {
@@ -59,10 +75,25 @@ abstract class AbstractExceptionRenderer
         
         return $exceptions;
     }
-    
-    public function getStatusCode()
+
+    /**
+     * Returns the HTTP status code if available
+     * 
+     * @return int|null
+     */
+    public function getStatusCode() : ?int
     {
         return $this->statusCode;
+    }
+
+    /**
+     * Returns the log ID if available
+     * 
+     * @return string|null
+     */
+    public function getLogId() : ?string
+    {
+        return $this->logId;
     }
     
     public function getClass()
@@ -238,26 +269,39 @@ abstract class AbstractExceptionRenderer
     {
         return $this->traceAsString;
     }
-    
-    public function renderAsString()
+
+    /**
+     * @param bool $onlyBottomTrace
+     * @return string
+     */
+    public function renderPlainText(bool $includeTrace = true, bool $onlyBottomTrace = false) : string
     {
         $message = '';
         $next = false;
         
-        foreach (array_reverse(array_merge([$this], $this->getAllPrevious())) as $exception) {
-            if ($next) {
-                $message .= 'Next ';
-            } else {
+        $prevs = $this->getAllPrevious();
+        $length = count($prevs) + 1;
+        foreach (array_reverse(array_merge([$this], $prevs)) as $i => $exception) {
+            if (! $next) {
                 $next = true;
             }
-            $message .= $exception->getClass();
+            if ($includeTrace) {
+                $message .= '[' . ($length - $i) . ' of ' . $length . '] ';
+            }
             
+            // Exception text
+            $message .= $exception->getClass();
             if ('' != $exception->getMessage()) {
                 $message .= ': '.$exception->getMessage();
             }
-            
-            $message .= ' in '.$exception->getFile().':'.$exception->getLine().
-            "\nStack trace:\n".$exception->getTraceAsString()."\n\n";
+            $message .= ' in ' . $exception->getFile().':'.$exception->getLine();
+
+            // Stack trace
+            if ($includeTrace === true && ($onlyBottomTrace === false || $length === ($i + 1))) {
+                $message .= "\n" . StringDataType::indent($exception->getTraceAsString(), '  ') . "\n\n";
+            } else {
+                $message .= "\n";
+            }
         }
         
         return rtrim($message);
@@ -277,5 +321,21 @@ abstract class AbstractExceptionRenderer
         } else {
             $this->setTrace($exception->getTrace(), $exception->getFile(), $exception->getLine());
         }
+    }
+
+    /**
+     * @return int
+     */
+    protected function getMaxArgumentChars() : int
+    {
+        return $this->maxArgChars;
+    }
+
+    /**
+     * @return int
+     */
+    protected function getMaxArgumentArrayItems() : int
+    {
+        return $this->maxArgArrayItems;
     }
 }
