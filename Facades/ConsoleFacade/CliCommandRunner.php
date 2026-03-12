@@ -4,7 +4,7 @@ namespace exface\Core\Facades\ConsoleFacade;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Process\Process;
 
-class CommandRunner
+class CliCommandRunner
 {
     /**
      * 
