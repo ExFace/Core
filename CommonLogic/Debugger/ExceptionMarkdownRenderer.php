@@ -73,6 +73,10 @@ EOF
                     $content .= "| --- |\n";
                 }
             }
+            // If we only have one line (just the header), we need an empty line to make the table render properly
+            if ($i === 0) {
+                $content .= "|  |\n";
+            }
 
             $content .= "\n";
         }
@@ -123,6 +127,11 @@ EOF
         $file = null;
         $file = (preg_match('#[^/\\\\]*+$#', $path, $file) ? $file[0] : $path);
 
+        if ($file !== $path) {
+            $path = StringDataType::substringAfter($path, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR, $path);
+            $file = '<span title="'.$path.'">'.$file.'</span>';
+        }
+        
         return sprintf('in **%s** %s', $file, 0 < $line ? ' line '.$line : '');
     }
     
