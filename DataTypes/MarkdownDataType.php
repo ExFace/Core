@@ -95,7 +95,7 @@ class MarkdownDataType
         $headings = $headings ?? array_keys($rows[0] ?? []);
         $md = '|';
         foreach ($headings as $heding) {
-            $md .= ' ' . static::escapeString($heding) . ' |';
+            $md .= ' ' . static::escapeString($heding ?? '') . ' |';
         }
         $md .= PHP_EOL . '|';
         foreach ($headings as $heding) {
@@ -104,7 +104,7 @@ class MarkdownDataType
         foreach ($rows as $row) {
             $md .= PHP_EOL . '|';
             foreach ($row as $cell) {
-                $md .= ' ' . static::escapeString($cell) . ' |';
+                $md .= ' ' . static::escapeString($cell ?? '') . ' |';
             }
         }
 
