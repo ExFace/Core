@@ -431,14 +431,20 @@ SQL;
         return $output;
     }
 
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
-     */
+    
     protected function escapeAlias(string $tableOrPredicateAlias) : string
     {
         return '"' . $tableOrPredicateAlias . '"';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeName()
+     */
+    protected function escapeName(string $tableOrColumnName) : string
+    {
+        return '"' . $tableOrColumnName . '"';
     }
 
     /**

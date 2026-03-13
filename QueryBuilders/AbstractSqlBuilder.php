@@ -1947,7 +1947,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
-     * Escapes an SQL alias propertly: e.g. `"myalias"` for MySQL, `[myAlias]` for MS SQL
+     * Escapes an SQL alias properly: e.g. `... AS "myalias"` for MySQL, `... AS [myAlias]` for MS SQL
      *
      * @param string $tableOrPredicateAlias
      * @return string
@@ -1955,6 +1955,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function escapeAlias(string $tableOrPredicateAlias) : string
     {
         return '"' . $tableOrPredicateAlias . '"';
+    }
+
+    /**
+     * Escapes an SQL column, table or schema name: e.g. ``SELECT `my_col` FROM ...`` for MySQL, `[myCol]` for MS SQL
+     * 
+     * @param string $tableOrColumnName
+     * @return string
+     */
+    protected function escapeName(string $tableOrColumnName) : string
+    {
+        return $tableOrColumnName;
     }
 
     /**
