@@ -54,7 +54,7 @@ abstract class AbstractMarkdownPrinterMiddleware implements MarkdownPrinterMiddl
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($this->shouldSkip($request)) {
+        if (! $this->isRequestToPrinterFile($request)) {
             return $handler->handle($request);
         }
 
@@ -83,9 +83,9 @@ abstract class AbstractMarkdownPrinterMiddleware implements MarkdownPrinterMiddl
         return $response;
     }
 
-    public function shouldSkip(ServerRequestInterface $request): bool
+    protected function isRequestToPrinterFile(ServerRequestInterface $request): bool
     {
-        return ! StringDataType::endsWith(
+        return StringDataType::endsWith(
             $request->getUri()->getPath(),
             $this->fileUrl,
             false
