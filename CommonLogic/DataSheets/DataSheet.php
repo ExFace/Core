@@ -225,12 +225,12 @@ class DataSheet implements DataSheetInterface
     {
         if($otherKeyColumn->getDataSheet() !== $otherSheet) {
             throw new DataSheetColumnNotFoundError($otherSheet, 'Cannot aggregate like: Column "' . 
-                $otherKeyColumn->getName() . '" not found!');
+                $otherKeyColumn->getName() . '" does belong to the expected datasheet!');
         }
 
         if($selfKeyColumn->getDataSheet() !== $this) {
             throw new DataSheetColumnNotFoundError($this, 'Cannot aggregate like: Column "' .
-                $selfKeyColumn->getName() . '" not found!');
+                $selfKeyColumn->getName() . '" does belong to the expected datasheet!');
         }
         $selfKeyColumnName = $selfKeyColumn->getName();
 
@@ -240,7 +240,7 @@ class DataSheet implements DataSheetInterface
         $resultSheet->getColumns()->addFromExpression($selfKeyColumnName);
 
         // Pre-process our own key colum. We filter out empty keys, since they can't be matched
-        // and put them in an associative to speed up matching keys to rows.
+        // and put the remaining ones in an associative array to speed up matching keys to rows.
         $selfKeys = [];
         foreach ($selfKeyColumn->getValues() as $rowNr => $key) {
             if($key === null || $key === '') {
@@ -269,9 +269,9 @@ class DataSheet implements DataSheetInterface
                 }
                 
                 // If we found a matching row in our data, we extract its values per column.
+                // We ignore columns that don't have any pending aggregations.
                 foreach ($this->getRow($rowNr) as $colName => $value) {
-                    if(
-                        $colName === $selfKeyColumnName ||
+                    if($colName === $selfKeyColumnName ||
                         !key_exists($colName, $aggregationsPerColumn)
                     ) {
                         continue;
