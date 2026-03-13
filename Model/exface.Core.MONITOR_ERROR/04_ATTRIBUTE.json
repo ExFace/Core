@@ -599,7 +599,7 @@
         {
             "_EXPORT_SUMMARY": "Log file [LOG_FILE]",
             "CREATED_ON": "2021-04-21 09:49:52",
-            "MODIFIED_ON": "2021-04-21 11:01:32",
+            "MODIFIED_ON": "2026-03-13 11:40:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb56a2814fb6cb56a025041000001",
@@ -620,16 +620,18 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
-            "ICON": null,
-            "ICON_SET": null,
-            "ABBREVIATION": null,
+            "ICON": "",
+            "ICON_SET": "",
+            "ABBREVIATION": "",
             "ALIAS": "LOG_FILE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": [
                 "// Multiline text delimited by `\n`",
                 "@MySQL: CONCAT('logs/', DATE_FORMAT([#CREATED_ON#], '%Y-%m-%d'), '.log')",
                 "",
-                "@T-SQL: CONCAT('logs/', FORMAT([#CREATED_ON#], 'yyyy-MM-dd'), '.log')"
+                "@T-SQL: CONCAT('logs/', FORMAT([#CREATED_ON#], 'yyyy-MM-dd'), '.log')",
+                "",
+                "@pgSQL: CONCAT('logs/', to_char(MONITOR_ERROR.created_on, 'YYYY-MM-DD'), '.log')"
             ],
             "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
             "FORMATTER": "",
