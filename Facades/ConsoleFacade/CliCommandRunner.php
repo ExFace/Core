@@ -3,7 +3,6 @@ namespace exface\Core\Facades\ConsoleFacade;
 
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\ServerSoftwareDataType;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Process\Process;
 
