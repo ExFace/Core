@@ -1107,7 +1107,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                     $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
                         return ($child instanceof iTakeInput)
                             && $child->getMetaObject()->isExactly($containerWidget->getMetaObject())
-                            && ($child instanceof iCanBeBoundToAttribute)
+                            && (($child instanceof iCanBeBoundToAttribute) || ($child instanceof Input))
                             && $child->isBoundToAttribute()
                             && $child->getAttributeAlias() === $attrAlias;
                     });
