@@ -292,9 +292,9 @@ abstract class AbstractExceptionRenderer
             // Exception text
             $message .= $exception->getClass();
             if ('' != $exception->getMessage()) {
-                $message .= ': '.$exception->getMessage();
+                $message .= ":\n ".$exception->getMessage();
             }
-            $message .= ' in ' . $exception->getFile().':'.$exception->getLine();
+            $message .= "\n in " . $exception->getFile().':'.$exception->getLine();
 
             // Stack trace
             if ($includeTrace === true && ($onlyBottomTrace === false || $length === ($i + 1))) {
