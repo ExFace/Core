@@ -48,6 +48,7 @@ class Tour implements TourInterface, iHaveIcon
     private ?string $description = null;
     private bool $showProgress = false;
     private bool $disableActiveInteraction = false;
+    private bool $autorun = false;
     
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
     {
@@ -205,6 +206,30 @@ class Tour implements TourInterface, iHaveIcon
     protected function setDisableActiveInteraction(bool $disableActiveInteraction) : TourInterface
     {
         $this->disableActiveInteraction = $disableActiveInteraction;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAutorun() : bool
+    {
+        return $this->autorun;
+    }
+    
+    /**
+     * If true, the tour will be automatically started when the view is loaded.
+     * 
+     * @uxon-property autorun
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $autorun
+     * @return TourInterface
+     */
+    protected function setAutorun(bool $autorun = false) : TourInterface
+    {
+        $this->autorun = $autorun;
         return $this;
     }
 }
