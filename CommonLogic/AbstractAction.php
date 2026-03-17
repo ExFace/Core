@@ -561,10 +561,9 @@ abstract class AbstractAction implements ActionInterface
      * the result message and (if needed) a separate result object should be set within the specific implementation via
      * set_result_data_sheet(), set_result_message() and set_result() respectively!
      *
-     * This method is protected because only get_result...() methods are intended to be used by external objects. In
-     * addition to performing the action they also take care of saving it to the current context, etc., while perform()
-     * ist totally depending on the specific action implementation and holds only the actual logic without all the
-     * overhead.
+     * This method is protected because only get_result...() methods are intended to be used by external objects. In addition to performing 
+     * the action they also take care of saving it to the current context, etc., while perform() ist totally depending on the specific
+     * action implementation and holds only the actual logic without all the overhead.
      *
      * @return void
      */
@@ -836,8 +835,8 @@ abstract class AbstractAction implements ActionInterface
     /**
      * Returns the translation string for the given message id.
      *
-     * This is a shortcut for calling $this->getApp()->getTranslator()->translate(). Additionally it will automatically
-     * append an action prefix to the given id: e.g. $action->translate('SOME_MESSAGE') will result in
+     * This is a shortcut for calling $this->getApp()->getTranslator()->translate(). Additionally it will automatically append an
+     * action prefix to the given id: e.g. $action->translate('SOME_MESSAGE') will result in 
      * $action->getApp()->getTranslator()->translate('ACTION.ALIAS.SOME_MESSAGE')
      *
      * @see Translation::translate()
@@ -1148,8 +1147,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * @uxon-property input_mapper
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
-     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to":
-     *     ""}]}
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to":""}]}
      * 
      * @see setInputMappers()
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMapper()
@@ -1771,8 +1769,7 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
-     * Objects and relations that may be affected by the action (in addition to those determined by the action logic
-     * automatically).
+     * Objects and relations that may be affected by the action (in addition to those determined by the action logic automatically).
      * 
      * Most effects of an action can be determined automatically. If not, you can add them
      * here manually. For example:
@@ -2189,13 +2186,13 @@ abstract class AbstractAction implements ActionInterface
      * an alert depending on the monitor configuration.
      *
      * Logging long-running actions must be explicitly enabled in `MONITOR.LONG_RUNNERS.ENABLED` System.config.json.
-     * If enabled, all actions taking longer than `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS` will be logged to
-     * the monitor.
+     * If enabled, all actions taking longer than `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS` will be logged to the
+     * monitor.
      *
      * - Any value >= 0 will override the config setting.
      * - You can disable this feature by setting the threshold to `-1` or `false`.
-     * - Not setting this property explicitly applies the default threshold defined in
-     * `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS` in the `System.config.json`.
+     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
+     * in the `System.config.json`.
      * 
      * @uxon-property monitor_as_long_running_after_seconds
      * @uxon-type int
