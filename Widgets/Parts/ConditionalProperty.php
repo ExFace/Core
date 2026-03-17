@@ -364,4 +364,47 @@ class ConditionalProperty implements WidgetPartInterface
         }
         return false;
     }
+
+
+    /**
+     * Merges a conditional property with a number of other conditions with an OR operator. The other conditions can either be UxonObjects, or other ConditionalProperties
+     * 
+     * @param ConditionalProperty|UxonObject[] $others One or more properties to be merged with, separated by a comma
+     * @return ConditionalProperty imported and merged ConditionalProperty
+     */
+    public function mergeWithOR(ConditionalProperty|UxonObject ...$others): ConditionalProperty
+    {
+        $conditionGroups = [];
+        
+        foreach ($others as $other) {
+            if ($other instanceof ConditionalProperty) {
+                $uxons = $other->getConditionGroup()->exportUxonObject();
+            } else { // UxonObject
+                $uxons = $other;
+            }
+
+            $conditionGroups[] = $uxons->toArray();
+        }
+
+        // If someone calls mergeWithOR() without args, don't change anything
+        if (count($conditionGroups) === 0) {
+            return $this;
+        } else {
+
+            // Start with "this" condition group
+            $conditionGroups = array_merge(
+                [$this->getConditionGroup()->exportUxonObject()->toArray()], 
+                $conditionGroups
+            );
+        }
+
+        $newCondGrpUxon = new UxonObject([
+            'operator' => EXF_LOGICAL_OR,
+            'condition_groups' => $conditionGroups,
+        ]);
+
+        $this->importUxonObject($newCondGrpUxon);
+        return $this;
+    }
+    
 }
