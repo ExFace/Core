@@ -15,10 +15,9 @@ class JsException extends RuntimeException
         $this->js = $js;
 
         $message = $js['message'] ?? 'JavaScript error';
-        $file    = $js['file']    ?? ($js['source'] ?? 'unknown');
-        $line    = $js['line']    ?? 0;
+        $location    = $js['page'] ?? 'unknown';
 
-        parent::__construct("[JS] {$message} @ {$file}:{$line}", $code, $previous);
+        parent::__construct("JS-Error: \"{$message}\" thrown in \"{$location}\"", $code, $previous);
     }
 
     public function createDebugWidget(DebugMessage $debugWidget)
@@ -46,18 +45,63 @@ class JsException extends RuntimeException
     
     protected function toMarkdown() : string
     {
+        $breadcrumbsMd = implode(
+            ' → ',
+            array_map(function ($loc) {
+                $title = $loc['title'] ?? '';
+                $url   = $loc['url'] ?? '#';
+                return "[{$title}]({$url})";
+            }, $this->js['locations'])
+        );
+
         return <<<MD
-# Position in app
+# JavaScript Error
 
-- Breadcrumbs: TODO ideally as markdown links
-- Online state: TODO
-- Log level?
+**Error-Message:** {$this->js['message']}
 
-# Stacktrace
+## Details: 
 
-{$this->getJsTraceAsString()}
+- Page: [{$this->js['page']}]({$this->js['url']})
+- Clickpath: {$breadcrumbsMd}
+- Level: {$this->js['level']}
+- Timestamp: {$this->js['timestamp']}
+
+## JS Stacktrace
+
+{$this->getJsTraceAsMarkdownTable()}
 
 MD;
+    }
+
+    /**
+     * Creates a basic MD table from a JS stacktrace
+     * @return string
+     */
+    protected function getJsTraceAsMarkdownTable(): string
+    {
+        $trace = $this->getJsTrace();
+        if (empty($trace)) {
+            return "No stack trace available.";
+        }
+
+        $markdown = "| File | Line | Function |\n";
+        $markdown .= "|------|------|------|\n";
+
+        foreach ($trace as $frame) {
+            $file = $frame['file'] ?? 'unknown';
+            $line = $frame['line'] ?? 'unknown';
+            $function = $frame['function'] ?? 'N/A';
+            $class = $frame['class'] ?? 'N/A';
+
+            // anonymous frames
+            if ($file === '<anonymous>') {
+                $file = 'anonymous';
+            }
+
+            $markdown .= "| {$file} | {$line} | {$function} |\n";
+        }
+
+        return $markdown;
     }
 
     /** Return a PHP-like trace array so your markdown trace formatter keeps working */
@@ -131,6 +175,11 @@ MD;
                 $col  = (int)$m[3];
             } else {
                 $file = $loc;
+            }
+
+            // Handle <anonymous> frames
+            if ($file === '<anonymous>') {
+                $function = $function ?: 'anonymous';
             }
 
             $trace[] = [
