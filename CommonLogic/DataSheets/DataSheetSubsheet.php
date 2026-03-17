@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -17,13 +19,15 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
 {
 
-    private $parentSheet = null;
+    private $parentSheet;
 
     private $joinKeyAliasOfSubsheet = null;
     
     private $joinKeyAliasOfParentSheet = null;
     
     private $relationPathFromParentSheet = null;
+    
+    private $deferredAggregations = [];
     
     /**
      * 
@@ -182,5 +186,49 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
             return $this->getRelationPathFromParentSheet()->reverse();
         }
         return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDeferredAggregations() : array
+    {
+        return $this->deferredAggregations;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function addDeferredAggregation(string $columnName, AggregatorInterface $deferredAggregation) : void
+    {
+        $this->deferredAggregations[$columnName][$deferredAggregation->exportString()] = $deferredAggregation;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function copy(): DataSheetSubsheet
+    {
+        $copy = DataSheetFactory::createSubsheetFromUxon(
+            $this->getParentSheet(),
+            $this->exportUxonObject(),
+            $this->getJoinKeyAliasOfSubsheet(),
+            $this->getJoinKeyAliasOfParentSheet(),
+            $this->getRelationPathFromParentSheet()
+        );
+
+        // Copy internal properties, that do not get exported to UXON
+        foreach ($this->getColumns() as $key => $col) {
+            if ($col->getIgnoreFixedValues()) {
+                $copy->getColumns()->get($key)->setIgnoreFixedValues($col->getIgnoreFixedValues());
+            }
+        }
+
+        $copy->setAutoCount($this->getAutoCount());
+        if ($this->countRowsInDataSource() !== null) {
+            $copy->setCounterForRowsInDataSource($this->countRowsInDataSource());
+        }
+        
+        return $copy;
     }
 }
