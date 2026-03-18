@@ -273,7 +273,7 @@ class Monitor extends Profiler
     protected function isActionMeasured(ActionInterface $action) : bool
     {
             // If monitoring long runners is enabled AND the action is not explicitly excluded
-            ($this->longRunnersEnabled && $action->getMonitorAsLongRunningAfterSeconds() !== -1)
+            return ($this->longRunnersEnabled && $action->getMonitorAsLongRunningAfterSeconds() !== -1)
             // OR monitoring actions is enabled generally and the action is to be monitored
             || ($this->actionsEnabled && $this->isActionMonitored($action));
     }
@@ -450,27 +450,6 @@ class Monitor extends Profiler
         }*/ 
         
         return $this;
-    }
-
-    /**
-     * Returns a log handler specifically configured to log long-running actions. The result is cached to speed up
-     * repeated calls.
-     * 
-     * Use it's `handle()` method to log any long-running actions.
-     * 
-     * @return MonitorLogHandler
-     */
-    protected function getLongRunningActionsHandler() : MonitorLogHandler
-    {
-        if($this->longRunningActionsHandler === null) {
-            $this->longRunningActionsHandler = new MonitorLogHandler(
-                $this->getWorkbench(),
-                $this,
-                $this->longRunnersLogLevel
-            );
-        }
-
-        return $this->longRunningActionsHandler;
     }
 
     /**
