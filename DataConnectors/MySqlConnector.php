@@ -14,7 +14,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\ModelBuilders\MySqlModelBuilder;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
-use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\QueryBuilders\MySqlBuilder;
 
 /**
@@ -241,7 +241,7 @@ class MySqlConnector extends AbstractSqlConnector
                         $message = str_replace($binaryString, $decodedHex, $message);
                     }
                 }
-                return new DataQueryConstraintError($query, $message, '73II64M', $sqlException);
+                return new DataQueryUniqueConstraintError($query, $this, $message, '73II64M', $sqlException);
             default:
                 return new DataQueryFailedError($query, $message, '6T2T2UI', $sqlException);
         }

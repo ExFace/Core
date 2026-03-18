@@ -27,7 +27,8 @@ class ActionContext extends AbstractContext
      */
     public function getCurrentAction()
     {
-        return $this->getActions()[count($this->getActions()) - 1];
+        $index = count($this->getActions()) - 1;
+        return $index > -1 ? $this->getActions()[$index] : null;
     }
 
     /**

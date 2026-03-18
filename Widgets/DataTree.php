@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -80,6 +81,7 @@ class DataTree extends DataTable
     private $tree_leaf_id_concatenate = null;
     
     private $tree_leaf_id_column_id = null;
+    private $tree_leaf_id_column = null;
 
     private $tree_expanded = false;
     
@@ -420,7 +422,7 @@ class DataTree extends DataTable
      * This is important if your row UIDs may occur at multiple places in the hierarchy. Most tree widget
      * implementations will not work then, unless you make sure, the ids are unique by building branch paths.
      * 
-     * You can show the calculated leaf id if you specify `tree_leaf_id_column_id` additionally. See 
+     * You can show the calculated leaf id if you specify `tree_leaf_id_column` additionally. See 
      * Administration > Metamodel > Objects > Relations for a live example.
      * 
      * @uxon-property tree_leaf_id_concatenate
@@ -445,21 +447,24 @@ class DataTree extends DataTable
     }
     
     /**
-     * Makes the column with the given id hold the tree leaf ids.
+     * A custom column for leaf IDs instead of using the UID column of the object
      * 
-     * By default, leafs are identified by values from the table's UID column. However, if you use
-     * `tree_leaf_id_concatenate` to create path-like ids, you can show them by creating a special
+     * By default, leafs are identified by values from the table's UID column. However, there are cases,
+     * when this UID is not there or not unique enough from the point of view of a hierarchy: e.g.
+     *
+     * - the tree is recursive and the same data row (UID) can be included multiple times
+     * - if you use `tree_leaf_id_concatenate` to create path-like ids, you can show them by creating a special
      * column and referencing it here. 
      * 
      * To have the column show calculated ids, it must not have an attribute alias. For example, the
      * following widget will display a single column (the tree), showing UIDs of the underlying
-     * meta object concatenated with dashes.
+     * metaobject concatenated with dashes.
      * 
      * ```
      * {
      *  "widget_type": "DataTree",
      *  "tree_leaf_id_concatenate": "-",
-     *  "tree_leaf_id_column_id": "path_column",
+     *  "tree_leaf_id_column": "path_column",
      *  "columns": [
      *      {
      *          "caption": "Path",
@@ -471,25 +476,42 @@ class DataTree extends DataTable
      * 
      * See Administration > Metamodel > Objects > Relations for a live example.
      * 
-     * @uxon-property tree_leaf_id_column_id
-     * @uxon-type string
+     * @uxon-property tree_leaf_id_column
+     * @uxon-type metamodel:expression
      *
      * @param string $id
      * @return DataTree
      */
-    public function setTreeLeafIdColumnId(string $id) : DataTree
+    public function setTreeLeafIdColumn(string $expression) : DataTree
+    {
+        $col = $this->createColumnFromExpression(
+            ExpressionFactory::createFromString($this->getWorkbench(), $expression, $this->getMetaObject()),
+            null,
+            true
+        );
+        $this->addColumn($col);
+        $this->tree_leaf_id_column = $col;
+        return $this;
+    }
+
+    /**
+     * Similar to `tree_leaf_id_column`, but references an existing column by id instead of creating a new one from an expression.
+     * 
+     * @uxon-property tree_leaf_id_column_id
+     * @uxon-type uxon:$..id 
+     * 
+     * @param string $id
+     * @return $this
+     */
+    protected function setTreeLeafIdColumnId(string $id) : DataTree
     {
         $this->tree_leaf_id_column_id = $id;
         return $this;
     }
     
-    /**
-     *
-     * @return string|NULL
-     */
-    public function getTreeLeafIdColumnId() : ?string
+    public function hasCustomTreeLeafIdColumn() : bool
     {
-        return $this->tree_leaf_id_column_id;
+        return $this->tree_leaf_id_column !== null || $this->tree_leaf_id_column_id !== null;
     }
     
     /**
@@ -499,11 +521,18 @@ class DataTree extends DataTable
      */
     public function getTreeLeafIdColumn() : DataColumn
     {
-        if ($this->tree_leaf_id_column_id === null) {
+        if ($this->tree_leaf_id_column !== null) {
+            return $this->tree_leaf_id_column;
+        }
+        if ($this->tree_leaf_id_column_id !== null) {
+            return $this->getColumn($this->tree_leaf_id_column_id);
+        }
+        
+        if ($this->hasUidColumn()) {
             return $this->getUidColumn();
         }
         
-        return $this->getColumn($this->getTreeLeafIdColumnId());
+        throw new WidgetConfigurationError($this, 'A DataTree MUST have a UID column or a custom `tree_leaf_id_column`!');
     }
     
     /**
@@ -621,7 +650,7 @@ class DataTree extends DataTable
     /**
      * Set to TRUE to load the tree level-by-level and to FALSE to load everything at once.
      * 
-     * By default, the loading strategy is up to to facade used. However, setting a 
+     * By default, the loading strategy is up to the facade used. However, setting a 
      * `tree_root_uid` will automatically turn lazy loading on for performance reasons!
      * 
      * @uxon-property lazy_load_tree_levels

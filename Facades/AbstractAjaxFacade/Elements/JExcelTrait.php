@@ -467,12 +467,24 @@ JS;
             {$this->buildJsFixedFootersSpread()}
         },
         onselection: function(el, x1, y1, x2, y2, origin) {
-            $(el).data('_exfSelection', {
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2
-            });
+            // jexcel v4 seems to have issues with the initial onclick event https://github.com/jspreadsheet/ce/issues/1183, 
+            // on the first click this event is called once (correctly) and then multiple more times with values 0,0,0,0; which effectively resets the selection to the first row
+            // This causes issues with the context menu and our restore logic onBlur (deleting wrong rows ets)
+            // Example: user clicks row 3 once; event for row 3 gets fired, followed by multiple events with 0,0,0,0 in short succession. When the user then uses the context menu (rightclick -> delete)
+            // the onblur event gets called (when the context menu is used) and resets the last selection (0,0,0,0). This then deletes row 0 instead of row 3
+
+            let iTimeDiff = new Date().getTime() - $(el).data('_exfSelection')?.timeLastUpdated;
+
+            // so here, we try and fix this by only updating the selection data when the selection appears to be human (timeDiff > 15ms)
+            if (Number.isNaN(iTimeDiff) || iTimeDiff > 15){
+                $(el).data('_exfSelection', {
+                    timeLastUpdated: new Date().getTime(),
+                    x1: x1,
+                    y1: y1,
+                    x2: x2,
+                    y2: y2
+                });
+            }
         },
         onblur: function(el) {
             var oSel = $(el).data('_exfSelection');
@@ -820,7 +832,11 @@ JS;
                 mValue = '';
             }
 
-            if (this.getDoNotValidate() === true) {
+            // if were in a spare row, we dont need to validate
+            var aData = this.getJExcel().getData() || [];
+            var iSpareRows = {$this->getMinSpareRows()}; 
+
+            if (this.getDoNotValidate() === true || (iRow >= aData.length - iSpareRows)) {
                 return mValue;
             }
 

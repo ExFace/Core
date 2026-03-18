@@ -76,15 +76,17 @@ class Map extends AbstractWidget implements
     
     private $centerViaGps = null;
     
-    private $zoom = null;
+    private ?float $zoomInitial = null;
+    private ?float $zoomMin = null;
+    private ?float $zoomMax = null;
+    private ?float $zoomSnap = null;
+    private ?UxonObject $autoZoomDefaults = null;
     
-    private $zoomMin = null;
-    
-    private $zoomMax = null;
-    
-    private $showFullScreenButton = true;
+    private $showFullScreenButton = null;
     
     private $showGpsLocateButton = null;
+    
+    private $showZoomControls = null;
     
     private $showScale = true;
 
@@ -100,8 +102,6 @@ class Map extends AbstractWidget implements
     private $hide_header = null;
     
     private $coordinateSystem = self::COORDINATE_SYSTEM_AUTO;
-    
-    private ?UxonObject $autoZoomDefaults = null;
     
     /**
      *
@@ -675,7 +675,7 @@ class Map extends AbstractWidget implements
      */
     public function getZoom() : ?int
     {
-        return $this->zoom;
+        return $this->zoomInitial;
     }
 
     public function getDoubleClickToZoom() : ?bool
@@ -705,23 +705,38 @@ class Map extends AbstractWidget implements
      * are very common: 1 for complete zoom out (whole earth or even more), 2 double zoom, 3
      * for 4x zoom, etc.
      * 
-     * @uxon-property zoom
-     * @uxon-type integer
+     * Many map layers support `auto_zoom`, which will zoom automatically when the layer is loaded and make sure,
+     * all layer items are visible. You can set the defaults for `auto_zoom` on map level too. However, `zoom_initial`
+     * will be applied right when the map is loaded - even without any layers.
      * 
-     * @param int $value
+     * @uxon-property zoom_initial
+     * @uxon-type number
+     * 
+     * @param float $value
      * @return Map
      */
-    public function setZoom(int $value) : Map
+    public function setZoomInitial(float $value) : Map
     {
-        $this->zoom = $value;
+        $this->zoomInitial = $value;
         return $this;
+    }
+
+    /**
+     * @deprecated use zoom_initial instead
+     * 
+     * @param float $value
+     * @return $this
+     */
+    protected function setZoom(float $value) : Map
+    {
+        return $this->setZoomInitial($value);
     }
     
     /**
      * 
-     * @return int|NULL
+     * @return float|NULL
      */
-    public function getZoomMin() : ?int
+    public function getZoomMin() : ?float
     {
         return $this->zoomMin;
     }
@@ -732,10 +747,10 @@ class Map extends AbstractWidget implements
      * @uxon-property zoom_min
      * @uxon-type integer
      * 
-     * @param int $value
+     * @param float $value
      * @return Map
      */
-    public function setZoomMin(int $value) : Map
+    public function setZoomMin(float $value) : Map
     {
         $this->zoomMin = $value;
         return $this;
@@ -743,9 +758,9 @@ class Map extends AbstractWidget implements
     
     /**
      * 
-     * @return int|NULL
+     * @return float|NULL
      */
-    public function getZoomMax() : ?int
+    public function getZoomMax() : ?float
     {
         return $this->zoomMax;
     }
@@ -754,15 +769,71 @@ class Map extends AbstractWidget implements
      * The maximum zoom value for this map
      * 
      * @uxon-property zoom_max
-     * @uxon-type integer
+     * @uxon-type number
      * 
-     * @param int $value
+     * @param float $value
      * @return Map
      */
-    public function setZoomMax(int $value) : Map
+    public function setZoomMax(float $value) : Map
     {
         $this->zoomMax = $value;
         return $this;
+    }
+    
+    public function getZoomStep() : ?float
+    {
+        return $this->zoomSnap;
+    }
+
+    /**
+     * Factor to zoom at a time when pressing the zoom controls or using mouse wheel.
+     * 
+     * Use fractional steps like `0.25` or `0.1` for a smooth zoom. 
+     * 
+     * By default, the `zoom_step` is 1. Thus, valid zoom levels are `0`, `1`, `2`, `3`, etc. If you set the value 
+     * of zoomSnap to 0.5, the valid zoom levels of the map will be `0`, `0.5`, `1`, `1.5`, `2`, and so on. If you set 
+     * a value of 0.1, the valid zoom levels of the map will be `0`, `0.1`, `0.2`, `0.3`, `0.4`, and so on.
+     * 
+     * @uxon-property zoom_step
+     * @uxon-type float
+     * @uxon-default 1
+     * 
+     * @param float $value
+     * @return $this
+     */
+    public function setZoomStep(float $value) : Map
+    {
+        $this->zoomSnap = $value;
+        return $this;
+    }
+
+    /**
+     * Default setting for auto_zoom for all layers, that support it
+     *
+     * @uxon-property auto_zoom
+     * @uxon-type \exface\Core\Widgets\Parts\Maps\AutoZoom
+     * @uxon-template {"zoom_in": false, "zoom_out": true}
+     *
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setAutoZoom(UxonObject $uxon) : Map
+    {
+        $this->autoZoomDefaults = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getAutoZoomDefaults() : ?UxonObject
+    {
+        if ($this->autoZoomDefaults === null && count($this->getDataLayers())) {
+            $this->autoZoomDefaults = new UxonObject([
+                'zoom_in' => true
+            ]);
+        }
+        return $this->autoZoomDefaults;
     }
     
     /**
@@ -771,7 +842,16 @@ class Map extends AbstractWidget implements
      */
     public function getShowFullScreenButton() : bool
     {
-        return $this->showFullScreenButton;
+        if ($this->showFullScreenButton !== null) {
+            return $this->showFullScreenButton;
+        }
+        
+        // The header and caption already contains the fullscreen button.
+        if ($this->getHideCaption() && $this->getHideHeader()) {
+            return true;
+        } else {
+            return false;
+        }
     }
     
     /**
@@ -819,6 +899,40 @@ class Map extends AbstractWidget implements
     public function setShowGpsLocateButton(bool $value) : Map
     {
         $this->showGpsLocateButton = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     * 
+     */
+    public function getShowZoomControls() : bool
+    {
+        if ($this->showZoomControls === null) {
+            foreach ($this->getBaseMaps() as $map) {
+                if ($map->getCoordinateSystem() === self::COORDINATE_SYSTEM_PIXELS) {
+                    return false;
+                }
+            }
+        }
+        return $this->showZoomControls ?? true;
+    }
+    
+    /**
+     * Set to FALSE to hide the zoom and home controls from the map.
+     * - zoom controls are the "+" and "-" buttons to zoom in and out.
+     * - home control is the button to reset the view to the initial center and zoom level.
+     * 
+     * @uxon-property show_zoom_controls
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Map
+     */
+    public function setShowZoomControls(bool $value) : Map
+    {        
+        $this->showZoomControls = $value;
         return $this;
     }
     
@@ -938,34 +1052,5 @@ class Map extends AbstractWidget implements
             }
         }
         return array_unique($objs);
-    }
-
-    /**
-     * Default setting for auto_zoom for all layers, that support it
-     * 
-     * @uxon-property auto_zoom
-     * @uxon-type \exface\Core\Widgets\Parts\Maps\AutoZoom
-     * @uxon-template {"zoom_in": false, "zoom_out": true}
-     * 
-     * @param UxonObject $uxon
-     * @return $this
-     */
-    protected function setAutoZoom(UxonObject $uxon) : Map
-    {
-        $this->autoZoomDefaults = $uxon;
-        return $this;
-    }
-
-    /**
-     * @return UxonObject|null
-     */
-    public function getAutoZoomDefaults() : ?UxonObject
-    {
-        if ($this->autoZoomDefaults === null && count($this->getDataLayers())) {
-            $this->autoZoomDefaults = new UxonObject([
-                'zoom_in' => true
-            ]);
-        }
-        return $this->autoZoomDefaults;
     }
 }

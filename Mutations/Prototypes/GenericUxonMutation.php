@@ -18,12 +18,15 @@ use exface\Core\Mutations\AppliedMutationOnUxon;
  * to the place in the UXON where the operation is to be applied and a new value (if required by the
  * operation).
  * 
- * - `append` - adds one or more UXON objects at the end of the array located by the JSONpath
- * - `insert` - adds one or more UXON objects to an array before the element, the JSONpath points to
- * - `change` - changes a scalar property at the end of the JSONpath - e.g. to set a widget to `hidden:true`
- * - `replace` - replaces a UXON object with another one. The JSONpath should point to an object
- * - `move` - move an entire UXON object from one JSONpath position to another
- * - `remove` - removes all keys corresponding to the JSONpath entirely
+ * - modify scalar values (e.g. properties)
+ *  - `change` - changes a scalar property at the end of the JSONpath - e.g. to set a widget to `hidden:true`. If the
+ *  key at the end of the JSONpath does not exist, it will be created automatically.
+ *  - `remove` - removes all keys corresponding to the JSONpath entirely
+ * - modifying UXON objects
+ *  - `append` - adds one or more UXON objects at the end of the array located by the JSONpath
+ *  - `insert` - adds one or more UXON objects to an array before the element, the JSONpath points to
+ *  - `replace` - replaces a UXON object with another one. The JSONpath should point to an object
+ *  - `move` - move an entire UXON object from one JSONpath position to another
  * 
  * ## Using JSONpath
  * 

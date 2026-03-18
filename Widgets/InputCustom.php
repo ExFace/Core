@@ -79,40 +79,33 @@ class InputCustom extends Input implements CustomWidgetInterface
     private $initScript = null;
     
     private $getValueScript = null;
-    
     private $setValueScript = null;
     
     private $getDataScript = null;
-    
     private $setDataScript = null;
     
     private $disableScript = null;
-    
     private $enableScript = null;
     
     private $attachOnChangeScript = null;
     
     private $validatorScript = null;
+
+    private $resizeScript = null;
     
     private $cssClass = null;
-    
     private $css = null;
     
     private $includes = [];
-    
     private $includeCss = [];
-    
     private $includeJs = [];
-
     private $includeJsModules = [];
     
     private $placeholders = [];
-    
     private $scriptVars = [];
-    
     private $scriptVarsPlaceholders = [];
-
-    private $resizeScript = null;
+    
+    private $liveRefs = [];
     
     /**
      *
@@ -674,5 +667,41 @@ class InputCustom extends Input implements CustomWidgetInterface
     {
         $this->resizeScript = $value;
         return $this;
+    }
+
+    /**
+     * Additional live references - these scripts will be called if the value of linked widget changes
+     * 
+     * @uxon-property live_references
+     * @uxon-type array
+     * @uxon-template [{"widget_link": "", "on_change_script": ""}]
+     * 
+     * @param UxonObject $arrayOfUxons
+     * @return InputCustom
+     */
+    protected function setLiveReferences(UxonObject $arrayOfUxons) : InputCustom
+    {
+        $this->liveRefs = $arrayOfUxons->toArray();
+        return $this;
+    }
+
+    /**
+     * TODO replace the array with a proper widget part
+     * 
+     * @return array
+     */
+    public function getLiveReferences() : array
+    {
+        return $this->liveRefs;
+    }
+    
+    public function hasLiveReferences() : bool
+    {
+        return ! empty($this->liveRefs);
+    }
+    
+    protected function escapeJsString($string) : string
+    {
+        return json_encode($string);
     }
 }

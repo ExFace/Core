@@ -2214,15 +2214,15 @@
             "DOCS": ""
         },
         {
-            "_EXPORT_SUMMARY": "73II64M Object already exists!",
+            "_EXPORT_SUMMARY": "73II64M Such an entry already exists!",
             "CREATED_ON": "2018-12-16 21:26:11",
-            "MODIFIED_ON": "2018-12-17 09:19:16",
+            "MODIFIED_ON": "2026-03-03 08:44:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e90179229498ba9add0205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "CODE": "73II64M",
-            "TITLE": "Object already exists!",
+            "TITLE": "Such an entry already exists!",
             "DESCRIPTION": [
                 "// Multiline text delimited by `\n`",
                 "This error means, that at least one of the object, you tried to create already exists in the data source and cannot be created a second time. This is typically caused by unique constraints of different types: e.g.",
@@ -2232,7 +2232,7 @@
                 "",
                 "To solve the ussue, simply search for the existing object and use it instead of creating a new one."
             ],
-            "HINT": "Use existing objects instead of creating new ones.",
+            "HINT": "Use existing data instead of creating new entries.",
             "TYPE": "ERROR",
             "DOCS": ""
         },
@@ -3111,6 +3111,36 @@
                 "",
                 "The best workaround would be an SQL view or a table valued function, that will list the totals on a pre-aggregated level. In  our example above you could have a view listing totals per  `ORDER`. Then, to get the total revenue for a `CLIENT`, you would use an`attribute_alias` like `ORDER_STATS__TOTAL_VALUE:SUM`. Such a view might be a good idea anyway, because it may learn to calculate more KPIs in future: average price, total VAT, total discount, etc."
             ],
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "8557PH7 Constraint violation in data source!",
+            "CREATED_ON": "2026-03-03 11:45:25",
+            "MODIFIED_ON": "2026-03-03 11:55:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f18c5c1668d3c48c5c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "8557PH7",
+            "TITLE": "Constraint violation in data source!",
+            "DESCRIPTION": "This error occurs if a constraint in the data source is violated - e.g. a unique constraint or a foreign key constraint in an SQL database.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "8557RS3 Foreign key violation in data source!",
+            "CREATED_ON": "2026-03-03 11:50:24",
+            "MODIFIED_ON": "2026-03-03 11:50:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f18ae5c842a0ca8ae5025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "8557RS3",
+            "TITLE": "Foreign key violation in data source!",
+            "DESCRIPTION": "This error occurs when a foreign key constraint was violated in a data source - e.g. an SQL database.",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""

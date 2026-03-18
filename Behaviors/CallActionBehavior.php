@@ -389,8 +389,10 @@ class CallActionBehavior extends AbstractBehavior
             // See if relevant
             if ($this->hasRestrictionConditions()) {
                 $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
-                $logbook->addLine($this->getOnlyIfDataMatchesConditions()->__toString());
+                $logbook->addIndent(+1);
+                $logbook->addLine('`' . $this->getOnlyIfDataMatchesConditions()->__toString() . '`');
                 $inputSheet = $inputSheet->extract($this->getOnlyIfDataMatchesConditions(), true);
+                $logbook->addIndent(-1);
                 if ($inputSheet->isEmpty()) {
                     $logbook->addLine('**Skipped** because of `only_if_data_matches_conditions`');
                     $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
@@ -494,7 +496,7 @@ class CallActionBehavior extends AbstractBehavior
             if ($this->isErrorIfActionFails()) {
                 throw new BehaviorRuntimeError($this, 'Error in ' . $this->getAlias() . ' (' . $this->getName() . '): ' . $e->getMessage(), null, $e, $logbook);
             } 
-            $logbook->addLine('**Failed** silently (silenced by `error_if_action_fails`): ' . $e->getMessage());
+            $logbook->addLine('**Failed** silently (silenced by `error_if_action_fails`). ' . $e->getMessage());
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             $this->getWorkbench()->getLogger()->logException($e);
         }

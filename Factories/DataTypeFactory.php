@@ -82,10 +82,6 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      * @param string $alias
      * @param AppInterface $app
      * @param UxonObject $uxon
-     * @param string|null $name
-     * @param string|null $validation_error_code
-     * @param UxonObject|null $default_editor_uxon
-     * @param UxonObject|null $default_dispaly_uxon
      * 
      * @throws DataTypeConfigurationError
      * 
@@ -95,41 +91,17 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
         $prototype_alias, 
         $alias, 
         AppInterface $app, 
-        UxonObject $uxon, 
-        $name = null, 
-        $short_description = null, 
-        $validation_error_code = null, 
-        $validation_error_text = null, 
-        UxonObject $default_editor_uxon = null,
-        UxonObject $default_display_uxon = null
+        UxonObject $uxon
     ) : DataTypeInterface
     {
         $data_type = static::createFromPrototype($app->getWorkbench(), $prototype_alias);
         $data_type->setApp($app);
         $data_type->setAlias($alias);
-        if ($name !== '' && ! is_null($name)) {
-            $data_type->setName($name);
-        }
-        if ($validation_error_code !== '' && ! is_null($validation_error_code)) {
-            $data_type->setValidationErrorCode($validation_error_code);
-        }
-        if (! is_null($validation_error_text)) {
-            $data_type->setValidationErrorText($validation_error_text);
-        }
-        if ($short_description !== '' && ! is_null($short_description)) {
-            $data_type->setShortDescription($short_description);
-        }
-        if (! is_null($default_editor_uxon) && ! $default_editor_uxon->isEmpty()) {
-            $data_type->setDefaultEditorUxon($default_editor_uxon);
-        }
-        if (! is_null($default_display_uxon) && ! $default_display_uxon->isEmpty()) {
-            $data_type->setDefaultDisplayUxon($default_display_uxon);
-        }
         try {
             $data_type->importUxonObject($uxon);
         } catch (\Throwable $e) {
             if (! $e instanceof DataTypeExceptionInterface) {
-                $e = new DataTypeConfigurationError($type, 'Cannot initialize data type "' . $type->getAliasWithNamespace() . '". ' . $e->getMessage(), null, $e);
+                $e = new DataTypeConfigurationError($data_type, 'Cannot initialize data type "' . $data_type->getAliasWithNamespace() . '". ' . $e->getMessage(), null, $e);
             }
             throw $e;
         }

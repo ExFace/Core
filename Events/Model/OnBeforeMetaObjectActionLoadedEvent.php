@@ -11,7 +11,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
- * Event fired before a meta object's modeled action isn instantiated.
+ * Event fired before a metaobject's modeled action is instantiated.
  * 
  * Listeners to this even can modify the UXON configuration of the action.
  * 

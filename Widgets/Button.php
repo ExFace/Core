@@ -822,11 +822,9 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getHiddenIf() : ?ConditionalProperty
     {
-        // If there is a disabled_if already, use it
+        // If there is a 'normal' disabled_if already, get it
         $ownProperty = parent::getHiddenIf();
-        if ($ownProperty !== null) {
-            return $ownProperty;
-        }
+
         // Otherwise see if we can generate one from the action
         if (! $this->hasAction()) {
             return null;
@@ -863,13 +861,27 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         }
 
         switch (true) {
+            case $hiddenIfInvalid !== null && $hiddenIfUnauthorized !== null && $ownProperty !== null:
+                // normal hidden_if & hidden_if_input_invalid && hidden_if_unauthorized
+                return $ownProperty->mergeWithOR($hiddenIfInvalid, $hiddenIfUnauthorized);
+            case $hiddenIfInvalid !== null && $hiddenIfUnauthorized === null && $ownProperty !== null:
+                // normal hidden_if & hidden_if_input_invalid
+                return $ownProperty->mergeWithOR($hiddenIfInvalid);
+            case $hiddenIfInvalid === null && $hiddenIfUnauthorized !== null && $ownProperty !== null:
+                // normal hidden_if & hidden_if_unauthorized
+                return $ownProperty->mergeWithOR($hiddenIfUnauthorized);
             case $hiddenIfInvalid !== null && $hiddenIfUnauthorized === null:
+                // hidden_if_input_invalid
                 $this->setHiddenIf($hiddenIfInvalid);
                 break;
             case $hiddenIfUnauthorized !== null && $hiddenIfInvalid === null:
+                // hidden_if_unauthorized
                 $this->setHiddenIf($hiddenIfUnauthorized);
                 break;
             case $hiddenIfInvalid !== null && $hiddenIfUnauthorized !== null:
+                // hidden_if_input_invalid && hidden_if_unauthorized
+
+                // TODO: could at some point also be rewritten to mergewithOR?
                 $this->setHiddenIf(new UxonObject([
                     'operator' => EXF_LOGICAL_OR,
                     'condition_groups' => [
@@ -877,6 +889,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                         $hiddenIfUnauthorized->toArray()
                     ]
                 ]));
+
                 break;
         }
 
@@ -1248,9 +1261,10 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             if (parent::getDisabledIf() === null) {
                 $this->getDisabledIf();
             }
-            if (parent::getHiddenIf() === null) {
-                $this->getHiddenIf();
-            }
+            
+            // register hidden_if(s)
+            $this->getHiddenIf();
+
             // If the buttons logic has added new widgets to the input widget, make sure they are
             // prefilled!
             // @see getConditionPropertyFromAction() for details

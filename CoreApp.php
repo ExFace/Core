@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\AppInstallers\ApacheServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
 use exface\Core\CommonLogic\AppInstallers\NginxServerInstaller;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\Facades\LogHubFacade;
 use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
@@ -103,6 +104,11 @@ Disallow: /
         // Permalink facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(PermalinkFacade::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+
+        // LogHub facade
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(LogHubFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
         // Server installer.

@@ -188,7 +188,7 @@
     "CONTEXT.DEBUG.TRACE_NAME": "Trace",
     "CONTEXT.DEBUG.TRACE_JS_STARTED": "JS-Tracer AN: Fehler im JavaScript werden als Pop-Up angezeigt (für Debugging)",
     "CONTEXT.DEBUG.TRACE_JS_STOPPED": "JS-Tracer AUS: Fehler im JavaScript werden nur im Hintergrund geloggt",
-    "CONTEXT.DEBUG.TRACE_JS": "Trace fron-end errors",
+    "CONTEXT.DEBUG.TRACE_JS": "Trace front-end errors",
     "CONTEXT.DEBUG.TRACES_JS_LIST_BUTTON": "Frontend-Traces anzeigen",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION": "Intercept user communication",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION_HINT": "Temporary re-route all messages to certain users or roles while interception is active. Multiple values can be separated by comma.",
@@ -227,6 +227,8 @@
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
 	"DATASHEET.ERROR.LOOKUP_FAILED": "Der Wert %values% wurde nicht als \"%lookup_object%\" erkannt!|Die Werte %values% wurden nicht als \"%lookup_object%\" erkannt!",
 	"DATASHEET.ERROR.AFFECTED_ROWS": "Betroffene Zeile(n): %row_numbers%",
+	"DATASHEET.ERROR.DATA_OBJECT_EXISTS": "%object_name% existiert bereits.",
+	"DATASHEET.ERROR.DATA_OBJECT_EXISTS_WITH_ATTRS": "%object_name% existiert bereits. Die Kombination von %attr_list% und %attr_last% darf sich nicht wiederholen!",
 
     "DATATYPE.DATE.ERROR_INVALID_VALUE": "Wert: \"%value%\" ist kein valide Datum/Zeit Angabe",
     "DATATYPE.NUMBER.ERROR_INVALID_VALUE": "Wert \"%value%\" ist keine valide Zahl",
@@ -423,7 +425,11 @@
     "TASK.QUEUE.STATUS_DONE_MANUALLY": "Erledigt manuell",
     "TASK.QUEUE.STATUS_DONE": "Erledigt",
     "TASK.QUEUE.TYPE_SYNC": "Synchron",
-    "TASK.QUEUE.TYPE_ASYNC": "Asynchron",    
+    "TASK.QUEUE.TYPE_ASYNC": "Asynchron",
+
+  "TOUR.STEP.ACTION.NEXT": "Weiter",
+  "TOUR.STEP.ACTION.PREVIOUS": "Zurück",
+  "TOUR.STEP.ACTION.DONE": "Fertig",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
@@ -516,6 +522,7 @@
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.HINT": "Kopieren, Einfügen, etc.",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY": "Kopieren",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_VALUE": "Wert kopieren",
+  "WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_SUCCESS": "Erfolgreich kopiert.",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_HINT": "In Zwischenablage kopieren",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE": "Einfügen",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE_HINT": "Einfügen",
@@ -598,7 +605,7 @@
 	"ERROR.ECHARTS.AXIS_NO_DATA": "Keine Daten erhalten für Achse",
 
 	"ERROR.CAPTION": "Fehler",
-  "ERROR.No_RESULTS": "Keine Treffer",
+	"ERROR.NO_RESULTS": "Keine Treffer",
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",

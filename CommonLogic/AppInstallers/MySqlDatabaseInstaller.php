@@ -374,7 +374,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      */
     protected function escapeSqlStringValue(string $value) : string
     {
-        return $this->getDataConnection()->escapeString($value);
+        return "'" . $this->getDataConnection()->escapeString($value) . "'";
     }
     
     /**
@@ -478,16 +478,16 @@ SQL;
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    up_datetime={$this->escapeSqlDateTimeValue($time)},
-    up_script='{$upScript}',
-    up_result='{$this->escapeSqlStringValue($up_result_string)}',
-    down_datetime=NULL,
-    down_script='{$downScript}',
-    down_result=NULL,
-    log_id=NULL,
-    failed_flag=0,
-    failed_message=NULL
-WHERE id='{$id}';
+    up_datetime = {$this->escapeSqlDateTimeValue($time)},
+    up_script = {$upScript},
+    up_result = {$this->escapeSqlStringValue($up_result_string)},
+    down_datetime = NULL,
+    down_script = {$downScript},
+    down_result = NULL,
+    log_id = NULL,
+    failed_flag = 0,
+    failed_message = NULL
+WHERE id = '{$id}';
 
 SQL;
         }
@@ -503,11 +503,11 @@ INSERT INTO {$this->getMigrationsTableName()}
         down_script
     )
     VALUES (
-        '{$this->escapeSqlStringValue($migration->getMigrationName())}',
+        {$this->escapeSqlStringValue($migration->getMigrationName())},
         {$this->escapeSqlDateTimeValue($time)},
-        '{$upScript}',
-        '{$this->escapeSqlStringValue($up_result_string)}',
-        '{$downScript}'
+        {$upScript},
+        {$this->escapeSqlStringValue($up_result_string)},
+        {$downScript}
     );
     
 SQL;
@@ -527,21 +527,21 @@ SQL;
 
         if ($id = $migration->getId()) {
             if ($migration->getFailedLogId() !== null) {
-                $logIdEntry = "log_id='{$migration->getFailedLogId()}',";
+                $logIdEntry = "log_id = '{$migration->getFailedLogId()}',";
             }            
             return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    up_datetime={$this->escapeSqlDateTimeValue($time)},
-    up_script='{$upScript}',
-    up_result=NULL,
-    down_datetime=NULL,
-    down_script='{$downScript}',
-    down_result=NULL,
+    up_datetime = {$this->escapeSqlDateTimeValue($time)},
+    up_script = {$upScript},
+    up_result = NULL,
+    down_datetime = NULL,
+    down_script = {$downScript},
+    down_result = NULL,
     {$logIdEntry}
-    failed_flag=1,
-    failed_message='{$this->escapeSqlStringValue($migration->getFailedMessage())}'
+    failed_flag = 1,
+    failed_message = {$this->escapeSqlStringValue($migration->getFailedMessage())}
 WHERE id='{$id}';
 
 SQL;
@@ -565,13 +565,13 @@ INSERT INTO {$this->getMigrationsTableName()}
         failed_message
     )
     VALUES (
-        '{$this->escapeSqlStringValue($migration->getMigrationName())}',
+        {$this->escapeSqlStringValue($migration->getMigrationName())},
         {$this->escapeSqlDateTimeValue($time)},
-        '{$upScript}',
-        '{$downScript}',
+        {$upScript},
+        {$downScript},
         {$logId}
         1,
-        '{$this->escapeSqlStringValue($migration->getFailedMessage())}'
+        {$this->escapeSqlStringValue($migration->getFailedMessage())}
     );
     
 SQL;
@@ -592,13 +592,13 @@ SQL;
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    down_datetime={$this->escapeSqlDateTimeValue($time)},
-    down_script='{$downScript}',
-    down_result='{$this->escapeSqlStringValue($down_result_string)}',
-    log_id=NULL,
-    failed_flag=0,
-    failed_message=NULL
-WHERE id='{$migration->getId()}';
+    down_datetime = {$this->escapeSqlDateTimeValue($time)},
+    down_script = {$downScript},
+    down_result = {$this->escapeSqlStringValue($down_result_string)},
+    log_id = NULL,
+    failed_flag = 0,
+    failed_message = NULL
+WHERE id = '{$migration->getId()}';
 
 SQL;
     }
@@ -615,19 +615,19 @@ SQL;
 
         $logIdEntry = '';
         if ($migration->getFailedLogId() !== null) {
-            $logIdEntry = "log_id='{$migration->getFailedLogId()}',";
+            $logIdEntry = "log_id = '{$migration->getFailedLogId()}',";
         }       
         return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    down_datetime={$this->escapeSqlDateTimeValue($time)},
-    down_script='{$downScript}',
-    down_result=NULL,
+    down_datetime = {$this->escapeSqlDateTimeValue($time)},
+    down_script = {$downScript},
+    down_result = NULL,
     {$logIdEntry}
-    failed_flag=1,
-    failed_message='{$this->escapeSqlStringValue($migration->getFailedMessage())}'
-WHERE id='{$migration->getId()}';
+    failed_flag = 1,
+    failed_message = {$this->escapeSqlStringValue($migration->getFailedMessage())}
+WHERE id = '{$migration->getId()}';
 
 SQL;
     }

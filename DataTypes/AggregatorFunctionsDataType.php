@@ -9,7 +9,7 @@ use exface\Core\Exceptions\LogicException;
  * Enumeration of aggregator function like SUM, AVG, etc.
  * 
  * Aggregators are used as an extension for attribute aliases and relations paths to 
- * aggregate (total up) values values. For example, the following attribute aliases
+ * aggregate (total up) values. For example, the following attribute aliases
  * can be used in a table for an `ORDER` object:
  * 
  * - `POSITION__ID:COUNT` - display the number of order positions

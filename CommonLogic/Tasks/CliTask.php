@@ -1,7 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
+use exface\Core\Facades\ConsoleFacade\SymfonyCommandAdapter;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Tasks\CliTaskInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * 
@@ -10,9 +13,23 @@ use exface\Core\Interfaces\Tasks\CliTaskInterface;
  */
 class CliTask extends GenericTask implements CliTaskInterface
 {    
-    private $cliArguments = [];
+    private string $cliCommandName;
+    private array $cliArguments;
+    private array $cliOptions;
+
+    public function __construct(WorkbenchInterface $workbench, string $commandName, array $arguments = [], array $options = [], FacadeInterface $facade = null)
+    {
+        $this->facade = $facade;
+        $this->workbench = $workbench;
+        $this->cliCommandName = $commandName;
+        $this->cliArguments = $arguments;
+        $this->cliOptions = $options;
+    }
     
-    private $cliOptions = [];
+    public function getCliCommandName() : string
+    {
+        return $this->cliCommandName;
+    }
     
     /**
      * 
@@ -47,33 +64,11 @@ class CliTask extends GenericTask implements CliTaskInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\CliTaskInterface::setCliArguments()
-     */
-    public function setCliArguments(array $nameValuePairs) : CliTaskInterface
-    {
-        $this->cliArguments = $nameValuePairs;
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\CliTaskInterface::getCliOptions()
      */
     public function getCliOptions() : array
     {
         return $this->cliOptions;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\CliTaskInterface::setCliOptions()
-     */
-    public function setCliOptions(array $nameValuePairs) : CliTaskInterface
-    {
-        $this->cliOptions = $nameValuePairs;
-        return $this;
     }
     
     /**

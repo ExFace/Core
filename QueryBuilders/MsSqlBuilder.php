@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
@@ -11,7 +11,6 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
-use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
@@ -270,7 +269,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if ($useEnrichment) {
             $query = $this->buildSqlQuerySelectWithEnrichment($select, $enrichment_select, $select_comment, $from, $join, $enrichment_join, $where, $group_by, $having, $order_by, $limit, $distinct);
         } else {
-            if ($this->isAggregatedToSingleRowViaListOnly() === true) {
+            if ($this->isAggregatedToSingleRowViaStuffXML() === true) {
                 $distinct = 'DISTINCT ';
             }
             $query = $this->buildSqlQuerySelectWithoutEnrichment($select, $select_comment, $from, $join, $where, $group_by, $having, $order_by, $limit, $distinct);
@@ -448,7 +447,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     {        
         $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable, $addComments);
         $aggr = $aggregator ?? $qpart->getAggregator();
-        if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {
+        if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && $this->isAggregatedViaStuffXML($qpart, $aggr)) {
             $sql = StringDataType::substringBefore($sql, ' AS ', $sql, false, true);
         }
         return $sql;
@@ -514,27 +513,46 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
         $args = $aggregator->getArguments();
-        $function_name = $aggregator->getFunction()->getValue();
+        $aggrFunc = $aggregator->getFunction()->getValue();
         
-        switch ($function_name) {
-            case AggregatorFunctionsDataType::LIST_DISTINCT:
-            case AggregatorFunctionsDataType::LIST_ALL:
-                // This is a VERY strange way to concatennate row values, but it seems to be the only
-                // one available in SQL Server: STUFF(CAST(( SELECT ... FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, {LengthOfDelimiter}, '')
-                // Since in case of subselects the `...` needs to be replaced by the whole subselect,
-                // we need to split the logic in two: `STUFF...` goes here and `FOR XML...` goes in
-                // buildSqlSelectSubselect() or buildSqlSelectGrouped() for subselects and regular
-                // columns a bit differently.
-                
+        $isListAggregation = ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT);
+        $isAggregatedViaStuffXML = $this->isAggregatedViaStuffXML($qpart, $aggregator);
+        
+        switch ($aggrFunc) {
+            // Use STRING_AGG() for list aggregations if possible
+            case $isListAggregation && ! $isAggregatedViaStuffXML :
+                $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
+                $output = "STRING_AGG($sql, '{$this->escapeString($delim)}')";
+                if ($qpart->getQuery()->isSubquery()) {
+                    /* IDEA replace LABEL attributes with SQL statements with UID attributes - did not work because
+                     * of a syntax error. No time to evaluate further so far
+                    $attr = $qpart->getAttribute();
+                    $attrObj = $attr->getObject();
+                    if ($this->isSqlStatement($qpart->getDataAddress())) {
+                        if (($attr->isLabelForObject() || $attr->getAlias() === MetaAttributeInterface::OBJECT_LABEL_ALIAS) && $attrObj->hasUidAttribute()) {
+                            $groupByAlias = ($attr->isRelated() ? $attr->getRelationPath()->toString() . RelationPath::RELATION_SEPARATOR : '') . $attrObj->getUidAttribute()->getAlias();
+                        } else {
+                            throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
+                        }
+                    } else {
+                        $groupByAlias = $qpart->getAttribute()->getAliasWithRelationPath();
+                    }*/
+                    $groupByAlias = $qpart->getAttribute()->getAliasWithRelationPath();
+                    $qpart->getQuery()->addAggregation($groupByAlias);
+                }
+                return $output;
+            // If STRING_AGG() is not expected to work, try a workaround - see `isAggregatedViaStuffXML()` for details.
+            case $isListAggregation && $isAggregatedViaStuffXML:
                 // Make sure to cast any non-string things to nvarchar BEFORE they are concatenated
                 if (! ($qpart->getAttribute()->getDataType() instanceof StringDataType)) {
                     $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
                 }
                 $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
                 if ($qpart->getQuery()->isSubquery()) {
+                    // IDEA replace LABEL attributes with SQL statements with UID attributes - see non-XML LIST above
                     $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 }
-                return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = '{$this->escapeString($delim)}' + {$sql}";
+                return "STUFF(CAST(( SELECT " . ($aggrFunc == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = '{$this->escapeString($delim)}' + {$sql}";
             default:
                 return parent::buildSqlGroupByExpression($qpart, $sql, $aggregator);
         }
@@ -552,9 +570,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $function_name = $aggregator->getFunction()->getValue();
         $args = $aggregator->getArguments();
         switch ($function_name) {
-            // See buildSqlGroupByExpression() for details
-            case AggregatorFunctionsDataType::LIST_DISTINCT:
-            case AggregatorFunctionsDataType::LIST_ALL:
+            // See isAggregatedViaStuffXML() for details
+            case $this->isAggregatedViaStuffXML($qpart, $aggregator):
                 // Only do this special treatment if it is not a subquery - otherwise the buildSqlSelectSubselect()
                 // will add its own `FOR XML...` because that would not need an inner query since it is based on a 
                 // subquery already
@@ -603,7 +620,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
                     $subSql = $subSqlFrom . StringDataType::substringAfter($subSql, $subSqlFrom);
-                    // At this point, $sql is the result of buildSqlGroupByExpression for THIS query. Since we are going
+                    // At this point, $sql is the result of buildSqlGroupByExpression() for THIS query. Since we are going
                     // to use it in the subquery, we need to replace the table alias in the select clause - i.e. 
                     // "tt.aggregatedCol" -> "ttLIST.aggregatedCol" in the above example.
                     $thisSqlSelect = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false, false);
@@ -628,9 +645,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $aggregator = $qpart->getAggregator();
             $function_name = $aggregator->getFunction()->getValue();
             switch ($function_name) {
-                // See buildSqlGroupByExpression() for details
-                case AggregatorFunctionsDataType::LIST_DISTINCT:
-                case AggregatorFunctionsDataType::LIST_ALL:
+                // See isAggregatedViaStuffXML() for details
+                case $this->isAggregatedViaStuffXML($qpart, $aggregator):
                     $args = $aggregator->getArguments();
                     $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
                     $delimLength = strlen($delim);
@@ -641,41 +657,76 @@ class MsSqlBuilder extends AbstractSqlBuilder
         return $subselect;
     }
 
-    protected function buildSqlWhereSubquery(QueryPartFilter $qpart, $rely_on_joins = true)
+    protected function buildSqlWhereCondition(QueryPartFilter $qpart, $rely_on_joins = true)
     {
-        // This is a workaround for SQL errors due to unclosed FOR XML wrappers in HAVING clauses.
-        // The problem occurs when filtering over an aggregated attribute, that has a relation path with
-        // more than one reverse relation. In this case, the WHERE gets a nested subselect with a HAVING 
-        // clause (not quite sure, if that is correct) and inside that clause there is `SELECT [text()] = `
-        // but no `FOR XML`. 
-        // The workaround simply removes the aggregator from the filter in this case. It produces different
-        // results - e.g. the filter value cannot contain a delimited list, but only a single value. But it works
-        // for a lot of cases - in particular for table columns with a filter in the header.
-        if ($qpart->hasAggregator()) {
+        // When filtering, replace LIST_DISTINCT with LIST_ALL because the filter result should be the same
+        // and filtering with STRING_AGG() is much simpler to write. In fact, we never got filters to work
+        // with FOR XML stuff reliably - See isAggregatedViaStuffXML() for details
+        // TODO Table-header filters still don't work even with LIST if apply_to_aggregates:true. Disable it here?
+        if ($qpart->hasAggregator() && ! $this->isAggregatedViaStuffXML($qpart)) {
             $aggr = $qpart->getAggregator();
             $aggrFunc = $aggr->getFunction()->__toString();
-            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
-                $relPath = $qpart->getAttribute()->getRelationPath();
-                $revRelCnt = 0;
-                foreach ($relPath->getRelations() as $rel) {
-                    if ($rel->isReverseRelation()) {
-                        $revRelCnt++;
-                    }
-                }
-                if ($revRelCnt > 1) {
-                    $alias = DataAggregation::stripAggregator($qpart->getAlias());
-                    $condUxon = $qpart->getCondition()->exportUxonObject();
-                    $condAlias = $condUxon->getProperty('expression');
-                    $condUxon->setProperty('expression', DataAggregation::stripAggregator($condAlias));
-                    $condNoAggr = ConditionFactory::createFromUxon($this->getWorkbench(), $condUxon);
-                    $qpartNoAggr = new QueryPartFilter($alias, $this, $condNoAggr);
-                    return parent::buildSqlWhereSubquery($qpartNoAggr, $rely_on_joins);
-                }
+            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
+                $listAllAggr = new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_ALL, $aggr->getArguments());
+                $qpart->setAggregator($listAllAggr);
+                // TODO applying the filter to aggregates does not work for some reason...
+                // A subselect with HAVING is being built then and EXFCOREQ cannot be resolved or is
+                // at the wrong place. Never found out, what exactly is wrong.
+                $qpart->getCondition()->setApplyToAggregates(false);
+                /* Not quite sure, if we can reliably change the aggregator of an instantiated qpart. Here is variant
+                 * with a cloned $qpart, but it produces different results for some reason.
+                 * Remove this if really not required.
+                $alias = DataAggregation::stripAggregator($qpart->getAlias());
+                $condUxon = $qpart->getCondition()->exportUxonObject();
+                $condAlias = $condUxon->getProperty('expression');
+                $condUxon->setProperty('expression', DataAggregation::addAggregatorToAlias(DataAggregation::stripAggregator($condAlias), $listAllAggr->exportString()));
+                $condNoAggr = ConditionFactory::createFromUxon($this->getWorkbench(), $condUxon);
+                $qpartNoAggr = new QueryPartFilter($alias, $this, $condNoAggr);
+                $sql = parent::buildSqlWhereCondition($qpartNoAggr, $rely_on_joins);
+                */
+                $sql = parent::buildSqlWhereCondition($qpart, $rely_on_joins);
+                return $sql;
             }
         }
-        
-        // In all other cases, use the default SQL builder logic
-        return parent::buildSqlWhereSubquery($qpart, $rely_on_joins);
+        return parent::buildSqlWhereCondition($qpart, $rely_on_joins);
+    }
+
+    /**
+     * Returns TRUE if an aggregation with `STUFF ... FOR XML` is required for the given query part
+     * 
+     * Since SQL Server 2017 there is an alternative: `STRING_AGG()`, but it has pros and cons, so
+     * we still need to use the strange workaround. This method here allows to determine, when
+     * the workaround is required. It is different here from MsSql2016Builder!
+     * 
+     * When to use `STRING_AGG()`?
+     * - It does not support DISTINCT, so we can't use it for :LIST_DISTINCT SELECTs
+     * - It does not support nesting (just like the other aggregations in MS SQL), but STUFF ... FOR XML does
+     * - It works better in WHERE and HAVING clauses. Mainly because of bugs in the complex scattered 
+     * implementation of STUFF ... FOR XML - the statement sometimes remains unfinished while being passed
+     * around through different methods.
+     * 
+     * @param QueryPartAttribute $qpart
+     * @param AggregatorInterface|null $aggregator
+     * @return bool
+     */
+    protected function isAggregatedViaStuffXML(QueryPartAttribute $qpart, ?AggregatorInterface $aggregator = null) : bool
+    {
+        // Don't USE STUFF ... FOR XML for filters
+        if ($qpart instanceof QueryPartFilter) {
+            return false;
+        }
+        // Obviously don't use it if there is no aggregator
+        $aggr = $aggregator ?? $qpart->getAggregator();
+        if (! $aggr) {
+            return false;
+        }
+        // Use STUFF ... FOR XML for :LIST and :LIST_DISTINCT in SELECTs, totals and other query parts
+        $aggrFunc = $aggr->getFunction()->getValue();
+        if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_ALL) {
+            return true;
+        }
+        // Otherwise
+        return false;
     }
     
     /**
@@ -849,7 +900,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     }
 
     /**
-     * Returns TRUE if this query is to be aggregated to a single row AND only uses LIST or LIST_DISTINCT as aggregators
+     * Returns TRUE if this query is to be aggregated to a single row AND only uses LIST_DISTINCT as aggregator
      * 
      * This is important for MS SQL because the `FOR XML PATH` concatenation still produces multiple rows
      * (all with the same values). This does not happen if at least one other group function is used. If it
@@ -863,23 +914,22 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * 
      * `SELECT DISTINCT STUFF((SELECT [text()] = ', ' + tbl.name FOR XML PATH(''),TYPE),1,2,'') FROM tbl WHERE id IN (100,101)`
      * 
-     * @see buildSqlGroupByExpression()
+     * @see isAggregatedViaStuffXML()
      * @see buildSqlSelectGrouped()
      * 
      * @return bool
      */
-    protected function isAggregatedToSingleRowViaListOnly() : bool
+    protected function isAggregatedToSingleRowViaStuffXML() : bool
     {
         if ($this->isAggregatedToSingleRow() === false) {
             return false;
         }
 
         foreach ($this->getAttributes() as $qpart) {
-            $aggr = $qpart->hasAggregator() ? $qpart->getAggregator() : null;
-            if ($aggr === null) {
+            if (! $qpart->hasAggregator()) {
                 return false;
             }
-            if ($aggr->__toString() !== AggregatorFunctionsDataType::LIST_ALL && $aggr->__toString() !== AggregatorFunctionsDataType::LIST_DISTINCT) {
+            if (! $this->isAggregatedViaStuffXML($qpart)) {
                 return false;
             }
         }

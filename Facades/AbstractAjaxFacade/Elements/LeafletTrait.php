@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Contexts\DebugContext;
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Interfaces\Widgets\iCanBlink;
 use exface\Core\Widgets\Icon;
@@ -220,8 +221,10 @@ HTML;
         initialZoom: {$this->getZoomInitial()}
     };
     {$this->buildJsLeafletVar()}._exfLayers = {};
-
+    
+    {$this->buildJsLeafletControlHomeZoom()}
     {$this->buildJsLeafletControlLocate()}
+    {$this->buildJsLeafletDebugControlGetCenter()}
     {$this->buildJsLeafletControlScale()}
     {$this->buildJsMapDrop()}
     {$this->buildJsLayers()}
@@ -264,12 +267,21 @@ JS;
             $mapOptions .= "
         maxZoom: {$val},";
         }
+        if (null !== $val = $widget->getZoomStep()) {
+            $mapOptions .= "
+        zoomSnap: {$val},";
+        }
 
         if (!$widget->getDoubleClickToZoom()) {
             $mapOptions .= "
         doubleClickZoom: false,";
         }
 
+        if (null !== $val = json_encode($widget->getShowZoomControls())) {
+            $mapOptions .= "
+        zoomControl: {$val},";
+        }
+        
         return $mapOptions;
     }
 
@@ -283,6 +295,116 @@ JS;
             return '';
         }
         return "L.control.locate().addTo({$this->buildJsLeafletVar()});";
+    }
+    
+    protected function buildJsLeafletControlHomeZoom() : string
+    {
+        $widget = $this->getWidget();
+        if (! $widget->getShowZoomControls()) {
+            return '';
+        }
+        $zoom = $this->getZoomInitial();
+        $lat = $widget->getCenterLatitude() ?? 0;
+        $lon = $widget->getCenterLongitude() ?? 0;
+        
+        return <<<JS
+
+            (function (map){
+                const controlGetHomeButton = L.Control.extend({
+                  options: {
+                    position: 'topleft' 
+                  },
+        
+                  onAdd(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const homeBtn = L.DomUtil.create('a', 'exf-leaflet-control-get-home', container);
+                    
+                    container.title = 'Show initial view';
+                    homeBtn.innerHTML = '<span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">' 
+                    + '<i class="fa fa-home" style="font-size:18px;"></i>'
+                    + '</span>';
+                    
+                    L.DomEvent.disableClickPropagation(homeBtn);
+                    L.DomEvent.on(homeBtn, 'click', () => {
+                      
+                        // Values after the initial autoZoom is done:
+                        let center = map._exfState.homeCenter;
+                        let zoom = map._exfState.homeZoom;
+                        
+                        if (!center || zoom === undefined) {
+                          // takes initial values
+                          center = [{$lat}, {$lon}];
+                          zoom = {$zoom};
+                        }
+                        
+                        if (center) {
+                          {$this->buildJsLeafletVar()}.setView(center, zoom);
+                        }        
+                    });
+                
+                    return container;
+                  }
+                });
+        
+                new controlGetHomeButton().addTo(map);
+            })({$this->buildJsLeafletVar()});
+
+JS;
+    }
+    
+    protected function buildJsLeafletDebugControlGetCenter() : string
+    {
+        if (!$this->getWidget()->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            return '';
+        }
+
+        $popupJs = $this->getWidget()->getShowPopupOnClick() ?  $this->buildJsLeafletPopup('"Current View Center Location"', $this->buildJsLeafletPopupList("[
+            {
+                caption: 'Latitude',
+                value: mapCenter.lat + '°'
+            },{
+                caption: 'Longitude',
+                value: mapCenter.lng + '°'
+            }, {
+                caption: 'Zoom',
+                value: mapZoom
+            }
+        ]"), "[mapCenter.lat,mapCenter.lng]") : '';
+        
+        
+        return <<<JS
+            
+            (function (map){
+                const controlGetCenterButton = L.Control.extend({
+                  options: {
+                    position: 'topleft' 
+                  },
+        
+                  onAdd(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const centerButton = L.DomUtil.create('a', 'exf-leaflet-control-get-center', container);
+                    
+                    container.title = 'Show View Center and Zoom';
+                    centerButton.innerHTML = '<span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">' 
+                    + '<i class="fa fa-info-circle" style="font-size:18px;"></i>' 
+                    + '</span>';
+                    
+                    L.DomEvent.disableClickPropagation(centerButton);
+                    L.DomEvent.on(centerButton, 'click', () => {
+                      const mapCenter = map.getCenter();
+                      const mapZoom = map.getZoom();
+                      
+                      {$popupJs}          
+                    });
+                
+                    return container;
+                  }
+                });
+        
+                new controlGetCenterButton().addTo(map);
+            })({$this->buildJsLeafletVar()});
+
+JS;
     }
 
     /**
@@ -825,54 +947,101 @@ JS;
         if (($layer instanceof ShapeDataColumnMapLayerInterface) && ($layer instanceof MarkerMapLayerInterface)) {
             $renderShapesAsMarkers .= <<<JS
                         
-                            // Compute a representative center
-                            /* TODO Use turf instead of the first point
-                            const center = turf.centerOfMass(feature); // or turf.centroid(feature)
-                            const [lng, lat] = center.geometry.coordinates;
+                            // Alternaitve soltion: Compute a representative center
+                            /* TODO Try turf instead of the first point
+                                const center = turf.centerOfMass(feature); // or turf.centroid(feature)
+                                out.push(center.geometry.coordinates);
                             */
                             
-                            // For now use the top-most ([lng, lat] with max latitude) for a GeoJSON Feature or Geometry
-                            const fnTop = function topMostCoordinate(feature) {
-                                const geom = feature.type === 'Feature' ? feature.geometry : feature;
-                                if (!geom || !geom.type) return null;
-                                let top = null;
+                            /**
+                             * Collection of "top-most" coordinates (max latitude) for each geometry found.
+                             * - Input must be a GeoJSON that contains FeatureCollection, GeometryCollection, Feature or any type of Geometry (Point, Polygon etc).
+                             * - Output is an array of [longitutde, latitude], one entry per geometry (Polygon, Point, etc.).
+                             */
+                            function topMostCoordinates(node, out = []) {                                                            
+                                if (!node) return out;
                                 
-                                // Tailored iterator: avoid extra checks, just visit with known nesting depths
-                                function visit(coords, depth) {
+                                // If a GeoJSON Feature is passed, descend into its geometry
+                                if (node.type === "Feature") {
+                                    return topMostCoordinates(node.geometry, out);
+                                }
+                                
+                                // If a FeatureCollection is passed, descend into its features
+                                if (node.type === "FeatureCollection") {
+                                    for (const f of node.features) topMostCoordinates(f, out);
+                                    return out;
+                                }
+                                
+                                // If a GeometryCollection is passed, descend into its geometries
+                                if (node.type === "GeometryCollection") {
+                                    for (const g of node.geometries) topMostCoordinates(g, out);
+                                    return out;
+                                }
+                                
+                                // single geometry
+                                const { type, coordinates } = node;
+
+                                // At this point we expect a GeoJSON Geometry object with "coordinates".
+                                if (!type || !coordinates) return out;            
+                                
+                                // Recursive walk trough a GeoJSON "coordinates" structure to find the [lng, lat] pair with the highest latitude.
+                                function findTopMostCoordinate(coordinates, depth) {
+                                  var top = null;
+                                
+                                  function visit(value, depth) {
+                                    if (value == null) return;
+                                    
                                     if (depth === 0) {
-                                        // coords is a single [lng, lat]
-                                        const lng = coords[0], lat = coords[1];
-                                        if (top === null || lat > top[1]) top = [lng, lat];
-                                        return;
+                                        // GeoJSON coordinate arrays can contain extra elements (altitude), but we only care about long and lat.
+                                        let [lng, lat] = value;
+                                        if (typeof lng === "number" && typeof lat === "number") {                                        
+                                            // keep the coordinate with the highest latitude.
+                                            if (top === null || lat > top[1]) {
+                                                top = [lng, lat];
+                                            }                                        
+                                            return;
+                                        }
                                     }
-                                    // coords is an array; go one level deeper
-                                    for (let i = 0; i < coords.length; i++) {
-                                        visit(coords[i], depth - 1);
+                                    // value is an array; go one level deeper
+                                    for (let i = 0; i < value.length; i++) {
+                                        visit(value[i], depth - 1);
                                     }
+                                  }
+                                
+                                  visit(coordinates, depth);
+                                  return top;
+                                }
+
+                                let topCoordinate = [];
+                                switch (type) {
+                                    case 'Point':            topCoordinate = findTopMostCoordinate(coordinates, 0); break;
+                                    case 'MultiPoint':       topCoordinate = findTopMostCoordinate(coordinates, 1); break;
+                                    case 'LineString':       topCoordinate = findTopMostCoordinate(coordinates, 1); break;
+                                    case 'MultiLineString':  topCoordinate = findTopMostCoordinate(coordinates, 2); break;
+                                    case 'Polygon':          topCoordinate = findTopMostCoordinate(coordinates, 2); break; // rings included
+                                    case 'MultiPolygon':     topCoordinate = findTopMostCoordinate(coordinates, 3); break;
+                                    default: return out;
                                 }
                                 
-                                switch (geom.type) {
-                                    case 'Point':            visit(geom.coordinates, 0); break;
-                                    case 'MultiPoint':       visit(geom.coordinates, 1); break;
-                                    case 'LineString':       visit(geom.coordinates, 1); break;
-                                    case 'MultiLineString':  visit(geom.coordinates, 2); break;
-                                    case 'Polygon':          visit(geom.coordinates, 2); break; // rings included
-                                    case 'MultiPolygon':     visit(geom.coordinates, 3); break;
-                                    default: return null;
-                                }
+                                // Only add top coordinate if we found one
+                                if (topCoordinate) out.push(topCoordinate);
                                 
-                                return top;
-                            }
-                            const [lng, lat] = fnTop(feature);
-                            var oMarker = L.marker([lat, lng], { 
-                                icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
-                                draggable: false,
-                                autoPan: false,
-                                $markerProps 
-                            });
+                                return out;
+                            }                            
                             
-                            if (oClusterLayer) {
-                                oClusterLayer.addLayer(oMarker);
+                            // create markers for eacht top coordinate of every geometry within our geoJSON
+                            const markerCoords = topMostCoordinates(feature);                            
+                            for (const [lng, lat] of markerCoords) {
+                                const oMarker = L.marker([lat, lng], {
+                                    icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
+                                    draggable: false,
+                                    autoPan: false,
+                                    $markerProps
+                                });
+                            
+                                if (oClusterLayer) {
+                                    oClusterLayer.addLayer(oMarker);
+                                }
                             }
 
 JS;
@@ -1179,12 +1348,13 @@ JS;
         }
 
         if (($layer instanceof ValueLabeledMapLayerInterface) && $layer->hasValue()) {
-            if ($layer->getValuePosition() === DataShapesLayer::VALUE_POSITION_TOOLTIP) {
-                $layerCaption = '';
-                if (! $layer->getHideCaption() && null !== $layerCaption = $layer->getCaption()) {
-                    $layerCaptionJs = $this->escapeString($layerCaption . ' ');
-                }
-                $tooltipJs = <<<JS
+            switch (true) {
+                case $layer->getValuePosition() === DataShapesLayer::VALUE_POSITION_TOOLTIP:
+                    $layerCaption = '';
+                    if (! $layer->getHideCaption() && null !== $layerCaption = $layer->getCaption()) {
+                        $layerCaptionJs = $this->escapeString($layerCaption . ' ');
+                    }
+                    $tooltipJs = <<<JS
 
                     layer.bindTooltip({$layerCaptionJs} + feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: false, 
@@ -1193,8 +1363,15 @@ JS;
                     }).openTooltip();
 
 JS;
-            } else {
-                $tooltipJs = <<<JS
+                    break;
+                // For data shapes layers place value text inside layer an scale it with the shape if 
+                case ($layer instanceof DataShapesLayer) && $layer->getValueTextFitToShape() === true:
+                    $tooltipJs = $this->buildJsShapeValueOverlay($layer, 'layer');
+                    break;
+                // Otherwise place a permanent tooltip in the center of the layer, do not scale it and let it
+                // overflow the layer freely - i.e. text is always the same size regardless of the shape.
+                default:
+                    $tooltipJs = <<<JS
 
                     layer.bindTooltip(feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: true, 
@@ -1475,6 +1652,12 @@ JS;
                                     oMap.fitBounds(oBounds, {padding: [10,10], maxZoom: oMap.getZoom() });
                                     break;
                             }
+                            
+                            // it saves the last initial autoZoom and is used in buildJsLeafletControlHomeZoom()
+                            oMap.once('moveend', () => {
+                              oMap._exfState.homeCenter = oMap.getCenter();
+                              oMap._exfState.homeZoom = oMap.getZoom();
+                            });
                         }
                 	},100);
 
@@ -2083,6 +2266,158 @@ JS;
     });
 })($oMapJs);
 JS;
+    }
+
+    /**
+     * Returns the JS to create an SVG overlay with data of `value_attribute_alias` for every layer item and scale it with the layer
+     * 
+     * Challanges:
+     * - When you set viewBox to the actual pixel size (0 0 w h), you fix letterboxing, but you also redefine the SVG 
+     * coordinate system so that CSS px inside <foreignObject> becomes “smaller” in screen space as w/h grow → text 
+     * shrinks when you zoom in (the inverse scaling you observed).
+     * - When you keep a fixed square viewBox (0 0 100 100) you get stable scaling, but wide/flat rectangles letterbox 
+     * because the viewBox aspect ratio doesn’t match the viewport → content looks narrow/squeezed. This is exactly 
+     * what preserveAspectRatio is meant to control when viewBox and viewport have different aspect ratios.
+     * 
+     * @param DataShapesLayer $layer
+     * @param string $layerJs
+     * @return string
+     */
+    protected function buildJsShapeValueOverlay(DataShapesLayer $layer, string $layerJs) : string
+    {
+        $lineWidth = 1;
+        if ($layer instanceof DataShapesLayer) {
+            $lineWidth = $layer->getLineWeight() ?? $lineWidth;
+        }
+        return <<<JS
+
+(function(layer) {
+    function buildLabelSvgElement() {
+      const svgNS = "http://www.w3.org/2000/svg";
+      const xhtmlNS = "http://www.w3.org/1999/xhtml";
+    
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("xmlns", svgNS);
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "100%");
+      // viewBox is set dynamically later
+      svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+    
+      const bg = document.createElementNS(svgNS, "rect");
+      bg.setAttribute("x", "0");
+      bg.setAttribute("y", "0");
+      bg.setAttribute("fill", "transparent");
+      svg.appendChild(bg);
+    
+      const fo = document.createElementNS(svgNS, "foreignObject");
+      fo.setAttribute("x", "0");
+      fo.setAttribute("y", "0");
+      svg.appendChild(fo);
+    
+      const container = document.createElementNS(xhtmlNS, "div");
+      container.setAttribute(
+        "style",
+        `
+        width:100%;
+        height:100%;
+        box-sizing:border-box;
+        padding:5px;
+        text-align:left;
+        `
+      );
+      $(container).append(feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}']);
+    
+      fo.appendChild(container);
+    
+      // expose nodes so we can resize viewBox/bg/fo later
+      svg.__bg = bg;
+      svg.__fo = fo;
+    
+      return svg;
+    }
+
+    const svgEl = buildLabelSvgElement();
+    const overlay = L.svgOverlay(svgEl, layer.getBounds(), { interactive: false });
+    
+    const syncViewBoxToPixels = (bScaleText) => {
+        var bScaleText = true;
+        const map = layer._map;
+        if (!map) return;
+        
+        const fLineW = {$lineWidth};
+        const b = layer.getBounds();
+        const nw = map.latLngToLayerPoint(b.getNorthWest());
+        const se = map.latLngToLayerPoint(b.getSouthEast());
+        var w,h;
+        
+        if (bScaleText === false) {
+            w = Math.max(1, Math.round(Math.abs(se.x - nw.x)));
+            h = Math.max(1, Math.round(Math.abs(se.y - nw.y)));
+            
+            // ✅ Critical: viewBox aspect ratio matches the rectangle on screen
+            svgEl.setAttribute("viewBox", `0 0 \${w} \${h}`);
+        } else {
+            /*
+            Instead of viewBox = 0 0 w h (pixel-dependent), do:
+            - compute the rectangle’s current pixel aspect ratio r = w / h
+            - keep a constant viewBox height (e.g., VBH = 100)
+            - set viewBox width to VBW = r * VBH
+            This way:
+            - the viewBox matches the rectangle’s aspect ratio → no letterboxing / no narrow FO ✅
+            - the viewBox scale does not depend on zoom → text grows when the rectangle grows ✅
+            - you still get left alignment and tiny margins.
+            // FIXME why is text bigger if height is bigger???
+             */
+            const pxW = Math.max(1, Math.abs(se.x - nw.x));
+            const pxH = Math.max(1, Math.abs(se.y - nw.y));
+            
+            // aspect ratio of the shape in screen pixels
+            const r = pxW / pxH;
+            
+            // keep viewBox magnitude constant, change ONLY ratio
+            h = 100;             // constant "design height"
+            w = Math.max(1, r * h);
+            
+            svgEl.setAttribute("viewBox", `0 0 \${w} \${h}`);
+            svgEl.setAttribute("preserveAspectRatio", "xMinYMin meet");
+            $(svgEl).css('font-size', '1.4rem');
+        }
+        
+        // Make bg and foreignObject fill the full viewBox (use numbers, not %)
+        svgEl.__bg.setAttribute("width", String(w));
+        svgEl.__bg.setAttribute("height", String(h));
+        svgEl.__fo.setAttribute("width", String(w));
+        svgEl.__fo.setAttribute("height", String(h));
+    };
+
+
+    layer.on("add", () => {
+        overlay.addTo(layer._map);
+        syncViewBoxToPixels();
+        // TODO add geoman events if editable
+    });
+    
+    const syncBounds = () => {
+        if (!layer._map) return;
+        overlay.setBounds(layer.getBounds());
+        syncViewBoxToPixels();
+    };
+    
+    // TODO add geoman events if editable
+    
+    layer.on("remove", () => {
+        const map = layer._map;
+        if (map) {
+            map.off("zoom", syncViewBoxToPixels);
+            map.off("zoomend", syncViewBoxToPixels);
+            if (map.hasLayer(overlay)) map.removeLayer(overlay);
+        }
+    });
+    
+    layer._labelOverlay = overlay;
+})($layerJs);
+JS;
+
     }
 
     /**

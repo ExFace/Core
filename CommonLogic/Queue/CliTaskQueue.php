@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Tasks\ResultMessageStream;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
-use exface\Core\Facades\ConsoleFacade\CommandRunner;
+use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
@@ -71,7 +71,7 @@ class CliTaskQueue extends SyncTaskQueue
             }
 
             // Run each command and collect the output
-            foreach (CommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false) as $output) {
+            foreach (CliCommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false) as $output) {
                 $allOutputs[] = $output;
             }
         }

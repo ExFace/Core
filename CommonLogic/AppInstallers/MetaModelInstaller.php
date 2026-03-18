@@ -196,7 +196,11 @@ class MetaModelInstaller extends DataInstaller
             yield from $this->validatePermalinks($indent);
             
             // Commit the transaction
-            $transaction->commit();
+            if (! $transaction->isRolledBack()) {
+                $transaction->commit();
+            } else {
+                yield $indent . "DB Transaction rolled back" . PHP_EOL;
+            }
         } else {
             yield $indent . "No model files to install" . PHP_EOL;
         }
