@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
@@ -40,6 +41,53 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         $this->setInputRowsMin(0);
         $this->setInputRowsMax(null);
     }
+
+    protected function validateApplicability(TaskInterface $task, DataTransactionInterface $transaction): void
+    {
+        parent::validateApplicability($task, $transaction);
+
+        // See if the task has input data.
+        if(!$task->hasInputData()) {
+            return;
+        }
+        $taskInput = $task->getInputData();
+
+        // See if this action is coupled with a widget.
+        if($task->isTriggeredByWidget()) {
+            $widget = $task->getWidgetTriggeredBy();
+        } elseif ($this->isDefinedInWidget()) {
+            $widget = $this->getWidgetDefinedIn();
+        } else {
+            return;
+        }
+
+        // If it is, we can get the data structure expectations from the widget.
+        $expectedData = $widget->prepareDataSheetToRead();
+        $expectedColumns = $expectedData->getColumns();
+        $unexpectedColumns = [];
+
+        // Now check if there are input columns that are not present in our expected structure, which would imply
+        // a mistake or unauthorized attempts at accessing or manipulating data. Note that missing input columns
+        // are of no concern here, since they might be handled later by mappers or prototype specific logic.
+        foreach ($taskInput->getColumns() as $inputColumn) {
+            $inputColumnName = $inputColumn->getName();
+            if(!$expectedColumns->has($inputColumnName)) {
+                $unexpectedColumns[] = '"' . $inputColumnName . '"';
+            }
+        }
+
+        if(!empty($unexpectedColumns)) {
+            $error = new ActionTaskInvalidException(
+                $this,
+                $task,
+                'Unexpected task input columns detected for action "' . $this->getAliasWithNamespace() .
+                '": ' . implode(', ', $unexpectedColumns) . '!'
+            );
+            $error->setUseExceptionMessageAsTitle(true);
+            throw $error;
+        }
+    }
+
 
     /**
      * 

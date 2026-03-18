@@ -4,9 +4,9 @@ namespace exface\Core\CommonLogic;
 use exface\Core\CommonLogic\Actions\ActionConfirmationList;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\IAffectMetaObjectsInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -349,7 +349,7 @@ abstract class AbstractAction implements ActionInterface
         }
         
         // TODO What's the correct response here? Throw, silent, message or something else.
-        $this->validateTask($task, $transaction);
+        $this->validateApplicability($task, $transaction);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
             return $this->getInputDataSheet($task);
@@ -392,75 +392,37 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Validates a given task against the expectations of this action. Throws an error, when encountering issues and
-     * returns `void` if the task is valid for this action.
+     * Validates whether this action can be applied to a given task. Throws an error, when encountering issues
+     * and returns `void` if the task is valid for this action.
      * 
      * Base validation ensures that:
      * - The task object and action object match, provided both are defined.
-     * - The task input data only contains columns present in the action widget, provided both are defined.
+     * - TODO The task input data only contains columns present in the action widget, provided both are defined.
      * - If any components for a given validation step are missing, the step succeeds. Validation only fails, if the
      * required data is present, but does not match expectations.
      * 
-     * @throws ExceptionInterface
+     * @throws ActionTaskInvalidException
      * Throws an exception with a description of the violation.
      */
-    protected function validateTask(TaskInterface $task, DataTransactionInterface $transaction) : void
+    protected function validateApplicability(TaskInterface $task, DataTransactionInterface $transaction) : void
     {
         $taskObject = $task->hasMetaObject() ? $task->getMetaObject() : null;
-        $taskInput = $task->hasInputData() ? $task->getInputData() : null;
 
         // Ensure metaobjects match.
         if($taskObject !== null && !$taskObject->isExactly($this->getMetaObject())) {
+
             // See if any input mapper has a matching from object.
-            $hasMatchingInputMapper = false;
-            foreach ($this->getInputMappers() as $mapper) {
-                if($taskObject->isExactly($mapper->getFromMetaObject())) {
-                    $hasMatchingInputMapper = true;
-                    break;
-                }
-            }
-
-            // If we couldn't match with an input mapper either, the task is invalid for this action.
-            if(!$hasMatchingInputMapper) {
-                throw (new ActionRuntimeError(
+            // If we can't match with an input mapper either, the task is invalid for this action.
+            if(!$this->getInputMapper($taskObject) !== null) {
+                $error = new ActionTaskInvalidException(
                     $this,
+                    $task,
                     'Action "' . $this->getAliasWithNamespace() . '" is defined for "' .
-                    $this->getMetaObject()->getAliasWithNamespace() . '", but received a task with object "' .
-                    $task->getMetaObject()->getAliasWithNamespace() . '"!'
-                ))->setUseExceptionMessageAsTitle(true);
-            }
-        }
-
-        // If the metaobjects match, we can check if the input data matches expectations.
-        $widget = null;
-        if($task->isTriggeredByWidget()) {
-            $widget = $task->getWidgetTriggeredBy();
-        } elseif ($this->isDefinedInWidget()) {
-            $widget = $this->getWidgetDefinedIn();
-        }
-
-        // TODO How to properly extract widget data expectations?
-        $expectedData = $widget?->getPrefillData() ?? $widget?->prepareDataSheetToRead();
-        if($taskInput !== null && $expectedData !== null) {
-            $expectedColumns = $expectedData->getColumns();
-            $unexpectedColumns = [];
-            
-            // Now check if there are input columns that are not present in our expected structure, which would imply
-            // a mistake or unauthorized attempts at accessing or manipulating data. Note that missing input columns
-            // are of no concern here, since they might be handled later by mappers or prototype specific logic.
-            foreach ($taskInput->getColumns() as $inputColumn) {
-                $inputColumnName = $inputColumn->getName();
-                if(!$expectedColumns->has($inputColumnName)) {
-                    $unexpectedColumns[] = '"' . $inputColumnName . '"';
-                }
-            }
-            
-            if(!empty($unexpectedColumns)) {
-                throw (new ActionRuntimeError(
-                    $this,
-                    'Unexpected task input columns detected for action "' . $this->getAliasWithNamespace() . 
-                        '": ' . implode(', ', $unexpectedColumns) . '!'
-                ))->setUseExceptionMessageAsTitle(true);
+                        $this->getMetaObject()->getAliasWithNamespace() . '", but received a task with object "' .
+                        $task->getMetaObject()->getAliasWithNamespace() . '"!'
+                );
+                $error->setUseExceptionMessageAsTitle(true);
+                throw $error;
             }
         }
     }
