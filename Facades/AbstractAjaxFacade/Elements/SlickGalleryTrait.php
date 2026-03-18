@@ -483,6 +483,8 @@ JS;
     oData.rows = (oData.rows || []).map(({ $colNamesList }) => ({ $colNamesList }));
     oData.filters = oConfiguratorData.filters;
     
+    {$this->buildJsFileNameNormalizer("oData")}
+
     {$this->buildJsFileNameDuplicateRenamer("oData")}
     
     return {
@@ -527,8 +529,12 @@ JS;
      * @param string $oDataJs
      * @return string
      */
-    public function buildJsFileNameDuplicateRenamer(string $oDataJs) : string {
-        $fileStorageFieldName = $this->getWidget()->getUploader()->getFileContentAttribute()->getAliasWithRelationPath();
+    public function buildJsFileNameDuplicateRenamer(string $oDataJs) : string
+    {
+        
+        $uploader = $this->getWidget()->getUploader();
+        $fileStorageFieldName = $uploader->getFileContentAttribute()->getAliasWithRelationPath();
+        $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
 
         return <<<JS
       
@@ -539,14 +545,14 @@ JS;
               oData.rows.forEach(function(oRow) {
                 // The fileStorageFieldName variable is only set with data for new file uploads. 
                 // And only new file uploads can be renamed.
-                if (oRow?.{$fileStorageFieldName} !== undefined || !oRow.Dateiname) return;
-                  fillNameCopysSeenArray(aNameCopysSeen, oRow.Dateiname);
+                if (oRow?.{$fileStorageFieldName} !== undefined || !oRow.{$filenameColName}) return;
+                  fillNameCopysSeenArray(aNameCopysSeen, oRow.{$filenameColName});
               });
               
               // new uploads:
               oData.rows.forEach( oRow => {
-                  if (oRow?.{$fileStorageFieldName} == undefined || !oRow.Dateiname) return;
-                  const sFileName = oRow.Dateiname;
+                  if (oRow?.{$fileStorageFieldName} == undefined || !oRow.{$filenameColName}) return;
+                  const sFileName = oRow.{$filenameColName};
                   fillNameCopysSeenArray(aNameCopysSeen, sFileName);
                   
                   if (aNameCopysSeen[sFileName.toLowerCase()] > 0){
@@ -555,9 +561,9 @@ JS;
                     const sCurrentExt = (/(?:\.([^.]+))?$/).exec((sFileName || ''))[1];
                     
                     if (sCurrentExt?.length > 0) {
-                      oRow.Dateiname = createNewBaseName(sFileNameBase, sCurrentExt);
+                      oRow.{$filenameColName} = createNewBaseName(sFileNameBase, sCurrentExt);
                     } else {
-                      oRow.Dateiname = createNewBaseName(sFileName);
+                      oRow.{$filenameColName} = createNewBaseName(sFileName);
                     }
                   }
               });
@@ -600,7 +606,36 @@ JS;
                   aNameCopysSeen[sFileNameLowerCase]++;
                 }
               }
-            })($oDataJs)      
+            })($oDataJs);     
+JS;
+    }
+
+    /**
+     * It normalizes filenames to standard NFC format that is used in windows and most linux systems.
+     * macOS or other apple system might use NFD to encode unicode characters in filenames.
+     * Those can clash with regex expression even though the filename seems valid for the user.
+     * See https://aeb.win.tue.nl/linux/uc/nfc_vs_nfd.html
+     * @param string $oDataJs
+     * @return string
+     */
+    public function buildJsFileNameNormalizer(string $oDataJs) : string
+    {
+        $uploader = $this->getWidget()->getUploader();
+        $fileStorageFieldName = $uploader->getFileContentAttribute()->getAliasWithRelationPath();
+        $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
+
+        return <<<JS
+      
+            (function(oData) {
+              let aNameCopysSeen = {};
+              
+              // new uploads:
+              oData.rows.forEach( oRow => {
+                  if (oRow?.{$fileStorageFieldName} == undefined || !oRow.{$filenameColName}) return;
+                  const sFileName = oRow.{$filenameColName};
+                  oRow.{$filenameColName} = sFileName.normalize("NFC");
+              });
+            })($oDataJs);      
 JS;
     }
 
