@@ -349,7 +349,7 @@ abstract class AbstractAction implements ActionInterface
         }
         
         // TODO What's the correct response here? Throw, silent, message or something else.
-        $this->validateApplicability($task, $transaction);
+        $this->validateApplicability(new ActionInputValidator($this, $task));
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
             return $this->getInputDataSheet($task);
@@ -395,36 +395,14 @@ abstract class AbstractAction implements ActionInterface
      * Validates whether this action can be applied to a given task. Throws an error, when encountering issues
      * and returns `void` if the task is valid for this action.
      * 
-     * Base validation ensures that:
-     * - The task object and action object match, provided both are defined.
-     * - TODO The task input data only contains columns present in the action widget, provided both are defined.
-     * - If any components for a given validation step are missing, the step succeeds. Validation only fails, if the
-     * required data is present, but does not match expectations.
+     * Base validation ensures that the task object and action object match, provided both are defined.
      * 
      * @throws ActionTaskInvalidException
-     * Throws an exception with a description of the violation.
+     * Throws an exception if validation FAILS, containing a description of the violation.
      */
-    protected function validateApplicability(TaskInterface $task, DataTransactionInterface $transaction) : void
+    protected function validateApplicability(ActionInputValidator $validator) : void
     {
-        $taskObject = $task->hasMetaObject() ? $task->getMetaObject() : null;
-
-        // Ensure metaobjects match.
-        if($taskObject !== null && !$taskObject->isExactly($this->getMetaObject())) {
-
-            // See if any input mapper has a matching from object.
-            // If we can't match with an input mapper either, the task is invalid for this action.
-            if(!$this->getInputMapper($taskObject) !== null) {
-                $error = new ActionTaskInvalidException(
-                    $this,
-                    $task,
-                    'Action "' . $this->getAliasWithNamespace() . '" is defined for "' .
-                        $this->getMetaObject()->getAliasWithNamespace() . '", but received a task with object "' .
-                        $task->getMetaObject()->getAliasWithNamespace() . '"!'
-                );
-                $error->setUseExceptionMessageAsTitle(true);
-                throw $error;
-            }
-        }
+        $validator->validateTaskObject();
     }
     
     /**

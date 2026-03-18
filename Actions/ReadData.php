@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\ActionInputValidator;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -42,6 +43,17 @@ class ReadData extends AbstractAction implements iReadData
     
     private ?UxonObject $customColumnsUxon = null;
     private ?UxonObject $customSortersUxon = null;
+
+    /**
+     * @inheritDoc
+     */
+    protected function validateApplicability(ActionInputValidator $validator): void
+    {
+        parent::validateApplicability($validator);
+
+        $expectedColumns = $validator->getExpectedColumns('prepareDataSheetToPrefill');
+        $validator->validateTaskColumns($expectedColumns);
+    }
 
     /**
      * 
