@@ -1806,7 +1806,7 @@ abstract class AbstractWidget implements WidgetInterface
 
 - Widget type: [{$this->getWidgetType()}]($docsLink)
 - Widget ID: `{$this->getId()}`
-- Page: `{$this->getPage()->getAliasWithNamespace()}`
+- Page: [{$this->getPage()->getName()}]({$this->getPage()->getAliasWithNamespace()}.html)
 - Called by action: {$actionInfo}
 
 ## Widget UXON
@@ -1905,7 +1905,7 @@ MD;
      * 
      * @uxon-property tour_steps
      * @uxon-type \exface\Core\Widgets\Parts\Tours\TourStep[]
-     * @uxon-template [{"title": ""}]
+     * @uxon-template [{"title":"","body":"","waypoints":[""]}]
      * 
      * @param UxonObject $arrayOfSteps
      * @return WidgetInterface

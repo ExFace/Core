@@ -23,11 +23,11 @@ use exface\Core\Widgets\Traits\SingleValueInputTrait;
  *  
  * ```
  * 
- * Supported input formats are:
+ * ## Supported input formats are
  * 
- * - hh:mm, hh:mm AM/PM (e.g. "13:59" or "01:59 PM")
- * - hh:mm:ss, hh:mm:ss AM/PM (e.g. "13:59:31" or "01:59:31 PM")
- * - hhmm (eg. 1359)
+ * - `hh:mm`, `hh:mm AM/PM` (e.g. "13:59" or "01:59 PM")
+ * - `hh:mm:ss`, `hh:mm:ss AM/PM` (e.g. "13:59:31" or "01:59:31 PM")
+ * - `hhmm` (e.g. 1359)
  * 
  * Shortcut-values (TODO): 
  * 

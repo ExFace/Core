@@ -95,7 +95,7 @@ class MarkdownDataType
         $headings = $headings ?? array_keys($rows[0] ?? []);
         $md = '|';
         foreach ($headings as $heding) {
-            $md .= ' ' . static::escapeString($heding) . ' |';
+            $md .= ' ' . static::escapeString($heding ?? '') . ' |';
         }
         $md .= PHP_EOL . '|';
         foreach ($headings as $heding) {
@@ -104,8 +104,28 @@ class MarkdownDataType
         foreach ($rows as $row) {
             $md .= PHP_EOL . '|';
             foreach ($row as $cell) {
-                $md .= ' ' . static::escapeString($cell) . ' |';
+                $md .= ' ' . static::escapeString($cell ?? '') . ' |';
             }
+        }
+
+        return $md;
+    }
+
+    /**
+     * Summary of buildMarkdownTableFromArray
+     * 
+     * @param array $keyValues
+     * @param string $keyHeading
+     * @param string $valueHeading
+     * @return string
+     */
+    public static function buildMarkdownTableFromPropertySet(array $keyValues, string $keyHeading, string $valueHeading) : string
+    {
+        $md = '| ' . static::escapeString($keyHeading) . ' | ' . static::escapeString($valueHeading) . ' |';
+        $md .= PHP_EOL . '| ---- | ---- |';
+        
+        foreach ($keyValues as $key => $value) {
+            $md .= PHP_EOL . '| ' . self::escapeString($key ?? '') . ' | ' . self::escapeString($value ?? '') . ' |';
         }
 
         return $md;

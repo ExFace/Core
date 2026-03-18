@@ -231,8 +231,10 @@
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Missing values for \"%column%\" of \"%object%\" on row(s) %rows%!",
 	"DATASHEET.ERROR.LOOKUP_FAILED": "Could not find value %values% in \"%lookup_object%\"!|Could not find values %values% in \"%lookup_object%\"!",
 	"DATASHEET.ERROR.AFFECTED_ROWS": "Affected row(s): %row_numbers%",
-	
-    "DATATYPE.DATE.ERROR_INVALID_VALUE": "Invalid date/time value: \"%value%\"",
+	"DATASHEET.ERROR.DATA_OBJECT_EXISTS": "%object_name% already exists.",
+	"DATASHEET.ERROR.DATA_OBJECT_EXISTS_WITH_ATTRS": "%object_name% already exists. The combination of %attr_list% and %attr_last% must be unique!",
+
+	"DATATYPE.DATE.ERROR_INVALID_VALUE": "Invalid date/time value: \"%value%\"",
     "DATATYPE.NUMBER.ERROR_INVALID_VALUE": "Value \"%value%\" is not a number",
   
 	"DATATYPE.VALIDATION.MUST": "Must",
@@ -438,8 +440,12 @@
     "TASK.QUEUE.STATUS_DONE_MANUALLY": "Done manually",
     "TASK.QUEUE.STATUS_DONE": "Done",
     "TASK.QUEUE.TYPE_SYNC": "Sync",
-    "TASK.QUEUE.TYPE_ASYNC": "Async",  
-    
+    "TASK.QUEUE.TYPE_ASYNC": "Async",
+
+  "TOUR.STEP.ACTION.NEXT": "Next",
+  "TOUR.STEP.ACTION.PREVIOUS": "Previous",
+  "TOUR.STEP.ACTION.DONE": "Done",
+  
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_Y": "Y",
@@ -531,6 +537,7 @@
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.HINT": "Copy, paste, etc.",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY": "Copy",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_VALUE": "Copy value",
+  "WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_SUCCESS": "Successfully copied.",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_HINT": "Copy to clipboard",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE": "Paste",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE_HINT": "Paste",
@@ -613,7 +620,7 @@
 	"ERROR.ECHARTS.AXIS_NO_DATA": "No data received for axis",
 	
 	"ERROR.CAPTION": "Error",
-  "ERROR.No_RESULTS": "No results",
+	"ERROR.NO_RESULTS": "No results",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
 	"ERROR.OBJECT_CAPTION": "Object \"%name%\"",

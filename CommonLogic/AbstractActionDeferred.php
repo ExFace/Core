@@ -62,6 +62,13 @@ use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
  */
 abstract class AbstractActionDeferred extends AbstractAction
 {
+    protected function init()
+    {
+        parent::init();
+        // Do not monitor deferred actions as potentially long-running by default, because they are often used for
+        // CLI commands, which are expected to run for a long time.
+        $this->setMonitorAsLongRunningAfterSeconds(-1);
+    }
     
     /**
      *

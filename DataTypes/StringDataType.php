@@ -2,8 +2,8 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderModifier;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
@@ -516,6 +516,18 @@ class StringDataType extends AbstractDataType
         }
         
         return $replaced;
+    }
+
+    /**
+     * Removes modifiers from a given placenolder name: e.g. `myph|??NULL` -> `myph`
+     * 
+     * @param string $expression
+     * @param string $delimiter
+     * @return string#
+     */
+    public static function stripPlaceholderModifiers(string $expression, string $delimiter = AbstractPlaceholderModifier::DELIMITER) : string
+    {
+        return StringDataType::substringBefore($expression, $delimiter, $expression);
     }
     
     /**

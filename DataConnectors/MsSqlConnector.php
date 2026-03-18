@@ -13,7 +13,7 @@ use exface\Core\ModelBuilders\MsSqlModelBuilder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
-use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
 use exface\Core\QueryBuilders\MsSqlBuilder;
@@ -125,32 +125,32 @@ use exface\Core\QueryBuilders\MsSqlBuilder;
  * @link https://github.com/ExFace/Core/tree/1.x-dev/Docs/creating_metamodels/data_sources/SQL/Troubleshooting_MS_SQL.md
  * 
  * ```
-* <?php
-    * $serverName = "<SERVER>\<INSTANCE>";  
-    * $connectionInfo = [
-    	* "Database" => "<dbname>"
-    	* // Add more options here
-    * ];  
+ * <?php
+ * $serverName = "<SERVER>\<INSTANCE>";  
+ * $connectionInfo = [
+ * "Database" => "<dbname>"
+ * // Add more options here
+ * ];  
  *
-* $conn = sqlsrv_connect($serverName, $connectionInfo);  
-    * if( $conn === false ) {  
-         * echo "Unable to connect.</br>";  
-         * die( print_r( sqlsrv_errors(), true));  
-    * }  
+ * $conn = sqlsrv_connect($serverName, $connectionInfo);  
+ * if( $conn === false ) {  
+ * echo "Unable to connect.</br>";  
+ * die( print_r( sqlsrv_errors(), true));  
+ * }  
  *
-* $tsql = "SELECT CONVERT(varchar(32), SUSER_SNAME())";  
-    * $stmt = sqlsrv_query( $conn, $tsql);  
-    * if( $stmt === false )  {  
-         * echo "Error in executing query.</br>";  
-         * die( print_r( sqlsrv_errors(), true));  
-    * }  
+ * $tsql = "SELECT CONVERT(varchar(32), SUSER_SNAME())";  
+ * $stmt = sqlsrv_query( $conn, $tsql);  
+ * if( $stmt === false )  {  
+ * echo "Error in executing query.</br>";  
+ * die( print_r( sqlsrv_errors(), true));  
+ * }  
  *
-* $row = sqlsrv_fetch_array($stmt);  
-    * echo "User login: ".$row[0]."</br>";  
+ * $row = sqlsrv_fetch_array($stmt);  
+ * echo "User login: ".$row[0]."</br>";  
  *
-* sqlsrv_free_stmt( $stmt);  
-    * sqlsrv_close( $conn);  
-* ?>
+ * sqlsrv_free_stmt( $stmt);  
+ * sqlsrv_close( $conn);
+ * ?>
  * 
  * ```
  *
@@ -308,7 +308,7 @@ class MsSqlConnector extends AbstractSqlConnector
                 return new DataQueryRelationCardinalityError($query, $message, null, $err->setAlias('7W2J960'));
             case 2627:
             case 2601:
-                return new DataQueryConstraintError($query, $message, null, $err->setAlias('73II64M'));
+                return new DataQueryUniqueConstraintError($query, $this, $message, null, $err->setAlias('73II64M'));
             // Subquery returns more than 1 row - SQL error code 1242
             case 1242:
                 return new DataQueryRelationCardinalityError($query, $message, $err);

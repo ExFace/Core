@@ -35,6 +35,7 @@
    	"DEBUG.LOG_LEVEL_AUTHENTICATION_EXPIRED": "DEBUG",
    	"DEBUG.LOG_LEVEL_AUTHORIZATION_DENIED": "ERROR",
    	"DEBUG.LOG_LEVEL_AUTHORIZATION_DENIED_ANONYMOUS": "DEBUG",
+	"DEBUG.LOG_LEVEL_HUB_JAVASCRIPT_ERROR": "CRITICAL",
     "DEBUG.TRACE": false,
 	"DEBUG.TRACE_BLOCKED": false,
 	"DEBUG.TRACE_MAX_TIME_SECONDS": "60",
@@ -124,8 +125,11 @@
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate",
 			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
     	],
+		"exface.Core.Model.OnBeforeDataTypeLoaded": [
+			"\\exface\\Core\\Mutations\\MutationPoints\\DataTypeMutationPoint::onDataTypeLoadedApplyMutations"
+		],
         "exface.Core.Model.OnBeforeSnippetLoaded": [
-          "\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"
+          	"\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"
         ],
     	"exface.Core.Model.OnMessageLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"

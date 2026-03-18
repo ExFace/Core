@@ -996,8 +996,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insertValues = implode(',', $output);
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . $insertColumns . ') VALUES (' . $insertValues . ')';
 
-            $beforeSql = $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '');
-            $afterSql = $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '');
+            $beforeSql = is_array($before_each_insert_sqls) ?
+                $before_each_insert_sqls[$rowIdx] . ($uidBeforeEach ?? '') : 
+                null;
+            
+            $afterSql = is_array($after_each_insert_sqls) ?
+                $after_each_insert_sqls[$rowIdx] . ($uidAfterEach ?? '') :
+                null;
+            
             if ($beforeSql || $afterSql) {
                 $query = $data_connection->runSql($beforeSql . $sql . '; ' . $afterSql, true);
                 if ($uidAddress && $customUid === null && $rRow = $query->getResultArray()[0]) {
@@ -1282,6 +1288,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $uidConditionGrp = ConditionGroupFactory::createAND($this->getMainObject());
             $uidConditionGrp->addConditionFromAttribute($uidAttr, '', ComparatorDataType::IN, false);
+            $affected_rows = 0;
             foreach ($updates_by_uid as $uid => $row) {
                 $uidConditionGrp->getConditions()[0]->setValue($uid);
                 $uidWhere = $this->buildSqlWhere(
@@ -1940,7 +1947,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
-     * Escapes an SQL alias propertly: e.g. `"myalias"` for MySQL, `[myAlias]` for MS SQL
+     * Escapes an SQL alias properly: e.g. `... AS "myalias"` for MySQL, `... AS [myAlias]` for MS SQL
      *
      * @param string $tableOrPredicateAlias
      * @return string
@@ -1948,6 +1955,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function escapeAlias(string $tableOrPredicateAlias) : string
     {
         return '"' . $tableOrPredicateAlias . '"';
+    }
+
+    /**
+     * Escapes an SQL column, table or schema name: e.g. ``SELECT `my_col` FROM ...`` for MySQL, `[myCol]` for MS SQL
+     * 
+     * @param string $tableOrColumnName
+     * @return string
+     */
+    protected function escapeName(string $tableOrColumnName) : string
+    {
+        return $tableOrColumnName;
     }
 
     /**
@@ -2887,10 +2905,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlGroupBy(QueryPart $qpart, $select_from = null)
     {
-        if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
-            // Seems like SQL statements are not supported in the GROUP BY clause in general
-            throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
-        } else {
+        if ($this->isGroupable($qpart, true)) {
             // If it's not a custom SQL statement, it must be a column, so we need to prefix it with the table alias
             if ($select_from === null) {
                 $select_from = $qpart->getAttribute()->getRelationPath()->toString() ? $qpart->getAttribute()->getRelationPath()->toString() : $this->getMainObject()->getAlias();
@@ -3078,6 +3093,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
         $baseObj = $relation_path !== null ? $relation_path->getEndObject() : $this->getMainObject();
         foreach (StringDataType::findPlaceholders($data_address) as $ph) {
+            // TODO #placeholder-modifiers switch to more generic StringDataType::stripPlaceholderModifiers()
+            // - but is it really enough to search for a single pipe? Can there be pipes in placeholders without modifiers?
             $phAlias = IfNullModifier::stripFilter($ph);
             // TODO how to use the default value from the modifier here?
             if (StringDataType::startsWith($phAlias, '=')) {
@@ -3189,7 +3206,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     break;
                 case StringDataType::startsWith($ph, '~right:'):
                     $attrAlias = StringDataType::substringAfter($ph, '~right:');
-                    // TODO add support for modifiers here! Currently we just ignore them
+                    // TODO #placeholder-modifiers switch to more generic StringDataType::stripPlaceholderModifiers()
+                    // - but is it really enough to search for a single pipe? Can there be pipes in placeholders without modifiers?
+                    // TODO #placeholder-modifiers add support for modifiers here! Currently we just ignore them
                     $attrAlias = IfNullModifier::stripFilter($attrAlias);
                     $relPath = $leftQuery !== $rightQuery ? null : RelationPathFactory::createForObject($relation->getLeftObject())->appendRelation($relation);
                     // If the placeholder is a RELATED attribute of the right object, we will need to JOIN all tables
@@ -3812,5 +3831,31 @@ SQL;
                 return 0;
         }
         return null;
+    }
+
+    /**
+     * Returns TRUE if the given query part can be used in a GROUP BY clause
+     * 
+     * If $throwError is TRUE, the method will throw an exception with the specific reason, why the query
+     * part is not groupable.
+     * 
+     * @param QueryPartAttribute $qpart
+     * @param bool $throwError
+     * @return null
+     */
+    protected function isGroupable(QueryPartAttribute $qpart, bool $throwError = false) : bool
+    {
+        $error = null;
+        // Seems like SQL statements are not supported in the GROUP BY clause in general
+        if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
+            $error = 'Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement';
+        }
+        if ($error) {
+            if ($throwError) {
+                throw new QueryBuilderException($error);
+            }
+            return false;
+        }
+        return true;
     }
 }
