@@ -551,7 +551,7 @@ class StringDataType extends AbstractDataType
     }
     
     /**
-     * Returns the part of the given string ($haystack) preceeding the first occurrence of $needle.
+     * Returns the part of the given string ($haystack) preceding the first occurrence of $needle.
      * 
      * Examples:
      * - substringBefore('one, two, three', ',') => 'one'
@@ -559,7 +559,7 @@ class StringDataType extends AbstractDataType
      * - substringBefore('one, two, three', ';') => false
      * - substringBefore('one, two, three', ';', 'one, two, three') => 'one, two, three'
      * 
-     * Using the optional parameters you can make the search case sensitive and
+     * Using the optional parameters you can make the search case-sensitive and
      * search for the last occurrence instead of the first one.
      * 
      * Returns $default if the $needle was not found.
@@ -609,7 +609,7 @@ class StringDataType extends AbstractDataType
     /**
      * Returns the part of the given string ($haystack) following the first occurrence of $needle.
      * 
-     * Using the optional parameters you can make the search case sensitive and
+     * Using the optional parameters you can make the search case-sensitive and
      * search for the last occurrence instead of the first one.
      * 
      * @param string $haystack
