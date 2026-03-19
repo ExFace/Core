@@ -135,14 +135,24 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @return mixed
      */
     public function parse($value);
-    
+
     /**
      * Formats the current internal value (or the given value) to a human-readable string
      * 
+     * Formatting will ignore errors by default and will return the unformatted value if it cannot
+     * be formatted (e.g. because parsing according to the data type model fails). In most cases, 
+     * formatting is done on already saved values, so not displaying them or even stopping the
+     * rendering of dialogs is not a good idea. This is especially critical, when validation rules
+     * change over time and there already is data, that does not match the new validation rules.
+     * 
+     * However, setting $silent to FALSE will switch back to throwing errors like cast() and parse()
+     * would do.
+     * 
      * @param mixed $value
+     * @param bool $silent
      * @return string
      */
-    public function format($value = null) : string;
+    public function format($value = null, bool $silent = true) : string;
     
     /**
      * Returns the unique error code (error model alias) used for parsing errors of this data type.
