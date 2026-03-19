@@ -265,7 +265,7 @@ class Monitor extends Profiler
     }
 
     /**
-     * Returns TRUE 
+     * Returns TRUE if action runtime is to be measured - e.g. for monitoring long runners or action in general
      * 
      * @param ActionInterface $action
      * @return bool
