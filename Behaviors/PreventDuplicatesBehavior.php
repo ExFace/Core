@@ -426,15 +426,17 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             default: return $this->getOnDuplicateMultiRow();
         }
     }
-    
+
     /**
      * Updates duplicates found by the given matcher and returns an array of row numbers affected
      * 
+     * TODO refactor this method to use the DuplicatesMatcher::getMatchesToUpdate() to centralize the logic for
+     * comparing rows. 
+     *
      * @param DataSheetInterface $eventSheet
-     * @param DataMatcherInterface $matcher
+     * @param MultiMatcher $matcher
      * @param DataTransactionInterface $transaction
-     * @param bool $ignoreUidMatches
-     * @throws BehaviorRuntimeError
+     * @param BehaviorLogBook $logbook
      * @return int[]
      */
     protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction, BehaviorLogBook $logbook) : array
