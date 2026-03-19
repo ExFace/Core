@@ -62,14 +62,19 @@ class ActionInputValidator
             // See if any input mapper has a matching from object.
             // If we can't match with an input mapper either, the task is invalid for this action.
             if(!$action->getInputMapper($taskObject) !== null) {
+                $taskAlias = $taskObject->getAliasWithNamespace();
+                
                 $error = new ActionTaskInvalidException(
                     $action,
                     $task,
                     'Action "' . $action->getAliasWithNamespace() . '" is defined for "' .
                     $actionObject->getAliasWithNamespace() . '", but received a task with object "' .
-                    $taskObject->getAliasWithNamespace() . '"!'
+                    $taskAlias . '"!'
                 );
+                
                 $error->setUseExceptionMessageAsTitle(true);
+                $error->addIssue(ActionTaskInvalidException::ISSUE_INVALID_OBJECT, $taskAlias);
+                
                 throw $error;
             }
         }
@@ -108,7 +113,7 @@ class ActionInputValidator
             $this->addColumnsFromWidget(
                 $expectedColumns,
                 $inputWidget->getConfiguratorWidget(),
-                $widgetPrepareDataSheetFunction
+                'prepareDataSheetToRead'
             );
         }
         
@@ -205,7 +210,7 @@ class ActionInputValidator
         foreach ($taskInput->getColumns() as $inputColumn) {
             $inputColumnName = $inputColumn->getName();
             if(!key_exists($inputColumnName, $expectedColumns)) {
-                $unexpectedColumns[] = '"' . $inputColumnName . '"';
+                $unexpectedColumns[$inputColumnName] = '"' . $inputColumnName . '"';
             }
         }
 
@@ -216,7 +221,12 @@ class ActionInputValidator
                 'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
                 '": ' . implode(', ', $unexpectedColumns) . '!'
             );
+            
             $error->setUseExceptionMessageAsTitle(true);
+            foreach (array_keys($unexpectedColumns) as $unexpectedColumn) {
+                $error->addIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN, $unexpectedColumn);
+            }
+            
             throw $error;
         }
     }

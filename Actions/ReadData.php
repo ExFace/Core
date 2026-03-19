@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\ActionInputValidator;
+use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -51,8 +52,21 @@ class ReadData extends AbstractAction implements iReadData
     {
         parent::validateApplicability($validator);
 
-        $expectedColumns = $validator->getExpectedColumns('prepareDataSheetToPrefill');
-        $validator->validateTaskColumns($expectedColumns);
+        $expectedColumns = $validator->getExpectedColumns();
+        
+        try {
+            $validator->validateTaskColumns($expectedColumns);
+        } catch (ActionTaskInvalidException $exception) {
+            $task = $validator->getTask();
+            if(!$task->hasInputData()) {
+                throw $exception;
+            }
+            
+            $inputData = $task->getInputData();
+            foreach ($exception->getIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN) as $badColumn) {
+                $inputData->getColumns()->removeByKey($badColumn);
+            }
+        }
     }
 
     /**
