@@ -173,7 +173,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
                 $attrVals = $e->getAffectedAttributeValues();
                 $e = new DataQueryUniqueConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
-            case $sqlState === PostgreSqlError::SQL_STATE_UNIQUE_VIOLATION:
+            case $sqlState === PostgreSqlError::SQL_STATE_FOREIGN_KEY_VIOLATION:
                 $obj = $e->getAffectedObject();
                 $attrVals = $e->getAffectedAttributeValues();
                 $e = new DataQueryForeignKeyError($query, $message, null, $e, $obj, $attrVals);
