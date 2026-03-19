@@ -69,7 +69,13 @@ trait ToastUIEditorTrait
                             }
                             
                             {$this->getOnChangeScript()} 
-                        }    
+                        },
+                        beforePreviewRender: function(sHtml){
+                            setTimeout(function(){
+                                var oEditor = {$this->buildJsMarkdownVar()};
+                                oEditor.refreshMermaid();
+                            }, 0);
+                        }  
                     },
                     customHTMLRenderer: {
                         {$this->buildJsCustomHtmlRenderers()}
@@ -79,7 +85,7 @@ trait ToastUIEditorTrait
                     ],
                 });
                 
-                {$this->buildJsAdditionalWidgetsCode()}
+                {$this->buildJsAdditionalWidgetsCode('ed')}
                 
                 return ed;
             }();
@@ -126,7 +132,11 @@ JS;
                     ],
                 });
                 
-                {$this->buildJsAdditionalWidgetsCode()}
+                {$this->buildJsAdditionalWidgetsCode('ed')}
+                
+                setTimeout(function(){
+                    ed.refreshMermaid();
+                }, 0);
                 
                 return ed;
             }();
@@ -138,7 +148,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsAdditionalWidgetsCode(): string {
+    protected function buildJsAdditionalWidgetsCode(string $editorJs): string {
         $additionalWidgetsCode = '';
 
         if ($this->getWidget() instanceof InputMarkdown 
@@ -148,6 +158,40 @@ JS;
               
             {$this->buildJsMentionsWidgetComponents()}
 JS;
+        }
+        
+        if (true) {
+            $additionalWidgetsCode.= <<<JS
+                
+                (function(oEditor){
+                if (mermaid === undefined) return;
+                var sPreviewSelector;
+                if (oEditor.options.viewer === true) {
+                    sPreviewSelector = '.toastui-editor-contents code[data-language="mermaid"]';
+                } else {
+                    sPreviewSelector = '#{$this->getId()} .toastui-editor-md-preview code[data-language="mermaid"]'
+                }
+                oEditor.refreshMermaid = function() {
+                    mermaid.initialize({
+                        startOnLoad:true,
+                        config: sPreviewSelector,
+                        theme: 'default'
+                    });
+                    
+                    if ($(sPreviewSelector + ':visible').length > 0) {
+                        mermaid.run({
+                            querySelector: sPreviewSelector
+                        });
+                    }
+                }
+                $('#{$this->getId()} .toastui-editor-tabs > .tab-item:nth-child(2)').click(function(){
+                    setTimeout(function(){
+                        oEditor.refreshMermaid();
+                        }, 0);
+                });
+                })($editorJs);
+JS;
+
         }
 
         return $additionalWidgetsCode;
@@ -847,6 +891,7 @@ JS;
                             .addClass(bExpanding ? 'fa-compress' : 'fa-expand');
                         if (bExpanding && jqWrapper.innerWidth() > 800) {
                             oEditor.changePreviewStyle('vertical');
+                            oEditor.refreshMermaid();
                         } else {
                             oEditor.changePreviewStyle('tab');
                         }
