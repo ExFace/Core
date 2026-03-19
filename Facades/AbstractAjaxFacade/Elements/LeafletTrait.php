@@ -448,6 +448,7 @@ JS;
                 $visible = $layer->getVisibility() >= WidgetVisibilityDataType::NORMAL;
                 $autoZoom = $layer->getAutoZoom();
                 $autoZoomJs = $autoZoom ? $autoZoom->exportUxonObject()->toJson() : '{}';
+                $hideInLayerSelection = json_encode($layer->getHideInLayerSelection());
 
                 if ($visible) {
                     $layerInit .= ".addTo({$this->buildJsLeafletVar()})";
@@ -466,7 +467,8 @@ JS;
             autoZoom: {$autoZoomJs},
             visibility: {$layer->getVisibility()},
             $optionsJs
-            layer: $layerInit
+            layer: $layerInit,
+            addToLayerControl: !{$hideInLayerSelection}
         },
 JS;
             }
@@ -484,7 +486,9 @@ JS;
     var oLayerList = {};
 
     aLayers.forEach(function(oLayerData){
+      if (oLayerData.addToLayerControl) {
         oLayerList[oLayerData.caption] = oLayerData.layer;
+      }
     });
     
     L.control.layers(oBaseMapsList, oLayerList)
