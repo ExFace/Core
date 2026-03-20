@@ -847,10 +847,10 @@ function() {
                     
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();
+                    oLayer.addData(aGeoJson);
                     if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
-                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 }
                 
@@ -865,10 +865,10 @@ JS;
                     var aRowsSkipped = [];
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();    
+                    oLayer.addData(aGeoJson);
                     if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
-                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
