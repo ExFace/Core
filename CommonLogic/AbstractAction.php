@@ -2012,7 +2012,7 @@ abstract class AbstractAction implements ActionInterface
             default:
                 throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_action in action');
         }
-        $this->getConfirmations()->addFromUxon($uxon);
+        $this->getConfirmations()->prepend($this->confirmations->createConfirmation($uxon));
         return $this;
     }
 
