@@ -54,17 +54,25 @@ class ReadData extends AbstractAction implements iReadData
 
         $expectedColumns = $validator->getExpectedColumns();
         
-        try {
+        try { 
             $validator->validateTaskColumns($expectedColumns);
         } catch (ActionTaskInvalidException $exception) {
             $task = $validator->getTask();
             if(!$task->hasInputData()) {
                 throw $exception;
             }
-            
+
+            // We ignore unexpected columns IF they are system columns.
             $inputData = $task->getInputData();
             foreach ($exception->getIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN) as $badColumn) {
-                $inputData->getColumns()->removeByKey($badColumn);
+                $col = $inputData->getColumns()->get($badColumn);
+                if(
+                    $col !== null &&
+                    $col->isAttribute() && 
+                    $col->getAttribute()->isSystem()
+                ) {
+                    $inputData->getColumns()->removeByKey($badColumn);
+                }
             }
         }
     }
