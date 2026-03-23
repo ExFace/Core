@@ -203,32 +203,4 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
     {
         $this->deferredAggregations[$columnName][$deferredAggregation->exportString()] = $deferredAggregation;
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function copy(): DataSheetSubsheet
-    {
-        $copy = DataSheetFactory::createSubsheetFromUxon(
-            $this->getParentSheet(),
-            $this->exportUxonObject(),
-            $this->getJoinKeyAliasOfSubsheet(),
-            $this->getJoinKeyAliasOfParentSheet(),
-            $this->getRelationPathFromParentSheet()
-        );
-
-        // Copy internal properties, that do not get exported to UXON
-        foreach ($this->getColumns() as $key => $col) {
-            if ($col->getIgnoreFixedValues()) {
-                $copy->getColumns()->get($key)->setIgnoreFixedValues($col->getIgnoreFixedValues());
-            }
-        }
-
-        $copy->setAutoCount($this->getAutoCount());
-        if ($this->countRowsInDataSource() !== null) {
-            $copy->setCounterForRowsInDataSource($this->countRowsInDataSource());
-        }
-        
-        return $copy;
-    }
 }

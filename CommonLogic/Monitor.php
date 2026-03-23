@@ -221,7 +221,7 @@ class Monitor extends Profiler
         // Log long-running actions
         if ($this->longRunnersEnabled && $actionMs > 0) {
             $thresholdMs = 1000 * $action->getMonitorAsLongRunningAfterSeconds($this->getActionLongRunningThreshold($action));
-            if ($thresholdMs > 0 && $actionMs > $thresholdMs) {
+            if ($thresholdMs > -1 && $actionMs > $thresholdMs) {
                 $msg = 'Long-running action detected: ' . $action->__toString() . ' ran for ' . TimeDataType::formatMs($actionMs) . ' (> ' . TimeDataType::formatMs($thresholdMs) . ' threshold)!';
                 $this->logLongRunningAction($msg, $action);
             }
@@ -265,14 +265,17 @@ class Monitor extends Profiler
     }
 
     /**
-     * Returns TRUE 
+     * Returns TRUE if action runtime is to be measured - e.g. for monitoring long runners or action in general
      * 
      * @param ActionInterface $action
      * @return bool
      */
     protected function isActionMeasured(ActionInterface $action) : bool
     {
-        return $this->longRunnersEnabled || ($this->actionsEnabled && $this->isActionMonitored($action));
+            // If monitoring long runners is enabled AND the action is not explicitly excluded
+            return ($this->longRunnersEnabled && $action->getMonitorAsLongRunningAfterSeconds() !== -1)
+            // OR monitoring actions is enabled generally and the action is to be monitored
+            || ($this->actionsEnabled && $this->isActionMonitored($action));
     }
     
     /**
@@ -289,7 +292,7 @@ class Monitor extends Profiler
             try {
                 if ($this->requestFirstAction !== null && $this->isActionMeasured($this->requestFirstAction)) {
                     $thresholdMs = 1000 * $this->getActionLongRunningThreshold($this->requestFirstAction);
-                    if ($thresholdMs < $totalMs) {
+                    if ($thresholdMs > -1 && $thresholdMs < $totalMs) {
                         $longRunnerMsg = $this->requestFirstAction->getAliasWithNamespace();
                         if ($this->requestFirstAction->hasMetaObject()) {
                             $longRunnerMsg .= ' on ' . $this->requestFirstAction->getMetaObject()->getAliasWithNamespace();
@@ -297,7 +300,7 @@ class Monitor extends Profiler
                     }
                 } else {
                     $thresholdMs = 1000 * $this->longRunnersThreshold;
-                    if ($thresholdMs < $totalMs) {
+                    if ($thresholdMs > -1 && $thresholdMs < $totalMs) {
                         $requestId = $this->getWorkbench()->getContext()->getScopeRequest()->getRequestId();
                         $longRunnerMsg = 'request id ' . $requestId;
                     }

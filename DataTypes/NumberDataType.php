@@ -4,6 +4,8 @@ namespace exface\Core\DataTypes;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataTypeFactory;
 
@@ -454,9 +456,21 @@ class NumberDataType extends AbstractDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, bool $silent = true) : string
     {
-        $num = $this->parse($value);
+        $value = $value ?? $this->getValue();
+        try {
+            $num = $this->parse($value);
+        } catch (DataTypeExceptionInterface $e) {
+            // When formatting, casting/parsing/validation errors should not break the operation
+            $e = $this->createFormatterError($value, $e);
+            if ($silent) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
+                return $value;
+            } else {
+                throw $e;
+            }
+        }
         
         if ($num === null || $num === '' || $num === EXF_LOGICAL_NULL) {
             return $this->getEmptyFormat();

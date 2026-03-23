@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\ConsoleFacade;
 
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\ServerSoftwareDataType;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Process\Process;
 
@@ -116,5 +118,41 @@ class CliCommandRunner
             }
         }
         return true;
+    }
+
+    public static function setPermissionsForPath(string $path, string $user) : array
+    {        
+        if (ServerSoftwareDataType::isOsWindows()) {
+            // Grant Modify (M) to user. (Closer to old CACLS ":c" change permission.)
+            // /T optional (propagate through subfolders). /C continue on errors.
+            // $cmd = "CACLS {$path} /e /p {$user}:c";
+            // CACLS is deprecated (use icacls on Windows instead) - but for now it works and is battle-tested
+            $cmd = 'icacls ' . escapeshellarg($path) . ' /grant ' . escapeshellarg($user . ':(M)') . ' /C';
+        } else {
+            // Linux / Unix
+            // Prefer ACLs: give rwX (X applies execute only to dirs / already-executable files)
+            // -m modifies ACL; -R would be recursive (only if you need it!)
+            $setfacl = trim((string)@shell_exec('command -v setfacl 2>/dev/null'));
+            if ($setfacl !== '') {
+                $cmd = 'setfacl -m ' . escapeshellarg('u:' . $user . ':rwX') . ' ' . escapeshellarg($path);
+            } else {
+                // Fallback: basic chmod. This does NOT target a specific user—only adjusts mode bits.
+                // Choose something sensible for your use case; here: add user rwX.
+                $cmd = 'chmod u+rwX ' . escapeshellarg($path);
+            }
+        }
+
+        $output = [];
+        exec($cmd . ' 2>&1', $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            $filename = FilePathDataType::findFileName($path, true);
+            throw new RuntimeException(
+                "Permission for the user '{$user}' and folder/file '{$filename}' could not be changed! "
+                . "Command: {$cmd} Output: " . implode("\n", $output)
+            );
+        }
+        
+        return $output;
     }
 }

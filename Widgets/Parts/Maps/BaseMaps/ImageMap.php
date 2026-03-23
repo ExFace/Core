@@ -64,7 +64,11 @@ class ImageMap extends AbstractBaseMap
             $widget->setZoomMax($this->getZoomMax());
         }
         if ($widget->getZoom() === null) {
-            $widget->setZoom($this->getZoomMin());
+            $widget->setZoomInitial($this->getZoomMin());
+        }
+        // Make zooming smoother
+        if ($widget->getZoomStep() === null) {
+            $widget->setZoomStep(0.1);
         }
     }
     

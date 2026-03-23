@@ -19,8 +19,7 @@ class CliTask extends GenericTask implements CliTaskInterface
 
     public function __construct(WorkbenchInterface $workbench, string $commandName, array $arguments = [], array $options = [], FacadeInterface $facade = null)
     {
-        $this->facade = $facade;
-        $this->workbench = $workbench;
+        parent::__construct($workbench, $facade);
         $this->cliCommandName = $commandName;
         $this->cliArguments = $arguments;
         $this->cliOptions = $options;

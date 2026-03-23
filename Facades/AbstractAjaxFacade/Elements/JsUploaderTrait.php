@@ -54,7 +54,11 @@ trait JsUploaderTrait
 
         $fileNameDataType = $this->getUploader()->getFilenameAttribute()->getDataType();
         $fileNameFormatter = $this->getFacade()->getDataTypeFormatter($fileNameDataType);
-        $fileNameIssuesJs = $fileNameFormatter->buildJsGetValidatorIssues('oFileObj.name');
+        // Check filenames normalized to standard NFC format that is used in windows and most linux systems.
+        // macOS or other apple system might use NFD to encode unicode characters in filenames.
+        // Those can clash with regex expression even though the filename seems valid for the user.
+        // See https://aeb.win.tue.nl/linux/uc/nfc_vs_nfd.html
+        $fileNameIssuesJs = $fileNameFormatter->buildJsGetValidatorIssues('oFileObj.name.normalize("NFC")');
         
         $maxFilenameLength = $this->getUploader()->getMaxFilenameLength() ?? 'null';
         $maxFileSize = $this->getUploader()->getMaxFileSizeMb() ?? 'null';
@@ -92,6 +96,7 @@ trait JsUploaderTrait
                     }
                 }
                 // Validate file name.
+
                 sFileNameError = {$fileNameIssuesJs};
                 if(sFileNameError !== '') {
                     sError = sFileNameError;

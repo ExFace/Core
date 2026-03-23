@@ -399,7 +399,7 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
      *
      * @uxon-property bearer_token_as_jwt
      * @uxon-type object
-     * @uxon-template {"username": "", "tenant": "", "audience": "", "role": "", "disabled": false}
+     * @uxon-template {"username": "", "disabled": false}
      *
      * @param UxonObject $uxon
      * @return $this
@@ -409,20 +409,11 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
         if ($uxon->getProperty('disabled') === true) {
             return $this;
         }
-
         $username = $uxon->getProperty('username');
-        $expectedTenantId = $uxon->getProperty('tenant');
-        $expectedAudience = $uxon->getProperty('audience'); // TODO: Info: audience (aud) of a token is a claim and not a scope!
-        $requiredRole = $uxon->getProperty('role');
         
         $this->addTokenExtractor(
-            function(ServerRequestInterface $request, HttpFacadeInterface $facade) 
-            use ($username, 
-                $expectedTenantId, 
-                $expectedAudience, 
-                $requiredRole) 
+            function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($username) 
             {
-                
                 if (! $request->hasHeader('Authorization')) {
                     return null;
                 }
@@ -433,13 +424,9 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
                     return new JWTAuthToken(
                         $tokenString, 
                         $username, 
-                        $facade, 
-                        $expectedTenantId, 
-                        $expectedAudience, 
-                        $requiredRole
+                        $facade,
                     );
                 }
-
                 return null;
             }
         );
