@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\DataSheetJoinRules;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
@@ -112,13 +113,20 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param DataSheetInterface $otherSheet
-     * @param string|null $leftKeyColName
-     * @param string|null $rightKeyColName
-     * @param string $relationPath
+     * @param DataSheetInterface      $otherSheet
+     * @param string|null             $leftKeyColName
+     * @param string|null             $rightKeyColName
+     * @param string                  $relationPath
+     * @param DataSheetJoinRules|null $joinRules
      * @return DataSheetInterface
      */
-    public function joinLeft(DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
+    public function joinLeft(
+        DataSheetInterface $otherSheet,
+        string $leftKeyColName = null,
+        string $rightKeyColName = null,
+        string $relationPath = '',
+        DataSheetJoinRules $joinRules = null
+    ) : DataSheetInterface;
 
     /**
      * Replaces data if this sheet with data in matching columns of the given sheet.
