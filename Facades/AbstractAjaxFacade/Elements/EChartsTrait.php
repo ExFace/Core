@@ -7,6 +7,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
@@ -2357,8 +2358,11 @@ JS;
         // Data type specific formatting
         $type = $col->getDataType();
         switch (true) {
-            case ($type instanceof NumberDataType) && $type->getPrecisionMax() === 0:
-                $originalType = $type;
+            // For numeric axes make sure we have at least one fractional digit because otherwise the axis will
+            // have multiple ticks that look exactly the same if it has few values: e.g. if an integer axis 
+            // ends up with a max value of 2, it will probably have ticks for 1, 1 (actually 1.5, but rounded) and 2.
+            // DO NOT do this for enums as they also often are integers (e.g. state ids).
+            case ($type instanceof NumberDataType) && ! ($type instanceof EnumDataTypeInterface) && $type->getPrecisionMax() === 0:
                 $type = DataTypeFactory::createFromString($this->getWorkbench(), NumberDataType::class);
                 // 0.5 -> 0.5, 1.0 -> 1, 1.254 -> 1.25
                 $type->setPrecisionMax(2);
