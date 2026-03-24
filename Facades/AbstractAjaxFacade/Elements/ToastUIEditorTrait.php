@@ -187,7 +187,7 @@ JS;
                 $('#{$this->getId()} .toastui-editor-tabs > .tab-item:nth-child(2)').click(function(){
                     setTimeout(function(){
                         oEditor.refreshMermaid();
-                        }, 0);
+                    }, 0);
                 });
                 })($editorJs);
 JS;
@@ -954,6 +954,12 @@ JS;
         
         oEditor.setMarkdown({$value});
         oEditor._lastSetValue = {$value};
+        
+        if (oEditor.refreshMermaid) {
+            setTimeout(function(){
+                oEditor.refreshMermaid();
+            }, 0);
+        }
 JS;
     }
 
