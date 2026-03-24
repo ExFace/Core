@@ -135,6 +135,7 @@ JS;
                 {$this->buildJsAdditionalWidgetsCode('ed')}
                 
                 setTimeout(function(){
+                    if (typeof mermaid === 'undefined') return;
                     ed.refreshMermaid();
                 }, 0);
                 
@@ -164,7 +165,7 @@ JS;
             $additionalWidgetsCode.= <<<JS
                 
                 (function(oEditor){
-                if (mermaid === undefined) return;
+                if (typeof mermaid === 'undefined') return;
                 var sPreviewSelector;
                 if (oEditor.options.viewer === true) {
                     sPreviewSelector = '.toastui-editor-contents code[data-language="mermaid"]';
