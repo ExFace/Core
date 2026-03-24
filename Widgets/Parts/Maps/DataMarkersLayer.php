@@ -16,8 +16,79 @@ use exface\Core\Widgets\Parts\Maps\Traits\ColoredLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 
 /**
+ * A map layer that adds data markers into a map using longitude and latitude values. The marker is an interactive element with its own pop-up.
+ * 
+ * ### Data Setup Guide
+ * 
+ * please open the properties of widget_type `Map` for a full guide on how to pass on data to any layer in a map widget!
+ *  If no data or filter within data is provided everything from the object_alias is loaded, or it will use the data from another layer with the same object_alias.
+ * 
+ * ### Marker Icon
+ * 
+ * You can change the `icon` of a marker to any svg but doing that means loosing control over the color of the marker, so you might want to color the svg directly.
+ * 
+ * ### Widget Configuration Guide
+ * 
+ *  **Widget Links**
+ * 
+ *  ```
+ *  {
+ *       "widget_type": "Input",
+ *       "value": 450196.06,
+ *       "caption": "UTM Longitude",
+ *       "data_column_name": "UTM_Longitude",
+ *       "id": "your_long_widget"
+ *  },
+ *  {
+ *       "widget_type": "Input",
+ *       "value": 5427449.28,
+ *       "data_column_name": "UTM_Latitude",
+ *       "caption": "UTM Latitude",
+ *       "id": "your_lat_widget"
+ *  }
  *
+ *  ...
+ *
+ *  {
+ *        "type": "DataPoints",
+ *        "object_alias": "the.app.your_object_alias",
+ *        "caption": "Your Marker",
+ *        "latitude_widget_link": "=your_lat_widget",
+ *        "longitude_widget_link": "=your_long_widget",
+ *        "//": "UTM needs to be projected since this is not the native leaflet format. see https://epsg.io/ to find other formats.",
+ *        "projection": {
+ *            "name": "EPSG:25832",
+ *            "definition": "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+ *        }
+ *  }
+ * 
+ *  ```
+ * 
+ * **data with value links via attribute alias**
+ * 
+ *  ```
+ *  {
+ *      "type": "DataPoints",
+ *      "object_alias": "the.app.your_object_alias",
+ *      "caption": "Your point from client data",
+ *      "latitude_attribute_alias": "your_latitude_alias",
+ *      "longitude_attribute_alias": "your_longitude_alias",
+ *      "value_attribute_alias": "LABEL",
+ *      "color_attribute_alias": "your_color_alias",
+ *      "//icon": "you can change the icon but that will ignore the color_attribute_alias",
+ *      "//": "This is a Gauss Krueger example and needs to be projected since this is not the native leaflet format. see https://epsg.io/ to find other formats."
+ *      "projection": {
+ *          "name": "EPSG:31467",
+ *          "definition": "+proj=tmerc +lat_0=0 +lon_0=8.999 +k=1 +x_0=3500000 +y_0=0 +ellps=bessel +units=m +no_defs +type=crs"
+ *      }
+ *  }
+ * 
+ *  ```
+ *
+ * 
+ * @link exface/core/Widgets/Map
  * @author Andrej Kabachnik
+ * @summary_author Miriam Seitz
  *
  */
 class DataMarkersLayer extends AbstractDataLayer 
