@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\DataSheetJoinRules;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
@@ -76,23 +77,9 @@ interface DataSheetSubsheetInterface extends DataSheetInterface
     public function getRelationPathToParentSheet() : ?MetaRelationPathInterface;
 
     /**
-     * Returns alls deferred aggregations for this sheet. 
+     * Returns the join rules for this sub-sheet.
      * 
-     * Deferred aggregations signify that some data in this sheet SHOULD be aggregated, but to allow for more
-     * flexibility in JOINing this data, the actual process of aggregating it has not been performed yet. This will
-     * usually be done automatically, when JOINing, but you can perform it manually via `aggregateLike()`.
-     * 
-     * @return array
-     * @see DataSheetInterface::aggregateLike()
+     * @return DataSheetJoinRules
      */
-    public function getDeferredAggregations() : array;
-
-    /**
-     * Add a deferred aggregation to this sub-sheet.
-     * 
-     * @param string              $columnName
-     * @param AggregatorInterface $deferredAggregation
-     * @return void
-     */
-    public function addDeferredAggregation(string $columnName, AggregatorInterface $deferredAggregation) : void;
+    public function getJoinRules() : DataSheetJoinRules;
 }
