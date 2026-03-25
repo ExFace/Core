@@ -271,9 +271,7 @@ class DataSheet implements DataSheetInterface
                 // If we found a matching row in our data, we extract its values per column.
                 // We ignore columns that don't have any pending aggregations.
                 foreach ($this->getRow($rowNr) as $colName => $value) {
-                    if($colName === $selfKeyColumnName ||
-                        !key_exists($colName, $aggregationsPerColumn)
-                    ) {
+                    if(!key_exists($colName, $aggregationsPerColumn)) {
                         continue;
                     }
                     
@@ -289,7 +287,7 @@ class DataSheet implements DataSheetInterface
             
             // Now aggregate each column, for which we have aggregations.
             foreach ($columnValues as $colName => $values) {
-                if($colName === $selfKeyColumnName || empty($values)) {
+                if(empty($values)) {
                     continue;
                 }
                 
@@ -318,27 +316,56 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::joinLeft()
      */
-    public function joinLeft(DataSheetInterface $other_sheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relation_path = '') : DataSheetInterface
+    public function joinLeft(
+        DataSheetInterface $otherSheet,
+        string             $leftKeyColName = null,
+        string             $rightKeyColName = null,
+        string             $relationPath = '',
+        DataSheetJoinRules $joinRules = null
+    ) : DataSheetInterface
     {
-        // Check if the other sheet has deferred aggregations and perform them.
-        if($other_sheet instanceof DataSheetSubsheet) {
-            $deferredAggregations = $other_sheet->getDeferredAggregations();
-            if(!empty($deferredAggregations)) {
-                $other_sheet = $other_sheet->aggregateLike(
-                    $this,
-                    $other_sheet->getJoinKeyColumnOfParentSheet(),
-                    $other_sheet->getJoinKeyColumnOfSubsheet(),
-                    $deferredAggregations
-                );
-            }
+        if($joinRules !== null) {
+            $leftKeyColName = $joinRules->getLeftKeyColumnName() ?? $leftKeyColName;
+            $rightKeyColName = $joinRules->getRightKeyColumnName() ?? $rightKeyColName;
+            $relationPath = $joinRules->getRelationPathFromLeftSheet()?->toString() ?? $relationPath;
         }
         
+        // If the left key column is aggregated and the right key column isn't, we need to aggregate like.
+        $leftKeyColumn = $this->getColumns()->getByExpression($leftKeyColName);
+        $rightKeyColumn = $otherSheet->getColumns()->getByExpression($rightKeyColName);
+        if( $leftKeyColumn !== null && $leftKeyColumn->hasAggregator() &&
+            $rightKeyColumn !== null && !$rightKeyColumn->hasAggregator()
+        ) {
+            $aggregatorsPerColumn = $joinRules?->getAggregatorsPerColumn();
+            // If no aggregators per column were specified, we aggregate the key column.
+            if(empty($aggregatorsPerColumn)) {
+                $alias = DataAggregation::addAggregatorToAlias(
+                    $rightKeyColName,
+                    AggregatorFunctionsDataType::LIST_DISTINCT
+                );
+                
+                $aggregation = DataAggregation::getAggregatorFromAlias(
+                    $this->getWorkbench(),
+                    $alias
+                );
+                
+                $aggregatorsPerColumn[$rightKeyColName][$aggregation->exportString()] = $aggregation;
+            }
+            
+            $otherSheet = $otherSheet->aggregateLike(
+                $this,
+                $leftKeyColumn,
+                $rightKeyColumn,
+                $aggregatorsPerColumn
+            );
+        }
+
         // First copy the columns of the right data sheet ot the left one
         $right_cols = array();
-        foreach ($other_sheet->getColumns() as $col) {
+        foreach ($otherSheet->getColumns() as $col) {
             $right_cols[] = $col->copy();
         }
-        $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
+        $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relationPath));
         $leftColNamesUpdated = [];
         // Now process the data and join rows
         if (! is_null($leftKeyColName) && ! is_null($rightKeyColName)) {
@@ -350,7 +377,7 @@ class DataSheet implements DataSheetInterface
                 // data.
                 $left_row_nr += $addedRowsCnt;
                 // Check if the right column is really present in the data to be joined
-                if (! $rightKeyCol = $other_sheet->getColumns()->get($rightKeyColName)) {
+                if (! $rightKeyCol = $otherSheet->getColumns()->get($rightKeyColName)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $rightKeyColName . '" for a left join!', '6T5E849');
                 }
                 // Find rows in the other sheet, that match the currently processed key
@@ -373,9 +400,9 @@ class DataSheet implements DataSheetInterface
                             $this->addRow($left_row, false, false, $left_row_new_nr);
                             $addedRowsCnt++;
                         }
-                        $right_row = $other_sheet->getRow($right_row_nr);
+                        $right_row = $otherSheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
-                            $leftColName = RelationPath::join($relation_path, $col_name);
+                            $leftColName = RelationPath::join($relationPath, $col_name);
                             $leftColNamesUpdated[] = $leftColName;
                             $this->setCellValue($leftColName, ($left_row_new_nr ?? $left_row_nr), $val);
                         }
@@ -385,9 +412,9 @@ class DataSheet implements DataSheetInterface
                     // If the right sheet does not have corresponding rows, treat them as empty.
                     // BUT only if we are JOINing with a relation. If JOINing the same object,
                     // do not empty its values just because the right sheet did not has less data!
-                    if ($relation_path !== '') {
+                    if ($relationPath !== '') {
                         foreach ($right_cols as $col) {
-                            $leftColName = RelationPath::join($relation_path, $col->getName());
+                            $leftColName = RelationPath::join($relationPath, $col->getName());
                             $leftColNamesUpdated[] = $leftColName;
                             $this->setCellValue($leftColName, $left_row_nr, null);
                         }
@@ -399,7 +426,7 @@ class DataSheet implements DataSheetInterface
             // need to dublicate rows as in the case above - but it's unclear, what should
             // happen if there are actually no key columns...
             foreach ($this->rows as $left_row_nr => $row) {
-                $rightRow = $other_sheet->getRow($left_row_nr);
+                $rightRow = $otherSheet->getRow($left_row_nr);
                 $rightColNames = array_keys($rightRow);
                 $leftColNamesUpdated = array_merge($leftColNamesUpdated, $rightColNames);
                 $this->rows[$left_row_nr] = array_merge($row, $rightRow);
@@ -755,7 +782,10 @@ class DataSheet implements DataSheetInterface
                 // sheet until later. Whenever this subsheet is about to be joined these aggregations can be performed
                 // beforehand.
                 if($requiresAggregateLike && $attribute_aggregator) {
-                    $subsheet->addDeferredAggregation($addedColumn->getName(), $attribute_aggregator);
+                    $subsheet->getJoinRules()->addAggregatorsForColumn(
+                        $addedColumn->getName(), 
+                        [$attribute_aggregator]
+                    );
                 }
             } else {
                 throw new DataSheetReadError($this, 'QueryBuilder "' . get_class($query) . '" cannot read attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() .'"!');
@@ -896,7 +926,14 @@ class DataSheet implements DataSheetInterface
                 $subsheet->dataRead();
 
                 // Do the JOIN
-                $this->joinLeft($subsheet, $parentSheetKeyCol->getName(), $subsheet->getJoinKeyColumnOfSubsheet()->getName(), ($subsheet->hasRelationToParent() ? $subsheet->getRelationPathFromParentSheet()->toString() : ''));
+                $joinRules = $subsheet->getJoinRules();
+                $this->joinLeft(
+                    $subsheet,
+                    $subsheet->getJoinKeyColumnOfParentSheet()->getName(),
+                    $subsheet->getJoinKeyColumnOfSubsheet()->getName(),
+                    $joinRules->getRelationPathFromLeftSheet()?->toString() ?? '',
+                    $joinRules
+                );
             }
         }
         
