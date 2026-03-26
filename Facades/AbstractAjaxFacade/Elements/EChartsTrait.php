@@ -1505,7 +1505,7 @@ JS;
             case $series->getColor() !== null:
                 $itemStyle = "itemStyle: { color: '{$series->getColor()}' },";
                 break;
-            case $series->getYDataColumn()->getCellWidget() instanceof iHaveColorScale:
+            case ($series->getYDataColumn()->getCellWidget() instanceof iHaveColorScale) && $series->getYDataColumn()->getCellWidget()->hasColorScale():
                 $itemStyle = "itemStyle: { color: {$this->buildJsColumnColorFunction($series->getYDataColumn(), false)} },";
                 break;
             default:
