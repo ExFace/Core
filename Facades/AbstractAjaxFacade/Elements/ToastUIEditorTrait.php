@@ -135,6 +135,7 @@ JS;
                 {$this->buildJsAdditionalWidgetsCode('ed')}
                 
                 setTimeout(function(){
+                    if (typeof mermaid === 'undefined') return;
                     ed.refreshMermaid();
                 }, 0);
                 
@@ -164,7 +165,7 @@ JS;
             $additionalWidgetsCode.= <<<JS
                 
                 (function(oEditor){
-                if (mermaid === undefined) return;
+                if (typeof mermaid === 'undefined') return;
                 var sPreviewSelector;
                 if (oEditor.options.viewer === true) {
                     sPreviewSelector = '.toastui-editor-contents code[data-language="mermaid"]';
@@ -187,7 +188,7 @@ JS;
                 $('#{$this->getId()} .toastui-editor-tabs > .tab-item:nth-child(2)').click(function(){
                     setTimeout(function(){
                         oEditor.refreshMermaid();
-                        }, 0);
+                    }, 0);
                 });
                 })($editorJs);
 JS;
@@ -954,6 +955,12 @@ JS;
         
         oEditor.setMarkdown({$value});
         oEditor._lastSetValue = {$value};
+        
+        if (oEditor.refreshMermaid) {
+            setTimeout(function(){
+                oEditor.refreshMermaid();
+            }, 0);
+        }
 JS;
     }
 

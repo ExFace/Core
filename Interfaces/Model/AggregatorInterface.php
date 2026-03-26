@@ -51,6 +51,13 @@ interface AggregatorInterface extends WorkbenchDependantInterface, iCanBeConvert
      * @return bool
      */
     public function is($stringOrAggregator) : bool;
+
+    /**
+     * Returns TRUE if this aggregator produces delimited lists (e.g. LIST, LIST_DISTINCT, etc.)
+     * 
+     * @return bool
+     */
+    public function isList() : bool;
     
     /**
      * Returns the data type resulting after aggregating the given data type.

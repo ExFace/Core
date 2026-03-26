@@ -67,17 +67,19 @@ class Pad extends Container implements iFillEntireContainer
     }
     
     /**
-     * Sets an image as background - the image is set via URI relative to workbench root
+     * Sets an image as background - either a URI relative to installation root or a static formula
+     * 
+     * Static formulas can be used here: e.g. `=GetConfig()`
      * 
      * @uxon-property background_image
-     * @uxon-type uri
+     * @uxon-type uri|formula
      * 
      * @param string $value
      * @return Pad
      */
     public function setBackgroundImage(string $value) : Pad
     {
-        $this->backgroundImage = $value;
+        $this->backgroundImage = $this->evaluatePropertyExpression($value);
         return $this;
     }
 }
