@@ -150,7 +150,7 @@ class DownloadFile extends AbstractAction
                 }
                 
                 $content = $contentCol->getValue(0);
-                $contentDataType = $contentAttrAlias->getDataType();
+                $contentDataType = $contentCol->getDataType();
                 if ($contentDataType instanceof BinaryDataType) {                    
                     $content = $contentDataType->convertToBinary($content);
                 }
