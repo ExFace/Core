@@ -17,13 +17,12 @@ use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
- * ### Data Points Map Layer
+ * A map layer to draw point(s) into a map using longitude and latitude values.
  * 
- * A map layer to draw point into a map using longitude and latitude data.
- * 
- * #### How to provide data
+ * ### How to provide values
  * 
  * **Widget Links**
+ * 
  * ```
  * {
  *      "widget_type": "Input",
@@ -39,7 +38,9 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  *      "caption": "UTM Latitude",
  *      "id": "Test_Lat"
  * }
+ * 
  * ...
+ * 
  * {
 *       "type": "DataPoints",
 *       "caption": "Test Koordinaten für einen Mast",
@@ -52,14 +53,16 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
 *           "definition": "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
 *       }
  * }
+ * 
  * ```
  * 
- * #### Link via attribute alias
+ * **data with value links via attribute alias**
+ * 
  * ```
  *  {
  *          "type": "DataPoints",
  *          "caption": "Ausgewählter Mast",
- *          "data_widget_link": "tabelle_Mast",
+ *          "data_widget_link": "=tabelle_Mast",
  *          "latitude_attribute_alias": "Latitude",
  *          "longitude_attribute_alias": "Longitude",
  *          "value_attribute_alias": "LABEL",
@@ -72,6 +75,7 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  *              "definition": "+proj=tmerc +lat_0=0 +lon_0=8.999 +k=1 +x_0=3500000 +y_0=0 +ellps=bessel +units=m +no_defs +type=crs"
  *          }
  *  }
+ * 
  * ```
  * 
  * @author Andrej Kabachnik
