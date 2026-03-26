@@ -914,6 +914,11 @@ JS;
             var oJExcel = oWidget.getJExcel();
             let numRows = oJExcel.getData().length;
 
+            // do not refresh if nothing is there 
+            if (numRows === 0) {
+                return;
+            }
+
             for (i in this._cols) {
                 this._cols[i].conditionize(this);
             }
@@ -2591,7 +2596,11 @@ JS;
             var aVals = [];
 
             aSelectedIdxs.forEach(function(iRowIdx){
-                aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+                if (aAllRows.length === 0|| aAllRows[iRowIdx]['{$col->getDataColumnName()}'] === undefined) {
+                    console.warn('Data is not loaded yet, or column {$col->getDataColumnName()} does not exist in the current spreadsheet.'); 
+                } else {
+                    aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+                }
             })
 
             return aVals.join('{$delimiter}');
