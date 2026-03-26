@@ -1331,7 +1331,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
             return $hint;
         }
-        return $this->getCellWidget()->getHint($includeDebugInfo) . $this->getHintDebugForColumn($includeDebugInfo && $includeDebugInfo);
+        return $this->getCellWidget()->getHint($includeDebugInfo) . $this->getHintDebugForColumn($includeDebugInfo && $foundDebugContext);
     }
 
     /**
@@ -1342,8 +1342,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     protected function getHintDebugForColumn(bool $includeDebugInfo = true) : string
     {
+        
         $hint = '';
-        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+        if ($includeDebugInfo !== true) {
+            return $hint;
+        }
+        if (null !== $group = $this->getAttributeGroupAlias()) {
             $hint .= "\n- Attribute group: `{$group}`";
         }
         if ($this->isFilterable() === false) {
@@ -1352,7 +1356,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($this->isSortable() === false) {
             $hint .= "\n - NOT sortable";
         }
-        if ($this->isEditable() === false) {
+        if ($this->isExportable() === false) {
             $hint .= "\n - NOT exportable";
         }
         return $hint;
