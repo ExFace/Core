@@ -150,6 +150,7 @@ class DataMatrix extends DataTable
         $this->setPaginate(false);
         $this->setShowRowNumbers(false);
         $this->setMultiSelect(false);
+        $this->setConfiguratorSetupsEnabled(false);
     }
 
     /**
