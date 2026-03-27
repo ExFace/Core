@@ -176,7 +176,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
             case $sqlState === PostgreSqlError::SQL_STATE_FOREIGN_KEY_VIOLATION:
                 $obj = $e->getAffectedObject();
                 $attrVals = $e->getAffectedAttributeValues();
-                $e = new DataQueryForeignKeyError($query, $message, null, $e, $obj, $attrVals);
+                $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
             case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
             case $sqlState === 23514: // CHECK VIOLATION
@@ -184,7 +184,7 @@ class PostgreSqlConnector extends AbstractSqlConnector
             case $sqlState === 23502: // NOT NULL VIOLATION
                 $obj = $e->getAffectedObject();
                 $attrVals = $e->getAffectedAttributeValues();
-                $e = new DataQueryConstraintError($query, $message, null, $e, $obj, $attrVals);
+                $e = new DataQueryConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
             default:
                 $e = new DataQueryFailedError($query, $message, null, $e);
