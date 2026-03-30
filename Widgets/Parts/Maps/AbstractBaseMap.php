@@ -28,7 +28,7 @@ abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterf
      * `\exface\Core\Widgets\Parts\Maps\BaseMaps\EsriArcGisMap`).
      *
      * @uxon-property type
-     * @uxon-type [OpenStreetMap,EsriArcGisMap,GenericUrlTiles,ImageMap,OpenTopoMap,WMS]
+     * @uxon-type [OpenStreetMap,EsriArcGisMap,GenericUrlTiles,ImageMap,OpenTopoMap,WMS,NoMap]
      * @uxon-required true
      * @uxon-default OpenStreetMap
      *

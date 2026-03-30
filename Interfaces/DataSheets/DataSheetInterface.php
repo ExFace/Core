@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\DataSheetJoinRules;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
@@ -112,13 +113,20 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param DataSheetInterface $otherSheet
-     * @param string|null $leftKeyColName
-     * @param string|null $rightKeyColName
-     * @param string $relationPath
+     * @param DataSheetInterface      $otherSheet
+     * @param string|null             $leftKeyColName
+     * @param string|null             $rightKeyColName
+     * @param string                  $relationPath
+     * @param DataSheetJoinRules|null $joinRules
      * @return DataSheetInterface
      */
-    public function joinLeft(DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
+    public function joinLeft(
+        DataSheetInterface $otherSheet,
+        string $leftKeyColName = null,
+        string $rightKeyColName = null,
+        string $relationPath = '',
+        DataSheetJoinRules $joinRules = null
+    ) : DataSheetInterface;
 
     /**
      * Replaces data if this sheet with data in matching columns of the given sheet.
@@ -871,4 +879,36 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface;
+
+    /**
+     * Copies this instance and aggregates it based on the key column of a specified other sheet.
+     *
+     * Values found in `$otherKeyColumn` will be de-aggregated and then matched with values found in `$selfKeyColumn`
+     * to collect the data that needs to be aggregated.
+     *
+     * Then all `$aggregationsPerColumn` are performed on the collected data. The resulting sheet will contain
+     * matching keys for each value in `$otherKeyColumn` and only columns for which you provided aggregations. Since
+     * it is fully aggregated and has a matching key column, you can JOIN the result sheet with the `$otherSheet`.
+     *
+     * @param DataSheetInterface  $otherSheet
+     * @param DataColumnInterface $otherKeyColumn
+     * @param DataColumnInterface $selfKeyColumn
+     * @param array               $aggregationsPerColumn
+     * Specify the aggregations you want to be performed per column. You can specify any number of aggregations per 
+     * column. The array must have the following structure:
+     * ```
+     *  [
+     *      'colName1' => [ AggregatorInterface, ... , AggregatorInterface ],
+     *      'colName2' => [ AggregatorInterface, ... , AggregatorInterface ],
+     *      ...
+     *  ]
+     * ```
+     * @return DataSheetInterface
+     */
+    public function aggregateLike(
+        DataSheetInterface $otherSheet,
+        DataColumnInterface $otherKeyColumn,
+        DataColumnInterface $selfKeyColumn,
+        array $aggregationsPerColumn
+    ) : DataSheetInterface;
 }

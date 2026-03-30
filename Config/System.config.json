@@ -35,6 +35,7 @@
    	"DEBUG.LOG_LEVEL_AUTHENTICATION_EXPIRED": "DEBUG",
    	"DEBUG.LOG_LEVEL_AUTHORIZATION_DENIED": "ERROR",
    	"DEBUG.LOG_LEVEL_AUTHORIZATION_DENIED_ANONYMOUS": "DEBUG",
+	"DEBUG.LOG_LEVEL_HUB_JAVASCRIPT_ERROR": "CRITICAL",
     "DEBUG.TRACE": false,
 	"DEBUG.TRACE_BLOCKED": false,
 	"DEBUG.TRACE_MAX_TIME_SECONDS": "60",
@@ -45,9 +46,6 @@
     "DEBUG.SQL_FORMATTING_MAX_CHARS": 20000,
 	"DEBUG.AUTOMATIC_UXON_VALIDATION": true,
 	"DEBUG.MAINTENANCE_MODE": false,
-    "DEBUG.LOG_LONG_RUNNING_ACTIONS": false,
-	"DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD": 5,
-    "DEBUG.LOG_LONG_RUNNING_ACTIONS_LEVEL": "warning",
 
 	"LOG.MINIMUM_LEVEL_TO_LOG": "debug",
 	"LOG.MAX_DAYS_TO_KEEP": "14",
@@ -62,6 +60,11 @@
 	"MONITOR.ERRORS.ENABLED": true,
 	"MONITOR.ERRORS.MINIMUM_LEVEL_TO_LOG": "critical",
 	"MONITOR.ERRORS.DAYS_TO_KEEP": 30,
+	"MONITOR.LONG_RUNNERS.ENABLED": false,
+	"MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_READS": 5,
+	"MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS": 30,
+	"MONITOR.LONG_RUNNERS.EXCLUDE_CLI": true,
+	"MONITOR.LONG_RUNNERS.LOG_LEVEL": "warning",
 	
 	"FOLDERS.USERDATA_PATH_ABSOLUTE": "",
     "FOLDERS.CACHE_PATH_ABSOLUTE": "",
@@ -123,7 +126,7 @@
 			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
     	],
 		"exface.Core.Model.OnBeforeDataTypeLoaded": [
-			"\\exface\\Core\\Mutations\\MutationPoints\\DataTypemutationPoint::onDataTypeLoadedApplyMutations"
+			"\\exface\\Core\\Mutations\\MutationPoints\\DataTypeMutationPoint::onDataTypeLoadedApplyMutations"
 		],
         "exface.Core.Model.OnBeforeSnippetLoaded": [
           	"\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"

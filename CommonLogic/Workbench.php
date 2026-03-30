@@ -460,26 +460,6 @@ class Workbench implements WorkbenchInterface
         }
         return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchInterface::getAppFolder()
-     */
-    public function getAppFolder(AppSelectorInterface|string $selector) : string 
-    {
-        $alias = is_string($selector) ? $selector : $selector->getAppAlias();
-        $pathInVendor = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $alias);
-        $pathInVendorLC = mb_strtolower($pathInVendor);
-        $pathToVendor = $this->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR;
-        switch (true) {
-            case is_dir($pathToVendor . $pathInVendorLC):
-                return $pathInVendorLC;
-            case is_dir($pathToVendor . $pathInVendor):
-                return $pathInVendor;
-        }
-        return $pathInVendorLC;         
-    }
 
     /**
      * 

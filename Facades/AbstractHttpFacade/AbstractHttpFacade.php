@@ -7,7 +7,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\CommonLogic\Debugger\HttpMessageDebugWidgetRenderer;
+use exface\Core\CommonLogic\Debugger\HttpMessageDebugger;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
@@ -69,7 +69,7 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             if ($request->getAttribute($this->getRequestAttributeForFacade()) === null) {
                 // Log the request as-is
                 if ($workbench->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') === true) {
-                    $workbench->getLogger()->notice('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugWidgetRenderer($request));
+                    $workbench->getLogger()->notice('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugger($request));
                 }
                 
                 // Save the facade in the request attributes, to mark the request as being processed

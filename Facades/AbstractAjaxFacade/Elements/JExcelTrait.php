@@ -68,6 +68,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * - isDisabled() : bool
  * - refreshDropdown(iColIdx) : Promise
  * - updateDependantColumns(iColIdx, iRowIdx, mValue) : void
+ * - addDropdownHitboxes(oCell): void
  * - success(data, textStatus, jqXHR)
  * - error(jqXHR, textStatus, errorThrown)
  * - bLoaded: bool // true after all constructors ran
@@ -361,6 +362,26 @@ JS;
             if (oWidget !== undefined && oWidget.isDisabled() === true) {
                 {$this->buildJsSetDisabled(true)}
             }
+
+            // add hitboxes for dropdowns here once on load, as exfWidget might not be there yet
+            // then use exfWidget.addDropdownHitboxes() to add them on subsequent onAddRow, onChange events
+            jqSelf.find(".jexcel_dropdown").each(function(){
+                if(!$(this).find(".dropdown-open").length) {
+                    $(this).prepend("<i class='dropdown-open' aria-hidden='true'></i>");
+                }
+            });
+
+            // adding a custom onclick event to the table, in oder to open the editor of dropdowns with a single click
+            // Idea based off https://github.com/jspreadsheet/ce/issues/1029 , 
+            // as other solutions using onSelect or similar functions broke a lot of other logic, such as keyboard navigation
+            jqSelf.off('click', '.jexcel_dropdown .dropdown-open').on('click', '.jexcel_dropdown .dropdown-open', function() {
+                var iColIdx = $(this).parent(".jexcel_dropdown").data("x");
+                var iRowIdx = $(this).parent(".jexcel_dropdown").data("y");
+
+                if (iColIdx !== undefined && iRowIdx !== undefined) {
+                    instance.jexcel.openEditor(instance.jexcel.records[iRowIdx][iColIdx], true);
+                }
+            });
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
@@ -446,11 +467,17 @@ JS;
     
                 // if a dropdown column is updated,
                 // check if there are related columns that should be updated too
+                // also re-add the hitbox for single-click, as they get cleared when selcting a value
                 let sColumnType = instance.jexcel.options.columns[col].type;
-                if (instance.exfWidget.bLoaded && sColumnType === 'autocomplete' && instance.exfWidget.getColumnModel(col).dependantCols.length > 0) { 
-                    
+                if (instance.exfWidget.bLoaded && sColumnType === 'autocomplete') { 
+
+                    // re-add the hitbox for single-click
+                    instance.exfWidget.addDropdownHitboxes(cell);
+
                     // update the related cols
-                    instance.exfWidget.updateDependantColumns(col, row, value)
+                    if (instance.exfWidget.getColumnModel(col).dependantCols.length > 0){
+                        instance.exfWidget.updateDependantColumns(col, row, value);
+                    }
                 }
 
                 // refresh the conditional properties of spreadsheet onchange
@@ -461,18 +488,30 @@ JS;
             }, 0);
         },
         oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
-            
+            el.exfWidget.addDropdownHitboxes();
         },
         ondeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             {$this->buildJsFixedFootersSpread()}
         },
         onselection: function(el, x1, y1, x2, y2, origin) {
-            $(el).data('_exfSelection', {
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2
-            });
+            // jexcel v4 seems to have issues with the initial onclick event https://github.com/jspreadsheet/ce/issues/1183, 
+            // on the first click this event is called once (correctly) and then multiple more times with values 0,0,0,0; which effectively resets the selection to the first row
+            // This causes issues with the context menu and our restore logic onBlur (deleting wrong rows ets)
+            // Example: user clicks row 3 once; event for row 3 gets fired, followed by multiple events with 0,0,0,0 in short succession. When the user then uses the context menu (rightclick -> delete)
+            // the onblur event gets called (when the context menu is used) and resets the last selection (0,0,0,0). This then deletes row 0 instead of row 3
+
+            let iTimeDiff = new Date().getTime() - $(el).data('_exfSelection')?.timeLastUpdated;
+
+            // so here, we try and fix this by only updating the selection data when the selection appears to be human (timeDiff > 15ms)
+            if (Number.isNaN(iTimeDiff) || iTimeDiff > 15){
+                $(el).data('_exfSelection', {
+                    timeLastUpdated: new Date().getTime(),
+                    x1: x1,
+                    y1: y1,
+                    x2: x2,
+                    y2: y2
+                });
+            }
         },
         onblur: function(el) {
             var oSel = $(el).data('_exfSelection');
@@ -820,7 +859,11 @@ JS;
                 mValue = '';
             }
 
-            if (this.getDoNotValidate() === true) {
+            // if were in a spare row, we dont need to validate
+            var aData = this.getJExcel().getData() || [];
+            var iSpareRows = {$this->getMinSpareRows()}; 
+
+            if (this.getDoNotValidate() === true || (iRow >= aData.length - iSpareRows)) {
                 return mValue;
             }
 
@@ -897,6 +940,11 @@ JS;
             var oWidget = this;
             var oJExcel = oWidget.getJExcel();
             let numRows = oJExcel.getData().length;
+
+            // do not refresh if nothing is there 
+            if (numRows === 0) {
+                return;
+            }
 
             for (i in this._cols) {
                 this._cols[i].conditionize(this);
@@ -1174,6 +1222,27 @@ JS;
                 else {
                     console.warn('Relation key ' + sColRelationKey + ' not found in dropdown source');
                 }
+            }
+        },
+        addDropdownHitboxes: function (oCell = null) {
+            // attaches a single-click hitbox to open a dropdown editor on a cell.
+            // if a a specific cell is passed as parameter, only attach to that cell, otherwise check all dropdowns
+            var jqSelf = {$this->buildJsJqueryElement()};
+            
+            if (oCell !== null) {
+                // Attach hitbox for the specific cell
+                if (!$(oCell).find(".dropdown-open").length) {
+                    $(oCell).prepend("<i class='dropdown-open' aria-hidden='true'></i>");
+                }
+ 
+            }
+            else {
+                // check for all dropdowns
+                jqSelf.find(".jexcel_dropdown").each(function(){
+                    if(!$(this).find(".dropdown-open").length) {
+                        $(this).prepend("<i class='dropdown-open' aria-hidden='true'></i>");
+                    }
+                });
             }
         },
         showAddRowsDialogue: function() {
@@ -2575,7 +2644,11 @@ JS;
             var aVals = [];
 
             aSelectedIdxs.forEach(function(iRowIdx){
-                aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+                if (aAllRows.length === 0|| aAllRows[iRowIdx]['{$col->getDataColumnName()}'] === undefined) {
+                    console.warn('Data is not loaded yet, or column {$col->getDataColumnName()} does not exist in the current spreadsheet.'); 
+                } else {
+                    aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+                }
             })
 
             return aVals.join('{$delimiter}');

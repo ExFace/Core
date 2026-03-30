@@ -222,4 +222,20 @@ class Aggregator implements AggregatorInterface {
         
         return $this;
     }
+
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\AggregatorInterface::isList()
+     */
+    public function isList() : bool
+    {
+        switch ($this->getFunction()->getValue()){
+            case AggregatorFunctionsDataType::LIST_ALL:
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                return true;
+        }
+        return false;
+    }
 }

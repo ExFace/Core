@@ -27,7 +27,7 @@ trait JqueryAlignmentTrait {
             } elseif ($default_alignment === EXF_ALIGN_LEFT){
                 return EXF_ALIGN_RIGHT;
             } else {
-                return EXF_ALING_LEFT;
+                return EXF_ALIGN_LEFT;
             }
         }
         

@@ -1,5 +1,64 @@
 # Release history
 
+## 1.38 - in Development
+
+## 1.37 - 19.03.2026
+
+New features:
+
+- [SAP OpenUI5 facade](https://github.com/ExFace/UI5Facade/):
+  - Big Update to OpenUI5 version 1.144
+  - New Theme `Fiori 4 (Horizon)` now supported
+  - JavaScript errors are now sent to the main server log and available for administrators (if front-end tracing is on!)
+  - Widget highlight mode in debug context for app designers (highlights widgets when hovering over them)
+  - Support for colored SVG icons (icon set `svg_colored`)
+- Attributes can now have icons and abbrevations, that will be used as captions for narrow data colums
+- Dedicated log for app install/repair operation
+- New features for [axenox.GenAI](https://github.com/axenox/genai/) app
+  - Support for ChatGPT 5 and OpenAI "responses API"
+  - Universal chat page in AI administration to try/test any agent - even inactive or unpublished versions
+- New formulas `=Right()`, `=Substring()`, `=TimeFromSeconds()` and `=JsonPrettify()`
+
+Experimental features:
+
+- New authenticator for Microsoft Azure AppRegistration tokens in the [axenox.Microsoft365Connector](https://github.
+  com/axenox/microsoft365connector/) app
+- Tours to guide users through the app and its features (experimental!)
+- New docs editor in Administration > Docs with a tree structure for better organization of documentation (experimental!)
+
+Improvements:
+
+- Export actions (e.g. `exface.Core.ExportXLSX`) now include optional columns and other configurator options of their data widget.
+- Behaviors can now be `disabled_if_app_not_installed`
+- Improved admininistration UI:
+  - List of attributes for attribute groups now includes custom attributes and inherited attributes
+- Improved logs
+  - More links to related documentation and other log messages
+- New option `exclude_options` for `InputSelect` and similar widgets to exclude certain options from being shown
+- Improved widget `DataCarousel`: added `details_title_column` and improved prefill handling
+- New option `hidden_if_no_columns` for data widgets
+- Many improvements in the `Map` widget
+- New option `call_after_all_actions_complete` for `CallActionBehavior` to postone action execution until all other actions, chains, behaviors, etc. are done
+- Completely reworked monitoring long running requests, improved configuration
+- Many improvements for PostgreSQL - in particular improved error handling
+- Custom `lookup_sheet` template for `LookupMapping`s
+- Improvements in the SAP OpenUI5 facade:
+  - Widgets `DataTree` and `Gantt` now supports `freeze_columns`
+
+## 1.36 - 09.02.2026
+
+New features:
+
+- Long running action log
+
+Improvements:
+
+- Property to hide tables without visible columns
+- Config option to block tracing on a system
+- Input row count check for `CallActionBehavior`
+
+## 1.35 - 23.01.2026
+
 ## 1.34 - 10.12.2025
 
 New features:

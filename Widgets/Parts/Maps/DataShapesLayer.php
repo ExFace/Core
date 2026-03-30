@@ -80,6 +80,7 @@ class DataShapesLayer extends AbstractDataLayer
     private $isBlinking = false;
     
     private $valuePosition = self::VALUE_POSITION_TOOLTIP;
+    private $valueTextAutoSize = false;
     
     private $dropToActions = [];
     
@@ -311,6 +312,27 @@ class DataShapesLayer extends AbstractDataLayer
         return $this;
     }
     
+    public function getValueTextFitToShape() : bool
+    {
+        return $this->valueTextAutoSize;
+    }
+
+    /**
+     * Set to TRUE to scale the size of the value text automatically to fit in to the bounds of the shape
+     * 
+     * @uxon-property value_text_fit_to_shape
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return MapLayerInterface
+     */
+    public function setValueTextFitToShape(bool $value): MapLayerInterface
+    {
+        $this->valueTextAutoSize = $value;
+        return $this;
+    }
+
     /**
      * 
      * @return array

@@ -10,6 +10,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -148,14 +149,35 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Makes the column display an attribute of the Data's meta object or a related object.
+     * Makes the column display an attribute of the Data's metaobject or a related object.
      *
-     * The attribute_alias can contain a relation path and/or an optional aggregator: e.g.
-     * "attribute_alias": "ORDER__POSITION__VALUE:SUM"
+     * Related attributes can be accessed using relation paths: e.g. `PRODUCT__BRAND__NAME`. Relations can be
+     * "traveled" forwards and backwards - i.e. you can count all products of a brand via `PRODUCT__ID:COUNT`.
+     * Since this widget can only display a single value and reverse relation typically lead to multiple values, it
+     * is important to use an aggregator (in our case `:COUNT`) if your relation path includes at least one reverse
+     * relation.
      *
      * **WARNING:** In earlier versions this field used to accept calculated values like formulas.
      * Don't do this anymore: use `calculation` instead. For the sake of backwards compatibility
      * some calculations will still work in the `attribute_alias` but this fallback is not stable!
+     * 
+     * ## Aggregations
+     *
+     * Available aggregators:
+     *
+     * - `ATTRIBUTE:SUM`
+     * - `ATTRIBUTE:AVG`
+     * - `ATTRIBUTE:MIN`
+     * - `ATTRIBUTE:MAX`
+     * - `ATTRIBUTE:MIN_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the minimum of `OTHER_ATTRIBUTE`
+     * - `ATTRIBUTE:MAX_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the maximum of `OTHER_ATTRIBUTE`
+     * - `ATTRIBUTE:LIST`
+     * - `ATTRIBUTE:LIST(,)` - a list with an explicitly defined separator - `,` in this case
+     * - `ATTRIBUTE:LIST_DISTINCT`
+     * - `ATTRIBUTE:LIST_DISTINCT(,)` - a distinct list with an explicitly defined separator
+     * - `ATTRIBUTE:COUNT`
+     * - `ATTRIBUTE:COUNT_DISTINCT`
+     * - `ATTRIBUTE:COUNT_IF(OTHER_ATTRIBUTE > 0)` - currently only supports simple conditions with an attribute alias on the left and a scalar on the right. There MUST be spaces around the comparator!
      *
      * @uxon-property attribute_alias
      * @uxon-type metamodel:attribute
@@ -736,6 +758,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                     break;
                 case $type instanceof NumberDataType && ! ($type instanceof EnumDataTypeInterface):
                 case $type instanceof DateDataType:
+                case $type instanceof TimeDataType:
                     $this->setAlign(EXF_ALIGN_OPPOSITE);
                     break;
                 case $type instanceof BooleanDataType:
@@ -1308,7 +1331,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
             return $hint;
         }
-        return $this->getCellWidget()->getHint($includeDebugInfo) . $this->getHintDebugForColumn($includeDebugInfo && $includeDebugInfo);
+        return $this->getCellWidget()->getHint($includeDebugInfo) . $this->getHintDebugForColumn($includeDebugInfo && $foundDebugContext);
     }
 
     /**
@@ -1319,8 +1342,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     protected function getHintDebugForColumn(bool $includeDebugInfo = true) : string
     {
+        
         $hint = '';
-        if ($includeDebugInfo === true && null !== $group = $this->getAttributeGroupAlias()) {
+        if ($includeDebugInfo !== true) {
+            return $hint;
+        }
+        if (null !== $group = $this->getAttributeGroupAlias()) {
             $hint .= "\n- Attribute group: `{$group}`";
         }
         if ($this->isFilterable() === false) {
@@ -1329,7 +1356,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($this->isSortable() === false) {
             $hint .= "\n - NOT sortable";
         }
-        if ($this->isEditable() === false) {
+        if ($this->isExportable() === false) {
             $hint .= "\n - NOT exportable";
         }
         return $hint;

@@ -1,12 +1,20 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Actions\ReadData;
+use exface\Core\Actions\UxonValidate;
+use exface\Core\CommonLogic\Debugger\ActionDebugger;
 use exface\Core\CommonLogic\Debugger\Profiler;
+use exface\Core\CommonLogic\Debugger\WidgetDebugger;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Facades\ConsoleFacade;
+use exface\Core\Interfaces\Actions\iExportData;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -42,17 +50,17 @@ class Monitor extends Profiler
     
     private $rowObjects = [];
     
+    private ?ActionInterface $requestFirstAction = null;
+    
     private $actionsEnabled = false;
 
-    private $logLongRunningActions = false;
-    
-    private $longRunningActionsThreshold = 10;
-    
-    private $longRunningActionsLevel = 'CRITICAL';
-    
-    private $longRunningActionsHandler = null;
-    
     private $errorsEnabled = false;
+
+    private bool $longRunnersEnabled = false;
+    private int $longRunnersThresholdRead = -1;
+    private int $longRunnersThreshold = -1;
+    private string $longRunnersLogLevel = LoggerInterface::DEBUG;
+    private $longRunningActionsHandler = null;
     
     /**
      * 
@@ -73,17 +81,24 @@ class Monitor extends Profiler
     {
         $self = new self($workbench, $startTimeMs);        
         $config = $workbench->getConfig();
+
+        // Do not monitor anything while installing the workbench
+        if ($workbench->isInstalled() === false) {
+            return;
+        }
         
         $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
         $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');
         
-        $self->logLongRunningActions = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS');
-        $self->longRunningActionsThreshold = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_THRESHOLD');
-        $self->longRunningActionsLevel = $config->getOption('DEBUG.LOG_LONG_RUNNING_ACTIONS_LEVEL');
-     
-        // Do not monitor anything while installing the workbench
-        if ($workbench->isInstalled() === false) {
-            return;
+        $self->longRunnersEnabled = $config->getOption('MONITOR.LONG_RUNNERS.ENABLED');
+        if ($self->longRunnersEnabled === true) {
+            if ($config->getOption('MONITOR.LONG_RUNNERS.EXCLUDE_CLI') === true && ConsoleFacade::isPhpScriptRunInCli()) {
+                $self->longRunnersEnabled = false;
+            } else {
+                $self->longRunnersThresholdRead = $config->getOption('MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_READS');
+                $self->longRunnersThreshold = $config->getOption('MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS');
+                $self->longRunnersLogLevel = $config->getOption('MONITOR.LONG_RUNNERS.LOG_LEVEL');
+            }
         }
         
         $self->registerEventListeners();
@@ -100,14 +115,14 @@ class Monitor extends Profiler
     {
         $eventManager = $this->getWorkbench()->eventManager();
         
-        if ($this->actionsEnabled) {
+        if ($this->actionsEnabled || $this->longRunnersEnabled) {
             $eventManager->addListener(OnBeforeActionPerformedEvent::getEventName(), [
                 $this,
                 'onActionStart'
             ]);
         }
         // Actions
-        if ($this->actionsEnabled || $this->errorsEnabled) {            
+        if ($this->actionsEnabled || $this->longRunnersEnabled || $this->errorsEnabled) {            
             $eventManager->addListener(OnActionPerformedEvent::getEventName(), [
                 $this,
                 'onActionStop'
@@ -177,11 +192,15 @@ class Monitor extends Profiler
      */
     public function onActionStart(OnBeforeActionPerformedEvent $event) : void
     {
-        if (! $this->isActionMonitored($event->getAction())) {
-            return;
+        $action = $event->getAction();
+        // Make sure we know, what is the first action started, so we can use its alias/name for log
+        // entries.
+        if ($this->requestFirstAction === null) {
+            $this->requestFirstAction = $action;
         }
-        
-        $this->start($event->getAction(), 'Action "' . $event->getAction()->getAliasWithNamespace() . '"');
+        if ($this->isActionMeasured($action)) {
+            $this->start($action);
+        }
     }
     
     /**
@@ -193,42 +212,70 @@ class Monitor extends Profiler
     {
         $action = $event->getAction();
         
-        if (! $this->isActionMonitored($action)) {
-            return;
+        $actionMs = 0;
+        if ($this->isActionMeasured($action)) {
+            $lap = $this->stop($action);
+            $actionMs = $lap->getTimeTotalMs();
         }
         
-        $ms = null;
-        if ($this->actionsEnabled) {
-            $ms = $this->stop($action)->getTimeTotalMs();
-            $s = $ms / 1000;
-            
-            $threshold = $action->getLongRunningThreshold() ?? $this->longRunningActionsThreshold;
-            if($threshold < 0) {
-                return;
-            }
-            
-            if($this->logLongRunningActions && $s > $threshold) {
-                $msg = 'Action "' . $action->getName() . '" ran for ' . $s . 's!';
-                
-                $exception = new ActionRuntimeError(
-                    $action,
-                    $msg
-                );
-                
-                $this->getLongRunningActionsHandler()->handle(
-                    $this->longRunningActionsLevel,
-                    $msg,
-                    ['id' => $exception->getId()],
-                    $exception
-                );
+        // Log long-running actions
+        if ($this->longRunnersEnabled && $actionMs > 0) {
+            $thresholdMs = 1000 * $action->getMonitorAsLongRunningAfterSeconds($this->getActionLongRunningThreshold($action));
+            if ($thresholdMs > -1 && $actionMs > $thresholdMs) {
+                $msg = 'Long-running action detected: ' . $action->__toString() . ' ran for ' . TimeDataType::formatMs($actionMs) . ' (> ' . TimeDataType::formatMs($thresholdMs) . ' threshold)!';
+                $this->logLongRunningAction($msg, $action);
             }
         }
 
-        if($action instanceof iReadData) {
-            return;
+        // Log action to action monitor
+        if ($this->actionsEnabled === true && $this->isActionMonitored($action)) {
+            $this->addRowFromAction($action, $event->getTask(), $actionMs);
         }
+    }
+    
+    protected function logLongRunningAction(string $msg, ?ActionInterface $action = null) : void
+    {
+        if ($action === null) {
+            $exception = new RuntimeException($msg);
+        } else {
+            $exception = new ActionRuntimeError($action, $msg);
+        }
+        $exception->setLogLevel($this->longRunnersLogLevel);
 
-        $this->addRowFromAction($action, $event->getTask(), $ms);
+        $this->getLongRunningActionsHandler()->handle(
+            $this->longRunnersLogLevel,
+            $msg,
+            ['id' => $exception->getId()],
+            $exception
+        );
+    }
+
+    /**
+     * @param ActionInterface $action
+     * @return int
+     */
+    protected function getActionLongRunningThreshold(ActionInterface $action) : int
+    {
+        switch (true) {
+            case $action instanceof ReadData && ! ($action instanceof iExportData):
+                return $this->longRunnersThresholdRead;
+            default:
+                return $this->longRunnersThreshold;
+        }
+    }
+
+    /**
+     * Returns TRUE if action runtime is to be measured - e.g. for monitoring long runners or action in general
+     * 
+     * @param ActionInterface $action
+     * @return bool
+     */
+    protected function isActionMeasured(ActionInterface $action) : bool
+    {
+            // If monitoring long runners is enabled AND the action is not explicitly excluded
+            return ($this->longRunnersEnabled && $action->getMonitorAsLongRunningAfterSeconds() !== -1)
+            // OR monitoring actions is enabled generally and the action is to be monitored
+            || ($this->actionsEnabled && $this->isActionMonitored($action));
     }
     
     /**
@@ -238,6 +285,39 @@ class Monitor extends Profiler
      */
     public function onWorkbenchStop(OnBeforeStopEvent $event)
     {
+        // Log long-running requests
+        if ($this->longRunnersEnabled === true) {
+            $totalMs = $this->getTimeElapsedMs();
+            $longRunnerMsg = null;
+            try {
+                if ($this->requestFirstAction !== null && $this->isActionMeasured($this->requestFirstAction)) {
+                    $thresholdMs = 1000 * $this->getActionLongRunningThreshold($this->requestFirstAction);
+                    if ($thresholdMs > -1 && $thresholdMs < $totalMs) {
+                        $longRunnerMsg = $this->requestFirstAction->getAliasWithNamespace();
+                        if ($this->requestFirstAction->hasMetaObject()) {
+                            $longRunnerMsg .= ' on ' . $this->requestFirstAction->getMetaObject()->getAliasWithNamespace();
+                        }
+                    }
+                } else {
+                    $thresholdMs = 1000 * $this->longRunnersThreshold;
+                    if ($thresholdMs > -1 && $thresholdMs < $totalMs) {
+                        $requestId = $this->getWorkbench()->getContext()->getScopeRequest()->getRequestId();
+                        $longRunnerMsg = 'request id ' . $requestId;
+                    }
+                }
+
+                if ($longRunnerMsg !== null) {
+                    $msg = 'Long running request detected: ' . $longRunnerMsg . ' ran for ' . TimeDataType::formatMs($totalMs) . ' (> ' . TimeDataType::formatMs($thresholdMs) . ' threshold)!';
+                    $this->logLongRunningAction($msg, $this->requestFirstAction);
+                }
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException(
+                    new RuntimeException('Cannot log long-running request to monitor. ' . $e->getMessage(), null, $e)
+                );
+            }
+        }
+        
+        // Save data
         if (! empty($this->rowObjects)) {
             try {
                 foreach ($this->getWorkbench()->data()->getTransactions() as $tx) {
@@ -270,9 +350,11 @@ class Monitor extends Profiler
     protected function isActionMonitored(ActionInterface $action) : bool
     {
         switch (true) {
-            // Ignore ReadData, unless we are logging long-running actions AND reads.
-            case $action instanceof iReadData && !$this->logLongRunningActions: 
+            // Ignore ReadData actions - there are too many not monitor.
+            case $action instanceof iReadData: 
+            // Same goes for the following administration-related actions
             case $action instanceof UxonAutosuggest:
+            case $action instanceof UxonValidate:
             case $action instanceof ContextBarApi:
             case $action instanceof ShowContextPopup:
                 return false;
@@ -321,38 +403,8 @@ class Monitor extends Profiler
                 continue;
             }
             
-            try {
-                switch (true) {
-                    case $task->isTriggeredOnPage():
-                        $page = $task->getPageTriggeredOn();
-                        break;
-                    case $action->isDefinedInWidget():
-                        $page = $action->getWidgetDefinedIn()->getPage();
-                        break;
-                    default:
-                        $page = null;
-                }
-            } catch (\Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-            }
-            
-            $triggerWidget = ($task->isTriggeredByWidget() ? $task->getWidgetTriggeredBy() : ($action->isDefinedInWidget() ? $action->getWidgetDefinedIn() : null));
-            if ($triggerWidget instanceof iUseInputWidget) {
-                $inputWidget = $triggerWidget->getInputWidget();
-            } else {
-                $inputWidget = $triggerWidget;
-            }
-            
-            if ($triggerWidget) {
-                $triggerName = $triggerWidget->getCaption() ?? '';
-                if ($triggerName === '') {
-                    $triggerName = $action->getName();
-                }
-            } else {
-                $triggerName = $action->getName();
-            }
-            
-            $inputName = $inputWidget ? $this->getInputName($inputWidget) : '';
+            $actionDebugger = new ActionDebugger($action, $task);
+            $page = $actionDebugger->getPage();
             
             try {
                 $object = $action->getMetaObject();
@@ -364,8 +416,8 @@ class Monitor extends Profiler
                 'PAGE' => $page ? $page->getUid() : null,
                 'OBJECT' => $object ? $object->getId() : null,
                 'ACTION_ALIAS' => $action->getAliasWithNamespace(),
-                'ACTION_NAME' => $triggerName,
-                'WIDGET_NAME' => $inputName,
+                'ACTION_NAME' => $actionDebugger->getTriggerName(),
+                'WIDGET_NAME' => $actionDebugger->getInputUiPath(),
                 'FACADE_ALIAS' => $task->getFacade() ? $task->getFacade()->getAliasWithNamespace() : '',
                 'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
                 'TIME' => $item['time'],
@@ -399,29 +451,6 @@ class Monitor extends Profiler
         
         return $this;
     }
-    
-    /**
-     * 
-     * @param WidgetInterface $inputWidget
-     * @return string
-     */
-    protected function getInputName(WidgetInterface $inputWidget) : string
-    {
-        $inputName = $inputWidget->getCaption();
-        switch (true) {
-            case $inputWidget instanceof Dialog && $inputWidget->hasParent():
-                $btn = $inputWidget->getParent();
-                if ($btn instanceof Button) {
-                    if ($btnCaption = $btn->getCaption()) {
-                        $inputName = $btnCaption;
-                    }
-                    $btnInput = $btn->getInputWidget();
-                    $inputName = $this->getInputName($btnInput) . ' > ' . $inputName;
-                }
-                break;
-        }
-        return $inputName ?? $inputWidget->getWidgetType();
-    }
 
     /**
      * Returns a log handler specifically configured to log long-running actions. The result is cached to speed up
@@ -437,7 +466,7 @@ class Monitor extends Profiler
             $this->longRunningActionsHandler = new MonitorLogHandler(
                 $this->getWorkbench(),
                 $this,
-                $this->longRunningActionsLevel
+                $this->longRunnersLogLevel
             );
         }
 
