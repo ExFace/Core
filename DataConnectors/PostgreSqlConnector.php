@@ -157,40 +157,36 @@ class PostgreSqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * 
+     *
      * @param DataQueryInterface $query
      * @param string $message
      * @return DataQueryExceptionInterface
      */
     protected function createQueryError(DataQueryInterface $query, string $message = null, ?Result $res = null) : DataQueryExceptionInterface
-    {        
+    {
         $message = 'PostgreSQL query failed. ' . $message;
         $e = new PostgreSqlError($this, $message, '6T2T2UI', null, $res);
+        $obj = $e->getAffectedObject();
+        $attrVals = $e->getAffectedAttributeValues();
         $sqlState = intval($e->getSqlState());
         switch (true) {
             case $sqlState === PostgreSqlError::SQL_STATE_UNIQUE_VIOLATION:
-                $obj = $e->getAffectedObject();
-                $attrVals = $e->getAffectedAttributeValues();
                 $e = new DataQueryUniqueConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
             case $sqlState === PostgreSqlError::SQL_STATE_FOREIGN_KEY_VIOLATION:
-                $obj = $e->getAffectedObject();
-                $attrVals = $e->getAffectedAttributeValues();
                 $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
+            case $sqlState === 23502: // NOT NULL VIOLATION
             case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
             case $sqlState === 23514: // CHECK VIOLATION
             case $sqlState === 23001: // RESTRICT VIOLATION
-            case $sqlState === 23502: // NOT NULL VIOLATION
-                $obj = $e->getAffectedObject();
-                $attrVals = $e->getAffectedAttributeValues();
-                $e = new DataQueryConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                $e = new DataQueryConstraintError($query,$this, $message, null, $e, $obj, $attrVals);
                 break;
             default:
                 $e = new DataQueryFailedError($query, $message, null, $e);
                 break;
         }
-        
+
         return $e;
     }
 

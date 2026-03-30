@@ -25,30 +25,40 @@ class DataQueryUniqueConstraintError extends DataQueryConstraintError
      * @param MetaObjectInterface $obj
      * @return string|null
      */
-    protected function generateMessage(MetaObjectInterface $obj) : ?string
+    protected function generateMessage(MetaObjectInterface $obj): ?string
     {
         $attrAliases = array_keys($this->getAttributeValues());
         $attrNames = [];
+
         foreach ($attrAliases as $attrAlias) {
             try {
                 $attrNames[] = $obj->getAttribute($attrAlias)->getName();
             } catch (\Throwable $e) {
-                // Skip invalid aliases
+                // Ungültige Aliases ignorieren
             }
         }
-        $lastName = array_pop($attrNames);
+
         $translator = $obj->getWorkbench()->getCoreApp()->getTranslator();
-        if (empty($attrNames)) {
-            $msg = $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS', [
-                '%object_name%' =>  '"' . $obj->getName() . '"'
-            ]);
-        } else {
-            $msg = $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS_WITH_ATTRS', [
-                '%object_name%' => '"' . $obj->getName() . '"',
-                '%attr_list%' => '"' . implode('", "', $attrNames) . '"',
-                '%attr_last%' => '"' . $lastName . '"'
+        $objectName = '"' . $obj->getName() . '"';
+
+        $attrCount = count($attrNames);
+
+        if ($attrCount === 0) {
+            return $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS', [
+                '%object_name%' => $objectName,
             ]);
         }
-        return $msg;
+
+        if ($attrCount === 1) {
+            return $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS_WITH_ATTR', [
+                '%object_name%' => $objectName,
+                '%attr_name%'   => '"' . $attrNames[0] . '"',
+            ]);
+        }
+
+        return $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS_WITH_ATTRS', [
+            '%object_name%' => $objectName,
+            '%attr_list%'   => '"' . implode('", "', $attrNames) . '"',
+        ]);
     }
 }
