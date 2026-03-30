@@ -187,6 +187,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
         // set it here. In most facades, setting merely the value of the combo will make the facade load the
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
+        $text_column_expr = null;
         if ($this->getAttribute()->isRelation()) {
             // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
             $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
@@ -201,12 +202,21 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
             $text_column_expr = $this->getTextColumn()->getExpression()->toString();
         }
         
-        if ($text_column_expr && $col = $data_sheet->getColumns()->getByExpression($text_column_expr)) {
-            $textPointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValueText($textPointer->getValue());
-            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $textPointer));
+        // Assign a label to `value_text`.
+        if ($text_column_expr) {
+            $col = $data_sheet->getColumns()->getByExpression($text_column_expr);
+            // If the input sheet does not contain the text column, we use the original column instead.
+            // This may result in naked UIDs being rendered, which is ugly, but better than an empty input.
+            if(!$col) {
+                $col = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias()); 
+            }
+            
+            if($col) {
+                $textPointer = DataPointerFactory::createFromColumn($col, 0);
+                $this->setValueText($textPointer->getValue());
+                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $textPointer));
+            }
         }
-        return;
     }
     
     /**
