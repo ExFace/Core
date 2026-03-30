@@ -10,6 +10,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryForeignKeyError;
+use exface\Core\Exceptions\DataSources\DataQueryNotNullConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\DataSources\PostgreSqlError;
@@ -176,7 +177,9 @@ class PostgreSqlConnector extends AbstractSqlConnector
             case $sqlState === PostgreSqlError::SQL_STATE_FOREIGN_KEY_VIOLATION:
                 $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
-            case $sqlState === 23502: // NOT NULL VIOLATION
+            case $sqlState === PostgreSqlError::SQL_STATE_NOT_NULL_VIOLATION:// NOT NULL VIOLATION
+                $e = new DataQueryNotNullConstraintError($query,$this, $message, null, $e, $obj, $attrVals);
+                break;
             case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
             case $sqlState === 23514: // CHECK VIOLATION
             case $sqlState === 23001: // RESTRICT VIOLATION
