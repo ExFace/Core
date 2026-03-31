@@ -1,25 +1,26 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Events\DataSheet\OnBeforeReadDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Events\DataTransactionEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
-use exface\Core\Factories\ConditionGroupFactory;
-use exface\Core\Interfaces\Events\EventInterface;
-use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
-use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
@@ -35,6 +36,10 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * 
  * You can specify one or multiple events in `calculate_on_events`. If no events are specified,
  * calculations will be performed when reading data, that includes any of the calculated columns. 
+ * 
+ * You can additionally restrict calculations on update flows by using `only_if_attributes_change`.
+ * In that case, calculations will only be applied if at least one of the configured attributes
+ * is actually changed in `OnBeforeUpdateData`.
  * 
  * ## Examples
  * 
@@ -118,6 +123,12 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
 
     private $calculateOnEventNames = [];
 
+    private array $onlyIfAttributesChange = [];
+
+    private array $ignoreDataSheets = [];
+
+    private array $ignoreLogbooks = [];
+
     private $inProgress = false;
     
     /**
@@ -128,6 +139,13 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
     protected function registerEventListeners() : BehaviorInterface
     {
         $eventMgr = $this->getWorkbench()->eventManager();
+
+        // Register the change-check listener first to make sure it is called before the
+        // calculation listener even if both listen to OnBeforeUpdateData
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $eventMgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
+        }
+
         if (! empty($this->calculateOnEventNames)) {
             foreach ($this->calculateOnEventNames as $eventName) {
                 $eventMgr->addListener($eventName, [$this, 'onEventCalculate'], $this->getPriority());
@@ -147,6 +165,7 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
     protected function unregisterEventListeners() : BehaviorInterface
     {
         $eventMgr = $this->getWorkbench()->eventManager();
+
         if (! empty($this->calculateOnEventNames)) {
             foreach ($this->calculateOnEventNames as $eventName) {
                 $eventMgr->removeListener($eventName, [$this, 'onEventCalculate']);
@@ -154,14 +173,18 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
         } else {
             $eventMgr->removeListener(OnReadDataEvent::getEventName(), [$this, 'onEventCalculate']);
         }
+
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $eventMgr->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
+        }
         
         return $this;
     }
 
     /**
-     * Executes the action if applicable
+     * Executes the calculation if applicable
      * 
-     * @param EventInterface $event
+     * @param DataSheetEventInterface $event
      * @return void
      */
     public function onEventCalculate(DataSheetEventInterface $event)
@@ -178,8 +201,13 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
             return;
         }
 		
-        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
-        
+        $ignoreKey = array_search($inputSheet, $this->ignoreDataSheets, true);
+        if ($ignoreKey !== false && null !== $logbook = ($this->ignoreLogbooks[$ignoreKey] ?? null)) {
+            $logbook->addSection('Proceeding with event ' . $event::getEventName());
+        } else {
+            $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        }
+
         $logbook->addDataSheet('Event data', $inputSheet);
         $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
@@ -188,6 +216,12 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
         // Don't bother if this read is caused by the same behavior - e.g. loading additional data
         if ($this->inProgress === true) {
             $logbook->addLine('**Skipped** because of operation performed from within the same behavior (e.g. reading missing data)');
+            return;
+        }
+
+        if (in_array($inputSheet, $this->ignoreDataSheets, true)) {
+            $logbook->addLine('**Skipped** because of `only_if_attributes_change`');
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
 
@@ -253,6 +287,83 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
         $this->inProgress = false;
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+    }
+
+    /**
+     * Checks if any of the `only_if_attributes_change` attributes are about to change
+     * 
+     * @param OnBeforeUpdateDataEvent $event
+     * @return void
+     */
+    public function onBeforeUpdateCheckChange(OnBeforeUpdateDataEvent $event)
+    {
+        if ($this->isDisabled()) {
+            return;
+        }
+
+        if ($this->inProgress === true) {
+            return;
+        }
+
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
+        if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+
+        if (! empty($this->getOnlyIfAttributesChange())) {
+            $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+            $logbook->setIndentActive(1);
+            $logbook->addLine('Checking `only_if_attributes_change`: ' . implode(', ', $this->getOnlyIfAttributesChange()));
+
+            $ignore = true;
+            foreach ($this->getOnlyIfAttributesChange() as $attrAlias) {
+                if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
+                    $ignore = false;
+                    $logbook->addLine('Detected change in column "' . $attrAlias . '"', 1);
+                    break;
+                }
+            }
+
+            if ($ignore === true) {
+                $this->ignoreDataSheets[] = $event->getDataSheet();
+                $this->ignoreLogbooks[] = $logbook;
+            }
+        }
+    }
+
+    /**
+     * 
+     * @return array
+     */
+    protected function getOnlyIfAttributesChange() : array
+    {
+        return $this->onlyIfAttributesChange ?? [];
+    }
+
+    /**
+     * Only apply calculations if any of these attributes change (list of aliases)
+     * 
+     * @uxon-property only_if_attributes_change
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $value
+     * @return CalculatingBehavior
+     */
+    protected function setOnlyIfAttributesChange(UxonObject $value) : CalculatingBehavior
+    {
+        $this->onlyIfAttributesChange = $value->toArray();
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasRestrictionOnAttributeChange() : bool
+    {
+        return !empty($this->getOnlyIfAttributesChange());
     }
 
     /**
