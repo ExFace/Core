@@ -313,6 +313,7 @@ JS;
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
+        $wrapCaptions = $this->escapeBool(!$widget->getNowrapCaptions());
         $disabledJs = $widget->isDisabled() ? 'true' : 'false';
         
         if (($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute()) {
@@ -361,6 +362,10 @@ JS;
 
             if (oWidget !== undefined && oWidget.isDisabled() === true) {
                 {$this->buildJsSetDisabled(true)}
+            }
+
+            if ({$wrapCaptions} === true) {
+                jqSelf.addClass('exf-wrap-captions');
             }
 
             // add hitboxes for dropdowns here once on load, as exfWidget might not be there yet
