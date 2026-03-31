@@ -6,7 +6,10 @@ use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Exceptions\DataSources\DataQueryForeignKeyError;
+use exface\Core\Exceptions\DataSources\DataQueryNotNullConstraintError;
 use exface\Core\Exceptions\DataSources\MsSqlError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\ModelBuilders\MsSqlModelBuilder;
@@ -291,32 +294,52 @@ class MsSqlConnector extends AbstractSqlConnector
      * @param string $message
      * @return DataQueryExceptionInterface
      */
+    /**
+     *
+     * @param DataQueryInterface $query
+     * @param string|null $message
+     * @return DataQueryExceptionInterface
+     */
     protected function createQueryError(DataQueryInterface $query, string $message = null) : DataQueryExceptionInterface
     {
-        $err = $this->getLastErrorException();
-        if ($message === null) {
-            $message = $err->getMessage();
-        } else {
-            $message = StringDataType::endSentence($message) . ' SQL error: ' . $err->getMessage();
-        }
-        
-        switch ($err->getSqlErrorCode()) {
-            // Cannot perform an aggregate function on an expression containing an aggregate or a subquery
-            case 130:
-                return new DataQueryFailedError($query, $message, null, $err->setAlias('84RWYLO'));
-            case 512:
-                return new DataQueryRelationCardinalityError($query, $message, null, $err->setAlias('7W2J960'));
-            case 2627:
-            case 2601:
-                return new DataQueryUniqueConstraintError($query, $this, $message, null, $err->setAlias('73II64M'));
-            // Subquery returns more than 1 row - SQL error code 1242
-            case 1242:
-                return new DataQueryRelationCardinalityError($query, $message, $err);
+        $message = 'MsSQL query failed. ' . $message;
+        $e = new MsSqlError($this, $message, '6T2T2UI', null);
+        $obj = $e->getAffectedObject();
+        $attrVals = $e->getAffectedAttributeValues();
+        $sqlState = intval($e->getSqlState());
+        $sqlErrorCode = intval($e->getSqlErrorCode());
+
+        switch (true) {
+            case $sqlState === 23000 && ($sqlErrorCode === 2601 || $sqlErrorCode === 2627):
+                $e = new DataQueryUniqueConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+
+            case $sqlState === 23000 && $sqlErrorCode === 547:
+                $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+
+            case $sqlState === 23000 && $sqlErrorCode === 515:
+                $e = new DataQueryNotNullConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+
+            case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
+            case $sqlState === 23514: // CHECK VIOLATION
+            case $sqlState === 23001: // RESTRICT VIOLATION
+                $e = new DataQueryConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+
+            case $sqlErrorCode === 512:
+            case $sqlErrorCode === 1242:
+                $e = new DataQueryRelationCardinalityError($query, $message, null, $e);
+                break;
+
             default:
-                return new DataQueryFailedError($query, $message, null, $err->setAlias('6T2T2UI'));
+                $e = new DataQueryFailedError($query, $message, null, $e);
+                break;
         }
+
+        return $e;
     }
-    
     /**
      *
      * {@inheritDoc}

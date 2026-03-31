@@ -31,6 +31,7 @@ class PostgreSqlError extends RuntimeException implements DataConnectorException
 {
     const SQL_STATE_UNIQUE_VIOLATION = 23505;
     const SQL_STATE_FOREIGN_KEY_VIOLATION = 23503;
+    const SQL_STATE_NOT_NULL_VIOLATION = 23502;
     
     private PostgreSqlConnector $connector;
     private string $errorMessage;
@@ -205,6 +206,13 @@ MD;
             case self::SQL_STATE_FOREIGN_KEY_VIOLATION:
                 $keyVals = $this->parsePgUniqueViolationKeys($this->details['MESSAGE_DETAIL']);
                 return $keyVals;
+            case self::SQL_STATE_NOT_NULL_VIOLATION:
+                $col = $this->details['COLUMN_NAME'] ?? null;
+                if($col === null) {
+                    return null;
+                }else{
+                    return [$col => null];
+                }
             default:
                 $col = $this->details['COLUMN_NAME'] ?? null;
                 return $col === null ? null : [$col];
