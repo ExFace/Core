@@ -859,7 +859,7 @@ class Map extends AbstractWidget implements
      * 
      * @uxon-property show_full_screen_button
      * @uxon-type boolean
-     * @uxon-defaul true
+     * @uxon-default true
      * 
      * @param bool $value
      * @return Map
