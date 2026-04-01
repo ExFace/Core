@@ -60,6 +60,8 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
     private $rowNumberColumn = null;
 
     private $doNotValidateDynamically = false;
+
+    private $nowrap_captions = true;
     
     /**
      * 
@@ -325,6 +327,30 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
     public function getDoNotValidateDynamically() : bool
     {
         return $this->doNotValidateDynamically;
+    }
+
+    /**
+     * Set to FALSE to allow caption text to wrap in column headers. Default is TRUE, which means text will have an overflow with ellipsis (...)
+     * 
+     * @uxon-property nowrap_captions
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataSpreadSheet
+     */
+    public function setNowrapCaptions(bool $value) : DataSpreadSheet
+    {
+        $this->nowrap_captions = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getNowrapCaptions() : bool
+    {
+        return $this->nowrap_captions;
     }
     
     /**
