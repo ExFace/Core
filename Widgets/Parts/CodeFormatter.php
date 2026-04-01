@@ -123,7 +123,7 @@ class CodeFormatter implements WidgetPartInterface
      * 
      * @uxon-property prettify
      * @uxon-type boolean
-     * @uxon-defaul true
+     * @uxon-default true
      * 
      * @param bool $prettify
      * @return $this
@@ -148,7 +148,7 @@ class CodeFormatter implements WidgetPartInterface
      * 
      * @uxon-property colorize
      * @uxon-type boolean
-     * @uxon-defaul true
+     * @uxon-default true
      * 
      * @param bool $colorize
      * @return $this
