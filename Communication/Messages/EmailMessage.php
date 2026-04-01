@@ -349,4 +349,45 @@ class EmailMessage extends TextMessage
         $this->attachmentPath = $value;
         return $this;
     }
+
+    /**
+     * List of files to attach
+     * 
+     * ```
+     * {
+     *     "attachments": [
+     *          "C:\wamp\www\exface\data\file1.txt",
+     *          "metamodel://my.app.ObjectAlias/uid_of_file/filename.ext",
+     *          "file://c/wamp/www/exface/data/file1.txt",
+     *          "ftp://folder/file.ext"
+     *     ]
+     * }
+     * 
+     * ```
+     * 
+     * Here is how you would write a message template in a NotifyingBehavior if you have an
+     * object with an `FileAttachmentBehavior`. Since an attachment is actually a file itself,
+     * it is enough to reference the UID of the attachment and the message will have access to
+     * the file contents, name, mime type, etc.
+     * 
+     * ```
+     *  {
+     *      "attachments": [
+     *           "metamodel://my.app.ObjectAlias/[#~input:Id#]/*"
+     *      ]
+     *  }
+     *
+     *  ```
+     * 
+     * @uxon-proeprty attachments
+     * @uxon-type string[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $uxonArray
+     * @return EmailMessage
+     */
+    public function setAttachments(UxonObject $uxonArray) : EmailMessage
+    {
+        // TODO
+    }
 }
