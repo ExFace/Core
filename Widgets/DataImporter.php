@@ -153,6 +153,8 @@ class DataImporter extends AbstractWidget implements
     private $required = false;
 
     private $doNotValidateDynamically = false;
+
+    private $nowrap_captions = true;
     
     /**
      * 
@@ -213,6 +215,30 @@ class DataImporter extends AbstractWidget implements
     public function getDoNotValidateDynamically() : bool
     {
         return $this->doNotValidateDynamically;
+    }
+
+    /**
+     * Set to FALSE to allow caption text to wrap in column headers. Default is TRUE, which means text will have an overflow with ellipsis (...)
+     * 
+     * @uxon-property nowrap_captions
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataImporter
+     */
+    public function setNowrapCaptions(bool $value) : DataImporter
+    {
+        $this->nowrap_captions = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getNowrapCaptions() : bool
+    {
+        return $this->nowrap_captions;
     }
     
     /**
