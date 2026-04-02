@@ -9,23 +9,25 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 
 /**
  * DataTimelineHeader configuration can set different date formats (ICU) for a DataTimeline header.
+ * The frist element in the header_lines array is rendered at the top, the next below etc.
  * 
  * - `interval` - This sets an interval that covers a specific time period, such as a month.
  * - `date_format` - sets the date format.
  * - `date_format_at_border` - formats the borders of a chosen interval with different date format.
  * 
  * ## Examples
+ * 
+ * In frappe-gantt, to show a timeline with months at the top and days below:
  * ```
  *      "header_lines": [
  *          {
  *              "interval": "month",
  *              "date_format": "",
- *              "date_format_at_border": "MMM"
+ *              "date_format_at_border": "MMMM"
  *          },
  *          {
- *              "interval": "month",
- *              "date_format": "d",
- *              "date_format_at_border": "d MMM"
+ *              "interval": "day",
+ *              "date_format": "dd",
  *          }
  *      ]
  * ```
@@ -72,12 +74,12 @@ class DataTimelineHeader implements WidgetPartInterface
     {
         return $this->interval;
     }
-
+    
     /**
      * Sets the interval of the header that is used for the border formats.
      * 
      * @uxon-property interval
-     * @uxon-type [day,month,week,year]
+     * @uxon-type [day,month,week,year,decade]
      * @uxon-default day
      * 
      * @param string $interval
@@ -99,9 +101,22 @@ class DataTimelineHeader implements WidgetPartInterface
     
     /**
      * Sets the date format of the header. 
-     * Example for 17.12.2025: 'M' -> '12' and 'MMM' -> 'Dez.'.
+     * Example for 08.02.2025: 
+     * - 'd' -> 8,
+     * - 'dd' -> 08, 
+     * - 'ddd' -> 39 (day of the year)
+     * - 'M' -> 2,
+     * - 'MM' -> '02', 
+     * - 'MMM' -> 'Feb.', 
+     * - 'MMMM' -> 'Februar', 
+     * - 'yy' -> 25,
+     * - 'yyyy' -> 2025
      * 
      * Search for "ICU" to learn more about the format settings.
+     * 
+     * Special tokens:
+     * - '~weekRange': shows the week range from Monday to Sunday. Example: 01.03 - 07.03
+     * - '~decade': shows decades. Example: 2020, 2030, ...
      *
      * 
      * @uxon-property date_format
@@ -128,6 +143,8 @@ class DataTimelineHeader implements WidgetPartInterface
      * Sets the border format of an interval. 
      * Example: If Interval == month -> sets the date format only for the column where the month changes.
      * 
+     * For more information, see 'date_format' documentation.
+     * 
      * @uxon-property date_format_at_border
      * @uxon-type string
      * 
@@ -148,8 +165,9 @@ class DataTimelineHeader implements WidgetPartInterface
         switch ($value) {
             case 'day': $value = DataTimeline::INTERVAL_DAY; break;
             case 'month': $value = DataTimeline::INTERVAL_MONTH; break;
-            case 'weer':  $value = DataTimeline::INTERVAL_WEEK; break;
+            case 'week':  $value = DataTimeline::INTERVAL_WEEK; break;
             case 'year': $value = DataTimeline::INTERVAL_YEAR; break;
+            case 'decade': $value = DataTimeline::INTERVAL_DECADE; break;
         }
         
         $const = DataTimeline::class . '::INTERVAL_' . strtoupper($value);
