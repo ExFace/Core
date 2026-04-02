@@ -49,7 +49,7 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $name = null;
     
     protected bool $isInProgress = false;
-
+    
     /**
      * Disable this behavior type for the specified object.
      * 
@@ -252,6 +252,23 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function register() : BehaviorInterface
     {
+        $behaviorList = $this->getObject()->getBehaviors();
+        $classList = [];
+        foreach ($behaviorList as $key => $behavior) {
+            if($behavior->isDisabled()) {
+                $behaviorList->remove($behavior);
+                continue;
+            }
+
+            $classList[$key] = get_class($behavior);
+        }
+        
+        // TODO Doing this here ensures that dependencies are always resolved and up-to-date. However, whenever a
+        // TODO new behavior is registered, all dependencies must be re-resolved, which might be expensive.
+        foreach ($behaviorList as $behavior) {
+            $behavior->resolveDependencies($behaviorList, $classList);
+        }
+        
         $this->registerEventListeners();
         $this->setRegistered(true);
         return $this;
@@ -451,5 +468,30 @@ abstract class AbstractBehavior implements BehaviorInterface
     {
         $this->name = $name;
         return $this;
+    }
+
+    /**
+     * Returns an array with dependencies to be resolved.
+     * 
+     * Override this method (and merge results with the parent) to
+     * add new dependencies.
+     * 
+     * @return array
+     */
+    protected function getDependencies() : array
+    {
+        return [];
+    }
+
+    /**
+     * @param BehaviorListInterface $behaviorList
+     * @param array                 $classList
+     * @return void
+     */
+    protected function resolveDependencies(BehaviorListInterface $behaviorList, array $classList) : void
+    {
+        foreach ($this->getDependencies() as $dependency) {
+            $dependency->resolve($this, $behaviorList, $classList);
+        }
     }
 }
