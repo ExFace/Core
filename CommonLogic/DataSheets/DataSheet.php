@@ -3773,6 +3773,66 @@ class DataSheet implements DataSheetInterface
         }
         return $diffRows;
     }
+
+    /**
+     * Like `getRowsDiff()`, but with additional info on the diffed rows.
+     * 
+     * @param DataSheetInterface $otherSheet
+     * @param array              $exclude
+     * @return array
+     */
+    public function getRowsDiffWithInfo(DataSheetInterface $otherSheet, array $exclude = []) : array
+    {
+        $diffRows = [];
+        $diffIdxs = [];
+
+        $excludeColumns = [];
+        foreach ($exclude as $excl) {
+            switch (true) {
+                case $excl instanceof MetaAttributeInterface:
+                    if ($col = $this->getColumns()->getByAttribute($excl)) {
+                        $excludeColumns[] = $col;
+                    }
+                    break;
+                case $excl instanceof DataColumnInterface:
+                    $excludeColumns[] = $excl;
+                    break;
+                default:
+                    if ($col = $this->getColumns()->getByExpression($excl)) {
+                        $excludeColumns[] = $col;
+                    }
+                    break;
+            }
+        }
+
+        $cols = [];
+        foreach ($this->getColumns() as $thisCol) {
+            if (in_array($thisCol, $excludeColumns)) {
+                continue;
+            }
+            if ($otherCol = $otherSheet->getColumns()->get($thisCol->getName())) {
+                $idxs = array_keys($thisCol->diffRows($otherCol));
+                $diffIdxs = array_merge($diffIdxs, $idxs);
+                
+                if(!empty($idxs)) {
+                    $cols[] = $thisCol->getAttributeAlias();
+                }
+            } else {
+                $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->getValues(false)));
+            }
+        }
+        
+        $diffIdxs = array_unique($diffIdxs);
+        sort($diffIdxs);
+        foreach ($diffIdxs as $i) {
+            $diffRows[$i] = $this->getRow($i);
+        }
+        
+        return [
+            'cols' => $cols,
+            'rows' => $diffRows
+        ];
+    }
     
     /**
      * 
