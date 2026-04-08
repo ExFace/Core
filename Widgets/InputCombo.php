@@ -200,9 +200,10 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                 // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
                 $textPrefillExpr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), MetaAttributeInterface::OBJECT_LABEL_ALIAS);
             } else {
+                // FIXME doesnt work right now, sometimes the InputComboTable is not showing the selected value
                 // If we still don't have a text column, but there is a value column AND the text attribute is the same
                 // as the value attribute
-                if ($valuePrefillCol && $this->getTextAttributeAlias() === $this->getAttributeAlias()) {
+                if ($valuePrefillCol && $this->getTextAttributeAlias() === $this->getValueAttributeAlias()) {
                     $textPrefillExpr = $valuePrefillCol->getExpressionObj();
                 }
             }
