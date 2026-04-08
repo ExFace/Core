@@ -246,6 +246,20 @@ class SmtpConnector extends AbstractDataConnector implements CommunicationConnec
             if ($attachmentPath = $message->getAttachmentPath()) {
                 $email->attachFromPath($attachmentPath);
             }
+
+            if($attachments = $message->getAttachments()) {
+                foreach ($attachments as $attachment) {
+                    if(!$attachment->exists()) {
+                        continue;
+                    }
+                    
+                    $email->attach(
+                        $attachment->openFile()->read(),
+                        $attachment->getFilename(true),
+                        $attachment->getMimetype()
+                    );
+                }
+            }
             
             $email->subject($message->getSubject() ?? '');
         }
@@ -262,7 +276,6 @@ class SmtpConnector extends AbstractDataConnector implements CommunicationConnec
         $footer = $this->getFooter();
         $header = $this->getHeader();
         if (HtmlDataType::isValueHtml($body)) {
-            $footer = ($footer !== null ? '<footer>' . $footer . '</footer>': '');
             $footer = ($header !== null ? '<header>' . $header . '</header>': '');
             $email->html($header . $body . $footer);
         } else {
