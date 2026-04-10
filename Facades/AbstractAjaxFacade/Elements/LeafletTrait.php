@@ -792,7 +792,10 @@ JS;
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
 
         // Add clustering
-        $isClusteringMarkers = $layer->isClusteringMarkers() ?? false;
+        $isClusteringMarkers = false;
+        if ($layer instanceof MarkerMapLayerInterface) {
+            $isClusteringMarkers = $layer->isClusteringMarkers() ?? false;
+        }
         if (($layer instanceof MarkerMapLayerInterface) && $isClusteringMarkers) {
             $clusterInitJs = <<<JS
 L.markerClusterGroup({
@@ -1035,7 +1038,8 @@ JS;
                             }                            
                             
                             // create markers for eacht top coordinate of every geometry within our geoJSON
-                            const markerCoords = topMostCoordinates(feature);                            
+                            const markerCoords = topMostCoordinates(feature);
+                            oClusterLayer?.clearLayers();                            
                             for (const [lng, lat] of markerCoords) {
                                 const oMarker = L.marker([lat, lng], {
                                     icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
