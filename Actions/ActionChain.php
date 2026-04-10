@@ -530,7 +530,16 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      */
     public function getInputRowsMax()
     {
-        return parent::getInputRowsMax() ?? $this->getActionFirst()->getInputRowsMax();
+        return $this->getInputRowsMaxFromParent() ?? $this->getActionFirst()->getInputRowsMax();
+    }
+
+    /**
+     * Returns the defined input rows max for the chain, not regarding the actiosn in the chain
+     * @return int
+     */
+    protected function getInputRowsMaxFromParent()
+    {
+        return parent::getInputRowsMax();
     }
 
     /**

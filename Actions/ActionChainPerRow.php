@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
@@ -59,5 +60,15 @@ class ActionChainPerRow extends ActionChain implements iCallOtherActions
         // TODO maybe enhance output to show output of every signle result for debbuging purposes
         $combinedResult->setMessage("Action chain performed for {$resultCount} rows seperately.");
         return $combinedResult;        
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getInputRowsMax()
+     */
+    public function getInputRowsMax()
+    {
+        return $this->getInputRowsMaxFromParent();
     }
 }
