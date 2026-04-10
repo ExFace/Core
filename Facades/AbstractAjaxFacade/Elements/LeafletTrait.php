@@ -792,7 +792,8 @@ JS;
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
 
         // Add clustering
-        if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
+        $isClusteringMarkers = $layer->isClusteringMarkers() ?? false;
+        if (($layer instanceof MarkerMapLayerInterface) && $isClusteringMarkers) {
             $clusterInitJs = <<<JS
 L.markerClusterGroup({
                     iconCreateFunction: {$this->buildJsClusterIcon($layer, 'cluster')},
@@ -847,10 +848,10 @@ function() {
                     
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();
-                    if (oClusterLayer !== null) {
+                    oLayer.addData(aGeoJson);
+                    if ('{$isClusteringMarkers}') {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
-                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 }
                 
@@ -865,10 +866,10 @@ JS;
                     var aRowsSkipped = [];
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();    
-                    if (oClusterLayer !== null) {
+                    oLayer.addData(aGeoJson);
+                    if ('{$isClusteringMarkers}') {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
-                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
