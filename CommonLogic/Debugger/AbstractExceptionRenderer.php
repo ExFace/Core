@@ -281,7 +281,7 @@ abstract class AbstractExceptionRenderer
         
         $prevs = $this->getAllPrevious();
         $length = count($prevs) + 1;
-        foreach (array_reverse(array_merge([$this], $prevs)) as $i => $exception) {
+        foreach (array_merge([$this], $prevs) as $i => $exception) {
             if (! $next) {
                 $next = true;
             }
@@ -298,7 +298,16 @@ abstract class AbstractExceptionRenderer
 
             // Stack trace
             if ($includeTrace === true && ($onlyBottomTrace === false || $length === ($i + 1))) {
-                $message .= "\n" . StringDataType::indent($exception->getTraceAsString(), '  ') . "\n\n";
+                $trace = $exception->getTraceAsString();
+                // Remove the absolute path to the vendor directory from the stack trace, as it is not relevant for
+                // debugging and clutters the output.
+                $vendorFolder = DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
+                $vendorPath = StringDataType::substringBefore(__FILE__, $vendorFolder , false);
+                if ($vendorPath !== false) {
+                    $vendorPath .= $vendorFolder;
+                    $trace = str_replace(' ' . $vendorPath, ' ', $trace);
+                }
+                $message .= "\n" . StringDataType::indent($trace, '  ') . "\n\n";
             } else {
                 $message .= "\n";
             }
