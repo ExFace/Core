@@ -2,6 +2,9 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -16,8 +19,11 @@ use exface\Core\Factories\ResultFactory;
  * 
  * The following events are supported:
  * 
+ * - `exface.Core.DataSheet.OnBeforeCreateData`
  * - `exface.Core.DataSheet.OnCreateData`
+ * - `exface.Core.DataSheet.OnBeforeUpdateData`
  * - `exface.Core.DataSheet.OnUpdateData`
+ * - `exface.Core.DataSheet.OnBeforeDeleteData`
  * - `exface.Core.DataSheet.OnDeleteData`
  *
  * @author Andrej Kabachnik
@@ -40,19 +46,32 @@ class CallEvent extends AbstractAction
     {
         $eventMgr = $this->getWorkbench()->eventManager();
         $dataSheet = $this->getInputDataSheet($task);
+        // TODO replace this switch() with an EventFactory.
+        // Since all events have different constructor arguments, we could use the `GenericUxonFactory`,
+        // which is capable of transforming UXON into PHP constructors.
         switch ($this->getEventName()) {
+            case OnBeforeCreateDataEvent::getEventName():
+                $event = new OnBeforeCreateDataEvent($dataSheet, $transaction);
+                break;
             case OnCreateDataEvent::getEventName():
-                $eventMgr->dispatch(new OnCreateDataEvent($dataSheet, $transaction));
+                $event = new OnCreateDataEvent($dataSheet, $transaction);
+                break;
+            case OnBeforeUpdateDataEvent::getEventName():
+                $event = new OnBeforeUpdateDataEvent($dataSheet, $transaction);
                 break;
             case OnUpdateDataEvent::getEventName():
-                $eventMgr->dispatch(new OnUpdateDataEvent($dataSheet, $transaction));
+                $event = new OnUpdateDataEvent($dataSheet, $transaction);
+                break;
+            case OnBeforeDeleteDataEvent::getEventName():
+                $event = new OnBeforeDeleteDataEvent($dataSheet, $transaction);
                 break;
             case OnDeleteDataEvent::getEventName():
-                $eventMgr->dispatch(new OnDeleteDataEvent($dataSheet, $transaction));
+                $event = new OnDeleteDataEvent($dataSheet, $transaction);
                 break;
             default:
                 throw new ActionConfigurationError($this, 'Cannot fire event "' . $this->getEventName() . '" via action "' . $this->getAliasWithNamespace() . '": this type of event is not supported!');
         }
+        $eventMgr->dispatch($event);
         $result = ResultFactory::createDataResult($task, $dataSheet, 'Event "' . $this->getEventName() . '" fired.');
         return $result;
     }

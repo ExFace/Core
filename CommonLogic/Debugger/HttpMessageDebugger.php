@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger;
 
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
@@ -22,25 +21,22 @@ use exface\Core\DataTypes\ByteSizeDataType;
 class HttpMessageDebugger implements iCanGenerateDebugWidgets
 {
     const MAX_BODY_PRINT_SIZE = 100*1024; // 100 kb in bytes
-    
     const MAX_PARAM_PRINT_SIZE = 10*1024; // 10 kb in bytes 
     
-    private $request = null;
+    private ?RequestInterface $request = null;
+    private ?string $requestTabCaption = null;
     
-    private $requestTabCaption = null;
-    
-    private $response = null;
-    
-    private $responseTabCaption = null;
-    
+    private ?ResponseInterface $response = null;
+    private ?string $responseTabCaption = null;
+
     /**
-     * 
-     * @param RequestInterface $psr7Request
-     * @param ResponseInterface $psr7Response
-     * @param string $requestTabCaption
-     * @param string $responseTabCaption
+     *
+     * @param RequestInterface|null $psr7Request
+     * @param ResponseInterface|null $psr7Response
+     * @param string|null $requestTabCaption
+     * @param string|null $responseTabCaption
      */
-    public function __construct(RequestInterface $psr7Request, ResponseInterface $psr7Response = null, string $requestTabCaption = null, string $responseTabCaption = null)
+    public function __construct(?RequestInterface $psr7Request = null, ?ResponseInterface $psr7Response = null, string $requestTabCaption = null, string $responseTabCaption = null)
     {
         $this->request = $psr7Request;
         $this->response = $psr7Response;
@@ -58,34 +54,35 @@ class HttpMessageDebugger implements iCanGenerateDebugWidgets
         $page = $debug_widget->getPage();
         
         // Request
-        $request_tab = $debug_widget->createTab();
-        $request_tab->setCaption($this->requestTabCaption ?? 'HTTP-Request');
-        try {
-            $url = $this->request->getUri()->__toString();
-        } catch (\Throwable $e) {
-            $url = 'Unavailable: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
-        }
-        $request_widget = WidgetFactory::create($page, 'Markdown', $request_tab);
-        
-        $serverParams = '';
-        if (($this->request instanceof ServerRequestInterface) && $debug_widget->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_SERVER_PARAMS') === true) {
-            $serverParams = <<<MD
+        if ($this->request !== null) {
+            $request_tab = $debug_widget->createTab();
+            $request_tab->setCaption($this->requestTabCaption ?? 'HTTP-Request');
+            try {
+                $url = $this->request->getUri()->__toString();
+            } catch (\Throwable $e) {
+                $url = 'Unavailable: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+            }
+            $request_widget = WidgetFactory::create($page, 'Markdown', $request_tab);
+
+            $serverParams = '';
+            if (($this->request instanceof ServerRequestInterface) && $debug_widget->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_SERVER_PARAMS') === true) {
+                $serverParams = <<<MD
 
 ## Server parameters
 {$this->buildMarkdownServerParams($this->request)}
 MD;
-        }
-        
-        $urlParams = '';
-        if ($query = $this->request->getUri()->getQuery()) {
-            $urlParams = <<<MD
+            }
+
+            $urlParams = '';
+            if ($query = $this->request->getUri()->getQuery()) {
+                $urlParams = <<<MD
             
 ```
 ?{$this->prettifyUrlParams($query)}
 ```
 MD;
-        }
-        $request_widget->setValue(<<<MD
+            }
+            $request_widget->setValue(<<<MD
 ## Request URL
             
 [{$url}]({$url}){$urlParams}
@@ -98,33 +95,36 @@ MD;
 
 {$this->buildMarkdownMessageBody($this->request)}
 
-MD);
-$request_widget->setWidth('100%');
-$request_tab->addWidget($request_widget);
-$debug_widget->addTab($request_tab);
+MD
+            );
+            $request_widget->setWidth('100%');
+            $request_tab->addWidget($request_widget);
+            $debug_widget->addTab($request_tab);
+        }
 
-// Response
-if ($this->response !== null) {
-    $response_tab = $debug_widget->createTab();
-    $response_tab->setCaption($this->responseTabCaption ?? 'HTTP-Response');
+        // Response
+        if ($this->response !== null) {
+            $response_tab = $debug_widget->createTab();
+            $response_tab->setCaption($this->responseTabCaption ?? 'HTTP-Response');
+            
+            $response_widget = WidgetFactory::create($page, 'Markdown', $response_tab);
+            $response_widget->setValue(<<<MD
+## Response headers
     
-    $response_widget = WidgetFactory::create($page, 'Markdown', $response_tab);
-    $response_widget->setValue(<<<MD
-    ## Response headers
+{$this->buildMarkdownResponseHeaders($this->response)}
+
+## Response body
+
+{$this->buildMarkdownMessageBody($this->response)}
+
+MD
+            );
+            $response_widget->setWidth('100%');
+            $response_tab->addWidget($response_widget);
+            $debug_widget->addTab($response_tab);
+        }
         
-    {$this->buildMarkdownResponseHeaders($this->response)}
-    
-    ## Response body
-    
-    {$this->buildMarkdownMessageBody($this->response)}
-    
-    MD);
-    $response_widget->setWidth('100%');
-    $response_tab->addWidget($response_widget);
-    $debug_widget->addTab($response_tab);
-}
-
-return $debug_widget;
+        return $debug_widget;
     }
     
     /**

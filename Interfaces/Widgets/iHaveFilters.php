@@ -9,6 +9,9 @@ interface iHaveFilters extends WidgetInterface
 
     public function addFilter(WidgetInterface $filter_widget) : iHaveFilters;
 
+    /**
+     * @return iFilterData[]
+     */
     public function getFilters() : array;
     
     /**

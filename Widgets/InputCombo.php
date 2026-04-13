@@ -169,8 +169,8 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         
         // If the prefill data is based on the same object, as the widget and has a column matching
         // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
-        if ($col = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
-            $valuePointer = DataPointerFactory::createFromColumn($col, 0);
+        if ($valuePrefillCol = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
+            $valuePointer = DataPointerFactory::createFromColumn($valuePrefillCol, 0);
             $value = $valuePointer->getValue(true, $this->getMultiSelectValueDelimiter(), true);
             
             // If it is a single-select but the prefill has multiple values (either explicitly or as a delimited list),
@@ -187,26 +187,36 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
         // set it here. In most facades, setting merely the value of the combo will make the facade load the
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
+        $textPrefillExpr = null;
         if ($this->getAttribute()->isRelation()) {
+            $textCol = $this->getTextColumn();
             // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-            $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
-            // If the column we would need is not there and it's the label column (which is very probable), it might just be named differently
-            // Many DataSheets include relation__LABEL columns but may not inlcude a column with the alias of the label attribute. It's worth
-            // trying this trick to prevent additional queries to the data source just to find the text for the combo value!
-            if (! $data_sheet->getColumns()->getByExpression($text_column_expr) && $this->getTextColumn()->getAttribute()->isLabelForObject() === true) {
+            $textPrefillExpr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), $textCol->getAttributeAlias());
+            // If the column we needed is not there, and it's the label column (which is very probable), it might
+            // just be named differently Many DataSheets include relation__LABEL columns but may not include a column
+            // with the alias of the label attribute. It's worth trying this trick to prevent additional queries to the
+            // data source just to find the text for the combo value!
+            if (! $data_sheet->getColumns()->getByExpression($textPrefillExpr) && $textCol->getAttribute()->isLabelForObject() === true) {
                 // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-                $text_column_expr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), MetaAttributeInterface::OBJECT_LABEL_ALIAS);
+                $textPrefillExpr = RelationPath::join($this->getAttribute()->getAliasWithRelationPath(), MetaAttributeInterface::OBJECT_LABEL_ALIAS);
+            } else {
+                // FIXME doesnt work right now, sometimes the InputComboTable is not showing the selected value
+                // If we still don't have a text column, but there is a value column AND the text attribute is the same
+                // as the value attribute
+                if ($valuePrefillCol && $this->getTextAttributeAlias() === $this->getValueAttributeAlias()) {
+                    $textPrefillExpr = $valuePrefillCol->getExpressionObj();
+                }
             }
         } elseif ($this->getMetaObject()->isExactly($this->getOptionsObject())) {
-            $text_column_expr = $this->getTextColumn()->getExpression()->toString();
+            $textPrefillExpr = $this->getTextColumn()->getExpression()->toString();
         }
         
-        if ($text_column_expr && $col = $data_sheet->getColumns()->getByExpression($text_column_expr)) {
-            $textPointer = DataPointerFactory::createFromColumn($col, 0);
+        // Assign a label to `value_text`.
+        if ($textPrefillExpr && $textPrefillCol = $data_sheet->getColumns()->getByExpression($textPrefillExpr)) {
+            $textPointer = DataPointerFactory::createFromColumn($textPrefillCol, 0);
             $this->setValueText($textPointer->getValue());
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $textPointer));
         }
-        return;
     }
     
     /**

@@ -57,15 +57,18 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
                 $items[] = [
                     'type' => 'directory',
                     'title' => $title,
+                    'sort_key' => $this->extractSortKey($title),
                     'link' => $link,
                     'full_path' => $folderIndex,
                     'relative_path' => $this->relativePath($filePath, $directory),
                     'children' => $this->scanMarkdownDirectory($filePath, $maxDepth, $currentDepth + 1, $relativePath . $file),
                 ];
             } elseif (pathinfo($filePath, PATHINFO_EXTENSION) === 'md') {
+                $title = MarkdownDataType::findHeadOfFile($filePath);
                 $items[] = [
                     'type' => 'file',
-                    'title' => MarkdownDataType::findHeadOfFile($filePath),
+                    'title' => $title,
+                    'sort_key' => $this->extractSortKey($title),
                     'link' => $relativePath . $this->relativePath($filePath, $directory),
                     'full_path' => $filePath,
                     'relative_path' => $relativePath . $this->relativePath($filePath, $directory),
@@ -73,8 +76,32 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
             }
         }
         $sorter = new RowDataArraySorter();
-        $sorter->addCriteria('title', SORT_ASC);
+        $sorter->addCriteria('sort_key', SORT_ASC);
         return $sorter->sort($items);
+    }
+
+    /**
+     * Extracts a zero-padded sort key from a numbered title for natural ordering.
+     *
+     *  Supports arbitrary depth (e.g. 1, 1.2, 1.10.3) and falls back
+     *  to alphabetical ordering for unnumbered titles.
+     *
+     *  Examples:
+     *    "1.10 Foo"  -> "00001.00010"
+     *    "1.2.1 Bar" -> "00001.00002.00001"
+     *    "Intro"     -> "zzzzz.Intro"
+     * @param string $title
+     * @return string
+     */
+    private function extractSortKey(string $title): string
+    {
+        if (preg_match('/^([\d]+(?:\.[\d]+)*)/', trim($title), $matches)) {
+            $parts = explode('.', $matches[1]);
+            $padded = array_map(fn($p) => str_pad($p, 5, '0', STR_PAD_LEFT), $parts);
+            return implode('.', $padded);
+        }
+
+        return 'zzzzz.' . $title;
     }
     
     function getFlattenMarkdownFiles(string $rootDir) : array

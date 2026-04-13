@@ -10,7 +10,6 @@ use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
@@ -1502,10 +1501,15 @@ JS;
      */
     protected function buildJsColumnBarChartProperties (ColumnChartSeries $series) : string
     {
-        if ($series->getColor() !== null) {
-            $color = "itemStyle: { color: '{$series->getColor()}' },";
-        } else {
-            $color = '';
+        switch (true) {
+            case $series->getColor() !== null:
+                $itemStyle = "itemStyle: { color: '{$series->getColor()}' },";
+                break;
+            case ($series->getYDataColumn()->getCellWidget() instanceof iHaveColorScale) && $series->getYDataColumn()->getCellWidget()->hasColorScale():
+                $itemStyle = "itemStyle: { color: {$this->buildJsColumnColorFunction($series->getYDataColumn(), false)} },";
+                break;
+            default:
+                $itemStyle = '';
         }
         
         $getFormattedValueJs = 'var value = ' . $this->buildJsGetFormattedValue($series, 'params.value.' . $series->getValueDataColumn()->getDataColumnName(), 'chart', $series->getShowValues()) . ';';
@@ -1529,7 +1533,7 @@ JS;
     },
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
-    {$color}
+    {$itemStyle}
     {$label}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties($series)}
@@ -1693,30 +1697,10 @@ JS;
         }
         $itemStyleJs = '';
         if ($series->getTextDataColumn()->getCellWidget() instanceof iHaveColorScale) {
-            $semanticColors = $this->getFacade()->getSemanticColors();
-            $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
             $itemStyleJs = <<<JS
 
     itemStyle: {
-        color: function(params) {
-            var oSemanticColors = $semanticColorsJs;
-            var sValue = params.data._key;
-            var sColor = {$this->buildJsScaleResolver('sValue', $series->getTextDataColumn()->getCellWidget()->getColorScale(), $series->getTextDataColumn()->getCellWidget()->isColorScaleRangeBased())};
-            if (sColor !== undefined && sColor.startsWith('~')) {
-                sColor = oSemanticColors[sColor] || '';
-            } 
-            if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
-                return sColor;
-            }
-            var oOptions = {$this->buildJsEChartsVar()}.getOption();
-            var aColors = oOptions.color;
-            var iColorsCount = aColors.length;
-            var iIndex = params.dataIndex;
-            while (iIndex >= iColorsCount) {
-                iIndex = iIndex - iColorsCount;
-            }
-            return aColors[iIndex];
-        }
+        color: {$this->buildJsColumnColorFunction($series->getTextDataColumn(), true, '_key')}
     },
             
 JS;        
@@ -2089,8 +2073,6 @@ JS;
             $onZero = '';
         }
         
-        $isNumericAxisJs = $axis->getDataColumn()->getDataType() instanceof NumberDataType ? 'true' : 'false';
-        
         //initially hide all axes, so they are only shown after calculation for the gaps and everything is done
         return <<<JS
         
@@ -2113,7 +2095,7 @@ JS;
             fontFamily: '{$this->baseAxisLabelFont()}',
             fontSize: {$this->baseAxisLabelFontSize()},
             formatter: function(a) {
-                var bIsNumber = $isNumericAxisJs;
+                var bIsNumber = {$this->escapeBool($this->isAxisNumeric($axis))};
                 if (bIsNumber && Number.isInteger(a)){
                     return a;
                 }
@@ -2362,7 +2344,7 @@ JS;
             // have multiple ticks that look exactly the same if it has few values: e.g. if an integer axis 
             // ends up with a max value of 2, it will probably have ticks for 1, 1 (actually 1.5, but rounded) and 2.
             // DO NOT do this for enums as they also often are integers (e.g. state ids).
-            case ($type instanceof NumberDataType) && ! ($type instanceof EnumDataTypeInterface) && $type->getPrecisionMax() === 0:
+            case $this->isDataNumeric($col) && $type->getPrecisionMax() === 0:
                 $type = DataTypeFactory::createFromString($this->getWorkbench(), NumberDataType::class);
                 // 0.5 -> 0.5, 1.0 -> 1, 1.254 -> 1.25
                 $type->setPrecisionMax(2);
@@ -3949,5 +3931,61 @@ JS;
             return $config->getOption('WIDGET.CHART.COLORS')->toArray();
         }
         return [];
+    }
+    
+    protected function isAxisNumeric(ChartAxis $axis) : bool
+    {
+        return $this->isDataNumeric($axis->getDataColumn());
+    }
+    
+    protected function isDataNumeric(DataColumn $column) : bool
+    {
+        $dataType = $column->getDataType();
+        return ($dataType instanceof NumberDataType) && ! ($dataType instanceof EnumDataTypeInterface);
+    }
+    
+    protected function buildJsColumnColorFunction(DataColumn $column, bool $alternateColors = true, ?string $dataColumnName = null) : string
+    {
+        $cellWidet = $column->getCellWidget();
+        if (($cellWidet instanceof iHaveColorScale) && $cellWidet->hasColorScale()) {
+            $dataColumnName ??= $column->getDataColumnName();
+            $semanticColors = $this->getFacade()->getSemanticColors();
+            $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+            $colorScaleJs = <<<JS
+
+            var oSemanticColors = $semanticColorsJs;
+            var sValue = params.data['$dataColumnName'];
+            var sColor = {$this->buildJsScaleResolver('sValue', $cellWidet->getColorScale(), $cellWidet->isColorScaleRangeBased())};
+            if (sColor !== undefined && sColor.startsWith('~')) {
+                sColor = oSemanticColors[sColor] || '';
+            } 
+            if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
+                return sColor;
+            }
+JS;
+
+        }
+        if ($alternateColors) {
+            $alternateJs = <<<JS
+
+                var oOptions = {$this->buildJsEChartsVar()}.getOption();
+                var aColors = oOptions.color;
+                var iColorsCount = aColors.length;
+                var iIndex = params.dataIndex;
+                while (iIndex >= iColorsCount) {
+                    iIndex = iIndex - iColorsCount;
+                }
+                return aColors[iIndex];
+JS;
+        }
+        
+        return <<<JS
+
+        function(params) {
+            {$colorScaleJs}
+            {$alternateJs}
+            return null;
+        }            
+JS;
     }
 }

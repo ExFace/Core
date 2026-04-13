@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use cebe\markdown\GithubMarkdown;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Traits\iRenderMermaidTrait;
 
 /**
  * Shows markdown contents rendered as HTML.
@@ -19,7 +20,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 class Markdown extends Html
 {
-    private $renderMermaidDiagrams = false;
+    use iRenderMermaidTrait;
+    
     private $openLinksIn = null;
     private $openLinksInPopupWidth = null;
     private $openLinksInPopupHeight = null;
@@ -27,7 +29,6 @@ class Markdown extends Html
     const OPEN_LINKS_IN_SELF = 'self';
     const OPEN_LINKS_IN_POPUP = 'popup';
     const OPEN_LINKS_IN_NEW_TAB = 'new_tab';
-    
     
     /**
      * @return string $markdown
@@ -61,31 +62,6 @@ img {max-width: 100%}
 CSS;
         $css .= parent::getCss();
         return $css;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasRenderMermaidDiagrams() : bool
-    {
-        return $this->renderMermaidDiagrams;
-    }
-    
-    /**
-     * Set to TRUE to render ```mermaid blocks as diagrams
-     * 
-     * @uxon-property render_mermaid_diagrams
-     * @uxon-type boolean
-     * @uxon-default 
-     * 
-     * @param bool $value
-     * @return Markdown
-     */
-    public function setRenderMermaidDiagrams(bool $value) : Markdown
-    {
-        $this->renderMermaidDiagrams = $value;
-        return $this;
     }
     
     /**

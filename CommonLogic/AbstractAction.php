@@ -1557,18 +1557,20 @@ abstract class AbstractAction implements ActionInterface
         $handlesChanges = $this instanceof iModifyData;
         $effects = [];
         $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name, $handlesChanges);
+        
         // If the action is bound to a button, it might also affect objects of the buttons input widget (e.g. dialog)
         // and those of the input of the button that opened that dialog, etc.
         if ($button !== null) {
             $effects = array_merge($effects, $this->getEffectsFromTriggerWidget($button, $this->getMetaObject(), $name, RelationPathFactory::createForObject($this->getMetaObject())));
         }
-        // Totally independently, we need to examine the input widget of the button. If it has data widgets, that
-        // produce subsheets, the action will obviosly also save their changes if it handles changes at all
+        
+        // Totally independently, we need to examine the input widget of the button. 
         if ($handlesChanges === true && ($button instanceof iUseInputWidget)) {
             $actionObj = $this->getMetaObject();
             $buttonInput = $button->getInputWidget();
             $inputDataObj = $buttonInput->getMetaObject();
-            // This can happen in containers only - their data might include subsheets
+            // If it has data widgets, that produce subsheets, the action will obviously also save their changes
+            // if it handles changes at allThis can happen in containers only - their data might include subsheets
             if ($buttonInput instanceof iContainOtherWidgets) {
                 foreach ($buttonInput->getInputWidgets() as $input) {
                     if (($input instanceof iTakeInputAsDataSubsheet) && $input->isSubsheetForObject($inputDataObj)) {
@@ -1596,24 +1598,31 @@ abstract class AbstractAction implements ActionInterface
     protected function getEffectsFromTriggerWidget(iTriggerAction $button, MetaObjectInterface $prevLevelObject, string $prevLevelName, MetaRelationPathInterface $prevLevelRelPath = null) : array
     {
         $effects = [];
+        $effectName = $button->getCaption() ?: $prevLevelName;
         
-        if (! ($name = $button->getCaption())) {
-            $name = $prevLevelName;
-        }
         $thisLevelObject = $button->getMetaObject();
         
         // Add effect on the object of the button triggering this action - if it is based on a different object.
         if ($thisLevelObject !== $prevLevelObject) {
-            if ($prevLevelObject !== $button->getMetaObject()) {
-                $name .= ' > ' . $prevLevelName;
+            if ($prevLevelName !== $effectName && $prevLevelObject !== $button->getMetaObject()) {
+                $effectName .= ' > ' . $prevLevelName;
             }
             $effectUxon = new UxonObject([
-                'name' => $name,
+                'name' => $effectName,
                 'effected_object' => $thisLevelObject->getAliasWithNamespace()
             ]);
+            // If we can find a relation from the previous level to this one, include the relation in the
+            // effect. But watch out for inherited relations: if the relation is inherited, its right object will
+            // not be te object of this level! In this case, add two relation - one with the level object and NO
+            // relation and one with the relation (resulting in an effect on the relations right object).
             $relationFromPrev = null;
             if ($prevLevelRelPath && $relationFromPrev = $prevLevelObject->findRelation($thisLevelObject, true)) {
                 $relPathFromPrev = $prevLevelRelPath->copy()->appendRelation($relationFromPrev);
+                // If the relation does not point to this levels object, add both effects - for the relaiton
+                // and for the level object
+                if ($relationFromPrev->getRightObject() !== $thisLevelObject) {
+                    $effects[] = new ActionEffect($this, $effectUxon->copy());
+                }
                 $effectUxon->setProperty('relation_path_to_effected_object', $relPathFromPrev->toString());
             }
             $effects[] = new ActionEffect($this, $effectUxon);
@@ -1655,7 +1664,7 @@ abstract class AbstractAction implements ActionInterface
             // level objects) - add an effect for it
             if ($inputObject !== $button->getMetaObject() && $inputObject !== $prevLevelObject) {
                 $effectUxon = new UxonObject([
-                    'name' => $name,
+                    'name' => $effectName,
                     'effected_object' => $inputObject->getAliasWithNamespace()
                 ]);
                 if ($inputObjectRelPath) {
@@ -1681,7 +1690,7 @@ abstract class AbstractAction implements ActionInterface
                     }
                     $effects = array_merge(
                         $effects, 
-                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $name, $relPath)
+                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $effectName, $relPath)
                     );
                 }
             }
@@ -2012,7 +2021,7 @@ abstract class AbstractAction implements ActionInterface
             default:
                 throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_action in action');
         }
-        $this->getConfirmations()->addFromUxon($uxon);
+        $this->getConfirmations()->prepend($this->confirmations->createConfirmation($uxon));
         return $this;
     }
 

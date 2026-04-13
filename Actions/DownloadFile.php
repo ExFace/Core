@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -149,6 +150,10 @@ class DownloadFile extends AbstractAction
                 }
                 
                 $content = $contentCol->getValue(0);
+                $contentDataType = $contentCol->getDataType();
+                if ($contentDataType instanceof BinaryDataType) {                    
+                    $content = $contentDataType->convertToBinary($content);
+                }
                 $filename = $filenameCol->getValue(0);
                 if (FilePathDataType::findExtension($filename) === null && $mimeCol) {
                     $mimeType = $mimeCol->getValue(0);

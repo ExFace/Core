@@ -77,6 +77,49 @@ class DataQueryConstraintError extends DataQueryFailedError implements DataConne
 
     protected function generateMessage(MetaObjectInterface $obj) : ?string
     {
-        return null;
+        $translator = $obj->getWorkbench()
+            ->getCoreApp()
+            ->getTranslator();
+
+        $attrAliases = array_keys($this->getAttributeValues());
+        $attrNames = [];
+
+        foreach ($attrAliases as $alias) {
+            try {
+                $attrNames[] = $obj->getAttribute($alias)->getName();
+            } catch (\Throwable $e) {
+                // ignorieren
+            }
+        }
+
+        if (empty($attrNames)) {
+            return $translator->translate(
+                'DATASHEET.ERROR.CONSTRAINT_VIOLATION',
+                [
+                    '%object_name%' => '"' . $obj->getName() . '"'
+                ]
+            );
+        }
+
+        if (count($attrNames) === 1) {
+            return $translator->translate(
+                'DATASHEET.ERROR.CONSTRAINT_VIOLATION_WITH_ATTR',
+                [
+                    '%object_name%' => '"' . $obj->getName() . '"',
+                    '%attr_name%'   => '"' . $attrNames[0] . '"'
+                ]
+            );
+        }
+
+        $last = array_pop($attrNames);
+
+        return $translator->translate(
+            'DATASHEET.ERROR.CONSTRAINT_VIOLATION_WITH_ATTRS',
+            [
+                '%object_name%' => '"' . $obj->getName() . '"',
+                '%attr_list%'   => '"' . implode('", "', $attrNames) . '"',
+                '%attr_last%'   => '"' . $last . '"'
+            ]
+        );
     }
 }

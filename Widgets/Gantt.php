@@ -310,7 +310,7 @@ class Gantt extends DataTree
      * 
      * @uxon-property view_mode_column_width_day
      * @uxon-type integer
-     * @uxon-defaul 38
+     * @uxon-default 38
      * 
      * @param int $value
      * @return $this
@@ -334,7 +334,7 @@ class Gantt extends DataTree
      *
      * @uxon-property view_mode_column_width_week
      * @uxon-type integer
-     * @uxon-defaul 140
+     * @uxon-default 140
      *
      * @param int $value
      * @return $this
@@ -358,7 +358,7 @@ class Gantt extends DataTree
      *
      * @uxon-property view_mode_column_width_month
      * @uxon-type integer
-     * @uxon-defaul 20
+     * @uxon-default 20
      *
      * @param int $value
      * @return $this
@@ -382,7 +382,7 @@ class Gantt extends DataTree
      *
      * @uxon-property view_mode_column_width_year
      * @uxon-type integer
-     * @uxon-defaul 12
+     * @uxon-default 12
      *
      * @param int $value
      * @return $this

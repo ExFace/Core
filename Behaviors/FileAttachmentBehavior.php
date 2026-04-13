@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\Facades\DocsFacade;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -941,14 +942,21 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         }
 
         $this->inProgress = true;
+        $logbook = $this->createLogBook($event);
+        $this->beginWork($event, $logbook);
 
         // See if the relation to the file object (= the path to the file its data source)
         // is already included in the attachment data. If not, we will need to read it here
         // explicitly. This actually happens very often because paths often include UIDs,
         // document numbers and other data from the object being attached to.
+        $logbook->addDataSheet('Event data', $eventSheet);
+        $logbook->addLine('Looking for paths to save `' . $eventSheet->countRows() . '` attachment files');
+        $logbook->addIndent(+1);
         $fileRel = $this->getFileRelation();
+        $logbook->addLine('Relation from "' . $eventSheet->getMetaObject()->getName() . '" to file object [' . $fileRel->getRightObject()->__toString() . '](' . DocsFacade::buildUrlToDocsForMetaObject($fileRel->getRightObject()) . '): `' . $fileRel->getAlias() . '`');
         $leftKeyCol = $eventSheet->getColumns()->getByAttribute($fileRel->getLeftKeyAttribute());
         if (! $leftKeyCol) {
+            $logbook->addLine('Key column `' . $fileRel->getLeftKeyAttribute()->getAliasWithRelationPath() . '` not found - reading file data with an additional `Attachment Sheet`');
             // However, we can only read additional data if our attachment data has UIDs on
             // every row!
             if (! $eventSheet->hasUidColumn(true)) {
@@ -960,6 +968,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
             $leftKeyCol = $attachmentSheet->getColumns()->addFromAttribute($fileRel->getLeftKeyAttribute());
             // At this point we know, that there was no path column. So we need to read it anyway. 
             if (null !== $pathExpr = $this->getFilePathCalculation()) {
+                $logbook->addLine('Path calculation `' . $pathExpr->__toString() . '` found');
                 $calcPathCol = $attachmentSheet->getColumns()->addFromExpression($pathExpr);
                 $attachmentSheet->dataRead();
                 // Fill the path column with calculated paths on rows, that do not have a value yet. If they do,
@@ -976,12 +985,13 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
                 // If we do not have a calculation formula, just read the path column
                 $attachmentSheet->dataRead();
             }
+            $logbook->addDataSheet('Attachment data', $attachmentSheet);
             // IMPORTANT: make sure, the freshly read data has the same row order, as the event
             // data. You never know for sure, how a file storage will sort the results by default!
             try {
                 $attachmentSheet->sortLike($eventSheet);
             } catch (\Throwable $e) {
-                throw new BehaviorRuntimeError($this, 'Cannot read required file attachment data to save the corresponding files', null, $e);
+                throw new BehaviorRuntimeError($this, 'Cannot read required file attachment data to save the corresponding files', null, $e, $logbook);
             }
         } else {
             // IDEA we actually do not need to save ALL the attachment data again here
@@ -989,9 +999,13 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
             // to create a new sheet here and only take system columns and the $leftKeyCol
             // here.
             $attachmentSheet = $eventSheet;
+            $logbook->addLine('Key column `' . $leftKeyCol->getAttributeAlias() . '` found in event data - using file data from event sheet only');
         }
-
+        $logbook->addIndent(-1);
+        
+        $logbook->addLine('Processing file columns:');
         foreach ($pending['fileCols'] as $i => $col) {
+            $logbook->continueLine(' `' . $col->getExpressionObj()->__toString() . '`,');
             $attachmentSheet->getColumns()->add($col);
             $newCol = $attachmentSheet->getColumns()->get($col->getName());
             $newCol->setValues($pending['fileVals'][$i]);
@@ -1003,7 +1017,11 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         // Update the attachment object now that we know it has been created previously.
         // This update will contain the file contents and will lead to creation
         // of the file since we explicitly ask to create missing UIDs here.
-        $attachmentSheet->dataUpdate(true, $event->getTransaction());
+        try {
+            $attachmentSheet->dataUpdate(true, $event->getTransaction());
+        } catch (\Throwable $e) {
+            throw new BehaviorRuntimeError($this, 'Cannot save attachment files. ' . $e->getMessage(), null, $e, $logbook);
+        }
         // TODO the above update logic is actually called too many times if attachments are saved as subsheets.
         // Suppose we have an attachment already and add two more via ImageGallery. This will produce a subsheet
         // having one row without content, but with a UID, and two rows with content, but without UIDs. 
@@ -1019,7 +1037,9 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         }
 
         unset($this->pendingSheets[$pendingKey]);
+        $this->finishWork($event, $logbook);
         $this->inProgress = false;
+        
         return;
     }
 
