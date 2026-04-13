@@ -15,8 +15,9 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
 
 /**
- * Base implementation for a map layer showing data
+ * Base implementations for every base map or map layer showing data.
  * 
+ * @see Map 
  * @author Andrej Kabachnik
  *
  */

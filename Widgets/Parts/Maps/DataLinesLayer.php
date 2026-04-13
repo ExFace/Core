@@ -1,17 +1,41 @@
 <?php
 namespace exface\Core\Widgets\Parts\Maps;
 
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Widgets\iHaveColorWithOutline;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\Traits\iHaveColorTrait;
-use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
+use exface\Core\Widgets\Parts\Maps\Traits\ColoredLayerTrait;
 use exface\Core\DataTypes\NumberDataType;
 
 /**
- * Draws a straight line between coordinates in a data row
+ * Draws straight line(s) between two coordinates in a data row. The coordinates are give as longitude and latitude values. A line an interactive element with its own pop-up.
+ *
+ * ### Data Setup Guide
+ * 
+ * Please open the properties of widget_type `Map` for a full guide on how to pass on data to any layer in a map widget!
+ * If no data or filter within data is provided everything from the object_alias is loaded, or it will use the data from another layer with the same object_alias.
+ * 
+ * ### Widget Setup Guide
+ * 
+ * Will show one or multiple lines from the linked table.
+ * 
+ * ```
+ * {
+ *     "type": "DataLines",
+ *     "object_alias": "the.app.your_object_alias",
+ *     "caption": "Your point from client data",
+ *     "//": "For data setup please look into the properties of the Map widget."
+ *     "from_longitude_attribute_alias": "your_from_longitude_alias",
+ *     "from_latitude_attribute_alias": "your_from_latitude_alias",
+ *     "to_longitude_attribute_alias": "your_to_longitude_alias",
+ *     "to_latitude_attribute_alias": "your_to_latitude_alias",
+ * }
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
  *
@@ -20,10 +44,8 @@ class DataLinesLayer extends AbstractDataLayer
     implements
     ColoredDataMapLayerInterface
 {
-    
-    use iHaveColorTrait;
-    
-    use iHaveColorScaleTrait;
+    // TODO: Add color and values (color outline is missing since it is a line, but we wait for the new config with #1786)
+    use ColoredLayerTrait;
     
     private $fromLatAttributeAlias = null;
     
@@ -53,7 +75,7 @@ class DataLinesLayer extends AbstractDataLayer
     }
     
     /**
-     * Alias of the attribtue that will contain the latitude of the beginning of a line
+     * Alias of the attribute that will contain the latitude of the beginning of a line
      *
      * @uxon-property from_longitude_attribute_alias
      * @uxon-type metamodel:attribute
@@ -87,7 +109,7 @@ class DataLinesLayer extends AbstractDataLayer
     }
     
     /**
-     * Alias of the attribtue that will contain the latitude of the beginning of a line
+     * Alias of the attribute that will contain the latitude of the beginning of a line
      *
      * @uxon-property to_longitude_attribute_alias
      * @uxon-type metamodel:attribute
@@ -121,7 +143,7 @@ class DataLinesLayer extends AbstractDataLayer
     }
     
     /**
-     * Alias of the attribtue that will contain the latitude of the beginning of a line
+     * Alias of the attribute that will contain the latitude of the beginning of a line
      *
      * @uxon-property to_latitude_attribute_alias
      * @uxon-type metamodel:attribute
@@ -155,7 +177,7 @@ class DataLinesLayer extends AbstractDataLayer
     }
     
     /**
-     * Alias of the attribtue that will contain the latitude of the beginning of a line
+     * Alias of the attribute that will contain the latitude of the beginning of a line
      *
      * @uxon-property from_latitude_attribute_alias
      * @uxon-type metamodel:attribute
@@ -230,20 +252,6 @@ class DataLinesLayer extends AbstractDataLayer
         
         return $widget;
     }
-    
-    public function getColorColumn(): ?DataColumn
-    {
-        return null;
-    }
-
-    public function isColorScaleRangeBased(): bool
-    {
-        if ($this->getColorColumn() === null) {
-            return false;
-        }
-        return $this->getColorColumn()->getDataType() instanceof NumberDataType;
-    }
-    
     
     /**
      * @return integer
