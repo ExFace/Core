@@ -2,11 +2,15 @@
 
 namespace exface\Core\Widgets;
 
+use exface\Core\Widgets\Traits\iRenderMermaidTrait;
+
 /**
  * This widget can render text with Markdown syntax.
  */
-class DisplayMarkdown extends Value
+class DisplayMarkdown extends Value 
 {
+    use iRenderMermaidTrait;
+    
     /**
      * Set the editor to a "Word-like" WYSIWYG mode or to raw markdown mode.
      *

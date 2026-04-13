@@ -640,7 +640,7 @@ class CallActionBehavior extends AbstractBehavior
      */
     protected function hasRestrictionOnAttributeChange() : bool
     {
-        return $this->onlyIfAttributesChange !== null;
+        return !empty($this->getOnlyIfAttributesChange());
     }
     
     /**

@@ -19,39 +19,34 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
 {
 
-    private $parentSheet;
+    private DataSheetInterface $parentSheet;
+    
+    private DataSheetJoinRules $joinRules;
 
-    private $joinKeyAliasOfSubsheet = null;
-    
-    private $joinKeyAliasOfParentSheet = null;
-    
-    private $relationPathFromParentSheet = null;
-    
-    private $deferredAggregations = [];
-    
     /**
-     * 
-     * @param MetaObjectInterface $object
-     * @param DataSheetInterface $parentSheet
-     * @param string $joinKeyAliasOfSubsheet
-     * @param string $joinKeyAliasOfParentSheet
-     * @param MetaRelationPathInterface $relationPathFromParentSheet
+     *
+     * @param MetaObjectInterface            $object
+     * @param DataSheetInterface             $parentSheet
+     * @param string                         $joinKeyAliasOfSubSheet
+     * @param string                         $joinKeyAliasOfParentSheet
+     * @param MetaRelationPathInterface|null $relationPathFromParentSheet
      */
     public function __construct(
-        MetaObjectInterface $object, 
-        DataSheetInterface $parentSheet, 
-        string $joinKeyAliasOfSubsheet, 
-        string $joinKeyAliasOfParentSheet,
+        MetaObjectInterface       $object, 
+        DataSheetInterface        $parentSheet, 
+        string                    $joinKeyAliasOfSubSheet, 
+        string                    $joinKeyAliasOfParentSheet,
         MetaRelationPathInterface $relationPathFromParentSheet = null
     )
     {
         parent::__construct($object);
         $this->setParentSheet($parentSheet);
-        $this->setJoinKeyAliasOfParentSheet($joinKeyAliasOfParentSheet);
-        $this->setJoinKeyAliasOfSubsheet($joinKeyAliasOfSubsheet);
-        if ($relationPathFromParentSheet !== null) {
-            $this->setRelationPathFromParentSheet($relationPathFromParentSheet);
-        }
+        
+        $this->joinRules = new DataSheetJoinRules(
+            DataColumn::sanitizeColumnName($joinKeyAliasOfParentSheet),
+            DataColumn::sanitizeColumnName($joinKeyAliasOfSubSheet),
+            $relationPathFromParentSheet
+        );
     }
 
     /**
@@ -62,6 +57,11 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
     public function getParentSheet() : DataSheetInterface
     {
         return $this->parentSheet;
+    }
+    
+    public function getJoinRules() : DataSheetJoinRules
+    {
+    return $this->joinRules;
     }
 
     /**
@@ -82,7 +82,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     public function getJoinKeyAliasOfSubsheet() : string
     {
-        return $this->joinKeyAliasOfSubsheet;
+        return $this->getJoinRules()->getRightKeyColumnName();
     }
 
     /**
@@ -92,7 +92,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     protected function setJoinKeyAliasOfSubsheet(string $value) : DataSheetSubsheetInterface
     {
-        $this->joinKeyAliasOfSubsheet = $value;
+        $this->getJoinRules()->setRightKeyColumnName($value);
         return $this;
     }
     
@@ -103,7 +103,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     public function getJoinKeyAliasOfParentSheet() : string
     {
-        return $this->joinKeyAliasOfParentSheet;
+        return $this->getJoinRules()->getLeftKeyColumnName();
     }
     
     /**
@@ -113,7 +113,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     protected function setJoinKeyAliasOfParentSheet(string $value) : DataSheetSubsheetInterface
     {
-        $this->joinKeyAliasOfParentSheet = $value;
+        $this->getJoinRules()->setLeftKeyColumnName($value);
         return $this;
     }
     
@@ -151,7 +151,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     public function getRelationPathFromParentSheet() : ?MetaRelationPathInterface
     {
-        return $this->relationPathFromParentSheet;
+        return $this->getJoinRules()->getRelationPathFromLeftSheet();
     }
     
     /**
@@ -161,7 +161,7 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
      */
     protected function setRelationPathFromParentSheet(MetaRelationPathInterface $value) : DataSheetSubsheet
     {
-        $this->relationPathFromParentSheet = $value;
+        $this->getJoinRules()->setRelationPathFromLeftSheet($value);
         return $this;
     }
     
@@ -186,21 +186,5 @@ class DataSheetSubsheet extends DataSheet implements DataSheetSubsheetInterface
             return $this->getRelationPathFromParentSheet()->reverse();
         }
         return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getDeferredAggregations() : array
-    {
-        return $this->deferredAggregations;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function addDeferredAggregation(string $columnName, AggregatorInterface $deferredAggregation) : void
-    {
-        $this->deferredAggregations[$columnName][$deferredAggregation->exportString()] = $deferredAggregation;
     }
 }

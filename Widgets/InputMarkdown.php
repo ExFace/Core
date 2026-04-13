@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\TextMention;
 use exface\Core\Widgets\Parts\TextStencil;
+use exface\Core\Widgets\Traits\iRenderMermaidTrait;
 
 /**
  * Markdown editor
@@ -16,6 +17,8 @@ use exface\Core\Widgets\Parts\TextStencil;
  */
 class InputMarkdown extends InputText
 {
+    use iRenderMermaidTrait;
+    
     const MODE_WYSIWYG = 'wysiwyg';
     const MODE_MARKDOWN = 'markdown';
     
@@ -25,6 +28,12 @@ class InputMarkdown extends InputText
     private ?UxonObject $stencilsUxon = null;
     private array $mentions = [];
     private ?UxonObject $mentionsUxon = null;
+    
+    protected function init()
+    {
+        // Turn mermaid support ON by default
+        $this->setRenderMermaidDiagrams(true);
+    }
     
     /**
      * Set the editor to a "Word-like" WYSIWYG mode or to raw markdown mode.

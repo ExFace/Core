@@ -192,7 +192,7 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
         $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
         $tile->setAction(new UxonObject([
             'alias' => 'exface.Core.GoToPage',
-            'page_alias' => $node->getPageSelector()
+            'page_alias' => $node->getPageSelector()->toString()
             
         ]));
         return $tile;

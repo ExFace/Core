@@ -135,7 +135,9 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 if ($toSheet->isEmpty() === true) {
                     if ($this->getCreateRowInEmptyData() === true) {
                         $log .= ' Adding a new row because the to-sheet was empty.';
-                        $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
+                        $toSheet->addRow([
+                            $newCol->getName() => $this->mapValue($fromExpr->evaluate())
+                        ]);
                     } else {
                         $log .= ' Will not add row to empty data because `create_row_in_empty_data` is `false`.';
                     }
@@ -151,7 +153,9 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 if ($toSheet->isEmpty() === true) {
                     if ($fromSheet->isEmpty() === false && $this->getCreateRowInEmptyData() === true) {
                         $log .= ' Adding a new row because the to-sheet was empty.';
-                        $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
+                        $toSheet->addRow([
+                            $newCol->getName() => $this->mapValue($fromExpr->evaluate($fromSheet, 0))
+                        ]);
                     } else {
                         $log .= ' Will not add row to empty data because ' . ($fromSheet->isEmpty() ? 'from-sheet is empty.' : '`create_row_in_empty_data` is `false`.');
                     }
@@ -183,7 +187,8 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 }
             // Data column references
             case $fromCol:
-                $toSheet->getColumns()->addFromExpression($toExpr, null, $fromCol->getHidden())->setValues($fromCol->getValues(false));
+                $toCol = $toSheet->getColumns()->addFromExpression($toExpr, null, $fromCol->getHidden());
+                $toCol->setValues($this->mapValues($fromCol->getValues(false)));
                 break;
             // Data column references should not result in errors if the data sheet is completely empty
             // Otherwise input-mappers would always produce errors on empty input data!
@@ -204,6 +209,32 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
         if ($logbook !== null) $logbook->addLine($log);
         
         return $toSheet;
+    }
+
+    /**
+     * Transforms a from-value into a to-value (if any changes are needed)
+     * 
+     * Override this method in extending mapper classes to add value transformation
+     * 
+     * @param mixed $fromValue
+     * @return mixed
+     */
+    protected function mapValue($fromValue)
+    {
+        return $fromValue;
+    }
+
+    /**
+     * Transforms an array of from-values into to-values (if any changes are needed)
+     *
+     * Override this method in extending mapper classes to add value transformation
+     *
+     * @param array $fromValues
+     * @return array
+     */
+    protected function mapValues(array $fromValues) : array
+    {
+        return $fromValues;
     }
     
     /**

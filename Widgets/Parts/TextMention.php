@@ -238,7 +238,7 @@ class TextMention extends TextStencil
      * 
      * @uxon-property tag_color
      * @uxon-type string
-     * @uxon-defaul '#001580'
+     * @uxon-default '#001580'
      * 
      * @param string $color
      * @return $this

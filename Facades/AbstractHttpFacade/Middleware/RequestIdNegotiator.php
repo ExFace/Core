@@ -35,19 +35,16 @@ class RequestIdNegotiator implements MiddlewareInterface
     {
         $headerName = $this->headerName;
         if (! $request->hasHeader($headerName)) {
-            $request = $this->addRequestId($request);
+            $requestId = $this::generateRequestId();
+            $request = $request->withHeader($this->headerName, $requestId);
+        } else {
+            $requestId = $request->getHeaderLine($headerName);
         }
-        return $handler->handle($request);
-    }
-    
-    /**
-     * 
-     * @param ServerRequestInterface $request
-     * @return ServerRequestInterface
-     */
-    public function addRequestId(ServerRequestInterface $request) : ServerRequestInterface
-    {
-        return $request->withHeader($this->headerName, $this::generateRequestId());
+        $response = $handler->handle($request);
+        if (! $response->hasHeader($this->headerName)) {
+            $response = $response->withHeader($this->headerName, $requestId);
+        }
+        return $response;
     }
     
     /**

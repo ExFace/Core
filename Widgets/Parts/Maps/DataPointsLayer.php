@@ -17,6 +17,66 @@ use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
+ * A map layer to draw point(s) into a map using longitude and latitude values.
+ * 
+ * ### How to provide values
+ * 
+ * **Widget Links**
+ * 
+ * ```
+ * {
+ *      "widget_type": "Input",
+ *      "value": 450196.06,
+ *      "caption": "UTM Longitude",
+ *      "data_column_name": "UTM_Longitude",
+ *      "id": "Test_Long"
+ * },
+ * {
+ *      "widget_type": "Input",
+ *      "value": 5427449.28,
+ *      "data_column_name": "UTM_Latitude",
+ *      "caption": "UTM Latitude",
+ *      "id": "Test_Lat"
+ * }
+ * 
+ * ...
+ * 
+ * {
+*       "type": "DataPoints",
+*       "caption": "Test Koordinaten für einen Mast",
+*       "auto_zoom_to_see_all": true,
+*       "latitude_widget_link": "=Test_Lat",
+*       "longitude_widget_link": "=Test_Long",
+*       "auto_zoom_max": 17,
+*       "projection": {
+*           "name": "EPSG:25832",
+*           "definition": "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+*       }
+ * }
+ * 
+ * ```
+ * 
+ * **data with value links via attribute alias**
+ * 
+ * ```
+ *  {
+ *          "type": "DataPoints",
+ *          "caption": "Ausgewählter Mast",
+ *          "data_widget_link": "=tabelle_Mast",
+ *          "latitude_attribute_alias": "Latitude",
+ *          "longitude_attribute_alias": "Longitude",
+ *          "value_attribute_alias": "LABEL",
+ *          "color_attribute_alias": "Bautyp__Farbe",
+ *          "auto_zoom_to_see_all": true,
+ *          "auto_zoom_max": 17,
+ *          "visibility": "optional",
+ *          "projection": {
+ *              "name": "EPSG:31467",
+ *              "definition": "+proj=tmerc +lat_0=0 +lon_0=8.999 +k=1 +x_0=3500000 +y_0=0 +ellps=bessel +units=m +no_defs +type=crs"
+ *          }
+ *  }
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
  *

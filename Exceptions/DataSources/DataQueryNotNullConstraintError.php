@@ -5,22 +5,32 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Exception thrown if a query fails due to a constraint violation within the data source.
+ * Exception thrown if a query fails due to a NOT NULL violation within the data source.
  *
  * @author Andrej Kabachnik
- *        
  */
-class DataQueryUniqueConstraintError extends DataQueryConstraintError
+class DataQueryNotNullConstraintError extends DataQueryConstraintError
 {
     /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Exceptions\DataSources\DataQueryFailedError::getDefaultLogLevel()
      */
-    public function getDefaultLogLevel(){
+    public function getDefaultLogLevel()
+    {
         return LoggerInterface::ERROR;
     }
-    
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '8K2N4L1';
+    }
+
     /**
      * @param MetaObjectInterface $obj
      * @return string|null
@@ -44,19 +54,19 @@ class DataQueryUniqueConstraintError extends DataQueryConstraintError
         $attrCount = count($attrNames);
 
         if ($attrCount === 0) {
-            return $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS', [
+            return $translator->translate('DATASHEET.ERROR.REQUIRED_VALUE_MISSING', [
                 '%object_name%' => $objectName,
             ]);
         }
 
         if ($attrCount === 1) {
-            return $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS_WITH_ATTR', [
+            return $translator->translate('DATASHEET.ERROR.REQUIRED_VALUE_MISSING_WITH_ATTR', [
                 '%object_name%' => $objectName,
                 '%attr_name%'   => '"' . $attrNames[0] . '"',
             ]);
         }
 
-        return $translator->translate('DATASHEET.ERROR.DATA_OBJECT_EXISTS_WITH_ATTRS', [
+        return $translator->translate('DATASHEET.ERROR.REQUIRED_VALUE_MISSING_WITH_ATTRS', [
             '%object_name%' => $objectName,
             '%attr_list%'   => '"' . implode('", "', $attrNames) . '"',
         ]);

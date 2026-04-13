@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnDictionaryMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToJsonMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataFilterToFilterMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\JsonToRowsMapping;
@@ -793,6 +794,24 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         foreach ($uxon as $prop){
             $this->addMapping(new DataJoinMapping($this, $prop));
+        }
+        return $this;
+    }
+
+    /**
+     * Translate values in specified columns using a dictionary
+     *
+     * @uxon-property column_dictionary_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnDictionaryMapping[]
+     * @uxon-template [{"from":"","to": "", "dictionary":{"": ""}}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setColumnDictionaryMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataColumnDictionaryMapping($this, $prop));
         }
         return $this;
     }

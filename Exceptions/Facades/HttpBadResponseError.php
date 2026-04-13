@@ -2,8 +2,8 @@
 namespace exface\Core\Exceptions\Facades;
 
 use exface\Core\Widgets\DebugMessage;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\Debugger\HttpMessageDebugger;
 
@@ -15,11 +15,13 @@ use exface\Core\CommonLogic\Debugger\HttpMessageDebugger;
  */
 class HttpBadResponseError extends InvalidArgumentException
 {
-    private $response = null;
+    private ResponseInterface $response;
+    private ?RequestInterface $request = null;
     
-    public function __construct(ResponseInterface $request, $message, $alias = null, $previous = null)
+    public function __construct(ResponseInterface $response, $message, $alias = null, $previous = null, RequestInterface $request = null)
     {
-        $this->response = $request;
+        $this->response = $response;
+        $this->request = $request;
         parent::__construct($message, $alias, $previous);
     }
     
@@ -33,12 +35,12 @@ class HttpBadResponseError extends InvalidArgumentException
         return parent::getStatusCode($default);
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Exceptions\HttpServerRequestExceptionInterface::getResponse()
-     */
-    public function getResponse() : ServerRequestInterface
+    public function getRequest() : ?RequestInterface
+    {
+        return $this->request;
+    }
+    
+    public function getResponse() : ResponseInterface
     {
         return $this->response;
     }
@@ -51,8 +53,7 @@ class HttpBadResponseError extends InvalidArgumentException
     public function createDebugWidget(DebugMessage $debugWidget)
     {
         $debugWidget = parent::createDebugWidget($debugWidget);
-        $debugRenderer = new HttpMessageDebugger($this->getResponse());
-        $debugWidget = $debugRenderer->createDebugWidget($debugWidget);
-        return $debugWidget;
+        $debugRenderer = new HttpMessageDebugger($this->getRequest(), $this->getResponse());
+        return $debugRenderer->createDebugWidget($debugWidget);
     }
 }
