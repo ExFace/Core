@@ -1125,7 +1125,7 @@ JS;
                 });
                 
                 oLayer._exfRefresh();
-                return oClusterLayer;
+                return oClusterLayer ?? oLayer;
             })({$this->buildJsLeafletVar()})
 JS;
     }
