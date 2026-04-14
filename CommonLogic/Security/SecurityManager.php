@@ -56,7 +56,7 @@ class SecurityManager implements SecurityManagerInterface
         
         // Initialize all authenticators to give them the option to register listeners 
         // (e.g. for the exface.Core.Security.OnAuthenticated event).
-        $this->authenticators = self::loadAuthenticatorsFromConfig($this->getWorkbench());
+        $this->authenticators = array_values(self::loadAuthenticatorsFromConfig($this->getWorkbench()));
         
         // Initialize authorization points if the workbench is already installed.
         // If it's not installed, we are in the process of installation and obviously no
@@ -236,6 +236,12 @@ class SecurityManager implements SecurityManagerInterface
     }
     
     /**
+     * Instantiates all authenticators defined in System.config.json without activating them for user logins
+     * 
+     * Calling this twice will produce different instances. In particular, modifying the authenticators received
+     * from this method will NOT affect the way users can or cannot log in.
+     * 
+     * The returned array has authenticator ids as keys.
      * 
      * @param WorkbenchInterface $workbench
      * @throws UnexpectedValueException
@@ -261,7 +267,9 @@ class SecurityManager implements SecurityManagerInterface
             switch (true) {
                 case is_string($authConfig):
                     $class = $authConfig;
-                    $uxon = null;
+                    $uxon = new UxonObject([
+                        'id' => $pos
+                    ]);
                     break;
                 case $authConfig instanceof UxonObject:
                     $class = $authConfig->getProperty('class');
@@ -293,7 +301,7 @@ class SecurityManager implements SecurityManagerInterface
             if ($uxon !== null && $uxon->isEmpty() === false) {
                 $authenticator->importUxonObject($uxon);
             }
-            $authenticators[] = $authenticator;
+            $authenticators[$authenticatorsUxon->getProperty('id')] = $authenticator;
         }
         //$authenticators[] = new RememberMeAuthenticator($workbench);
         return $authenticators;
