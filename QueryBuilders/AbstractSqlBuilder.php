@@ -2816,10 +2816,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
             // the subselect.
             if ($customJoinOn = $start_rel->getAttributeDefinedIn()->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
+                // From the point of view of the reverse relation, its "left" table is the subquery and its
+                // "right" table is the main query or any of its JOINed tables - so the right table is the last
+                // regular (joinable) relation in the path.
+                $rightTableAlias = $prefix_rel_path->isEmpty() ? $this->getMainTableAlias() : $this->getShortAlias($prefix_rel_path->getRelationLast()->getAlias() . $this->getQueryId());
                 $customJoinOn = $this->replacePlaceholdersInSqlJoin(
                     $customJoinOn,
                     $relq->getMainTableAlias(),
-                    $this->getMainTableAlias(),
+                    $rightTableAlias,
                     $start_rel,
                     $relq
                 );
