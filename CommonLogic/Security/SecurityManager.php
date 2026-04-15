@@ -301,7 +301,7 @@ class SecurityManager implements SecurityManagerInterface
             if ($uxon !== null && $uxon->isEmpty() === false) {
                 $authenticator->importUxonObject($uxon);
             }
-            $authenticators[$authenticatorsUxon->getProperty('id')] = $authenticator;
+            $authenticators[$uxon->getProperty('id')] = $authenticator;
         }
         //$authenticators[] = new RememberMeAuthenticator($workbench);
         return $authenticators;
