@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\SqlDataType;
@@ -3101,7 +3102,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // - but is it really enough to search for a single pipe? Can there be pipes in placeholders without modifiers?
             $phAlias = IfNullModifier::stripFilter($ph);
             // TODO how to use the default value from the modifier here?
-            if (StringDataType::startsWith($phAlias, '=')) {
+            if (Expression::detectCalculation($phAlias)) {
                 $formula = FormulaFactory::createFromString($this->getWorkbench(), $phAlias);
                 if ($formula->isStatic() === false) {
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": the used formula is not static! Only static formulas are supported in data address placeholders!');
