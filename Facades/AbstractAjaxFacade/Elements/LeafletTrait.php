@@ -792,11 +792,7 @@ JS;
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
 
         // Add clustering
-        $isClusteringMarkers = false;
-        if ($layer instanceof MarkerMapLayerInterface) {
-            $isClusteringMarkers = $layer->isClusteringMarkers() ?? false;
-        }
-        if (($layer instanceof MarkerMapLayerInterface) && $isClusteringMarkers) {
+        if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
             $clusterInitJs = <<<JS
 L.markerClusterGroup({
                     iconCreateFunction: {$this->buildJsClusterIcon($layer, 'cluster')},
@@ -825,7 +821,7 @@ function() {
                     
                     oLayer.clearLayers();
                     oLayer.addData(aGeoJson);
-                    if ('{$isClusteringMarkers}') {
+                    if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
@@ -851,10 +847,10 @@ function() {
                     
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();
-                    oLayer.addData(aGeoJson);
-                    if ('{$isClusteringMarkers}') {
+                    if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
+                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 }
                 
@@ -869,10 +865,10 @@ JS;
                     var aRowsSkipped = [];
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();    
-                    oLayer.addData(aGeoJson);
-                    if ('{$isClusteringMarkers}') {
+                    if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
+                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
@@ -1038,8 +1034,6 @@ JS;
                             }                            
                             
                             // create markers for eacht top coordinate of every geometry within our geoJSON
-                            if (oClusterLayer) {
-                                oClusterLayer.clearLayers();                            
                                 const markerCoords = topMostCoordinates(feature);
                                 for (const [lng, lat] of markerCoords) {
                                     const oMarker = L.marker([lat, lng], {
@@ -1049,6 +1043,7 @@ JS;
                                         $markerProps
                                     });
                                 
+                                if (oClusterLayer) {
                                     oClusterLayer.addLayer(oMarker);
                                 }
                             }
@@ -1058,6 +1053,7 @@ JS;
                 $clusterInitJs = <<<JS
 
                                 oClusterLayer = L.layerGroup();
+                                oClusterLayer.addLayer(oLayer);
 JS;
 
             }
@@ -1117,15 +1113,11 @@ JS;
                         return;
                     }
                     oLayer._exfRefresh(oEvent);
-                    // If we have a clustering wrapper, we have to ensure the marker layer is added to it,
-                    // after refreshes or else it won't render.
-                    if (oClusterLayer) {
-                        oClusterLayer.addLayer(oLayer);
-                    }
                 });
                 
                 oLayer._exfRefresh();
-                return oClusterLayer ?? oLayer;
+                
+                return oClusterLayer ? oClusterLayer : oLayer;
             })({$this->buildJsLeafletVar()})
 JS;
     }
