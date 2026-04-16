@@ -35,7 +35,6 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -125,7 +124,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * 
  * NOTE: This trait requires the exfTools JS library to be available!
  * 
- * @method Data getWidget()
+ * @method DataSpreadSheet|DataImporter getWidget()
  * 
  * @author Andrej Kabachnik
  *
@@ -332,7 +331,8 @@ JS;
     {$this->buildJsResetSelection('')}
     .jspreadsheet({
         data: [ [] ],
-        columnSorting:false,
+        columnSorting: {$this->escapeBool($this->getWidget()->getAllowSortingLoadedData())},
+        filters: {$this->escapeBool($this->getWidget()->getAllowFilteringLoadedData())},
         allowRenameColumn: false,
         allowInsertColumn: false,
         allowDeleteColumn: false,

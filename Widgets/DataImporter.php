@@ -154,7 +154,10 @@ class DataImporter extends AbstractWidget implements
 
     private $doNotValidateDynamically = false;
 
-    private $nowrap_captions = true;
+    private bool $nowrapCaptions = true;
+
+    private ?bool $allowFilteringLoadedData = null;
+    private ?bool $allowSortingLoadedData = null;
     
     /**
      * 
@@ -229,7 +232,7 @@ class DataImporter extends AbstractWidget implements
      */
     public function setNowrapCaptions(bool $value) : DataImporter
     {
-        $this->nowrap_captions = $value;
+        $this->nowrapCaptions = $value;
         return $this;
     }
 
@@ -238,7 +241,7 @@ class DataImporter extends AbstractWidget implements
      */
     public function getNowrapCaptions() : bool
     {
-        return $this->nowrap_captions;
+        return $this->nowrapCaptions;
     }
     
     /**
@@ -587,5 +590,71 @@ class DataImporter extends AbstractWidget implements
         $uxon = parent::exportUxonObject();
         $uxon = $uxon->extend($this->exportUxonForEditableProperties());
         return $uxon;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowFilteringLoadedData() : bool
+    {
+        return $this->allowFilteringLoadedData ?? $this->willLoadAllData();
+    }
+
+    /**
+     * Set to TRUE or FALSE to explicitly control if sorting loaded data via column headers is allowed or not
+     * 
+     * By default, filtering and sorting is allowed in an importer because it normally has no effect on the
+     * result of the import.
+     *
+     * @uxon-property allow_filtering_loaded_data
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setAllowFilteringLoadedData(bool $value) : DataSpreadSheet
+    {
+        $this->allowFilteringLoadedData = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowSortingLoadedData() : bool
+    {
+        return $this->allowSortingLoadedData ?? $this->willLoadAllData();
+    }
+
+    /**
+     * Set to TRUE or FALSE to explicitly control if sorting loaded data via column headers is allowed or not
+     * 
+     * By default, filtering and sorting is allowed in an importer because it normally has no effect on the
+     * result of the import.
+     *
+     * @uxon-property allow_sorting_loaded_data
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setAllowSortingLoadedData(bool $value) : DataSpreadSheet
+    {
+        $this->allowSortingLoadedData = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if the widget will have all available data loaded at once
+     *
+     * It is important to know if the user is able to request more data from the server - e.g. via filtering,
+     * pagination or similar. If not, we can assume, that we have all data available for the current use case
+     * at hand, so we can safely work with it in the front-end - filter it, sort it, etc.
+     *
+     * @return bool
+     */
+    public function willLoadAllData() : bool
+    {
+        return true;
     }
 }
