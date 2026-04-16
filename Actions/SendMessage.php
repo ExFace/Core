@@ -29,8 +29,9 @@ use exface\Core\CommonLogic\UxonObject;
  * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
  * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
  * from the given app
- * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
+ * - `[#~data:column_name#]` - will be replaced by the formatted value from `column_name` of the data sheet,
  * for which the notification was triggered - only works with notification on data sheet events!
+ * - `[#~input:column_name#]` -similar to `~data`, however the value will not be formatted.
  * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
  * This means, static formulas will always work, while data-driven formulas will only work on data sheet
  * events!
