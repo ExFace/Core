@@ -23,19 +23,18 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
-use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iCanBeEditable;
 use exface\Core\Widgets\Traits\iCanBeEditableTrait;
 
 /**
- * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
+ * The DataImporter allows users to quickly create data by copy-pasting tables from Excel-compatible editors.
  * 
- * This is particularly usefull to import data from Excel or Excel-compatible formats. Instead
- * of uploading a file with a predefined format and praying for a successfull import, the user 
+ * This is particularly useful to import data from Excel or Excel-compatible formats. Instead
+ * of uploading a file with a predefined format and praying for a successful import, the user 
  * can see his data and actively work with it _before_ attempting to actually save it.
  * 
  * It is recommended to render the `DataImporter` as a spreadsheet, where the user can past the
- * the data. Each editable column of the spreadsheet should represent an writable attribute.
+ * data. Each editable column of the spreadsheet should represent a writable attribute.
  * 
  * The `DataImporter` has columns similarly to a `DataTable` or `DataSpreadSheet`, but it does
  * not have filters, sorters, etc. as it is a write-only widget. You can specify the available 
@@ -45,21 +44,21 @@ use exface\Core\Widgets\Traits\iCanBeEditableTrait;
  * form an "Add columns" menu or similar).
  * 
  * If no `columns` specified, the widget will automatically produce a column for every required 
- * editable attribute of the object of the widget with it's default editor as `cell_widget`.
+ * editable attribute of the object of the widget with its default editor as `cell_widget`.
  * 
  * The `DataImporter` also can have buttons - just like a `DataTable`. However, instead of a
  * search-button, that is added automatically to other `Data` widgets, the `DataImporter`
  * has a specie button for the `preview_action`. 
  * 
  * The `preview_action` of the `DataImporter` can be used to preform a dry-run before importing.
- * This is particularly usefull if data is enriched when being imported. The preview should do the
+ * This is particularly usefully if data is enriched when being imported. The preview should do the
  * enrichment and sent the enriched data back instead of writing it as the regular import action
  * would do. The enriched data than appears in the `DataImporter` making it easy for the user
  * to take care of enrichment errors or simply to verify the result before it is actually saved
  * to the data source. The `preview_action` must return the same columns as it receives from the
  * `DataImporter`. 
  * 
- * A `preview_action` is recommended for custom-built import actions with extra logic in addtion
+ * A `preview_action` is recommended for custom-built import actions with extra logic in addition
  * to pure saving data. In this case, it is a good Idea to extract this logic into a separate
  * action prototype and use it as the `preview_action`, while the actual import action would
  * simply call the preview logic and save the result to the destination data source.
@@ -612,7 +611,7 @@ class DataImporter extends AbstractWidget implements
      * @param bool $value
      * @return $this
      */
-    public function setAllowFilteringLoadedData(bool $value) : DataSpreadSheet
+    public function setAllowFilteringLoadedData(bool $value) : DataImporter
     {
         $this->allowFilteringLoadedData = $value;
         return $this;
@@ -638,7 +637,7 @@ class DataImporter extends AbstractWidget implements
      * @param bool $value
      * @return $this
      */
-    public function setAllowSortingLoadedData(bool $value) : DataSpreadSheet
+    public function setAllowSortingLoadedData(bool $value) : DataImporter
     {
         $this->allowSortingLoadedData = $value;
         return $this;
