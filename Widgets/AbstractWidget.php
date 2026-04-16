@@ -29,7 +29,7 @@ use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\Widgets\Parts\Tours\TourStep;
+use exface\Core\Widgets\Parts\Tours\TourWaypointStep;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Uxon\WidgetSchema;
 use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
@@ -1926,7 +1926,7 @@ MD;
             $uxon = $this->tourSteps;
             $this->tourSteps = [];
             foreach ($uxon as $stepUxon) {
-                $this->tourSteps[] = new TourStep($this, $stepUxon);
+                $this->tourSteps[] = new TourWaypointStep($this, $stepUxon);
             }
         }
         return $this->tourSteps;
