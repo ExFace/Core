@@ -387,6 +387,44 @@ JS;
                     instance.jexcel.openEditor(instance.jexcel.records[iRowIdx][iColIdx], true);
                 }
             });
+
+            // wrap/replace the original keydown listener of JExcel, in order to overwrite the tab functionality
+            if (!jspreadsheet._exfKeyDownControlWrapped) {
+                jspreadsheet._exfKeyDownControlWrapped = true;
+                var _origKeyDownControls = jspreadsheet.keyDownControls;
+
+                jspreadsheet.keyDownControls = function(e) {
+                    if (e.key === 'Tab' && jspreadsheet.current) {
+                        var oInst = jspreadsheet.current;
+                        var aSelectedCol = oInst.getSelectedColumns();
+                        var aSelectedRow = oInst.getSelectedRows(true);
+                        if (aSelectedCol.length > 0 && aSelectedRow.length > 0) {
+                            var iLastVisibleColIdx = oInst.options.columns.findLastIndex(function(col) { return col.type !== 'hidden'; });
+                            var iFirstVisibleColIdx = oInst.options.columns.findIndex(function(col) { return col.type !== 'hidden'; });
+
+                            // tab at last visible column -> move to first column of next row
+                            // shift + tab at first visible column -> move to last column of previous row
+                            if (!e.shiftKey && aSelectedCol[0] === iLastVisibleColIdx) {
+                                oInst.down();
+                                oInst.first();
+                                e.preventDefault();
+                                return;
+                            }
+                            else if (e.shiftKey && aSelectedCol[0] === iFirstVisibleColIdx) {
+                                oInst.up();
+                                oInst.last();
+                                e.preventDefault();
+                                return;
+                            }
+                        }
+                    }
+                    return _origKeyDownControls.call(this, e);
+                };
+
+                // replace old event listener (otherwise its still pointing to original function)
+                document.removeEventListener('keydown', _origKeyDownControls);
+                document.addEventListener('keydown', jspreadsheet.keyDownControls);
+            }
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
