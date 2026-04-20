@@ -210,6 +210,7 @@ class SqlDataQuery extends AbstractDataQuery
         
         $inputCode_widget = WidgetFactory::createFromUxonInParent($sql_tab, new UxonObject([
             'widget_type' => 'InputCode',
+            'id' => $debug_widget->getId() . '_SqlDataQuery_InputCode',
             'width' => '100%',
             'height' => '100%',
             "language" => 'sql',
