@@ -166,6 +166,7 @@ class DataImporter extends AbstractWidget implements
     protected function init()
     {
         parent::init();
+        $this->setStriped(false);
         $this->initColumns();
     }
     
