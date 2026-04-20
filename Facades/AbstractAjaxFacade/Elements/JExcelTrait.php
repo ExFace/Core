@@ -313,6 +313,7 @@ JS;
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         $wrapCaptions = $this->escapeBool(!$widget->getNowrapCaptions());
+        $stripeTable = $this->escapeBool($widget->getStriped());
         $disabledJs = $widget->isDisabled() ? 'true' : 'false';
         
         if (($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute()) {
@@ -364,8 +365,12 @@ JS;
                 {$this->buildJsSetDisabled(true)}
             }
 
+            // custom styling flags
             if ({$wrapCaptions} === true) {
                 jqSelf.addClass('exf-wrap-captions');
+            }
+            if ({$stripeTable} === true) {
+                jqSelf.addClass('exf-stripe-table');
             }
 
             // add hitboxes for dropdowns here once on load, as exfWidget might not be there yet
