@@ -900,6 +900,19 @@ class MsSqlBuilder extends AbstractSqlBuilder
     }
 
     /**
+     * @see AbstractSqlBuilder::escapeLikeExpression()
+     */
+    protected function escapeLikeExpression($string) : string
+    {
+        $prefix = '';
+        if (mb_substr($string, 0, 1) === '%') {
+            $prefix = '%';
+            $string = mb_substr($string, 1);
+        }
+        return $prefix . $this->escapeString($string);
+    }
+
+    /**
      * Returns TRUE if this query is to be aggregated to a single row AND only uses LIST_DISTINCT as aggregator
      * 
      * This is important for MS SQL because the `FOR XML PATH` concatenation still produces multiple rows
