@@ -126,10 +126,19 @@ class ExportJSON extends ReadData implements iExportData
         // widget calling the action is a button and it normally does not know
         // which columns to export.
 
-        // skip this step if we use the exportDataSheet as the reference (e.g. exporting from DataTables with a configurator)
         $widget = $this->getWidgetToReadFor($task);
-        if ($widget && $this->getUseExportDataSheet($widget) === false) {
-            $dataSheet = $widget->prepareDataSheetToRead($dataSheet);
+        if ($widget !== null) {
+            $widgetSheet = $widget->prepareDataSheetToRead($dataSheet);
+            if($this->getUseExportDataSheet($widget) === false) {
+                $dataSheet = $widgetSheet;
+            } else {
+                // If we use the exportDataSheet as the reference (e.g. exporting from DataTables with a configurator)
+                // we need to transfer aggregations.
+                // TODO geb 2026-04-14: Is this the right place and do we need to import other properties as well?
+                foreach ($widgetSheet->getAggregations() as $aggregation) {
+                    $dataSheet->getAggregations()->add($aggregation);
+                }
+            }
         }
         
         $dataSheet->removeRows();

@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
 use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Widgets\Filter;
+use exface\Core\Widgets\Parts\Tours\TourStoryStep;
 
 /**
  * This class is a tour driver that uses the driver.js library to create interactive tours on the UI.
@@ -18,7 +19,7 @@ use exface\Core\Widgets\Filter;
 class DriverJsTourDriver implements TourDriverInterface
 {
     private HttpFacadeInterface $facade;
-    private array $steps = [];
+    private array $waypointSteps = [];
     
     public function __construct(HttpFacadeInterface $httpFacade)
     {
@@ -35,17 +36,19 @@ class DriverJsTourDriver implements TourDriverInterface
     }
 
     /**
+     * Registers a tour waypoint step.
+     * 
      * {@inheritDoc}
-     * @see TourDriverInterface::addStep()
+     * @see TourDriverInterface::registerWaypointStep()
      */
-    public function registerStep(TourStepInterface $step) : TourDriverInterface
+    public function registerWaypointStep(TourStepInterface $step) : TourDriverInterface
     {
-        $this->steps[] = $step;
+        $this->waypointSteps[] = $step;
         return $this;
     }
 
     /**
-     * Gets the steps for the given tour, filtered by the tour's waypoint route and sorted by their order.
+     * Gets the steps (TourWaypointStep and TourStoryStep) for the given tour, filtered by the tour's waypoint route and sorted by their order.
      * 
      * {@inheritDoc}
      * @see TourDriverInterface::getTourSteps()
@@ -56,7 +59,9 @@ class DriverJsTourDriver implements TourDriverInterface
         $tourWaypoints = explode("&", $tour->getWaypointsRoute());
         $takeAllWaypoints = in_array("~all", $tourWaypoints);
         
-        foreach ($this->steps as $step) {
+        // * TourWaypointSteps:
+        foreach ($this->waypointSteps as $step) {
+            
             // Filter only steps, that have matching waypoints
             $stepWaypoints = $step->getWaypoints();
             
@@ -65,8 +70,24 @@ class DriverJsTourDriver implements TourDriverInterface
             }
         }
         
-        // sorting steps by order
-        usort($steps, function ($a, $b) {
+        // Sorts the steps based on the order of the waypoints in the tour's waypoint route
+        // and then by their position_in_tour property.
+        usort($steps, function ($a, $b) use ($tourWaypoints, $takeAllWaypoints) {
+            $aWaypoints = $a->getWaypoints();
+            $bWaypoints = $b->getWaypoints();
+
+            if ($takeAllWaypoints) {
+                $aGroup = $this->getStepWaypointSortValue($aWaypoints);
+                $bGroup = $this->getStepWaypointSortValue($bWaypoints);
+            } else {
+                $aGroup = $this->getFirstMatchingWaypointIndex($aWaypoints, $tourWaypoints);
+                $bGroup = $this->getFirstMatchingWaypointIndex($bWaypoints, $tourWaypoints);
+            }
+
+            if ($aGroup !== $bGroup) {
+                return $aGroup <=> $bGroup;
+            }
+
             $aOrder = $a->getPositionInTour();
             $bOrder = $b->getPositionInTour();
 
@@ -76,8 +97,45 @@ class DriverJsTourDriver implements TourDriverInterface
 
             return $aOrder <=> $bOrder;
         });
+
+        // * TourStorySteps:
+        // Adds the tour stroy steps after the waypoint steps.
+        if (null !== $tourStorySteps = $tour->getTourStorySteps()) {
+            $steps = array_merge($steps, $tourStorySteps);
+        }
         
         return $steps;
+    }
+
+    /**
+     * Gets the index of the first matching waypoint in the tour's waypoint route for the given step waypoints.
+     * 
+     * @param array $stepWaypoints
+     * @param array $tourWaypoints
+     * @return int
+     */
+    private function getFirstMatchingWaypointIndex(array $stepWaypoints, array $tourWaypoints): int
+    {
+        foreach ($tourWaypoints as $index => $tourWaypoint) {
+            if (in_array($tourWaypoint, $stepWaypoints, true)) {
+                return $index;
+            }
+        }
+
+        return PHP_INT_MAX;
+    }
+
+    /**
+     * Gets a string value for sorting the steps that have the same waypoints, 
+     * by sorting their waypoints and concatenating them.
+     * 
+     * @param array $stepWaypoints
+     * @return string
+     */
+    private function getStepWaypointSortValue(array $stepWaypoints): string
+    {
+        sort($stepWaypoints, SORT_NATURAL | SORT_FLAG_CASE);
+        return implode('|', $stepWaypoints);
     }
 
     /**
@@ -159,7 +217,19 @@ JS;
      */
     public function getStepHighlightedElementId(TourStepInterface $step): string
     {
-        $widget = $step->getWidget();
+        if ($step instanceof TourStoryStep) {
+            
+            // If there is no widget to focus, we return a dummy string,
+            // which means that the popover will be displayed in the center of the screen
+            // without highlighting any element.
+            if ( null === $widgetLink = $step->getWidgetToFocus()) {
+                return 'exf-tour-step-no-highlight';
+            }
+            
+            $widget = $widgetLink->getTargetWidget();
+        } else {
+            $widget = $step->getWidget();
+        }
         
         // Filters will mostly not have any id - they just render their input_widget, so we take that
         if ($widget instanceof Filter) {
