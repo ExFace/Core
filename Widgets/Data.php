@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
+use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
@@ -27,6 +28,7 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
+use exface\Core\Widgets\Traits\iHaveSidebarTrait;
 use exface\Core\Widgets\Traits\IHaveTourGuideTrait;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Interfaces\Widgets\iShowData;
@@ -74,6 +76,7 @@ class Data
         iHaveFilters, 
         iHaveSorters,
         iHaveQuickSearch,
+        iHaveSidebar,
         iSupportLazyLoading, 
         iHaveContextualHelp, 
         IHaveTourGuideInterface,
@@ -97,6 +100,7 @@ class Data
     use iCanAutoloadDataTrait;
     use iTrackIncomingLinksTrait;
     use IHaveTourGuideTrait;
+    use iHaveSidebarTrait;
 
     // properties
     private $paginate = true;

@@ -151,7 +151,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
     {
         // TODO avoid infinite loops here when there are no optional columns to add
         // For example, adding ` && $this->propertiesToSet === null ` caused infinite loops when opening LOG_ENTRY in the
-        // logs. The behavior added a DialogSidebar with an AiChat widget, but no optional columns. No idea, why
+        // logs. The behavior added a Sidebar with an AiChat widget, but no optional columns. No idea, why
         // that caused trouble, but for now `change_properties` simply only works for regular widgets, not for
         // configurators.
         if ($this->columnsToAddUxon === null) {
@@ -278,7 +278,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
      * Add a sidebar to the widgets if they support sidebars
      * 
      * @uxon-property add_sidebar
-     * @uxon-type \exface\Core\Widgets\DialogSidebar
+     * @uxon-type \exface\Core\Widgets\Sidebar
      * @uxon-template {"widgets": [{"widget_type": ""}]}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $sidebarUxon
