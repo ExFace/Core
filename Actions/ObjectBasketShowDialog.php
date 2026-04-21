@@ -115,6 +115,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $info_button = $dialog->createButton();
         $info_button->setActionAlias('exface.Core.ShowObjectInfoDialog');
         $info_button->setInputWidget($table);
+        $info_button->setCloseDialog(false);
         $dialog->addButton($info_button);
         
         // Add actions menu
