@@ -314,6 +314,8 @@ JS;
         $wrapCaptions = $this->escapeBool(!$widget->getNowrapCaptions());
         $stripeTable = $this->escapeBool($widget->getStriped());
         $disabledJs = $widget->isDisabled() ? 'true' : 'false';
+
+        $translator = $widget->getWorkbench()->getCoreApp()->getTranslator();
         
         if (($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute()) {
             $rowNumberCol = $widget->getRowNumberColumn();
@@ -342,6 +344,36 @@ JS;
         wordWrap: $wordWrap,
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
+        text:{
+            noRecordsFound: '{$translator->translate('WIDGET.JEXCEL.NO_RECORDS_FOUND')}',
+            showingPage: '{$translator->translate('WIDGET.JEXCEL.SHOWING_PAGE')}',
+            show: '{$translator->translate('WIDGET.JEXCEL.SHOW')}',
+            entries: '{$translator->translate('WIDGET.JEXCEL.ENTRIES')}',
+            insertANewColumnBefore: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_COLUMN_BEFORE')}',
+            insertANewColumnAfter: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_COLUMN_AFTER')}',
+            deleteSelectedColumns: '{$translator->translate('WIDGET.JEXCEL.DELETE_SELECTED_COLUMNS')}',
+            renameThisColumn: '{$translator->translate('WIDGET.JEXCEL.RENAME_COLUMN')}',
+            orderAscending: '{$translator->translate('WIDGET.JEXCEL.ORDER_ASCENDING')}',
+            orderDescending: '{$translator->translate('WIDGET.JEXCEL.ORDER_DESCENDING')}',
+            insertANewRowBefore: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_ROW_BEFORE')}',
+            insertANewRowAfter: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_ROW_AFTER')}',
+            deleteSelectedRows: '{$translator->translate('WIDGET.JEXCEL.DELETE_SELECTED_ROWS')}',
+            editComments: '{$translator->translate('WIDGET.JEXCEL.EDIT_COMMENTS')}',
+            addComments: '{$translator->translate('WIDGET.JEXCEL.ADD_COMMENTS')}',
+            comments: '{$translator->translate('WIDGET.JEXCEL.COMMENTS')}',
+            clearComments: '{$translator->translate('WIDGET.JEXCEL.CLEAR_COMMENTS')}',
+            copy: '{$translator->translate('WIDGET.JEXCEL.COPY')}',
+            paste: '{$translator->translate('WIDGET.JEXCEL.PASTE')}',
+            saveAs: '{$translator->translate('WIDGET.JEXCEL.SAVE_AS')}',
+            areYouSureToDeleteTheSelectedRows: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DELETE_ROWS')}',
+            areYouSureToDeleteTheSelectedColumns: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DELETE_COLUMNS')}',
+            thisActionWillDestroyAnyExistingMergedCellsAreYouSure: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DESTROY_MERGED_CELLS')}',
+            thisActionWillClearYourSearchResultsAreYouSure: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_CLEAR_SEARCH')}',
+            thereIsAConflictWithAnotherMergedCell: '{$translator->translate('WIDGET.JEXCEL.ERROR_MERGED_CELL_CONFLICT')}',
+            invalidMergeProperties: '{$translator->translate('WIDGET.JEXCEL.ERROR_INVALID_MERGE_PROPERTIES')}',
+            cellAlreadyMerged: '{$translator->translate('WIDGET.JEXCEL.ERROR_CELL_ALREADY_MERGED')}',
+            noCellsSelected: '{$translator->translate('WIDGET.JEXCEL.NO_CELLS_SELECTED')}',
+        },
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
             var oWidget = jqSelf[0].exfWidget;
