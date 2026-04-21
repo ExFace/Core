@@ -78,6 +78,7 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
         parent::init();
         $this->setPaginate(false);
         $this->setEditable(true);
+        $this->setStriped(false);
     }
     
     /**
