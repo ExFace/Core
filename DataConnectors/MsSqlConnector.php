@@ -314,6 +314,9 @@ class MsSqlConnector extends AbstractSqlConnector
         $sqlErrorCode = intval($e->getSqlErrorCode());
 
         switch (true) {
+            case strpos($e->getMessage(), 'UTF-16') !== false:
+                $e = new DataQueryFailedError($query, 'MS SQL encountered a UTF-16 Encoding error. ' . $e->getMessage(), '', null);
+                break;
             case $sqlState === 23000 && ($sqlErrorCode === 2601 || $sqlErrorCode === 2627):
                 $e = new DataQueryUniqueConstraintError($query, $this, $message, '73II64M', $e, $obj, $attrVals);
                 break;
