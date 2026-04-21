@@ -2,6 +2,11 @@
 namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WidgetInterface;
@@ -24,7 +29,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * @author Andrej Kabachnik
  * 
  */
-class ConditionalProperty implements WidgetPartInterface
+class ConditionalProperty implements WidgetPartInterface, ConditionalExpressionInterface
 {
     use ImportUxonObjectTrait {
         importUxonObject as importUxonObjectViaTrait;
@@ -406,5 +411,62 @@ class ConditionalProperty implements WidgetPartInterface
         $this->importUxonObject($newCondGrpUxon);
         return $this;
     }
-    
+
+
+    /**
+     * @inheritDoc
+     */
+    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null): bool
+    {
+        return $this->getConditionGroup()->evaluate($data_sheet, $row_number);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRequiredExpressions(?MetaObjectInterface $object = null): array
+    {
+        return $this->toConditionGroup()->getRequiredExpressions($object);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionalExpressionInterface::isEmpty()
+     */
+    public function isEmpty(): bool
+    {
+        return ! empty($this->getConditionGroup()->getConditions()) || $this->getConditionGroup()->hasNestedGroups();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionalExpressionInterface::toConditionGroup()
+     */
+    public function toConditionGroup(): ConditionGroupInterface
+    {
+        return $this->getConditionGroup()->toConditionGroup();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionalExpressionInterface::__toString()
+     */
+    public function __toString(): string
+    {
+        return $this->getPropertyName() . ': ' . $this->getConditionGroup()->__toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iCanBeCopied::copy()
+     */
+    public function copy(): \exface\Core\Interfaces\iCanBeCopied
+    {
+        return new conditionalProperty(
+            $this->getWidget(),
+            $this->getPropertyName(),
+            $this->exportUxonObject(),
+            $this->getBaseObject()
+        );
+    }
 }

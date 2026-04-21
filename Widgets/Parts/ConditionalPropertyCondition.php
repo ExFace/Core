@@ -2,6 +2,9 @@
 namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
@@ -428,5 +431,46 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
     public function __toString() : string
     {
         return $this->getValueLeftExpression()->__toString() . ' ' . $this->getComparator() . ' ' . $this->getValueRightExpression()->__toString();
+    }
+
+    /**
+     * Converts the conditional property condition in to a regular condition expression if possible
+     * 
+     * @return ConditionInterface
+     */
+    public function toCondition() : ConditionInterface
+    {
+        $attrExpr = null;
+        $valueExpr = null;
+        $expr = $this->getValueLeftExpression();
+        if ($expr->isReference()) {
+            throw new RuntimeException('Cannot convert conditional property "' . $this->__toString() . '" to a regular condition group - widget links not supported!');
+        }
+        if ($expr->isMetaAttribute()) {
+            $attrExpr = $expr;
+        } else {
+            $valueExpr = $expr;
+        }
+        $expr = $this->getValueRightExpression();
+        if ($expr->isReference()) {
+            throw new RuntimeException('Cannot convert conditional property "' . $this->__toString() . '" to a regular condition group - widget links not supported!');
+        }
+        if ($expr->isMetaAttribute()) {
+            if ($attrExpr !== null) {
+                throw new RuntimeException('Cannot convert conditional property "' . $this->__toString() . '" to a regular condition group - cannot have meta attributes on both sides of the condition!');
+            } else {
+                $attrExpr = $expr;
+            }
+        } else {
+            $valueExpr = $expr;
+        }
+        
+        return ConditionFactory::createFromExpression(
+            $this->getWorkbench(),
+            $attrExpr,
+            $this->getComparator(),
+            $valueExpr->__toString(),
+            false
+        );
     }
 }
