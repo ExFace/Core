@@ -326,9 +326,12 @@ class CallAction extends AbstractAction implements iCallOtherActions
             if ($this->actionConditionsUxon === null) {
                 return [];
             }
-            
             foreach ($this->actionConditionsUxon as $uxon) {
-                $this->actionConditions[] = new ConditionalProperty($this->getWidgetDefinedIn(), 'action_conditions', $uxon);
+                if ($this->isDefinedInWidget() === false) {
+                    $this->actionConditions[] = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getMetaObject());
+                } else {
+                    $this->actionConditions[] = new ConditionalProperty($this->getWidgetDefinedIn(), 'action_conditions', $uxon);
+                }
             }
         }
         
@@ -364,8 +367,10 @@ class CallAction extends AbstractAction implements iCallOtherActions
     {
         $i = $this->getActionIndex($action);
         $conditionalProp = $this->getActionsConditions()[$i];
-        if ($conditionalProp !== null) {
+        if ($conditionalProp instanceof ConditionalProperty) {
             return ConditionGroupFactory::createFromConditionalProperty($conditionalProp->getConditionGroup(), $this->getMetaObject());
+        } else if ($conditionalProp instanceof ConditionGroupInterface) {
+            return $conditionalProp;
         }
         return null;
     }
