@@ -3144,6 +3144,27 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "85UE61O MS SQL encountered a UTF-16 Encoding error.",
+            "CREATED_ON": "2026-04-21 11:38:33",
+            "MODIFIED_ON": "2026-04-21 11:38:33",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f1b4addd2192ceb4ad3f003e727bcd",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "85UE61O",
+            "TITLE": "MS SQL encountered a UTF-16 Encoding error.",
+            "DESCRIPTION": [
+                "// Multiline text delimited by `\n`",
+                "This error occurs when processing an SQL file with missing or unexpected encoding. Check your workflow to ensure that the file you used is encoded with UTF-8 for maximum compatibility:",
+                "",
+                "*  If you are using an external IDE, such as Microsoft Server Management Studio, make sure that you chose the right export settings, when saving your file.",
+                "* We recommend using our built-in IDE, which you can find by navigating to `Administration > Apps`, selecting your app and clicking on the `IDE` button in the toolbar. Any files created with this tool are automatically compatible with our backend."
+            ],
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
