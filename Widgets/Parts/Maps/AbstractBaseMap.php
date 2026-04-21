@@ -89,7 +89,7 @@ abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterf
      * 
      * @uxon-property double_click_to_zoom
      * @uxon-type boolean
-     * @uxon-defaul true
+     * @uxon-default true
      * 
      * @param int $value
      * @return Map

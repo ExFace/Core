@@ -66,14 +66,23 @@ trait SendMessagesFromDataTrait
                 case $dataSheet !== null:
                     foreach (array_keys($dataSheet->getRows()) as $rowNo) {
                         $rowRenderer = clone $renderer;
+                        
                         $rowRenderer->addPlaceholder(
                             (new DataRowPlaceholders($dataSheet, $rowNo, '~data:'))
                             ->setSanitizeAsUxon(true)
-                            );
+                        );
+
+                        $rowRenderer->addPlaceholder(
+                            (new DataRowPlaceholders($dataSheet, $rowNo, '~input:'))
+                                ->setSanitizeAsUxon(true)
+                                ->setFormatValues(false)
+                        );
+                        
                         $rowRenderer->addPlaceholder(
                             (new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo))
                             //->setSanitizeAsUxon(true)
-                            );
+                        );
+                        
                         $renderedJson = $rowRenderer->render($json);
                         $renderedUxon = UxonObject::fromJson($renderedJson);
                         $message = new Envelope($this->getWorkbench(), $renderedUxon);

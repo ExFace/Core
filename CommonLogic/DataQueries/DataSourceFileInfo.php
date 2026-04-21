@@ -26,7 +26,7 @@ use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
  * - `metamodel://my.app.ObjectAlias/uid_of_file/*`
  * - `metamodel://my.app.ObjectAlias/folder_attribute/*`
  * 
- * Currently no real (nested) folder structure is supported - you can't travel up the folder tree, but
+ * Currently, no real (nested) folder structure is supported - you can't travel up the folder tree, but
  * the `folder_attribute` of the `FileBehavior` may contain a complex path.
  * 
  * @author Andrej Kabachnik

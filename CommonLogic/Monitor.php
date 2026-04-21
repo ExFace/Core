@@ -290,12 +290,13 @@ class Monitor extends Profiler
             $totalMs = $this->getTimeElapsedMs();
             $longRunnerMsg = null;
             try {
-                if ($this->requestFirstAction !== null && $this->isActionMeasured($this->requestFirstAction)) {
-                    $thresholdMs = 1000 * $this->getActionLongRunningThreshold($this->requestFirstAction);
+                $action = $this->requestFirstAction;
+                if ($action !== null && $this->isActionMeasured($action)) {
+                    $thresholdMs = 1000 * $action->getMonitorAsLongRunningAfterSeconds($this->getActionLongRunningThreshold($action));
                     if ($thresholdMs > -1 && $thresholdMs < $totalMs) {
-                        $longRunnerMsg = $this->requestFirstAction->getAliasWithNamespace();
-                        if ($this->requestFirstAction->hasMetaObject()) {
-                            $longRunnerMsg .= ' on ' . $this->requestFirstAction->getMetaObject()->getAliasWithNamespace();
+                        $longRunnerMsg = $action->getAliasWithNamespace();
+                        if ($action->hasMetaObject()) {
+                            $longRunnerMsg .= ' on ' . $action->getMetaObject()->getAliasWithNamespace();
                         }
                     }
                 } else {

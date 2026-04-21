@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
@@ -650,7 +651,7 @@ class Data
         foreach ($this->getMetaObject()->getDataAddressRequiredPlaceholders(false, true) as $ph) {
             // If the placeholder is an attribute, add a required filter on it (or make an existing filter required)
             $phAlias = StringDataType::stripPlaceholderModifiers($ph);
-            if ($ph_attr = $this->getMetaObject()->getAttribute($phAlias)) {
+            if (! Expression::detectCalculation($phAlias) && $ph_attr = $this->getMetaObject()->getAttribute($phAlias)) {
                 if ($this->getConfiguratorWidget()->hasFilters()) {
                     $ph_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($ph_attr);
                     foreach ($ph_filters as $ph_filter) {

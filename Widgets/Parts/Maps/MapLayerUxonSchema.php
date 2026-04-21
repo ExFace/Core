@@ -11,8 +11,7 @@ use exface\Core\Widgets\Map;
  * This schema loads the correct widget part depending on the `type` property of
  * series UXON.
  * 
- * @see UxonSchema for general information.
- * 
+ * @see UxonSchema for general information. 
  * @author Andrej Kabachnik
  *
  */
@@ -29,7 +28,12 @@ class MapLayerUxonSchema extends UxonSchema
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'type') === 0) {
-                $class = Map::getLayerClassFromType($value);
+                if (in_array('base_maps', $uxon->getPath())) {
+                    $class = Map::getLayerClassFromType($value, 'BaseMaps');
+                } else {
+                    $class = Map::getLayerClassFromType($value);
+                }                    
+                
                 if ($this->validatePrototypeClass($class) === true) {
                     $name = $class;
                 }
