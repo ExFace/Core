@@ -2,9 +2,19 @@
 namespace exface\Core\Widgets\Parts\Maps\BaseMaps;
 
 /**
- *
+ * Open source street map.
+ * 
+ * ```
+ * {
+ *     "type": "OpenStreetMap",
+ *     "caption": "Straßenkarte"
+ * }
+ * 
+ * ```
+ * 
+ * see https://www.openstreetmap.de/ for more information.
  * @author Andrej Kabachnik
- *
+ * 
  */
 class OpenStreetMap extends GenericUrlTiles
 {

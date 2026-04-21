@@ -792,11 +792,7 @@ JS;
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
 
         // Add clustering
-        $isClusteringMarkers = false;
-        if ($layer instanceof MarkerMapLayerInterface) {
-            $isClusteringMarkers = $layer->isClusteringMarkers() ?? false;
-        }
-        if (($layer instanceof MarkerMapLayerInterface) && $isClusteringMarkers) {
+        if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
             $clusterInitJs = <<<JS
 L.markerClusterGroup({
                     iconCreateFunction: {$this->buildJsClusterIcon($layer, 'cluster')},
@@ -851,10 +847,10 @@ function() {
                     
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();
-                    oLayer.addData(aGeoJson);
-                    if ('{$isClusteringMarkers}') {
+                    if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
+                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 }
                 
@@ -869,10 +865,10 @@ JS;
                     var aRowsSkipped = [];
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
                     oLayer.clearLayers();    
-                    oLayer.addData(aGeoJson);
-                    if ('{$isClusteringMarkers}') {
+                    if (oClusterLayer !== null) {
                         oClusterLayer.clearLayers().addLayer(oLayer);
                     }
+                    oLayer.addData(aGeoJson);
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
@@ -1038,16 +1034,15 @@ JS;
                             }                            
                             
                             // create markers for eacht top coordinate of every geometry within our geoJSON
-                            const markerCoords = topMostCoordinates(feature);
-                            oClusterLayer?.clearLayers();                            
-                            for (const [lng, lat] of markerCoords) {
-                                const oMarker = L.marker([lat, lng], {
-                                    icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
-                                    draggable: false,
-                                    autoPan: false,
-                                    $markerProps
-                                });
-                            
+                                const markerCoords = topMostCoordinates(feature);
+                                for (const [lng, lat] of markerCoords) {
+                                    const oMarker = L.marker([lat, lng], {
+                                        icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
+                                        draggable: false,
+                                        autoPan: false,
+                                        $markerProps
+                                    });
+                                
                                 if (oClusterLayer) {
                                     oClusterLayer.addLayer(oMarker);
                                 }
@@ -1106,6 +1101,8 @@ JS;
                     }
                 });
                 
+                // If we are displaying markers, especially if we cluster them, the cluster layer will serve as
+                // a wrapper for rendering all map markers.
                 var oClusterLayer = {$clusterInitJs};
 
                 {$initEditingJs}

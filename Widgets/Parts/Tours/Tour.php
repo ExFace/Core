@@ -46,9 +46,11 @@ class Tour implements TourInterface, iHaveIcon
     private ?string $title = null;
     private ?string $waypointsRoute = null;
     private ?string $description = null;
-    private bool $showProgress = false;
+    private bool $showProgress = true;
     private bool $disableActiveInteraction = false;
     private bool $autorun = false;
+    private ?array $tourStorySteps = null;
+    private ?UxonObject $tourStoryStepsUxon = null;
     
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
     {
@@ -114,6 +116,12 @@ class Tour implements TourInterface, iHaveIcon
      */
     public function getWaypointsRoute(): string
     {
+        // If TourStorySteps are used, TourWaypointSteps are not automatically included:
+        $tourStorySteps = $this->getTourStorySteps();
+        if ($tourStorySteps !== null && $tourStorySteps !== []) {
+            return '';
+        }
+        
         return $this->waypointsRoute ?? '~all';
     }
 
@@ -172,7 +180,7 @@ class Tour implements TourInterface, iHaveIcon
      * 
      * @uxon-property show_progress
      * @uxon-type boolean
-     * @uxon-default false
+     * @uxon-default true
      * 
      * @param bool $showProgress
      * @return TourInterface
@@ -230,6 +238,39 @@ class Tour implements TourInterface, iHaveIcon
     protected function setAutorun(bool $autorun = false) : TourInterface
     {
         $this->autorun = $autorun;
+        return $this;
+    }
+
+    /**
+     * Gets the story tour steps that are defined for this tour.
+     * 
+     * @return array|null
+     */
+    public function getTourStorySteps() : ?array
+    {
+        if ($this->tourStorySteps === null) {
+            foreach ($this->tourStoryStepsUxon as $uxon) {
+                $this->tourStorySteps[] = new TourStoryStep($this, $uxon);
+            }
+        }
+        return $this->tourStorySteps;
+    }
+
+    /**
+     * Sets the story tour steps for ths tour. The step order is determined by the uxon order from top to bottom.
+     * For unsorted tour steps you can also use the "tour_steps" property directly inside the widget definition instead.
+     * 
+     * @uxon-property steps
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourStoryStep
+     * @uxon-template [{"title":"","body":""}]
+     *
+     * @param UxonObject $arrayOfTourStorySteps
+     * @return TourInterface
+     */
+    protected function setSteps(UxonObject $arrayOfTourStorySteps) : TourInterface
+    {
+        $this->tourStoryStepsUxon = $arrayOfTourStorySteps;
+        $this->tourStorySteps = null;
         return $this;
     }
 }
