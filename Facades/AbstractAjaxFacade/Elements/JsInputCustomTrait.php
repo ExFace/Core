@@ -17,8 +17,6 @@ use exface\Core\Templates\Placeholders\ArrayPlaceholders;
  */
 trait JsInputCustomTrait {
 
-
-
     /**
      *
      * {@inheritDoc}
@@ -142,5 +140,10 @@ JS;
                 }
             }
         }
-    }    
+    }
+
+    public function getOnResizeScript()
+    {
+        return $this->getWidget()->getScriptToResize() ?? '';
+    }
 }
