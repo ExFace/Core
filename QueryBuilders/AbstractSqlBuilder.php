@@ -141,6 +141,15 @@ use exface\Core\Templates\Modifiers\IfNullModifier;
  * SQL dialect has its own syntax - typically functions like `JSON_VALUE(column, jsonPath)` or
  * `JSON_SET(column, jsonPath, value)` or similar. The common syntax introduced above will be
  * automatically translated into these JSON functions by the query builder.
+ * 
+ * ### Raw SQL filters (techie mode)
+ * 
+ * To give SQL skilled users more flexibility, SQL builders support "techie-mode" filter values: e.g. `sql:like:%[0-9]`.
+ * These special values can be used with `=` and `!=` comparators and allow to securely pass advanced SQL commands.
+ * Such a value consists of three parts separated by colons:
+ * 1. SQL dialect - `sql` by default
+ * 2. SQL function - `like` in this example - each query builder can provide different function with different syntax
+ * 3. the actual value - `%[0-9]` in this example - this must be compatible with the corresponding function
  *
  * @author Andrej Kabachnik
  *
@@ -1432,6 +1441,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
+     * @param $string
+     * @return string
+     */
+    protected function escapeLikeExpression($string) : string
+    {
+        return $this->escapeString($string);
+    }
+
+    /**
      * {@inheritdoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
      */
@@ -2595,6 +2613,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             case $comparator === EXF_COMPARATOR_IS_NOT:
             case $comparator === EXF_COMPARATOR_IS:
+                if (stripos($value, 'sql:') !== false) {
+                    $output = $this->buildSqlWhereComparatorCustomSql($subject, $comparator, $value, $valueIsSQL);
+                    break;
+                }
                 $like = $comparator === EXF_COMPARATOR_IS_NOT ? 'NOT LIKE' : 'LIKE';
                 $output = "UPPER({$subject}) $like ";
                 if ($valueIsSQL) {
@@ -2615,6 +2637,32 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             default:
                 throw new QueryBuilderException('Comparator "' . $comparator . '" is not supported in SQL query builders');
+        }
+        return $output;
+    }
+
+    /**
+     * Renders the "techie-mode" filters: `sql:like:%[0-9]`
+     * 
+     * @param string $subject
+     * @param string $comparator
+     * @param mixed $value
+     * @param bool $valueIsSQL
+     * @return string
+     */
+    protected function buildSqlWhereComparatorCustomSql(string $subject, string $comparator, $value, bool $valueIsSQL) : string
+    {
+        list($dialect, $function, $val) = explode(':', $value);
+        // IDEA check if the $dialect matches the current query builder.
+        switch (mb_strtolower($function)) {
+            case 'like':
+                $output = $subject . ' ' . ($comparator === ComparatorDataType::IS_NOT ? 'NOT LIKE' : 'LIKE');
+                $likeExpr = $this->escapeLikeExpression(mb_strtoupper($val));
+                $output .= ' ' . ($valueIsSQL ? $likeExpr : "'$likeExpr'");
+                break;
+            // IDEA add more functions here - e.g. regex matching, etc.
+            default:
+                throw new QueryBuilderException('Unknown custom SQL filter `' . $value . '`');
         }
         return $output;
     }

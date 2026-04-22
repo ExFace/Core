@@ -67,7 +67,6 @@ use exface\Core\CommonLogic\UxonObject;
  * - isDisabled() : bool
  * - refreshDropdown(iColIdx) : Promise
  * - updateDependantColumns(iColIdx, iRowIdx, mValue) : void
- * - addDropdownHitboxes(oCell): void
  * - success(data, textStatus, jqXHR)
  * - error(jqXHR, textStatus, errorThrown)
  * - bLoaded: bool // true after all constructors ran
@@ -313,7 +312,10 @@ JS;
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         $wrapCaptions = $this->escapeBool(!$widget->getNowrapCaptions());
+        $stripeTable = $this->escapeBool($widget->getStriped());
         $disabledJs = $widget->isDisabled() ? 'true' : 'false';
+
+        $translator = $widget->getWorkbench()->getCoreApp()->getTranslator();
         
         if (($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute()) {
             $rowNumberCol = $widget->getRowNumberColumn();
@@ -342,6 +344,36 @@ JS;
         wordWrap: $wordWrap,
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
+        text:{
+            noRecordsFound: '{$translator->translate('WIDGET.JEXCEL.NO_RECORDS_FOUND')}',
+            showingPage: '{$translator->translate('WIDGET.JEXCEL.SHOWING_PAGE')}',
+            show: '{$translator->translate('WIDGET.JEXCEL.SHOW')}',
+            entries: '{$translator->translate('WIDGET.JEXCEL.ENTRIES')}',
+            insertANewColumnBefore: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_COLUMN_BEFORE')}',
+            insertANewColumnAfter: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_COLUMN_AFTER')}',
+            deleteSelectedColumns: '{$translator->translate('WIDGET.JEXCEL.DELETE_SELECTED_COLUMNS')}',
+            renameThisColumn: '{$translator->translate('WIDGET.JEXCEL.RENAME_COLUMN')}',
+            orderAscending: '{$translator->translate('WIDGET.JEXCEL.ORDER_ASCENDING')}',
+            orderDescending: '{$translator->translate('WIDGET.JEXCEL.ORDER_DESCENDING')}',
+            insertANewRowBefore: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_ROW_BEFORE')}',
+            insertANewRowAfter: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_ROW_AFTER')}',
+            deleteSelectedRows: '{$translator->translate('WIDGET.JEXCEL.DELETE_SELECTED_ROWS')}',
+            editComments: '{$translator->translate('WIDGET.JEXCEL.EDIT_COMMENTS')}',
+            addComments: '{$translator->translate('WIDGET.JEXCEL.ADD_COMMENTS')}',
+            comments: '{$translator->translate('WIDGET.JEXCEL.COMMENTS')}',
+            clearComments: '{$translator->translate('WIDGET.JEXCEL.CLEAR_COMMENTS')}',
+            copy: '{$translator->translate('WIDGET.JEXCEL.COPY')}',
+            paste: '{$translator->translate('WIDGET.JEXCEL.PASTE')}',
+            saveAs: '{$translator->translate('WIDGET.JEXCEL.SAVE_AS')}',
+            areYouSureToDeleteTheSelectedRows: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DELETE_ROWS')}',
+            areYouSureToDeleteTheSelectedColumns: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DELETE_COLUMNS')}',
+            thisActionWillDestroyAnyExistingMergedCellsAreYouSure: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DESTROY_MERGED_CELLS')}',
+            thisActionWillClearYourSearchResultsAreYouSure: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_CLEAR_SEARCH')}',
+            thereIsAConflictWithAnotherMergedCell: '{$translator->translate('WIDGET.JEXCEL.ERROR_MERGED_CELL_CONFLICT')}',
+            invalidMergeProperties: '{$translator->translate('WIDGET.JEXCEL.ERROR_INVALID_MERGE_PROPERTIES')}',
+            cellAlreadyMerged: '{$translator->translate('WIDGET.JEXCEL.ERROR_CELL_ALREADY_MERGED')}',
+            noCellsSelected: '{$translator->translate('WIDGET.JEXCEL.NO_CELLS_SELECTED')}',
+        },
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
             var oWidget = jqSelf[0].exfWidget;
@@ -364,28 +396,43 @@ JS;
                 {$this->buildJsSetDisabled(true)}
             }
 
+            // custom styling flags
             if ({$wrapCaptions} === true) {
                 jqSelf.addClass('exf-wrap-captions');
             }
-
-            // add hitboxes for dropdowns here once on load, as exfWidget might not be there yet
-            // then use exfWidget.addDropdownHitboxes() to add them on subsequent onAddRow, onChange events
-            jqSelf.find(".jexcel_dropdown").each(function(){
-                if(!$(this).find(".dropdown-open").length) {
-                    $(this).prepend("<i class='dropdown-open' aria-hidden='true'></i>");
-                }
-            });
+            if ({$stripeTable} === true) {
+                jqSelf.addClass('exf-stripe-table');
+            }
 
             // adding a custom onclick event to the table, in oder to open the editor of dropdowns with a single click
             // Idea based off https://github.com/jspreadsheet/ce/issues/1029 , 
             // as other solutions using onSelect or similar functions broke a lot of other logic, such as keyboard navigation
-            jqSelf.off('click', '.jexcel_dropdown .dropdown-open').on('click', '.jexcel_dropdown .dropdown-open', function() {
-                var iColIdx = $(this).parent(".jexcel_dropdown").data("x");
-                var iRowIdx = $(this).parent(".jexcel_dropdown").data("y");
+            // UPDATE: the originally proposed invisible <i> element showed up as table data in some cases, for example when filtering content
+            // new approach: we now listen to onclick events for the dropdown cells in general, and if they are within the 35px area from the right edge we open the editor
+            // we use a pseudo :after element to visually highlight the area, but unfortunalety pseudo elements are not truly within the dom, so we cant use onclick directly
+            jqSelf.off('click', '.jexcel_dropdown').on('click', '.jexcel_dropdown', function(e) {
+                // only open editor if were in the area around the dropdown button (35px from right side)
+                if (e.offsetX >= this.offsetWidth - 35) {
+                    var iColIdx = $(this).data("x");
+                    var iRowIdx = $(this).data("y");
 
-                if (iColIdx !== undefined && iRowIdx !== undefined) {
-                    instance.jexcel.openEditor(instance.jexcel.records[iRowIdx][iColIdx], true);
+                    if (iColIdx !== undefined && iRowIdx !== undefined) {
+                        instance.jexcel.openEditor(instance.jexcel.records[iRowIdx][iColIdx], true);
+                    }
                 }
+            });
+
+            // show hover highlight if were hovering over dropdwn area (35 px from right side), since we do not use a proper html element
+            // otherwise on hover would always be called when hovering over entire cell
+            jqSelf.off('mousemove', '.jexcel_dropdown').on('mousemove', '.jexcel_dropdown', function(e) {
+                if (e.offsetX >= this.offsetWidth - 35) {
+                    $(this).addClass('exf-dropdown-hitbox-hover');
+                } else {
+                    $(this).removeClass('exf-dropdown-hitbox-hover');
+                }
+            });
+            jqSelf.off('mouseleave', '.jexcel_dropdown').on('mouseleave', '.jexcel_dropdown', function() {
+                $(this).removeClass('exf-dropdown-hitbox-hover');
             });
 
             // wrap/replace the original keydown listener of JExcel, in order to overwrite the tab functionality
@@ -514,9 +561,6 @@ JS;
                 let sColumnType = instance.jexcel.options.columns[col].type;
                 if (instance.exfWidget.bLoaded && sColumnType === 'autocomplete') { 
 
-                    // re-add the hitbox for single-click
-                    instance.exfWidget.addDropdownHitboxes(cell);
-
                     // update the related cols
                     if (instance.exfWidget.getColumnModel(col).dependantCols.length > 0){
                         instance.exfWidget.updateDependantColumns(col, row, value);
@@ -531,7 +575,6 @@ JS;
             }, 0);
         },
         oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
-            el.exfWidget.addDropdownHitboxes();
         },
         ondeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             {$this->buildJsFixedFootersSpread()}
@@ -1265,27 +1308,6 @@ JS;
                 else {
                     console.warn('Relation key ' + sColRelationKey + ' not found in dropdown source');
                 }
-            }
-        },
-        addDropdownHitboxes: function (oCell = null) {
-            // attaches a single-click hitbox to open a dropdown editor on a cell.
-            // if a a specific cell is passed as parameter, only attach to that cell, otherwise check all dropdowns
-            var jqSelf = {$this->buildJsJqueryElement()};
-            
-            if (oCell !== null) {
-                // Attach hitbox for the specific cell
-                if (!$(oCell).find(".dropdown-open").length) {
-                    $(oCell).prepend("<i class='dropdown-open' aria-hidden='true'></i>");
-                }
- 
-            }
-            else {
-                // check for all dropdowns
-                jqSelf.find(".jexcel_dropdown").each(function(){
-                    if(!$(this).find(".dropdown-open").length) {
-                        $(this).prepend("<i class='dropdown-open' aria-hidden='true'></i>");
-                    }
-                });
             }
         },
         showAddRowsDialogue: function() {
