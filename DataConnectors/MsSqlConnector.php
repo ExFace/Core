@@ -336,7 +336,7 @@ class MsSqlConnector extends AbstractSqlConnector
                 break;
 
             // Cannot perform an aggregate function on an expression containing an aggregate or a subquery
-            case 130:
+            case $sqlErrorCode === 130:
                 $e = new DataQueryFailedError($query, $message, null, $e->setAlias('84RWYLO'));
                 break;
 
