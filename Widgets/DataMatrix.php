@@ -213,8 +213,11 @@ class DataMatrix extends DataTable
             // Make sure, the transposed columns are always present - even if not requested from outside
             // TODO actually, why not allow users to unselect transposed columns in the configurator?
             foreach ($this->getColumnsTransposed() as $valuesWidgetCol) {
-                $valuesSheetCol = $pivotSheet->getColumns()->addFromExpression($valuesWidgetCol->getCalculationExpression() ?? $valuesWidgetCol->getExpression());
                 $labelWidgetCol = $valuesWidgetCol->getLabelColumn();
+                // Since none of the columns will be passed to any actions (because they currently cannot be "un-transposed")
+                // we do not need calculation and attribute_alias both. If it is a calculated column, we take the
+                // calculation expression, otherwise the attribute_alias expression.
+                $valuesSheetCol = $pivotSheet->getColumns()->addFromExpression($valuesWidgetCol->getCalculationExpression() ?? $valuesWidgetCol->getExpression());
                 $headerSheetCol = $pivotSheet->getColumns()->addFromExpression($labelWidgetCol->getCalculationExpression() ?? $labelWidgetCol->getExpression());
                 $pivotSheet->addColumnToTranspose($valuesSheetCol, $headerSheetCol);
             }
