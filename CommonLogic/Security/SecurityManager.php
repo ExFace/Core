@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Security;
 
+use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\Interfaces\UserInterface;
@@ -196,7 +197,15 @@ class SecurityManager implements SecurityManagerInterface
         }
         
         if ($token->getUsername() && $token->isAnonymous() === false) {
-            $user = UserFactory::createFromModel($this->getWorkbench(), $token->getUsername());
+            try {
+                $user = UserFactory::createFromModel($this->getWorkbench(), $token->getUsername());
+            } catch (UserNotFoundError $e) {
+                $this->getWorkbench()->getLogger()->logException(
+                    new SecurityException('No user model found for token "' . $token->getUsername() . '"', null, $e),
+                );
+                // If we cannot find the user in the DB - it is an anonymous user even the token had a username!
+                $user = UserFactory::createAnonymous($this->getWorkbench());
+            }
         } else {
             $user = UserFactory::createAnonymous($this->getWorkbench());
         }
