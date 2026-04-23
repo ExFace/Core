@@ -50,8 +50,14 @@ trait JqueryDataTransposerTrait {
     {
         $colModelsJs = '';
         $widget = $this->getWidget();
+        $formatValues = $this->willFormatValuesOnTranspose();
         foreach ($widget->getColumns() as $col) {
             $colKey = $col->getDataColumnName() ? $col->getDataColumnName() : $col->getId();
+            if ($formatValues) {
+                $formatterJs = "function(value){return {$this->getFacade()->getDataTypeFormatter($col->getCellWidget()->getValueDataType())->buildJsFormatter('value')} }";
+            } else {
+                $formatterJs = 'null';
+            }
             $colModelsJs .= "
         '{$colKey}': {
             sWidgetId: '{$col->getId()}',
@@ -63,7 +69,7 @@ trait JqueryDataTransposerTrait {
             bHideRowIfEmpty: " . (($col instanceof DataColumnTransposed) ? ($col->getHiddenIfEmpty() ? 'true' : 'false') : 'false') . ",
             sAlign: null,
             sFooterAggregator: {$this->escapeString($col->hasFooter() === true && $col->getFooter()->hasAggregator() === true ? $col->getFooter()->getAggregator()->exportString() : '')},
-            fnFormatter: function(value){return {$this->getFacade()->getDataTypeFormatter($col->getCellWidget()->getValueDataType())->buildJsFormatter('value')} },
+            fnFormatter: {$formatterJs},
             bTransposeData: " . ($col instanceof DataColumnTransposed ? 'true' : 'false') . ",
             sTransposeWithLabelsColumnKey: {$this->escapeString($col instanceof DataColumnTransposed ? $col->getLabelColumn()->getDataColumnName() : '')},
             bTransposedColumn: false,
@@ -342,5 +348,18 @@ trait JqueryDataTransposerTrait {
 })($dataJs, $colModelsJs);    
 
 JS;        
+    }
+
+    /**
+     * Returns TRUE if the JS transposed will format transposed values using their data types and FALSE if it will return raw values.
+     * 
+     * By default, the transposed will format values. Override this method if the receiving JS code does formatting
+     * itself.
+     * 
+     * @return bool
+     */
+    protected function willFormatValuesOnTranspose() : bool
+    {
+        return true;
     }
 }
