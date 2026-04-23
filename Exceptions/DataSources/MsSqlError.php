@@ -54,7 +54,7 @@ class MsSqlError extends RuntimeException implements DataConnectorExceptionInter
         } else {
             $errorMsg = $this->parseSqlError($firstError);
         }
-        $message = $message ?? $errorMsg;
+        $message = $errorMsg ?? $message;
         parent::__construct($message, $alias, $previous);
     }
 
