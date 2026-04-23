@@ -1158,7 +1158,14 @@ JS;
 JS;
 
     }
-    
+
+    /**
+     * Builds a JS-Snippet that displays an overlay to inform the user that the gallery is currently empty.
+     * 
+     * @param bool $error
+     * If TRUE, the overlay will be highlighted in red.
+     * @return string
+     */
     public function buildJsShowNoDataOverlay(bool $error = false) : string
     {
         $styleBorder = $error ? "'.125rem solid #b00'" : "''";
