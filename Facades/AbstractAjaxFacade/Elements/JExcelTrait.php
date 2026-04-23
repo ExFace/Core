@@ -362,6 +362,7 @@ JS;
             addComments: '{$translator->translate('WIDGET.JEXCEL.ADD_COMMENTS')}',
             comments: '{$translator->translate('WIDGET.JEXCEL.COMMENTS')}',
             clearComments: '{$translator->translate('WIDGET.JEXCEL.CLEAR_COMMENTS')}',
+            clearColumnFilter: '{$translator->translate('WIDGET.JEXCEL.CLEAR_COLUMN_FILTER')}',
             copy: '{$translator->translate('WIDGET.JEXCEL.COPY')}',
             paste: '{$translator->translate('WIDGET.JEXCEL.PASTE')}',
             saveAs: '{$translator->translate('WIDGET.JEXCEL.SAVE_AS')}',
@@ -373,6 +374,180 @@ JS;
             invalidMergeProperties: '{$translator->translate('WIDGET.JEXCEL.ERROR_INVALID_MERGE_PROPERTIES')}',
             cellAlreadyMerged: '{$translator->translate('WIDGET.JEXCEL.ERROR_CELL_ALREADY_MERGED')}',
             noCellsSelected: '{$translator->translate('WIDGET.JEXCEL.NO_CELLS_SELECTED')}',
+        },
+        contextMenu: function(obj, x, y, e) {
+            // in order to add/remove items we need to overwrite the entire context menu.
+            // seems like an unfortunate implementation on their side, but there is no way to just add/remove items from the default menu.
+            // https://bossanova.uk/jspreadsheet/v4/examples/contextmenu
+
+            var items = [];
+
+            if (y == null) {
+                // Insert a new column
+                if (obj.options.allowInsertColumn == true) {
+                    items.push({
+                        title:obj.options.text.insertANewColumnBefore,
+                        onclick:function() {
+                            obj.insertColumn(1, parseInt(x), 1);
+                        }
+                    });
+                }
+
+                if (obj.options.allowInsertColumn == true) {
+                    items.push({
+                        title:obj.options.text.insertANewColumnAfter,
+                        onclick:function() {
+                            obj.insertColumn(1, parseInt(x), 0);
+                        }
+                    });
+                }
+
+                // Delete a column
+                if (obj.options.allowDeleteColumn == true) {
+                    items.push({
+                        title:obj.options.text.deleteSelectedColumns,
+                        onclick:function() {
+                            obj.deleteColumn(obj.getSelectedColumns().length ? undefined : parseInt(x));
+                        }
+                    });
+                }
+
+                // Rename column
+                if (obj.options.allowRenameColumn == true) {
+                    items.push({
+                        title:obj.options.text.renameThisColumn,
+                        onclick:function() {
+                            obj.setHeader(x);
+                        }
+                    });
+                }
+
+                // Sorting
+                if (obj.options.columnSorting == true) {
+                    // Line
+                    items.push({ type:'line' });
+
+                    items.push({
+                        title:obj.options.text.orderAscending,
+                        onclick:function() {
+                            obj.orderBy(x, 0);
+                        }
+                    });
+                    items.push({
+                        title:obj.options.text.orderDescending,
+                        onclick:function() {
+                            obj.orderBy(x, 1);
+                        }
+                    });
+                }
+            } else {
+                // Insert new row
+                if (obj.options.allowInsertRow == true) {
+                    items.push({
+                        title:obj.options.text.insertANewRowBefore,
+                        onclick:function() {
+                            obj.insertRow(1, parseInt(y), 1);
+                        }
+                    });
+                    
+                    items.push({
+                        title:obj.options.text.insertANewRowAfter,
+                        onclick:function() {
+                            obj.insertRow(1, parseInt(y));
+                        }
+                    });
+                }
+
+                if (obj.options.allowDeleteRow == true) {
+                    items.push({
+                        title:obj.options.text.deleteSelectedRows,
+                        onclick:function() {
+                            obj.deleteRow(obj.getSelectedRows().length ? undefined : parseInt(y));
+                        }
+                    });
+                }
+
+                if (x) {
+                    if (obj.options.allowComments == true) {
+                        items.push({ type:'line' });
+
+                        var title = obj.records[y][x].getAttribute('title') || '';
+
+                        items.push({
+                            title: title ? obj.options.text.editComments : obj.options.text.addComments,
+                            onclick:function() {
+                                obj.setComments([ x, y ], prompt(obj.options.text.comments, title));
+                            }
+                        });
+
+                        if (title) {
+                            items.push({
+                                title:obj.options.text.clearComments,
+                                onclick:function() {
+                                    obj.setComments([ x, y ], '');
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Clear all column filters
+            if (obj.options.filters == true && x !== null && x !== undefined) {
+                if (obj.filters) {
+                    items.push({ type: 'line' });
+                    items.push({
+                        title: obj.options.text.clearColumnFilter,
+                        onclick: function() {
+                            obj.resetFilters();
+                        }
+                    });
+                }
+            }
+
+            // Line
+            items.push({ type:'line' });
+
+            // Copy
+            items.push({
+                title: obj.options.text.copy,
+                shortcut: 'Ctrl + C',
+                onclick: function() {
+                    obj.copy(true);
+                }
+            });
+
+            // Paste
+            if (navigator && navigator.clipboard) {
+                items.push({
+                    title: obj.options.text.paste,
+                    shortcut: 'Ctrl + V',
+                    onclick: function() {
+                        if (obj.selectedCell) {
+                            navigator.clipboard.readText().then(function(text) {
+                                if (text) {
+                                    obj.paste(obj.selectedCell[0], obj.selectedCell[1], text);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            // Save
+            if (obj.options.allowExport) {
+                items.push({
+                    title: obj.options.text.saveAs,
+                    shortcut: 'Ctrl + S',
+                    onclick: function () {
+                        obj.download();
+                    }
+                });
+            }
+
+            // NOTE: we removed 'about' item here
+
+            return items;
         },
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
@@ -418,6 +593,17 @@ JS;
 
                     if (iColIdx !== undefined && iRowIdx !== undefined) {
                         instance.jexcel.openEditor(instance.jexcel.records[iRowIdx][iColIdx], true);
+                    }
+                }
+            });
+
+            // single-click logic for filter row dropdown cells
+            jqSelf.off('click', '.jexcel_column_filter').on('click', '.jexcel_column_filter', function(e) {
+                // only open editor if were in the area around the dropdown button (35px from right side)
+                if (e.offsetX >= this.offsetWidth - 35) {
+                    var iColIdx = $(this).data("x");
+                    if (iColIdx !== undefined) {
+                        instance.jexcel.openFilter(iColIdx);
                     }
                 }
             });
