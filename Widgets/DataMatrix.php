@@ -210,9 +210,12 @@ class DataMatrix extends DataTable
                 $pivotSheet->importUxonObject($data_sheet->exportUxonObject());
             }
             $pivotSheet = parent::prepareDataSheetToRead($pivotSheet);
+            // Make sure, the transposed columns are always present - even if not requested from outside
+            // TODO actually, why not allow users to unselect transposed columns in the configurator?
             foreach ($this->getColumnsTransposed() as $valuesWidgetCol) {
-                $valuesSheetCol = $pivotSheet->getColumns()->get($valuesWidgetCol->getDataColumnName());
-                $headerSheetCol = $pivotSheet->getColumns()->get($valuesWidgetCol->getLabelColumn()->getDataColumnName());
+                $valuesSheetCol = $pivotSheet->getColumns()->addFromExpression($valuesWidgetCol->getCalculationExpression() ?? $valuesWidgetCol->getExpression());
+                $labelWidgetCol = $valuesWidgetCol->getLabelColumn();
+                $headerSheetCol = $pivotSheet->getColumns()->addFromExpression($labelWidgetCol->getCalculationExpression() ?? $labelWidgetCol->getExpression());
                 $pivotSheet->addColumnToTranspose($valuesSheetCol, $headerSheetCol);
             }
             return $pivotSheet;
