@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\CommonLogic\Actions\ActionConfirmationList;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -347,6 +348,9 @@ abstract class AbstractAction implements ActionInterface
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
         
+        // TODO What's the correct response here? Throw, silent, message or something else.
+        $this->validateApplicability(new ActionInputValidator($this, $task));
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
             return $this->getInputDataSheet($task);
         }));
@@ -387,6 +391,20 @@ abstract class AbstractAction implements ActionInterface
         return $result;
     }
 
+    /**
+     * Validates whether this action can be applied to a given task. Throws an error, when encountering issues
+     * and returns `void` if the task is valid for this action.
+     * 
+     * Base validation ensures that the task object and action object match, provided both are defined.
+     * 
+     * @throws ActionTaskInvalidException
+     * Throws an exception if validation FAILS, containing a description of the violation.
+     */
+    protected function validateApplicability(ActionInputValidator $validator) : void
+    {
+        $validator->validateTaskObject();
+    }
+    
     /**
      *
      * {@inheritdoc}
