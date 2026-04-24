@@ -238,7 +238,8 @@ class Data
             // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
             // around.
             foreach ($this->getColumns() as $widgetCol) {
-                // If it's a calculated column, add the corresponding expression column if it is not there yet
+                // If it's a calculated column, check if it was requested or add it if needing all columns
+                // Do it in any case - even if there is also an attribute_alias or a data_column_name. 
                 if ($widgetCol->isCalculated()) {
                     $calcExpr = $widgetCol->getCalculationExpression();
                     if (! $calcExpr->isEmpty() && ! $calcExpr->isReference()) {
@@ -266,6 +267,9 @@ class Data
                     continue;
                 }
                 
+                // If we do not need ALL column, see if the column is requested - search for matching 
+                // data column names and attribute aliases. If none of them match, stop here as the column
+                // was not requestd.
                 if (! $needAllCols) {
                     $dataCol = $data_sheet->getColumns()->get($widgetCol->getDataColumnName());
                     if (! $dataCol && $widgetCol->isBoundToAttribute()) {

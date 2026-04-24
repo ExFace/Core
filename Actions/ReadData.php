@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\ActionInputValidator;
+use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -42,6 +44,38 @@ class ReadData extends AbstractAction implements iReadData
     
     private ?UxonObject $customColumnsUxon = null;
     private ?UxonObject $customSortersUxon = null;
+
+    /**
+     * @inheritDoc
+     */
+    protected function validateApplicability(ActionInputValidator $validator): void
+    {
+        parent::validateApplicability($validator);
+
+        $expectedColumns = $validator->getExpectedColumns();
+        
+        try { 
+            $validator->validateTaskColumns($expectedColumns);
+        } catch (ActionTaskInvalidException $exception) {
+            $task = $validator->getTask();
+            if(!$task->hasInputData()) {
+                throw $exception;
+            }
+
+            // We ignore unexpected columns IF they are system columns.
+            $inputData = $task->getInputData();
+            foreach ($exception->getIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN) as $badColumn) {
+                $col = $inputData->getColumns()->get($badColumn);
+                if(
+                    $col !== null &&
+                    $col->isAttribute() && 
+                    $col->getAttribute()->isSystem()
+                ) {
+                    $inputData->getColumns()->removeByKey($badColumn);
+                }
+            }
+        }
+    }
 
     /**
      * 

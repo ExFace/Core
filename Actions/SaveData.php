@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\ActionInputValidator;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
@@ -39,6 +40,17 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         $this->setIcon(Icons::CHECK);
         $this->setInputRowsMin(0);
         $this->setInputRowsMax(null);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function validateApplicability(ActionInputValidator $validator): void
+    {
+        parent::validateApplicability($validator);
+        
+        $expectedColumns = $validator->getExpectedColumns();
+        $validator->validateTaskColumns($expectedColumns);
     }
 
     /**
