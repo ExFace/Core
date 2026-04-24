@@ -228,7 +228,13 @@ class Data
                 $data_sheet = $btn->prepareDataSheetToRead($data_sheet);
             }
         }
-        
+
+        // Make sure we always read system attributes
+        foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttribute) {			
+            if (! $data_sheet->getColumns()->getByAttribute($sysAttribute)) {
+                $data_sheet->getColumns()->addFromAttribute($sysAttribute);
+            }
+        }
         // Add columns and their totals if required
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             // Add columns from this widget to the data if the object of the data is
@@ -237,7 +243,7 @@ class Data
             // That is, is we have a `LOCATION` and a `FACTORY`, that extends `LOCATION`,
             // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
             // around.
-            foreach ($this->getColumns() as $widgetCol) {
+            foreach ($this->getColumns() as $widgetCol) {                
                 // If it's a calculated column, check if it was requested or add it if needing all columns
                 // Do it in any case - even if there is also an attribute_alias or a data_column_name. 
                 if ($widgetCol->isCalculated()) {
@@ -252,7 +258,7 @@ class Data
                 
                 // TODO is it OK to ALWAYS add the nested data? Or do we need to check if we really need ALL cols here?
                 if ($widgetCol->hasNestedData()) {
-                    if(! $nestedCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias())) {
+                    if (! $nestedCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias())) {
                         $nestedCol = $data_sheet->getColumns()->addFromExpression($widgetCol->getAttributeAlias());
                     }
                     
