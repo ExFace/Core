@@ -57,11 +57,11 @@ class ActionInputValidator
         }
 
         // Ensure metaobjects match.
-        if(!$taskObject->isExactly($actionObject)) {
+        if(!$taskObject->is($actionObject)) {
 
             // See if any input mapper has a matching from object.
             // If we can't match with an input mapper either, the task is invalid for this action.
-            if(!$action->getInputMapper($taskObject) !== null) {
+            if($action->getInputMapper($taskObject) === null) {
                 $taskAlias = $taskObject->getAliasWithNamespace();
                 
                 $error = new ActionTaskInvalidException(
