@@ -526,6 +526,7 @@
     "WIDGET.IMAGEGALLERY.BUTTON_BROWSE": "Durchsuchen",
     "WIDGET.IMAGEGALLERY.BUTTON_DOWNLOAD": "Herunterladen",
     "WIDGET.IMAGEGALLERY.HINT_UPLOAD": "Dateien für Upload hierher ziehen oder Button \"Durchsuchen\" verwenden.",
+    "WIDGET.IMAGEGALLERY.HINT_REQUIRED": "Bitte fügen Sie mindestens eine Datei hinzu!",
     "WIDGET.IMAGEGALLERY.HINT_EMPTY": "Keine Dateien vorhanden",
     "WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
     "WIDGET.POPUP.CLOSE_BUTTON_CAPTION": "Abbrechen",
