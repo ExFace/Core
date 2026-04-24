@@ -120,8 +120,12 @@ interface EventManagerInterface extends WorkbenchDependantInterface
     /**
      * 
      * @param string $eventName
-     * @return array
+     * @return callable[]
      */
     public function getStaticListeners(string $eventName) : array;
+
+    /**
+     * @return array
+     */
+    public function getStaticListenersEvents() : array;
 }
-?>

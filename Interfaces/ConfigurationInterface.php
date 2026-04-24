@@ -114,6 +114,6 @@ interface ConfigurationInterface extends WorkbenchDependantInterface, iCanBeConv
      * @return boolean
      */
     public function hasOption(string $key, string $scope = null) : bool;
-}
 
-?>
+    public function isEmpty() : bool;
+}
