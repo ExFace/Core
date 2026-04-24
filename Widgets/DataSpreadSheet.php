@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Widgets\Traits\EditableTableTrait;
@@ -38,7 +39,8 @@ use exface\Core\Interfaces\Widgets\iCanEditData;
  * in the sheet!
  * 
  * @author Andrej Kabachnik
- *
+ * 
+ * @method \exface\Core\Widgets\DataConfigurator getConfiguratorWidget()
  */
 class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAsDataSubsheet, iCanEditData, iCanWrapText
 {
@@ -61,7 +63,10 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
 
     private $doNotValidateDynamically = false;
 
-    private $nowrap_captions = true;
+    private bool $nowrapCaptions = true;
+    
+    private ?bool $allowFilteringLoadedData = null;
+    private ?bool $allowSortingLoadedData = null;
     
     /**
      * 
@@ -341,7 +346,7 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
      */
     public function setNowrapCaptions(bool $value) : DataSpreadSheet
     {
-        $this->nowrap_captions = $value;
+        $this->nowrapCaptions = $value;
         return $this;
     }
 
@@ -350,7 +355,7 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
      */
     public function getNowrapCaptions() : bool
     {
-        return $this->nowrap_captions;
+        return $this->nowrapCaptions;
     }
     
     /**
@@ -387,5 +392,73 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
             ]);
         }
         return $sorters;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowFilteringLoadedData() : bool
+    {
+        return $this->allowFilteringLoadedData ?? $this->willLoadAllData();
+    }
+
+    /**
+     * Set to TRUE or FALSE to explicitly control if filtering loaded data via column headers is allowed or not
+     * 
+     * By default, filtering and sorting loaded data is allowed if we can safely assume, that all data for this
+     * widget was already loaded - that is, if there is no pagination, not additional filters the user can set, etc.
+     * 
+     * @uxon-property allow_filtering_loaded_data
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setAllowFilteringLoadedData(bool $value) : DataSpreadSheet
+    {
+        $this->allowFilteringLoadedData = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowSortingLoadedData() : bool
+    {
+        return $this->allowSortingLoadedData ?? $this->willLoadAllData();
+    }
+
+    /**
+     * Set to TRUE or FALSE to explicitly control if sorting loaded data via column headers is allowed or not
+     * 
+     * By default, filtering and sorting loaded data is allowed if we can safely assume, that all data for this
+     * widget was already loaded - that is, if there is no pagination, not additional filters the user can set, etc.
+     * 
+     * @uxon-property allow_sorting_loaded_data
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setAllowSortingLoadedData(bool $value) : DataSpreadSheet
+    {
+        $this->allowSortingLoadedData = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if the widget will have all available data loaded at once
+     * 
+     * It is important to know if the user is able to request more data from the server - e.g. via filtering,
+     * pagination or similar. If not, we can assume, that we have all data available for the current use case
+     * at hand, so we can safely work with it in the front-end - filter it, sort it, etc.
+     * 
+     * @return bool
+     */
+    public function willLoadAllData() : bool
+    {
+        return ! $this->isPaged()
+            && ! $this->hasRowNumberAttribute()
+            && $this->getConfiguratorWidget()->getFilterTab()->countWidgetsVisible() === 0;
     }
 }

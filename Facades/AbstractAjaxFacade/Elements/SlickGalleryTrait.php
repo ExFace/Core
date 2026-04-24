@@ -310,7 +310,7 @@ JS
                             jqCarousel.slick('slickRemove', iSlideIdx);
                             oData.rows.splice(iSlideIdx, 1);
                             if (oData.rows.length === 0) {
-                                $('#{$this->getIdOfSlick()}-nodata').show();
+                                {$this->buildJsShowNoDataOverlay()};
                             }
                             jqCarousel.data({$this->getJqDataProperty()}, oData);
                         }
@@ -770,7 +770,7 @@ JS;
                     if (aRows.length > 0) {
                         $('#{$this->getIdOfSlick()}-nodata').hide();
                     } else {
-                        $('#{$this->getIdOfSlick()}-nodata').show();
+                        {$this->buildJsShowNoDataOverlay()};
                     }
 
                 })();
@@ -852,7 +852,7 @@ JS;
                 .data({$this->getJqDataProperty()}, {})
                 .data({$this->getJqLastLoadedProperty()}, {})
                 .slick('slickRemove', null, null, true);
-            $('#{$this->getIdOfSlick()}-nodata').show();
+            {$this->buildJsShowNoDataOverlay()};
            
 JS;
     }
@@ -954,7 +954,7 @@ JS;
 
     $('#{$this->getId()}').on('dragleave', function(){
         $('#{$this->getIdOfSlick()}-dropzone').hide();
-        $('#{$this->getIdOfSlick()}-nodata').show();
+        {$this->buildJsShowNoDataOverlay()};
     })*/
 
     $('#{$this->getIdOfSlick()}')
@@ -1118,6 +1118,67 @@ JS;
         })({$lasLoadedGetterJs}, {$dataGetterJs})
 JS;
     }
+
+
+    /**
+     * Returns an inline JS snippet which validates the widget.
+     * 
+     * Returns TRUE if the widget is valid, returns FALSE if the widget is invalid.
+     *
+     * @param string|null $valJs
+     * @return string
+     */
+    public function buildJsValidator(?string $valJs = null) : string
+    {
+        if (!$this->getWidget()->isRequired()) {
+            return 'true';
+        }
+        
+        return <<<JS
+
+(function () {
+    var aData = {$this->buildJsDataGetter()};
+    return aData?.rows?.length > 0;
+})()
+JS;
+    }
+
+    /**
+     * Returns a JavaScript snippet which handles the situation where the widget is invalid e.g.
+     * by overwriting this function the widget could be highlighted or an error message could be
+     * shown.
+     *
+     * @return string
+     */
+    public function buildJsValidationError()
+    {
+        return <<<JS
+
+{$this->buildJsShowNoDataOverlay(true)}
+JS;
+
+    }
+
+    /**
+     * Builds a JS-Snippet that displays an overlay to inform the user that the gallery is currently empty.
+     * 
+     * @param bool $error
+     * If TRUE, the overlay will be highlighted in red.
+     * @return string
+     */
+    public function buildJsShowNoDataOverlay(bool $error = false) : string
+    {
+        $styleBorder = $error ? "'.125rem solid #b00'" : "''";
+        $styleColor = $error ? "'#b00'" : "''";
+        
+        return <<<JS
+
+var jqNoData = $('#{$this->getIdOfSlick()}-nodata');
+jqNoData.show();
+jqNoData.children().eq(0)?.css('border', {$styleBorder});
+jqNoData.children().eq(0)?.children().eq(1)?.css('color', {$styleColor});
+JS;
+    }
     
     /**
      * 
@@ -1125,23 +1186,35 @@ JS;
      */
     protected function buildHtmlNoDataOverlay() : string
     {
-        if ($this->getWidget()->isUploadEnabled()) {
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
-        } else {
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
-        }
         return <<<HTML
         
             <div id="{$this->getIdOfSlick()}-nodata" class="imagecarousel-overlay">
                 <div class="imagecarousel-nodata">
                     <i class="fa fa-file-image-o" aria-hidden="true"></i>
                     <div>
-                        {$message}
+                        {$this->buildHtmlNoDataMessage()}
                     </div>
                 </div>
             </div>
             
 HTML;
+    }
+
+    /**
+     * @return string
+     */
+    protected function buildHtmlNoDataMessage() : string
+    {
+        if ($this->getWidget()->isUploadEnabled()) {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
+            if($this->getWidget()->isRequired()) {
+                $message .= '<div>' . $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_REQUIRED') . '</div>';
+            }
+        } else {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
+        }
+        
+        return $message;
     }
     
     /**

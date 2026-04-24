@@ -3,6 +3,7 @@ namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
@@ -215,5 +216,22 @@ class ConditionalPropertyConditionGroup implements WidgetPartInterface, \Stringa
             $result .= ($result ? ' ' . $this->getOperator() . ' ' : '') . '( ' . $group->__toString() . ' )';
         }
         return $result;
+    }
+
+    /**
+     * Converts the conditional property condition group into a regular condition group expression if possible
+     * 
+     * @return ConditionGroupInterface
+     */
+    public function toConditionGroup(): ConditionGroupInterface
+    {
+        $condGrp = ConditionGroupFactory::createForObject($this->getBaseObject(), $this->getOperator(), false);
+        foreach ($this->getConditions() as $propCond) {
+            $condGrp->addCondition($propCond->toCondition());
+        }
+        foreach ($this->getConditionGroups() as $nestedGrp) {
+            $condGrp->addNestedGroup($nestedGrp->toConditionGroup());
+        }
+        return $condGrp;
     }
 }

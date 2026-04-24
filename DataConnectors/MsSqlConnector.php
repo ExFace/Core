@@ -302,16 +302,23 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     protected function createQueryError(DataQueryInterface $query, string $message = null) : DataQueryExceptionInterface
     {
-        $message = 'MsSQL query failed. ' . $message;
         $e = new MsSqlError($this, $message, '6T2T2UI', null);
+        if ($message === null) {
+            $message = $e->getMessage();
+        } else {
+            $message = StringDataType::endSentence($message) . ' SQL error: ' . $e->getMessage();
+        }
         $obj = $e->getAffectedObject();
         $attrVals = $e->getAffectedAttributeValues();
         $sqlState = intval($e->getSqlState());
         $sqlErrorCode = intval($e->getSqlErrorCode());
 
         switch (true) {
+            case strpos($e->getMessage(), 'UTF-16') !== false:
+                $e = new DataQueryFailedError($query, 'MS SQL encountered a UTF-16 Encoding error. ' . $e->getMessage(), '', null);
+                break;
             case $sqlState === 23000 && ($sqlErrorCode === 2601 || $sqlErrorCode === 2627):
-                $e = new DataQueryUniqueConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                $e = new DataQueryUniqueConstraintError($query, $this, $message, '73II64M', $e, $obj, $attrVals);
                 break;
 
             case $sqlState === 23000 && $sqlErrorCode === 547:
@@ -328,9 +335,15 @@ class MsSqlConnector extends AbstractSqlConnector
                 $e = new DataQueryConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
 
-            case $sqlErrorCode === 512:
+            // Cannot perform an aggregate function on an expression containing an aggregate or a subquery
+            case $sqlErrorCode === 130:
+                $e = new DataQueryFailedError($query, $message, null, $e->setAlias('84RWYLO'));
+                break;
+
+            // Subquery returned more than 1 value
+            case $sqlErrorCode === 512: 
             case $sqlErrorCode === 1242:
-                $e = new DataQueryRelationCardinalityError($query, $message, null, $e);
+                $e = new DataQueryRelationCardinalityError($query, $message, null, $e->setAlias('7W2J960'));
                 break;
 
             default:

@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
+use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
@@ -27,6 +28,7 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
+use exface\Core\Widgets\Traits\iHaveSidebarTrait;
 use exface\Core\Widgets\Traits\IHaveTourGuideTrait;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Interfaces\Widgets\iShowData;
@@ -74,6 +76,7 @@ class Data
         iHaveFilters, 
         iHaveSorters,
         iHaveQuickSearch,
+        iHaveSidebar,
         iSupportLazyLoading, 
         iHaveContextualHelp, 
         IHaveTourGuideInterface,
@@ -97,6 +100,7 @@ class Data
     use iCanAutoloadDataTrait;
     use iTrackIncomingLinksTrait;
     use IHaveTourGuideTrait;
+    use iHaveSidebarTrait;
 
     // properties
     private $paginate = true;
@@ -206,62 +210,101 @@ class Data
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
+        // See if we need to add columns from the data widget to the provided sheet or just read the columns
+        // given. This is important because some facades (like exface.UI5Facade) allow the user to show/hide columns,
+        // and we do not want to read user-hidden columns here - after all, users might just hide columns, that make
+        // their table slow. On the other hand, actions not originating from these configurable data widgets, will
+        // still need all column. Same goes for actions based on other objects than the one of the widget.
+        // The rule of thumb is, that if there are columns in the data sheet to read, we read them only. If not - 
+        // we read all columns from the widget.
+        $needAllCols = $data_sheet === null || $data_sheet->getColumns()->isEmpty();
+        
+        // Inherit reading logic
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
+        // Make sure, we ALWAYS read all columns required for buttons
         if ($this->hasButtons()) {
             foreach ($this->getButtons() as $btn) {
                 $data_sheet = $btn->prepareDataSheetToRead($data_sheet);
             }
         }
-        
-        // Columns & Totals
-        // Add columns from this widget to the data if the object of the data is
-        // the same as that of the widget or inherits from it (= if we know, that
-        // the data sheet can read all the attributes required).
-        // That is, is we have a `LOCATION` and a `FACTORY`, that extends `LOCATION`,
-        // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
-        // around.
+
+        // Make sure we always read system attributes
+        foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttribute) {			
+            if (! $data_sheet->getColumns()->getByAttribute($sysAttribute)) {
+                $data_sheet->getColumns()->addFromAttribute($sysAttribute);
+            }
+        }
+        // Add columns and their totals if required
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
-            foreach ($this->getColumns() as $col) {
-                // If it's a calculated column, add the corresponding expression column
-                if ($col->isCalculated() && ! $col->getCalculationExpression()->isEmpty() && ! $col->getCalculationExpression()->isReference()) {
-                    $data_sheet->getColumns()->addFromExpression($col->getCalculationExpression(), $col->getDataColumnName());
+            // Add columns from this widget to the data if the object of the data is
+            // the same as that of the widget or inherits from it (= if we know, that
+            // the data sheet can read all the attributes required).
+            // That is, is we have a `LOCATION` and a `FACTORY`, that extends `LOCATION`,
+            // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
+            // around.
+            foreach ($this->getColumns() as $widgetCol) {                
+                // If it's a calculated column, check if it was requested or add it if needing all columns
+                // Do it in any case - even if there is also an attribute_alias or a data_column_name. 
+                if ($widgetCol->isCalculated()) {
+                    $calcExpr = $widgetCol->getCalculationExpression();
+                    if (! $calcExpr->isEmpty() && ! $calcExpr->isReference()) {
+                        $dataColName = $widgetCol->getDataColumnName();
+                        if ($needAllCols && ! $data_sheet->getColumns()->get($dataColName)) {
+                            $data_sheet->getColumns()->addFromExpression($calcExpr, $dataColName);
+                        }
+                    }
                 }
                 
-                if ($col->hasNestedData()) {
-                    if(false === $nestedCol = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias())) {
-                        $nestedCol = $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias());
+                // TODO is it OK to ALWAYS add the nested data? Or do we need to check if we really need ALL cols here?
+                if ($widgetCol->hasNestedData()) {
+                    if (! $nestedCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias())) {
+                        $nestedCol = $data_sheet->getColumns()->addFromExpression($widgetCol->getAttributeAlias());
                     }
                     
-                    $nestedCol->setNestedDataTemplate($col->getNestedDataTemplateUxon());
+                    $nestedCol->setNestedDataTemplate($widgetCol->getNestedDataTemplateUxon());
                     continue;
                 }
                 
-                $cellWidget = $col->getCellWidget();
+                $cellWidget = $widgetCol->getCellWidget();
                 
                 // Don't add anything to the data sheet if the widget cannot even use it
                 if (! ($cellWidget instanceof iShowDataColumn && $cellWidget->isBoundToDataColumn())) {
                     continue;
                 }
                 
+                // If we do not need ALL column, see if the column is requested - search for matching 
+                // data column names and attribute aliases. If none of them match, stop here as the column
+                // was not requestd.
+                if (! $needAllCols) {
+                    $dataCol = $data_sheet->getColumns()->get($widgetCol->getDataColumnName());
+                    if (! $dataCol && $widgetCol->isBoundToAttribute()) {
+                        $dataCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias());
+                    }
+                    if (! $dataCol) {
+                        continue;
+                    }
+                }
+                
+                
                 // Let the cell widget tell the sheet, what it needs. Some widgets may need multiple
                 // attributes - like a ProgressBar with custom labels.
                 $cellWidget->prepareDataSheetToRead($data_sheet);
                 
                 // Add a total to the data sheet, if the column has a footer
-                if ($col->getAttributeAlias() && $col->hasFooter() === true && $col->getFooter()->hasAggregator() === true) {
-                    $data_column = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias());
-                    $total = DataColumnTotalsFactory::createFromString($data_column, $col->getFooter()->getAggregator()->exportString());
+                if ($widgetCol->getAttributeAlias() && $widgetCol->hasFooter() === true && $widgetCol->getFooter()->hasAggregator() === true) {
+                    $data_column = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias());
+                    $total = DataColumnTotalsFactory::createFromString($data_column, $widgetCol->getFooter()->getAggregator()->exportString());
                     $data_column->getTotals()->add($total);
                 }
             }
             
-            // Aggregations
+            // Add aggregations
             foreach ($this->getAggregations() as $attr) {
                 $data_sheet->getAggregations()->addFromString($attr);
             }
             
-            // Filters only if lazy loading is disabled!
+            // Add filters only if lazy loading is disabled!
             if (! $this->getLazyLoading()) {
                 // Add filters if they have values
                 foreach ($this->getFilters() as $filter_widget) {
@@ -271,7 +314,7 @@ class Data
                 }
             }
             
-            // Sorters defined in widget model if data sheet is not sorted or if there is no lazy loading
+            // Add sorters defined in widget model if data sheet is not sorted or if there is no lazy loading
             if (! $data_sheet->hasSorters() || ! $this->getLazyLoading()) {
                 foreach ($this->getSorters() as $sorterUxon) {
                     $data_sheet->getSorters()->addFromString($sorterUxon->getProperty('attribute_alias'), $sorterUxon->getProperty('direction'));
@@ -279,7 +322,7 @@ class Data
             }
         }
         
-        // Pagination
+        // Add pagination
         if (! $data_sheet->isPaged() && $pgSize = $this->getPaginator()->getPageSize()) {
             $data_sheet->setRowsLimit($pgSize);
         }

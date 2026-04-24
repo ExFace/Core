@@ -14,6 +14,7 @@ use exface\Core\Exceptions\DataSources\DataQueryNotNullConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\DataSources\PostgreSqlError;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\ModelBuilders\PostgreSqlModelBuilder;
@@ -174,8 +175,9 @@ class PostgreSqlConnector extends AbstractSqlConnector
             case $sqlState === PostgreSqlError::SQL_STATE_UNIQUE_VIOLATION:
                 $e = new DataQueryUniqueConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
                 break;
+            case $sqlState === 23001 && strpos($e->getMessage(), 'foreign key'): 
             case $sqlState === PostgreSqlError::SQL_STATE_FOREIGN_KEY_VIOLATION:
-                $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals);
+                $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals, $e->getOtherAffectedObject());
                 break;
             case $sqlState === PostgreSqlError::SQL_STATE_NOT_NULL_VIOLATION:// NOT NULL VIOLATION
                 $e = new DataQueryNotNullConstraintError($query,$this, $message, null, $e, $obj, $attrVals);
@@ -388,5 +390,19 @@ class PostgreSqlConnector extends AbstractSqlConnector
     {
         $this->sessionOptions = $arrayOfOptions->toArray();
         return $this;
+    }
+
+    /**
+     * PosgreSQL can JOIN across schemas, but not across different databases on one installation
+     * 
+     * @see AbstractSqlConnector::canJoin()
+     */
+    public function canJoin(DataConnectionInterface $otherConnection) : bool
+    {
+        $parentDecision = parent::canJoin($otherConnection);
+        if ($parentDecision === true && $this->getDbase() !== $otherConnection->getDbase()) {
+            return false;
+        }
+        return $parentDecision;
     }
 }

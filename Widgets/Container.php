@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
+use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -19,6 +20,7 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Traits\IHaveTourGuideTrait;
+use exface\Core\Widgets\Traits\iHaveSidebarTrait;
 
 /**
  * The Container is a basic widget, that contains other widgets.
@@ -42,10 +44,11 @@ use exface\Core\Widgets\Traits\IHaveTourGuideTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Container extends AbstractWidget implements iContainOtherWidgets, iCanPreloadData, IHaveTourGuideInterface
+class Container extends AbstractWidget implements iContainOtherWidgets, iHaveSidebar, IHaveTourGuideInterface, iCanPreloadData
 {
     use iCanPreloadDataTrait;
     use IHaveTourGuideTrait;
+    use iHaveSidebarTrait;
     
     private $widgets = array();
     
