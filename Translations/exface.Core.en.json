@@ -455,6 +455,7 @@
     "WIDGET.JEXCEL.ADD_COMMENTS": "Add comments",
     "WIDGET.JEXCEL.COMMENTS": "Comments",
     "WIDGET.JEXCEL.CLEAR_COMMENTS": "Clear comments",
+    "WIDGET.JEXCEL.CLEAR_COLUMN_FILTER": "Clear column filter",
     "WIDGET.JEXCEL.COPY": "Copy ...",
     "WIDGET.JEXCEL.PASTE": "Paste ...",
     "WIDGET.JEXCEL.SAVE_AS": "Save as ...",

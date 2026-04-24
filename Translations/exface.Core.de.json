@@ -441,6 +441,7 @@
     "WIDGET.JEXCEL.ADD_COMMENTS": "Kommentare hinzufügen",
     "WIDGET.JEXCEL.COMMENTS": "Kommentare",
     "WIDGET.JEXCEL.CLEAR_COMMENTS": "Kommentare löschen",
+    "WIDGET.JEXCEL.CLEAR_COLUMN_FILTER": "Spaltenfilter zurücksetzen",
     "WIDGET.JEXCEL.COPY": "Kopieren ...",
     "WIDGET.JEXCEL.PASTE": "Einfügen ...",
     "WIDGET.JEXCEL.SAVE_AS": "Speichern als ...",
