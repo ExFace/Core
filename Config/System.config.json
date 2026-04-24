@@ -104,42 +104,6 @@
         }
     ],
     
-    "EVENTS.STATIC_LISTENERS": {
-    	"exface.Core.Model.OnMetaObjectLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel",
-			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectMutationPoint::onObjectLoadedApplyMutations"
-    	],
-    	"exface.Core.Model.OnBeforeMetaObjectActionLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel",
-			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectActionMutationPoint::onActionLoadedApplyMutations"
-		],
-        "exface.Core.Model.OnBeforeMetaObjectBehaviorLoaded": [
-            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onBehaviorLoadedTranslateModel",
-			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectBehaviorMutationPoint::onBehaviorLoadedApplyMutations"
-        ],
-    	"exface.Core.Model.OnUiMenuItemLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate",
-			"\\exface\\Core\\Mutations\\MutationPoints\\UiPageMutationPoint::onUiMenuItemLoadedApplyMutations"
-    	],
-    	"exface.Core.Model.OnBeforeDefaultObjectEditorInit": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate",
-			"\\exface\\Core\\Mutations\\MutationPoints\\ObjectDefaultEditorMutationPoint::onDefaultEditorLoadedApplyMutations"
-    	],
-		"exface.Core.Model.OnBeforeDataTypeLoaded": [
-			"\\exface\\Core\\Mutations\\MutationPoints\\DataTypeMutationPoint::onDataTypeLoadedApplyMutations"
-		],
-        "exface.Core.Model.OnBeforeSnippetLoaded": [
-          	"\\exface\\Core\\Mutations\\MutationPoints\\UxonSnippetMutationPoint::onSnippetLoadedApplyMutations"
-        ],
-    	"exface.Core.Model.OnMessageLoaded": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
-    	],
-    	"exface.Core.Workbench.OnCleanUp": [
-    		"\\exface\\Core\\CommonLogic\\Monitor::onCleanUp",
-    		"\\exface\\Core\\CommonLogic\\Queue\\TaskQueueBroker::onCleanUp"
-    	]
-    },
-    
     "FACADES.ROUTES": {},
     
     "FACADES.HTTP.HEADERS.COMMON": {
