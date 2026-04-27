@@ -621,6 +621,37 @@ JS;
                 $(this).removeClass('exf-dropdown-hitbox-hover');
             });
 
+            // open context menu for the first visible data cell when clicking the select-all cell (top-left corner)
+            // (this is meant to raise more awareness that the context menu exists at all)
+            jqSelf.off('click', '.jexcel_selectall').on('click', '.jexcel_selectall', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!instance.jexcel.records || !instance.jexcel.records[0]) return;
+                var iFirstVisibleCol = instance.jexcel.options.columns.findIndex(function(col) { return col.type !== 'hidden'; });
+                if (iFirstVisibleCol === -1) return;
+                var iFirstVisibleRow = 0;
+                if (instance.jexcel.rows) {
+                    for (var i = 0; i < instance.jexcel.rows.length; i++) {
+                        if (instance.jexcel.rows[i] && instance.jexcel.rows[i].style.display !== 'none') {
+                            iFirstVisibleRow = i;
+                            break;
+                        }
+                    }
+                }
+                var oFirstCell = instance.jexcel.records[iFirstVisibleRow] && instance.jexcel.records[iFirstVisibleRow][iFirstVisibleCol];
+                
+                // open conext menu on first visible cell 
+                if (oFirstCell) {
+                    var oContextMenuEvent = new MouseEvent('contextmenu', {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: e.clientX,
+                        clientY: e.clientY
+                    });
+                    oFirstCell.dispatchEvent(oContextMenuEvent);
+                }
+            });
+
             // wrap/replace the original keydown listener of JExcel, in order to overwrite the tab functionality
             if (!jspreadsheet._exfKeyDownControlWrapped) {
                 jspreadsheet._exfKeyDownControlWrapped = true;

@@ -545,6 +545,7 @@
     "WIDGET.IMAGEGALLERY.BUTTON_BROWSE": "Browser",
     "WIDGET.IMAGEGALLERY.BUTTON_DOWNLOAD": "Download",
     "WIDGET.IMAGEGALLERY.HINT_UPLOAD": "Drag files here or press \"Browse\" button.",
+    "WIDGET.IMAGEGALLERY.HINT_REQUIRED": "Please upload at least one file!",
     "WIDGET.IMAGEGALLERY.HINT_EMPTY": "No files found",
     "WIDGET.NAVTILES.EMPTY": "This menu is empty or you don't have permissions for its items.",
     "WIDGET.POPUP.CLOSE_BUTTON_CAPTION": "Cancel",

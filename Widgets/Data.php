@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\WidgetInterface;
@@ -228,7 +229,7 @@ class Data
                 $data_sheet = $btn->prepareDataSheetToRead($data_sheet);
             }
         }
-        
+
         // Add columns and their totals if required
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             // Add columns from this widget to the data if the object of the data is
@@ -237,7 +238,7 @@ class Data
             // That is, is we have a `LOCATION` and a `FACTORY`, that extends `LOCATION`,
             // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
             // around.
-            foreach ($this->getColumns() as $widgetCol) {
+            foreach ($this->getColumns() as $widgetCol) {                
                 // If it's a calculated column, check if it was requested or add it if needing all columns
                 // Do it in any case - even if there is also an attribute_alias or a data_column_name. 
                 if ($widgetCol->isCalculated()) {
@@ -252,7 +253,7 @@ class Data
                 
                 // TODO is it OK to ALWAYS add the nested data? Or do we need to check if we really need ALL cols here?
                 if ($widgetCol->hasNestedData()) {
-                    if(! $nestedCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias())) {
+                    if (! $nestedCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias())) {
                         $nestedCol = $data_sheet->getColumns()->addFromExpression($widgetCol->getAttributeAlias());
                     }
                     
@@ -293,9 +294,21 @@ class Data
                 }
             }
             
-            // Add aggregations
+            // Add aggregations            
             foreach ($this->getAggregations() as $attr) {
                 $data_sheet->getAggregations()->addFromString($attr);
+            }
+
+            // Make sure we always read system attributes if the datasheet is not aggregated
+            foreach ($this->getMetaObject()->getAttributes()->getSystem()->getAll() as $attr) {
+                if (! $data_sheet->getColumns()->getByAttribute($attr)) {
+                    // Check if the system attribute has a default aggregator if the data sheet is being aggregated
+                    if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
+                        $data_sheet->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction(), null, true);
+                    } else {
+                        $data_sheet->getColumns()->addFromAttribute($attr, true);
+                    }
+                }
             }
             
             // Add filters only if lazy loading is disabled!

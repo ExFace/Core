@@ -1186,23 +1186,35 @@ JS;
      */
     protected function buildHtmlNoDataOverlay() : string
     {
-        if ($this->getWidget()->isUploadEnabled()) {
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
-        } else {
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
-        }
         return <<<HTML
         
             <div id="{$this->getIdOfSlick()}-nodata" class="imagecarousel-overlay">
                 <div class="imagecarousel-nodata">
                     <i class="fa fa-file-image-o" aria-hidden="true"></i>
                     <div>
-                        {$message}
+                        {$this->buildHtmlNoDataMessage()}
                     </div>
                 </div>
             </div>
             
 HTML;
+    }
+
+    /**
+     * @return string
+     */
+    protected function buildHtmlNoDataMessage() : string
+    {
+        if ($this->getWidget()->isUploadEnabled()) {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
+            if($this->getWidget()->isRequired()) {
+                $message .= '<div>' . $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_REQUIRED') . '</div>';
+            }
+        } else {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
+        }
+        
+        return $message;
     }
     
     /**
