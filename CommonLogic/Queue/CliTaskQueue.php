@@ -49,7 +49,9 @@ class CliTaskQueue extends SyncTaskQueue
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout = $task->getParameter('timeout');
+        $timeout = $task->hasParameter('timeout')
+            ? (float) $task->getParameter('timeout')
+            : $this->getCommandTimeout();
         $result = new ResultMessageStream($task);
 
         // Store each command's outputs
@@ -138,7 +140,7 @@ class CliTaskQueue extends SyncTaskQueue
      */
     public function getCommandTimeout() : float
     {
-        return $this->commandTimeout;
+        return $this->commandTimeout ?? 600.0;
     }
 
 
