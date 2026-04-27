@@ -12,6 +12,12 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 /**
  * Performs CLI command(s) from the task parameter `cmd` - similar to the WebConsoleFacade.
  * 
+ * The `command_timeout` property sets the maximum number of seconds a CLI command is allowed to 
+ * run before it is forcefully terminated. Without this limit, a command that hangs indefinitely 
+ * — due to a deadlock, waiting for user input, or an unresponsive external service — would keep 
+ * the PHP process alive forever and leave the queue item stuck in IN_PROGRESS state with no way 
+ * to recover automatically. By enforcing a timeout, the process is killed cleanly.
+ * 
  * @author Andrej Kabachnik
  *
  */
