@@ -565,7 +565,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * @param UserInterface $user
      * @param AuthenticationTokenInterface $token
      */
-    protected function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token) : AuthenticatorInterface
+    public function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token) : AuthenticatorInterface
     {
         if ($this->hasSyncRoles() === false) {
             return $this;
