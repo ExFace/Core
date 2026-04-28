@@ -75,6 +75,9 @@
     "SECURITY.SESSION_COOKIE_LIFETIME": "604800",
     "SECURITY.SESSION_COOKIE_PATH": "/",
     "SECURITY.FORCE_HTTPS": false,
+	"SECURITY.ACTION_INPUT.VALIDATION_ENABLED": false,
+	"SECURITY.ACTION_INPUT.VALIDATE_COLUMNS": true,
+	"SECURITY.ACTION_INPUT.VALIDATE_VALUES": true,
 	"SECURITY.PASSWORD_CONFIG": {
 		"validator_regex": "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\w\\s]|[_])).{8,}$/",
 		"validation_error_code": "7INNL87"
