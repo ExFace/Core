@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "App [exface.Core.APP]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2020-11-09 09:17:35",
+            "MODIFIED_ON": "2026-04-29 14:19:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x35370000000000000000000000000000",
@@ -115,6 +115,16 @@
                     },
                     {
                         "attribute_alias": "DEFAULT_LANGUAGE_CODE"
+                    },
+                    {
+                        "attribute_alias": "DESCRIPTION",
+                        "height": 5
+                    },
+                    {
+                        "attribute_alias": "PACKAGE"
+                    },
+                    {
+                        "attribute_alias": "DOCS_INTRO"
                     }
                 ]
             },

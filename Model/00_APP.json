@@ -31,6 +31,14 @@
             "attribute_alias": "DEFAULT_LANGUAGE_CODE"
         },
         {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DOCS_INTRO",
+            "attribute_alias": "DOCS_INTRO"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -43,11 +51,13 @@
         {
             "_EXPORT_SUMMARY": "ExFace Core [exface.Core]",
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2016-03-18 14:20:32",
+            "MODIFIED_ON": "2026-04-29 14:19:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31000000000000000000000000000000",
             "DEFAULT_LANGUAGE_CODE": "en",
+            "DESCRIPTION": "Main app of the no-code platform for business web apps. Once it is up and running, other apps can be installed for additional functionality.",
+            "DOCS_INTRO": "exface/core/Docs/Getting_started/Introduction.md",
             "ALIAS": "exface.Core",
             "NAME": "ExFace Core"
         }
