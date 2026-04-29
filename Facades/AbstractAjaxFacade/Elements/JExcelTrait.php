@@ -2705,7 +2705,7 @@ JS;
      */
     public function buildJsDataResetter() : string
     {
-        return "(function(){ {$this->buildJsJqueryElement()}.jspreadsheet('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })();";
+        return "(function(){ if( {$this->buildJsJqueryElement()}.length > 0) { {$this->buildJsJqueryElement()}.jspreadsheet('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} } })();";
     }
     
     /**
