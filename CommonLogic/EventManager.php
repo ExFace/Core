@@ -18,7 +18,10 @@ use exface\Core\Interfaces\AppInterface;
  */
 class EventManager implements EventManagerInterface
 {
-
+    public const FILE_STATIC_LISTENERS_TEMPLATE = 'EventListenersTemplate.template.json';
+    public const FILE_STATIC_LISTENERS = 'EventListeners.config.json';
+    public const CFG_STATIC_LISTENERS = 'STATIC_LISTENERS';
+    
     private $exface = null;
     private ?ConfigurationInterface $config;
 
@@ -37,11 +40,14 @@ class EventManager implements EventManagerInterface
         $this->dispatcher = new EventDispatcher();
         
         // Load events config
-        $configFile = $exface->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . 'Events.config.json';
+        $configFile = $exface->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS;
         $config = new Configuration($exface);
         $config->loadConfigFile($configFile, AppInterface::CONFIG_SCOPE_SYSTEM);
         if ($config->isEmpty()) {
-            $config->loadConfigFile($exface->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . 'Events.config.json');
+            $config->loadConfigFile($exface->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS);
+        }
+        if ($config->isEmpty()) {
+            $config->loadConfigFile($exface->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS_TEMPLATE);
         }
         $this->config = $config;
         
@@ -149,7 +155,7 @@ class EventManager implements EventManagerInterface
         }
         
         $config = $this->config;
-        $listeners = $config->getOption('STATIC_LISTENERS')->toArray();
+        $listeners = $config->getOption(self::CFG_STATIC_LISTENERS)->toArray();
         $eventListeners = $listeners[$eventName];
         if ($eventListeners) {
             $existingPrio = array_search($listener_callable, $eventListeners, true);
@@ -168,7 +174,7 @@ class EventManager implements EventManagerInterface
             }
         }
         
-        $config->setOption('STATIC_LISTENERS', new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
+        $config->setOption(self::CFG_STATIC_LISTENERS, new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
         
         return $this;
     }
@@ -181,7 +187,7 @@ class EventManager implements EventManagerInterface
     public function removeStaticListener(string $eventName, callable $listener_callable) : EventManagerInterface
     {
         $config = $this->config;
-        $listeners = $config->getOption('STATIC_LISTENERS')->toArray();
+        $listeners = $config->getOption(self::CFG_STATIC_LISTENERS)->toArray();
         
         if ($listeners[$eventName] === null || ($prio = array_search($listener_callable, $listeners[$eventName], true)) === false) {
             return $this;
@@ -189,7 +195,7 @@ class EventManager implements EventManagerInterface
         
         unset($listeners[$eventName][$prio]);
         
-        $config->setOption('STATIC_LISTENERS', new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
+        $config->setOption(self::CFG_STATIC_LISTENERS, new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
         return $this;
     }
     
@@ -210,7 +216,7 @@ class EventManager implements EventManagerInterface
      */
     public function getStaticListenersEvents() : array
     {
-        return $this->config->getOption('STATIC_LISTENERS')->toArray();
+        return $this->config->getOption(self::CFG_STATIC_LISTENERS)->toArray();
     }
     
     /**
@@ -232,7 +238,6 @@ class EventManager implements EventManagerInterface
                 $this->addListener($event, $callable, $priority);
             }
         }
-        return;
     }
     
     /**
@@ -245,7 +250,7 @@ class EventManager implements EventManagerInterface
         return ! empty($this->getStaticListeners($eventName));
     }
 
-    protected function sanitizePriority(string $evenName, int $priority = null) : ?int
+    protected function sanitizePriority(string $eventName, int $priority = null) : ?int
     {
         if ($priority === EventManagerInterface::PRIORITY_MIN) {
             $priority = ($this->priorityMinVals[$eventName] ?? $priority) - 1;
