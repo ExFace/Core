@@ -1,99 +1,120 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Factories\ActionFactory;
-use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iHaveCaption;
-use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\InputCombo;
-use exface\Core\Widgets\Traits\iHaveCaptionTrait;
-use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
- * Configuration for a mention tag or hash tag in a text editor
- * 
+ * Configuration for a mention tag or hash tag in a text editor.
+ *
  * Mention Widget Dokumentation:
- * For example, DevMan Tickets (autosuggest_object_alias) mention fetch can be activated by typing 
- * the "#" character (tag_prefix) into the editor (see the example uxon below).
- * 
- * If the input after the tag prefix matches the given regex (tag_text_regex),
- * it will fetch 10 (autosuggest_max_number_of_rows) filtered rows with the columns "LABEL" (autosuggest_filter_attribute_alias) and "id" (tag_text_attribute) 
- * and present a dropdown with the values of the "LABEL" field.
- * 
- * If the user selects one of the options or presses the space bar when only one row is shown, 
- * a tag containing the tag prefix and the 'id' field will appear in the editor, e.g. '#id', in the defined tag colour.
- * 
- * If the input after the tag prefix matches one of the mentions, but the table fetch does not succeed, 
- * the input will still be transformed into a mention tag but without any press actions included.
- * 
- * If the "tag_text_attribute" is not given, the results of the "autosuggest_filter_attribute_alias" will be taken and pasted to the text editor instead.
- * 
+ * For example, DevMan Tickets mention fetch can be activated by typing the `#`
+ * character (`tag_prefix`) into the editor (see the example UXON below).
+ *
+ * If the input after the tag prefix matches the given regex (`tag_text_regex`),
+ * it will fetch 10 (`autosuggest.max_number_of_rows`) filtered rows with the
+ * columns `LABEL` (`autosuggest.filter_attribute_alias`) and `id`
+ * (`tag_text_attribute`) and present a dropdown with the values of `LABEL`.
+ *
+ * If the user selects one of the options or presses the space bar when only one
+ * row is shown, a tag containing the tag prefix and the `id` field appears in
+ * the editor, e.g. `#id`, in the configured color.
+ *
+ * If the input after the tag prefix matches one of the mentions, but the table
+ * fetch does not succeed, the input is still transformed into a mention tag but
+ * without any press actions included.
+ *
+ * If `tag_text_attribute` is not given, the results of
+ * `autosuggest.filter_attribute_alias` will be inserted into the editor.
+ *
+ * Example 1: DevMan Ticket mention
+ *
  * ```
- *  {
+ * {
  *      "caption": "devman tickets mention",
- *      "hint": "this devman mention widget filters the DevMan.ticket table with LABEL field and writes the ID of it as an \"#id\" tag. ",
+ *      "hint": "this devman mention widget filters the DevMan.ticket table with LABEL field and writes the ID of it as an \"#id\" tag.",
  *      "tag_prefix": "#",
- *      "autosuggest_max_number_of_rows": 10,
  *      "tag_color": "green",
  *      "tag_text_regex": "\\d*",
- *      "autosuggest_object_alias": "axenox.DevMan.ticket",
- *      "autosuggest_filter_attribute_alias": "LABEL",
- *      "tag_text_attribute": "id"
- *  }
- * 
+ *      "tag_text_attribute": "id",
+ *      "autosuggest": {
+ *          "object_alias": "axenox.DevMan.ticket",
+ *          "filter_attribute_alias": "LABEL",
+ *          "max_number_of_rows": 10
+ *      }
+ * }
  * ```
- * 
- * Example 2: User mention:
+ *
+ * Example 2: User mention
+ *
  * ```
  * {
  *      "caption": "user mentions",
  *      "hint": "user mentions hint",
  *      "tag_prefix": "@",
- *      "autosuggest_max_number_of_rows": 10,
  *      "tag_color": "#001580",
  *      "tag_text_regex": ".*",
- *      "autosuggest_object_alias": "exface.Core.USER",
- *      "autosuggest_filter_attribute_alias": "FULL_NAME",
- * }
- * 
- * ```
- * 
- * 
- * TODO in the ToastUIEditorTrait:
- * 
- * ```
- *       "click_action": {
- *           "alias": "exface.Core.GoToPage",
- *           "page_alias": "axenox.DevMan.tickets"
+ *      "autosuggest": {
+ *          "object_alias": "exface.Core.USER",
+ *          "filter_attribute_alias": "FULL_NAME",
+ *          "max_number_of_rows": 10
  *      }
- *  
+ * }
  * ```
- * 
- * @author Andrej Kabachnik
  *
+ * Legacy note:
+ * Old top-level keys `autosuggest_object_alias`,
+ * `autosuggest_filter_attribute_alias` and `autosuggest_max_number_of_rows`
+ * are still supported for backwards compatibility.
+ *
+ * @author Andrej Kabachnik
  */
 class TextMention extends TextStencil
-{    
-    private $autosuggestObjectAlias = null;
-    private $autosuggestFilterAttributeAlias = null;
+{
+    private ?TextMentionAutosuggest $autosuggest = null;
+
     private $tagTextAttribute = null;
+
     private $tagPrefix = null;
-    private $autosuggestMaxNumberOfRows = null;
+
     private $tagTextRegex = null;
+
     private $tagColor = null;
 
+    /**
+     * Autosuggest configuration.
+     *
+     * @uxon-property autosuggest
+     * @uxon-type \exface\Core\Widgets\Parts\TextMentionAutosuggest
+     * @uxon-template {"object_alias": "", "filter_attribute_alias": "", "max_number_of_rows": 10}
+     *
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setAutosuggest(UxonObject $uxon) : TextMention
+    {
+        if ($this->autosuggest !== null) {
+            $this->autosuggest->importUxonObject($uxon);
+        } else {
+            $this->autosuggest = new TextMentionAutosuggest($this, $uxon);
+        }
+        return $this;
+    }
+
+    public function getAutosuggest() : TextMentionAutosuggest
+    {
+        if ($this->autosuggest === null) {
+            $this->autosuggest = new TextMentionAutosuggest($this);
+        }
+        return $this->autosuggest;
+    }
 
     /**
-     * It specifies the object where the mention widgets should get the data from.
+     * Backward compatible alias for `autosuggest.object_alias`.
      *
      * @uxon-property autosuggest_object_alias
      * @uxon-type metamodel:object
@@ -103,7 +124,7 @@ class TextMention extends TextStencil
      */
     protected function setAutosuggestObjectAlias(string $alias) : TextMention
     {
-        $this->autosuggestObjectAlias = $alias;
+        $this->getAutosuggest()->importUxonObject(new UxonObject(['object_alias' => $alias]));
         return $this;
     }
 
@@ -112,11 +133,11 @@ class TextMention extends TextStencil
      */
     public function getAutosuggestObject() : MetaObjectInterface
     {
-        return MetaObjectFactory::createFromString($this->getWorkbench(), $this->autosuggestObjectAlias);
+        return $this->getAutosuggest()->getObject();
     }
 
     /**
-     * This is the alias of the field inside the "autosuggest_object" that is used for filtering and will appear in the dropdown.
+     * Backward compatible alias for `autosuggest.filter_attribute_alias`.
      *
      * @uxon-property autosuggest_filter_attribute_alias
      * @uxon-type string
@@ -126,7 +147,7 @@ class TextMention extends TextStencil
      */
     protected function setAutosuggestFilterAttributeAlias(string $alias) : TextMention
     {
-        $this->autosuggestFilterAttributeAlias = $alias;
+        $this->getAutosuggest()->importUxonObject(new UxonObject(['filter_attribute_alias' => $alias]));
         return $this;
     }
 
@@ -135,12 +156,12 @@ class TextMention extends TextStencil
      */
     public function getAutosuggestFilterAttributeAlias() : string
     {
-        return $this->autosuggestFilterAttributeAlias;
+        return (string) $this->getAutosuggest()->getFilterAttributeAlias();
     }
-    
+
     /**
      * This is the attribute alias that will be inserted into the tag text when the autosuggest value is selected.
-     * If no 'autosuggest_filter_attribute_alias' is given, the 'tag_text_attribute' property is used automatically.
+     * If no `tag_text_attribute` is given, the `autosuggest.filter_attribute_alias` property is used automatically.
      *
      * @uxon-property tag_text_attribute
      * @uxon-type string
@@ -189,14 +210,17 @@ class TextMention extends TextStencil
     /**
      * This sets the limit number of rows that the autosuggest will display.
      *
+     * Backward compatible alias for `autosuggest.max_number_of_rows`.
+     *
      * @uxon-property autosuggest_max_number_of_rows
+     * @uxon-type integer
      *
      * @param int $numberOfRows
      * @return $this
      */
     public function setAutosuggestMaxNumberOfRows(int $numberOfRows) : TextMention
     {
-        $this->autosuggestMaxNumberOfRows = $numberOfRows;
+        $this->getAutosuggest()->importUxonObject(new UxonObject(['max_number_of_rows' => $numberOfRows]));
         return $this;
     }
 
@@ -205,11 +229,12 @@ class TextMention extends TextStencil
      */
     public function getAutosuggestMaxNumberOfRows() : ?int
     {
-        return $this->autosuggestMaxNumberOfRows;
+        return $this->getAutosuggest()->getMaxNumberOfRows();
     }
 
     /**
-     * This regular expression is used to identify the searching string of mentions
+     * This regular expression is used to identify the searching string of mentions.
+     *
      * Example:
      * - with the tag_prefix = "@" and tag_text_regex = ".*": "@Max Mustermann"
      * - with the tag_prefix = "#" and tag_text_regex = "\\d*": "#12345"
@@ -231,15 +256,14 @@ class TextMention extends TextStencil
     {
         return $this->tagTextRegex;
     }
-    
 
     /**
      * This sets the color of the mention tag.
-     * 
+     *
      * @uxon-property tag_color
      * @uxon-type string
      * @uxon-default '#001580'
-     * 
+     *
      * @param string $color
      * @return $this
      */
@@ -262,7 +286,7 @@ class TextMention extends TextStencil
         $autosuggestObj = $this->getAutosuggestObject();
         $uxon = new UxonObject([
             'alias' => 'exface.Core.ReadData',
-            'object_alias' => $this->autosuggestObjectAlias,
+            'object_alias' => $this->getAutosuggest()->getObjectAlias(),
             'columns' => []
         ]);
         if ($autosuggestObj->hasUidAttribute()) {
@@ -277,7 +301,7 @@ class TextMention extends TextStencil
         }
         return $uxon;
     }
-    
+
     public function getAutosuggestButton() : iTriggerAction
     {
         $btn = WidgetFactory::createFromUxonInParent($this->getWidget(), new UxonObject([
@@ -287,13 +311,13 @@ class TextMention extends TextStencil
         return $btn;
     }
 
-    //TODO SR: Check if this is still needed:
+    // TODO SR: Check if this is still needed:
     public function getAutosuggestWidget() : InputCombo
     {
         $autosuggestObj = $this->getAutosuggestObject();
         $uxon = new UxonObject([
             'widget_type' => 'InputComboTable',
-            'table_object_alias' => $this->autosuggestObjectAlias
+            'table_object_alias' => $this->getAutosuggest()->getObjectAlias()
         ]);
         if ($autosuggestObj->hasUidAttribute()) {
             $uxon->setProperty('value_attribute_alias', $autosuggestObj->getUidAttributeAlias());
@@ -305,7 +329,7 @@ class TextMention extends TextStencil
         } else {
             $uxon->setProperty('text_attribute_alias', $autosuggestObj->getUidAttributeAlias());
         }
-        
+
         $widget = WidgetFactory::createFromUxonInParent($this->getWidget(), $uxon);
         return $widget;
     }
