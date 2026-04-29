@@ -49,7 +49,6 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
-use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
@@ -99,7 +98,6 @@ class Data
     use iHaveContextualHelpTrait;
     use iHaveConfiguratorTrait;
     use iCanAutoloadDataTrait;
-    use iTrackIncomingLinksTrait;
     use IHaveTourGuideTrait;
     use iHaveSidebarTrait;
 
@@ -271,7 +269,7 @@ class Data
                 // If we do not need ALL column, see if the column is requested - search for matching 
                 // data column names and attribute aliases. If none of them match, stop here as the column
                 // was not requested.
-                if (! $needAllCols && ! $widgetCol->isHidden()) {
+                if (! $needAllCols && ! $widgetCol->isSystem()) {
                     $dataCol = $data_sheet->getColumns()->get($widgetCol->getDataColumnName());
                     if (! $dataCol && $widgetCol->isBoundToAttribute()) {
                         $dataCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias());
