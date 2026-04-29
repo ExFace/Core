@@ -4,6 +4,7 @@ namespace exface\Core;
 use exface\Core\CommonLogic\AppInstallers\ApacheServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
 use exface\Core\CommonLogic\AppInstallers\NginxServerInstaller;
+use exface\Core\CommonLogic\AppInstallers\StaticEventListenerInstaller;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Facades\LogHubFacade;
 use exface\Core\Facades\PermalinkFacade;
@@ -60,6 +61,10 @@ class CoreApp extends App
         // Make sure, it runs before any other installers do.
         $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
 
+        // Static listeners.
+        $staticListenersInstaller = new StaticEventListenerInstaller($this->getSelector());
+        $installer->addInstaller($staticListenersInstaller);
+        
         // robot.txt
         $robotsTxtInstaller = new FileContentInstaller($this->getSelector());
         $robotsTxtInstaller
