@@ -380,7 +380,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
                 case 'time_created_attribute': $this->timeCreatedAttributeAlias = $attrAlias; break;
                 case 'time_modified_attribute': $this->timeModifiedAttributeAlias = $attrAlias; break;
                 default:
-                    throw new BehaviorConfigurationError($this, 'Cannot override file attribute "' . $prop . '" in FileAttachmentBehavior!');
+                    throw new BehaviorConfigurationError($this, 'Cannot override file attribute `' . $prop . '` in FileAttachmentBehavior!');
             }
         }
 
