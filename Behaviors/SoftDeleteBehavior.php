@@ -389,7 +389,7 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
         try {
             return $this->getObject()->getAttribute($this->getSoftDeleteAttributeAlias()); 
         } catch (MetaAttributeNotFoundError $e) {
-            throw new BehaviorConfigurationError($this, 'Configuration error: no attribute "' . $this->getSoftDeleteAttributeAlias() . '" found in object "' . $this->getObject()->getAlias() . '".');
+            throw new BehaviorConfigurationError($this, 'Configuration error: no attribute `' . $this->getSoftDeleteAttributeAlias() . '` found in object "' . $this->getObject()->getAlias() . '".');
         }
     }
     
