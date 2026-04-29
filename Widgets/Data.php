@@ -270,8 +270,8 @@ class Data
                 
                 // If we do not need ALL column, see if the column is requested - search for matching 
                 // data column names and attribute aliases. If none of them match, stop here as the column
-                // was not requestd.
-                if (! $needAllCols) {
+                // was not requested.
+                if (! $needAllCols && ! $widgetCol->isHidden()) {
                     $dataCol = $data_sheet->getColumns()->get($widgetCol->getDataColumnName());
                     if (! $dataCol && $widgetCol->isBoundToAttribute()) {
                         $dataCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias());
