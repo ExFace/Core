@@ -3732,7 +3732,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDiff()
      */
-    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = []) : array
+    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = [], bool $ignoreEmptyCols = false) : array
     {
         $diffRows = [];
         $diffIdxs = [];
@@ -3760,10 +3760,19 @@ class DataSheet implements DataSheetInterface
             if (in_array($thisCol, $excludeColumns)) {
                 continue;
             }
-            if ($otherCol = $otherSheet->getColumns()->get($thisCol->getName())) {
-                $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->diffRows($otherCol)));
-            } else {
-                $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->getValues(false)));
+            switch (true) {
+                // If both sheets have the column, diff values in the
+                case $otherCol = $otherSheet->getColumns()->get($thisCol->getName()):
+                    $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->diffRows($otherCol)));
+                    break;
+                // If the other sheet has no corresponding colum AND we can ignore empty columns, ignore this column
+                // if it is empty.
+                case $ignoreEmptyCols === true && $thisCol->isEmpty(true):
+                    break;
+                // Otherwise treat ALL rows as diffs
+                default:
+                    $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->getValues(false)));
+                    break;
             }
         }
         $diffIdxs = array_unique($diffIdxs);
