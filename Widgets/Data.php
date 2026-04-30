@@ -296,18 +296,6 @@ class Data
             foreach ($this->getAggregations() as $attr) {
                 $data_sheet->getAggregations()->addFromString($attr);
             }
-
-            // Make sure we always read system attributes if the datasheet is not aggregated
-            foreach ($this->getMetaObject()->getAttributes()->getSystem()->getAll() as $attr) {
-                if (! $data_sheet->getColumns()->getByAttribute($attr)) {
-                    // Check if the system attribute has a default aggregator if the data sheet is being aggregated
-                    if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
-                        $data_sheet->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction(), null, true);
-                    } else {
-                        $data_sheet->getColumns()->addFromAttribute($attr, true);
-                    }
-                }
-            }
             
             // Add filters only if lazy loading is disabled!
             if (! $this->getLazyLoading()) {
