@@ -1026,10 +1026,13 @@ class DataSheet implements DataSheetInterface
         // Ensure, the columns with system attributes are always in the select if a row represents a
         // single UID. Adding system attributes does not make sense for aggregated rows as it is 
         // unclear, how they should be aggregated.
-        //
+        // We have a similar logic in FormToolbar::addSystemAttributeWidgets() where a Form widget is automatically
+        // given hidden inpiuts for all system attributes. These are using default aggregators.
+        // IDEA #system-attributes add a centralize mechanism to ensure system attributes are always present?
         // FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
         // aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
-        // the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
+        // the code creating the sheet add the system columns. The behaviors will produce errors if this does not happen
+        // anyway.
         if ($this->hasAggregateAll() === false) {
             foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
                 if (! $this->getColumns()->getByAttribute($attr)) {
