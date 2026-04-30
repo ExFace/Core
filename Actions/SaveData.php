@@ -49,10 +49,10 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
     {
         $validator = parent::validateApplicability($task);
 
-        if ($this->getWorkbench()->getConfig()->getOption('SECURITY.SECURITY.ACTION_INPUT.VALIDATE_COLUMNS') === true) {
-            $expectedColumns = $validator->getExpectedColumns();
-            $validator->validateTaskColumns($expectedColumns);
-        }
+        $expectedColumns = $validator->getExpectedColumns();
+        $validator->validateTaskColumns($expectedColumns);
+        
+        return $validator;
     }
 
     /**

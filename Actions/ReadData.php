@@ -51,32 +51,32 @@ class ReadData extends AbstractAction implements iReadData
     protected function validateApplicability(TaskInterface $task) : ActionInputValidator
     {
         $validator = parent::validateApplicability($task);
+        $expectedColumns = $validator->getExpectedColumns();
 
-        if ($this->getWorkbench()->getConfig()->getOption('SECURITY.SECURITY.ACTION_INPUT.VALIDATE_COLUMNS') === true) {
-            $expectedColumns = $validator->getExpectedColumns();
+        try {
+            $validator->validateTaskColumns($expectedColumns);
+        } catch (ActionTaskInvalidException $exception) {
+            $task = $validator->getTask();
+            if (! $task->hasInputData()) {
+                throw $exception;
+            }
 
-            try {
-                $validator->validateTaskColumns($expectedColumns);
-            } catch (ActionTaskInvalidException $exception) {
-                $task = $validator->getTask();
-                if (!$task->hasInputData()) {
-                    throw $exception;
-                }
-
-                // We ignore unexpected columns IF they are system columns.
-                $inputData = $task->getInputData();
-                foreach ($exception->getIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN) as $badColumn) {
-                    $col = $inputData->getColumns()->get($badColumn);
-                    if (
-                        $col !== null &&
-                        $col->isAttribute() &&
-                        $col->getAttribute()->isSystem()
-                    ) {
-                        $inputData->getColumns()->removeByKey($badColumn);
-                    }
+            // We ignore unexpected columns IF they are system columns.
+            // TODO wouldn't it be easier to always add system columns to the expected list? There is also a new
+            // $columnWidget->isSystem() method, that could  be used here
+            $inputData = $task->getInputData();
+            foreach ($exception->getIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN) as $badColumn) {
+                $col = $inputData->getColumns()->get($badColumn);
+                if (
+                    $col !== null &&
+                    $col->isAttribute() &&
+                    $col->getAttribute()->isSystem()
+                ) {
+                    $inputData->getColumns()->removeByKey($badColumn);
                 }
             }
         }
+        return $validator;
     }
 
     /**

@@ -74,8 +74,11 @@ class ActionInputValidator
                 
                 $error->setUseExceptionMessageAsTitle(true);
                 $error->addIssue(ActionTaskInvalidException::ISSUE_INVALID_OBJECT, $taskAlias);
-                
-                throw $error;
+                if ($this->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
+                    throw $error;
+                } else {
+                    $this->action->getWorkbench()->getLogger()->logException($error);
+                }
             }
         }
     }
@@ -226,8 +229,11 @@ class ActionInputValidator
             foreach (array_keys($unexpectedColumns) as $unexpectedColumn) {
                 $error->addIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN, $unexpectedColumn);
             }
-            
-            throw $error;
+            if ($this->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
+                throw $error;
+            } else {
+                $this->action->getWorkbench()->getLogger()->logException($error);
+            }
         }
     }
 
