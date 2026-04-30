@@ -92,6 +92,10 @@ class FormToolbar extends Toolbar
     {
         // If the button has an action, that is supposed to modify data, we need to make sure, that the panel
         // contains alls system attributes of the base object, because they may be needed by the business logic
+        // A similar logic is used in `DataSheet::dataReadInitQueryBuilder()` where we make sure to ALWAYS read
+        // all system columns. The difference here is, that a form MUST have widgets for the system attributes
+        // while data widgets often can pass data to their action without having explicit column for that data.
+        // IDEA #system-attributes add a centralize mechanism to ensure system attributes are always present?
         if (null !== $action = $button->getAction()) {
             $obj = $container->getMetaObject();
             $workbench = $this->getWorkbench();
