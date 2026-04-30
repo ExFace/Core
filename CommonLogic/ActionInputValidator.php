@@ -211,6 +211,10 @@ class ActionInputValidator
         // a mistake or unauthorized attempts at accessing or manipulating data. Note that missing input columns
         // are of no concern here, since they might be handled later by mappers or prototype specific logic.
         foreach ($taskInput->getColumns() as $inputColumn) {
+            // system attribute colums don't need to be checked, as they are added to a read without the widget knowing about them
+            if ($inputColumn->isAttribute() && $inputColumn->getAttribute()->isSystem()) {
+                continue;
+            }            
             $inputColumnName = $inputColumn->getName();
             if(!key_exists($inputColumnName, $expectedColumns)) {
                 $unexpectedColumns[$inputColumnName] = '"' . $inputColumnName . '"';
@@ -229,7 +233,7 @@ class ActionInputValidator
             foreach (array_keys($unexpectedColumns) as $unexpectedColumn) {
                 $error->addIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN, $unexpectedColumn);
             }
-            if ($this->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
+            if ($this->action->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
                 throw $error;
             } else {
                 $this->action->getWorkbench()->getLogger()->logException($error);
