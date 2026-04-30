@@ -1522,6 +1522,7 @@ class Data
             }
             $colNames[] = $col->getDataColumnName();
         }
+        // IDEA #system-attributes add a centralize mechanism to ensure system attributes are always present?
         foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttr) {
             $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
         }
