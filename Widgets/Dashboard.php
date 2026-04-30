@@ -22,7 +22,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * 
  * A split-style dashboard contains only one widget: a `SplitHorizontal` or `SplitVertical`.
  * In this case, the dashboard screen consists of bordered areas and is not scrollable.
- * It is the same as a split widget, but with the option to have have common filters.
+ * It is the same as a split widget, but with the option to have common filters.
  * 
  * ## Grid layout 
  * 
@@ -33,7 +33,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * 
  * ## Common filters
  * 
- * A dasboard can provide common filters, that apply to all widgets in it. It has its own
+ * A dashboard can provide common filters, that apply to all widgets in it. It has its own
  * `DashboardConfigurator` to house these filters. For now, this configurator only supports
  * filters. In practice, it is easier to define `filters` directly in the dashboard.
  * 
@@ -46,9 +46,9 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * ```json
  *  {
  *      "object_alias": "exface.Core.PAGE",
- *      "widget_type": "Dashbaord",
+ *      "widget_type": "Dashboard",
  *      "filters": [
- *          {"attribtue_alias": "APP"}
+ *          {"attribute_alias": "APP"}
  *      ],
  *      "filters_apply_to": {
  *          "APP": [

@@ -438,21 +438,30 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array[]
      */
     public function getRowsByIndex(array $indexes) : array;
-    
+
     /**
      * Returns only those rows from the current sheet, that are not present in the other sheet provided.
-     *
-     * This method is mainly usefull to compare data sheets deemed to be identical - it compares
-     * rows with the same row numbers.
      * 
+     * Internally this method will compare the values of every column of this sheet with the column of the same
+     * name in the provided other sheet:
+     * - If both sheets have the column, the values are compared row-by-row
+     * - If this column has columns not present in the other sheet, ALL rows will be considered different unless
+     * `$ignoreEmptyCols` ist set to TRUE and the column is empty.
+     * - If the other sheet a column, that is not part of this sheet, it will be ignored.
+     *
+     * This method is mainly useful to compare data sheets deemed to be identical - it compares
+     * rows with the same row numbers.
+     *
      * Columns, attributes or expressions can be excluded from the comparison via `$exclude` argument.
      * Differences in the corresponding columns will be ignored!
+     * 
      *
      * @param DataSheetInterface $otherSheet
      * @param DataColumnInterface[]|MetaAttributeInterface[]|ExpressionInterface[]|string[] $exclude
+     * @param bool $ignoreEmptyCols
      * @return array
      */
-    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = []) : array;
+    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = [], bool $ignoreEmptyCols = false) : array;
 
     /**
      * Returns the specified row as an associative array (e.g.

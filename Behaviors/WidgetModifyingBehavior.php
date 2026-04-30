@@ -2,11 +2,10 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\DataTypes\RegularExpressionDataType;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Actions\iShowWidget;
-use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\WidgetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -15,8 +14,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Widgets\DataTableConfigurator;
-use exface\Core\Widgets\Dialog;
 
 /**
  * Allows to modify widgets, that show the object of this behavior: e.g. add buttons, etc.
@@ -44,6 +43,7 @@ use exface\Core\Widgets\Dialog;
 class WidgetModifyingBehavior extends AbstractBehavior
 {    
     private ?array $onlyOnPages = null;
+    private ?array $onlyOnPagesRegex = null;
     private ?array $onlyWidgetIds = null;
     private bool $onlyPageRoot = false;
     private ?array $onlyForActions = null;
@@ -102,6 +102,12 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
         foreach ($this->onlyOnPages as $selector) {
             if ($page->is($selector)) {
+                return true;
+            }
+        }
+        foreach ($this->onlyOnPagesRegex as $pattern) {
+            $pageAlias = $page->getAliasWithNamespace();
+            if (preg_match($pattern, $pageAlias) === 1) {
                 return true;
             }
         }
@@ -210,7 +216,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
             $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
         }
 
-        if ($this->sideBarToAdd !== null && $widget instanceof Dialog) {
+        if ($this->sideBarToAdd !== null && $widget instanceof iHaveSidebar) {
             $widget->setSidebar($this->sideBarToAdd);
         }
         
@@ -302,7 +308,13 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function setOnlyOnPages(UxonObject $aliasOrUids) : WidgetModifyingBehavior
     {
-        $this->onlyOnPages = $aliasOrUids->toArray();
+        foreach ($aliasOrUids->toArray() as $alias) {
+            if (RegularExpressionDataType::isRegex($alias)) {
+                $this->onlyOnPagesRegex[] = $alias;
+            } else {
+                $this->onlyOnPages[] = $alias;
+            }
+        }
         return $this;
     }
 

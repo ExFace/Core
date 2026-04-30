@@ -256,6 +256,18 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             $json = $uxon->toJson();
             $json = $this->getTemplateRenderer()->render($json);
             $uxon = UxonObject::fromJson($json, CASE_LOWER);
+/*            
+            if ($uxon->isEmpty()) {
+                $uxon = UxonObject::fromJson(<<<JSON
+{
+  "host": "sdrlogbasedemo1.salt-solutions.de",
+  "dbase": "hoyer_apollo",
+  "user": "developer",
+  "password": "SkvVh0u^0%.;vhp2lh*%",
+  "relation_matcher": "/(?<alias>(?<table>.*))_(?<key>id)/i"
+}
+JSON);
+            }*/
             
             // Import UXON.
             $this->uxon = $uxon;

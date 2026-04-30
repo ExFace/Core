@@ -1220,7 +1220,7 @@ class OrderingBehavior extends AbstractBehavior
         if (!is_numeric($index)) {
             throw new BehaviorRuntimeError(
                 $this,
-                'Cannot order values of attribute "' . $indexAlias . '": invalid value "' . $index . "' encountered! Ordering indices must be numeric.",
+                'Cannot order values of attribute `' . $indexAlias . '`: invalid value "' . $index . "' encountered! Ordering indices must be numeric.",
                 null,
                 null,
                 $logBook);

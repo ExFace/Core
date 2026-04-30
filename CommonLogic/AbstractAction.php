@@ -349,9 +349,7 @@ abstract class AbstractAction implements ActionInterface
         }
         
         // TODO What's the correct response here? Throw, silent, message or something else.
-        if ($this->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') !== false) {
-            $this->validateApplicability($task);
-        }
+        $this->validateApplicability($task);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
             return $this->getInputDataSheet($task);
