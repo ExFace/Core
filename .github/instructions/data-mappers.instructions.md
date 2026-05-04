@@ -35,6 +35,16 @@ document mappings well:
 make it easier to understand a new mapping. See examples in the individual 
 mapping prototype classes.
 
+## Logbooks for additional insights when tracing
+
+Because of the described difficulty to understand mappings, it is also important 
+to use the `$logbook` passed to every `map()` method and explain the applied 
+transformation there. The logbook will be visible in error debug information 
+or when explicitly tracing server logic.
+
+Add as few lines as posstible to the `$logbook`, but make sure all 
+transformation steps are covered.
+
 ## Reading missing data
 
 Very often the input data (from-sheet) of a mapper does not have all the 
