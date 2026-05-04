@@ -154,10 +154,15 @@ TODO:
 - debugging
 - logbooks
 
+### Tests
+
+We currently do not use unit tests in the core. We do use Behat for 
+automated tests, but it is a separate package `axenox\bdt`. For now, do not 
+attempt to write automated tests for the core.
+
 ### Coding guidelines
 
-Use the [PHP coding guidelines](..
-/Docs/developer_docs/code_conventions/index.md) when writing code. 
+Use the [PHP coding guidelines](../Docs/developer_docs/code_conventions/index.md) when writing code. 
 
 ## Advanced features
 
