@@ -74,7 +74,7 @@ class ActionInputValidator
                 
                 $error->setUseExceptionMessageAsTitle(true);
                 $error->addIssue(ActionTaskInvalidException::ISSUE_INVALID_OBJECT, $taskAlias);
-                if ($this->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
+                if ($this->action->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
                     throw $error;
                 } else {
                     $this->action->getWorkbench()->getLogger()->logException($error);
