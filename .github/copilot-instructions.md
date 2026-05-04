@@ -9,7 +9,10 @@ apps. To run the apps, it uses PHP to generate HTML/JS front-ends and SQL or
 other data queries from that metamodel.
 
 Each app is a separate PHP package and repo, containing its model files as JSON 
-and components to extend the Core functionality written in PHP or JS. Apps, that primarily aim to extend the possibilities of the platform are called "infrastructure" apps, while those that hold models of client applications, are referred to as "payload" apps.
+and components to extend the Core functionality written in PHP or JS. Apps, 
+that primarily aim to extend the possibilities of the platform are called 
+"infrastructure" apps, while those that hold models of client applications, 
+are referred to as "payload" apps.
 
 ## Target audience
 
@@ -109,9 +112,12 @@ by an expression relative to the main object:
 
 - an alias of an attribute of the object
 - an alias of an attribute of a related object (prefixed by a relation path)
-- an Excel-like formula (small php classes found in the `Formulas` folder of every app)
+- an Excel-like formula (small php classes found in the `Formulas` folder of 
+  every app)
 - a constant
-- in the context of a widget an expression may also be a reference to another widget - a widget link. This is similar to referencing an excel table from another worksheet.
+- in the context of a widget an expression may also be a reference to 
+  another widget - a widget link. This is similar to referencing an excel 
+  table from another worksheet.
 
 Expressions, that do not reference data are called "static" expressions, while 
 those depending on data are referred to as "non-static" or "data-driven".
@@ -120,19 +126,31 @@ those depending on data are referred to as "non-static" or "data-driven".
 
 #### Actions
 
-DataSheets can be passed to actions to perform business logic upon them. Each action ist a UXON prototype class, so it can be configured by the app designer.
+DataSheets can be passed to actions to perform business logic upon them. 
+Each action ist a UXON prototype class, so it can be configured by the app 
+designer.
 
-Each action stands for a typical business task type: e.g. ReadData, CreateData, UpdateData, etc.
+Each action stands for a typical business task type: e.g. ReadData, 
+CreateData, UpdateData, etc.
 
-Actions can be triggered by users (via button) or by scheduled background processes.
+Actions can be triggered by users (via button) or by scheduled background 
+processes.
 
 #### Mappers
 
-In addition to the inner logic of an action, `input_mapper` and `output_mappers` can be defined in the UXON to transform data before or after an action. Each mapper has a `from_object`, a `to_object` and a set of mappings in applies while transforming a from-DataSheet into a to-DataSheet. Mappings can be simple like the `DataColumnMapoing` or do complex stuff like `DataPivotMapping`, `LookupMapping` or `JoinMapping` data. There is a mapping prototype in TODO for every type of transformation.
+In addition to the inner logic of an action, `input_mapper` and 
+`output_mappers` can be defined in the UXON to transform data before or 
+after an action. Each mapper has a `from_object`, a `to_object` and a set of 
+mappings in applies while transforming a from-DataSheet into a to-DataSheet. 
+Mappings can be simple like the `DataColumnMapoing` or do complex stuff like 
+`DataPivotMapping`, `LookupMapping` or `JoinMapping` data. There is a 
+mapping prototype in TODO for every type of transformation.
 
 #### Behaviors
 
-Global business rules for a metabjects are defined in their behaviors. These are not triggered by buttons explicitly like actions, but rather react to events automatically in the background.
+Global business rules for a metabjects are defined in their behaviors. These 
+are not triggered by buttons explicitly like actions, but rather react to 
+events automatically in the background.
 
 ### Widgets
 
@@ -178,3 +196,11 @@ documentation has a handy table of contents in `Docs/sitemap.md`, which is a
 good entry point to look through the docs.
 
 ## Global rules
+
+- Every class must have a docblock. 
+- Every method must have a dockblock
+  - If the method overrides a parent method, the dockblock must include 
+  `{@inheritDoc}` and `@see` to make it easily visible, where the overridden 
+  method is located.
+  - If the method is meant to accept UXON properties, it must have 
+  `@uxon-property` annotations.
