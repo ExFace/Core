@@ -43,6 +43,7 @@ class Tour implements TourInterface, iHaveIcon
     use IHaveIconTrait;
     
     private WidgetInterface $widget;
+    private ?string $id = null;
     private ?string $title = null;
     private ?string $waypointsRoute = null;
     private ?string $description = null;
@@ -74,6 +75,29 @@ class Tour implements TourInterface, iHaveIcon
     public function getWorkbench()
     {
         return $this->widget->getWorkbench();
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getId(): ?string
+    {
+        return $this->id;
+    }
+    
+    /** 
+     * The id of the tour.
+     * It can be used with tour_steps.on_next_step_function to automatically start this tour.
+     * 
+     * @uxon-property id
+     * @uxon-type string
+     * 
+     * @param string $id
+     * @return TourInterface
+     */
+    protected function setId(string $id) : TourInterface
+    {        $this->id = $id;
+        return $this;
     }
 
     /**

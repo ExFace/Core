@@ -26,6 +26,11 @@ use exface\Core\Interfaces\WidgetInterface;
  *          "body": "This text will appear in the popover when the step is active.",
  *          "side": "bottom",
  *          "align": "center",
+ *          "$click_on_next_step": true
+ *          "$on_next_step": {
+ *              "function": "press",
+ *              "autostart_tour_id" : "news"
+ *          }
  *     },
  * ```
  *
@@ -48,6 +53,8 @@ abstract class AbstractTourStep implements TourStepInterface
     private ?string $body = "";
     private ?string $side = null;
     private ?string $align = null;
+    private $onNextStepFunction = null;
+    private $onNextStepFunctionUxon = null;
 
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
     {
@@ -66,12 +73,12 @@ abstract class AbstractTourStep implements TourStepInterface
 
     /**
      * The title of the step. This will be displayed as the title of the popover when the step is active.
-     *
+     * 
      * @uxon-property title
      * @uxon-type string
      * @uxon-required true
      * @uxon-translatable true
-     *
+     * 
      * @param string $title
      * @return TourStepInterface
      */
@@ -92,10 +99,10 @@ abstract class AbstractTourStep implements TourStepInterface
 
     /**
      * The body text of the step, which can contain a more detailed description.
-     *
+     * 
      * @uxon-property body
      * @uxon-type string
-     *
+     * 
      * @param string $body
      * @return TourStepInterface
      */
@@ -115,11 +122,11 @@ abstract class AbstractTourStep implements TourStepInterface
 
     /**
      * The side on which the popover should be displayed (top, right, bottom, left)
-     *
+     * 
      * @uxon-property side
      * @uxon-type [top,right,bottom,left]
      * @uxon-template "bottom"
-     *
+     * 
      * @param string $side
      * @return TourStepInterface
      */
@@ -144,11 +151,11 @@ abstract class AbstractTourStep implements TourStepInterface
 
     /**
      * The alignment of the popover (start, center, end)
-     *
+     * 
      * @uxon-property align
      * @uxon-type [start,center,end]
      * @uxon-template "center"
-     *
+     * 
      * @param string $align
      * @return TourStepInterface
      */
@@ -159,6 +166,34 @@ abstract class AbstractTourStep implements TourStepInterface
             throw new Error("Invalid tour step align value: $align. Allowed values are: start, center, end.");
         }
         $this->align = $align;
+        return $this;
+    }
+
+    /**
+     * @return TourOnNextStepFunction
+     */
+    public function getOnNextStepFunction() : TourOnNextStepFunction
+    {
+        if ($this->onNextStepFunction === null) {
+            $this->onNextStepFunction = new TourOnNextStepFunction($this, $this->onNextStepFunctionUxon);
+        }
+        return $this->onNextStepFunction;
+    }
+
+    /**
+     * It defines a function that will be executed when the user clicks on the "next" button in the popover of this step.
+     * 
+     * @uxon-property on_next_step_function
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourOnNextStepFunction
+     * @uxon-template {"function": "press"}
+     * 
+     * @param UxonObject $onNextStepFunctionUxon
+     * @return TourStepInterface
+     */
+    protected function setOnNextStepFunction(UxonObject $onNextStepFunctionUxon) : TourStepInterface
+    {
+        $this->onNextStepFunctionUxon = $onNextStepFunctionUxon;
+        $this->onNextStepFunction = null;
         return $this;
     }
 }

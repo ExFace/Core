@@ -67,7 +67,7 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Edit [WidgetSetupEditForUsers]",
             "CREATED_ON": "2025-08-08 15:11:58",
-            "MODIFIED_ON": "2025-08-14 12:34:27",
+            "MODIFIED_ON": "2026-05-04 16:05:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0854043e6831a8540025041000001",
@@ -118,6 +118,7 @@
                                     "hide_caption": true,
                                     "paginate": false,
                                     "configurator_setups_enabled": false,
+                                    "multi_select": true,
                                     "filters": [
                                         {
                                             "attribute_alias": "WIDGET_SETUP",
@@ -182,7 +183,7 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Share [WidgetSetupShareForUsers]",
             "CREATED_ON": "2025-08-12 11:50:22",
-            "MODIFIED_ON": "2025-08-14 12:27:18",
+            "MODIFIED_ON": "2026-05-04 15:54:21",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0b59ac3940686b59a025041000001",
@@ -223,7 +224,8 @@
                             "table_object_alias": "exface.Core.USER",
                             "text_attribute_alias": "FULL_NAME",
                             "value_attribute_alias": "UID",
-                            "data_column_name": "_SharedUser"
+                            "data_column_name": "_SharedUser",
+                            "multi_select": true
                         }
                     ],
                     "buttons": [
@@ -245,7 +247,9 @@
                                                 {
                                                     "from": "UID",
                                                     "to": "WIDGET_SETUP"
-                                                },
+                                                }
+                                            ],
+                                            "row_split_mappings": [
                                                 {
                                                     "from": "_SharedUser",
                                                     "to": "USER"
