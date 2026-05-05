@@ -186,10 +186,12 @@ class StaticEventListenerInstaller extends AbstractAppInstaller
         ) {
             return;
         }
+        
         $listeners = &$configArray[EventManager::CFG_STATIC_LISTENERS];
+        $sources = &$configArray[self::CFG_SOURCES];
         
         // Remove the source from every event.
-        foreach ($configArray[self::CFG_SOURCES] as $eventName => &$sourcesPerEvent) {
+        foreach ($sources as $eventName => &$sourcesPerEvent) {
             // Get all callables for this event associated with this source. 
             $associatedCallables = $sourcesPerEvent[$source];
             // If no callables are associated with this source, move on.
@@ -224,6 +226,13 @@ class StaticEventListenerInstaller extends AbstractAppInstaller
                 if($index !== false) {
                     unset($listenersPerEvent[$index]);
                 }
+                
+                // Remove event and sources if it has no listeners.
+                if(empty($listenersPerEvent)) {
+                    unset($listeners[$eventName]);
+                    unset($sources[$eventName]);
+                    break;
+                }
             }
         }
     }
@@ -249,7 +258,7 @@ class StaticEventListenerInstaller extends AbstractAppInstaller
      */
     protected function getPathToConfigFolder() : string
     {
-        return $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR;
+        return $this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR;
     }
 
     /**
