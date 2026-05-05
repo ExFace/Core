@@ -42,7 +42,28 @@ Remember: UXON annotations are written primarily for app designers. They
 must be well understandable without PHP knowledge and focus on the UXON 
 structures, not on code.
 
-Everything is written in English. Regular Phpdoc annotation are allowed too, but do not have effect on UXON.
+### Common annotation rules
+
+UXON Docblocks must adhere to the following rules:
+
+- Everything is written in English.
+- Must have a one-liner summary (first line) telling the designer, what this 
+  prototype, property or other element is for
+- Should have a description if the summary alone is not clear anough. The 
+  description must be formatted as Markdown and separated from the summary 
+  with a blank line
+- Every code block inside descriptions must end with a blank line with a 
+  single space character before the closing ```` ``` ````. This is a 
+  limitation of our current annoutation reader.
+- Every blank line in a Docblock must contain at least one space after the 
+  leading `*` to be recognized as a blank line in the generated 
+  documentation. This is a limitation of our current annoutation reader.
+
+Regular Phpdoc annotation are allowed too, but do not have effect on UXON. 
+If a separate description for developers is needed, it must be separated by 
+at least one annotation (e.g. `@author` or `@param`) from the UXON 
+description. The parser responsible for documentation generation considers 
+only the first part of the Docblock to be a description.
 
 ### Class-level Docblocks for prototypes
 
@@ -50,8 +71,8 @@ The class-level Docblock must include the following:
 
 - one-liner summary (first line) telling the designer, what this prototype 
   is for
-- description formatted as Markdown listing most important UXON properties 
-  and use cases. It should include typical example UXONs.
+- description listing most important UXON properties and use cases. It 
+  should include typical example UXONs.
 
 ### Method annotations for UXON properties
 
@@ -80,13 +101,15 @@ is implemented in `\exface\Core\Uxon\UxonSchema`.
 
 ### Primitive-like types
 
-- string
-- number
-- integer
-- boolean (or bool)
-- object
-- array
-- date, datetime, timezone
+- `string`
+- `number`, `integer`
+- `date`, `datetime`
+- `timezone`
+- `object` - a generic JSON object, not specifically typed
+- `array` - a generic JSON array, not specifically typed 
+- `icon`
+- `color`
+- `uri`
 
 ### Class types (hinting UXON prototypes)
 
@@ -97,27 +120,56 @@ is implemented in `\exface\Core\Uxon\UxonSchema`.
   \DataSheet`
   - Arrays of class type: `@uxon-type \exface\Core\CommonLogic\DataSheets
   \DataSheet[]`
+  - 
+### Metamodel types
 
-### Union types
+`metamodel:*` type ensure a property value matches a UID or alias in the 
+metamodel.
 
-- Use `|` to declare alternatives.
-- Example: `@uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string`
+- `metamodel:app`
+- `metamodel:object`
+- `metamodel:attribute`
+- `metamodel:attribute_group`
+- `metamodel:relation`
+- `metamodel:action`
+- `metamodel:page`
+- `metamodel:data_source`
+- `metamodel:comparator`
+- `metamodel:connection`
+- `metamodel:datatype`
+- `metamodel:formula`
+- `metamodel:expression`
+- `metamodel:widget_link`
+- `metamodel:event`
+- `metamodel:aggregator`
+- `metamodel:context`
+- `metamodel:role`
+- `metamodel:username`
+- `metamodel:communication_channel`
+- `metamodel:snippet`
+- `metamodel:widget_function`
+- `metamodel:facade`
+
+### Generic data lookup types
+
+`metamodel:<object_alias>:<attribute_alias>` allows to bind a UXON property 
+to values of the specified attribute: e.g. `metamodel:exface.Core.
+COMMUNICATION_TEMPLATE:ALIAS` means, that property is supposed to be filled 
+with the alias of a communication template.
 
 ### Enum types
 
 - Use square bracket enum syntax.
 - Example: `@uxon-type [error,warning,info,success,hint,question]`
 
-### Metamodel types
+### Union types
 
-- Use metamodel:* where appropriate.
-- Common examples: metamodel:object, metamodel:attribute, metamodel:action, metamodel:page, metamodel:formula, metamodel:snippet.
-- For object-driven attribute suggestions, prefer metamodel:attribute and ensure object context exists.
+Use `|` to declare alternatives. Example: `@uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string`
 
 ### Typed object maps
 
-- Use `{keyType => valueType}` when UXON object keys/values are typed.
-- Example: `{string => metamodel:attribute}`
+Use `{keyType => valueType}` when UXON object keys/values are typed. 
+Example: `{string => metamodel:attribute}`
 
 ## UXON placeholders
 
@@ -135,49 +187,26 @@ The placeholder `[#~input:NAME#]` will be replaced by the `NAME` column of the D
 
 To hint the availability of placeholders, multiple `@uxon-placeholder` annotations can be used in addition to other UXON annotations on method level.
 
-Define parameters in snippet configuration:
-
-- name: placeholder key
-- description: what the parameter controls
-- type: declared UXON type for documentation/editor guidance
-- required: true/false
-- default_value: fallback when omitted
-
-Use placeholders in snippet body:
-
-- [#parameter_name#]
-
-Embed snippet in UXON with call object:
-
-- ~snippet: alias_with_namespace
-- parameters: object containing parameter values
-
-Behavior expectations:
-
-- required parameters must fail fast when missing
-- optional parameters may use default_value
-- keep parameter names stable and descriptive
-
-## Authoring checklist for new UXON property
+## Best practices
 
 1. Create or reuse a setter with exact property-to-setter mapping.
-2. Add @uxon-property and @uxon-type annotations.
-3. Add @uxon-template if this improves UXON editor usability.
+2. Add `@uxon-property` and `@uxon-type` annotations.
+3. Add `@uxon-template` if this improves UXON editor usability.
 4. Use strict argument types in PHP where possible.
-5. For nested UXON payloads, prefer UxonObject or explicit prototype class types.
-6. If the property is user-facing text and should be localized, add @uxon-translatable true.
-7. Verify import/export symmetry where applicable.
+5. For nested UXON payloads, prefer `UxonObject` over arrays. Use a class 
+   type hint and add a `@uxon-template` for better editor support.
+6. If the property is user-facing text and should be localized, add `@uxon-translatable true`.
 
-## Good examples (patterns)
+### Good examples
 
-### Scalar property:
+#### Scalar property:
 
 ```
 @uxon-property result_message_text
 @uxon-type string
 ```
 
-### Array of prototypes:
+#### Array of prototypes:
 
 ```
 @uxon-property actions
@@ -185,21 +214,21 @@ Behavior expectations:
 @uxon-template [{"alias": ""}]
 ```
 
-### Flexible union input:
+#### Flexible union input:
 
 ```
 @uxon-property confirmation_for_action
 @uxon-type \exface\Core\Widgets\ConfirmationMessage|boolean|string
 ```
 
-#### Enum input:
+##### Enum input:
 
 ```
 @uxon-property type
 @uxon-type [error,warning,info,success,hint,question]
 ```
 
-## Do not
+### Do not
 
 - Do not add new architecture if existing UXON import patterns cover the use case.
 - Do not leave UXON setters undocumented.
