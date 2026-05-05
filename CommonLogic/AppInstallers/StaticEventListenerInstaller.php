@@ -227,7 +227,7 @@ class StaticEventListenerInstaller extends AbstractAppInstaller
                     unset($listenersPerEvent[$index]);
                 }
                 
-                // Remove event and sources if it hase no listeners.
+                // Remove event and sources if it has no listeners.
                 if(empty($listenersPerEvent)) {
                     unset($listeners[$eventName]);
                     unset($sources[$eventName]);
@@ -258,7 +258,7 @@ class StaticEventListenerInstaller extends AbstractAppInstaller
      */
     protected function getPathToConfigFolder() : string
     {
-        return $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR;
+        return $this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR;
     }
 
     /**
