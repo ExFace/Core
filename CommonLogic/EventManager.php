@@ -44,9 +44,6 @@ class EventManager implements EventManagerInterface
         $config = new Configuration($exface);
         $config->loadConfigFile($configFile, AppInterface::CONFIG_SCOPE_SYSTEM);
         if ($config->isEmpty()) {
-            $config->loadConfigFile($exface->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS);
-        }
-        if ($config->isEmpty()) {
             $config->loadConfigFile($exface->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS_TEMPLATE);
         }
         $this->config = $config;
