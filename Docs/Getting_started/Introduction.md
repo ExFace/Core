@@ -1,4 +1,4 @@
-# Introduction & key concepts
+# Platform introduction & key concepts
 
 The ExFace platform (open source) also known as Power UI (paid version) or simply "the workbench" is a no-code web platform for business apps. 
 
