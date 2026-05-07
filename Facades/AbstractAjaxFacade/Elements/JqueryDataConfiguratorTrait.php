@@ -67,7 +67,12 @@ trait JqueryDataConfiguratorTrait
                 if ($filter->hasCustomConditionGroup() === true) {
                     $nestedGroups[] = $filterElement->buildJsCustomConditionGroup();
                 } else {
-                    $filters[] = $filterElement->buildJsConditionGetter(null, $widget->getMetaObject());
+                    // add hidden property to properly handle hidden filters in the UI5DataConfigurator/Setups
+                    $filters[] = preg_replace(
+                        '/\}\s*$/',
+                        ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                        preg_replace('/,\s*\}\s*$/', '}', $filterElement->buildJsConditionGetter(null, $widget->getMetaObject()))
+                    );
                 }
             }
         } else {
