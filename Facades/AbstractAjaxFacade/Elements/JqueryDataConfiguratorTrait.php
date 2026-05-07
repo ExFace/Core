@@ -41,6 +41,43 @@ trait JqueryDataConfiguratorTrait
         }
         return;
     }
+
+    /**
+     * Returns the filters of a data object, and adds a hidden flag, indicating whether the filter is hidden or not. 
+     * This only works for rendered filters, as it gets the current JS values of the filters.
+     *
+     * @return string 
+     */
+    public function buildJsFilterGetter() : string
+    {
+        $widget = $this->getWidget();
+        $filters = [];
+        $nestedGroups = [];
+
+        foreach ($widget->getFilters() as $filter) {
+            $filterElement = $this->getFacade()->getElement($filter);
+            if ($filter->hasCustomConditionGroup() === true) {
+                $nestedGroups[] = preg_replace(
+                    '/\}\s*$/',
+                    ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                    preg_replace('/,\s*\}\s*$/', '}', $filterElement->buildJsCustomConditionGroup())
+                );
+            } else {
+                $filters[] = preg_replace(
+                    '/\}\s*$/',
+                    ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                    preg_replace('/,\s*\}\s*$/', '}', $filterElement->buildJsConditionGetter(null, $widget->getMetaObject()))
+                );
+            }
+        }
+
+        $filters = array_filter($filters);
+        if (empty($filters) === false || empty($nestedGroups) === false) {
+            return '{operator: "AND", ignore_empty_values: true, conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
+        }
+
+        return '';
+    }
     
     /**
      * The data JS-object of a configurator widget contains filters, sorters, etc., that are
@@ -67,12 +104,7 @@ trait JqueryDataConfiguratorTrait
                 if ($filter->hasCustomConditionGroup() === true) {
                     $nestedGroups[] = $filterElement->buildJsCustomConditionGroup();
                 } else {
-                    // add hidden property to properly handle hidden filters in the UI5DataConfigurator/Setups
-                    $filters[] = preg_replace(
-                        '/\}\s*$/',
-                        ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
-                        preg_replace('/,\s*\}\s*$/', '}', $filterElement->buildJsConditionGetter(null, $widget->getMetaObject()))
-                    );
+                    $filters[] = $filterElement->buildJsConditionGetter(null, $widget->getMetaObject());
                 }
             }
         } else {
