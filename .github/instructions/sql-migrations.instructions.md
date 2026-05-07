@@ -26,6 +26,11 @@ Use these rules when writing SQL migrations to keep the DBs of apps up-to-date.
   migrations, these scripts are called "static SQL" and are not tracked in 
   the migration log table.
 
+**CRITICAL:** make sure you always create migrations for ALL DB types, that 
+have subfolders in the app. The user will provide the DDL for one migration 
+only, but you must create as many files, as there are DB types in the app. 
+It is important, that a commit always has a complete set of migrations.
+
 ## Migration file content and execution principles
 
 The folder `%app%/Install/Sql/%SqlDbType%/` contains all SQL needed to 
