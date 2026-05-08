@@ -4,6 +4,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
@@ -75,7 +77,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
+class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigurator, iHaveFilters
 {
     use iHaveConfiguratorTrait;
 
@@ -386,6 +388,15 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
     public function setMessages(UxonObject $arrayOfUxon) : Dashboard
     {
         $this->getConfiguratorWidget()->getMessageList()->setMessages($arrayOfUxon);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
+    public function getAlternativeContainerForOrphanedSiblings(): ?iContainOtherWidgets
+    {
         return $this;
     }
 }
