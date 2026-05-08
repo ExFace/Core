@@ -356,4 +356,11 @@ interface AjaxFacadeElementInterface
      * @return string
      */
     public function buildJsCheckInitialized() : string;
+
+    /**
+     * Returns the main DOM element holding the widget.
+     * 
+     * @return string
+     */
+    public function buildJsDomElementGetter() : string;
 }
