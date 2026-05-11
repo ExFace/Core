@@ -2002,7 +2002,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // if you use $qpart->getUsedRelations() on a FilterGroup and just continue with the "else" part of this if, reverse relations are being ignored.
             // The problem is, that the special treatment for attributes of the main object and an explicit left_table_alias should be applied to filter group
             // at some point, but it is not, because it is not possible to determine, what object the filter group belongs to (it might have attributes from
-            // many object). I don not understand, however, why that special treatment seems to be important for reverse relations... In any case, this recursion
+            // many object). I do not understand, however, why that special treatment seems to be important for reverse relations... In any case, this recursion
             // does the job.
             foreach ($qpart->getFiltersAndNestedGroups() as $f) {
                 $joins = array_merge($joins, $this->buildSqlJoins($f));
@@ -3249,6 +3249,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $phVals = [];
         foreach ($phs as $ph) {
             switch (true) {
+                
+                // Static formulas like `[#=User()#]` do not care about being left or right - they can be evaluated immediately
+                // TODO #placeholder-modifiers needed here?
+                case Expression::detectCalculation($ph):
+                    $formula = FormulaFactory::createFromString($this->getWorkbench(), $ph);
+                    if ($formula->isStatic() === false) {
+                        throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in SQL JOIN `' . $sqlJoin . '`: the used formula is not static! Only static formulas are supported in data address placeholders!');
+                    }
+                    $phVals[$ph] = $formula->evaluate();
+                    continue;
+                    
+                // Left-side placeholders like `[#~left:MY_ATTR#]` can be replaced using the same logic as for regular data addresses
                 case StringDataType::startsWith($ph, '~left:'):
                     $phVals[$ph] = $leftQuery->replacePlaceholdersInSqlAddress(
                         '[#' . StringDataType::substringAfter($ph, '~left:') . '#]',
@@ -3257,6 +3269,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $leftTableAlias
                     );
                     break;
+                    
+                // Right-side placeholders like `[#~right:MY_ATTR#]` belong to a related object, so the need some rebasing
                 case StringDataType::startsWith($ph, '~right:'):
                     $attrAlias = StringDataType::substringAfter($ph, '~right:');
                     // TODO #placeholder-modifiers switch to more generic StringDataType::stripPlaceholderModifiers()
@@ -3309,14 +3323,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         );
                     }
                     break;
+                    
+                // Hard-coded placeholders
                 case $ph === '~left_alias':
                     $phVals[$ph] = $leftTableAlias;
                     break;
                 case $ph === '~right_alias':
                     $phVals[$ph] = $rightTableAlias;
                     break;
+                    
+                // Error for all unknown placeholders
                 default:
-                    throw new PlaceholderNotFoundError('Invalid placeholder "' . $ph . '" in custom SQL_JOIN_ON of object ' . $leftQuery->getMainObject()->__toString() . ': ' . $sqlJoin);
+                    throw new PlaceholderNotFoundError($ph, 'Invalid placeholder "' . $ph . '" in custom SQL_JOIN_ON of object ' . $leftQuery->getMainObject()->__toString(), null, null, $sqlJoin);
             }
         }
 
