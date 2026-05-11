@@ -1,5 +1,5 @@
 ---
-description: "Use when creating or modifying SQL migration files for ExFace SQL Database Installer"
+description: "Use when creating or modifying SQL installer files (migration, views, init-db, etc.) for an app."
 name: "SQL migrations"
 applyTo: "Install/**/*.sql"
 ---
@@ -18,16 +18,16 @@ Use these rules when writing SQL migrations to keep the DBs of apps up-to-date.
 - When setting up SQL installers for the app the first time, create a 
   `InitDB` folder with baseline migration files creating the initial tables.
 - When writing migrations for DB changes, create SQL files in the 
-  `Migrations/<version>` subfolder. Make sure you know the version (or ask 
-  for it).
+  `Migrations/<version>` subfolder. If the user does not specify a version, 
+  always use the latest version subfolder.
 - When writing views, stored procedures, or other non-table objects, create 
   SQL files in correspondings subfolders (e.g. `Views`, `StoredProcedures`). 
   Make sure, they are completely recreated with each install. In contrast to 
   migrations, these scripts are called "static SQL" and are not tracked in 
   the migration log table.
 
-**CRITICAL:** make sure you always create migrations for ALL DB types, that 
-have subfolders in the app. The user will provide the DDL for one migration 
+**CRITICAL:** Always create migrations for ALL DB types engines, you find in 
+the `Install` folder of the app. The user will provide the DDL for one migration 
 only, but you must create as many files, as there are DB types in the app. 
 It is important, that a commit always has a complete set of migrations.
 
