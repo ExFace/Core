@@ -58,8 +58,7 @@ class ServiceParameter implements ServiceParameterInterface
     public function exportUxonObject()
     {
         $uxon = new UxonObject([
-            'name' => $this->getName(),
-            'data_type' => $this->getDataType()->exportUxonObject()
+            'name' => $this->getName()
         ]);
 
         if (null !== $val = $this->getDescription()) {
@@ -74,6 +73,17 @@ class ServiceParameter implements ServiceParameterInterface
         if (null !== $val = $this->getDefaultValue()) {
             $uxon->setProperty('default_value', $val);
         }
+        
+        // Make sure, every exported parameter UXON has a data_type. The DataType::exportUxonObject() for some reason
+        // does not always include an alias - add it here, just to make sure!
+        $type = $this->getDataType();
+        $typeUxon = $type->exportUxonObject();
+        if (! $typeUxon->hasProperty('alias')) {
+            $typeUxon->setProperty('alias', $type->getAliasWithNamespace());
+        }
+        $uxon->setProperty('data_type', $typeUxon);
+        
+        // Also export custom properties as-is
         if (! ($val = $this->getCustomProperties())->isEmpty()) {
             $uxon->setProperty('custom_properties', $val);
         }
