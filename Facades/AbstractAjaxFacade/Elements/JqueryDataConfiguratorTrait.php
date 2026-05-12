@@ -76,7 +76,7 @@ trait JqueryDataConfiguratorTrait
             return '{operator: "AND", ignore_empty_values: true, conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
         }
 
-        return '';
+        return '[]';
     }
     
     /**
