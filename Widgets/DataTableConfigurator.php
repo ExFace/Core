@@ -302,7 +302,13 @@ class DataTableConfigurator extends DataConfigurator
                     'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_VISIBILITY'),
                 ], [
                     'attribute_alias' => 'DESCRIPTION',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_DESC_PLACEHOLDER'),
                     'nowrap' => false
+                ],
+                [
+                    'attribute_alias' => 'MODIFIED_ON',
+                    'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_MODIFIED_ON'),
+                    'readonly' => true
                 ], [
                     'attribute_alias' => 'PAGE',
                     'hidden' => true
@@ -320,6 +326,10 @@ class DataTableConfigurator extends DataConfigurator
                     'readonly' => true,
                     'hidden' => true
                 ], [
+                    'attribute_alias' => 'CREATED_BY_USER',
+                    'readonly' => true,
+                    'hidden' => true
+                ],[
                     'attribute_alias' => 'WIDGET_SETUP_USER__MODIFIED_ON',
                     'readonly' => true,
                     'hidden' => true
@@ -336,6 +346,7 @@ class DataTableConfigurator extends DataConfigurator
             ->addButton($this->createButtonToUpdateSetup($table))
             ->addButton($this->createButtonToFavoriteSetup($table))
             ->addButton($this->createButtonToShareSetup($table))
+            ->addButton($this->createButtonToPublishSetup($table))
             ->addButton($this->createButtonToEditSetup($table))
             ->addButton($this->createButtonToDeleteSetup($table));
         $tab->addWidget($table);
@@ -375,9 +386,9 @@ class DataTableConfigurator extends DataConfigurator
                 "operator" => EXF_LOGICAL_OR,
                 "conditions" => [
                     [
-                        "value_left" => "=~input!VISIBILITY",
+                        "value_left" => "=~input!CREATED_BY_USER",
                         "comparator" => "!==",
-                        "value_right" => "PRIVATE"
+                        "value_right" => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid()
                     ],
                     [
                         "value_left" => "=~input!UID",
@@ -389,6 +400,11 @@ class DataTableConfigurator extends DataConfigurator
         ]));
     }
     
+    /**
+     * Button to update a widget_setup_user entry to mark/unmark the current setup as favorite for the current user.
+     * @param iHaveButtons $table
+     * @return Button
+     */
     public function createButtonToFavoriteSetup(iHaveButtons $table) : Button
     {
         return $table->createButton(new UxonObject([
@@ -406,6 +422,16 @@ class DataTableConfigurator extends DataConfigurator
             'hide_caption' => true,
             'icon' => 'share',
             'action' => $this->buildUxonForActionShareSetup()
+        ]));
+    }
+
+    public function createButtonToPublishSetup(iHaveButtons $table) : Button
+    {
+        return $table->createButton(new UxonObject([
+            'hide_caption' => true,
+            'icon' => 'globe',
+            'action' => $this->buildUxonForActionPublishSetup(),
+            'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_PUBLISH_HINT')
         ]));
     }
 
@@ -427,9 +453,9 @@ class DataTableConfigurator extends DataConfigurator
                 'operator' => 'AND',
                 'conditions' => [
                     [
-                        'value_left' => '=~input!VISIBILITY',
-                        'comparator' => ComparatorDataType::EQUALS_NOT,
-                        'value_right' => 'PRIVATE'
+                        "value_left" => "=~input!CREATED_BY_USER",
+                        "comparator" => "!==",
+                        "value_right" => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid()
                     ]
                 ]
             ],
@@ -619,6 +645,13 @@ class DataTableConfigurator extends DataConfigurator
         ];
     }
 
+    protected function buildUxonForActionPublishSetup() : array
+    {
+        return [
+            'alias' => "exface.Core.WidgetSetupPublishDialogForUsers"
+        ];
+    }
+
     protected function buildUxonForActionEditSetup() : array
     {
         return [
@@ -645,15 +678,25 @@ class DataTableConfigurator extends DataConfigurator
                 "to_object_alias" => "exface.Core.WIDGET_SETUP_USER",
                 "column_to_column_mappings" => [
                     [
-                        "from" => "WIDGET_SETUP_USER__UID",
+                        "from" => "USER_ENTRY_FOR_CURRENT_USER__UID",
                         "to" => "UID"
-                    ],[
-                        "from" => "WIDGET_SETUP_USER__MODIFIED_ON",
+                    ],
+                    [
+                        "from" => "USER_ENTRY_FOR_CURRENT_USER__MODIFIED_ON",
                         "to" => "MODIFIED_ON"
-                    ],[
-                        "from" => "=Not(WIDGET_SETUP_USER__FAVORITE_FLAG)",
+                    ],
+                    [
+                        "from" => "=Not(IfNull(USER_ENTRY_FOR_CURRENT_USER__FAVORITE_FLAG, 0))",
                         "to" => "FAVORITE_FLAG"
-                    ]
+                    ],
+                    [
+                        "from" => "'" . $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid() . "'",
+                        "to" => "USER"
+                    ],
+                    [
+                        "from" => "UID",
+                        "to" => "WIDGET_SETUP"
+                    ],
                 ]
             ]
         ];
