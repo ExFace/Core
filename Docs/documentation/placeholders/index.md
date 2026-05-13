@@ -39,8 +39,7 @@ Example
 ```html
 <!-- BEGIN NavButtons:noprint=true -->
 <!-- noprint:start -->
-
-
+[<kbd> <br> Zurück <br> </kbd>](../docs_crosslinking.md) [<kbd> <br> Weiter <br> </kbd>](ImageCaptionNumberPlaceholder.md)
 <!-- noprint:end -->
 <!-- END NavButtons -->
 ```
