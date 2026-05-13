@@ -80,6 +80,13 @@ Order of execution:
 Each migration file must contain explicit UP and DOWN sections:
 
 ```sql
+/*
+ * <short description of the change>
+ *
+ * <any details required to understand the SQL>
+ *
+ * @author <name of the author(s)>
+ */
 -- UP
 ALTER TABLE tablename
     ADD columnname3 datetime DEFAULT NULL,
@@ -95,6 +102,7 @@ Rules:
 - Use `-- UP` and `-- DOWN` markers exactly (with the space).
 - DOWN must reliably revert UP.
 - Keep migrations idempotent where possible, especially in `InitDB` and `DemoData`.
+- Make comment lines not longer than 80 characters for better readability
 
 ## Global principles for writing migration SQL
 
@@ -113,8 +121,9 @@ Rules:
 - Validate scripts thoroughly! Errors during installation can corrupt the DB 
   and are often hard to analyze and fix.
 
-**CRITICAL:** NEVER delete existing data in a migration script unless it is 
-already marked as `trash_` or you are explictily orderd to delete!
+**CRITICAL:** NEVER delete existing data in a migration script unless the 
+table or column is already marked as `trash_` or you are explictily orderd 
+to delete!
 
 - When removing columns or tables, always check if they are empty first.
 - If tables and column are NOT empty, rename them instead of dropping. 
@@ -141,19 +150,24 @@ Notes:
 - Delimiter may be a plain string or regex.
 - `MsSqlDatabaseInstaller` additionally supports `GO` as default batch separator.
 
-## DB-specific behavior and transaction expectations
+## DB-specific rules
 
-- **MySQL**:
+### MySQL
+
   - DDL is not rollback-safe; installer wraps script execution in transactions to keep DML behavior consistent.
-  - Utility procedures referenced via `CALL <name>(...)` may be auto-loaded from `QueryBuilders/SqlFunctions/MySQL/<name>.sql` when not created in script.
-- **PostgreSQL**:
+
+### PostgreSQL
+
   - Supports DDL rollback.
-  - Installer uses PostgreSQL-specific migration table schema and `RETURNING id` for insert logging.
-  - Utility cleanup uses `DROP FUNCTION IF EXISTS <name>();`.
-- **MS SQL Server**:
+  - Use `UUID` as type for unique identifiers as primary keys
+  - Use `UUID` instead of `BINARY(16)`
+
+### Microsoft SQL Server
+
   - Supports DDL rollback in many scenarios; installer still runs migrations in explicit transactions.
-  - Supports schema-qualified migration log table naming (`[schema].[_migrations]`).
-  - Uses `SELECT SCOPE_IDENTITY()` to retrieve inserted migration id.
+  - Use `GO` as batch delimiter where needed.
+  - Use `NVARCHAR()` instead of `VARCHAR()`
+  - Use `NVARCHAR(MAX)` instead of `TEXT` for long text fields.
 
 ## Migration logging expectations
 
