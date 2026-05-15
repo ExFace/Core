@@ -14,8 +14,14 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use Sabre\Xml\Service;
 
+/**
+ * Generic model for external service parameters/arguments
+ * 
+ * This model describes properties of arguments or parameters of external services like RPC, web services, etc.
+ * 
+ * @author Andrej Kabachnik
+ */
 class ServiceParameter implements ServiceParameterInterface
 {
     use ImportUxonObjectTrait;
@@ -41,6 +47,8 @@ class ServiceParameter implements ServiceParameterInterface
     private $service = null;
     
     private $dataSourceProperties = null;
+
+    private $example = null;
     
     public function __construct(WorkbenchDependantInterface $service, UxonObject $uxon = null)
     {
@@ -72,6 +80,9 @@ class ServiceParameter implements ServiceParameterInterface
         }
         if (null !== $val = $this->getDefaultValue()) {
             $uxon->setProperty('default_value', $val);
+        }
+        if (null !== $val = $this->getExample()) {
+            $uxon->setProperty('example', $val);
         }
         
         // Make sure, every exported parameter UXON has a data_type. The DataType::exportUxonObject() for some reason
@@ -427,6 +438,47 @@ class ServiceParameter implements ServiceParameterInterface
         } else {
             $this->emptyExpression = null;
         }
+        return $this;
+    }
+
+    /**
+     *
+     * @return string|int|float|bool|null
+     */
+    public function getExample() : mixed
+    {
+        if ($this->example === null) {
+            if ($this->defaultValue !== null) {
+                return $this->defaultValue;
+            }
+        }
+        return $this->example;
+    }
+
+    /**
+     *
+     * @return bool
+     */
+    public function hasExample() : bool
+    {
+        return $this->getExample() !== null;
+    }
+
+    /**
+     * A single example value for this parameter.
+     * 
+     * Similar to OpenAPI's `example` field, this provides a sample value that helps
+     * users understand the expected format or typical content for this parameter.
+     * 
+     * @uxon-property example
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return ServiceParameterInterface
+     */
+    public function setExample(string $value) : ServiceParameterInterface
+    {
+        $this->example = $value;
         return $this;
     }
 }

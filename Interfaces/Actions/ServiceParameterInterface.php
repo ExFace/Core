@@ -10,7 +10,10 @@ use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
+ * Interface for models of all kinds of parameters and arguments of remote service calls.
  * 
+ * Service parameters are UXON prototypes describing arguments of external services: e.g. web services, RPC calls, CLI 
+ * commands, etc. The parameter model must include everything needed to generate syntactically correct service calls.
  *
  * @author Andrej Kabachnik
  *        
@@ -141,4 +144,26 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
      * @return ServiceParameterInterface
      */
     public function setGroup(string $value) : ServiceParameterInterface;
+
+    /**
+     * Returns a single example value for this parameter or NULL if none defined.
+     *
+     * @return string|int|float|bool|null
+     */
+    public function getExample() : mixed;
+
+    /**
+     * Returns TRUE if an example value is defined for this parameter.
+     *
+     * @return bool
+     */
+    public function hasExample() : bool;
+
+    /**
+     * A single example value for this parameter (similar to OpenAPI's example field).
+     *
+     * @param string $value
+     * @return ServiceParameterInterface
+     */
+    public function setExample(string $value) : ServiceParameterInterface;
 }
