@@ -466,17 +466,17 @@ class ServiceParameter implements ServiceParameterInterface
 
     /**
      * A single example value for this parameter.
-     * 
+     *
      * Similar to OpenAPI's `example` field, this provides a sample value that helps
      * users understand the expected format or typical content for this parameter.
-     * 
+     *
      * @uxon-property example
      * @uxon-type string
-     * 
-     * @param string $value
+     *
+     * @param int|float|bool|string $value
      * @return ServiceParameterInterface
      */
-    public function setExample(string $value) : ServiceParameterInterface
+    public function setExample(int|float|bool|string $value) : ServiceParameterInterface
     {
         $this->example = $value;
         return $this;
