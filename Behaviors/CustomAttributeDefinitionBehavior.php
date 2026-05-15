@@ -834,34 +834,11 @@ class CustomAttributeDefinitionBehavior extends AbstractBehavior
         $logBook->addLine('Attribute caching set to `' . $cacheSettings . '`.');
         
         $additionalSpecifiers = '';
-        
-        // We need to check if any filters are dynamic, since dynamic filters cannot be resolved without reading
-        // the datasheet, which means there is no point in caching them.
-        if($attributeFilters !== null) {
-            $evaluatedExpressions = [];
-            
-            foreach ($attributeFilters->getRequiredExpressions() as $expression) {
-                if(!$expression->isStatic()) {
-                    $logBook->addLine(
-                        'Caching disabled because a dynamic filter was detected: "' . $expression->__toString() . '". ' .
-                        'This might degrade performance. If you want to benefit from  caching, make sure all filter ' .
-                        'expressions are static.'
-                    );
-                    
-                    return null;
-                }
-                
-                $string = $expression->__toString();
-                if(!key_exists($string, $evaluatedExpressions)) {
-                    $evaluatedExpressions[$string] = $expression->evaluate();
-                }
-            }
 
-            if(!empty($evaluatedExpressions)) {
-                $encoded = json_encode($evaluatedExpressions);
-                $logBook->addLine('Separating cache by results from static formulas found in filters: ' . $encoded);
-                $additionalSpecifiers .= $encoded;
-            }
+        if($attributeFilters !== null) {
+            $encoded = json_encode($attributeFilters->__toString());
+            $logBook->addLine('Separating cache by filters: ' . $encoded);
+            $additionalSpecifiers .= $encoded;
         }
         
         if($cacheSettings === self::CACHE_SETTING_USER) {
