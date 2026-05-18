@@ -15,10 +15,10 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * ## Scalar (single value) comparators
  * 
  * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
- * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+ * data types. If the left value is a string, becomes TRUE if it contains the right value. Case-
  * insensitive for strings
  * - `!=` - yields TRUE if `IS` would result in FALSE
- * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
+ * - `==` - compares two single values of the same type. Case-sensitive for stings. Normalizes the 
  * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
  * - `!==` - the inverse of `EQUALS`
  * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
