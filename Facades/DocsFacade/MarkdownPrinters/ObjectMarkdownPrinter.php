@@ -99,6 +99,7 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter //implements Markdow
 {$heading} 
 
 - Alias: **{$metaObject->getAliasWithNamespace()}**
+- UID: `{$metaObject->getId()}`
 - Data Source: **{$metaObject->getDataSource()->getName()}**, query builder: [{$queryBuilderClass}]($queryBuilderLink), connector: [{$connectorClass}]({$connectorLink})
 {$importantAttributes}
 
