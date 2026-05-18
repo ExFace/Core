@@ -48,7 +48,7 @@ class ServiceParameter implements ServiceParameterInterface
     
     private $dataSourceProperties = null;
 
-    private $example = null;
+    private $examples = null;
     
     public function __construct(WorkbenchDependantInterface $service, UxonObject $uxon = null)
     {
@@ -442,26 +442,26 @@ class ServiceParameter implements ServiceParameterInterface
     }
 
     /**
-     *
-     * @return string|int|float|bool|null
+     * {@inheritDoc}
+     * @see ServiceParameterInterface::getExamples()
      */
-    public function getExample() : mixed
+    public function getExamples() : ?array
     {
-        if ($this->example === null) {
+        if ($this->examples === null) {
             if ($this->defaultValue !== null) {
                 return $this->defaultValue;
             }
         }
-        return $this->example;
+        return $this->examples;
     }
 
     /**
-     *
-     * @return bool
+     * {@inheritDoc}
+     * @see ServiceParameterInterface::hasExamples()
      */
-    public function hasExample() : bool
+    public function hasExamples() : bool
     {
-        return $this->getExample() !== null;
+        return $this->getExamples() !== null;
     }
 
     /**
@@ -478,7 +478,26 @@ class ServiceParameter implements ServiceParameterInterface
      */
     public function setExample(int|float|bool|string $value) : ServiceParameterInterface
     {
-        $this->example = $value;
+        $this->examples = [$value];
+        return $this;
+    }
+
+    /**
+     * A array of example values for this parameter.
+     *
+     * Similar to OpenAPI's `example` field, this provides a sample value that helps
+     * users understand the expected format or typical content for this parameter.
+     *
+     * @uxon-property examples
+     * @uxon-type array
+     * @uxon-template [""]
+     *
+     * @param UxonObject|array $value
+     * @return ServiceParameterInterface
+     */
+    public function setExamples(UxonObject|array $value) : ServiceParameterInterface
+    {
+        $this->examples = ($value instanceof UxonObject) ? $value->toArray() : $value;
         return $this;
     }
 }

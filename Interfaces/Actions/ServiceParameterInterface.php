@@ -146,24 +146,24 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
     public function setGroup(string $value) : ServiceParameterInterface;
 
     /**
-     * Returns a single example value for this parameter or NULL if none defined.
+     * Returns an array with example values for this parameter or NULL if none defined.
      *
-     * @return string|int|float|bool|null
+     * @return array|null
      */
-    public function getExample() : mixed;
+    public function getExamples() : ?array;
 
     /**
      * Returns TRUE if an example value is defined for this parameter.
      *
      * @return bool
      */
-    public function hasExample() : bool;
+    public function hasExamples() : bool;
 
     /**
-     * A single example value for this parameter (similar to OpenAPI's example field).
+     * A array of example values for this parameter (similar to JSONschema object properties examples field).
      *
-     * @param string $value
+     * @param array $values
      * @return ServiceParameterInterface
      */
-    public function setExample(string $value) : ServiceParameterInterface;
+    public function setExamples(array $values) : ServiceParameterInterface;
 }
