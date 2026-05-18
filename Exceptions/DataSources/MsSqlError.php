@@ -134,7 +134,8 @@ class MsSqlError extends RuntimeException implements DataConnectorExceptionInter
         } else {
             $warningsTable = 'No warnings provided by MS SQL Server';
         }
-        return <<<MD
+        
+        $markdown = <<<MD
 ## Main Error
 
 - Message: **{$this->getMessage()}**
@@ -159,6 +160,15 @@ Helpful links:
 
 {$warningsTable}
 MD;
+        
+        if (null !== $logbook = $this->getConnector()->getLogbook()) {
+            $markdown .= <<<MD
+## Connection log
+
+{$logbook->__toString()}
+MD;
+        }
+        return $markdown;
     }
 
     public function getSqlState() : ?string
