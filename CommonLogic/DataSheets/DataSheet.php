@@ -87,42 +87,35 @@ class DataSheet implements DataSheetInterface
 
     // properties to be copied on copy()
     private $cols = array();
-
     private $rows = array();
-
     private $totals_rows = array();
+    private $subsheets = array();
 
     private $filters = null;
 
     private $sorters = array();
-    
     private $autosort = true;
 
-    private $total_row_count = null;
-    
-    private $autocount = true;
-
-    private $subsheets = array();
-
-    private $aggregation_columns = null;
-    
-    private $aggregateAll = null;
 
     private $rows_on_page = null;
-
     private $row_offset = 0;
+    private $total_row_count = null;
+    private $autocount = true;
+
+    private $aggregation_columns = null;
+    private $aggregateAll = null;
 
     private $uid_column_name = null;
 
     private $invalid_data_flag = false;
     
     private $is_fresh = true;
-    
     private $is_fresh_tag = null;
+    
+    private ?bool $is_cacheable = null;
 
     // properties NOT to be copied on copy()
     private $exface;
-
     private $meta_object;
     
     private $dataSourceHasMoreRows = true;
@@ -3814,7 +3807,11 @@ class DataSheet implements DataSheetInterface
         return $removeRows;
     }
 
-    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     */
     public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array
     {
         $cnt = $this->countRows();
@@ -3849,7 +3846,7 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::extractRows()
      */
     public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface
     {
@@ -3857,5 +3854,26 @@ class DataSheet implements DataSheetInterface
         $allIdx = $this->getRowIndexes();
         $removeIdx = array_diff($allIdx, $rowIndexes);
         return $copy->removeRows($removeIdx, $reindex);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isCacheable()
+     */
+    public function isCacheable() : bool
+    {
+        return $this->is_cacheable;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setCacheable()
+     */
+    public function setCacheable(bool $trueOrFalse) : DataSheetInterface
+    {
+        $this->is_cacheable = $trueOrFalse;
+        return $this;
     }
 }
