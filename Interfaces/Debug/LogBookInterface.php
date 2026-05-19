@@ -5,6 +5,12 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
 {
+
+    /**
+     * @return string
+     */
+    public function getTitle() : string;
+    
     /**
      * Add a line to the logbook optionally defining the indent (relative to previous) and a section
      * 

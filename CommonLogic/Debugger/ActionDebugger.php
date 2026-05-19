@@ -100,7 +100,7 @@ class ActionDebugger implements iCanGenerateDebugWidgets
         $task = $this->getTask();
         switch (true) {
             case $widget:
-                return WidgetDebugger::getWidgetUiPath($widget);
+                return (new WidgetDebugger($widget, false))->getBreadcrumbs();
             case $task !== null && $task->isTriggeredOnPage():
                 return 'Page "' . $task->getPageTriggeredOn()->getCaption() . '"';
             case $task !== null && $task instanceof ScheduledTask:
@@ -108,7 +108,7 @@ class ActionDebugger implements iCanGenerateDebugWidgets
             case $task !== null && $task instanceof CliTask:
                 return 'CLI command ' . $task->getCliCommandName();
         }
-        return $widget ? WidgetDebugger::getWidgetUiPath($widget) : 'Not triggered by widget';
+        return 'Not triggered by widget';
     }
     
     public function getTriggerUiPathMarkdown(bool $startWithPage = true, bool $includeLastWidgetType = true) : string
@@ -117,7 +117,7 @@ class ActionDebugger implements iCanGenerateDebugWidgets
         $task = $this->getTask();
         switch (true) {
             case $widget:
-                return WidgetDebugger::getWidgetUiPathMarkdown($widget, $startWithPage, $includeLastWidgetType);
+                return (new WidgetDebugger($widget))->getBreadcrumbs($startWithPage, true);
             case $task !== null && $task->isTriggeredOnPage():
                 return 'Page [' . $widget->getPage()->getName() . '](' . $widget->getPage()->getAliasWithNamespace() . '.html)';
         }
@@ -150,7 +150,7 @@ class ActionDebugger implements iCanGenerateDebugWidgets
     public function getInputUiPath() : ?string
     {
         $inputWidget = $this->getInputWidget();
-        return $inputWidget ? WidgetDebugger::getWidgetUiPath($inputWidget) : null;
+        return $inputWidget ? (new WidgetDebugger($inputWidget, false))->getBreadcrumbs() : null;
     }
     
     public function getAction() : ActionInterface
